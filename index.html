@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>にこわ -nikowa- v0.9</title>
+<title>にこわ -nikowa- v1.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -29,13 +29,130 @@
     background-image: radial-gradient(rgba(95,169,133,0.08) 1px, transparent 1px);
     background-size: 10px 10px;
   }
+  .app-frame { position: relative; }
   .app { min-height: 100vh; padding-bottom: 90px; }
+  .side-panel { display: none; }
+
+  /* PC幅では左にスマホ画面・右に詳細パネル */
+  @media (min-width: 960px) {
+    body {
+      max-width: 1000px;
+      display: grid;
+      grid-template-columns: 480px 1fr;
+      gap: 24px;
+      padding: 16px;
+      box-sizing: border-box;
+      background-image: radial-gradient(rgba(95,169,133,0.08) 1px, transparent 1px);
+      background-size: 10px 10px;
+    }
+    .app-frame {
+      max-width: 480px;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+      background: var(--bg);
+      background-image: radial-gradient(rgba(95,169,133,0.08) 1px, transparent 1px);
+      background-size: 10px 10px;
+      position: relative;
+      min-height: 700px;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+    }
+    .bottom-nav {
+      position: sticky !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      transform: none !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      border-radius: 0 !important;
+    }
+    .app { min-height: auto; padding-bottom: 16px; }
+    .side-panel {
+      display: block;
+      max-width: 480px;
+      align-self: start;
+      position: sticky;
+      top: 16px;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+    }
+    .side-panel-title {
+      font-size: 13px; font-weight: 700;
+      color: var(--ink-dark); letter-spacing: 1.2px;
+      margin: 0 0 12px; padding: 0 4px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .side-panel-title::before {
+      content: ''; display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--accent); border-radius: 50%;
+    }
+    .side-panel-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-soft);
+    }
+    .side-pet-row {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      gap: 10px; align-items: center;
+      padding: 8px 6px;
+      border-bottom: 1px dashed var(--line-soft);
+    }
+    .side-pet-row:last-child { border-bottom: none; }
+    .side-pet-sprite-wrap {
+      width: 48px; height: 48px;
+      background: var(--mint-bg);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .side-pet-sprite-wrap svg { width: 80%; height: 80%; }
+    .side-pet-sprite-wrap .pet-emoji { font-size: 28px; }
+    .side-pet-name { font-size: 13px; font-weight: 700; color: var(--ink-dark); }
+    .side-pet-meta { font-size: 11px; color: var(--ink-sub); margin-top: 2px; }
+    .side-pet-status {
+      font-size: 10px; padding: 3px 7px;
+      border-radius: 999px;
+      background: var(--mint-bg);
+      color: var(--mint-deep);
+      font-weight: 700;
+    }
+    .side-pet-status.warn {
+      background: var(--accent-bg);
+      color: var(--accent-deep);
+    }
+    .side-empty {
+      color: var(--ink-sub);
+      font-size: 12px;
+      text-align: center;
+      padding: 20px 12px;
+      line-height: 1.7;
+    }
+  }
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 14px 16px 12px;
     background: linear-gradient(180deg, #D5E8DD 0%, #C4DFD0 100%);
     border-bottom: 2px solid var(--line);
     position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-with-date { padding-top: 26px; position: sticky; }
+  .topbar-date-badge {
+    position: absolute;
+    top: 4px; left: 12px;
+    font-size: 10.5px; font-weight: 700;
+    color: var(--ink-dark);
+    background: rgba(255,255,255,0.7);
+    padding: 2px 8px; border-radius: 8px;
+    letter-spacing: 0.4px;
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(255,255,255,0.5);
   }
   .topbar-btn {
     background: var(--surface); border: 1.5px solid var(--line);
@@ -258,6 +375,25 @@
     margin-top: 12px; box-shadow: var(--shadow);
     animation: slideDown 0.25s ease;
   }
+  .day-card {
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-top: 10px;
+    box-shadow: var(--shadow-soft);
+    animation: slideDown 0.25s ease;
+  }
+  .day-card-title {
+    font-size: 12px; font-weight: 700;
+    margin-bottom: 8px; letter-spacing: 0.5px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--line-soft);
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .day-card-count {
+    color: var(--ink-sub); font-weight: 500; font-size: 11px;
+  }
   @keyframes slideDown {
     from { opacity: 0; transform: translateY(-6px); }
     to { opacity: 1; transform: translateY(0); }
@@ -311,12 +447,17 @@
     display: flex; align-items: flex-end; justify-content: center;
     padding-bottom: 8%; z-index: 3;
   }
-  .pet-room-sprite svg {
+  .pet-room-sprite svg, .pet-room-sprite .pet-emoji {
     image-rendering: pixelated;
     width: 64%; height: 64%;
     animation: bob 3s ease-in-out infinite;
   }
-  .pet-room-card.rainbow .pet-room-sprite svg {
+  .pet-room-sprite .pet-emoji {
+    font-size: 56px;
+    width: auto; height: auto;
+  }
+  .pet-room-card.rainbow .pet-room-sprite svg,
+  .pet-room-card.rainbow .pet-room-sprite .pet-emoji {
     animation: floatGently 4s ease-in-out infinite;
     filter: drop-shadow(0 0 8px rgba(255,200,220,0.6));
   }
@@ -388,11 +529,12 @@
     cursor: pointer; background: none; border: none;
     font-family: inherit; padding: 4px;
   }
-  .rainbow-pet svg {
+  .rainbow-pet svg, .rainbow-pet .pet-emoji {
     image-rendering: pixelated; width: 56px; height: 56px;
     filter: drop-shadow(0 0 8px rgba(255,200,220,0.6));
     animation: floatGently 4s ease-in-out infinite;
   }
+  .rainbow-pet .pet-emoji { font-size: 44px; width: auto; height: auto; }
   .rainbow-pet-name { font-size: 11px; color: var(--ink-dark); font-weight: 600; }
   
   .pet-detail-window {
@@ -414,10 +556,13 @@
     display: flex; align-items: flex-end; justify-content: center;
     padding-bottom: 8%; z-index: 3;
   }
-  .pet-detail-sprite svg {
+  .pet-detail-sprite svg, .pet-detail-sprite .pet-emoji {
     image-rendering: pixelated;
     width: 38%; height: 60%;
     animation: bob 2.5s ease-in-out infinite;
+  }
+  .pet-detail-sprite .pet-emoji {
+    font-size: 80px; width: auto; height: auto;
   }
   .pet-detail-info {
     display: flex; align-items: center; justify-content: space-between;
@@ -439,39 +584,149 @@
   }
   .pet-tabs-bar { display: flex; gap: 4px; padding: 0 16px; margin-top: 8px; }
   .pet-tab-btn {
-    flex: 1; background: var(--surface);
-    border: 1.5px solid var(--line);
-    border-radius: 12px 12px 0 0;
-    padding: 10px 4px 12px; cursor: pointer; font-family: inherit;
-    display: flex; flex-direction: column;
-    align-items: center; gap: 2px;
-    color: var(--ink-sub);
+    flex: 1; padding: 8px 4px; cursor: pointer;
+    background: var(--surface-warm); border: 1.5px solid var(--line);
+    border-bottom: none; border-radius: 10px 10px 0 0;
+    font-family: inherit; color: var(--ink-sub);
+    display: flex; flex-direction: column; align-items: center;
+    gap: 2px; min-width: 0;
   }
   .pet-tab-btn.active {
-    background: var(--mint-bg); border-color: var(--mint);
+    background: var(--surface);
     color: var(--mint-deep);
-    border-bottom-color: var(--mint-bg);
-    margin-bottom: -2px; z-index: 1;
+    border-color: var(--mint);
   }
-  .pet-tab-icon { font-size: 18px; }
-  .pet-tab-label { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+  .pet-tab-icon { font-size: 16px; }
+  .pet-tab-label {
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
   .pet-tab-content { border-top: 2px solid var(--mint); }
+
+  /* これからの出来事 */
+  .upcoming-list { display: flex; flex-direction: column; gap: 6px; }
+  .upcoming-item {
+    display: grid; grid-template-columns: auto auto 1fr;
+    gap: 8px; align-items: center;
+    padding: 8px 10px;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--line-soft);
+    font-size: 12px;
+  }
+  .upcoming-date {
+    font-weight: 700; color: var(--ink-dark);
+    background: var(--mint-bg);
+    padding: 3px 8px; border-radius: 8px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .upcoming-date.today {
+    background: var(--accent-bg);
+    color: var(--accent-deep);
+  }
+  .upcoming-tag {
+    padding: 2px 6px; border-radius: 6px;
+    font-size: 10.5px; font-weight: 600;
+    white-space: nowrap;
+  }
+  .upcoming-title {
+    color: var(--ink); font-size: 12px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .upcoming-empty {
+    text-align: center; padding: 20px 12px;
+    color: var(--ink-sub); font-size: 12.5px;
+    background: var(--surface-warm);
+    border-radius: 10px;
+    border: 1px dashed var(--line);
+  }
+  .cal-add-btn {
+    background: var(--mint-bg); color: var(--mint-deep);
+    border: 1px solid var(--mint); border-radius: 10px;
+    padding: 5px 10px; font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .cal-add-btn:active { background: var(--mint); color: var(--surface); }
+  .cal-clear-btn {
+    background: transparent; border: 1px solid var(--line);
+    border-radius: 8px; padding: 3px 8px; font-size: 10.5px;
+    color: var(--ink-sub); cursor: pointer; font-family: inherit;
+    margin-left: 6px;
+  }
+
+  /* 日記タブ */
+  .diary-datetime-row {
+    display: flex; gap: 6px; margin-bottom: 10px;
+    align-items: center;
+  }
+  .diary-date-input, .diary-time-input {
+    flex: 1; padding: 7px 8px;
+    border: 1.5px solid var(--line); border-radius: 8px;
+    background: var(--surface);
+    font-family: inherit; font-size: 12.5px;
+    color: var(--ink);
+    min-width: 0;
+  }
+  .diary-now-btn {
+    background: var(--mint-bg); color: var(--mint-deep);
+    border: 1.5px solid var(--mint); border-radius: 8px;
+    padding: 6px 10px; font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .diary-now-btn:active { background: var(--mint); color: var(--surface); }
+  .diary-photo-text-row {
+    display: flex; gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .diary-photo-stack {
+    display: flex; flex-direction: column; gap: 4px;
+    flex-shrink: 0;
+  }
+  .diary-photo-item {
+    position: relative;
+    width: 80px; height: 80px;
+  }
+  .diary-photo-img {
+    width: 80px; height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1.5px solid var(--line);
+  }
+  .diary-textarea {
+    flex: 1; min-height: 80px;
+    margin: 0;
+    min-width: 0;
+  }
+  .diary-actions-row {
+    display: flex; gap: 6px; margin-bottom: 8px;
+  }
+  .diary-photo-add-btn {
+    flex: 1; background: var(--surface-warm);
+    border: 1.5px dashed var(--line);
+    border-radius: 8px; padding: 8px;
+    font-family: inherit; font-size: 12px;
+    color: var(--ink-sub); font-weight: 600;
+    cursor: pointer;
+  }
+  .diary-photo-add-btn:active { background: var(--mint-bg); }
   
   .quick-care-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 6px;
   }
   .quick-care-btn {
     background: var(--surface); border: 1.5px solid var(--line);
-    border-radius: 12px; padding: 10px 4px 8px;
+    border-radius: 10px; padding: 6px 2px 5px;
     cursor: pointer; font-family: inherit;
     display: flex; flex-direction: column;
-    align-items: center; gap: 2px;
+    align-items: center; gap: 1px;
     box-shadow: var(--shadow-soft);
   }
   .quick-care-btn:active { transform: scale(0.92); background: var(--mint-bg); }
-  .quick-care-icon { font-size: 22px; line-height: 1; }
+  .quick-care-icon { font-size: 17px; line-height: 1.1; }
   .quick-care-label {
-    font-size: 10px; color: var(--ink-dark); font-weight: 600;
+    font-size: 9.5px; color: var(--ink-dark); font-weight: 600;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
   }
   .care-edit-btn {
@@ -567,7 +822,90 @@
     font-size: 12.5px; font-weight: 700;
     cursor: pointer; letter-spacing: 1px;
   }
+  .pet-emoji {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-size: 56px;
+  }
+  .pet-emoji-mini { font-size: 28px; }
   .post-list { display: flex; flex-direction: column; gap: 8px; }
+  /* 引き出し日記スタイルの投稿表示 */
+  .post-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 4px 2px;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .post-row:active { opacity: 0.85; }
+  .post-row-time {
+    font-size: 11px;
+    color: var(--ink-sub);
+    background: var(--surface);
+    padding: 4px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+    font-weight: 600;
+    flex-shrink: 0;
+    margin-top: 2px;
+    border: 1px solid var(--line-soft);
+  }
+  .post-row-bubble {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 8px 12px;
+    border: 1px solid var(--line-soft);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    min-width: 0;
+  }
+  .post-row-text {
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .post-row-photos {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+  .post-row-photo {
+    width: 50px; height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid var(--line-soft);
+  }
+  .post-row-vis {
+    font-size: 12px;
+    margin-top: 4px;
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+  .post-scroll-frame {
+    height: 500px;
+    overflow-y: auto;
+    background: var(--surface-warm);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.04);
+    -webkit-overflow-scrolling: touch;
+  }
+  .post-scroll-frame::-webkit-scrollbar { width: 6px; }
+  .post-scroll-frame::-webkit-scrollbar-track { background: transparent; }
+  .post-scroll-frame::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 3px;
+  }
+  .post-scroll-frame::-webkit-scrollbar-thumb:hover { background: var(--mint-deep); }
   .post-card {
     background: var(--surface); border: 1px solid var(--line);
     border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow-soft);
@@ -615,6 +953,11 @@
   }
   .nav-btn .nav-icon { font-size: 20px; }
   .nav-btn.active { color: var(--mint-deep); background: var(--mint-bg); }
+  .nav-back-btn {
+    color: var(--accent-deep) !important;
+    background: var(--accent-bg) !important;
+  }
+  .nav-back-btn:active { transform: scale(0.92); }
   .modal {
     position: fixed; inset: 0;
     background: rgba(45,74,60,0.4);
@@ -650,6 +993,7 @@
     align-items: center; gap: 2px;
   }
   .pet-type-btn .sprite-mini { width: 36px; height: 36px; image-rendering: pixelated; }
+  .pet-type-btn .pet-emoji-mini { font-size: 30px; line-height: 1; }
   .pet-type-btn .label { font-size: 10px; color: var(--ink-sub); font-weight: 600; }
   .pet-type-btn.selected { border-color: var(--accent); background: var(--accent-bg); }
   .pet-type-btn.selected .label { color: var(--accent-deep); font-weight: 700; }
@@ -884,13 +1228,18 @@
 </head>
 <body>
 
+<div class="app-frame">
 <div class="app" id="app"></div>
 
 <nav class="bottom-nav" id="bottomNav" style="display:none;">
   <button class="nav-btn active" data-view="houses"><span class="nav-icon">🏘️</span><span>まち</span></button>
+  <button class="nav-btn nav-back-btn" id="navBackBtn" onclick="navBack()" style="display:none;"><span class="nav-icon">‹</span><span>戻る</span></button>
   <button class="nav-btn" data-view="schedule"><span class="nav-icon">📅</span><span>よてい</span></button>
   <button class="nav-btn" data-view="settings"><span class="nav-icon">⚙️</span><span>せってい</span></button>
 </nav>
+</div>
+
+<aside class="side-panel" id="sidePanel"></aside>
 
 <div class="modal" id="userModal"><div class="modal-content">
   <h2 class="modal-title">あなたのこと</h2>
@@ -952,6 +1301,8 @@
     <input type="text" class="form-input" id="petNameInput" placeholder="例：もも" maxlength="12"></div>
   <div class="form-group"><label class="form-label">しゅるい</label>
     <div class="pet-type-grid" id="petTypeGrid"></div></div>
+  <div class="form-group"><label class="form-label">種類 <span style="color:var(--ink-sub); font-weight:500; font-size:10.5px;">（犬種・猫種など、自由）</span></label>
+    <input type="text" class="form-input" id="petBreedInput" maxlength="40" placeholder="例：トイプードル、MIX"></div>
   <div class="form-group"><label class="form-label">おたんじょうび（にんいです）</label>
     <input type="date" class="form-input" id="petBirthInput"></div>
   <div class="form-group" id="rainbowDateGroup" style="display:none;">
@@ -967,11 +1318,17 @@
   <h2 class="modal-title">この子のこと</h2>
   <div class="form-group"><label class="form-label">なまえ</label>
     <input type="text" class="form-input" id="editPetNameInput" maxlength="12"></div>
+  <div class="form-group"><label class="form-label">種類 <span style="color:var(--ink-sub); font-weight:500; font-size:10.5px;">（犬種・猫種など、自由）</span></label>
+    <input type="text" class="form-input" id="editPetBreedInput" maxlength="40" placeholder="例：トイプードル、MIX、コーギー×チワワ"></div>
   <div class="form-group"><label class="form-label">おたんじょうび</label>
     <input type="date" class="form-input" id="editPetBirthInput"></div>
   <div class="form-group" id="editRainbowDateGroup" style="display:none;">
     <label class="form-label">虹の橋の日</label>
     <input type="date" class="form-input" id="editPetRainbowDateInput"></div>
+  <div class="form-group">
+    <label class="form-label">プロフィール写真</label>
+    <button class="btn btn-secondary" style="width:100%;" onclick="setProfilePhotoFromModal()">📷 写真を変更する</button>
+  </div>
   <div class="form-group"><label class="form-label">居場所</label>
     <div id="editPlaceContent"></div></div>
   <div class="modal-actions">
@@ -1116,6 +1473,50 @@
   </div>
 </div></div>
 
+<!-- 投稿メニューモーダル（長押し時） -->
+<div class="modal" id="postMenuModal"><div class="modal-content">
+  <h2 class="modal-title">この投稿どうする？</h2>
+  <div style="display:flex; flex-direction:column; gap:8px;">
+    <button class="btn btn-secondary" style="text-align:left; padding: 14px 16px;" onclick="postMenuEdit()">
+      <div style="font-size:14px; font-weight:700; color:var(--ink-dark);">✏️ なおす</div>
+      <div style="font-size:11px; color:var(--ink-sub); font-weight:500;">文字や見せる範囲をへんしゅう</div>
+    </button>
+    <button class="btn btn-secondary" style="text-align:left; padding: 14px 16px; background: var(--accent-bg);" onclick="postMenuDelete()">
+      <div style="font-size:14px; font-weight:700; color:var(--accent-deep);">🌷 手放す</div>
+      <div style="font-size:11px; color:var(--ink-sub); font-weight:500;">この投稿と写真を消します</div>
+    </button>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('postMenuModal')">やめる</button>
+  </div>
+</div></div>
+
+<!-- 投稿編集モーダル -->
+<div class="modal" id="editPostModal"><div class="modal-content">
+  <h2 class="modal-title">投稿をなおす</h2>
+  <div class="form-group">
+    <label class="form-label">本文</label>
+    <textarea class="memo-textarea" id="editPostText" style="min-height: 80px;" placeholder="ひとこと"></textarea>
+  </div>
+  <div class="form-group">
+    <label class="form-label">見る範囲</label>
+    <div class="visibility-row" id="editPostVisRow" style="margin-top:0;">
+      <button class="visibility-btn" data-vis="private" onclick="this.parentNode.querySelectorAll('.visibility-btn').forEach(b=>b.classList.remove('selected')); this.classList.add('selected');">🔑 自分</button>
+      <button class="visibility-btn" data-vis="house" onclick="this.parentNode.querySelectorAll('.visibility-btn').forEach(b=>b.classList.remove('selected')); this.classList.add('selected');">🏡 家族</button>
+      <button class="visibility-btn" data-vis="public" onclick="this.parentNode.querySelectorAll('.visibility-btn').forEach(b=>b.classList.remove('selected')); this.classList.add('selected');">🌍 公開</button>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal('editPostModal')">やめる</button>
+    <button class="btn btn-primary" onclick="saveEditPost()">ほぞん</button>
+  </div>
+</div></div>
+
+<!-- 日記投稿モーダル（+日記ボタンで開く） -->
+<div class="modal" id="diaryComposeModal"><div class="modal-content" id="diaryComposeModalContent">
+  <!-- 中身は renderDiaryComposeModal() で動的生成 -->
+</div></div>
+
 <input type="file" id="hiddenFileInput" accept="image/*" style="display:none;">
 <div class="toast" id="toast"></div>
 
@@ -1140,20 +1541,18 @@ const PET_PALETTES = {
   turtle: { 1:"#7FA88A", 2:"#A8C8B5", 3:"#2D4A3C", 4:"#C8DEC8", 5:"#E88AA0" },
   other: { 1:"#A8B5C8", 2:"#D8DFE8", 3:"#3B2A1B", 4:"#FFFFFF", 5:"#E88AA0" }
 };
+const PET_EMOJIS = {
+  dog: '🐶', cat: '🐱', rabbit: '🐰', hamster: '🐹',
+  bird: '🐦', fish: '🐟', turtle: '🐢', other: '✨'
+};
+
 function spriteSVG(kind, palette, sizeAttr) {
-  if (!sizeAttr) sizeAttr = '';
-  const grid = SPRITES[kind] || SPRITES.other;
-  const rects = [];
-  for (let y = 0; y < grid.length; y++) {
-    for (let x = 0; x < grid[y].length; x++) {
-      const ch = grid[y][x];
-      if (ch === '.' || ch === ' ') continue;
-      const fill = palette[ch];
-      if (!fill) continue;
-      rects.push('<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+fill+'"/>');
-    }
-  }
-  return '<svg viewBox="0 0 32 32" '+sizeAttr+' shape-rendering="crispEdges" style="image-rendering:pixelated">'+rects.join('')+'</svg>';
+  // sizeAttr に "class=..." が含まれていたらそのクラスを使う
+  // それ以外は petEmoji クラスを付与
+  const emoji = PET_EMOJIS[kind] || PET_EMOJIS.other;
+  let extraClass = '';
+  if (sizeAttr && sizeAttr.indexOf('sprite-mini') !== -1) extraClass = ' pet-emoji-mini';
+  return '<span class="pet-emoji'+extraClass+'" aria-label="'+kind+'">'+emoji+'</span>';
 }
 
 const STORAGE_KEY = 'nikowa_data_v3';
@@ -1284,7 +1683,7 @@ let careEditDraft = [];
 let iconPickerCallback = null;
 let tidyTargetPetId = null;
 let moveTargetPetId = null;
-let postDraft = { text: '', photoIds: [], visibility: 'house' };
+let postDraft = { text: '', photoIds: [], visibility: 'house', date: null, time: null };
 let editingTaskId = null;
 let selectedRepeat = 'daily';
 let selectedTaskIcon = '🌿';
@@ -1294,6 +1693,8 @@ let schedCalMonth = null;
 let schedCalSelected = null;
 let petCalMonth = null;
 let petCalSelected = null;
+let diaryCalMonth = null;
+let diaryCalSelected = null;
 let houseCalMonth = null;
 let houseCalSelected = null;
 let houseTab = 'home'; // 'home' or 'diary'
@@ -1319,6 +1720,13 @@ function loadData() {
   if (!data.themeId) data.themeId = 'mint';
   if (!data.user) data.user = { name: '', avatar: '🌷' };
   if (!data.petTab) data.petTab = 'care';
+  // v0.9以前のタブ値マイグレーション
+  if (data.petTab === 'schedule') data.petTab = 'calendar';
+  if (data.petTab === 'photo' || data.petTab === 'care' || data.petTab === 'calendar' || data.petTab === 'diary') {
+    // 有効値、そのまま
+  } else {
+    data.petTab = 'care';
+  }
   if (data.houses.length === 0) {
     const h = { id: 'house_' + Date.now(), name: 'マイホーム', createdAt: Date.now() };
     data.houses.push(h);
@@ -1545,7 +1953,10 @@ function calcAge(birthStr) {
   const totalMonths = (now.getFullYear() - b.getFullYear()) * 12 + (now.getMonth() - b.getMonth());
   if (totalMonths < 0) return '';
   if (totalMonths < 12) return totalMonths+'ヶ月';
-  return Math.floor(totalMonths/12)+'さい';
+  const years = Math.floor(totalMonths/12);
+  const months = totalMonths % 12;
+  if (months === 0) return years+'歳';
+  return years+'歳'+months+'ヶ月';
 }
 function calcStreak(petId) {
   const records = data.records[petId] || {};
@@ -1593,6 +2004,7 @@ async function pickPhoto() {
   return new Promise(resolve => {
     const input = document.getElementById('hiddenFileInput');
     input.value = '';
+    input.multiple = false;
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (!file) { resolve(null); return; }
@@ -1606,6 +2018,34 @@ async function pickPhoto() {
         showToast('写真を読みこめませんでした');
         resolve(null);
       }
+    };
+    input.click();
+  });
+}
+
+async function pickMultiplePhotos(maxCount) {
+  return new Promise(resolve => {
+    const input = document.getElementById('hiddenFileInput');
+    input.value = '';
+    input.multiple = true;
+    input.onchange = async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) { resolve([]); return; }
+      const limit = Math.min(files.length, maxCount || 5);
+      const results = [];
+      for (let i = 0; i < limit; i++) {
+        try {
+          const dataUrl = await resizeImage(files[i], MAX_PHOTO_SIZE);
+          const id = 'photo_' + Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2,5);
+          photos[id] = dataUrl;
+          results.push(id);
+        } catch(err) {
+          // skip failed
+        }
+      }
+      savePhotos();
+      if (files.length > limit) showToast('一度に '+limit+'枚までです');
+      resolve(results);
     };
     input.click();
   });
@@ -1634,26 +2074,81 @@ function renderPostCard(post) {
   const d = new Date(post.createdAt);
   const today = new Date(); today.setHours(0,0,0,0);
   const postDay = new Date(d); postDay.setHours(0,0,0,0);
-  const diffDays = Math.floor((today - postDay) / (1000 * 60 * 60 * 24));
-  let dateLabel;
-  if (diffDays === 0) dateLabel = '今日';
-  else if (diffDays === 1) dateLabel = '昨日';
-  else if (diffDays < 7) dateLabel = diffDays+'日まえ';
-  else dateLabel = (d.getMonth()+1)+'月'+d.getDate()+'日';
+  const isToday = postDay.getTime() === today.getTime();
   const timeStr = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-  const visIcon = post.visibility === 'private' ? '🔒' : (post.visibility === 'public' ? '🌍' : '🏡');
-  let html = '<div class="post-card">';
-  html += '<div class="post-header"><span class="post-time">'+dateLabel+' '+timeStr+'</span><span class="post-visibility">'+visIcon+'</span><button class="post-delete" onclick="deletePost(\''+post.id+'\')">×</button></div>';
-  if (post.text) html += '<div class="post-text">'+escapeHtml(post.text)+'</div>';
+  const dateLabel = isToday ? timeStr : (d.getMonth()+1)+'/'+d.getDate()+' '+timeStr;
+  const visIcon = post.visibility === 'private' ? '🔑' : (post.visibility === 'public' ? '🌍' : '🏡');
+  
+  let html = '<div class="post-row" oncontextmenu="event.preventDefault(); openPostMenu(\''+post.id+'\'); return false;" ontouchstart="postTouchStart(event, \''+post.id+'\')" ontouchend="postTouchEnd()" ontouchmove="postTouchEnd()" ontouchcancel="postTouchEnd()">';
+  html += '<span class="post-row-time">'+dateLabel+'</span>';
+  html += '<div class="post-row-bubble">';
+  if (post.text) html += '<div class="post-row-text">'+escapeHtml(post.text)+'</div>';
   if ((post.photoIds || []).length > 0) {
-    html += '<div class="post-photos">';
+    html += '<div class="post-row-photos">';
     for (const pid of post.photoIds) {
-      if (photos[pid]) html += '<img class="post-photo" src="'+photos[pid]+'" onclick="openPhotoViewer(\''+pid+'\')" alt="">';
+      if (photos[pid]) html += '<img class="post-row-photo" src="'+photos[pid]+'" onclick="event.stopPropagation(); openPhotoViewer(\''+pid+'\')" alt="">';
     }
     html += '</div>';
   }
   html += '</div>';
+  html += '<span class="post-row-vis" title="'+(post.visibility === 'private' ? '自分だけ' : (post.visibility === 'public' ? '公開' : '家族'))+'">'+visIcon+'</span>';
+  html += '</div>';
   return html;
+}
+
+// 長押し検知
+let postLongPressTimer = null;
+function postTouchStart(event, postId) {
+  postLongPressTimer = setTimeout(() => {
+    if (navigator.vibrate) try { navigator.vibrate(30); } catch(e) {}
+    openPostMenu(postId);
+  }, 500);
+}
+function postTouchEnd() {
+  if (postLongPressTimer) { clearTimeout(postLongPressTimer); postLongPressTimer = null; }
+}
+
+// 投稿メニュー（編集・削除）
+let postMenuTargetId = null;
+function openPostMenu(postId) {
+  postMenuTargetId = postId;
+  document.getElementById('postMenuModal').classList.add('show');
+}
+function postMenuEdit() {
+  closeModal('postMenuModal');
+  if (!postMenuTargetId) return;
+  const post = data.posts.find(p => p.id === postMenuTargetId);
+  if (!post) return;
+  document.getElementById('editPostText').value = post.text || '';
+  // 公開範囲ボタン
+  const visBtns = document.querySelectorAll('#editPostVisRow .visibility-btn');
+  for (const b of visBtns) b.classList.toggle('selected', b.dataset.vis === post.visibility);
+  document.getElementById('editPostModal').classList.add('show');
+}
+function postMenuDelete() {
+  closeModal('postMenuModal');
+  if (!postMenuTargetId) return;
+  if (!confirm('この投稿を消しますか？\n写真もいっしょに手放されます。')) return;
+  const post = data.posts.find(p => p.id === postMenuTargetId);
+  if (post) {
+    for (const pid of (post.photoIds || [])) deletePhoto(pid);
+    data.posts = data.posts.filter(p => p.id !== postMenuTargetId);
+    saveData();
+    showToast('整理しました🌷');
+    render();
+  }
+}
+function saveEditPost() {
+  if (!postMenuTargetId) return;
+  const post = data.posts.find(p => p.id === postMenuTargetId);
+  if (!post) return;
+  post.text = document.getElementById('editPostText').value.trim();
+  const sel = document.querySelector('#editPostVisRow .visibility-btn.selected');
+  if (sel) post.visibility = sel.dataset.vis;
+  saveData();
+  closeModal('editPostModal');
+  showToast('なおしました🌷');
+  render();
 }
 function deletePost(postId) {
   if (!confirm('この投稿を消しますか？')) return;
@@ -1780,6 +2275,7 @@ function changeCalMonth(prefix, delta) {
   let target;
   if (prefix === 'sched') target = schedCalMonth;
   else if (prefix === 'house') target = houseCalMonth;
+  else if (prefix === 'diary') target = diaryCalMonth;
   else target = petCalMonth;
   if (!target) return;
   let m = target.month + delta;
@@ -1788,6 +2284,7 @@ function changeCalMonth(prefix, delta) {
   while (m > 11) { m -= 12; y += 1; }
   if (prefix === 'sched') schedCalMonth = { year: y, month: m };
   else if (prefix === 'house') houseCalMonth = { year: y, month: m };
+  else if (prefix === 'diary') diaryCalMonth = { year: y, month: m };
   else petCalMonth = { year: y, month: m };
   render();
 }
@@ -1799,6 +2296,9 @@ function goToToday(prefix) {
   } else if (prefix === 'house') {
     houseCalMonth = { year: t.getFullYear(), month: t.getMonth() };
     houseCalSelected = todayKey();
+  } else if (prefix === 'diary') {
+    diaryCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+    diaryCalSelected = todayKey();
   } else {
     petCalMonth = { year: t.getFullYear(), month: t.getMonth() };
     petCalSelected = todayKey();
@@ -1808,6 +2308,7 @@ function goToToday(prefix) {
 function selectCalDate(prefix, dateKey) {
   if (prefix === 'sched') schedCalSelected = (schedCalSelected === dateKey) ? null : dateKey;
   else if (prefix === 'house') houseCalSelected = (houseCalSelected === dateKey) ? null : dateKey;
+  else if (prefix === 'diary') diaryCalSelected = (diaryCalSelected === dateKey) ? null : dateKey;
   else petCalSelected = (petCalSelected === dateKey) ? null : dateKey;
   render();
 }
@@ -1843,29 +2344,35 @@ function renderDayDetail(dateKey, scope) {
   }
   careEntries.sort((a, b) => a.timestamp - b.timestamp);
   
-  let html = '<div class="day-detail">';
+  let html = '';
+  
+  // 日付ヘッダ＋記念日（共通の上部）
+  html += '<div class="day-detail">';
   html += '<div class="day-detail-head"><span class="day-detail-date">'+dateStr+'</span><span class="day-detail-rel">'+escapeHtml(relativeStr)+'</span></div>';
   if (memorials.length > 0) {
     html += '<div class="day-mem-banner">';
     html += memorials.map(m => '<div>'+escapeHtml(m)+'</div>').join('');
     html += '</div>';
   }
+  html += '</div>';
+  
   let hasContent = memorials.length > 0;
+  
+  // 予定（独立カード）
   if (schedules.length > 0) {
     hasContent = true;
-    html += '<div class="day-section"><div class="day-section-title" style="color:var(--accent-deep);">📅 予定</div><div class="schedule-list">';
+    html += '<div class="day-card">';
+    html += '<div class="day-card-title" style="color:var(--accent-deep);">📅 予定 <span class="day-card-count">'+schedules.length+'件</span></div>';
+    html += '<div class="schedule-list">';
     for (const s of schedules) html += renderSchedulePill(s);
     html += '</div></div>';
   }
-  if (posts.length > 0) {
-    hasContent = true;
-    html += '<div class="day-section"><div class="day-section-title" style="color:#A88800;">📝 おもいで</div><div class="post-list">';
-    for (const post of posts) html += renderPostCard(post);
-    html += '</div></div>';
-  }
+  
+  // お世話（独立カード）
   if (careEntries.length > 0) {
     hasContent = true;
-    html += '<div class="day-section"><div class="day-section-title" style="color:var(--mint-deep);">🌿 お世話 <span style="color:var(--ink-sub); font-weight:500;">('+careEntries.length+'件)</span></div>';
+    html += '<div class="day-card">';
+    html += '<div class="day-card-title" style="color:var(--mint-deep);">🌿 お世話 <span class="day-card-count">'+careEntries.length+'件</span></div>';
     html += '<div class="day-care-tiles">';
     for (const entry of careEntries) {
       const time = new Date(entry.timestamp).toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
@@ -1874,12 +2381,24 @@ function renderDayDetail(dateKey, scope) {
     }
     html += '</div></div>';
   }
+  
+  // おもいで（独立カード）
+  if (posts.length > 0) {
+    hasContent = true;
+    html += '<div class="day-card">';
+    html += '<div class="day-card-title" style="color:#A88800;">📝 おもいで <span class="day-card-count">'+posts.length+'件</span></div>';
+    html += '<div class="post-list">';
+    for (const post of posts) html += renderPostCard(post);
+    html += '</div></div>';
+  }
+  
   if (!hasContent) {
+    html += '<div class="day-card">';
     if (isFuture) html += '<div class="day-empty"><span class="emoji">🌷</span>まだ予定はありません</div>';
     else if (isToday) html += '<div class="day-empty"><span class="emoji">🌱</span>今日はまだ記録がありません</div>';
     else html += '<div class="day-empty"><span class="emoji">🍃</span>この日の記録はありません</div>';
+    html += '</div>';
   }
-  html += '</div>';
   return html;
 }
 
@@ -1980,11 +2499,11 @@ function setHouseTab(tab) {
 
 function renderHouse() {
   document.getElementById('bottomNav').style.display = 'flex';
-  setActiveNav('houses');
+  setActiveNav('house');
   const house = getActiveHouse();
   if (!house) { currentView = 'houses'; render(); return; }
   
-  let html = '<div class="topbar"><button class="topbar-btn" onclick="backToHouses()">‹</button><div class="topbar-title">🏡 '+escapeHtml(house.name)+'</div><div class="topbar-spacer"></div></div>';
+  let html = '<div class="topbar"><div class="topbar-spacer"></div><div class="topbar-title">🏡 '+escapeHtml(house.name)+'</div><div class="topbar-spacer"></div></div>';
   
   // タブバー
   html += '<div class="pet-tabs-bar" style="margin-top: 12px;">';
@@ -2112,10 +2631,12 @@ function renderHouseDiaryTab(house) {
 
 function enterPet(petId) {
   data.activePetId = petId;
-  postDraft = { text: '', photoIds: [], visibility: 'house' };
-  petCalSelected = null;
+  postDraft = { text: '', photoIds: [], visibility: 'house', date: null, time: null };
+  petCalSelected = todayKey();
+  diaryCalSelected = null;
   const t = new Date();
   petCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+  diaryCalMonth = { year: t.getFullYear(), month: t.getMonth() };
   saveData();
   currentView = 'pet';
   render();
@@ -2126,6 +2647,16 @@ function backToHouse() {
   saveData();
   render();
 }
+
+function navBack() {
+  // 戻る順：pet → house → houses
+  if (currentView === 'pet') backToHouse();
+  else if (currentView === 'house') backToHouses();
+  else if (currentView === 'schedule' || currentView === 'settings') {
+    // よてい・せっていからは家一覧に戻る
+    backToHouses();
+  }
+}
 function setPetTab(tab) {
   data.petTab = tab;
   saveData();
@@ -2134,7 +2665,7 @@ function setPetTab(tab) {
 
 function renderPet() {
   document.getElementById('bottomNav').style.display = 'flex';
-  setActiveNav('houses');
+  setActiveNav('pet');
   const pet = getActivePet();
   if (!pet) { currentView = 'house'; render(); return; }
   const careItems = pet.careItems || DEFAULT_CARE_ITEMS;
@@ -2142,14 +2673,21 @@ function renderPet() {
   const memorials = getTodayMemorial(pet);
   const streak = pet.place === 'home' ? calcStreak(pet.id) : 0;
   const tab = data.petTab || 'care';
-  let html = '<div class="topbar"><button class="topbar-btn" onclick="backToHouse()">‹</button>';
+  const todayD = new Date();
+  const todayDateStr = todayD.getFullYear()+'/'+String(todayD.getMonth()+1).padStart(2,'0')+'/'+String(todayD.getDate()).padStart(2,'0');
+  const todayWd = ['日','月','火','水','木','金','土'][todayD.getDay()];
+  let html = '<div class="topbar topbar-with-date">';
+  html += '<div class="topbar-spacer"></div>';
+  html += '<div class="topbar-date-badge">'+todayDateStr+' ('+todayWd+')</div>';
   html += '<div class="topbar-title">'+(PLACE_ICONS[pet.place]||'🏠')+' '+escapeHtml(pet.name)+'の部屋</div>';
-  html += '<button class="topbar-btn" onclick="openEditPetModal(\''+pet.id+'\')">⚙️</button></div>';
+  html += '<div class="topbar-spacer"></div></div>';
   html += '<div class="pet-detail-window">';
   html += renderRoomBox(pet, true);
-  html += '<button class="photo-set-btn" onclick="setProfilePhoto(\''+pet.id+'\')">📷 写真</button>';
+  html += '<button class="photo-set-btn" onclick="openEditPetModal(\''+pet.id+'\')">⚙️ 設定</button>';
+  // 種類（breed）表示
+  const breedStr = pet.breed ? ' ・ '+escapeHtml(pet.breed) : '';
   html += '<div class="pet-detail-info"><div><h2 class="pet-detail-name">'+escapeHtml(pet.name)+'</h2>';
-  html += '<div class="pet-detail-meta">'+PET_TYPE_NAMES[pet.type]+(age?' ・ '+age:'')+'</div></div>';
+  html += '<div class="pet-detail-meta">'+PET_TYPE_NAMES[pet.type]+(age?' ・ '+age:'')+breedStr+'</div></div>';
   html += '<div class="pet-detail-place-tag">'+PLACE_ICONS[pet.place]+' '+PLACE_NAMES[pet.place]+'</div></div></div>';
   if (memorials.length > 0) {
     html += '<div class="section"><div class="memorial-card"><div class="memorial-title">✨ 今日は特別な日</div>';
@@ -2164,13 +2702,16 @@ function renderPet() {
   }
   if (pet.place === 'home') {
     html += '<div class="pet-tabs-bar">';
-    html += '<button class="pet-tab-btn '+(tab==='care'?'active':'')+'" onclick="setPetTab(\'care\')"><span class="pet-tab-icon">🌿</span><span class="pet-tab-label">きろく</span></button>';
-    html += '<button class="pet-tab-btn '+(tab==='photo'?'active':'')+'" onclick="setPetTab(\'photo\')"><span class="pet-tab-icon">📷</span><span class="pet-tab-label">しゃしん</span></button>';
-    html += '<button class="pet-tab-btn '+(tab==='schedule'?'active':'')+'" onclick="setPetTab(\'schedule\')"><span class="pet-tab-icon">📅</span><span class="pet-tab-label">よてい</span></button>';
+    html += '<button class="pet-tab-btn '+(tab==='care'?'active':'')+'" onclick="setPetTab(\'care\')"><span class="pet-tab-icon">🌿</span><span class="pet-tab-label">お世話</span></button>';
+    html += '<button class="pet-tab-btn '+(tab==='calendar'?'active':'')+'" onclick="setPetTab(\'calendar\')"><span class="pet-tab-icon">📅</span><span class="pet-tab-label">カレンダー</span></button>';
+    html += '<button class="pet-tab-btn '+(tab==='diary'?'active':'')+'" onclick="setPetTab(\'diary\')"><span class="pet-tab-icon">📓</span><span class="pet-tab-label">日記</span></button>';
+    html += '<button class="pet-tab-btn '+(tab==='photo'?'active':'')+'" onclick="setPetTab(\'photo\')"><span class="pet-tab-icon">📷</span><span class="pet-tab-label">写真</span></button>';
     html += '</div><div class="pet-tab-content">';
     if (tab === 'care') html += renderTabCare(pet, careItems);
+    else if (tab === 'calendar') html += renderTabCalendar(pet);
+    else if (tab === 'diary') html += renderTabDiary(pet);
     else if (tab === 'photo') html += renderTabPhoto(pet);
-    else html += renderTabSchedule(pet);
+    else html += renderTabCare(pet, careItems);
     html += '</div>';
   } else if (pet.place === 'rainbow') {
     html += '<div class="section"><div class="memorial-card">';
@@ -2209,6 +2750,7 @@ function renderTabCare(pet, careItems) {
   const dueTasks = tasks.filter(isTaskDue);
   const futureTasks = tasks.filter(t => !isTaskDue(t));
   let html = '';
+  // 今日のタスク
   if (dueTasks.length > 0) {
     html += '<div class="section">';
     html += '<div class="section-head"><h2 class="section-title">今日のタスク</h2><span class="section-count">'+dueTasks.length+'けん</span></div>';
@@ -2229,6 +2771,7 @@ function renderTabCare(pet, careItems) {
     }
     html += '</div></div>';
   }
+  // クイックお世話
   html += '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">クイックお世話</h2></div>';
   html += '<div class="quick-care-grid">';
@@ -2241,6 +2784,7 @@ function renderTabCare(pet, careItems) {
   html += '</div>';
   html += '<button class="care-edit-btn" onclick="openCareEditModal()">✏️ お世話項目をへんしゅう</button>';
   html += '</div>';
+  // 繰り返しタスク
   html += '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">繰り返しタスク</h2><span class="section-count">'+tasks.length+'けん</span></div>';
   if (futureTasks.length > 0) {
@@ -2256,6 +2800,7 @@ function renderTabCare(pet, careItems) {
   }
   html += '<button class="schedule-add" style="margin-top:6px;" onclick="openAddTaskModal(\''+pet.id+'\')">＋ 繰り返しタスクをついか</button>';
   html += '</div>';
+  // 最近のお世話
   html += '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">最近のお世話</h2><span class="section-count">直近24時間</span></div>';
   if (recent.length === 0) {
@@ -2281,47 +2826,215 @@ function renderTabCare(pet, careItems) {
     html += '</div>';
   }
   html += '</div>';
-  html += '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">今日のようす</h2></div>';
-  html += '<div class="memo-card">';
-  html += '<textarea class="memo-textarea" id="memoInput" placeholder="今日の'+escapeHtml(pet.name)+'は どんな様子？" oninput="postDraft.text = this.value">'+escapeHtml(postDraft.text || '')+'</textarea>';
-  html += '<div class="memo-photo-row">';
-  for (const pid of postDraft.photoIds) {
-    if (photos[pid]) {
-      html += '<div class="memo-photo-wrap"><img class="memo-photo-thumb" src="'+photos[pid]+'" alt="">';
-      html += '<button class="memo-photo-remove" onclick="removeDraftPhoto(\''+pid+'\')">×</button></div>';
-    }
-  }
-  if (postDraft.photoIds.length < 3) html += '<button class="memo-photo-add" onclick="addMemoPhoto()">＋</button>';
-  html += '</div>';
-  html += '<div class="visibility-row"><span class="visibility-label">見る範囲：</span>';
-  html += '<button class="visibility-btn '+(postDraft.visibility==='private'?'selected':'')+'" onclick="setVisibility(\'private\')">🔒 自分</button>';
-  html += '<button class="visibility-btn '+(postDraft.visibility==='house'?'selected':'')+'" onclick="setVisibility(\'house\')">🏡 家族</button>';
-  html += '<button class="visibility-btn '+(postDraft.visibility==='public'?'selected':'')+'" onclick="setVisibility(\'public\')">🌍 公開</button>';
-  html += '</div>';
-  html += '<div class="memo-buttons"><button class="memo-save" onclick="saveMemo()">投稿する</button></div>';
-  html += '</div></div>';
-  
-  // === ペット用カレンダー ===
+  return html;
+}
+
+function renderTabCalendar(pet) {
+  let html = '';
   if (!petCalMonth) {
     const t = new Date();
     petCalMonth = { year: t.getFullYear(), month: t.getMonth() };
   }
+  if (petCalSelected === null || petCalSelected === undefined) petCalSelected = todayKey();
+  
+  // これからの出来事
+  const upcomingSchedules = data.schedules
+    .filter(s => s.petId === pet.id && s.date >= todayKey())
+    .sort((a,b) => a.date.localeCompare(b.date))
+    .slice(0, 5);
+  
   html += '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">'+escapeHtml(pet.name)+'のカレンダー</h2></div>';
+  html += '<div class="section-head"><h2 class="section-title">これからの出来事</h2></div>';
+  if (upcomingSchedules.length === 0) {
+    html += '<div class="upcoming-empty">これからの予定はまだありません🌷</div>';
+  } else {
+    html += '<div class="upcoming-list">';
+    for (const s of upcomingSchedules) {
+      const dt = keyToDate(s.date);
+      const isToday = s.date === todayKey();
+      const monthDay = (dt.getMonth()+1)+'/'+dt.getDate();
+      html += '<div class="upcoming-item">';
+      html += '<span class="upcoming-date'+(isToday?' today':'')+'">'+(isToday?'今日':monthDay)+'</span>';
+      html += '<span class="upcoming-tag" style="'+tagStyle(s.tag)+'">'+escapeHtml(s.tag)+'</span>';
+      html += '<span class="upcoming-title">'+escapeHtml(s.title)+'</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  
+  // カレンダー（+予定追加ボタン付き）
+  html += '<div class="section">';
+  html += '<div class="section-head"><h2 class="section-title">'+escapeHtml(pet.name)+'のカレンダー</h2>';
+  html += '<button class="cal-add-btn" onclick="openAddScheduleModal(\''+pet.id+'\')">＋予定</button>';
+  html += '</div>';
   html += renderCalendar(petCalMonth, petCalSelected, { petId: pet.id }, 'pet');
   if (petCalSelected) html += renderDayDetail(petCalSelected, { petId: pet.id });
   html += '</div>';
   
-  const posts = getPetPosts(pet.id);
-  if (posts.length > 0) {
-    html += '<div class="section">';
-    html += '<div class="section-head"><h2 class="section-title">'+escapeHtml(pet.name)+'のおもいで</h2><span class="section-count">'+posts.length+'件</span></div>';
+  return html;
+}
+
+function renderTabDiary(pet) {
+  let html = '';
+  // カレンダー（日記用）を最初に
+  if (!diaryCalMonth) {
+    const t = new Date();
+    diaryCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+  }
+  html += '<div class="section">';
+  html += '<div class="section-head"><h2 class="section-title">日記カレンダー</h2>';
+  html += '<button class="cal-add-btn" onclick="openDiaryComposeModal(\''+pet.id+'\')">＋日記</button>';
+  html += '</div>';
+  html += renderCalendar(diaryCalMonth, diaryCalSelected, { petId: pet.id, diary: true }, 'diary');
+  html += '</div>';
+  
+  // おもいで一覧
+  let posts = getPetPosts(pet.id);
+  let titleSuffix = '';
+  if (diaryCalSelected) {
+    posts = posts.filter(p => {
+      const d = new Date(p.createdAt);
+      const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      return k === diaryCalSelected;
+    });
+    const dt = keyToDate(diaryCalSelected);
+    titleSuffix = '（'+(dt.getMonth()+1)+'/'+dt.getDate()+'）';
+  }
+  html += '<div class="section">';
+  html += '<div class="section-head"><h2 class="section-title">'+escapeHtml(pet.name)+'のおもいで'+titleSuffix+'</h2><span class="section-count">'+posts.length+'件</span>';
+  if (diaryCalSelected) html += '<button class="cal-clear-btn" onclick="diaryCalSelected=null; render();">×解除</button>';
+  html += '</div>';
+  if (posts.length === 0) {
+    if (diaryCalSelected) {
+      html += '<div class="schedule-empty"><div style="font-size:24px; margin-bottom:6px;">📓</div>この日の日記はまだありません<br><button class="schedule-add" style="margin-top:10px; max-width:220px;" onclick="openDiaryComposeModal(\''+pet.id+'\', \''+diaryCalSelected+'\')">＋ この日の日記を書く</button></div>';
+    } else {
+      html += '<div class="schedule-empty"><div style="font-size:24px; margin-bottom:6px;">📓</div>まだ日記がありません<br><button class="schedule-add" style="margin-top:10px; max-width:220px;" onclick="openDiaryComposeModal(\''+pet.id+'\')">＋ 最初の日記を書く</button></div>';
+    }
+  } else {
+    html += '<div class="post-scroll-frame">';
     html += '<div class="post-list">';
-    for (const post of posts.slice(0, 10)) html += renderPostCard(post);
+    for (const post of posts) html += renderPostCard(post);
     html += '</div></div>';
   }
+  html += '</div>';
   return html;
+}
+
+function openDiaryComposeModal(petId, presetDate) {
+  const pet = data.pets.find(p => p.id === petId);
+  if (!pet) return;
+  const now = new Date();
+  postDraft.date = presetDate || todayKey();
+  postDraft.time = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  postDraft.text = '';
+  postDraft.photoIds = [];
+  if (!postDraft.visibility) postDraft.visibility = 'house';
+  renderDiaryComposeModal(pet);
+  document.getElementById('diaryComposeModal').classList.add('show');
+}
+
+function renderDiaryComposeModal(pet) {
+  let html = '<h2 class="modal-title">ひとこと日記</h2>';
+  html += '<div class="diary-datetime-row">';
+  html += '<input type="date" class="diary-date-input" id="diaryDate" value="'+postDraft.date+'" onchange="postDraft.date = this.value">';
+  html += '<input type="time" class="diary-time-input" id="diaryTime" value="'+postDraft.time+'" onchange="postDraft.time = this.value">';
+  html += '<button class="diary-now-btn" onclick="setDiaryToNow()">今</button>';
+  html += '</div>';
+  html += '<div class="diary-photo-text-row">';
+  if (postDraft.photoIds.length > 0) {
+    html += '<div class="diary-photo-stack">';
+    for (const pid of postDraft.photoIds) {
+      if (photos[pid]) {
+        html += '<div class="diary-photo-item"><img class="diary-photo-img" src="'+photos[pid]+'" alt="">';
+        html += '<button class="memo-photo-remove" onclick="removeDraftPhotoModal(\''+pid+'\', \''+pet.id+'\')">×</button></div>';
+      }
+    }
+    html += '</div>';
+  }
+  html += '<textarea class="memo-textarea diary-textarea" id="memoInput" placeholder="'+escapeHtml(pet.name)+'は どんな様子？" oninput="postDraft.text = this.value">'+escapeHtml(postDraft.text || '')+'</textarea>';
+  html += '</div>';
+  html += '<div class="diary-actions-row">';
+  html += '<button class="diary-photo-add-btn" onclick="addMemoPhotoMultiModal(\''+pet.id+'\')">📷 写真を追加</button>';
+  html += '</div>';
+  html += '<div class="visibility-row"><span class="visibility-label">見る範囲：</span>';
+  html += '<button class="visibility-btn '+(postDraft.visibility==='private'?'selected':'')+'" onclick="setVisibilityModal(\'private\', \''+pet.id+'\')">🔑 自分</button>';
+  html += '<button class="visibility-btn '+(postDraft.visibility==='house'?'selected':'')+'" onclick="setVisibilityModal(\'house\', \''+pet.id+'\')">🏡 家族</button>';
+  html += '<button class="visibility-btn '+(postDraft.visibility==='public'?'selected':'')+'" onclick="setVisibilityModal(\'public\', \''+pet.id+'\')">🌍 公開</button>';
+  html += '</div>';
+  html += '<div class="modal-actions">';
+  html += '<button class="btn btn-secondary" onclick="closeModal(\'diaryComposeModal\')">やめる</button>';
+  html += '<button class="btn btn-primary" onclick="saveMemoFromModal()">投稿する</button>';
+  html += '</div>';
+  document.getElementById('diaryComposeModalContent').innerHTML = html;
+}
+
+function setVisibilityModal(v, petId) {
+  postDraft.visibility = v;
+  const pet = data.pets.find(p => p.id === petId);
+  if (pet) renderDiaryComposeModal(pet);
+}
+
+async function addMemoPhotoMultiModal(petId) {
+  if (postDraft.photoIds.length >= 5) { showToast('写真は5枚まで'); return; }
+  const memoEl = document.getElementById('memoInput');
+  if (memoEl) postDraft.text = memoEl.value;
+  const remaining = 5 - postDraft.photoIds.length;
+  const ids = await pickMultiplePhotos(remaining);
+  if (ids && ids.length > 0) {
+    for (const id of ids) postDraft.photoIds.push(id);
+    const pet = data.pets.find(p => p.id === petId);
+    if (pet) renderDiaryComposeModal(pet);
+  }
+}
+
+function removeDraftPhotoModal(photoId, petId) {
+  const memoEl = document.getElementById('memoInput');
+  if (memoEl) postDraft.text = memoEl.value;
+  postDraft.photoIds = postDraft.photoIds.filter(id => id !== photoId);
+  deletePhoto(photoId);
+  const pet = data.pets.find(p => p.id === petId);
+  if (pet) renderDiaryComposeModal(pet);
+}
+
+function saveMemoFromModal() {
+  const pet = getActivePet();
+  if (!pet) return;
+  const memoEl = document.getElementById('memoInput');
+  if (!memoEl) return;
+  const text = memoEl.value.trim();
+  if (!text && postDraft.photoIds.length === 0) { showToast('ひとことか写真を追加してね'); return; }
+  let createdAt = Date.now();
+  if (postDraft.date && postDraft.time) {
+    const [hh, mm] = postDraft.time.split(':').map(Number);
+    const d = keyToDate(postDraft.date);
+    d.setHours(hh || 0, mm || 0, 0, 0);
+    createdAt = d.getTime();
+  }
+  const post = {
+    id: 'post_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    petId: pet.id, createdAt: createdAt,
+    type: postDraft.photoIds.length > 0 ? 'photo' : 'note',
+    text: text, photoIds: postDraft.photoIds.slice(),
+    visibility: postDraft.visibility || 'house',
+    authorName: data.user.name || '', authorAvatar: data.user.avatar || '🌷'
+  };
+  data.posts.push(post);
+  postDraft = { text: '', photoIds: [], visibility: postDraft.visibility, date: null, time: null };
+  saveData();
+  closeModal('diaryComposeModal');
+  showToast('投稿しました🌷');
+  render();
+}
+
+function setDiaryToNow() {
+  const now = new Date();
+  postDraft.date = todayKey();
+  postDraft.time = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const dEl = document.getElementById('diaryDate');
+  const tEl = document.getElementById('diaryTime');
+  if (dEl) dEl.value = postDraft.date;
+  if (tEl) tEl.value = postDraft.time;
 }
 
 function renderTabPhoto(pet) {
@@ -2486,26 +3199,46 @@ function saveMemo() {
   if (!memoEl) return;
   const text = memoEl.value.trim();
   if (!text && postDraft.photoIds.length === 0) { showToast('ひとことか写真を追加してね'); return; }
+  // 日付・時間から createdAt を作る
+  let createdAt = Date.now();
+  if (postDraft.date && postDraft.time) {
+    const [hh, mm] = postDraft.time.split(':').map(Number);
+    const d = keyToDate(postDraft.date);
+    d.setHours(hh || 0, mm || 0, 0, 0);
+    createdAt = d.getTime();
+  }
   const post = {
     id: 'post_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-    petId: pet.id, createdAt: Date.now(),
+    petId: pet.id, createdAt: createdAt,
     type: postDraft.photoIds.length > 0 ? 'photo' : 'note',
     text: text, photoIds: postDraft.photoIds.slice(),
     visibility: postDraft.visibility || 'house',
     authorName: data.user.name || '', authorAvatar: data.user.avatar || '🌷'
   };
   data.posts.push(post);
-  postDraft = { text: '', photoIds: [], visibility: postDraft.visibility };
+  postDraft = { text: '', photoIds: [], visibility: postDraft.visibility, date: null, time: null };
   saveData();
   showToast('投稿しました🌷');
   renderPet();
 }
 async function addMemoPhoto() {
-  if (postDraft.photoIds.length >= 3) { showToast('写真は3枚まで'); return; }
+  if (postDraft.photoIds.length >= 5) { showToast('写真は5枚まで'); return; }
   const memoEl = document.getElementById('memoInput');
   if (memoEl) postDraft.text = memoEl.value;
   const id = await pickPhoto();
   if (id) { postDraft.photoIds.push(id); renderPet(); }
+}
+async function addMemoPhotoMulti() {
+  if (postDraft.photoIds.length >= 5) { showToast('写真は5枚まで'); return; }
+  const memoEl = document.getElementById('memoInput');
+  if (memoEl) postDraft.text = memoEl.value;
+  // 複数選択でファイル選ばせる
+  const remaining = 5 - postDraft.photoIds.length;
+  const ids = await pickMultiplePhotos(remaining);
+  if (ids && ids.length > 0) {
+    for (const id of ids) postDraft.photoIds.push(id);
+    renderPet();
+  }
 }
 function removeDraftPhoto(photoId) {
   const memoEl = document.getElementById('memoInput');
@@ -2642,10 +3375,13 @@ function renderSettings() {
 }
 
 function setActiveNav(view) {
-  const btns = document.querySelectorAll('.nav-btn');
+  const btns = document.querySelectorAll('.nav-btn[data-view]');
   for (const b of btns) b.classList.toggle('active', b.dataset.view === view);
+  // 戻るボタン：houses以外で表示
+  const backBtn = document.getElementById('navBackBtn');
+  if (backBtn) backBtn.style.display = (view === 'houses') ? 'none' : 'flex';
 }
-document.querySelectorAll('.nav-btn').forEach(btn => {
+document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
   btn.onclick = () => {
     const view = btn.dataset.view;
     if (view === 'houses') {
@@ -2772,6 +3508,7 @@ function confirmDeleteHouse(houseId) {
 function openAddPetModal() {
   selectedPetType = 'dog'; selectedPlace = 'home';
   document.getElementById('petNameInput').value = '';
+  document.getElementById('petBreedInput').value = '';
   document.getElementById('petBirthInput').value = '';
   document.getElementById('petRainbowDateInput').value = '';
   document.getElementById('rainbowDateGroup').style.display = 'none';
@@ -2803,6 +3540,7 @@ function openAddPetModal() {
 }
 function savePet() {
   const name = document.getElementById('petNameInput').value.trim();
+  const breed = document.getElementById('petBreedInput').value.trim();
   const birth = document.getElementById('petBirthInput').value;
   const rainbowDate = document.getElementById('petRainbowDateInput').value;
   if (!name) { showToast('なまえを入れてね'); return; }
@@ -2811,6 +3549,7 @@ function savePet() {
   data.pets.push({
     id: 'pet_' + Date.now(),
     houseId: houseId, name: name, type: selectedPetType, place: selectedPlace,
+    breed: breed || null,
     birth: birth || null,
     rainbowDate: selectedPlace === 'rainbow' ? (rainbowDate || null) : null,
     careItems: DEFAULT_CARE_ITEMS.slice(),
@@ -2827,6 +3566,7 @@ function openEditPetModal(petId) {
   const pet = data.pets.find(p => p.id === petId);
   if (!pet) return;
   document.getElementById('editPetNameInput').value = pet.name;
+  document.getElementById('editPetBreedInput').value = pet.breed || '';
   document.getElementById('editPetBirthInput').value = pet.birth || '';
   document.getElementById('editPetRainbowDateInput').value = pet.rainbowDate || '';
   document.getElementById('editRainbowDateGroup').style.display = pet.place === 'rainbow' ? 'block' : 'none';
@@ -2846,11 +3586,25 @@ function saveEditPet() {
   const name = document.getElementById('editPetNameInput').value.trim();
   if (!name) { showToast('なまえを入れてね'); return; }
   pet.name = name;
+  pet.breed = document.getElementById('editPetBreedInput').value.trim() || null;
   pet.birth = document.getElementById('editPetBirthInput').value || null;
   pet.rainbowDate = document.getElementById('editPetRainbowDateInput').value || null;
   saveData();
   closeModal('editPetModal');
   render();
+}
+async function setProfilePhotoFromModal() {
+  if (!editingPetId) return;
+  const id = await pickPhoto();
+  if (!id) return;
+  const pet = data.pets.find(p => p.id === editingPetId);
+  if (!pet) return;
+  if (pet.profilePhotoId) deletePhoto(pet.profilePhotoId);
+  pet.profilePhotoId = id;
+  saveData();
+  showToast('写真を変更しました🌷');
+  // モーダルを閉じずに、render は controlのため少し遅延
+  setTimeout(() => render(), 50);
 }
 function askMoveToRainbow() {
   closeModal('editPetModal');
@@ -2912,19 +3666,25 @@ function restorePet(petId) {
   showToast(pet.name+'を一覧に戻しました🌷');
   render();
 }
-function openAddScheduleModal() {
+function openAddScheduleModal(targetPetId) {
   editingScheduleId = null;
   document.getElementById('scheduleModalTitle').textContent = '予定をついか';
   document.getElementById('scheduleDeleteBtn').style.display = 'none';
   const house = getActiveHouse();
-  const pets = house ? getHousePets(house.id) : data.pets;
+  let pets;
+  if (targetPetId) {
+    const p = data.pets.find(x => x.id === targetPetId);
+    pets = p ? [p] : (house ? getHousePets(house.id) : data.pets);
+  } else {
+    pets = house ? getHousePets(house.id) : data.pets;
+  }
   if (pets.length === 0) { showToast('まずは子をむかえてください'); return; }
   const sel = document.getElementById('schedulePetInput');
   let html = '';
-  for (const p of pets) html += '<option value="'+p.id+'">'+escapeHtml(p.name)+'</option>';
+  for (const p of pets) html += '<option value="'+p.id+'"'+(p.id===targetPetId?' selected':'')+'>'+escapeHtml(p.name)+'</option>';
   sel.innerHTML = html;
   document.getElementById('scheduleTitleInput').value = '';
-  document.getElementById('scheduleDateInput').value = schedCalSelected || todayKey();
+  document.getElementById('scheduleDateInput').value = petCalSelected || schedCalSelected || todayKey();
   selectedTag = 'ケア';
   setupTagButtons();
   document.getElementById('addScheduleModal').classList.add('show');
@@ -3195,6 +3955,150 @@ function doImport() {
     } else { showToast('データの形式がちがうみたい'); }
   } catch(err) { showToast('読みこめませんでした'); }
 }
+function renderSidePanel() {
+  const el = document.getElementById('sidePanel');
+  if (!el) return;
+  // PC幅でしか表示されないが、HTMLは常に生成しておく
+  let html = '';
+  
+  if (currentView === 'houses' || (!currentView)) {
+    // 全家のサマリー
+    const totalPets = data.pets.filter(p => !p.archived).length;
+    html += '<div class="side-panel-title">すべての家のようす</div>';
+    html += '<div class="side-panel-card">';
+    if (data.houses.length === 0) {
+      html += '<div class="side-empty">まだ家がありません🌷<br>「あたらしい家」から作ってみよう</div>';
+    } else {
+      for (const h of data.houses) {
+        const pets = getHousePets(h.id);
+        html += '<div class="side-pet-row" style="grid-template-columns: 1fr auto;">';
+        html += '<div><div class="side-pet-name">🏡 '+escapeHtml(h.name)+'</div>';
+        html += '<div class="side-pet-meta">'+pets.length+'にん</div></div>';
+        html += '<button class="side-pet-status" style="border:none; cursor:pointer; font-family:inherit;" onclick="enterHouse(\''+h.id+'\')">入る</button>';
+        html += '</div>';
+      }
+    }
+    html += '</div>';
+    if (totalPets > 0) {
+      html += '<div class="side-panel-title">全部の子（'+totalPets+'にん）</div>';
+      html += '<div class="side-panel-card">';
+      for (const pet of data.pets.filter(p => !p.archived)) {
+        const palette = pet.palette || PET_PALETTES[pet.type] || PET_PALETTES.other;
+        const summary = pet.place === 'home' ? getTodayCareSummary(pet.id) : null;
+        html += '<div class="side-pet-row">';
+        html += '<div class="side-pet-sprite-wrap">'+spriteSVG(pet.type, palette)+'</div>';
+        html += '<div><div class="side-pet-name">'+escapeHtml(pet.name)+'</div>';
+        html += '<div class="side-pet-meta">'+PET_TYPE_NAMES[pet.type]+(pet.place !== 'home' ? ' ・ '+PLACE_NAMES[pet.place] : '')+'</div></div>';
+        if (summary && summary.count > 0) {
+          html += '<span class="side-pet-status">今日'+summary.count+'件</span>';
+        } else if (pet.place === 'home') {
+          html += '<span class="side-pet-status warn">未記録</span>';
+        } else {
+          html += '<span class="side-pet-status">'+(PLACE_ICONS[pet.place]||'')+'</span>';
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+  } else if (currentView === 'house') {
+    // 家の中：その家のペットサマリー
+    const house = getActiveHouse();
+    if (house) {
+      const pets = getHousePets(house.id);
+      html += '<div class="side-panel-title">'+escapeHtml(house.name)+'のみんな</div>';
+      html += '<div class="side-panel-card">';
+      if (pets.length === 0) {
+        html += '<div class="side-empty">まだ うちの子がいません🌷</div>';
+      } else {
+        for (const pet of pets) {
+          const palette = pet.palette || PET_PALETTES[pet.type] || PET_PALETTES.other;
+          const summary = pet.place === 'home' ? getTodayCareSummary(pet.id) : null;
+          const lastTime = summary && summary.lastTime
+            ? new Date(summary.lastTime).toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'})
+            : null;
+          html += '<div class="side-pet-row" style="cursor:pointer;" onclick="enterPet(\''+pet.id+'\')">';
+          html += '<div class="side-pet-sprite-wrap">'+spriteSVG(pet.type, palette)+'</div>';
+          html += '<div><div class="side-pet-name">'+escapeHtml(pet.name)+'</div>';
+          html += '<div class="side-pet-meta">';
+          if (pet.place === 'home' && summary && summary.count > 0) {
+            html += '今日 '+summary.count+'件 ・ '+lastTime;
+          } else if (pet.place !== 'home') {
+            html += PLACE_ICONS[pet.place]+' '+PLACE_NAMES[pet.place];
+          } else {
+            html += 'まだ記録なし';
+          }
+          html += '</div></div>';
+          html += '<span class="side-pet-status'+(pet.place === 'home' && (!summary || summary.count === 0) ? ' warn' : '')+'">›</span>';
+          html += '</div>';
+        }
+      }
+      html += '</div>';
+    }
+  } else if (currentView === 'pet') {
+    // ペット個別：その子の最近の投稿
+    const pet = getActivePet();
+    if (pet) {
+      const posts = getPetPosts(pet.id).slice(0, 5);
+      html += '<div class="side-panel-title">'+escapeHtml(pet.name)+'のさいきん</div>';
+      html += '<div class="side-panel-card">';
+      if (posts.length === 0) {
+        html += '<div class="side-empty">まだ おもいでがありません🌷<br>「今日のようす」から投稿してみよう</div>';
+      } else {
+        for (const post of posts) {
+          const d = new Date(post.createdAt);
+          const dateStr = (d.getMonth()+1)+'/'+d.getDate()+' '+d.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+          html += '<div style="padding: 8px 6px; border-bottom: 1px dashed var(--line-soft); font-size: 12px; line-height: 1.6;">';
+          html += '<div style="font-size: 10.5px; color: var(--mint-deep); font-weight: 700; margin-bottom: 4px;">'+dateStr+'</div>';
+          if (post.text) html += '<div style="color: var(--ink); white-space: pre-wrap;">'+escapeHtml(post.text.length > 80 ? post.text.slice(0, 80)+'...' : post.text)+'</div>';
+          if ((post.photoIds || []).length > 0 && photos[post.photoIds[0]]) {
+            html += '<img src="'+photos[post.photoIds[0]]+'" style="width:60px; height:60px; object-fit:cover; border-radius:8px; margin-top:6px; border:1px solid var(--line-soft);">';
+          }
+          html += '</div>';
+        }
+      }
+      html += '</div>';
+    }
+  } else if (currentView === 'schedule') {
+    // 予定画面：今日の予定だけサマリー
+    const todayK = todayKey();
+    const todaySchedules = data.schedules.filter(s => s.date === todayK);
+    html += '<div class="side-panel-title">きょうの予定</div>';
+    html += '<div class="side-panel-card">';
+    if (todaySchedules.length === 0) {
+      html += '<div class="side-empty">きょうの予定はありません🌷</div>';
+    } else {
+      for (const s of todaySchedules) {
+        const pet = data.pets.find(p => p.id === s.petId);
+        if (!pet) continue;
+        html += '<div class="side-pet-row" style="grid-template-columns: 1fr auto;">';
+        html += '<div><div class="side-pet-name">'+escapeHtml(s.title)+'</div>';
+        html += '<div class="side-pet-meta">'+escapeHtml(pet.name)+'</div></div>';
+        html += '<span class="side-pet-status" style="'+tagStyle(s.tag)+'">'+escapeHtml(s.tag)+'</span>';
+        html += '</div>';
+      }
+    }
+    html += '</div>';
+  } else if (currentView === 'settings') {
+    // 設定画面：データ概要
+    let bytes = 0;
+    try {
+      bytes += (localStorage.getItem(STORAGE_KEY) || '').length;
+      bytes += (localStorage.getItem(PHOTOS_KEY) || '').length;
+    } catch(e) {}
+    const mb = (bytes / 1024 / 1024).toFixed(2);
+    html += '<div class="side-panel-title">いまのにこわ</div>';
+    html += '<div class="side-panel-card">';
+    html += '<div style="font-size:12.5px; color:var(--ink); line-height:1.9;">';
+    html += '🏡 家：<strong>'+data.houses.length+'けん</strong><br>';
+    html += '🐾 うちの子：<strong>'+data.pets.filter(p => !p.archived).length+'にん</strong><br>';
+    html += '📷 写真：<strong>'+Object.keys(photos).length+'枚</strong><br>';
+    html += '💾 容量：<strong>'+mb+' MB</strong>';
+    html += '</div></div>';
+  }
+  
+  el.innerHTML = html;
+}
+
 function render() {
   if (currentView === 'houses') renderHouses();
   else if (currentView === 'house') renderHouse();
@@ -3202,6 +4106,7 @@ function render() {
   else if (currentView === 'schedule') renderSchedule();
   else if (currentView === 'settings') renderSettings();
   else renderHouses();
+  renderSidePanel();
 }
 loadData();
 applyTheme(data.themeId || 'mint');
