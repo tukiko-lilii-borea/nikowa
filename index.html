@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>にこわ -nikowa-</title>
+<title>にこわ -nikowa- v0.9</title>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -77,13 +77,26 @@
     font-size: 18px; cursor: pointer; font-family: inherit; box-shadow: var(--shadow-soft);
   }
   .theme-quick-btn:active { transform: scale(0.94); }
-  .app-logo { text-align: center; padding: 16px 0 4px; }
+  .app-logo { text-align: center; padding: 16px 0 4px; position: relative; }
   .app-logo-text { font-size: 22px; font-weight: 900; color: var(--ink-dark); letter-spacing: 4px; margin: 0; }
   .app-logo-sub { font-size: 9px; color: var(--ink-sub); letter-spacing: 5px; margin-top: 2px; }
   .app-logo-tag {
     display: inline-block; background: var(--accent-bg); color: var(--accent-deep);
     font-size: 9.5px; padding: 2px 8px; border-radius: 999px;
     margin-top: 6px; letter-spacing: 1px; font-weight: 600;
+  }
+  .app-logo-sparkle {
+    position: absolute;
+    font-size: 13px;
+    pointer-events: none;
+    animation: logoTwinkle 3s ease-in-out infinite;
+  }
+  .app-logo-sparkle.s1 { top: 14px; left: calc(50% - 80px); transform: rotate(-12deg); color: var(--accent); }
+  .app-logo-sparkle.s2 { top: 22px; left: calc(50% + 64px); transform: rotate(15deg); animation-delay: 1.2s; color: var(--mint-deep); font-size: 10px; }
+  .app-logo-sparkle.s3 { top: 50px; left: calc(50% - 64px); animation-delay: 2.4s; color: var(--accent-deep); font-size: 9px; }
+  @keyframes logoTwinkle {
+    0%, 100% { opacity: 0.55; transform: scale(0.9) rotate(var(--rot, 0deg)); }
+    50% { opacity: 1; transform: scale(1.1) rotate(var(--rot, 0deg)); }
   }
   .section { padding: 18px 16px 0; }
   .section-head {
@@ -467,6 +480,16 @@
   }
   .recent-care-item:last-child { border-bottom: none; }
   .recent-care-time { font-size: 11.5px; color: var(--mint-deep); font-weight: 700; }
+  .recent-care-time-btn {
+    background: transparent; border: 1px solid transparent;
+    border-radius: 6px; padding: 3px 6px;
+    cursor: pointer; font-family: inherit;
+    text-align: left;
+  }
+  .recent-care-time-btn:active {
+    background: var(--mint-bg); border-color: var(--mint);
+    transform: scale(0.96);
+  }
   .recent-care-icon { font-size: 18px; text-align: center; }
   .recent-care-name { color: var(--ink); font-weight: 500; }
   .recent-care-delete {
@@ -853,7 +876,7 @@
 <div class="app" id="app"></div>
 
 <nav class="bottom-nav" id="bottomNav" style="display:none;">
-  <button class="nav-btn active" data-view="house"><span class="nav-icon">🏠</span><span>マイホーム</span></button>
+  <button class="nav-btn active" data-view="houses"><span class="nav-icon">🏘️</span><span>まち</span></button>
   <button class="nav-btn" data-view="schedule"><span class="nav-icon">📅</span><span>よてい</span></button>
   <button class="nav-btn" data-view="settings"><span class="nav-icon">⚙️</span><span>せってい</span></button>
 </nav>
@@ -956,6 +979,16 @@
   </div>
 </div></div>
 
+<div class="modal" id="editHouseModal"><div class="modal-content">
+  <h2 class="modal-title">家のなまえをかえる</h2>
+  <div class="form-group"><label class="form-label">家のなまえ</label>
+    <input type="text" class="form-input" id="editHouseNameInput" maxlength="14"></div>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal('editHouseModal')">やめる</button>
+    <button class="btn btn-primary" onclick="saveEditHouse()">ほぞん</button>
+  </div>
+</div></div>
+
 <div class="modal" id="addScheduleModal"><div class="modal-content">
   <h2 class="modal-title" id="scheduleModalTitle">予定をついか</h2>
   <div class="form-group"><label class="form-label">どの子？</label>
@@ -1054,6 +1087,24 @@
   </div>
 </div></div>
 
+<!-- 時間編集モーダル -->
+<div class="modal" id="careTimeEditModal"><div class="modal-content">
+  <h2 class="modal-title">時間をなおす</h2>
+  <p class="modal-sub">忘れてた時間に変えられます🌷</p>
+  <div class="form-group">
+    <label class="form-label">日にち</label>
+    <input type="date" class="form-input" id="careTimeEditDate">
+  </div>
+  <div class="form-group">
+    <label class="form-label">時間</label>
+    <input type="time" class="form-input" id="careTimeEditTime">
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal('careTimeEditModal')">やめる</button>
+    <button class="btn btn-primary" onclick="saveCareTimeEdit()">ほぞん</button>
+  </div>
+</div></div>
+
 <input type="file" id="hiddenFileInput" accept="image/*" style="display:none;">
 <div class="toast" id="toast"></div>
 
@@ -1098,24 +1149,71 @@ const STORAGE_KEY = 'nikowa_data_v3';
 const PHOTOS_KEY = 'nikowa_photos_v3';
 const MAX_PHOTO_SIZE = 800;
 const THEMES = {
-  mint: { name: 'ミント', emoji: '🍃',
+  mint: { name: 'チョコミント', emoji: '🍃', pattern: 'dot',
     vars: { '--bg':'#E8F2EC','--surface':'#FBFDFB','--surface-warm':'#F4F9F5','--line':'#BFD9C8','--line-soft':'#D9E8DF','--ink-dark':'#2D4A3C','--ink':'#46604F','--ink-sub':'#7A958A','--ink-light':'#A8BFB2','--mint':'#8FC9AB','--mint-deep':'#5FA985','--mint-bg':'#DCEBE2','--accent':'#E88AA0','--accent-deep':'#D26A82','--accent-bg':'#FCE4EB','--today-bg':'#FFE9F0','--today-border':'#F5B4C5','--warm-yellow':'#F5D77A','--soft-purple':'#B8A5D9' },
-    bgDot: 'rgba(95, 169, 133, 0.08)',
+    paperColor: 'rgba(95,169,133,0.08)',
     headerGrad: 'linear-gradient(180deg, #D5E8DD 0%, #C4DFD0 100%)' },
-  soda: { name: 'ソーダ', emoji: '🥤',
-    vars: { '--bg':'#E5F1FA','--surface':'#F8FCFF','--surface-warm':'#EFF6FC','--line':'#A8C8E0','--line-soft':'#D0E2F0','--ink-dark':'#1F3A5C','--ink':'#3A5680','--ink-sub':'#7A95B5','--ink-light':'#B0C4D8','--mint':'#7AC0E5','--mint-deep':'#4598C8','--mint-bg':'#D8E8F5','--accent':'#F5C547','--accent-deep':'#E0A82A','--accent-bg':'#FFF1D0','--today-bg':'#FFF6E0','--today-border':'#F5D078','--warm-yellow':'#F5D77A','--soft-purple':'#A8B5D9' },
-    bgDot: 'rgba(80, 150, 210, 0.10)',
-    headerGrad: 'linear-gradient(180deg, #C8E4F5 0%, #A8D0EA 100%)' },
-  strawberry: { name: 'イチゴミルク', emoji: '🍓',
-    vars: { '--bg':'#FCE8EE','--surface':'#FFFAFB','--surface-warm':'#FCEFF2','--line':'#F0B8C5','--line-soft':'#F5D5DC','--ink-dark':'#5A2A3A','--ink':'#7A4054','--ink-sub':'#B57A8A','--ink-light':'#D8B5C0','--mint':'#F5A0B5','--mint-deep':'#D86A82','--mint-bg':'#FCDDE5','--accent':'#9DCDA8','--accent-deep':'#6BA67A','--accent-bg':'#DDF0E0','--today-bg':'#E8F8E5','--today-border':'#A8D8AA','--warm-yellow':'#F5D77A','--soft-purple':'#B8A5D9' },
-    bgDot: 'rgba(220, 130, 160, 0.08)',
-    headerGrad: 'linear-gradient(180deg, #F8D5DD 0%, #F0B8C8 100%)' }
+  soda: { name: 'ソーダ', emoji: '🥤', pattern: 'polka',
+    vars: { '--bg':'#E5F1F8','--surface':'#FBFDFE','--surface-warm':'#F2F8FC','--line':'#B6D4E5','--line-soft':'#D6E5EE','--ink-dark':'#1E3A55','--ink':'#3A5470','--ink-sub':'#7A93A8','--ink-light':'#AFC4D5','--mint':'#90C8E4','--mint-deep':'#5BA8D6','--mint-bg':'#D6EBF6','--accent':'#F5C95C','--accent-deep':'#D8A52E','--accent-bg':'#FFF4D2','--today-bg':'#FFF4D2','--today-border':'#F0CE6C','--warm-yellow':'#F5D77A','--soft-purple':'#A8B5D9' },
+    paperColor: 'rgba(91,168,214,0.16)',
+    headerGrad: 'linear-gradient(180deg, #D2E7F2 0%, #BFD8E8 100%)' },
+  strawberry: { name: 'いちごみるく', emoji: '🍓', pattern: 'gingham',
+    vars: { '--bg':'#FBEDF1','--surface':'#FFFBFC','--surface-warm':'#FCEFF3','--line':'#F0C6D1','--line-soft':'#F4D9E0','--ink-dark':'#5A2D3D','--ink':'#7A4858','--ink-sub':'#A07585','--ink-light':'#C8A6B0','--mint':'#F5A6BD','--mint-deep':'#E07298','--mint-bg':'#FAD9E2','--accent':'#E07298','--accent-deep':'#C44F77','--accent-bg':'#FAD9E2','--today-bg':'#FFE0EA','--today-border':'#F0A6BD','--warm-yellow':'#F5D77A','--soft-purple':'#B8A5D9' },
+    paperColor: 'rgba(224,114,152,0.18)',
+    headerGrad: 'linear-gradient(180deg, #FAD9E2 0%, #F5C6D3 100%)' },
+  honey: { name: 'ハニーレモン', emoji: '🍯', pattern: 'stripe',
+    vars: { '--bg':'#FCF3D8','--surface':'#FFFCF2','--surface-warm':'#FBF5DC','--line':'#EBD79A','--line-soft':'#F0E2B6','--ink-dark':'#5A4218','--ink':'#7A5C2A','--ink-sub':'#A48958','--ink-light':'#D2BD8A','--mint':'#F5C56A','--mint-deep':'#E8A22E','--mint-bg':'#FBEBC0','--accent':'#7BB48E','--accent-deep':'#5A8E6E','--accent-bg':'#E1EFE2','--today-bg':'#FCE9C0','--today-border':'#E8B958','--warm-yellow':'#F5D050','--soft-purple':'#C8A85A' },
+    paperColor: 'rgba(232,162,46,0.10)',
+    headerGrad: 'linear-gradient(180deg, #F8E7B5 0%, #F2D88E 100%)' },
+  pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham',
+    vars: { '--bg':'#F7E8C9','--surface':'#FFF8E8','--surface-warm':'#FBEFD2','--line':'#E0BC7C','--line-soft':'#EAD2A0','--ink-dark':'#4D2E10','--ink':'#704418','--ink-sub':'#9C7A42','--ink-light':'#CBAA78','--mint':'#D89E58','--mint-deep':'#B8762A','--mint-bg':'#F2DCAE','--accent':'#C84A5E','--accent-deep':'#A1334A','--accent-bg':'#F8DCE0','--today-bg':'#F8DCE0','--today-border':'#E08894','--warm-yellow':'#F5D050','--soft-purple':'#C8A878' },
+    paperColor: 'rgba(184,118,42,0.18)',
+    headerGrad: 'linear-gradient(180deg, #F0D6A0 0%, #E5C079 100%)' },
+  cola: { name: 'コーラ', emoji: '🥃', pattern: 'polka',
+    vars: { '--bg':'#F2E7DC','--surface':'#FBF6EE','--surface-warm':'#F2E5D0','--line':'#C5A988','--line-soft':'#DBC4A4','--ink-dark':'#2A1A0E','--ink':'#48301E','--ink-sub':'#85664A','--ink-light':'#B89A7A','--mint':'#A04A36','--mint-deep':'#722616','--mint-bg':'#E8D2C2','--accent':'#D9354A','--accent-deep':'#B0202E','--accent-bg':'#FAD9DC','--today-bg':'#FAD9DC','--today-border':'#E68088','--warm-yellow':'#F5D050','--soft-purple':'#C8A878' },
+    paperColor: 'rgba(114,38,22,0.14)',
+    headerGrad: 'linear-gradient(180deg, #E8D5BE 0%, #D8BC9A 100%)' },
+  lavender: { name: 'ラベンダーマカロン', emoji: '🪻', pattern: 'dot',
+    vars: { '--bg':'#EFE5F5','--surface':'#FAF5FC','--surface-warm':'#F0E5F5','--line':'#C8B4DA','--line-soft':'#DCCDE6','--ink-dark':'#3D2A55','--ink':'#5C4577','--ink-sub':'#8E7AA5','--ink-light':'#BCAACE','--mint':'#B89DD2','--mint-deep':'#9477BF','--mint-bg':'#E1D2EE','--accent':'#E08FB0','--accent-deep':'#B86888','--accent-bg':'#F8DDE6','--today-bg':'#F8DDE6','--today-border':'#E0A2BA','--warm-yellow':'#F5D77A','--soft-purple':'#9477BF' },
+    paperColor: 'rgba(148,119,191,0.10)',
+    headerGrad: 'linear-gradient(180deg, #E0D0EC 0%, #CDB8E0 100%)' },
+  matcha: { name: '抹茶わらび', emoji: '🍵', pattern: 'stripe',
+    vars: { '--bg':'#EAEDD5','--surface':'#F8FAEC','--surface-warm':'#EFF3D5','--line':'#B5BF82','--line-soft':'#CFD7A2','--ink-dark':'#2F3B1A','--ink':'#4A582A','--ink-sub':'#7A8852','--ink-light':'#B5BF82','--mint':'#9BB166','--mint-deep':'#6E8A3A','--mint-bg':'#DCE5B8','--accent':'#C44864','--accent-deep':'#962E48','--accent-bg':'#F5D6DA','--today-bg':'#F5D6DA','--today-border':'#D88090','--warm-yellow':'#D8B65A','--soft-purple':'#A85A78' },
+    paperColor: 'rgba(110,138,58,0.10)',
+    headerGrad: 'linear-gradient(180deg, #D9DEB6 0%, #C5CC95 100%)' }
 };
+
+function paperBackground(theme) {
+  const c = theme.paperColor;
+  switch (theme.pattern) {
+    case 'dot':
+      return 'radial-gradient('+c+' 1px, transparent 1px)';
+    case 'polka':
+      return 'radial-gradient('+c+' 2.5px, transparent 3px)';
+    case 'stripe':
+      return 'repeating-linear-gradient(45deg, '+c+' 0 1px, transparent 1px 14px)';
+    case 'gingham':
+      return 'linear-gradient(90deg, '+c+' 50%, transparent 50%), linear-gradient(0deg, '+c+' 50%, transparent 50%)';
+    default:
+      return 'radial-gradient('+c+' 1px, transparent 1px)';
+  }
+}
+function paperBackgroundSize(theme) {
+  switch (theme.pattern) {
+    case 'dot': return '10px 10px';
+    case 'polka': return '18px 18px';
+    case 'stripe': return 'auto';
+    case 'gingham': return '22px 22px, 22px 22px';
+    default: return '10px 10px';
+  }
+}
+
 function applyTheme(themeId) {
   const theme = THEMES[themeId] || THEMES.mint;
   const root = document.documentElement;
   for (const key in theme.vars) root.style.setProperty(key, theme.vars[key]);
-  document.body.style.backgroundImage = 'radial-gradient('+theme.bgDot+' 1px, transparent 1px)';
+  document.body.style.backgroundImage = paperBackground(theme);
+  document.body.style.backgroundSize = paperBackgroundSize(theme);
   let styleEl = document.getElementById('theme-dynamic');
   if (!styleEl) {
     styleEl = document.createElement('style');
@@ -1184,6 +1282,9 @@ let schedCalMonth = null;
 let schedCalSelected = null;
 let petCalMonth = null;
 let petCalSelected = null;
+let houseCalMonth = null;
+let houseCalSelected = null;
+let houseTab = 'home'; // 'home' or 'diary'
 
 function loadData() {
   try {
@@ -1664,13 +1765,17 @@ function renderCalendar(monthYear, selectedDate, scope, idPrefix) {
 }
 
 function changeCalMonth(prefix, delta) {
-  const target = prefix === 'sched' ? schedCalMonth : petCalMonth;
+  let target;
+  if (prefix === 'sched') target = schedCalMonth;
+  else if (prefix === 'house') target = houseCalMonth;
+  else target = petCalMonth;
   if (!target) return;
   let m = target.month + delta;
   let y = target.year;
   while (m < 0) { m += 12; y -= 1; }
   while (m > 11) { m -= 12; y += 1; }
   if (prefix === 'sched') schedCalMonth = { year: y, month: m };
+  else if (prefix === 'house') houseCalMonth = { year: y, month: m };
   else petCalMonth = { year: y, month: m };
   render();
 }
@@ -1679,6 +1784,9 @@ function goToToday(prefix) {
   if (prefix === 'sched') {
     schedCalMonth = { year: t.getFullYear(), month: t.getMonth() };
     schedCalSelected = todayKey();
+  } else if (prefix === 'house') {
+    houseCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+    houseCalSelected = todayKey();
   } else {
     petCalMonth = { year: t.getFullYear(), month: t.getMonth() };
     petCalSelected = todayKey();
@@ -1687,6 +1795,7 @@ function goToToday(prefix) {
 }
 function selectCalDate(prefix, dateKey) {
   if (prefix === 'sched') schedCalSelected = (schedCalSelected === dateKey) ? null : dateKey;
+  else if (prefix === 'house') houseCalSelected = (houseCalSelected === dateKey) ? null : dateKey;
   else petCalSelected = (petCalSelected === dateKey) ? null : dateKey;
   render();
 }
@@ -1763,7 +1872,8 @@ function renderDayDetail(dateKey, scope) {
 }
 
 function renderHouses() {
-  document.getElementById('bottomNav').style.display = 'none';
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav('houses');
   const app = document.getElementById('app');
   let html = '<div class="start-header">';
   html += '<button class="user-chip" onclick="openUserModal()">';
@@ -1772,7 +1882,15 @@ function renderHouses() {
   html += '</button>';
   html += '<button class="theme-quick-btn" onclick="openThemeModal()">🎨</button>';
   html += '</div>';
-  html += '<div class="app-logo"><h1 class="app-logo-text">にこわ</h1><div class="app-logo-sub">- nikowa -</div><div class="app-logo-tag">虹・心・輪</div></div>';
+  const themeNow = THEMES[data.themeId] || THEMES.mint;
+  html += '<div class="app-logo">';
+  html += '<span class="app-logo-sparkle s1">✦</span>';
+  html += '<span class="app-logo-sparkle s2">✦</span>';
+  html += '<span class="app-logo-sparkle s3">✧</span>';
+  html += '<h1 class="app-logo-text">にこわ</h1>';
+  html += '<div class="app-logo-sub">- nikowa -</div>';
+  html += '<div class="app-logo-tag">'+themeNow.emoji+' '+themeNow.name+'</div>';
+  html += '</div>';
   html += '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">家をえらぶ</h2><span class="section-count">'+data.houses.length+'けん</span></div>';
   html += '<div class="houses-grid">';
@@ -1844,11 +1962,43 @@ function renderPetRoomCard(pet) {
   return html;
 }
 
+function setHouseTab(tab) {
+  houseTab = tab;
+  if (tab === 'diary' && !houseCalMonth) {
+    const t = new Date();
+    houseCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+    houseCalSelected = todayKey();
+  }
+  render();
+}
+
 function renderHouse() {
   document.getElementById('bottomNav').style.display = 'flex';
-  setActiveNav('house');
+  setActiveNav('houses');
   const house = getActiveHouse();
   if (!house) { currentView = 'houses'; render(); return; }
+  
+  let html = '<div class="topbar"><button class="topbar-btn" onclick="backToHouses()">‹</button><div class="topbar-title">🏡 '+escapeHtml(house.name)+'</div><div class="topbar-spacer"></div></div>';
+  
+  // タブバー
+  html += '<div class="pet-tabs-bar" style="margin-top: 12px;">';
+  html += '<button class="pet-tab-btn '+(houseTab==='home'?'active':'')+'" onclick="setHouseTab(\'home\')"><span class="pet-tab-icon">🏠</span><span class="pet-tab-label">ホーム</span></button>';
+  html += '<button class="pet-tab-btn '+(houseTab==='diary'?'active':'')+'" onclick="setHouseTab(\'diary\')"><span class="pet-tab-icon">📖</span><span class="pet-tab-label">みんなの日記</span></button>';
+  html += '</div>';
+  html += '<div class="pet-tab-content">';
+  
+  if (houseTab === 'diary') {
+    html += renderHouseDiaryTab(house);
+  } else {
+    html += renderHouseHomeTab(house);
+  }
+  
+  html += '</div>';
+  html += '<div style="height: 16px;"></div>';
+  document.getElementById('app').innerHTML = html;
+}
+
+function renderHouseHomeTab(house) {
   const pets = getHousePets(house.id);
   const homePets = pets.filter(p => p.place === 'home');
   const rainbowPets = pets.filter(p => p.place === 'rainbow');
@@ -1864,7 +2014,8 @@ function renderHouse() {
     .slice(0, 5);
   const todayMemorials = [];
   for (const pet of pets) todayMemorials.push.apply(todayMemorials, getTodayMemorial(pet));
-  let html = '<div class="topbar"><button class="topbar-btn" onclick="backToHouses()">‹</button><div class="topbar-title">🏡 '+escapeHtml(house.name)+'</div><div class="topbar-spacer"></div></div>';
+  
+  let html = '';
   if (todayMemorials.length > 0) {
     html += '<div class="section"><div class="memorial-card">';
     html += '<div class="memorial-title">✨ 今日は特別な日</div>';
@@ -1935,8 +2086,22 @@ function renderHouse() {
     }
     html += '</div></div></div>';
   }
-  html += '<div style="height: 16px;"></div>';
-  document.getElementById('app').innerHTML = html;
+  return html;
+}
+
+function renderHouseDiaryTab(house) {
+  if (!houseCalMonth) {
+    const t = new Date();
+    houseCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+  }
+  const selected = houseCalSelected || todayKey();
+  let html = '<div class="section">';
+  html += renderCalendar(houseCalMonth, selected, { houseId: house.id }, 'house');
+  html += '</div>';
+  html += '<div class="section" style="padding-bottom: 24px;">';
+  html += renderDayDetail(selected, { houseId: house.id });
+  html += '</div>';
+  return html;
 }
 
 function enterPet(petId) {
@@ -1963,7 +2128,7 @@ function setPetTab(tab) {
 
 function renderPet() {
   document.getElementById('bottomNav').style.display = 'flex';
-  setActiveNav('house');
+  setActiveNav('houses');
   const pet = getActivePet();
   if (!pet) { currentView = 'house'; render(); return; }
   const careItems = pet.careItems || DEFAULT_CARE_ITEMS;
@@ -2101,7 +2266,7 @@ function renderTabCare(pet, careItems) {
       const icon = care ? care.icon : (log.careIcon || '🌿');
       const name = care ? care.label : (log.careName || '不明');
       html += '<div class="recent-care-item">';
-      html += '<div class="recent-care-time">'+dayLabel+timeStr+'</div>';
+      html += '<button class="recent-care-time recent-care-time-btn" onclick="openCareTimeEditModal(\''+log.date+'\', '+log.timestamp+')" title="タップで時間を編集">'+dayLabel+timeStr+'</button>';
       html += '<div class="recent-care-icon">'+escapeHtml(icon)+'</div>';
       html += '<div class="recent-care-name">'+escapeHtml(name)+(author?' <span style="font-size:11px; opacity:0.7;">'+author+'</span>':'')+'</div>';
       html += '<button class="recent-care-delete" onclick="deleteCareLog(\''+log.date+'\', '+log.timestamp+')">×</button>';
@@ -2220,6 +2385,76 @@ function deleteCareLog(date, timestamp) {
     for (const k in record.care) if (record.care[k] === timestamp) delete record.care[k];
   }
   saveData();
+  renderPet();
+}
+
+// 時間編集
+let careTimeEditTarget = null;
+function openCareTimeEditModal(date, timestamp) {
+  careTimeEditTarget = { date: date, timestamp: timestamp };
+  const d = new Date(timestamp);
+  document.getElementById('careTimeEditDate').value = date;
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  document.getElementById('careTimeEditTime').value = hh+':'+mm;
+  document.getElementById('careTimeEditModal').classList.add('show');
+}
+function saveCareTimeEdit() {
+  if (!careTimeEditTarget) return;
+  const pet = getActivePet();
+  if (!pet) return;
+  const newDate = document.getElementById('careTimeEditDate').value;
+  const newTime = document.getElementById('careTimeEditTime').value;
+  if (!newDate || !newTime) { showToast('日にちと時間を入れてね'); return; }
+  
+  const oldDate = careTimeEditTarget.date;
+  const oldTs = careTimeEditTarget.timestamp;
+  const oldRecord = data.records[pet.id] && data.records[pet.id][oldDate];
+  if (!oldRecord) { closeModal('careTimeEditModal'); return; }
+  
+  // 該当ログを取得
+  let logEntry = null;
+  if (oldRecord.careLog) {
+    logEntry = oldRecord.careLog.find(l => l.timestamp === oldTs);
+  }
+  let careIdLegacy = null;
+  if (oldRecord.care) {
+    for (const k in oldRecord.care) {
+      if (oldRecord.care[k] === oldTs) { careIdLegacy = k; break; }
+    }
+  }
+  
+  // 新しいタイムスタンプ生成
+  const parts = newDate.split('-');
+  const tparts = newTime.split(':');
+  const newTs = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]),
+                         parseInt(tparts[0]), parseInt(tparts[1])).getTime();
+  
+  // 旧レコードから削除
+  if (oldRecord.careLog) oldRecord.careLog = oldRecord.careLog.filter(l => l.timestamp !== oldTs);
+  if (careIdLegacy && oldRecord.care) delete oldRecord.care[careIdLegacy];
+  
+  // 新レコードに追加
+  if (!data.records[pet.id][newDate]) {
+    data.records[pet.id][newDate] = { care: {}, careLog: [], memo: '', photoIds: [] };
+  }
+  const newRecord = data.records[pet.id][newDate];
+  if (!newRecord.careLog) newRecord.careLog = [];
+  if (logEntry) {
+    newRecord.careLog.push(Object.assign({}, logEntry, { timestamp: newTs }));
+  } else if (careIdLegacy) {
+    newRecord.careLog.push({
+      careId: careIdLegacy,
+      timestamp: newTs,
+      authorName: data.user.name || '',
+      authorAvatar: data.user.avatar || '🌷'
+    });
+  }
+  
+  careTimeEditTarget = null;
+  saveData();
+  closeModal('careTimeEditModal');
+  showToast('時間をなおしました🌷');
   renderPet();
 }
 function spawnSparkles(el) {
@@ -2367,6 +2602,7 @@ function renderSettings() {
     html += '<div class="house-card" style="cursor:default;"><div class="house-icon" style="font-size:22px;">🏡</div>';
     html += '<div class="house-info"><div class="house-name" style="font-size:14px;">'+escapeHtml(h.name)+'</div>';
     html += '<div class="house-sub">'+petCount+'にん</div></div>';
+    html += '<button class="btn btn-secondary btn-mini" style="margin-right:4px;" onclick="openEditHouseModal(\''+h.id+'\')">なまえ</button>';
     if (data.houses.length > 1) html += '<button class="btn btn-danger btn-mini" onclick="confirmDeleteHouse(\''+h.id+'\')">削除</button>';
     html += '</div>';
   }
@@ -2394,7 +2630,7 @@ function renderSettings() {
   html += '</div></div></div>';
   html += '<div class="section" style="padding-bottom: 24px;"><div class="section-head"><h2 class="section-title">アプリのこと</h2></div>';
   html += '<div style="background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; font-size: 12px; color: var(--ink-sub); line-height: 1.8;">';
-  html += '<strong style="color:var(--ink-dark);">にこわ -nikowa-</strong><br>version 0.7.0<br><br>';
+  html += '<strong style="color:var(--ink-dark);">にこわ -nikowa-</strong><br>version 0.9.0<br><br>';
   html += '虹（に）・心（こ）・輪（わ）<br>ニコニコな輪が広がりますように🌈</div></div>';
   document.getElementById('app').innerHTML = html;
 }
@@ -2406,7 +2642,11 @@ function setActiveNav(view) {
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.onclick = () => {
     const view = btn.dataset.view;
-    if (view === 'house') currentView = 'house';
+    if (view === 'houses') {
+      currentView = 'houses';
+      data.selectedHouseId = null;
+      saveData();
+    }
     else if (view === 'schedule') {
       currentView = 'schedule';
       if (!schedCalMonth) {
@@ -2482,6 +2722,27 @@ function saveHouse() {
   data.houses.push({ id: 'house_' + Date.now(), name: name, createdAt: Date.now() });
   saveData();
   closeModal('addHouseModal');
+  render();
+}
+
+let editingHouseId = null;
+function openEditHouseModal(houseId) {
+  const h = data.houses.find(x => x.id === houseId);
+  if (!h) return;
+  editingHouseId = houseId;
+  document.getElementById('editHouseNameInput').value = h.name;
+  document.getElementById('editHouseModal').classList.add('show');
+}
+function saveEditHouse() {
+  if (!editingHouseId) return;
+  const h = data.houses.find(x => x.id === editingHouseId);
+  if (!h) return;
+  const name = document.getElementById('editHouseNameInput').value.trim();
+  if (!name) { showToast('家のなまえを入れてね'); return; }
+  h.name = name;
+  saveData();
+  closeModal('editHouseModal');
+  showToast('なまえをかえました🌷');
   render();
 }
 function confirmDeleteHouse(houseId) {
