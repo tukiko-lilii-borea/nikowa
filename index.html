@@ -26,7 +26,7 @@
   html { background: var(--bg); }
   body {
     max-width: 480px; margin: 0 auto;
-    background-image: radial-gradient(rgba(95,169,133,0.08) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(95,169,133,0.24) 1px, transparent 1px);
     background-size: 10px 10px;
   }
   .app-frame { position: relative; }
@@ -42,7 +42,7 @@
       gap: 24px;
       padding: 16px;
       box-sizing: border-box;
-      background-image: radial-gradient(rgba(95,169,133,0.08) 1px, transparent 1px);
+      background-image: radial-gradient(rgba(95,169,133,0.24) 1px, transparent 1px);
       background-size: 10px 10px;
     }
     .app-frame {
@@ -51,7 +51,7 @@
       overflow: hidden;
       box-shadow: 0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
       background: var(--bg);
-      background-image: radial-gradient(rgba(95,169,133,0.08) 1px, transparent 1px);
+      background-image: radial-gradient(rgba(95,169,133,0.24) 1px, transparent 1px);
       background-size: 10px 10px;
       position: relative;
       min-height: 700px;
@@ -172,6 +172,268 @@
     display: flex; justify-content: space-between; align-items: center;
     padding: 14px 16px 0;
   }
+
+  /* ===== 新スタート画面：ヒーロー ===== */
+  .hero-section {
+    padding: 14px 18px 4px;
+  }
+  .hero-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .hero-user-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(255,255,255,0.7);
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-family: inherit;
+    font-size: 12px; color: var(--ink-dark); font-weight: 600;
+    cursor: pointer; backdrop-filter: blur(8px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  .hero-user-chip:active { transform: scale(0.96); }
+  .hero-user-prompt {
+    color: var(--ink-sub); font-weight: 500; font-size: 11px;
+  }
+  .hero-theme-btn {
+    width: 34px; height: 34px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hero-theme-btn:active { transform: scale(0.94); }
+  .hero-logo {
+    text-align: center; padding: 4px 0 6px;
+  }
+  .hero-logo-img {
+    max-width: 200px; width: 60%; height: auto;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.04));
+  }
+  .hero-message {
+    text-align: center; padding: 0 12px 14px;
+  }
+  .hero-message-main {
+    font-size: 13.5px; color: var(--ink-dark);
+    font-weight: 600; line-height: 1.6;
+    letter-spacing: 0.3px;
+  }
+  .hero-message-sub {
+    font-size: 11px; color: var(--ink-sub);
+    margin-top: 4px; letter-spacing: 0.3px;
+  }
+
+  /* ===== 今日の家（メインカード） ===== */
+  .today-house-section {
+    padding: 0 16px 14px;
+  }
+  .today-house-label {
+    font-size: 10.5px; color: var(--ink-sub);
+    letter-spacing: 2px; font-weight: 700;
+    margin-bottom: 8px; padding-left: 4px;
+  }
+  .main-house-card {
+    width: 100%;
+    background: var(--surface);
+    border: none;
+    border-radius: 22px;
+    padding: 18px 18px 16px;
+    text-align: left;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.03);
+    position: relative;
+    overflow: hidden;
+  }
+  .main-house-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 140px; height: 140px;
+    background: radial-gradient(circle, var(--mint-bg) 0%, transparent 70%);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  .main-house-card:active { transform: scale(0.99); }
+  .main-house-top {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 14px;
+    position: relative; z-index: 1;
+  }
+  .main-house-icon {
+    font-size: 36px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));
+  }
+  .main-house-info { flex: 1; min-width: 0; }
+  .main-house-name {
+    font-size: 18px; font-weight: 700;
+    color: var(--ink-dark);
+    letter-spacing: 0.5px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .main-house-status {
+    font-size: 11.5px; color: var(--ink-sub);
+    margin-top: 2px;
+  }
+  .main-house-pets {
+    display: flex; gap: 4px; flex-wrap: wrap;
+    margin-bottom: 14px;
+    position: relative; z-index: 1;
+  }
+  .main-house-pet {
+    width: 36px; height: 36px;
+    background: var(--mint-bg);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .main-house-pet-photo {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    border: 1.5px solid var(--surface);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .main-house-pet-more {
+    width: 36px; height: 36px;
+    background: var(--surface-warm);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    color: var(--ink-sub);
+  }
+  .main-house-bottom {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; padding-top: 10px;
+    border-top: 1px dashed var(--line-soft);
+    position: relative; z-index: 1;
+  }
+  .main-house-stat {
+    font-size: 11.5px; color: var(--ink-sub);
+  }
+  .main-house-stat strong {
+    font-size: 13px; color: var(--mint-deep);
+    margin-left: 2px;
+  }
+  .main-house-stat-quiet {
+    font-size: 11.5px; color: var(--ink-sub);
+    font-style: italic;
+    opacity: 0.8;
+  }
+  .main-house-last {
+    font-size: 10.5px; color: var(--ink-sub);
+    margin-top: 2px;
+  }
+  .main-house-cta {
+    font-size: 12px; font-weight: 700;
+    color: var(--mint-deep);
+    background: var(--mint-bg);
+    padding: 6px 12px;
+    border-radius: 100px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ===== ほかの家（小さめ） ===== */
+  .other-houses-section {
+    padding: 0 16px 14px;
+  }
+  .other-houses-label {
+    font-size: 10.5px; color: var(--ink-sub);
+    letter-spacing: 2px; font-weight: 700;
+    margin-bottom: 8px; padding-left: 4px;
+  }
+  .other-houses-row {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .other-house-card {
+    flex: 1; min-width: calc(50% - 4px);
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; font-family: inherit;
+    text-align: left;
+  }
+  .other-house-card:active { transform: scale(0.98); }
+  .other-house-icon {
+    font-size: 22px; line-height: 1;
+  }
+  .other-house-info { flex: 1; min-width: 0; }
+  .other-house-name {
+    font-size: 12.5px; font-weight: 700;
+    color: var(--ink-dark);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .other-house-meta {
+    font-size: 10.5px; color: var(--ink-sub);
+    margin-top: 1px;
+  }
+  .other-house-add {
+    flex: 1; min-width: calc(50% - 4px);
+    background: transparent;
+    border: 1.5px dashed var(--line);
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; font-family: inherit;
+    color: var(--mint-deep);
+  }
+  .other-house-add-icon {
+    font-size: 22px; font-weight: 300;
+    line-height: 1;
+  }
+  .other-house-add-label {
+    font-size: 11.5px; font-weight: 700;
+  }
+
+  /* ===== 家1個のときの追加ボタン ===== */
+  .add-house-mini-section {
+    padding: 0 16px 14px;
+    text-align: center;
+  }
+  .add-house-mini {
+    background: transparent;
+    border: 1.5px dashed var(--line);
+    color: var(--ink-sub);
+    padding: 10px 18px;
+    border-radius: 100px;
+    font-family: inherit;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+  }
+  .add-house-mini:active { transform: scale(0.97); }
+
+  /* ===== 家がない時 ===== */
+  .houses-empty-section {
+    padding: 0 20px;
+  }
+  .houses-empty-card {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 36px 24px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  }
+  .houses-empty-icon { font-size: 48px; margin-bottom: 8px; }
+  .houses-empty-title { font-size: 16px; font-weight: 700; color: var(--ink-dark); margin-bottom: 4px; }
+  .houses-empty-sub { font-size: 12px; color: var(--ink-sub); margin-bottom: 20px; }
+  .houses-empty-btn {
+    background: var(--mint-deep); color: var(--surface);
+    border: none; border-radius: 100px;
+    padding: 12px 24px;
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(95,169,133,0.3);
+  }
+  .houses-empty-btn:active { transform: scale(0.97); }
   .user-chip {
     background: var(--surface); border: 1.5px solid var(--line);
     border-radius: 999px; padding: 4px 12px 4px 4px;
@@ -223,13 +485,14 @@
   }
   .section { padding: 18px 16px 0; }
   .section-head {
-    display: flex; align-items: baseline; justify-content: space-between;
+    display: flex; align-items: center; gap: 8px;
     margin-bottom: 12px;
   }
   .section-title {
     font-size: 15px; font-weight: 700; color: var(--ink-dark);
     letter-spacing: 1.2px; margin: 0;
     display: flex; align-items: center; gap: 6px;
+    flex: 1;
   }
   .section-title::before {
     content: ''; display: inline-block;
@@ -241,6 +504,20 @@
     font-weight: 600; cursor: pointer; font-family: inherit; padding: 4px 8px;
   }
   .section-count { font-size: 11px; color: var(--ink-sub); }
+  .section-add-btn {
+    background: var(--accent-bg);
+    color: var(--accent-deep);
+    border: none;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    font-size: 16px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  }
+  .section-add-btn:active { transform: scale(0.92); }
   .houses-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .house-tile {
     background: var(--surface); border: 1.5px solid var(--line);
@@ -740,12 +1017,12 @@
     border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-soft);
   }
   .recent-care-item {
-    display: grid; grid-template-columns: 70px 28px 1fr 28px;
-    align-items: center; gap: 8px; padding: 10px 12px;
+    display: grid; grid-template-columns: 70px 28px 1fr 24px;
+    align-items: start; gap: 8px; padding: 10px 12px;
     border-bottom: 1px dashed var(--line-soft); font-size: 13px;
   }
   .recent-care-item:last-child { border-bottom: none; }
-  .recent-care-time { font-size: 11.5px; color: var(--mint-deep); font-weight: 700; }
+  .recent-care-time { font-size: 11.5px; color: var(--mint-deep); font-weight: 700; padding-top: 3px; }
   .recent-care-time-btn {
     background: transparent; border: 1px solid transparent;
     border-radius: 6px; padding: 3px 6px;
@@ -756,12 +1033,26 @@
     background: var(--mint-bg); border-color: var(--mint);
     transform: scale(0.96);
   }
-  .recent-care-icon { font-size: 18px; text-align: center; }
-  .recent-care-name { color: var(--ink); font-weight: 500; }
+  .recent-care-icon { font-size: 18px; text-align: center; padding-top: 2px; }
+  .recent-care-name {
+    color: var(--ink); font-weight: 500;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+    min-width: 0;
+    padding-top: 4px;
+  }
+  .recent-care-name-text {
+    overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+    align-self: flex-start;
+  }
   .recent-care-delete {
     background: transparent; border: none;
     color: var(--ink-light); font-size: 16px; cursor: pointer;
-    padding: 4px; font-family: inherit; line-height: 1; border-radius: 4px;
+    padding: 4px 0; font-family: inherit; line-height: 1; border-radius: 4px;
+    align-self: start;
+    width: 24px;
+    text-align: right;
   }
   .memo-card {
     background: var(--surface); border: 1px solid var(--line);
@@ -1181,6 +1472,15 @@
     border-radius: 10px; cursor: pointer; font-family: inherit; text-align: left;
   }
   .task-upcoming:active { transform: scale(0.98); }
+  .task-upcoming-due {
+    background: var(--accent-bg) !important;
+    border: 1px solid var(--accent) !important;
+    border-style: solid !important;
+  }
+  .task-upcoming-due .task-upcoming-meta {
+    color: var(--accent-deep);
+    font-weight: 700;
+  }
   .task-upcoming-icon { font-size: 18px; text-align: center; }
   .task-upcoming-title {
     font-size: 13px; color: var(--ink-dark); font-weight: 600;
@@ -1199,6 +1499,83 @@
     display: flex; align-items: center; justify-content: center; padding: 0;
   }
   .task-icon-btn.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .house-icon-row {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px;
+    background: var(--surface-warm); padding: 8px; border-radius: 10px;
+  }
+  .house-icon-btn {
+    aspect-ratio: 1; background: var(--surface);
+    border: 1.5px solid transparent; border-radius: 8px;
+    font-size: 18px; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .house-icon-btn.selected { border-color: var(--mint); background: var(--mint-bg); }
+  .ymd-row {
+    display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 6px;
+  }
+  .ymd-select {
+    padding: 10px 8px !important;
+    font-size: 14px !important;
+    text-align: center;
+    text-align-last: center;
+  }
+  /* ヘルプ系 */
+  .recent-care-author {
+    display: inline-flex; align-items: center; gap: 2px;
+    background: var(--surface-warm);
+    border-radius: 100px;
+    padding: 1px 7px;
+    font-size: 9.5px;
+    color: var(--ink-sub);
+    font-weight: 500;
+    flex-shrink: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    align-self: flex-end;
+  }
+  .help-list {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .help-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer; font-family: inherit;
+    text-align: left; width: 100%;
+  }
+  .help-item:active { transform: scale(0.99); }
+  .help-icon { font-size: 20px; line-height: 1; }
+  .help-label { flex: 1; font-size: 13px; color: var(--ink-dark); font-weight: 600; }
+  .help-arrow { font-size: 16px; color: var(--ink-sub); font-weight: 700; }
+  .help-modal-content {
+    max-height: 80vh;
+    display: flex; flex-direction: column;
+  }
+  .help-body {
+    flex: 1; overflow-y: auto;
+    padding: 4px 2px 12px;
+  }
+  .help-section {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--line-soft);
+  }
+  .help-section:last-child {
+    border-bottom: none; margin-bottom: 0; padding-bottom: 0;
+  }
+  .help-section-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--accent-deep);
+    margin-bottom: 6px;
+  }
+  .help-section p {
+    font-size: 12.5px; color: var(--ink-dark);
+    line-height: 1.7; margin: 0 0 6px;
+  }
   .repeat-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .repeat-card {
     background: var(--surface-warm); border: 1.5px solid transparent;
@@ -1304,10 +1681,20 @@
   <div class="form-group"><label class="form-label">種類 <span style="color:var(--ink-sub); font-weight:500; font-size:10.5px;">（犬種・猫種など、自由）</span></label>
     <input type="text" class="form-input" id="petBreedInput" maxlength="40" placeholder="例：トイプードル、MIX"></div>
   <div class="form-group"><label class="form-label">おたんじょうび（にんいです）</label>
-    <input type="date" class="form-input" id="petBirthInput"></div>
+    <div class="ymd-row">
+      <select class="form-input ymd-select" id="petBirthYear"></select>
+      <select class="form-input ymd-select" id="petBirthMonth"></select>
+      <select class="form-input ymd-select" id="petBirthDay"></select>
+    </div>
+    <input type="hidden" id="petBirthInput"></div>
   <div class="form-group" id="rainbowDateGroup" style="display:none;">
     <label class="form-label">虹の橋の日（にんいです）</label>
-    <input type="date" class="form-input" id="petRainbowDateInput"></div>
+    <div class="ymd-row">
+      <select class="form-input ymd-select" id="petRainbowYear"></select>
+      <select class="form-input ymd-select" id="petRainbowMonth"></select>
+      <select class="form-input ymd-select" id="petRainbowDay"></select>
+    </div>
+    <input type="hidden" id="petRainbowDateInput"></div>
   <div class="modal-actions">
     <button class="btn btn-secondary" onclick="closeModal('addPetModal')">やめる</button>
     <button class="btn btn-primary" onclick="savePet()">むかえる</button>
@@ -1321,10 +1708,20 @@
   <div class="form-group"><label class="form-label">種類 <span style="color:var(--ink-sub); font-weight:500; font-size:10.5px;">（犬種・猫種など、自由）</span></label>
     <input type="text" class="form-input" id="editPetBreedInput" maxlength="40" placeholder="例：トイプードル、MIX、コーギー×チワワ"></div>
   <div class="form-group"><label class="form-label">おたんじょうび</label>
-    <input type="date" class="form-input" id="editPetBirthInput"></div>
+    <div class="ymd-row">
+      <select class="form-input ymd-select" id="editPetBirthYear"></select>
+      <select class="form-input ymd-select" id="editPetBirthMonth"></select>
+      <select class="form-input ymd-select" id="editPetBirthDay"></select>
+    </div>
+    <input type="hidden" id="editPetBirthInput"></div>
   <div class="form-group" id="editRainbowDateGroup" style="display:none;">
     <label class="form-label">虹の橋の日</label>
-    <input type="date" class="form-input" id="editPetRainbowDateInput"></div>
+    <div class="ymd-row">
+      <select class="form-input ymd-select" id="editPetRainbowYear"></select>
+      <select class="form-input ymd-select" id="editPetRainbowMonth"></select>
+      <select class="form-input ymd-select" id="editPetRainbowDay"></select>
+    </div>
+    <input type="hidden" id="editPetRainbowDateInput"></div>
   <div class="form-group">
     <label class="form-label">プロフィール写真</label>
     <button class="btn btn-secondary" style="width:100%;" onclick="setProfilePhotoFromModal()">📷 写真を変更する</button>
@@ -1341,6 +1738,8 @@
   <h2 class="modal-title">あたらしい家</h2>
   <div class="form-group"><label class="form-label">家のなまえ</label>
     <input type="text" class="form-input" id="houseNameInput" placeholder="例：実家" maxlength="14"></div>
+  <div class="form-group"><label class="form-label">アイコン</label>
+    <div class="house-icon-row" id="houseIconRow"></div></div>
   <div class="modal-actions">
     <button class="btn btn-secondary" onclick="closeModal('addHouseModal')">やめる</button>
     <button class="btn btn-primary" onclick="saveHouse()">つくる</button>
@@ -1348,9 +1747,11 @@
 </div></div>
 
 <div class="modal" id="editHouseModal"><div class="modal-content">
-  <h2 class="modal-title">家のなまえをかえる</h2>
+  <h2 class="modal-title">家のじょうほう</h2>
   <div class="form-group"><label class="form-label">家のなまえ</label>
     <input type="text" class="form-input" id="editHouseNameInput" maxlength="14"></div>
+  <div class="form-group"><label class="form-label">アイコン</label>
+    <div class="house-icon-row" id="editHouseIconRow"></div></div>
   <div class="modal-actions">
     <button class="btn btn-secondary" onclick="closeModal('editHouseModal')">やめる</button>
     <button class="btn btn-primary" onclick="saveEditHouse()">ほぞん</button>
@@ -1434,6 +1835,64 @@
   <button class="photo-viewer-close" onclick="event.stopPropagation(); closePhotoViewer();">×</button>
   <img id="photoViewerImg" alt="">
 </div>
+
+<div class="modal" id="howToModal"><div class="modal-content help-modal-content">
+  <h2 class="modal-title">📖 使い方</h2>
+  <div class="help-body">
+    <div class="help-section">
+      <div class="help-section-title">🌷 はじめかた</div>
+      <p>① スタート画面で「あたらしい家をつくる」をタップ。<br>② 家のなまえとアイコンをえらぶ。<br>③ 家に入って、右下の「＋」から子をむかえる。</p>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">🌿 お世話の記録</div>
+      <p>子をタップして「お世話」タブへ。アイコンをタップするだけで時間つきで記録される。<br>長押しすると編集できる。</p>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">📅 繰り返しタスク</div>
+      <p>「＋ 繰り返しタスクをついか」から、毎日のごはんやフィラリアなど定期的なお世話を登録できる。<br>その日になると「今日のタスク」に出てきて、チェックすると次回に進む。</p>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">📓 日記とおもいで</div>
+      <p>「日記」タブの「＋日記」から、写真と一緒に思い出を残せる。<br>公開範囲は🔑じぶんだけ／🏡家のみんな／🌍みんなが選べる。</p>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">🎨 テーマ</div>
+      <p>スタート画面の右上のパレットアイコンから、好きな色テーマに変更できる。</p>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">📤 データのバックアップ</div>
+      <p>設定の「エクスポート」で、すべてのデータを書き出せる。新しい端末では「インポート」で復元できる。</p>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-primary" style="flex:1;" onclick="closeModal('howToModal')">とじる</button>
+  </div>
+</div></div>
+
+<div class="modal" id="aboutModal"><div class="modal-content help-modal-content">
+  <h2 class="modal-title">🌷 にこわとは</h2>
+  <div class="help-body">
+    <p style="text-align:center; font-size:13px; color:var(--ink-dark); line-height:1.8; margin-bottom:16px;">
+      <strong>今日もこの子と、ちゃんと過ごせた。</strong><br>
+      <span style="font-size:11.5px; color:var(--ink-sub);">できる日に、できる分だけで大丈夫</span>
+    </p>
+    <div class="help-section">
+      <p>「にこわ」は、ペットとの毎日の暮らしをそっと記録するアプリ。</p>
+      <p>すべてのデータはあなたの端末の中だけに保存される。クラウドにも上がらない。あなたとこの子だけの、やわらかな記録帳。</p>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">名前のいわれ</div>
+      <p>虹（に）・心（こ）・輪（わ）<br>ニコニコな輪が広がりますように🌈</p>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">大切にしていること</div>
+      <p>・「管理」ではなく「いっしょに過ごす」<br>・できる日に、できる分だけ<br>・虹の橋へ渡った子も、ずっと家族</p>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-primary" style="flex:1;" onclick="closeModal('aboutModal')">とじる</button>
+  </div>
+</div></div>
 
 <div class="modal" id="exportModal"><div class="modal-content">
   <h2 class="modal-title">📤 バックアップ</h2>
@@ -1561,35 +2020,35 @@ const MAX_PHOTO_SIZE = 800;
 const THEMES = {
   mint: { name: 'チョコミント', emoji: '🍃', pattern: 'dot',
     vars: { '--bg':'#E8F2EC','--surface':'#FBFDFB','--surface-warm':'#F4F9F5','--line':'#BFD9C8','--line-soft':'#D9E8DF','--ink-dark':'#2D4A3C','--ink':'#46604F','--ink-sub':'#7A958A','--ink-light':'#A8BFB2','--mint':'#8FC9AB','--mint-deep':'#5FA985','--mint-bg':'#DCEBE2','--accent':'#E88AA0','--accent-deep':'#D26A82','--accent-bg':'#FCE4EB','--today-bg':'#FFE9F0','--today-border':'#F5B4C5','--warm-yellow':'#F5D77A','--soft-purple':'#B8A5D9' },
-    paperColor: 'rgba(95,169,133,0.08)',
+    paperColor: 'rgba(95,169,133,0.24)',
     headerGrad: 'linear-gradient(180deg, #D5E8DD 0%, #C4DFD0 100%)' },
   soda: { name: 'ソーダ', emoji: '🥤', pattern: 'polka',
     vars: { '--bg':'#E5F1F8','--surface':'#FBFDFE','--surface-warm':'#F2F8FC','--line':'#B6D4E5','--line-soft':'#D6E5EE','--ink-dark':'#1E3A55','--ink':'#3A5470','--ink-sub':'#7A93A8','--ink-light':'#AFC4D5','--mint':'#90C8E4','--mint-deep':'#5BA8D6','--mint-bg':'#D6EBF6','--accent':'#F5C95C','--accent-deep':'#D8A52E','--accent-bg':'#FFF4D2','--today-bg':'#FFF4D2','--today-border':'#F0CE6C','--warm-yellow':'#F5D77A','--soft-purple':'#A8B5D9' },
-    paperColor: 'rgba(91,168,214,0.16)',
+    paperColor: 'rgba(91,168,214,0.10)',
     headerGrad: 'linear-gradient(180deg, #D2E7F2 0%, #BFD8E8 100%)' },
   strawberry: { name: 'いちごみるく', emoji: '🍓', pattern: 'gingham',
     vars: { '--bg':'#FBEDF1','--surface':'#FFFBFC','--surface-warm':'#FCEFF3','--line':'#F0C6D1','--line-soft':'#F4D9E0','--ink-dark':'#5A2D3D','--ink':'#7A4858','--ink-sub':'#A07585','--ink-light':'#C8A6B0','--mint':'#F5A6BD','--mint-deep':'#E07298','--mint-bg':'#FAD9E2','--accent':'#E07298','--accent-deep':'#C44F77','--accent-bg':'#FAD9E2','--today-bg':'#FFE0EA','--today-border':'#F0A6BD','--warm-yellow':'#F5D77A','--soft-purple':'#B8A5D9' },
-    paperColor: 'rgba(224,114,152,0.09)',
+    paperColor: 'rgba(224,114,152,0.07)',
     headerGrad: 'linear-gradient(180deg, #FAD9E2 0%, #F5C6D3 100%)' },
   honey: { name: 'ハニーレモン', emoji: '🍯', pattern: 'stripe',
     vars: { '--bg':'#FCF3D8','--surface':'#FFFCF2','--surface-warm':'#FBF5DC','--line':'#EBD79A','--line-soft':'#F0E2B6','--ink-dark':'#5A4218','--ink':'#7A5C2A','--ink-sub':'#A48958','--ink-light':'#D2BD8A','--mint':'#F5C56A','--mint-deep':'#E8A22E','--mint-bg':'#FBEBC0','--accent':'#7BB48E','--accent-deep':'#5A8E6E','--accent-bg':'#E1EFE2','--today-bg':'#FCE9C0','--today-border':'#E8B958','--warm-yellow':'#F5D050','--soft-purple':'#C8A85A' },
-    paperColor: 'rgba(232,162,46,0.10)',
+    paperColor: 'rgba(232,162,46,0.24)',
     headerGrad: 'linear-gradient(180deg, #F8E7B5 0%, #F2D88E 100%)' },
   pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham',
     vars: { '--bg':'#F7E8C9','--surface':'#FFF8E8','--surface-warm':'#FBEFD2','--line':'#E0BC7C','--line-soft':'#EAD2A0','--ink-dark':'#4D2E10','--ink':'#704418','--ink-sub':'#9C7A42','--ink-light':'#CBAA78','--mint':'#D89E58','--mint-deep':'#B8762A','--mint-bg':'#F2DCAE','--accent':'#C84A5E','--accent-deep':'#A1334A','--accent-bg':'#F8DCE0','--today-bg':'#F8DCE0','--today-border':'#E08894','--warm-yellow':'#F5D050','--soft-purple':'#C8A878' },
-    paperColor: 'rgba(184,118,42,0.09)',
+    paperColor: 'rgba(184,118,42,0.07)',
     headerGrad: 'linear-gradient(180deg, #F0D6A0 0%, #E5C079 100%)' },
   cola: { name: 'コーラ', emoji: '🥃', pattern: 'polka',
     vars: { '--bg':'#F2E7DC','--surface':'#FBF6EE','--surface-warm':'#F2E5D0','--line':'#C5A988','--line-soft':'#DBC4A4','--ink-dark':'#2A1A0E','--ink':'#48301E','--ink-sub':'#85664A','--ink-light':'#B89A7A','--mint':'#A04A36','--mint-deep':'#722616','--mint-bg':'#E8D2C2','--accent':'#D9354A','--accent-deep':'#B0202E','--accent-bg':'#FAD9DC','--today-bg':'#FAD9DC','--today-border':'#E68088','--warm-yellow':'#F5D050','--soft-purple':'#C8A878' },
-    paperColor: 'rgba(114,38,22,0.14)',
+    paperColor: 'rgba(114,38,22,0.10)',
     headerGrad: 'linear-gradient(180deg, #E8D5BE 0%, #D8BC9A 100%)' },
   lavender: { name: 'ラベンダーマカロン', emoji: '🪻', pattern: 'dot',
     vars: { '--bg':'#EFE5F5','--surface':'#FAF5FC','--surface-warm':'#F0E5F5','--line':'#C8B4DA','--line-soft':'#DCCDE6','--ink-dark':'#3D2A55','--ink':'#5C4577','--ink-sub':'#8E7AA5','--ink-light':'#BCAACE','--mint':'#B89DD2','--mint-deep':'#9477BF','--mint-bg':'#E1D2EE','--accent':'#E08FB0','--accent-deep':'#B86888','--accent-bg':'#F8DDE6','--today-bg':'#F8DDE6','--today-border':'#E0A2BA','--warm-yellow':'#F5D77A','--soft-purple':'#9477BF' },
-    paperColor: 'rgba(148,119,191,0.10)',
+    paperColor: 'rgba(148,119,191,0.24)',
     headerGrad: 'linear-gradient(180deg, #E0D0EC 0%, #CDB8E0 100%)' },
   matcha: { name: '抹茶わらび', emoji: '🍵', pattern: 'stripe',
     vars: { '--bg':'#EAEDD5','--surface':'#F8FAEC','--surface-warm':'#EFF3D5','--line':'#B5BF82','--line-soft':'#CFD7A2','--ink-dark':'#2F3B1A','--ink':'#4A582A','--ink-sub':'#7A8852','--ink-light':'#B5BF82','--mint':'#9BB166','--mint-deep':'#6E8A3A','--mint-bg':'#DCE5B8','--accent':'#C44864','--accent-deep':'#962E48','--accent-bg':'#F5D6DA','--today-bg':'#F5D6DA','--today-border':'#D88090','--warm-yellow':'#D8B65A','--soft-purple':'#A85A78' },
-    paperColor: 'rgba(110,138,58,0.10)',
+    paperColor: 'rgba(110,138,58,0.24)',
     headerGrad: 'linear-gradient(180deg, #D9DEB6 0%, #C5CC95 100%)' }
 };
 
@@ -1668,6 +2127,7 @@ const LOGO_DATA_URL = 'data:image/webp;base64,UklGRkxSAABXRUJQVlA4WAoAAAAQAAAAjw
 let data = {
   houses: [], pets: [], records: {}, schedules: [], posts: [], tasks: [],
   activeHouseId: null, activePetId: null, selectedHouseId: null,
+  lastUsedHouseId: null,
   themeId: 'mint',
   user: { name: '', avatar: '🌷' },
   petTab: 'care'
@@ -1892,7 +2352,13 @@ function getMemorialsForDate(dateKey, houseId, petId) {
     }
     if (pet.createdAt) {
       const c = new Date(pet.createdAt);
-      if (c.getMonth() + 1 === m && c.getDate() === d) memorials.push('💕 '+pet.name+'が家族になった日');
+      if (c.getMonth() + 1 === m && c.getDate() === d) {
+        if (pet.place === 'rainbow') {
+          memorials.push('🌷 '+pet.name+'と過ごした記録の日');
+        } else {
+          memorials.push('💕 '+pet.name+'、にこわへようこそ！');
+        }
+      }
     }
   }
   return memorials;
@@ -2395,7 +2861,7 @@ function renderDayDetail(dateKey, scope) {
   if (!hasContent) {
     html += '<div class="day-card">';
     if (isFuture) html += '<div class="day-empty"><span class="emoji">🌷</span>まだ予定はありません</div>';
-    else if (isToday) html += '<div class="day-empty"><span class="emoji">🌱</span>今日はまだ記録がありません</div>';
+    else if (isToday) html += '<div class="day-empty"><span class="emoji">🌱</span>今日の記録はまだありません</div>';
     else html += '<div class="day-empty"><span class="emoji">🍃</span>この日の記録はありません</div>';
     html += '</div>';
   }
@@ -2406,38 +2872,175 @@ function renderHouses() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('houses');
   const app = document.getElementById('app');
-  let html = '<div class="start-header">';
-  html += '<button class="user-chip" onclick="openUserModal()">';
-  html += '<span class="user-avatar">'+(data.user.avatar || '🌷')+'</span>';
-  html += '<span class="user-name">'+(data.user.name ? escapeHtml(data.user.name) : 'タップして名前を設定')+'</span>';
+  const userName = data.user.name || '';
+  const greeting = getTimeGreeting();
+  
+  let html = '<div class="hero-section">';
+  // 上部チップ
+  html += '<div class="hero-top">';
+  html += '<button class="hero-user-chip" onclick="openUserModal()">';
+  html += '<span>'+(data.user.avatar || '🌷')+'</span>';
+  if (userName) html += '<span>'+escapeHtml(userName)+'</span>';
+  else html += '<span class="hero-user-prompt">名前をつける</span>';
   html += '</button>';
-  html += '<button class="theme-quick-btn" onclick="openThemeModal()">🎨</button>';
+  html += '<button class="hero-theme-btn" onclick="openThemeModal()" title="テーマ">🎨</button>';
   html += '</div>';
-  html += '<div class="app-logo">';
-  html += '<img class="app-logo-img" src="' + LOGO_DATA_URL + '" alt="にこわ nikowa">';
+  // ロゴ
+  html += '<div class="hero-logo">';
+  html += '<img class="hero-logo-img" src="' + LOGO_DATA_URL + '" alt="にこわ nikowa">';
   html += '</div>';
-  html += '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">家をえらぶ</h2><span class="section-count">'+data.houses.length+'けん</span></div>';
-  html += '<div class="houses-grid">';
-  for (const h of data.houses) {
-    const petCount = getHousePets(h.id).length;
-    html += '<button class="house-tile" onclick="enterHouse(\''+h.id+'\')">';
-    html += '<div class="house-tile-icon">🏡</div>';
-    html += '<div class="house-tile-name">'+escapeHtml(h.name)+'</div>';
-    html += '<div class="house-tile-sub">'+(petCount > 0 ? petCount+'にん' : '空き家')+'</div>';
-    html += '</button>';
+  // メッセージ
+  html += '<div class="hero-message">';
+  html += '<div class="hero-message-main">今日もこの子と、ちゃんと過ごせた。</div>';
+  html += '<div class="hero-message-sub">できる日に、できる分だけで大丈夫</div>';
+  html += '</div>';
+  html += '</div>';
+  
+  const houses = data.houses;
+  if (houses.length === 0) {
+    // 家がまだない時
+    html += '<div class="houses-empty-section">';
+    html += '<div class="houses-empty-card">';
+    html += '<div class="houses-empty-icon">🏡</div>';
+    html += '<div class="houses-empty-title">最初の家をつくろう</div>';
+    html += '<div class="houses-empty-sub">この子の居場所をつくります</div>';
+    html += '<button class="houses-empty-btn" onclick="openAddHouseModal()">＋ あたらしい家</button>';
+    html += '</div></div>';
+  } else {
+    // 「今日の家」を決める：lastUsedHouseId > activeHouseId > 1番目
+    let mainHouseId = data.lastUsedHouseId || data.activeHouseId;
+    if (!houses.find(h => h.id === mainHouseId)) mainHouseId = houses[0].id;
+    const mainHouse = houses.find(h => h.id === mainHouseId);
+    const otherHouses = houses.filter(h => h.id !== mainHouseId);
+    
+    // 今日の家（メインカード）
+    html += '<div class="today-house-section">';
+    html += '<div class="today-house-label">今日の家</div>';
+    html += renderMainHouseCard(mainHouse);
+    html += '</div>';
+    
+    // ほかの家（小さめ）
+    if (otherHouses.length > 0) {
+      html += '<div class="other-houses-section">';
+      html += '<div class="other-houses-label">ほかの家</div>';
+      html += '<div class="other-houses-row">';
+      for (const h of otherHouses) {
+        const petCount = getHousePets(h.id).filter(p => !p.archived).length;
+        html += '<button class="other-house-card" onclick="enterHouse(\''+h.id+'\')">';
+        html += '<div class="other-house-icon">'+(h.icon || '🏡')+'</div>';
+        html += '<div class="other-house-info">';
+        html += '<div class="other-house-name">'+escapeHtml(h.name)+'</div>';
+        html += '<div class="other-house-meta">'+(petCount > 0 ? petCount+'匹' : 'まだ子はいません')+'</div>';
+        html += '</div></button>';
+      }
+      html += '<button class="other-house-add" onclick="openAddHouseModal()">';
+      html += '<div class="other-house-add-icon">＋</div>';
+      html += '<div class="other-house-add-label">あたらしい家</div>';
+      html += '</button>';
+      html += '</div></div>';
+    } else {
+      // 家1個のときは小さめの追加ボタン
+      html += '<div class="add-house-mini-section">';
+      html += '<button class="add-house-mini" onclick="openAddHouseModal()">';
+      html += '＋ あたらしい家をつくる';
+      html += '</button>';
+      html += '</div>';
+    }
   }
-  html += '<button class="house-tile house-tile-add" onclick="openAddHouseModal()">';
-  html += '<div class="house-tile-icon" style="color:var(--accent);">＋</div>';
-  html += '<div class="house-tile-name" style="color:var(--accent-deep); font-size:11px;">あたらしい家</div>';
-  html += '</button>';
-  html += '</div></div>';
-  html += '<div style="height: 16px;"></div>';
+  
+  html += '<div style="height: 24px;"></div>';
   app.innerHTML = html;
+}
+
+function getTimeGreeting() {
+  const h = new Date().getHours();
+  if (h < 5) return 'こんばんは';
+  if (h < 11) return 'おはよう';
+  if (h < 17) return 'こんにちは';
+  return 'こんばんは';
+}
+
+function renderMainHouseCard(house) {
+  const pets = getHousePets(house.id).filter(p => !p.archived);
+  const petCount = pets.length;
+  // 今日のお世話件数（家全体）
+  let todayCareCount = 0;
+  let lastCareTime = null;
+  let lastCareName = null;
+  let lastCareIcon = null;
+  for (const pet of pets) {
+    const summary = getTodayCareSummary(pet.id);
+    if (summary) {
+      todayCareCount += summary.count || 0;
+      if (summary.lastTime && (!lastCareTime || summary.lastTime > lastCareTime)) {
+        lastCareTime = summary.lastTime;
+        const careItemsMap = {};
+        for (const c of (pet.careItems || DEFAULT_CARE_ITEMS)) careItemsMap[c.id] = c;
+        const logs = getCareLogsForDate(pet.id, todayKey());
+        if (logs.length > 0) {
+          const last = logs[logs.length - 1];
+          const care = careItemsMap[last.careId];
+          if (care) { lastCareName = care.label; lastCareIcon = care.icon; }
+        }
+      }
+    }
+  }
+  
+  let html = '<button class="main-house-card" onclick="enterHouse(\''+house.id+'\')">';
+  html += '<div class="main-house-top">';
+  html += '<div class="main-house-icon">'+(house.icon || '🏡')+'</div>';
+  html += '<div class="main-house-info">';
+  html += '<div class="main-house-name">'+escapeHtml(house.name)+'</div>';
+  if (petCount === 0) {
+    html += '<div class="main-house-status">これから迎えられます</div>';
+  } else {
+    html += '<div class="main-house-status">'+petCount+'匹がいます</div>';
+  }
+  html += '</div></div>';
+  
+  // ペットのアイコン並び
+  if (petCount > 0) {
+    html += '<div class="main-house-pets">';
+    for (const pet of pets.slice(0, 5)) {
+      const pPhoto = pet.profilePhotoId && photos[pet.profilePhotoId];
+      if (pPhoto) {
+        html += '<div class="main-house-pet main-house-pet-photo" style="background-image:url(\''+pPhoto+'\')"></div>';
+      } else {
+        html += '<div class="main-house-pet">'+(PET_EMOJIS[pet.type] || '✨')+'</div>';
+      }
+    }
+    if (pets.length > 5) html += '<div class="main-house-pet-more">+'+(pets.length-5)+'</div>';
+    html += '</div>';
+  }
+  
+  // 今日の状態
+  if (petCount > 0) {
+    html += '<div class="main-house-bottom">';
+    if (todayCareCount > 0) {
+      html += '<div class="main-house-stat">今日のお世話 <strong>'+todayCareCount+'件</strong></div>';
+      if (lastCareTime && lastCareName) {
+        const t = new Date(lastCareTime);
+        const tStr = t.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+        html += '<div class="main-house-last">最近 '+tStr+' '+escapeHtml(lastCareIcon || '🌿')+' '+escapeHtml(lastCareName)+'</div>';
+      }
+    } else {
+      html += '<div class="main-house-stat-quiet">今日の記録はまだありません</div>';
+    }
+    html += '<div class="main-house-cta">会いにいく ›</div>';
+    html += '</div>';
+  } else {
+    html += '<div class="main-house-bottom">';
+    html += '<div class="main-house-cta">入る ›</div>';
+    html += '</div>';
+  }
+  
+  html += '</button>';
+  return html;
 }
 function enterHouse(houseId) {
   data.selectedHouseId = houseId;
   data.activeHouseId = houseId;
+  data.lastUsedHouseId = houseId;
   saveData();
   currentView = 'house';
   render();
@@ -2503,7 +3106,7 @@ function renderHouse() {
   const house = getActiveHouse();
   if (!house) { currentView = 'houses'; render(); return; }
   
-  let html = '<div class="topbar"><div class="topbar-spacer"></div><div class="topbar-title">🏡 '+escapeHtml(house.name)+'</div><div class="topbar-spacer"></div></div>';
+  let html = '<div class="topbar"><div class="topbar-spacer"></div><div class="topbar-title">'+(house.icon || '🏡')+' '+escapeHtml(house.name)+'</div><button class="topbar-btn" onclick="openEditHouseModal(\''+house.id+'\')">⚙️</button></div>';
   
   // タブバー
   html += '<div class="pet-tabs-bar" style="margin-top: 12px;">';
@@ -2572,19 +3175,18 @@ function renderHouseHomeTab(house) {
   }
   html += '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">これから</h2>';
-  if (upcoming.length > 0) html += '<button class="section-link" onclick="goSchedule()">カレンダー ›</button>';
+  html += '<button class="section-add-btn" onclick="openAddScheduleModal()" title="予定をついか">＋</button>';
   html += '</div>';
   if (upcoming.length === 0) {
-    html += '<div class="schedule-empty"><div style="font-size:30px; margin-bottom:8px;">📅</div>予定はまだありません<br>';
-    html += '<button class="schedule-add" style="margin-top:10px; max-width:200px; margin-left:auto; margin-right:auto; display:block;" onclick="openAddScheduleModal()">＋ 予定をついか</button></div>';
+    html += '<div class="schedule-empty"><div style="font-size:30px; margin-bottom:8px;">📅</div>予定はまだありません</div>';
   } else {
     html += '<div class="schedule-list">';
     for (const s of upcoming) html += renderSchedulePill(s);
-    html += '<button class="schedule-add" onclick="openAddScheduleModal()">＋ 予定をついか</button></div>';
+    html += '</div>';
   }
   html += '</div>';
   html += '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">うちの子</h2><span class="section-count">'+(homePets.length + digitalPets.length)+'にん</span></div>';
+  html += '<div class="section-head"><h2 class="section-title">うちの子</h2><span class="section-count">'+(homePets.length + digitalPets.length)+'匹</span></div>';
   if (pets.length === 0) {
     html += '<div class="empty-state" style="margin: 0;"><div class="emoji">🌷</div>';
     html += '<div class="empty-state-title">まずは、いっしょに暮らす子を</div>';
@@ -2598,7 +3200,7 @@ function renderHouseHomeTab(house) {
   html += '</div>';
   if (rainbowPets.length > 0) {
     html += '<div class="section" style="padding-bottom: 24px;">';
-    html += '<div class="section-head"><h2 class="section-title">虹の橋のひろば</h2><span class="section-count">'+rainbowPets.length+'にん</span></div>';
+    html += '<div class="section-head"><h2 class="section-title">虹の橋のひろば</h2><span class="section-count">'+rainbowPets.length+'匹</span></div>';
     html += '<div class="rainbow-meadow">';
     html += '<div class="rainbow-meadow-title">いつでも、会いに来られる場所</div>';
     html += '<div class="rainbow-meadow-sub">空のお花畑で、みんな仲良く過ごしています🌸</div>';
@@ -2785,20 +3387,25 @@ function renderTabCare(pet, careItems) {
   html += '<button class="care-edit-btn" onclick="openCareEditModal()">✏️ お世話項目をへんしゅう</button>';
   html += '</div>';
   // 繰り返しタスク
-  html += '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">繰り返しタスク</h2><span class="section-count">'+tasks.length+'けん</span></div>';
-  if (futureTasks.length > 0) {
+  html += '<div class="section" id="taskListSection">';
+  html += '<div class="section-head"><h2 class="section-title">繰り返しタスク</h2><span class="section-count">'+tasks.length+'けん</span><button class="section-add-btn" onclick="openAddTaskModal(\''+pet.id+'\')" title="タスクをついか">＋</button></div>';
+  if (tasks.length > 0) {
     html += '<div class="task-upcoming-list">';
-    for (const t of futureTasks.slice(0, 5)) {
-      html += '<button class="task-upcoming" onclick="openEditTaskModal(\''+t.id+'\')">';
+    // 今日のタスク（赤系・期限切れ）と未来のタスク両方をここに並べる
+    // dueTasksは上の「今日のタスク」セクションに出るが、ここでも全件のリストを表示
+    const allDisplayTasks = tasks; // 全タスクを表示（dueも含む）
+    for (const t of allDisplayTasks) {
+      const isDue = isTaskDue(t);
+      html += '<button class="task-upcoming'+(isDue?' task-upcoming-due':'')+'" onclick="openEditTaskModal(\''+t.id+'\')">';
       html += '<div class="task-upcoming-icon">'+escapeHtml(t.icon || '🌿')+'</div>';
       html += '<div class="task-upcoming-title">'+escapeHtml(t.title)+'<span style="font-size:10.5px; color:var(--ink-sub); font-weight:500; margin-left:6px;">'+REPEAT_LABELS[t.repeat]+(t.repeat==='interval'?'('+t.intervalDays+'日)':'')+(t.time?' '+t.time:'')+'</span></div>';
       html += '<div class="task-upcoming-meta">'+(t.nextDue?formatDate(t.nextDue):'')+'</div>';
       html += '</button>';
     }
     html += '</div>';
+  } else {
+    html += '<div class="schedule-empty" style="padding:14px;"><div style="font-size:11.5px; color:var(--ink-sub);">まだタスクがありません</div></div>';
   }
-  html += '<button class="schedule-add" style="margin-top:6px;" onclick="openAddTaskModal(\''+pet.id+'\')">＋ 繰り返しタスクをついか</button>';
   html += '</div>';
   // 最近のお世話
   html += '<div class="section">';
@@ -2813,13 +3420,19 @@ function renderTabCare(pet, careItems) {
       const isToday = log.date === todayKey();
       const dayLabel = isToday ? '' : (formatDate(log.date) + ' ');
       const timeStr = time.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
-      const author = log.authorAvatar || '';
+      // 自分が記録したログは現在のユーザー名・アバターを使う（名前変更を反映）
+      const isMe = !log.authorName || log.authorName === '' || log.authorName === data.user.name || log.authorAvatar === data.user.avatar;
+      const authorAvatar = isMe ? (data.user.avatar || log.authorAvatar || '') : (log.authorAvatar || '');
+      const authorName = isMe ? (data.user.name || '') : (log.authorName || '');
+      const authorTag = (authorAvatar || authorName)
+        ? '<span class="recent-care-author">'+(authorAvatar)+(authorName ? escapeHtml(authorName) : '')+'</span>'
+        : '';
       const icon = care ? care.icon : (log.careIcon || '🌿');
       const name = care ? care.label : (log.careName || '不明');
       html += '<div class="recent-care-item">';
       html += '<button class="recent-care-time recent-care-time-btn" onclick="openCareTimeEditModal(\''+log.date+'\', '+log.timestamp+')" title="タップで時間を編集">'+dayLabel+timeStr+'</button>';
       html += '<div class="recent-care-icon">'+escapeHtml(icon)+'</div>';
-      html += '<div class="recent-care-name">'+escapeHtml(name)+(author?' <span style="font-size:11px; opacity:0.7;">'+author+'</span>':'')+'</div>';
+      html += '<div class="recent-care-name"><span class="recent-care-name-text">'+escapeHtml(name)+'</span>'+authorTag+'</div>';
       html += '<button class="recent-care-delete" onclick="deleteCareLog(\''+log.date+'\', '+log.timestamp+')">×</button>';
       html += '</div>';
     }
@@ -3064,7 +3677,7 @@ function renderTabSchedule(pet) {
   const upcoming = data.schedules.filter(s => s.petId === pet.id && s.date >= todayK).sort((a, b) => compareDate(a.date, b.date));
   const past = data.schedules.filter(s => s.petId === pet.id && s.date < todayK).sort((a, b) => compareDate(b.date, a.date)).slice(0, 5);
   let html = '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">これから</h2><span class="section-count">'+upcoming.length+'けん</span></div>';
+  html += '<div class="section-head"><h2 class="section-title">これから</h2><span class="section-count">'+upcoming.length+'けん</span><button class="section-add-btn" onclick="openAddScheduleModal()" title="予定をついか">＋</button></div>';
   if (upcoming.length === 0) {
     html += '<div class="schedule-empty"><div style="font-size:24px; margin-bottom:6px;">📅</div>予定はありません</div>';
   } else {
@@ -3072,7 +3685,7 @@ function renderTabSchedule(pet) {
     for (const s of upcoming) html += renderSchedulePill(s);
     html += '</div>';
   }
-  html += '<button class="schedule-add" style="margin-top:10px;" onclick="openAddScheduleModal()">＋ 予定をついか</button></div>';
+  html += '</div>';
   if (past.length > 0) {
     html += '<div class="section"><div class="section-head"><h2 class="section-title">過去の予定</h2></div><div class="schedule-list">';
     for (const s of past) html += renderSchedulePill(s);
@@ -3338,16 +3951,16 @@ function renderSettings() {
   html += '<div class="houses-list">';
   for (const h of data.houses) {
     const petCount = getHousePets(h.id).length;
-    html += '<div class="house-card" style="cursor:default;"><div class="house-icon" style="font-size:22px;">🏡</div>';
+    html += '<div class="house-card" style="cursor:default;"><div class="house-icon" style="font-size:22px;">'+(h.icon || '🏡')+'</div>';
     html += '<div class="house-info"><div class="house-name" style="font-size:14px;">'+escapeHtml(h.name)+'</div>';
-    html += '<div class="house-sub">'+petCount+'にん</div></div>';
-    html += '<button class="btn btn-secondary btn-mini" style="margin-right:4px;" onclick="openEditHouseModal(\''+h.id+'\')">なまえ</button>';
+    html += '<div class="house-sub">'+petCount+'匹</div></div>';
+    html += '<button class="btn btn-secondary btn-mini" style="margin-right:4px;" onclick="openEditHouseModal(\''+h.id+'\')">編集</button>';
     if (data.houses.length > 1) html += '<button class="btn btn-danger btn-mini" onclick="confirmDeleteHouse(\''+h.id+'\')">削除</button>';
     html += '</div>';
   }
   html += '</div></div>';
   if (getArchivedPets().length > 0) {
-    html += '<div class="section"><div class="section-head"><h2 class="section-title">一覧から外した子</h2><span class="section-count">'+getArchivedPets().length+'にん</span></div>';
+    html += '<div class="section"><div class="section-head"><h2 class="section-title">一覧から外した子</h2><span class="section-count">'+getArchivedPets().length+'匹</span></div>';
     html += '<div class="houses-list">';
     for (const pet of getArchivedPets()) {
       html += '<div class="house-card" style="cursor:default;"><div class="house-icon" style="font-size:22px; background:var(--surface-warm);">📦</div>';
@@ -3357,19 +3970,25 @@ function renderSettings() {
     }
     html += '</div></div>';
   }
+  // ヘルプセクション
+  html += '<div class="section"><div class="section-head"><h2 class="section-title">ヘルプ</h2></div>';
+  html += '<div class="help-list">';
+  html += '<button class="help-item" onclick="openHowToModal()"><span class="help-icon">📖</span><span class="help-label">使い方</span><span class="help-arrow">›</span></button>';
+  html += '<button class="help-item" onclick="openAboutModal()"><span class="help-icon">🌷</span><span class="help-label">にこわとは</span><span class="help-arrow">›</span></button>';
+  html += '</div></div>';
   html += '<div class="section"><div class="section-head"><h2 class="section-title">データ</h2></div>';
   html += '<div style="background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px;">';
   html += '<div style="font-size:12px; color:var(--ink-sub); line-height:1.7; margin-bottom:12px;">';
   html += '使用容量: <strong style="color:var(--ink-dark);">'+mb+' MB</strong><br>';
   html += '写真: <strong style="color:var(--ink-dark);">'+photoCount+'枚</strong><br>';
-  html += 'ペット: <strong style="color:var(--ink-dark);">'+data.pets.length+'にん</strong></div>';
+  html += 'ペット: <strong style="color:var(--ink-dark);">'+data.pets.length+'匹</strong></div>';
   html += '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
   html += '<button class="btn btn-secondary" style="flex:1; min-width: 110px;" onclick="exportData()">📤 エクスポート</button>';
   html += '<button class="btn btn-secondary" style="flex:1; min-width: 110px;" onclick="importData()">📥 インポート</button>';
   html += '</div></div></div>';
   html += '<div class="section" style="padding-bottom: 24px;"><div class="section-head"><h2 class="section-title">アプリのこと</h2></div>';
   html += '<div style="background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; font-size: 12px; color: var(--ink-sub); line-height: 1.8;">';
-  html += '<strong style="color:var(--ink-dark);">にこわ -nikowa-</strong><br>version 0.9.0<br><br>';
+  html += '<strong style="color:var(--ink-dark);">にこわ -nikowa-</strong><br>version 1.0.0<br><br>';
   html += '虹（に）・心（こ）・輪（わ）<br>ニコニコな輪が広がりますように🌈</div></div>';
   document.getElementById('app').innerHTML = html;
 }
@@ -3454,14 +4073,36 @@ function openThemeModal() {
   }
   document.getElementById('themeModal').classList.add('show');
 }
+const HOUSE_ICONS = ['🏡','🏠','🏘️','🏢','🏤','⛺','🏯','🏰','🌳','🌸','🌷','🌿','⭐','💕','🌙','☀️'];
+let selectedHouseIcon = '🏡';
+
+function renderHouseIconRow(rowId, current) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  let html = '';
+  for (const ic of HOUSE_ICONS) {
+    html += '<button class="house-icon-btn '+(ic === current ? 'selected' : '')+'" data-icon="'+ic+'">'+ic+'</button>';
+  }
+  row.innerHTML = html;
+  row.querySelectorAll('.house-icon-btn').forEach(btn => {
+    btn.onclick = () => {
+      row.querySelectorAll('.house-icon-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedHouseIcon = btn.dataset.icon;
+    };
+  });
+}
+
 function openAddHouseModal() {
   document.getElementById('houseNameInput').value = '';
+  selectedHouseIcon = '🏡';
+  renderHouseIconRow('houseIconRow', selectedHouseIcon);
   document.getElementById('addHouseModal').classList.add('show');
 }
 function saveHouse() {
   const name = document.getElementById('houseNameInput').value.trim();
   if (!name) { showToast('家のなまえを入れてね'); return; }
-  data.houses.push({ id: 'house_' + Date.now(), name: name, createdAt: Date.now() });
+  data.houses.push({ id: 'house_' + Date.now(), name: name, icon: selectedHouseIcon, createdAt: Date.now() });
   saveData();
   closeModal('addHouseModal');
   render();
@@ -3473,6 +4114,8 @@ function openEditHouseModal(houseId) {
   if (!h) return;
   editingHouseId = houseId;
   document.getElementById('editHouseNameInput').value = h.name;
+  selectedHouseIcon = h.icon || '🏡';
+  renderHouseIconRow('editHouseIconRow', selectedHouseIcon);
   document.getElementById('editHouseModal').classList.add('show');
 }
 function saveEditHouse() {
@@ -3482,6 +4125,7 @@ function saveEditHouse() {
   const name = document.getElementById('editHouseNameInput').value.trim();
   if (!name) { showToast('家のなまえを入れてね'); return; }
   h.name = name;
+  h.icon = selectedHouseIcon;
   saveData();
   closeModal('editHouseModal');
   showToast('なまえをかえました🌷');
@@ -3505,6 +4149,61 @@ function confirmDeleteHouse(houseId) {
   saveData();
   render();
 }
+function openHowToModal() {
+  document.getElementById('howToModal').classList.add('show');
+}
+function openAboutModal() {
+  document.getElementById('aboutModal').classList.add('show');
+}
+
+function setupYmdSelectors(prefix, value) {
+  // prefix例: 'petBirth' / 'editPetBirth' / 'petRainbow' / 'editPetRainbow'
+  const yearSel = document.getElementById(prefix + 'Year');
+  const monthSel = document.getElementById(prefix + 'Month');
+  const daySel = document.getElementById(prefix + 'Day');
+  const hidden = document.getElementById(prefix === 'petRainbow' ? 'petRainbowDateInput'
+                : prefix === 'editPetRainbow' ? 'editPetRainbowDateInput'
+                : prefix + 'Input');
+  if (!yearSel || !monthSel || !daySel || !hidden) return;
+  
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  let curY = '', curM = '', curD = '';
+  if (value && value.length >= 10) {
+    curY = value.slice(0,4); curM = String(parseInt(value.slice(5,7))); curD = String(parseInt(value.slice(8,10)));
+  }
+  // 年（今年から30年前まで＋未来1年）
+  let yHtml = '<option value="">年</option>';
+  for (let y = thisYear + 1; y >= thisYear - 30; y--) {
+    yHtml += '<option value="'+y+'" '+(String(y)===curY?'selected':'')+'>'+y+'年</option>';
+  }
+  yearSel.innerHTML = yHtml;
+  // 月
+  let mHtml = '<option value="">月</option>';
+  for (let m = 1; m <= 12; m++) {
+    mHtml += '<option value="'+m+'" '+(String(m)===curM?'selected':'')+'>'+m+'月</option>';
+  }
+  monthSel.innerHTML = mHtml;
+  // 日
+  let dHtml = '<option value="">日</option>';
+  for (let d = 1; d <= 31; d++) {
+    dHtml += '<option value="'+d+'" '+(String(d)===curD?'selected':'')+'>'+d+'日</option>';
+  }
+  daySel.innerHTML = dHtml;
+  
+  const updateHidden = () => {
+    const y = yearSel.value, m = monthSel.value, d = daySel.value;
+    if (y && m && d) {
+      hidden.value = y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    } else {
+      hidden.value = '';
+    }
+  };
+  yearSel.onchange = updateHidden;
+  monthSel.onchange = updateHidden;
+  daySel.onchange = updateHidden;
+}
+
 function openAddPetModal() {
   selectedPetType = 'dog'; selectedPlace = 'home';
   document.getElementById('petNameInput').value = '';
@@ -3512,6 +4211,8 @@ function openAddPetModal() {
   document.getElementById('petBirthInput').value = '';
   document.getElementById('petRainbowDateInput').value = '';
   document.getElementById('rainbowDateGroup').style.display = 'none';
+  setupYmdSelectors('petBirth', '');
+  setupYmdSelectors('petRainbow', '');
   const grid = document.getElementById('petTypeGrid');
   let html = '';
   for (const type of PET_TYPES) {
@@ -3570,6 +4271,8 @@ function openEditPetModal(petId) {
   document.getElementById('editPetBirthInput').value = pet.birth || '';
   document.getElementById('editPetRainbowDateInput').value = pet.rainbowDate || '';
   document.getElementById('editRainbowDateGroup').style.display = pet.place === 'rainbow' ? 'block' : 'none';
+  setupYmdSelectors('editPetBirth', pet.birth || '');
+  setupYmdSelectors('editPetRainbow', pet.rainbowDate || '');
   const placeContent = document.getElementById('editPlaceContent');
   if (pet.place === 'home') {
     placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px; margin-bottom:6px;"><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">🏠 おうちにいます</span></div><button class="btn btn-secondary" style="width:100%; font-size:12px; color:var(--soft-purple);" onclick="askMoveToRainbow()">🌈 虹の橋へ移す</button>';
@@ -3722,7 +4425,7 @@ function saveSchedule() {
   const petId = document.getElementById('schedulePetInput').value;
   const title = document.getElementById('scheduleTitleInput').value.trim();
   const date = document.getElementById('scheduleDateInput').value;
-  if (!petId || !title || !date) { showToast('入力をかくにん'); return; }
+  if (!petId || !title || !date) { showToast('入力をかく匹'); return; }
   if (editingScheduleId) {
     const s = data.schedules.find(x => x.id === editingScheduleId);
     if (s) { s.petId = petId; s.title = title; s.date = date; s.tag = selectedTag; }
@@ -3889,6 +4592,7 @@ function saveTask() {
   if (!petId) { showToast('どの子か えらんでね'); return; }
   if (!title) { showToast('タスク名を入れてね'); return; }
   if (!nextDue) { showToast('日にちを えらんでね'); return; }
+  const isNew = !editingTaskId;
   if (editingTaskId) {
     const t = data.tasks.find(x => x.id === editingTaskId);
     if (t) {
@@ -3908,8 +4612,17 @@ function saveTask() {
   }
   saveData();
   closeModal('taskModal');
-  showToast('保存しました🌷');
+  showToast(isNew ? 'タスクをついかしました🌷' : '保存しました🌷');
+  // お世話タブを表示してタスクリストへスクロール
+  if (data.petTab !== 'care') {
+    data.petTab = 'care';
+    saveData();
+  }
   render();
+  setTimeout(() => {
+    const sec = document.getElementById('taskListSection');
+    if (sec) sec.scrollIntoView({behavior: 'smooth', block: 'center'});
+  }, 100);
 }
 function deleteTask() {
   if (!editingTaskId) return;
@@ -3972,15 +4685,15 @@ function renderSidePanel() {
       for (const h of data.houses) {
         const pets = getHousePets(h.id);
         html += '<div class="side-pet-row" style="grid-template-columns: 1fr auto;">';
-        html += '<div><div class="side-pet-name">🏡 '+escapeHtml(h.name)+'</div>';
-        html += '<div class="side-pet-meta">'+pets.length+'にん</div></div>';
+        html += '<div><div class="side-pet-name">'+(h.icon || '🏡')+' '+escapeHtml(h.name)+'</div>';
+        html += '<div class="side-pet-meta">'+pets.length+'匹</div></div>';
         html += '<button class="side-pet-status" style="border:none; cursor:pointer; font-family:inherit;" onclick="enterHouse(\''+h.id+'\')">入る</button>';
         html += '</div>';
       }
     }
     html += '</div>';
     if (totalPets > 0) {
-      html += '<div class="side-panel-title">全部の子（'+totalPets+'にん）</div>';
+      html += '<div class="side-panel-title">全部の子（'+totalPets+'匹）</div>';
       html += '<div class="side-panel-card">';
       for (const pet of data.pets.filter(p => !p.archived)) {
         const palette = pet.palette || PET_PALETTES[pet.type] || PET_PALETTES.other;
@@ -4090,7 +4803,7 @@ function renderSidePanel() {
     html += '<div class="side-panel-card">';
     html += '<div style="font-size:12.5px; color:var(--ink); line-height:1.9;">';
     html += '🏡 家：<strong>'+data.houses.length+'けん</strong><br>';
-    html += '🐾 うちの子：<strong>'+data.pets.filter(p => !p.archived).length+'にん</strong><br>';
+    html += '🐾 うちの子：<strong>'+data.pets.filter(p => !p.archived).length+'匹</strong><br>';
     html += '📷 写真：<strong>'+Object.keys(photos).length+'枚</strong><br>';
     html += '💾 容量：<strong>'+mb+' MB</strong>';
     html += '</div></div>';
