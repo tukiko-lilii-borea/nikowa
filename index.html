@@ -26,7 +26,7 @@
   html { background: var(--bg); }
   body {
     max-width: 480px; margin: 0 auto;
-    background-image: radial-gradient(rgba(95,169,133,0.24) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(95,169,133,0.18) 1px, transparent 1px);
     background-size: 10px 10px;
   }
   .app-frame { position: relative; }
@@ -42,7 +42,7 @@
       gap: 24px;
       padding: 16px;
       box-sizing: border-box;
-      background-image: radial-gradient(rgba(95,169,133,0.24) 1px, transparent 1px);
+      background-image: radial-gradient(rgba(95,169,133,0.18) 1px, transparent 1px);
       background-size: 10px 10px;
     }
     .app-frame {
@@ -51,7 +51,7 @@
       overflow: hidden;
       box-shadow: 0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
       background: var(--bg);
-      background-image: radial-gradient(rgba(95,169,133,0.24) 1px, transparent 1px);
+      background-image: radial-gradient(rgba(95,169,133,0.18) 1px, transparent 1px);
       background-size: 10px 10px;
       position: relative;
       min-height: 700px;
@@ -485,14 +485,13 @@
   }
   .section { padding: 18px 16px 0; }
   .section-head {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: baseline; justify-content: space-between;
     margin-bottom: 12px;
   }
   .section-title {
     font-size: 15px; font-weight: 700; color: var(--ink-dark);
     letter-spacing: 1.2px; margin: 0;
     display: flex; align-items: center; gap: 6px;
-    flex: 1;
   }
   .section-title::before {
     content: ''; display: inline-block;
@@ -504,20 +503,6 @@
     font-weight: 600; cursor: pointer; font-family: inherit; padding: 4px 8px;
   }
   .section-count { font-size: 11px; color: var(--ink-sub); }
-  .section-add-btn {
-    background: var(--accent-bg);
-    color: var(--accent-deep);
-    border: none;
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    font-size: 16px; font-weight: 700;
-    cursor: pointer; font-family: inherit;
-    display: flex; align-items: center; justify-content: center;
-    line-height: 1;
-    flex-shrink: 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-  }
-  .section-add-btn:active { transform: scale(0.92); }
   .houses-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .house-tile {
     background: var(--surface); border: 1.5px solid var(--line);
@@ -1014,45 +999,78 @@
   }
   .recent-care-list {
     background: var(--surface); border: 1px solid var(--line);
-    border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-soft);
+    border-radius: 14px; box-shadow: var(--shadow-soft);
+    overflow: hidden;
   }
   .recent-care-item {
-    display: grid; grid-template-columns: 70px 28px 1fr 24px;
-    align-items: start; gap: 8px; padding: 10px 12px;
+    display: flex; align-items: center;
+    gap: 6px; padding: 10px 10px;
     border-bottom: 1px dashed var(--line-soft); font-size: 13px;
+    width: 100%;
+    box-sizing: border-box;
   }
   .recent-care-item:last-child { border-bottom: none; }
-  .recent-care-time { font-size: 11.5px; color: var(--mint-deep); font-weight: 700; padding-top: 3px; }
   .recent-care-time-btn {
     background: transparent; border: 1px solid transparent;
-    border-radius: 6px; padding: 3px 6px;
+    border-radius: 6px; padding: 0 4px;
     cursor: pointer; font-family: inherit;
     text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+    line-height: 22px;
+    height: 22px;
   }
   .recent-care-time-btn:active {
     background: var(--mint-bg); border-color: var(--mint);
     transform: scale(0.96);
   }
-  .recent-care-icon { font-size: 18px; text-align: center; padding-top: 2px; }
+  .recent-care-icon {
+    font-size: 18px;
+    flex-shrink: 0; flex-grow: 0; flex-basis: 22px;
+    text-align: center;
+    line-height: 22px;
+    height: 22px;
+    /* row1と同じ位置に揃えるため、name列全体の高さに合わせる */
+    align-self: stretch;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .recent-care-time {
+    font-size: 11.5px; color: var(--mint-deep); font-weight: 700;
+    flex-shrink: 0; flex-grow: 0; flex-basis: 48px;
+    line-height: 22px;
+    align-self: stretch;
+    display: flex; align-items: center;
+  }
   .recent-care-name {
     color: var(--ink); font-weight: 500;
-    display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex: 1 1 0%;
     min-width: 0;
-    padding-top: 4px;
+    overflow: hidden;
+    line-height: 22px;
+    height: 22px;
   }
   .recent-care-name-text {
     overflow: hidden; text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 100%;
-    align-self: flex-start;
+    flex: 0 1 auto;
+    max-width: 50%;
+  }
+  .recent-care-author-wrap {
+    flex: 1 1 0%;
+    display: flex; justify-content: flex-end;
+    min-width: 0;
+    overflow: hidden;
   }
   .recent-care-delete {
     background: transparent; border: none;
     color: var(--ink-light); font-size: 16px; cursor: pointer;
-    padding: 4px 0; font-family: inherit; line-height: 1; border-radius: 4px;
-    align-self: start;
-    width: 24px;
-    text-align: right;
+    padding: 0; line-height: 1;
+    flex-shrink: 0; flex-grow: 0;
+    width: 18px; height: 18px;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-variant-emoji: text;
   }
   .memo-card {
     background: var(--surface); border: 1px solid var(--line);
@@ -1524,16 +1542,14 @@
     display: inline-flex; align-items: center; gap: 2px;
     background: var(--surface-warm);
     border-radius: 100px;
-    padding: 1px 7px;
-    font-size: 9.5px;
+    padding: 2px 6px;
+    font-size: 6.5px;
     color: var(--ink-sub);
     font-weight: 500;
-    flex-shrink: 0;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    align-self: flex-end;
   }
   .help-list {
     display: flex; flex-direction: column; gap: 6px;
@@ -1778,7 +1794,7 @@
       <button class="place-btn" data-tag="その他"><span class="icon">📌</span><span class="label">その他</span></button>
     </div></div>
   <div class="modal-actions">
-    <button class="btn btn-danger" id="scheduleDeleteBtn" onclick="deleteSchedule()" style="display:none; flex:0 0 auto; padding: 12px 16px;">削除</button>
+    <button class="btn btn-danger" id="scheduleDeleteBtn" onclick="deleteSchedule()" style="display:none; flex:0 0 auto; padding: 12px 16px;">手放す</button>
     <button class="btn btn-secondary" onclick="closeModal('addScheduleModal')">やめる</button>
     <button class="btn btn-primary" onclick="saveSchedule()">ほぞん</button>
   </div>
@@ -1825,7 +1841,7 @@
   <div class="form-group"><label class="form-label">いつから始める？</label>
     <input type="date" class="form-input" id="taskNextDueInput"></div>
   <div class="modal-actions">
-    <button class="btn btn-danger" id="taskDeleteBtn" onclick="deleteTask()" style="display:none; flex:0 0 auto; padding: 12px 16px;">削除</button>
+    <button class="btn btn-danger" id="taskDeleteBtn" onclick="deleteTask()" style="display:none; flex:0 0 auto; padding: 12px 16px;">整理する</button>
     <button class="btn btn-secondary" onclick="closeModal('taskModal')">やめる</button>
     <button class="btn btn-primary" onclick="saveTask()">ほぞん</button>
   </div>
@@ -1942,7 +1958,7 @@
     </button>
     <button class="btn btn-secondary" style="text-align:left; padding: 14px 16px; background: var(--accent-bg);" onclick="postMenuDelete()">
       <div style="font-size:14px; font-weight:700; color:var(--accent-deep);">🌷 手放す</div>
-      <div style="font-size:11px; color:var(--ink-sub); font-weight:500;">この投稿と写真を消します</div>
+      <div style="font-size:11px; color:var(--ink-sub); font-weight:500;">この投稿と写真は戻せません</div>
     </button>
   </div>
   <div class="modal-actions">
@@ -2020,35 +2036,35 @@ const MAX_PHOTO_SIZE = 800;
 const THEMES = {
   mint: { name: 'チョコミント', emoji: '🍃', pattern: 'dot',
     vars: { '--bg':'#E8F2EC','--surface':'#FBFDFB','--surface-warm':'#F4F9F5','--line':'#BFD9C8','--line-soft':'#D9E8DF','--ink-dark':'#2D4A3C','--ink':'#46604F','--ink-sub':'#7A958A','--ink-light':'#A8BFB2','--mint':'#8FC9AB','--mint-deep':'#5FA985','--mint-bg':'#DCEBE2','--accent':'#E88AA0','--accent-deep':'#D26A82','--accent-bg':'#FCE4EB','--today-bg':'#FFE9F0','--today-border':'#F5B4C5','--warm-yellow':'#F5D77A','--soft-purple':'#B8A5D9' },
-    paperColor: 'rgba(95,169,133,0.24)',
+    paperColor: 'rgba(95,169,133,0.18)',
     headerGrad: 'linear-gradient(180deg, #D5E8DD 0%, #C4DFD0 100%)' },
   soda: { name: 'ソーダ', emoji: '🥤', pattern: 'polka',
     vars: { '--bg':'#E5F1F8','--surface':'#FBFDFE','--surface-warm':'#F2F8FC','--line':'#B6D4E5','--line-soft':'#D6E5EE','--ink-dark':'#1E3A55','--ink':'#3A5470','--ink-sub':'#7A93A8','--ink-light':'#AFC4D5','--mint':'#90C8E4','--mint-deep':'#5BA8D6','--mint-bg':'#D6EBF6','--accent':'#F5C95C','--accent-deep':'#D8A52E','--accent-bg':'#FFF4D2','--today-bg':'#FFF4D2','--today-border':'#F0CE6C','--warm-yellow':'#F5D77A','--soft-purple':'#A8B5D9' },
-    paperColor: 'rgba(91,168,214,0.10)',
+    paperColor: 'rgba(91,168,214,0.07)',
     headerGrad: 'linear-gradient(180deg, #D2E7F2 0%, #BFD8E8 100%)' },
   strawberry: { name: 'いちごみるく', emoji: '🍓', pattern: 'gingham',
     vars: { '--bg':'#FBEDF1','--surface':'#FFFBFC','--surface-warm':'#FCEFF3','--line':'#F0C6D1','--line-soft':'#F4D9E0','--ink-dark':'#5A2D3D','--ink':'#7A4858','--ink-sub':'#A07585','--ink-light':'#C8A6B0','--mint':'#F5A6BD','--mint-deep':'#E07298','--mint-bg':'#FAD9E2','--accent':'#E07298','--accent-deep':'#C44F77','--accent-bg':'#FAD9E2','--today-bg':'#FFE0EA','--today-border':'#F0A6BD','--warm-yellow':'#F5D77A','--soft-purple':'#B8A5D9' },
-    paperColor: 'rgba(224,114,152,0.07)',
+    paperColor: 'rgba(224,114,152,0.05)',
     headerGrad: 'linear-gradient(180deg, #FAD9E2 0%, #F5C6D3 100%)' },
   honey: { name: 'ハニーレモン', emoji: '🍯', pattern: 'stripe',
     vars: { '--bg':'#FCF3D8','--surface':'#FFFCF2','--surface-warm':'#FBF5DC','--line':'#EBD79A','--line-soft':'#F0E2B6','--ink-dark':'#5A4218','--ink':'#7A5C2A','--ink-sub':'#A48958','--ink-light':'#D2BD8A','--mint':'#F5C56A','--mint-deep':'#E8A22E','--mint-bg':'#FBEBC0','--accent':'#7BB48E','--accent-deep':'#5A8E6E','--accent-bg':'#E1EFE2','--today-bg':'#FCE9C0','--today-border':'#E8B958','--warm-yellow':'#F5D050','--soft-purple':'#C8A85A' },
-    paperColor: 'rgba(232,162,46,0.24)',
+    paperColor: 'rgba(232,162,46,0.18)',
     headerGrad: 'linear-gradient(180deg, #F8E7B5 0%, #F2D88E 100%)' },
   pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham',
     vars: { '--bg':'#F7E8C9','--surface':'#FFF8E8','--surface-warm':'#FBEFD2','--line':'#E0BC7C','--line-soft':'#EAD2A0','--ink-dark':'#4D2E10','--ink':'#704418','--ink-sub':'#9C7A42','--ink-light':'#CBAA78','--mint':'#D89E58','--mint-deep':'#B8762A','--mint-bg':'#F2DCAE','--accent':'#C84A5E','--accent-deep':'#A1334A','--accent-bg':'#F8DCE0','--today-bg':'#F8DCE0','--today-border':'#E08894','--warm-yellow':'#F5D050','--soft-purple':'#C8A878' },
-    paperColor: 'rgba(184,118,42,0.07)',
+    paperColor: 'rgba(184,118,42,0.05)',
     headerGrad: 'linear-gradient(180deg, #F0D6A0 0%, #E5C079 100%)' },
   cola: { name: 'コーラ', emoji: '🥃', pattern: 'polka',
     vars: { '--bg':'#F2E7DC','--surface':'#FBF6EE','--surface-warm':'#F2E5D0','--line':'#C5A988','--line-soft':'#DBC4A4','--ink-dark':'#2A1A0E','--ink':'#48301E','--ink-sub':'#85664A','--ink-light':'#B89A7A','--mint':'#A04A36','--mint-deep':'#722616','--mint-bg':'#E8D2C2','--accent':'#D9354A','--accent-deep':'#B0202E','--accent-bg':'#FAD9DC','--today-bg':'#FAD9DC','--today-border':'#E68088','--warm-yellow':'#F5D050','--soft-purple':'#C8A878' },
-    paperColor: 'rgba(114,38,22,0.10)',
+    paperColor: 'rgba(114,38,22,0.07)',
     headerGrad: 'linear-gradient(180deg, #E8D5BE 0%, #D8BC9A 100%)' },
   lavender: { name: 'ラベンダーマカロン', emoji: '🪻', pattern: 'dot',
     vars: { '--bg':'#EFE5F5','--surface':'#FAF5FC','--surface-warm':'#F0E5F5','--line':'#C8B4DA','--line-soft':'#DCCDE6','--ink-dark':'#3D2A55','--ink':'#5C4577','--ink-sub':'#8E7AA5','--ink-light':'#BCAACE','--mint':'#B89DD2','--mint-deep':'#9477BF','--mint-bg':'#E1D2EE','--accent':'#E08FB0','--accent-deep':'#B86888','--accent-bg':'#F8DDE6','--today-bg':'#F8DDE6','--today-border':'#E0A2BA','--warm-yellow':'#F5D77A','--soft-purple':'#9477BF' },
-    paperColor: 'rgba(148,119,191,0.24)',
+    paperColor: 'rgba(148,119,191,0.18)',
     headerGrad: 'linear-gradient(180deg, #E0D0EC 0%, #CDB8E0 100%)' },
   matcha: { name: '抹茶わらび', emoji: '🍵', pattern: 'stripe',
     vars: { '--bg':'#EAEDD5','--surface':'#F8FAEC','--surface-warm':'#EFF3D5','--line':'#B5BF82','--line-soft':'#CFD7A2','--ink-dark':'#2F3B1A','--ink':'#4A582A','--ink-sub':'#7A8852','--ink-light':'#B5BF82','--mint':'#9BB166','--mint-deep':'#6E8A3A','--mint-bg':'#DCE5B8','--accent':'#C44864','--accent-deep':'#962E48','--accent-bg':'#F5D6DA','--today-bg':'#F5D6DA','--today-border':'#D88090','--warm-yellow':'#D8B65A','--soft-purple':'#A85A78' },
-    paperColor: 'rgba(110,138,58,0.24)',
+    paperColor: 'rgba(110,138,58,0.18)',
     headerGrad: 'linear-gradient(180deg, #D9DEB6 0%, #C5CC95 100%)' }
 };
 
@@ -2594,7 +2610,7 @@ function postMenuEdit() {
 function postMenuDelete() {
   closeModal('postMenuModal');
   if (!postMenuTargetId) return;
-  if (!confirm('この投稿を消しますか？\n写真もいっしょに手放されます。')) return;
+  if (!confirm('この投稿を手放しますか？\n写真もいっしょに手放されます。')) return;
   const post = data.posts.find(p => p.id === postMenuTargetId);
   if (post) {
     for (const pid of (post.photoIds || [])) deletePhoto(pid);
@@ -2617,7 +2633,7 @@ function saveEditPost() {
   render();
 }
 function deletePost(postId) {
-  if (!confirm('この投稿を消しますか？')) return;
+  if (!confirm('この投稿を手放しますか？')) return;
   const post = data.posts.find(p => p.id === postId);
   if (post) {
     for (const pid of (post.photoIds || [])) deletePhoto(pid);
@@ -3175,14 +3191,15 @@ function renderHouseHomeTab(house) {
   }
   html += '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">これから</h2>';
-  html += '<button class="section-add-btn" onclick="openAddScheduleModal()" title="予定をついか">＋</button>';
+  if (upcoming.length > 0) html += '<button class="section-link" onclick="goSchedule()">カレンダー ›</button>';
   html += '</div>';
   if (upcoming.length === 0) {
-    html += '<div class="schedule-empty"><div style="font-size:30px; margin-bottom:8px;">📅</div>予定はまだありません</div>';
+    html += '<div class="schedule-empty"><div style="font-size:30px; margin-bottom:8px;">📅</div>予定はまだありません<br>';
+    html += '<button class="schedule-add" style="margin-top:10px; max-width:200px; margin-left:auto; margin-right:auto; display:block;" onclick="openAddScheduleModal()">＋ 予定をついか</button></div>';
   } else {
     html += '<div class="schedule-list">';
     for (const s of upcoming) html += renderSchedulePill(s);
-    html += '</div>';
+    html += '<button class="schedule-add" onclick="openAddScheduleModal()">＋ 予定をついか</button></div>';
   }
   html += '</div>';
   html += '<div class="section">';
@@ -3388,7 +3405,7 @@ function renderTabCare(pet, careItems) {
   html += '</div>';
   // 繰り返しタスク
   html += '<div class="section" id="taskListSection">';
-  html += '<div class="section-head"><h2 class="section-title">繰り返しタスク</h2><span class="section-count">'+tasks.length+'けん</span><button class="section-add-btn" onclick="openAddTaskModal(\''+pet.id+'\')" title="タスクをついか">＋</button></div>';
+  html += '<div class="section-head"><h2 class="section-title">繰り返しタスク</h2><span class="section-count">'+tasks.length+'けん</span></div>';
   if (tasks.length > 0) {
     html += '<div class="task-upcoming-list">';
     // 今日のタスク（赤系・期限切れ）と未来のタスク両方をここに並べる
@@ -3406,6 +3423,7 @@ function renderTabCare(pet, careItems) {
   } else {
     html += '<div class="schedule-empty" style="padding:14px;"><div style="font-size:11.5px; color:var(--ink-sub);">まだタスクがありません</div></div>';
   }
+  html += '<button class="schedule-add" style="margin-top:6px;" onclick="openAddTaskModal(\''+pet.id+'\')">＋ 繰り返しタスクをついか</button>';
   html += '</div>';
   // 最近のお世話
   html += '<div class="section">';
@@ -3432,8 +3450,9 @@ function renderTabCare(pet, careItems) {
       html += '<div class="recent-care-item">';
       html += '<button class="recent-care-time recent-care-time-btn" onclick="openCareTimeEditModal(\''+log.date+'\', '+log.timestamp+')" title="タップで時間を編集">'+dayLabel+timeStr+'</button>';
       html += '<div class="recent-care-icon">'+escapeHtml(icon)+'</div>';
-      html += '<div class="recent-care-name"><span class="recent-care-name-text">'+escapeHtml(name)+'</span>'+authorTag+'</div>';
-      html += '<button class="recent-care-delete" onclick="deleteCareLog(\''+log.date+'\', '+log.timestamp+')">×</button>';
+      html += '<div class="recent-care-name">';
+      html += '<div class="recent-care-name"><span class="recent-care-name-text">'+escapeHtml(name)+'</span>'+(authorTag ? '<div class="recent-care-author-wrap">'+authorTag+'</div>' : '<div class="recent-care-author-wrap"></div>')+'<button class="recent-care-delete" onclick="deleteCareLog(\''+log.date+'\', '+log.timestamp+')">✕</button></div>';
+      html += '</div>';
       html += '</div>';
     }
     html += '</div>';
@@ -3677,7 +3696,7 @@ function renderTabSchedule(pet) {
   const upcoming = data.schedules.filter(s => s.petId === pet.id && s.date >= todayK).sort((a, b) => compareDate(a.date, b.date));
   const past = data.schedules.filter(s => s.petId === pet.id && s.date < todayK).sort((a, b) => compareDate(b.date, a.date)).slice(0, 5);
   let html = '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">これから</h2><span class="section-count">'+upcoming.length+'けん</span><button class="section-add-btn" onclick="openAddScheduleModal()" title="予定をついか">＋</button></div>';
+  html += '<div class="section-head"><h2 class="section-title">これから</h2><span class="section-count">'+upcoming.length+'けん</span></div>';
   if (upcoming.length === 0) {
     html += '<div class="schedule-empty"><div style="font-size:24px; margin-bottom:6px;">📅</div>予定はありません</div>';
   } else {
@@ -3685,7 +3704,7 @@ function renderTabSchedule(pet) {
     for (const s of upcoming) html += renderSchedulePill(s);
     html += '</div>';
   }
-  html += '</div>';
+  html += '<button class="schedule-add" style="margin-top:10px;" onclick="openAddScheduleModal()">＋ 予定をついか</button></div>';
   if (past.length > 0) {
     html += '<div class="section"><div class="section-head"><h2 class="section-title">過去の予定</h2></div><div class="schedule-list">';
     for (const s of past) html += renderSchedulePill(s);
@@ -4442,7 +4461,7 @@ function saveSchedule() {
 }
 function deleteSchedule() {
   if (!editingScheduleId) return;
-  if (!confirm('この予定を削除します。')) return;
+  if (!confirm('この予定を手放します。')) return;
   data.schedules = data.schedules.filter(s => s.id !== editingScheduleId);
   saveData();
   closeModal('addScheduleModal');
@@ -4626,7 +4645,7 @@ function saveTask() {
 }
 function deleteTask() {
   if (!editingTaskId) return;
-  if (!confirm('このタスクを削除します。')) return;
+  if (!confirm('このタスクを整理します。')) return;
   data.tasks = data.tasks.filter(t => t.id !== editingTaskId);
   saveData();
   closeModal('taskModal');
