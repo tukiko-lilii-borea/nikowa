@@ -169,19 +169,9 @@
   .topbar .topbar-title,
   .topbar .topbar-btn,
   .topbar .topbar-spacer,
-  .topbar .topbar-date-badge { position: relative; z-index: 2; }
-  .topbar-with-date { padding-top: 26px; position: sticky; }
-  .topbar-date-badge {
-    position: absolute;
-    top: 4px; left: 12px;
-    font-size: 10.5px; font-weight: 700;
-    color: var(--ink-dark);
-    background: rgba(255,255,255,0.7);
-    padding: 2px 8px; border-radius: 8px;
-    letter-spacing: 0.4px;
-    backdrop-filter: blur(2px);
-    border: 1px solid rgba(255,255,255,0.5);
-  }
+  .topbar .topbar-title,
+  .topbar .topbar-btn,
+  .topbar .topbar-spacer { position: relative; z-index: 2; }
   .topbar-btn {
     background: var(--surface); border: 1.5px solid var(--line);
     border-radius: 10px; width: 34px; height: 34px;
@@ -561,7 +551,7 @@
   }
   .section { padding: 18px 16px 0; }
   .section-head {
-    display: flex; align-items: baseline; justify-content: space-between;
+    display: flex; align-items: flex-end; justify-content: space-between;
     margin-bottom: 12px;
   }
   .section-title {
@@ -578,7 +568,7 @@
     font-size: 11px; color: var(--accent-deep);
     font-weight: 600; cursor: pointer; font-family: inherit; padding: 4px 8px;
   }
-  .section-count { font-size: 11px; color: var(--ink-sub); }
+  .section-count { font-size: 11px; color: var(--ink-sub); margin-right: auto; padding-left: 6px; }
   .houses-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .house-tile {
     background: var(--surface); border: 1.5px solid var(--line);
@@ -936,7 +926,7 @@
   }
   .pet-tab-icon { font-size: 16px; }
   .pet-tab-label {
-    font-size: 10.5px; font-weight: 700; letter-spacing: 0.3px;
+    font-size: 10.5px; font-weight: 900; letter-spacing: 0.3px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
   }
   .pet-tab-content { border-top: 2px solid var(--mint); }
@@ -2040,7 +2030,7 @@
 <div class="app" id="app"></div>
 
 <nav class="bottom-nav" id="bottomNav" style="display:none;">
-  <button class="nav-btn active" data-view="houses"><span class="nav-icon">🏘️</span><span>まち</span></button>
+  <button class="nav-btn active" data-view="houses"><span class="nav-icon">🏘️</span><span>ホーム</span></button>
   <button class="nav-btn nav-back-btn" id="navBackBtn" onclick="navBack()" style="display:none;"><span class="nav-icon">‹</span><span>戻る</span></button>
   <button class="nav-btn" data-view="town"><span class="nav-icon">🏙</span><span>タウン</span></button>
   <button class="nav-btn" data-view="schedule"><span class="nav-icon">📅</span><span>よてい</span></button>
@@ -2550,6 +2540,11 @@ function paperBackgroundSize(theme) {
 }
 
 // topbar用の桜吹雪HTML生成
+// 日付バッジ（現在無効）
+function topbarDateHtml() {
+  return '';
+}
+
 function topbarPetalHtml() {
   var colors = ['var(--accent)','var(--accent-deep)','var(--soft-purple)','var(--mint-deep)'];
   var lefts = [5,68,22,85,38,55,12,78];
@@ -3048,7 +3043,7 @@ function renderRoomBox(pet, isLarge) {
   const hasPhotoClass = profilePhoto ? 'has-photo' : '';
   return '<div class="'+(isLarge?'pet-detail-room':'pet-room-window')+' '+hasPhotoClass+'" style="'+photoStyle+'">'
     + '<div class="'+(isLarge?'pet-detail-sprite':'pet-room-sprite')+'">'
-    + spriteSVG(pet.type, palette)
+    + (profilePhoto ? '' : '')
     + '</div></div>';
 }
 
@@ -3551,15 +3546,10 @@ function renderMainHouseCard(house) {
   // ペットのアイコン並び
   if (petCount > 0) {
     html += '<div class="main-house-pets">';
-    for (const pet of pets.slice(0, 5)) {
-      const pPhoto = pet.profilePhotoId && photos[pet.profilePhotoId];
-      if (pPhoto) {
-        html += '<div class="main-house-pet main-house-pet-photo" style="background-image:url(\''+pPhoto+'\')"></div>';
-      } else {
-        html += '<div class="main-house-pet">'+(PET_EMOJIS[pet.type] || '✨')+'</div>';
-      }
+    for (const pet of pets.slice(0, 10)) {
+      html += '<div class="main-house-pet">'+(PET_EMOJIS[pet.type] || '✨')+'</div>';
     }
-    if (pets.length > 5) html += '<div class="main-house-pet-more">+'+(pets.length-5)+'</div>';
+    if (pets.length > 10) html += '<div class="main-house-pet-more">+'+(pets.length-10)+'</div>';
     html += '</div>';
   }
   
@@ -3632,7 +3622,7 @@ function renderPetRoomCard(pet) {
   if (streak >= 3 && pet.place === 'home') html += '<div class="pet-room-streak">🔥'+streak+'日</div>';
   html += '<div class="pet-room-nameplate"><span class="pet-room-name">';
   if (pet.place !== 'home') html += PLACE_ICONS[pet.place]+' ';
-  html += escapeHtml(pet.name)+'</span><span class="pet-room-species">'+PET_TYPE_NAMES[pet.type]+'</span></div>';
+  html += escapeHtml(pet.name)+' '+(PET_EMOJIS[pet.type] || '✨')+'</span><span class="pet-room-species">'+(pet.breed ? escapeHtml(pet.breed) : PET_TYPE_NAMES[pet.type])+'</span></div>';
   if (isHome && summary && summary.count > 0) {
     html += '<div class="pet-room-summary">今日 '+summary.count+'件 ・ 最終 '+lastTimeStr+'</div>';
   }
@@ -3657,6 +3647,12 @@ function renderHouse() {
   if (!house) { currentView = 'houses'; render(); return; }
   
   let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">'+(house.icon || '🏡')+' '+escapeHtml(house.name)+'</div><button class="topbar-btn" onclick="openEditHouseModal(\''+house.id+'\')">⚙️</button></div>';
+  
+  // 日付ライン
+  html += '<div style="text-align:right; padding:2px 16px 0; font-size:9px; color:var(--ink-sub); font-weight:700; letter-spacing:0.3px;">';
+  var _d = new Date();
+  html += _d.getFullYear()+'/'+(_d.getMonth()+1)+'/'+_d.getDate()+' ('+['日','月','火','水','木','金','土'][_d.getDay()]+')';
+  html += '</div>';
   
   // タブバー
   html += '<div class="pet-tabs-bar" style="margin-top: 12px;">';
@@ -3725,11 +3721,11 @@ function renderHouseHomeTab(house) {
   }
   html += '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">これから</h2>';
-  if (upcoming.length > 0) html += '<button class="section-link" onclick="goSchedule()">カレンダー ›</button>';
+  html += '<button class="section-link" onclick="openAddScheduleModal()">＋ ついか</button>';
+  if (upcoming.length > 0) html += '<button class="section-link" onclick="goSchedule()" style="margin-left:4px;">カレンダー ›</button>';
   html += '</div>';
   if (upcoming.length === 0) {
-    html += '<div class="schedule-empty"><div style="font-size:30px; margin-bottom:8px;">📅</div>予定はまだありません<br>';
-    html += '<button class="schedule-add" style="margin-top:10px; max-width:200px; margin-left:auto; margin-right:auto; display:block;" onclick="openAddScheduleModal()">＋ 予定をついか</button></div>';
+    html += '<div class="schedule-empty"><div style="font-size:30px; margin-bottom:8px;">📅</div>予定はまだありません</div>';
   } else {
     html += '<div class="schedule-list">';
     for (const s of upcoming) html += renderSchedulePill(s);
@@ -3784,6 +3780,7 @@ function renderHouseDiaryTab(house) {
 
 function enterPet(petId) {
   data.activePetId = petId;
+  data.petTab = 'care';
   postDraft = { text: '', photoIds: [], visibility: 'house', date: null, time: null };
   petCalSelected = todayKey();
   diaryCalSelected = null;
@@ -3830,18 +3827,24 @@ function renderPet() {
   const todayD = new Date();
   const todayDateStr = todayD.getFullYear()+'/'+String(todayD.getMonth()+1).padStart(2,'0')+'/'+String(todayD.getDate()).padStart(2,'0');
   const todayWd = ['日','月','火','水','木','金','土'][todayD.getDay()];
-  let html = '<div class="topbar topbar-with-date">'+topbarPetalHtml();
+  let html = '<div class="topbar">'+topbarPetalHtml();
   html += '<div class="topbar-spacer"></div>';
-  html += '<div class="topbar-date-badge">'+todayDateStr+' ('+todayWd+')</div>';
-  html += '<div class="topbar-title">'+(PLACE_ICONS[pet.place]||'🏠')+' '+escapeHtml(pet.name)+'の部屋</div>';
+  html += '<div class="topbar-title">'+(PET_EMOJIS[pet.type] || '✨')+' '+escapeHtml(pet.name)+'の部屋</div>';
   html += '<div class="topbar-spacer"></div></div>';
+  html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
   html += '<div class="pet-detail-window">';
   html += renderRoomBox(pet, true);
   html += '<button class="photo-set-btn" onclick="openEditPetModal(\''+pet.id+'\')">⚙️ 設定</button>';
-  // 種類（breed）表示
-  const breedStr = pet.breed ? ' ・ '+escapeHtml(pet.breed) : '';
-  html += '<div class="pet-detail-info"><div><h2 class="pet-detail-name">'+escapeHtml(pet.name)+'</h2>';
-  html += '<div class="pet-detail-meta">'+PET_TYPE_NAMES[pet.type]+(age?' ・ '+age:'')+breedStr+'</div></div>';
+  // 種類（breed）・誕生日表示
+  const breedStr = pet.breed ? escapeHtml(pet.breed) : PET_TYPE_NAMES[pet.type];
+  let birthDisplay = '';
+  if (pet.birth) {
+    const bd = new Date(pet.birth);
+    birthDisplay = '🎂 '+(bd.getFullYear())+'/'+(bd.getMonth()+1)+'/'+(bd.getDate());
+  }
+  const metaParts = [birthDisplay, breedStr].filter(Boolean);
+  html += '<div class="pet-detail-info"><div><h2 class="pet-detail-name">'+escapeHtml(pet.name)+' '+(PET_EMOJIS[pet.type] || '✨')+'</h2>';
+  html += '<div class="pet-detail-meta">'+metaParts.join(' ・ ')+'</div></div>';
   html += '<div class="pet-detail-place-tag">'+PLACE_ICONS[pet.place]+' '+PLACE_NAMES[pet.place]+'</div></div></div>';
   if (memorials.length > 0) {
     html += '<div class="section"><div class="memorial-card"><div class="memorial-title">✨ 今日は特別な日</div>';
@@ -3892,7 +3895,7 @@ function renderPet() {
     html += '<div class="empty-state-title">アプリの中の子</div><div class="empty-state-text">育成機能はもう少し先で🌷</div></div></div>';
   }
   html += '<div class="section" style="padding-bottom: 24px;">';
-  html += '<button class="btn btn-secondary" style="width:100%; max-width: 240px; margin: 0 auto; display: block; color: var(--ink-sub);" onclick="openTidyPetModal(\''+pet.id+'\')">この子の記録を整理する</button></div>';
+  html += '<button class="btn btn-secondary" style="width:100%; max-width: 200px; margin: 48px auto 24px; display: block; color: var(--ink-light); font-size: 11px; padding: 8px 12px; border: 1px dashed var(--line-soft);" onclick="openTidyPetModal(\''+pet.id+'\')">この子の記録を整理する</button></div>';
   document.getElementById('app').innerHTML = html;
 }
 
@@ -3940,7 +3943,7 @@ function renderTabCare(pet, careItems) {
   html += '</div>';
   // 繰り返しタスク
   html += '<div class="section" id="taskListSection">';
-  html += '<div class="section-head"><h2 class="section-title">繰り返しタスク</h2><span class="section-count">'+tasks.length+'けん</span></div>';
+  html += '<div class="section-head"><h2 class="section-title">繰り返しタスク</h2><span class="section-count">'+tasks.length+'けん</span><button class="section-link" onclick="openAddTaskModal(\''+pet.id+'\')">＋ ついか</button></div>';
   if (tasks.length > 0) {
     html += '<div class="task-upcoming-list">';
     // 今日のタスク（赤系・期限切れ）と未来のタスク両方をここに並べる
@@ -3958,7 +3961,6 @@ function renderTabCare(pet, careItems) {
   } else {
     html += '<div class="schedule-empty" style="padding:14px;"><div style="font-size:11.5px; color:var(--ink-sub);">まだタスクがありません</div></div>';
   }
-  html += '<button class="schedule-add" style="margin-top:6px;" onclick="openAddTaskModal(\''+pet.id+'\')">＋ 繰り返しタスクをついか</button>';
   html += '</div>';
   // 最近のお世話
   html += '<div class="section">';
@@ -4070,13 +4072,14 @@ function renderTabDiary(pet) {
   }
   html += '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">'+escapeHtml(pet.name)+'のおもいで'+titleSuffix+'</h2><span class="section-count">'+posts.length+'件</span>';
+  html += '<button class="section-link" onclick="openDiaryComposeModal(\''+pet.id+'\''+(diaryCalSelected ? ', \''+diaryCalSelected+'\'' : '')+')">＋ 日記を書く</button>';
   if (diaryCalSelected) html += '<button class="cal-clear-btn" onclick="diaryCalSelected=null; render();">×解除</button>';
   html += '</div>';
   if (posts.length === 0) {
     if (diaryCalSelected) {
-      html += '<div class="schedule-empty"><div style="font-size:24px; margin-bottom:6px;">📓</div>この日の日記はまだありません<br><button class="schedule-add" style="margin-top:10px; max-width:220px;" onclick="openDiaryComposeModal(\''+pet.id+'\', \''+diaryCalSelected+'\')">＋ この日の日記を書く</button></div>';
+      html += '<div class="schedule-empty"><div style="font-size:24px; margin-bottom:6px;">📓</div>この日の日記はまだありません</div>';
     } else {
-      html += '<div class="schedule-empty"><div style="font-size:24px; margin-bottom:6px;">📓</div>まだ日記がありません<br><button class="schedule-add" style="margin-top:10px; max-width:220px;" onclick="openDiaryComposeModal(\''+pet.id+'\')">＋ 最初の日記を書く</button></div>';
+      html += '<div class="schedule-empty"><div style="font-size:24px; margin-bottom:6px;">📓</div>まだ日記がありません</div>';
     }
   } else {
     html += '<div class="post-scroll-frame">';
@@ -4470,6 +4473,7 @@ function renderTown() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('town');
   let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">🏙 にこわタウン</div><button class="topbar-btn" onclick="openAddFacilityModal()">＋</button></div>';
+  html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9.5px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
   
   const facilities = data.facilities || [];
   
@@ -4922,6 +4926,7 @@ function renderSchedule() {
   if (!schedCalSelected) schedCalSelected = todayKey();
   let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">📅 よてい</div><button class="topbar-btn" onclick="openAddScheduleModal()">＋</button></div>';
   html += '<div class="section">';
+  html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9.5px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
   html += '<div class="section-head"><h2 class="section-title">'+(house ? escapeHtml(house.name) : '')+'</h2></div>';
   html += renderCalendar(schedCalMonth, schedCalSelected, { houseId: houseId }, 'sched');
   if (schedCalSelected) html += renderDayDetail(schedCalSelected, { houseId: houseId });
@@ -4942,6 +4947,7 @@ function renderSettings() {
   let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">⚙️ せってい</div><div class="topbar-spacer"></div></div>';
   html += '<div class="section"><div class="section-head"><h2 class="section-title">家</h2></div>';
   html += '<div class="houses-list">';
+  html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9.5px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
   for (const h of data.houses) {
     const petCount = getHousePets(h.id).length;
     html += '<div class="house-card" style="cursor:default;"><div class="house-icon" style="font-size:22px;">'+(h.icon || '🏡')+'</div>';
@@ -5836,6 +5842,7 @@ function render() {
   else if (currentView === 'facility') renderFacility();
   else renderHouses();
   renderSidePanel();
+  window.scrollTo(0, 0);
 }
 loadData();
 applyTheme(data.themeId || 'mint');
