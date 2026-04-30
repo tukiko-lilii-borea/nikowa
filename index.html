@@ -366,19 +366,18 @@
   .mode-section {
     padding: 0 16px 18px;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
   }
   .mode-card {
-    flex: 1;
     aspect-ratio: 1;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 8px;
+    gap: 6px;
     background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
     border: 1px solid rgba(255,255,255,0.7);
     border-radius: 20px;
-    padding: 12px 8px;
+    padding: 8px 4px;
     cursor: pointer; font-family: inherit;
     box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
     position: relative;
@@ -386,6 +385,17 @@
     isolation: isolate;
     transition: transform 0.1s ease;
   }
+  /* ○ 円形（スイーツ） */
+  .mode-card.shape-circle { border-radius: 50%; }
+  /* □ 正方形（和食） */
+  .mode-card.shape-square { border-radius: 4px; }
+  /* ◇ ひし形（大人） */
+  .mode-card.shape-diamond {
+    border-radius: 12px;
+    transform: rotate(45deg);
+  }
+  .mode-card.shape-diamond > * { transform: rotate(-45deg); }
+  .mode-card.shape-diamond:active { transform: rotate(45deg) scale(0.94); }
   .mode-card:active { transform: scale(0.96); }
   /* 偽すりガラス：bodyと同じ背景柄＋テーマaccent色をうっすら */
   .mode-card::before {
@@ -406,10 +416,10 @@
     opacity: 0.85;
   }
   .mode-card > * { position: relative; z-index: 1; }
-  .mode-card-icon { font-size: 34px; line-height: 1; }
+  .mode-card-icon { font-size: 24px; line-height: 1; }
   .mode-card-label {
-    font-size: 12px; font-weight: 700;
-    color: var(--ink-dark); letter-spacing: 1.5px;
+    font-size: 10px; font-weight: 700;
+    color: var(--ink-dark); letter-spacing: 0.5px;
   }
 
   /* ===== 今日の家（メインカード） ===== */
@@ -3128,78 +3138,78 @@ let PHOTOS_KEY = 'nikowa_photos_v3';
 const MAX_PHOTO_SIZE = 800;
 const THEMES = {
   // ===== スイーツ ×8 =====
-  mint: { name: 'チョコミント', emoji: '🍃', pattern: 'gingham',
+  mint: { name: 'チョコミント', emoji: '🍃', pattern: 'gingham', cardShape: 'circle',
     vars: { '--bg':'#D0FCED', '--surface':'#FFFFFF', '--surface-warm':'#E0F0E5', '--line':'#B8D8C5', '--line-soft':'#CCE4D5', '--ink-dark':'#2D4A3C', '--ink':'#466050', '--ink-sub':'#7A9588', '--ink-light':'#A8BFB2', '--mint':'#8FC9AB', '--mint-deep':'#5FA985', '--mint-bg':'#C2E2D0', '--accent':'#C8956A', '--accent-deep':'#9A6840', '--accent-bg':'#EDD5C0', '--today-bg':'#FCEAEF', '--today-border':'#F4C8D2', '--warm-yellow':'#F8E4A0', '--soft-purple':'#C8B0D8' },
     paperColor: 'rgba(255,255,255,0.55)',
     ginghamColor: 'rgba(255,255,255,0.55)',
     headerGrad: 'linear-gradient(180deg, #EAF6EE 0%, #DCEEE2 50%, #F2D9C8 100%)' },
-  candy_soda: { name: 'キャンディソーダ', emoji: '🍬', pattern: 'polka',
+  candy_soda: { name: 'キャンディソーダ', emoji: '🍬', pattern: 'polka', cardShape: 'circle',
     vars: { '--bg':'#C8E4F5', '--surface':'#FFFFFF', '--surface-warm':'#DCF0FA', '--line':'#B0D0E8', '--line-soft':'#C8DFF0', '--ink-dark':'#1A3A58', '--ink':'#2A5078', '--ink-sub':'#5888B0', '--ink-light':'#88AAC8', '--mint':'#78C0E8', '--mint-deep':'#4898C8', '--mint-bg':'#A8D8F0', '--accent':'#F7A0C0', '--accent-deep':'#E06890', '--accent-bg':'#FDE0EC', '--today-bg':'#FFF5D0', '--today-border':'#F0D870', '--warm-yellow':'#FCE874', '--soft-purple':'#C8B0E0' },
     paperColor: 'rgba(255,255,255,0.85)',
     headerGrad: 'linear-gradient(180deg, #E8F4FA 0%, #F8D0E0 50%, #FFF0B8 100%)' },
-  strawberry: { name: 'いちごみるく', emoji: '🍓', pattern: 'gingham',
+  strawberry: { name: 'いちごみるく', emoji: '🍓', pattern: 'gingham', cardShape: 'circle',
     vars: { '--bg':'#FEEBF8', '--surface':'#FFFFFF', '--surface-warm':'#FCF1F2', '--line':'#F4DCE2', '--line-soft':'#F8E8EC', '--ink-dark':'#7A4A58', '--ink':'#9A6878', '--ink-sub':'#B894A0', '--ink-light':'#D8BAC2', '--mint':'#F4C2CE', '--mint-deep':'#D88AA0', '--mint-bg':'#FDE2E8', '--accent':'#E89AB0', '--accent-deep':'#C26A85', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8C2E0' },
     paperColor: 'rgba(255,255,255,0.55)',
     ginghamColor: 'rgba(255,255,255,0.55)',
     headerGrad: 'linear-gradient(180deg, #FEF4F4 0%, #FBE2E8 50%, #F4BCC8 100%)' },
-  honey: { name: 'ハニーレモン', emoji: '🍋', pattern: 'polka',
+  honey: { name: 'ハニーレモン', emoji: '🍋', pattern: 'polka', cardShape: 'circle',
     vars: { '--bg':'#FFFBD0', '--surface':'#FFFFFF', '--surface-warm':'#FFF8C8', '--line':'#E8E070', '--line-soft':'#F0E890', '--ink-dark':'#4A4008', '--ink':'#6A5818', '--ink-sub':'#907830', '--ink-light':'#B8A058', '--mint':'#70EE7C', '--mint-deep':'#40C848', '--mint-bg':'#B0F0B8', '--accent':'#FF8387', '--accent-deep':'#D85058', '--accent-bg':'#FFD0D2', '--today-bg':'#FFF056', '--today-border':'#D8C820', '--warm-yellow':'#FFF056', '--soft-purple':'#D8C098' },
     paperColor: 'rgba(255,252,220,0.85)',
     headerGrad: 'linear-gradient(180deg, #FFFEE0 0%, #FFF056 50%, #70EE7C 100%)' },
-  pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham',
+  pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham', cardShape: 'circle',
     vars: { '--bg':'#FFDFAB', '--surface':'#FFFFFF', '--surface-warm':'#FCF1DA', '--line':'#EBD4A8', '--line-soft':'#F2E2C2', '--ink-dark':'#6B4A28', '--ink':'#8A6440', '--ink-sub':'#B0926A', '--ink-light':'#D4BC98', '--mint':'#E8C088', '--mint-deep':'#C28848', '--mint-bg':'#FBE2B8', '--accent':'#F0A0B2', '--accent-deep':'#C26880', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8B898' },
     paperColor: 'rgba(255,255,255,0.65)',
     ginghamColor: 'rgba(255,255,255,0.65)',
     headerGrad: 'linear-gradient(180deg, #FCEFD2 0%, #F0D4A0 50%, #F4C0CC 100%)' },
-  cream_soda: { name: 'クリームソーダ', emoji: '🍹', pattern: 'polka',
+  cream_soda: { name: 'クリームソーダ', emoji: '🍹', pattern: 'polka', cardShape: 'circle',
     vars: { '--bg':'#D8F5D8', '--surface':'#FFFFFF', '--surface-warm':'#E4F8E4', '--line':'#B0D8B0', '--line-soft':'#C8E8C8', '--ink-dark':'#204020', '--ink':'#385838', '--ink-sub':'#608060', '--ink-light':'#90B090', '--mint':'#78C878', '--mint-deep':'#48A048', '--mint-bg':'#A0D8A0', '--accent':'#F06060', '--accent-deep':'#C83838', '--accent-bg':'#FCD0D0', '--today-bg':'#FFF8E0', '--today-border':'#E8D088', '--warm-yellow':'#F8E8A0', '--soft-purple':'#C8B0C8' },
     paperColor: 'rgba(255,255,255,0.8)',
     headerGrad: 'linear-gradient(180deg, #E8FAE8 0%, #C8E8C8 50%, #FCE0E0 100%)' },
-  lavender: { name: 'ラベンダーマカロン', emoji: '🪻', pattern: 'gingham',
+  lavender: { name: 'ラベンダーマカロン', emoji: '🪻', pattern: 'gingham', cardShape: 'circle',
     vars: { '--bg':'#EDE0F5', '--surface':'#FFFFFF', '--surface-warm':'#E4D2F0', '--line':'#C8A8D8', '--line-soft':'#D8C0E8', '--ink-dark':'#3E2858', '--ink':'#5A4070', '--ink-sub':'#887098', '--ink-light':'#B0A0C0', '--mint':'#B090D0', '--mint-deep':'#8060A8', '--mint-bg':'#D0B8E0', '--accent':'#E088A8', '--accent-deep':'#B05870', '--accent-bg':'#F8C8D8', '--today-bg':'#F8D0DC', '--today-border':'#E0A0B8', '--warm-yellow':'#F8E4A0', '--soft-purple':'#8060A8' },
     paperColor: 'rgba(255,255,255,0.6)',
     ginghamColor: 'rgba(255,255,255,0.6)',
     headerGrad: 'linear-gradient(180deg, #F0E2F8 0%, #E0CCEE 50%, #FAD8E2 100%)' },
-  peach: { name: 'ピーチメルバ', emoji: '🍑', pattern: 'polka',
+  peach: { name: 'ピーチメルバ', emoji: '🍑', pattern: 'polka', cardShape: 'circle',
     vars: { '--bg':'#FFE8D8', '--surface':'#FFFFFF', '--surface-warm':'#FFF0E8', '--line':'#F0C8B0', '--line-soft':'#F8D8C8', '--ink-dark':'#5A3028', '--ink':'#7A4838', '--ink-sub':'#A87060', '--ink-light':'#D0A090', '--mint':'#F0B098', '--mint-deep':'#D88068', '--mint-bg':'#F8D0C0', '--accent':'#E06878', '--accent-deep':'#B84050', '--accent-bg':'#FCC8D0', '--today-bg':'#FFF0E0', '--today-border':'#E8C0A0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D0A8C8' },
     paperColor: 'rgba(255,255,255,0.7)',
     headerGrad: 'linear-gradient(180deg, #FFF2EA 0%, #F8D0B8 50%, #F0A0A8 100%)' },
   // ===== 和食 ×4 =====
-  kurogoma: { name: '黒ごま', emoji: '🖤', pattern: 'dot', simple: true,
+  kurogoma: { name: '黒ごま', emoji: '🖤', pattern: 'dot', simple: true, cardShape: 'square',
     vars: { '--bg':'#2A2A30', '--surface':'#3A3A42', '--surface-warm':'#3A3A42', '--line':'#58585F', '--line-soft':'#4A4A52', '--ink-dark':'#F8F7F2', '--ink':'#E8E6DE', '--ink-sub':'#C8C6C0', '--ink-light':'#9A9890', '--mint':'#D8D6CE', '--mint-deep':'#B8B6AE', '--mint-bg':'#58585F', '--accent':'#E8C878', '--accent-deep':'#C8A848', '--accent-bg':'#4A4838', '--today-bg':'#4A4A52', '--today-border':'#888880', '--warm-yellow':'#E8C878', '--soft-purple':'#A8A0A8' },
     paperColor: 'rgba(255,255,255,0.06)',
     headerGrad: 'linear-gradient(180deg, #38383F 0%, #2A2A30 100%)' },
-  tofu: { name: 'おとうふ', emoji: '🤍', pattern: 'dot', simple: true,
+  tofu: { name: 'おとうふ', emoji: '🤍', pattern: 'dot', simple: true, cardShape: 'square',
     vars: { '--bg':'#FAFAF6', '--surface':'#FFFFFF', '--surface-warm':'#F2F0EA', '--line':'#D8D6D0', '--line-soft':'#E8E6E0', '--ink-dark':'#2A2A28', '--ink':'#48484A', '--ink-sub':'#787876', '--ink-light':'#A8A8A6', '--mint':'#A0A8C0', '--mint-deep':'#6878A0', '--mint-bg':'#D8DCE8', '--accent':'#8A8068', '--accent-deep':'#5A5040', '--accent-bg':'#E8E2D8', '--today-bg':'#F2F0EA', '--today-border':'#A8A6A0', '--warm-yellow':'#C8B888', '--soft-purple':'#A8A0B0' },
     paperColor: 'rgba(0,0,0,0.04)',
     headerGrad: 'linear-gradient(180deg, #FAFAF6 0%, #F0EEE8 100%)' },
-  mitarashi: { name: 'みたらし', emoji: '🍡', pattern: 'seigaiha', simple: true,
+  mitarashi: { name: 'みたらし', emoji: '🍡', pattern: 'seigaiha', simple: true, cardShape: 'square',
     vars: { '--bg':'#FFF2D8', '--surface':'#FFFFFF', '--surface-warm':'#FFF0D0', '--line':'#E8C890', '--line-soft':'#F0D8A8', '--ink-dark':'#3E2808', '--ink':'#5A4018', '--ink-sub':'#886838', '--ink-light':'#B09060', '--mint':'#D8A850', '--mint-deep':'#B88830', '--mint-bg':'#F0D088', '--accent':'#D07828', '--accent-deep':'#A85810', '--accent-bg':'#FDE0B0', '--today-bg':'#FFF0C0', '--today-border':'#D8B058', '--warm-yellow':'#F0C848', '--soft-purple':'#C0A878' },
     paperColor: 'rgba(200,160,80,0.12)',
     headerGrad: 'linear-gradient(180deg, #FFF8E0 0%, #F0D898 50%, #D8A850 100%)' },
-  edamame: { name: '枝豆', emoji: '🥬', pattern: 'asanoha', simple: true,
+  edamame: { name: '枝豆', emoji: '🥬', pattern: 'asanoha', simple: true, cardShape: 'square',
     vars: { '--bg':'#E0F0D0', '--surface':'#FFFFFF', '--surface-warm':'#E8F2DA', '--line':'#B8D098', '--line-soft':'#CCE0B0', '--ink-dark':'#1A3010', '--ink':'#2A4820', '--ink-sub':'#507840', '--ink-light':'#80A868', '--mint':'#78B858', '--mint-deep':'#509838', '--mint-bg':'#A8D088', '--accent':'#A0C048', '--accent-deep':'#789828', '--accent-bg':'#D8E8B0', '--today-bg':'#F0F8E0', '--today-border':'#A8C870', '--warm-yellow':'#D8D068', '--soft-purple':'#A8B890' },
     paperColor: 'rgba(100,160,80,0.1)',
     headerGrad: 'linear-gradient(180deg, #ECF4E0 0%, #D0E4B0 50%, #B0D080 100%)' },
   // ===== 大人キレイ目 ×3 =====
-  cinderella: { name: 'シンデレラ', emoji: '👑', pattern: 'fleurdelis',
+  cinderella: { name: 'シンデレラ', emoji: '👑', pattern: 'fleurdelis', cardShape: 'diamond',
     vars: { '--bg':'#F0F4F8', '--surface':'#FFFFFF', '--surface-warm':'#EEF2F8', '--line':'#D0D8E0', '--line-soft':'#DDE4EC', '--ink-dark':'#2A3040', '--ink':'#404858', '--ink-sub':'#707888', '--ink-light':'#A0A8B8', '--mint':'#A8B8D0', '--mint-deep':'#6880A8', '--mint-bg':'#D0D8E8', '--accent':'#A0B8D8', '--accent-deep':'#6888B8', '--accent-bg':'#D8E4F0', '--today-bg':'#E8F0F8', '--today-border':'#A0B8D0', '--warm-yellow':'#E0D8C0', '--soft-purple':'#B0A8C8' },
     paperColor: 'rgba(160,175,200,0.12)',
     headerGrad: 'linear-gradient(180deg, #F8FAFC 0%, #E8F0F8 50%, #D0DCE8 100%)' },
-  neon: { name: 'ネオン', emoji: '✨', pattern: 'dot',
+  neon: { name: 'ネオン', emoji: '✨', pattern: 'dot', cardShape: 'diamond',
     vars: { '--bg':'#1A1A2E', '--surface':'#252540', '--surface-warm':'#252540', '--line':'#3A3A58', '--line-soft':'#303048', '--ink-dark':'#F0ECF8', '--ink':'#D8D0E8', '--ink-sub':'#B0A8C8', '--ink-light':'#8078A0', '--mint':'#00ABE1', '--mint-deep':'#0090C0', '--mint-bg':'#1A3048', '--accent':'#C8236B', '--accent-deep':'#A01050', '--accent-bg':'#3A1A28', '--today-bg':'#2A2A40', '--today-border':'#00ABE1', '--warm-yellow':'#F1E937', '--soft-purple':'#8078A0' },
     paperColor: 'rgba(255,255,255,0.04)',
     headerGrad: 'linear-gradient(180deg, #252540 0%, #1A1A2E 100%)' },
-  night_dress: { name: 'ナイトドレス', emoji: '🌙', pattern: 'damask',
+  night_dress: { name: 'ナイトドレス', emoji: '🌙', pattern: 'damask', cardShape: 'diamond',
     vars: { '--bg':'#1A1828', '--surface':'#2A2838', '--surface-warm':'#2A2838', '--line':'#484060', '--line-soft':'#3A3250', '--ink-dark':'#F0ECF8', '--ink':'#D8D0E8', '--ink-sub':'#B0A8C8', '--ink-light':'#8880A0', '--mint':'#C0B0D8', '--mint-deep':'#9080B8', '--mint-bg':'#3A3250', '--accent':'#C8C0D8', '--accent-deep':'#A098B8', '--accent-bg':'#2A2838', '--today-bg':'#3A3250', '--today-border':'#7868A0', '--warm-yellow':'#D0C8A0', '--soft-purple':'#9080B8' },
     paperColor: 'rgba(200,180,220,0.08)',
     headerGrad: 'linear-gradient(180deg, #282438 0%, #1A1828 100%)' },
   // ===== ダルメシアン ×2 =====
-  dalmatian_w: { name: 'ダルメシアン白', emoji: '🐾', pattern: 'dalmatian',
+  dalmatian_w: { name: 'ダルメシアン白', emoji: '🐾', pattern: 'dalmatian', cardShape: 'diamond',
     vars: { '--bg':'#F8F8F8', '--surface':'#FFFFFF', '--surface-warm':'#F4F4F2', '--line':'#D0D0D0', '--line-soft':'#E0E0E0', '--ink-dark':'#1A1A1A', '--ink':'#333333', '--ink-sub':'#666666', '--ink-light':'#999999', '--mint':'#B0B0B0', '--mint-deep':'#666666', '--mint-bg':'#E0E0E0', '--accent':'#D4AA40', '--accent-deep':'#B08820', '--accent-bg':'#F0E4C0', '--today-bg':'#FFF8E0', '--today-border':'#D8C070', '--warm-yellow':'#E8D068', '--soft-purple':'#A0A0A0' },
     paperColor: 'rgba(30,30,30,0.12)',
     headerGrad: 'linear-gradient(180deg, #FAFAFA 0%, #F0F0F0 50%, #E8E8E0 100%)' },
-  dalmatian_b: { name: 'ダルメシアン黒', emoji: '🖤', pattern: 'dalmatian_inv',
+  dalmatian_b: { name: 'ダルメシアン黒', emoji: '🖤', pattern: 'dalmatian_inv', cardShape: 'diamond',
     vars: { '--bg':'#1A1A1A', '--surface':'#2A2A2A', '--surface-warm':'#2A2A2A', '--line':'#484848', '--line-soft':'#3A3A3A', '--ink-dark':'#F8F8F0', '--ink':'#E8E8E0', '--ink-sub':'#C0C0B8', '--ink-light':'#888888', '--mint':'#D0D0C8', '--mint-deep':'#A8A8A0', '--mint-bg':'#484848', '--accent':'#D4AA40', '--accent-deep':'#B08820', '--accent-bg':'#3A3420', '--today-bg':'#3A3A3A', '--today-border':'#808070', '--warm-yellow':'#D4AA40', '--soft-purple':'#888888' },
     paperColor: 'rgba(255,255,255,0.10)',
     headerGrad: 'linear-gradient(180deg, #282828 0%, #1A1A1A 100%)' }
@@ -4383,16 +4393,21 @@ function renderTop() {
   html += '<div class="section-head"><h2 class="section-title">Welcome</h2></div>';
   html += '</div>';
   html += '<div class="mode-section">';
-  html += '<button class="mode-card mode-me" onclick="goToMeMode()">';
+  // テーマのcardShapeを取得
+  const _theme = THEMES[data.themeId || 'mint'] || THEMES.mint;
+  const _shape = _theme.cardShape || 'rounded';
+  const _shapeClass = _shape === 'circle' ? ' shape-circle' : _shape === 'square' ? ' shape-square' : _shape === 'diamond' ? ' shape-diamond' : '';
+
+  html += '<button class="mode-card mode-me'+_shapeClass+'" onclick="goToMeMode()">';
   html += '<div class="mode-card-icon">🌱</div><div class="mode-card-label">ME</div>';
   html += '</button>';
-  html += '<button class="mode-card mode-nest" onclick="goToNestMode()">';
+  html += '<button class="mode-card mode-nest'+_shapeClass+'" onclick="goToNestMode()">';
   html += '<div class="mode-card-icon">🪺</div><div class="mode-card-label">Nest</div>';
   html += '</button>';
-  html += '<button class="mode-card mode-pet" onclick="goToPetMode()">';
+  html += '<button class="mode-card mode-pet'+_shapeClass+'" onclick="goToPetMode()">';
   html += '<div class="mode-card-icon">🐾</div><div class="mode-card-label">PET</div>';
   html += '</button>';
-  html += '<button class="mode-card mode-kids" onclick="goToKidsMode()">';
+  html += '<button class="mode-card mode-kids'+_shapeClass+'" onclick="goToKidsMode()">';
   html += '<div class="mode-card-icon">🧸</div><div class="mode-card-label">KIDS</div>';
   html += '</button>';
   html += '</div>';
