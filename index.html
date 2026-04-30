@@ -227,15 +227,23 @@
   }
   .hero-glass {
     position: relative;
-    background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.6) 100%);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.22) 100%);
     border-radius: 28px;
     padding: 20px 12px 22px;
     margin: 0 -4px 8px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.8);
+    border: 1px solid rgba(255,255,255,0.7);
     box-shadow: 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
+    isolation: isolate;
+  }
+  /* 偽すりガラス：bodyと同じ背景柄を中に持たせて、それをぼかす */
+  .hero-glass::before {
+    content: '';
+    position: absolute;
+    inset: -40px;
+    background-color: var(--bg);
+    filter: blur(4px);
+    z-index: -1;
   }
   .hero-petal-layer {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -323,15 +331,19 @@
     border: 1px solid var(--line-soft) !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
   }
+  body.theme-simple .hero-glass::before {
+    display: none !important;
+  }
   body.theme-simple .hero-logo-simple {
     color: var(--ink-dark) !important;
   }
   .hero-glass-simple {
     background: var(--surface) !important;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--line-soft) !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+  }
+  .hero-glass-simple::before {
+    display: none !important;
   }
   .hero-logo-simple {
     text-align: center;
@@ -348,6 +360,76 @@
     letter-spacing: 3px;
     margin-top: 4px;
     font-family: 'Georgia', serif;
+  }
+
+  /* ===== モード選択カード（トップ画面） ===== */
+  .mode-section {
+    padding: 0 16px 18px;
+  }
+  .mode-section-label {
+    font-size: 10.5px; color: var(--ink-sub);
+    letter-spacing: 2px; font-weight: 700;
+    margin-bottom: 10px; padding-left: 4px;
+  }
+  .mode-card {
+    width: 100%;
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--line-soft);
+    border-radius: 20px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    text-align: left;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.1s ease;
+  }
+  .mode-card:active { transform: scale(0.98); }
+  .mode-card.mode-me,
+  .mode-card.mode-pet,
+  .mode-card.mode-kids {
+    background-color: var(--accent-bg);
+    background-image: linear-gradient(rgba(255,255,255,0.55), rgba(255,255,255,0.55));
+    border-color: var(--line-soft);
+  }
+  .mode-card-icon {
+    font-size: 36px;
+    flex-shrink: 0;
+    width: 52px; height: 52px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.7);
+    border-radius: 16px;
+  }
+  .mode-card-body {
+    flex: 1; min-width: 0;
+  }
+  .mode-card-title {
+    font-size: 16px; font-weight: 700;
+    color: var(--ink-dark);
+    margin-bottom: 3px;
+    letter-spacing: 0.5px;
+  }
+  .mode-card-sub {
+    font-size: 11.5px;
+    color: var(--ink-sub);
+    line-height: 1.4;
+  }
+  .mode-card-arrow {
+    font-size: 22px; color: var(--ink-light);
+    flex-shrink: 0;
+  }
+  .mode-card-badge {
+    display: inline-block;
+    font-size: 9.5px;
+    background: rgba(255,255,255,0.8);
+    color: var(--ink-sub);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 6px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
   }
 
   /* ===== 今日の家（メインカード） ===== */
@@ -2687,8 +2769,11 @@ function applyTheme(themeId) {
   } else {
     document.body.classList.remove('theme-simple');
   }
-  document.body.style.backgroundImage = paperBackground(theme);
-  document.body.style.backgroundSize = paperBackgroundSize(theme);
+  const paperBg = paperBackground(theme);
+  const paperSize = paperBackgroundSize(theme);
+  const paperPos = (theme.pattern === 'polka') ? '0 0, 23px 23px' : '0 0';
+  document.body.style.backgroundImage = paperBg;
+  document.body.style.backgroundSize = paperSize;
   // PC幅用にapp-frameにも反映
   var appFrame = document.querySelector('.app-frame');
   if (appFrame) {
@@ -2717,7 +2802,8 @@ function applyTheme(themeId) {
   var crayonHex = encodeURIComponent(crayonColor);
   var crayonSvg = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'><path d='M2,4 Q10,2 18,4 T36,4 T54,3 T72,5 T90,4 T108,3 T126,5 T144,4 T162,3 T180,5 T198,4' stroke='"+crayonHex+"' stroke-width='2.5' fill='none' stroke-linecap='round' opacity='0.85'/></svg>\")";
   styleEl.textContent = '.topbar { background: '+theme.headerGrad+' !important; }'
-    + ' .section-title { background-image: '+crayonSvg+' !important; }';
+    + ' .section-title { background-image: '+crayonSvg+' !important; }'
+    + ' .hero-glass::before { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }';
   // topbarに桜吹雪を追加
   setTimeout(function(){
     document.querySelectorAll('.topbar').forEach(function(tb){
@@ -2789,7 +2875,7 @@ let data = {
   petTab: 'care'
 };
 let photos = {};
-let currentView = 'houses';
+let currentView = 'top';
 let selectedPetType = 'dog';
 let selectedPlace = 'home';
 let selectedTag = 'ケア';
@@ -3528,6 +3614,119 @@ function renderDayDetail(dateKey, scope) {
   return html;
 }
 
+function renderTop() {
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav('houses'); // ボトムナビは「ホーム」をアクティブに
+  const app = document.getElementById('app');
+  const userName = data.user.name || '';
+  
+  let html = '<div class="hero-section">';
+  // 上部チップ
+  html += '<div class="hero-top">';
+  html += '<button class="hero-user-chip" onclick="openUserModal()">';
+  html += '<span>'+(data.user.avatar || '🌷')+'</span>';
+  if (userName) html += '<span>'+escapeHtml(userName)+'</span>';
+  else html += '<span class="hero-user-prompt">名前をつける</span>';
+  html += '</button>';
+  html += '<button class="hero-theme-btn" onclick="openThemeModal()" title="テーマ">🎨</button>';
+  html += '</div>';
+  // 桜吹雪 + すりガラスカード
+  var currentTheme = THEMES[data.themeId || 'mint'] || THEMES.mint;
+  var isSimple = currentTheme.simple === true;
+  var petalHtml = '';
+  if (!isSimple) {
+    var petalColors = ['var(--accent)','var(--accent-deep)','var(--soft-purple)','var(--mint-deep)'];
+    petalHtml = '<div class="hero-petal-layer">';
+    var heroLefts = [3,72,18,91,45,63,8,82,31,56,14,77,40,67];
+    var heroDelays = [-2.1,-0.3,-4.5,-1.8,-3.2,-0.7,-3.9,-2.6,-1.1,-4.0,-0.5,-3.4,-2.3,-1.6];
+    var heroDurs = [6,7,5,8,6,7,5,8,7,6,8,5,7,6];
+    var heroAnims = ['nkPetal','nkPetal2','nkPetal3','nkPetal','nkPetal3','nkPetal2','nkPetal','nkPetal3','nkPetal2','nkPetal','nkPetal2','nkPetal3','nkPetal','nkPetal2'];
+    for (var pi = 0; pi < 14; pi++) {
+      var pSize  = (9 + (pi % 4) * 2);
+      var pColor = petalColors[pi % 4];
+      petalHtml += '<div class="hero-petal" style="left:'+heroLefts[pi]+'%;font-size:'+pSize+'px;color:'+pColor+';animation-name:'+heroAnims[pi]+';animation-duration:'+heroDurs[pi]+'s;animation-delay:'+heroDelays[pi]+'s;">❀</div>';
+    }
+    petalHtml += '</div>';
+  }
+  html += '<div class="hero-glass'+(isSimple?' hero-glass-simple':'')+'">' + petalHtml;
+  html += '<div class="hero-logo">';
+  if (isSimple) {
+    html += '<div class="hero-logo-simple">にこわ<span class="hero-logo-simple-en">-nikowa-</span></div>';
+  } else {
+    html += '<img class="hero-logo-img" src="' + LOGO_DATA_URL + '" alt="にこわ nikowa">';
+  }
+  html += '</div>';
+  html += '<div class="hero-message">';
+  if (isSimple) {
+    html += '<div class="hero-message-main">今日も、この子と。</div>';
+  } else {
+    html += '<div class="hero-message-main">今日もこの子と、ちゃんと過ごせた。</div>';
+    html += '<div class="hero-message-sub">できる日に、できる分だけで大丈夫</div>';
+  }
+  html += '</div>';
+  html += '</div>'; // hero-glass閉じ
+  html += '</div>'; // hero-section閉じ
+
+  // モード選択カード
+  html += '<div class="mode-section">';
+  html += '<div class="mode-section-label">どこへいく？</div>';
+
+  // ME
+  html += '<button class="mode-card mode-me" onclick="openComingSoon(\'ME\')">';
+  html += '<div class="mode-card-icon">🌸</div>';
+  html += '<div class="mode-card-body">';
+  html += '<div class="mode-card-title">ME<span class="mode-card-badge">じゅんびちゅう</span></div>';
+  html += '<div class="mode-card-sub">じぶんのこと・ビューティー・自己投資</div>';
+  html += '</div>';
+  html += '<div class="mode-card-arrow">›</div>';
+  html += '</button>';
+
+  // PET
+  html += '<button class="mode-card mode-pet" onclick="goToPetMode()">';
+  html += '<div class="mode-card-icon">🐾</div>';
+  html += '<div class="mode-card-body">';
+  html += '<div class="mode-card-title">PET</div>';
+  html += '<div class="mode-card-sub">うちの子のお世話・記録・思い出</div>';
+  html += '</div>';
+  html += '<div class="mode-card-arrow">›</div>';
+  html += '</button>';
+
+  // KIDS
+  html += '<button class="mode-card mode-kids" onclick="openComingSoon(\'KIDS\')">';
+  html += '<div class="mode-card-icon">🧸</div>';
+  html += '<div class="mode-card-body">';
+  html += '<div class="mode-card-title">KIDS<span class="mode-card-badge">じゅんびちゅう</span></div>';
+  html += '<div class="mode-card-sub">こどもの記録・成長・作品・語録</div>';
+  html += '</div>';
+  html += '<div class="mode-card-arrow">›</div>';
+  html += '</button>';
+  html += '</div>'; // mode-section閉じ
+
+  // にこわタウン導線
+  html += '<div class="town-link-section">';
+  html += '<button class="town-link-card" onclick="goTown()">';
+  html += '<span class="town-link-icon">🏙</span>';
+  html += '<span class="town-link-body">';
+  html += '<span class="town-link-title">病院・トリミング・お店を探す</span>';
+  html += '<span class="town-link-sub">いつもの場所をのこそう・にこわタウン</span>';
+  html += '</span>';
+  html += '<span class="town-link-arrow">›</span>';
+  html += '</button>';
+  html += '</div>';
+
+  html += '<div style="height: 24px;"></div>';
+  app.innerHTML = html;
+}
+
+function goToPetMode() {
+  currentView = 'houses';
+  render();
+}
+
+function openComingSoon(modeName) {
+  showToast(modeName + 'モードは準備中やで🌸');
+}
+
 function renderHouses() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('houses');
@@ -3962,13 +4161,15 @@ function backToHouse() {
 }
 
 function navBack() {
-  // 戻る順：pet → house → houses、facility → town
+  // 戻る順：pet → house → houses → top、facility → town → top
   if (currentView === 'pet') backToHouse();
   else if (currentView === 'house') backToHouses();
+  else if (currentView === 'houses') { currentView = 'top'; render(); }
   else if (currentView === 'facility') { currentView = 'town'; render(); }
   else if (currentView === 'town' || currentView === 'schedule' || currentView === 'settings') {
-    // タウン・よてい・せっていからは家一覧に戻る
-    backToHouses();
+    // タウン・よてい・せっていからはトップに戻る
+    currentView = 'top';
+    render();
   }
 }
 function setPetTab(tab) {
@@ -5156,15 +5357,15 @@ function renderSettings() {
 function setActiveNav(view) {
   const btns = document.querySelectorAll('.nav-btn[data-view]');
   for (const b of btns) b.classList.toggle('active', b.dataset.view === view);
-  // 戻るボタン：houses以外で表示
+  // 戻るボタン：top以外で表示
   const backBtn = document.getElementById('navBackBtn');
-  if (backBtn) backBtn.style.display = (view === 'houses') ? 'none' : 'flex';
+  if (backBtn) backBtn.style.display = (view === 'top') ? 'none' : 'flex';
 }
 document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
   btn.onclick = () => {
     const view = btn.dataset.view;
     if (view === 'houses') {
-      currentView = 'houses';
+      currentView = 'top';
       data.selectedHouseId = null;
       saveData();
     }
@@ -6008,14 +6209,15 @@ function renderSidePanel() {
 
 let _suppressScrollTop = false;
 function render() {
-  if (currentView === 'houses') renderHouses();
+  if (currentView === 'top') renderTop();
+  else if (currentView === 'houses') renderHouses();
   else if (currentView === 'house') renderHouse();
   else if (currentView === 'pet') renderPet();
   else if (currentView === 'schedule') renderSchedule();
   else if (currentView === 'settings') renderSettings();
   else if (currentView === 'town') renderTown();
   else if (currentView === 'facility') renderFacility();
-  else renderHouses();
+  else renderTop();
   renderSidePanel();
   if (!_suppressScrollTop) window.scrollTo(0, 0);
   _suppressScrollTop = false;
