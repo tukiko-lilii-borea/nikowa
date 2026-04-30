@@ -396,6 +396,7 @@
     background-color: var(--accent-bg);
     filter: blur(4px);
     z-index: -2;
+    opacity: 0.4;
   }
   .mode-card::after {
     content: '';
@@ -403,7 +404,7 @@
     inset: -40px;
     filter: blur(4px);
     z-index: -1;
-    opacity: 0.7;
+    opacity: 0.85;
   }
   .mode-card > * {
     position: relative;
@@ -2696,7 +2697,7 @@ const THEMES = {
     ginghamColor: 'rgba(255,255,255,0.55)',
     headerGrad: 'linear-gradient(180deg, #FEF4F4 0%, #FBE2E8 50%, #F4BCC8 100%)' },
   honey: { name: 'ハニーレモン', emoji: '🍯', pattern: 'polka',
-    vars: { '--bg':'#F4F7B4', '--surface':'#FFFFFF', '--surface-warm':'#F5E8B0', '--line':'#E0C870', '--line-soft':'#E8D898', '--ink-dark':'#3E3008', '--ink':'#584818', '--ink-sub':'#806820', '--ink-light':'#A88838', '--mint':'#C89820', '--mint-deep':'#A07810', '--mint-bg':'#E8C858', '--accent':'#F5C060', '--accent-deep':'#C89028', '--accent-bg':'#FCE8B8', '--today-bg':'#F8E098', '--today-border':'#D8B048', '--warm-yellow':'#F0D870', '--soft-purple':'#B8A068' },
+    vars: { '--bg':'#F4F7B4', '--surface':'#FFFFFF', '--surface-warm':'#F5E8B0', '--line':'#E0C870', '--line-soft':'#E8D898', '--ink-dark':'#3E3008', '--ink':'#584818', '--ink-sub':'#806820', '--ink-light':'#A88838', '--mint':'#C89820', '--mint-deep':'#A07810', '--mint-bg':'#E8C858', '--accent':'#F5C060', '--accent-deep':'#C89028', '--accent-bg':'#F8C870', '--today-bg':'#F8E098', '--today-border':'#D8B048', '--warm-yellow':'#F0D870', '--soft-purple':'#B8A068' },
     paperColor: 'rgba(255,250,225,0.85)',
     headerGrad: 'linear-gradient(180deg, #F4F7B4 0%, #E8E090 50%, #DCEFE0 100%)' },
   pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham',
