@@ -227,12 +227,12 @@
   }
   .hero-glass {
     position: relative;
-    background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.22) 100%);
+    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.4) 100%);
     border-radius: 28px;
     padding: 20px 12px 22px;
     margin: 0 -4px 8px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.8);
     box-shadow: 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
     isolation: isolate;
   }
@@ -242,7 +242,7 @@
     position: absolute;
     inset: -40px;
     background-color: var(--bg);
-    filter: blur(4px);
+    filter: blur(8px);
     z-index: -1;
   }
   .hero-petal-layer {
@@ -360,92 +360,6 @@
     letter-spacing: 3px;
     margin-top: 4px;
     font-family: 'Georgia', serif;
-  }
-
-  /* ===== モード選択カード（トップ画面） ===== */
-  .mode-section {
-    padding: 0 16px 18px;
-  }
-  .mode-section-label {
-    font-size: 10.5px; color: var(--ink-sub);
-    letter-spacing: 2px; font-weight: 700;
-    margin-bottom: 10px; padding-left: 4px;
-  }
-  .mode-card {
-    width: 100%;
-    display: flex; align-items: center; gap: 14px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
-    border: 1px solid rgba(255,255,255,0.7);
-    border-radius: 20px;
-    padding: 16px 18px;
-    margin-bottom: 10px;
-    text-align: left;
-    cursor: pointer; font-family: inherit;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
-    position: relative;
-    overflow: hidden;
-    isolation: isolate;
-    transition: transform 0.1s ease;
-  }
-  .mode-card:active { transform: scale(0.98); }
-  /* 偽すりガラス：bodyと同じ背景柄＋テーマaccent色をうっすら */
-  .mode-card::before {
-    content: '';
-    position: absolute;
-    inset: -40px;
-    background-color: var(--accent-bg);
-    filter: blur(4px);
-    z-index: -2;
-    opacity: 0.4;
-  }
-  .mode-card::after {
-    content: '';
-    position: absolute;
-    inset: -40px;
-    filter: blur(4px);
-    z-index: -1;
-    opacity: 0.85;
-  }
-  .mode-card > * {
-    position: relative;
-    z-index: 1;
-  }
-  .mode-card-icon {
-    font-size: 36px;
-    flex-shrink: 0;
-    width: 52px; height: 52px;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,0.7);
-    border-radius: 16px;
-  }
-  .mode-card-body {
-    flex: 1; min-width: 0;
-  }
-  .mode-card-title {
-    font-size: 16px; font-weight: 700;
-    color: var(--ink-dark);
-    margin-bottom: 3px;
-    letter-spacing: 0.5px;
-  }
-  .mode-card-sub {
-    font-size: 11.5px;
-    color: var(--ink-sub);
-    line-height: 1.4;
-  }
-  .mode-card-arrow {
-    font-size: 22px; color: var(--ink-light);
-    flex-shrink: 0;
-  }
-  .mode-card-badge {
-    display: inline-block;
-    font-size: 9.5px;
-    background: rgba(255,255,255,0.8);
-    color: var(--ink-sub);
-    padding: 2px 8px;
-    border-radius: 10px;
-    margin-left: 6px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
   }
 
   /* ===== 今日の家（メインカード） ===== */
@@ -2225,6 +2139,10 @@
   }
 
 </style>
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -2681,6 +2599,81 @@ function spriteSVG(kind, palette, sizeAttr) {
 const STORAGE_KEY = 'nikowa_data_v3';
 const PHOTOS_KEY = 'nikowa_photos_v3';
 const MAX_PHOTO_SIZE = 800;
+
+// ===== Firebase (Phase 2-1) =====
+// Firestoreセキュリティルール（Firebase Console > Firestore > ルール で設定）:
+// rules_version = '2';
+// service cloud.firestore {
+//   match /databases/{database}/documents {
+//     match /users/{userId}/{document=**} {
+//       allow read, write: if request.auth != null && request.auth.uid == userId;
+//     }
+//   }
+// }
+let currentUser = null;
+let db = null;
+let auth = null;
+const firebaseConfig = {
+  apiKey: "AIzaSyAhNAZjlyohQaYzB8HjX5qTpW5W29JrOfw",
+  authDomain: "nikowa2525.firebaseapp.com",
+  projectId: "nikowa2525",
+  storageBucket: "nikowa2525.firebasestorage.app",
+  messagingSenderId: "579205168629",
+  appId: "1:579205168679:web:c3fd1ede3a91886d7274bc"
+};
+function initFirebase() {
+  if (typeof firebase === 'undefined') return;
+  try {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    auth.onAuthStateChanged(function(user) {
+      currentUser = user;
+      if (user) {
+        loadFromFirestore();
+      } else {
+        if (currentView === 'settings') render();
+      }
+    });
+  } catch(e) {}
+}
+async function loadFromFirestore() {
+  if (!currentUser || !db) return;
+  try {
+    const docRef = db.collection('users').doc(currentUser.uid).collection('nikowa').doc('main');
+    const doc = await docRef.get();
+    if (doc.exists) {
+      const fsData = doc.data();
+      if (fsData) {
+        for (const k in fsData) data[k] = fsData[k];
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e2) {}
+      }
+    } else {
+      await saveToFirestore();
+    }
+  } catch(e) {}
+  render();
+}
+async function saveToFirestore() {
+  if (!currentUser || !db) return;
+  try {
+    const docRef = db.collection('users').doc(currentUser.uid).collection('nikowa').doc('main');
+    await docRef.set(JSON.parse(JSON.stringify(data)));
+  } catch(e) {}
+}
+function signInWithGoogle() {
+  if (!auth) { showToast('Firebase未初期化'); return; }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(function() {
+    showToast('ログインできませんでした😢');
+  });
+}
+function signOutFirebase() {
+  if (!auth) return;
+  auth.signOut().then(function() {
+    showToast('ログアウトしました');
+  }).catch(function() {});
+}
 const THEMES = {
   mint: { name: 'チョコミント', emoji: '🍃', pattern: 'gingham',
     vars: { '--bg':'#D0FCED', '--surface':'#FFFFFF', '--surface-warm':'#E0F0E5', '--line':'#B8D8C5', '--line-soft':'#CCE4D5', '--ink-dark':'#2D4A3C', '--ink':'#466050', '--ink-sub':'#7A9588', '--ink-light':'#A8BFB2', '--mint':'#8FC9AB', '--mint-deep':'#5FA985', '--mint-bg':'#C2E2D0', '--accent':'#C8956A', '--accent-deep':'#9A6840', '--accent-bg':'#EDD5C0', '--today-bg':'#FCEAEF', '--today-border':'#F4C8D2', '--warm-yellow':'#F8E4A0', '--soft-purple':'#C8B0D8' },
@@ -2688,7 +2681,7 @@ const THEMES = {
     ginghamColor: 'rgba(255,255,255,0.55)',
     headerGrad: 'linear-gradient(180deg, #EAF6EE 0%, #DCEEE2 50%, #F2D9C8 100%)' },
   soda: { name: 'ソーダ', emoji: '🥤', pattern: 'polka',
-    vars: { '--bg':'#C8E4F5', '--surface':'#FFFFFF', '--surface-warm':'#D8EAF5', '--line':'#B0D0E8', '--line-soft':'#C8DFF0', '--ink-dark':'#1A3A58', '--ink':'#2A5078', '--ink-sub':'#4A78A0', '--ink-light':'#7898B8', '--mint':'#5AA8D8', '--mint-deep':'#3A8AB8', '--mint-bg':'#A0CCE8', '--accent':'#E8B840', '--accent-deep':'#B88A18', '--accent-bg':'#FCE8A0', '--today-bg':'#FFF0B8', '--today-border':'#E8C860', '--warm-yellow':'#F8E08A', '--soft-purple':'#A8B0D8' },
+    vars: { '--bg':'#F4F7B4', '--surface':'#FFFFFF', '--surface-warm':'#D8EAF5', '--line':'#B0D0E8', '--line-soft':'#C8DFF0', '--ink-dark':'#1A3A58', '--ink':'#2A5078', '--ink-sub':'#4A78A0', '--ink-light':'#7898B8', '--mint':'#5AA8D8', '--mint-deep':'#3A8AB8', '--mint-bg':'#A0CCE8', '--accent':'#E8B840', '--accent-deep':'#B88A18', '--accent-bg':'#FCE8A0', '--today-bg':'#FFF0B8', '--today-border':'#E8C860', '--warm-yellow':'#F8E08A', '--soft-purple':'#A8B0D8' },
     paperColor: 'rgba(255,255,255,0.85)',
     headerGrad: 'linear-gradient(180deg, #EAF4FA 0%, #D6E8F2 50%, #FCEBB8 100%)' },
   strawberry: { name: 'いちごみるく', emoji: '🍓', pattern: 'gingham',
@@ -2697,13 +2690,12 @@ const THEMES = {
     ginghamColor: 'rgba(255,255,255,0.55)',
     headerGrad: 'linear-gradient(180deg, #FEF4F4 0%, #FBE2E8 50%, #F4BCC8 100%)' },
   honey: { name: 'ハニーレモン', emoji: '🍯', pattern: 'polka',
-    vars: { '--bg':'#F4F7B4', '--surface':'#FFFFFF', '--surface-warm':'#F5E8B0', '--line':'#E0C870', '--line-soft':'#E8D898', '--ink-dark':'#3E3008', '--ink':'#584818', '--ink-sub':'#806820', '--ink-light':'#A88838', '--mint':'#C89820', '--mint-deep':'#A07810', '--mint-bg':'#E8C858', '--accent':'#F5C060', '--accent-deep':'#C89028', '--accent-bg':'#F8C870', '--today-bg':'#F8E098', '--today-border':'#D8B048', '--warm-yellow':'#F0D870', '--soft-purple':'#B8A068' },
+    vars: { '--bg':'#FCF2C8', '--surface':'#FFFFFF', '--surface-warm':'#F5E8B0', '--line':'#E0C870', '--line-soft':'#E8D898', '--ink-dark':'#3E3008', '--ink':'#584818', '--ink-sub':'#806820', '--ink-light':'#A88838', '--mint':'#C89820', '--mint-deep':'#A07810', '--mint-bg':'#E8C858', '--accent':'#78B090', '--accent-deep':'#508868', '--accent-bg':'#C8E0D0', '--today-bg':'#F8E098', '--today-border':'#D8B048', '--warm-yellow':'#F0D870', '--soft-purple':'#B8A068' },
     paperColor: 'rgba(255,250,225,0.85)',
-    headerGrad: 'linear-gradient(180deg, #F4F7B4 0%, #E8E090 50%, #DCEFE0 100%)' },
+    headerGrad: 'linear-gradient(180deg, #FCF2C8 0%, #F8E4A0 50%, #DCEFE0 100%)' },
   pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham',
     vars: { '--bg':'#FFDFAB', '--surface':'#FFFFFF', '--surface-warm':'#FCF1DA', '--line':'#EBD4A8', '--line-soft':'#F2E2C2', '--ink-dark':'#6B4A28', '--ink':'#8A6440', '--ink-sub':'#B0926A', '--ink-light':'#D4BC98', '--mint':'#E8C088', '--mint-deep':'#C28848', '--mint-bg':'#FBE2B8', '--accent':'#F0A0B2', '--accent-deep':'#C26880', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8B898' },
-    paperColor: 'rgba(255,255,255,0.65)',
-    ginghamColor: 'rgba(255,255,255,0.65)',
+    paperColor: 'rgba(194,136,72,0.08)',
     headerGrad: 'linear-gradient(180deg, #FCEFD2 0%, #F0D4A0 50%, #F4C0CC 100%)' },
   cola: { name: 'コーラ', emoji: '🥃', pattern: 'polka',
     vars: { '--bg':'#ECD8C0', '--surface':'#FFFFFF', '--surface-warm':'#ECD5C0', '--line':'#C8A080', '--line-soft':'#D8B898', '--ink-dark':'#3E2418', '--ink':'#5A3828', '--ink-sub':'#8A6850', '--ink-light':'#B89878', '--mint':'#A87850', '--mint-deep':'#704020', '--mint-bg':'#DCC0A0', '--accent':'#D06878', '--accent-deep':'#A04058', '--accent-bg':'#F8C8D0', '--today-bg':'#F8D0D8', '--today-border':'#E08898', '--warm-yellow':'#F8E4A0', '--soft-purple':'#B89080' },
@@ -2711,8 +2703,7 @@ const THEMES = {
     headerGrad: 'linear-gradient(180deg, #F5E8D8 0%, #D4A888 50%, #A06848 100%)' },
   lavender: { name: 'ラベンダーマカロン', emoji: '🪻', pattern: 'gingham',
     vars: { '--bg':'#EDE0F5', '--surface':'#FFFFFF', '--surface-warm':'#E4D2F0', '--line':'#C8A8D8', '--line-soft':'#D8C0E8', '--ink-dark':'#3E2858', '--ink':'#5A4070', '--ink-sub':'#887098', '--ink-light':'#B0A0C0', '--mint':'#B090D0', '--mint-deep':'#8060A8', '--mint-bg':'#D0B8E0', '--accent':'#E088A8', '--accent-deep':'#B05870', '--accent-bg':'#F8C8D8', '--today-bg':'#F8D0DC', '--today-border':'#E0A0B8', '--warm-yellow':'#F8E4A0', '--soft-purple':'#8060A8' },
-    paperColor: 'rgba(255,255,255,0.6)',
-    ginghamColor: 'rgba(255,255,255,0.6)',
+    paperColor: 'rgba(128,96,168,0.14)',
     headerGrad: 'linear-gradient(180deg, #F0E2F8 0%, #E0CCEE 50%, #FAD8E2 100%)' },
   matcha: { name: '抹茶わらび', emoji: '🍵', pattern: 'polka',
     vars: { '--bg':'#E4ECC0', '--surface':'#FFFFFF', '--surface-warm':'#E0E8B8', '--line':'#B8C880', '--line-soft':'#CCD8A0', '--ink-dark':'#1F2F10', '--ink':'#384828', '--ink-sub':'#5A6838', '--ink-light':'#88A058', '--mint':'#6A8830', '--mint-deep':'#4A6820', '--mint-bg':'#A8C868', '--accent':'#D88AA0', '--accent-deep':'#A86078', '--accent-bg':'#F8C8D8', '--today-bg':'#A8C868', '--today-border':'#E0A0B0', '--warm-yellow':'#D8C070', '--soft-purple':'#A08090' },
@@ -2821,8 +2812,7 @@ function applyTheme(themeId) {
   var crayonSvg = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'><path d='M2,4 Q10,2 18,4 T36,4 T54,3 T72,5 T90,4 T108,3 T126,5 T144,4 T162,3 T180,5 T198,4' stroke='"+crayonHex+"' stroke-width='2.5' fill='none' stroke-linecap='round' opacity='0.85'/></svg>\")";
   styleEl.textContent = '.topbar { background: '+theme.headerGrad+' !important; }'
     + ' .section-title { background-image: '+crayonSvg+' !important; }'
-    + ' .hero-glass::before { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
-    + ' .mode-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }';
+    + ' .hero-glass::before { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }';
   // topbarに桜吹雪を追加
   setTimeout(function(){
     document.querySelectorAll('.topbar').forEach(function(tb){
@@ -2894,7 +2884,7 @@ let data = {
   petTab: 'care'
 };
 let photos = {};
-let currentView = 'top';
+let currentView = 'houses';
 let selectedPetType = 'dog';
 let selectedPlace = 'home';
 let selectedTag = 'ケア';
@@ -2959,6 +2949,7 @@ function loadData() {
 function saveData() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
   catch(e) { showToast('保存できませんでした😢'); }
+  if (currentUser && db) saveToFirestore();
 }
 function savePhotos() {
   try { localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos)); }
@@ -3633,109 +3624,6 @@ function renderDayDetail(dateKey, scope) {
   return html;
 }
 
-function renderTop() {
-  document.getElementById('bottomNav').style.display = 'flex';
-  setActiveNav('houses'); // ボトムナビは「ホーム」をアクティブに
-  const app = document.getElementById('app');
-  const userName = data.user.name || '';
-  
-  let html = '<div class="hero-section">';
-  // 上部チップ
-  html += '<div class="hero-top">';
-  html += '<button class="hero-user-chip" onclick="openUserModal()">';
-  html += '<span>'+(data.user.avatar || '🌷')+'</span>';
-  if (userName) html += '<span>'+escapeHtml(userName)+'</span>';
-  else html += '<span class="hero-user-prompt">名前をつける</span>';
-  html += '</button>';
-  html += '<button class="hero-theme-btn" onclick="openThemeModal()" title="テーマ">🎨</button>';
-  html += '</div>';
-  // 桜吹雪 + すりガラスカード
-  var currentTheme = THEMES[data.themeId || 'mint'] || THEMES.mint;
-  var isSimple = currentTheme.simple === true;
-  var petalHtml = '';
-  if (!isSimple) {
-    var petalColors = ['var(--accent)','var(--accent-deep)','var(--soft-purple)','var(--mint-deep)'];
-    petalHtml = '<div class="hero-petal-layer">';
-    var heroLefts = [3,72,18,91,45,63,8,82,31,56,14,77,40,67];
-    var heroDelays = [-2.1,-0.3,-4.5,-1.8,-3.2,-0.7,-3.9,-2.6,-1.1,-4.0,-0.5,-3.4,-2.3,-1.6];
-    var heroDurs = [6,7,5,8,6,7,5,8,7,6,8,5,7,6];
-    var heroAnims = ['nkPetal','nkPetal2','nkPetal3','nkPetal','nkPetal3','nkPetal2','nkPetal','nkPetal3','nkPetal2','nkPetal','nkPetal2','nkPetal3','nkPetal','nkPetal2'];
-    for (var pi = 0; pi < 14; pi++) {
-      var pSize  = (9 + (pi % 4) * 2);
-      var pColor = petalColors[pi % 4];
-      petalHtml += '<div class="hero-petal" style="left:'+heroLefts[pi]+'%;font-size:'+pSize+'px;color:'+pColor+';animation-name:'+heroAnims[pi]+';animation-duration:'+heroDurs[pi]+'s;animation-delay:'+heroDelays[pi]+'s;">❀</div>';
-    }
-    petalHtml += '</div>';
-  }
-  html += '<div class="hero-glass'+(isSimple?' hero-glass-simple':'')+'">' + petalHtml;
-  html += '<div class="hero-logo">';
-  if (isSimple) {
-    html += '<div class="hero-logo-simple">にこわ<span class="hero-logo-simple-en">-nikowa-</span></div>';
-  } else {
-    html += '<img class="hero-logo-img" src="' + LOGO_DATA_URL + '" alt="にこわ nikowa">';
-  }
-  html += '</div>';
-  html += '<div class="hero-message">';
-  if (isSimple) {
-    html += '<div class="hero-message-main">今日も、この子と。</div>';
-  } else {
-    html += '<div class="hero-message-main">今日もこの子と、ちゃんと過ごせた。</div>';
-    html += '<div class="hero-message-sub">できる日に、できる分だけで大丈夫</div>';
-  }
-  html += '</div>';
-  html += '</div>'; // hero-glass閉じ
-  html += '</div>'; // hero-section閉じ
-
-  // モード選択カード
-  html += '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">どこへいく？</h2></div>';
-  html += '</div>';
-  html += '<div class="mode-section">';
-
-  // ME
-  html += '<button class="mode-card mode-me" onclick="openComingSoon(\'ME\')">';
-  html += '<div class="mode-card-icon">🌸</div>';
-  html += '<div class="mode-card-body">';
-  html += '<div class="mode-card-title">ME<span class="mode-card-badge">じゅんびちゅう</span></div>';
-  html += '<div class="mode-card-sub">じぶんのこと・ビューティー・自己投資</div>';
-  html += '</div>';
-  html += '<div class="mode-card-arrow">›</div>';
-  html += '</button>';
-
-  // PET
-  html += '<button class="mode-card mode-pet" onclick="goToPetMode()">';
-  html += '<div class="mode-card-icon">🐾</div>';
-  html += '<div class="mode-card-body">';
-  html += '<div class="mode-card-title">PET</div>';
-  html += '<div class="mode-card-sub">うちの子のお世話・記録・思い出</div>';
-  html += '</div>';
-  html += '<div class="mode-card-arrow">›</div>';
-  html += '</button>';
-
-  // KIDS
-  html += '<button class="mode-card mode-kids" onclick="openComingSoon(\'KIDS\')">';
-  html += '<div class="mode-card-icon">🧸</div>';
-  html += '<div class="mode-card-body">';
-  html += '<div class="mode-card-title">KIDS<span class="mode-card-badge">じゅんびちゅう</span></div>';
-  html += '<div class="mode-card-sub">こどもの記録・成長・作品・語録</div>';
-  html += '</div>';
-  html += '<div class="mode-card-arrow">›</div>';
-  html += '</button>';
-  html += '</div>'; // mode-section閉じ
-
-  html += '<div style="height: 24px;"></div>';
-  app.innerHTML = html;
-}
-
-function goToPetMode() {
-  currentView = 'houses';
-  render();
-}
-
-function openComingSoon(modeName) {
-  showToast(modeName + 'モードは準備中やで🌸');
-}
-
 function renderHouses() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('houses');
@@ -4170,15 +4058,13 @@ function backToHouse() {
 }
 
 function navBack() {
-  // 戻る順：pet → house → houses → top、facility → town → top
+  // 戻る順：pet → house → houses、facility → town
   if (currentView === 'pet') backToHouse();
   else if (currentView === 'house') backToHouses();
-  else if (currentView === 'houses') { currentView = 'top'; render(); }
   else if (currentView === 'facility') { currentView = 'town'; render(); }
   else if (currentView === 'town' || currentView === 'schedule' || currentView === 'settings') {
-    // タウン・よてい・せっていからはトップに戻る
-    currentView = 'top';
-    render();
+    // タウン・よてい・せっていからは家一覧に戻る
+    backToHouses();
   }
 }
 function setPetTab(tab) {
@@ -5316,6 +5202,25 @@ function renderSettings() {
   const mb = (bytes / 1024 / 1024).toFixed(2);
   const photoCount = Object.keys(photos).length;
   let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">⚙️ せってい</div><div class="topbar-spacer"></div></div>';
+  // アカウントセクション
+  html += '<div class="section"><div class="section-head"><h2 class="section-title">アカウント</h2></div>';
+  html += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;">';
+  if (currentUser) {
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">';
+    if (currentUser.photoURL) {
+      html += '<img src="'+currentUser.photoURL+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">';
+    } else {
+      html += '<div style="width:36px;height:36px;border-radius:50%;background:var(--mint-bg);display:flex;align-items:center;justify-content:center;font-size:20px;">👤</div>';
+    }
+    html += '<div><div style="font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(currentUser.displayName||'ユーザー')+'</div>';
+    html += '<div style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(currentUser.email||'')+'</div></div></div>';
+    html += '<div style="font-size:11.5px;color:var(--mint-deep);margin-bottom:10px;">☁️ クラウドに同期中</div>';
+    html += '<button class="btn btn-secondary" style="width:100%;" onclick="signOutFirebase()">ログアウト</button>';
+  } else {
+    html += '<div style="font-size:12px;color:var(--ink-sub);margin-bottom:12px;line-height:1.7;">Googleアカウントでログインすると<br>データをクラウドに保存できます。</div>';
+    html += '<button class="btn btn-primary" style="width:100%;" onclick="signInWithGoogle()">🔑 Googleでログイン</button>';
+  }
+  html += '</div></div>';
   html += '<div class="section"><div class="section-head"><h2 class="section-title">家</h2></div>';
   html += '<div class="houses-list">';
   html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9.5px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
@@ -5366,15 +5271,15 @@ function renderSettings() {
 function setActiveNav(view) {
   const btns = document.querySelectorAll('.nav-btn[data-view]');
   for (const b of btns) b.classList.toggle('active', b.dataset.view === view);
-  // 戻るボタン：top以外で表示
+  // 戻るボタン：houses以外で表示
   const backBtn = document.getElementById('navBackBtn');
-  if (backBtn) backBtn.style.display = (view === 'top') ? 'none' : 'flex';
+  if (backBtn) backBtn.style.display = (view === 'houses') ? 'none' : 'flex';
 }
 document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
   btn.onclick = () => {
     const view = btn.dataset.view;
     if (view === 'houses') {
-      currentView = 'top';
+      currentView = 'houses';
       data.selectedHouseId = null;
       saveData();
     }
@@ -6218,15 +6123,14 @@ function renderSidePanel() {
 
 let _suppressScrollTop = false;
 function render() {
-  if (currentView === 'top') renderTop();
-  else if (currentView === 'houses') renderHouses();
+  if (currentView === 'houses') renderHouses();
   else if (currentView === 'house') renderHouse();
   else if (currentView === 'pet') renderPet();
   else if (currentView === 'schedule') renderSchedule();
   else if (currentView === 'settings') renderSettings();
   else if (currentView === 'town') renderTown();
   else if (currentView === 'facility') renderFacility();
-  else renderTop();
+  else renderHouses();
   renderSidePanel();
   if (!_suppressScrollTop) window.scrollTo(0, 0);
   _suppressScrollTop = false;
@@ -6234,6 +6138,7 @@ function render() {
 loadData();
 applyTheme(data.themeId || 'mint');
 render();
+initFirebase();
 </script>
 </body>
 </html>
