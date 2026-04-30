@@ -21,15 +21,18 @@
   html, body {
     margin: 0; padding: 0;
     font-family: 'Zen Maru Gothic', sans-serif;
-    background: var(--bg); color: var(--ink); min-height: 100vh;
+    background-color: var(--bg) !important;
+    color: var(--ink); min-height: 100vh;
   }
-  html { background: var(--bg); }
+  html { background-color: var(--bg) !important; }
   body {
     max-width: 480px; margin: 0 auto;
-    background-image: radial-gradient(rgba(127,186,154,0.10) 1px, transparent 1px);
-    background-size: 10px 10px;
+    background-color: var(--bg) !important;
   }
-  .app-frame { position: relative; }
+  .app-frame { 
+    position: relative;
+  }
+  .app { background-color: transparent; }
   .app { min-height: 100vh; padding-bottom: 90px; }
   .side-panel { display: none; }
 
@@ -51,8 +54,6 @@
       overflow: hidden;
       box-shadow: 0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
       background: var(--bg);
-      background-image: radial-gradient(rgba(127,186,154,0.10) 1px, transparent 1px);
-      background-size: 10px 10px;
       position: relative;
       min-height: 700px;
       max-height: calc(100vh - 32px);
@@ -142,6 +143,9 @@
     border-bottom: 2px solid var(--line);
     position: sticky; top: 0; z-index: 10;
     overflow: hidden;
+    backdrop-filter: blur(12px) saturate(1.5);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
   }
   .topbar-petal-layer {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -223,14 +227,15 @@
   }
   .hero-glass {
     position: relative;
-    background: rgba(255,255,255,0.3);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.6) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 28px;
     padding: 20px 12px 22px;
     margin: 0 -4px 8px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.5);
+    border: 1px solid rgba(255,255,255,0.8);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
   }
   .hero-petal-layer {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -292,6 +297,57 @@
   .hero-message-sub {
     font-size: 11px; color: var(--ink-sub);
     margin-top: 4px; letter-spacing: 0.3px;
+  }
+
+  /* ===== シンプルテーマ用 ===== */
+  body.theme-simple {
+    background-color: var(--bg) !important;
+  }
+  body.theme-simple,
+  body.theme-simple * {
+    font-family: 'Yu Mincho', 'YuMincho', '游明朝', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', 'HG明朝E', serif !important;
+    letter-spacing: 0.5px;
+  }
+  body.theme-simple .anzu-bubble,
+  body.theme-simple .anzu-bubble * {
+    font-family: inherit !important;
+    letter-spacing: normal;
+  }
+  body.theme-simple .hero-message-main {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 4px;
+  }
+  body.theme-simple .hero-glass {
+    background: var(--surface) !important;
+    border: 1px solid var(--line-soft) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+  }
+  body.theme-simple .hero-logo-simple {
+    color: var(--ink-dark) !important;
+  }
+  .hero-glass-simple {
+    background: var(--surface) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--line-soft) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+  }
+  .hero-logo-simple {
+    text-align: center;
+    font-family: 'Yu Mincho', 'YuMincho', '游明朝', 'Hiragino Mincho ProN', serif;
+    font-size: 32px; font-weight: 600;
+    color: var(--ink-dark);
+    letter-spacing: 4px;
+    padding: 8px 0 4px;
+  }
+  .hero-logo-simple-en {
+    display: block;
+    font-size: 12px; font-weight: 400;
+    color: var(--ink-sub);
+    letter-spacing: 3px;
+    margin-top: 4px;
+    font-family: 'Georgia', serif;
   }
 
   /* ===== 今日の家（メインカード） ===== */
@@ -558,6 +614,11 @@
     font-size: 15px; font-weight: 700; color: var(--ink-dark);
     letter-spacing: 1.2px; margin: 0;
     display: flex; align-items: center; gap: 6px;
+    padding-bottom: 6px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'><path d='M2,4 Q10,2 18,4 T36,4 T54,3 T72,5 T90,4 T108,3 T126,5 T144,4 T162,3 T180,5 T198,4' stroke='%23C8956A' stroke-width='2.5' fill='none' stroke-linecap='round' opacity='0.85'/></svg>");
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: auto 6px;
   }
   .section-title::before {
     content: ''; display: inline-block;
@@ -2523,51 +2584,62 @@ const STORAGE_KEY = 'nikowa_data_v3';
 const PHOTOS_KEY = 'nikowa_photos_v3';
 const MAX_PHOTO_SIZE = 800;
 const THEMES = {
-  mint: { name: 'チョコミント', emoji: '🍃', pattern: 'dot',
-    vars: { '--bg':'#E8F4ED', '--surface':'#FFFFFF', '--surface-warm':'#E0F0E5', '--line':'#B8D8C5', '--line-soft':'#CCE4D5', '--ink-dark':'#2D4A3C', '--ink':'#466050', '--ink-sub':'#7A9588', '--ink-light':'#A8BFB2', '--mint':'#8FC9AB', '--mint-deep':'#5FA985', '--mint-bg':'#C2E2D0', '--accent':'#C8956A', '--accent-deep':'#9A6840', '--accent-bg':'#EDD5C0', '--today-bg':'#FCEAEF', '--today-border':'#F4C8D2', '--warm-yellow':'#F8E4A0', '--soft-purple':'#C8B0D8' },
-    paperColor: 'rgba(95,169,133,0.15)',
+  mint: { name: 'チョコミント', emoji: '🍃', pattern: 'gingham',
+    vars: { '--bg':'#D0FCED', '--surface':'#FFFFFF', '--surface-warm':'#E0F0E5', '--line':'#B8D8C5', '--line-soft':'#CCE4D5', '--ink-dark':'#2D4A3C', '--ink':'#466050', '--ink-sub':'#7A9588', '--ink-light':'#A8BFB2', '--mint':'#8FC9AB', '--mint-deep':'#5FA985', '--mint-bg':'#C2E2D0', '--accent':'#C8956A', '--accent-deep':'#9A6840', '--accent-bg':'#EDD5C0', '--today-bg':'#FCEAEF', '--today-border':'#F4C8D2', '--warm-yellow':'#F8E4A0', '--soft-purple':'#C8B0D8' },
+    paperColor: 'rgba(255,255,255,0.55)',
+    ginghamColor: 'rgba(255,255,255,0.55)',
     headerGrad: 'linear-gradient(180deg, #EAF6EE 0%, #DCEEE2 50%, #F2D9C8 100%)' },
   soda: { name: 'ソーダ', emoji: '🥤', pattern: 'polka',
-    vars: { '--bg':'#E4F0FA', '--surface':'#FFFFFF', '--surface-warm':'#D8EAF5', '--line':'#B0D0E8', '--line-soft':'#C8DFF0', '--ink-dark':'#2A4A68', '--ink':'#4A6A85', '--ink-sub':'#7A98B0', '--ink-light':'#A8C0D2', '--mint':'#88C4E2', '--mint-deep':'#5A9DC5', '--mint-bg':'#C0DEF0', '--accent':'#E8B840', '--accent-deep':'#B88A18', '--accent-bg':'#FCE8A0', '--today-bg':'#FFF0B8', '--today-border':'#E8C860', '--warm-yellow':'#F8E08A', '--soft-purple':'#A8B0D8' },
-    paperColor: 'rgba(90,157,197,0.12)',
+    vars: { '--bg':'#F4F7B4', '--surface':'#FFFFFF', '--surface-warm':'#D8EAF5', '--line':'#B0D0E8', '--line-soft':'#C8DFF0', '--ink-dark':'#1A3A58', '--ink':'#2A5078', '--ink-sub':'#4A78A0', '--ink-light':'#7898B8', '--mint':'#5AA8D8', '--mint-deep':'#3A8AB8', '--mint-bg':'#A0CCE8', '--accent':'#E8B840', '--accent-deep':'#B88A18', '--accent-bg':'#FCE8A0', '--today-bg':'#FFF0B8', '--today-border':'#E8C860', '--warm-yellow':'#F8E08A', '--soft-purple':'#A8B0D8' },
+    paperColor: 'rgba(255,255,255,0.85)',
     headerGrad: 'linear-gradient(180deg, #EAF4FA 0%, #D6E8F2 50%, #FCEBB8 100%)' },
   strawberry: { name: 'いちごみるく', emoji: '🍓', pattern: 'gingham',
-    vars: { '--bg':'#FEF8F8', '--surface':'#FFFFFF', '--surface-warm':'#FCF1F2', '--line':'#F4DCE2', '--line-soft':'#F8E8EC', '--ink-dark':'#7A4A58', '--ink':'#9A6878', '--ink-sub':'#B894A0', '--ink-light':'#D8BAC2', '--mint':'#F4C2CE', '--mint-deep':'#D88AA0', '--mint-bg':'#FDE2E8', '--accent':'#E89AB0', '--accent-deep':'#C26A85', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8C2E0' },
-    paperColor: 'rgba(216,138,160,0.08)',
+    vars: { '--bg':'#FEEBF8', '--surface':'#FFFFFF', '--surface-warm':'#FCF1F2', '--line':'#F4DCE2', '--line-soft':'#F8E8EC', '--ink-dark':'#7A4A58', '--ink':'#9A6878', '--ink-sub':'#B894A0', '--ink-light':'#D8BAC2', '--mint':'#F4C2CE', '--mint-deep':'#D88AA0', '--mint-bg':'#FDE2E8', '--accent':'#E89AB0', '--accent-deep':'#C26A85', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8C2E0' },
+    paperColor: 'rgba(255,255,255,0.55)',
+    ginghamColor: 'rgba(255,255,255,0.55)',
     headerGrad: 'linear-gradient(180deg, #FEF4F4 0%, #FBE2E8 50%, #F4BCC8 100%)' },
-  honey: { name: 'ハニーレモン', emoji: '🍯', pattern: 'dot',
-    vars: { '--bg':'#FAF0C8', '--surface':'#FFFFFF', '--surface-warm':'#F5E8B0', '--line':'#E0C870', '--line-soft':'#E8D898', '--ink-dark':'#584818', '--ink':'#786028', '--ink-sub':'#A08848', '--ink-light':'#C0A868', '--mint':'#E0B840', '--mint-deep':'#B88820', '--mint-bg':'#F0D070', '--accent':'#78B090', '--accent-deep':'#508868', '--accent-bg':'#C8E0D0', '--today-bg':'#F8E098', '--today-border':'#D8B048', '--warm-yellow':'#F0D870', '--soft-purple':'#B8A068' },
-    paperColor: 'rgba(184,136,32,0.14)',
+  honey: { name: 'ハニーレモン', emoji: '🍯', pattern: 'polka',
+    vars: { '--bg':'#FCF2C8', '--surface':'#FFFFFF', '--surface-warm':'#F5E8B0', '--line':'#E0C870', '--line-soft':'#E8D898', '--ink-dark':'#3E3008', '--ink':'#584818', '--ink-sub':'#806820', '--ink-light':'#A88838', '--mint':'#C89820', '--mint-deep':'#A07810', '--mint-bg':'#E8C858', '--accent':'#78B090', '--accent-deep':'#508868', '--accent-bg':'#C8E0D0', '--today-bg':'#F8E098', '--today-border':'#D8B048', '--warm-yellow':'#F0D870', '--soft-purple':'#B8A068' },
+    paperColor: 'rgba(255,250,225,0.85)',
     headerGrad: 'linear-gradient(180deg, #FCF2C8 0%, #F8E4A0 50%, #DCEFE0 100%)' },
   pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham',
-    vars: { '--bg':'#FEF9EE', '--surface':'#FFFFFF', '--surface-warm':'#FCF1DA', '--line':'#EBD4A8', '--line-soft':'#F2E2C2', '--ink-dark':'#6B4A28', '--ink':'#8A6440', '--ink-sub':'#B0926A', '--ink-light':'#D4BC98', '--mint':'#E8C088', '--mint-deep':'#C28848', '--mint-bg':'#FBE2B8', '--accent':'#F0A0B2', '--accent-deep':'#C26880', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8B898' },
+    vars: { '--bg':'#FFDFAB', '--surface':'#FFFFFF', '--surface-warm':'#FCF1DA', '--line':'#EBD4A8', '--line-soft':'#F2E2C2', '--ink-dark':'#6B4A28', '--ink':'#8A6440', '--ink-sub':'#B0926A', '--ink-light':'#D4BC98', '--mint':'#E8C088', '--mint-deep':'#C28848', '--mint-bg':'#FBE2B8', '--accent':'#F0A0B2', '--accent-deep':'#C26880', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8B898' },
     paperColor: 'rgba(194,136,72,0.08)',
     headerGrad: 'linear-gradient(180deg, #FCEFD2 0%, #F0D4A0 50%, #F4C0CC 100%)' },
   cola: { name: 'コーラ', emoji: '🥃', pattern: 'polka',
-    vars: { '--bg':'#F2E4D8', '--surface':'#FFFFFF', '--surface-warm':'#ECD5C0', '--line':'#C8A080', '--line-soft':'#D8B898', '--ink-dark':'#3E2418', '--ink':'#5A3828', '--ink-sub':'#8A6850', '--ink-light':'#B89878', '--mint':'#A87850', '--mint-deep':'#704020', '--mint-bg':'#DCC0A0', '--accent':'#D06878', '--accent-deep':'#A04058', '--accent-bg':'#F8C8D0', '--today-bg':'#F8D0D8', '--today-border':'#E08898', '--warm-yellow':'#F8E4A0', '--soft-purple':'#B89080' },
-    paperColor: 'rgba(142,94,60,0.12)',
+    vars: { '--bg':'#ECD8C0', '--surface':'#FFFFFF', '--surface-warm':'#ECD5C0', '--line':'#C8A080', '--line-soft':'#D8B898', '--ink-dark':'#3E2418', '--ink':'#5A3828', '--ink-sub':'#8A6850', '--ink-light':'#B89878', '--mint':'#A87850', '--mint-deep':'#704020', '--mint-bg':'#DCC0A0', '--accent':'#D06878', '--accent-deep':'#A04058', '--accent-bg':'#F8C8D0', '--today-bg':'#F8D0D8', '--today-border':'#E08898', '--warm-yellow':'#F8E4A0', '--soft-purple':'#B89080' },
+    paperColor: 'rgba(255,248,238,0.7)',
     headerGrad: 'linear-gradient(180deg, #F5E8D8 0%, #D4A888 50%, #A06848 100%)' },
-  lavender: { name: 'ラベンダーマカロン', emoji: '🪻', pattern: 'dot',
+  lavender: { name: 'ラベンダーマカロン', emoji: '🪻', pattern: 'gingham',
     vars: { '--bg':'#EDE0F5', '--surface':'#FFFFFF', '--surface-warm':'#E4D2F0', '--line':'#C8A8D8', '--line-soft':'#D8C0E8', '--ink-dark':'#3E2858', '--ink':'#5A4070', '--ink-sub':'#887098', '--ink-light':'#B0A0C0', '--mint':'#B090D0', '--mint-deep':'#8060A8', '--mint-bg':'#D0B8E0', '--accent':'#E088A8', '--accent-deep':'#B05870', '--accent-bg':'#F8C8D8', '--today-bg':'#F8D0DC', '--today-border':'#E0A0B8', '--warm-yellow':'#F8E4A0', '--soft-purple':'#8060A8' },
     paperColor: 'rgba(128,96,168,0.14)',
     headerGrad: 'linear-gradient(180deg, #F0E2F8 0%, #E0CCEE 50%, #FAD8E2 100%)' },
-  matcha: { name: '抹茶わらび', emoji: '🍵', pattern: 'stripe',
-    vars: { '--bg':'#ECF0D0', '--surface':'#FFFFFF', '--surface-warm':'#E0E8B8', '--line':'#B8C880', '--line-soft':'#CCD8A0', '--ink-dark':'#384828', '--ink':'#506838', '--ink-sub':'#7A9058', '--ink-light':'#A8B880', '--mint':'#98B858', '--mint-deep':'#6A8830', '--mint-bg':'#C0D488', '--accent':'#D88AA0', '--accent-deep':'#A86078', '--accent-bg':'#F8C8D8', '--today-bg':'#F8D0D8', '--today-border':'#E0A0B0', '--warm-yellow':'#D8C070', '--soft-purple':'#A08090' },
-    paperColor: 'rgba(106,136,48,0.12)',
-    headerGrad: 'linear-gradient(180deg, #ECF0D2 0%, #D8E2A8 50%, #F4D2DA 100%)' }
+  matcha: { name: '抹茶わらび', emoji: '🍵', pattern: 'polka',
+    vars: { '--bg':'#E4ECC0', '--surface':'#FFFFFF', '--surface-warm':'#E0E8B8', '--line':'#B8C880', '--line-soft':'#CCD8A0', '--ink-dark':'#1F2F10', '--ink':'#384828', '--ink-sub':'#5A6838', '--ink-light':'#88A058', '--mint':'#6A8830', '--mint-deep':'#4A6820', '--mint-bg':'#A8C868', '--accent':'#D88AA0', '--accent-deep':'#A86078', '--accent-bg':'#F8C8D8', '--today-bg':'#A8C868', '--today-border':'#E0A0B0', '--warm-yellow':'#D8C070', '--soft-purple':'#A08090' },
+    paperColor: 'rgba(250,252,232,0.8)',
+    headerGrad: 'linear-gradient(180deg, #ECF0D2 0%, #D8E2A8 50%, #F4D2DA 100%)' },
+  kurogoma: { name: 'くろごま', emoji: '⚫', pattern: 'dot', simple: true,
+    vars: { '--bg':'#2A2A30', '--surface':'#7A7A82', '--surface-warm':'#7A7A82', '--line':'#8A8A92', '--line-soft':'#6A6A72', '--ink-dark':'#F8F7F2', '--ink':'#E8E6DE', '--ink-sub':'#C8C6C0', '--ink-light':'#9A9890', '--mint':'#D8D6CE', '--mint-deep':'#B8B6AE', '--mint-bg':'#8A8A92', '--accent':'#D8B868', '--accent-deep':'#B89848', '--accent-bg':'#605840', '--today-bg':'#7A7A82', '--today-border':'#A8A6A0', '--warm-yellow':'#D8B868', '--soft-purple':'#A8A0A8' },
+    paperColor: 'rgba(255,255,255,0.08)',
+    headerGrad: 'linear-gradient(180deg, #38383F 0%, #2A2A30 100%)' },
+  tofu: { name: 'とうふ', emoji: '⚪', pattern: 'dot', simple: true,
+    vars: { '--bg':'#FAFAF6', '--surface':'#FFFFFF', '--surface-warm':'#F2F0EA', '--line':'#D8D6D0', '--line-soft':'#E8E6E0', '--ink-dark':'#2A2A28', '--ink':'#48484A', '--ink-sub':'#787876', '--ink-light':'#A8A8A6', '--mint':'#787876', '--mint-deep':'#48484A', '--mint-bg':'#D8D6D0', '--accent':'#8A8068', '--accent-deep':'#5A5040', '--accent-bg':'#E8E2D8', '--today-bg':'#F2F0EA', '--today-border':'#A8A6A0', '--warm-yellow':'#C8B888', '--soft-purple':'#A8A0A8' },
+    paperColor: 'rgba(0,0,0,0.04)',
+    headerGrad: 'linear-gradient(180deg, #FAFAF6 0%, #F0EEE8 100%)' }
 };
 
 function paperBackground(theme) {
   const c = theme.paperColor;
+  const ginghamC = theme.ginghamColor || c;
   switch (theme.pattern) {
     case 'dot':
       return 'radial-gradient('+c+' 1px, transparent 1px)';
     case 'polka':
-      return 'radial-gradient('+c+' 2.5px, transparent 3px)';
+      return 'radial-gradient('+c+' 8px, transparent 8.5px), radial-gradient('+c+' 8px, transparent 8.5px)';
     case 'stripe':
       return 'repeating-linear-gradient(45deg, '+c+' 0 1px, transparent 1px 14px)';
     case 'gingham':
-      return 'linear-gradient(90deg, '+c+' 50%, transparent 50%), linear-gradient(0deg, '+c+' 50%, transparent 50%)';
+      return 'linear-gradient(90deg, '+ginghamC+' 50%, transparent 50%), linear-gradient(0deg, '+ginghamC+' 50%, transparent 50%)';
     default:
       return 'radial-gradient('+c+' 1px, transparent 1px)';
   }
@@ -2575,7 +2647,7 @@ function paperBackground(theme) {
 function paperBackgroundSize(theme) {
   switch (theme.pattern) {
     case 'dot': return '10px 10px';
-    case 'polka': return '18px 18px';
+    case 'polka': return '46px 46px, 46px 46px';
     case 'stripe': return 'auto';
     case 'gingham': return '22px 22px, 22px 22px';
     default: return '10px 10px';
@@ -2589,6 +2661,8 @@ function topbarDateHtml() {
 }
 
 function topbarPetalHtml() {
+  var theme = THEMES[data.themeId || 'mint'];
+  if (theme && theme.simple) return '';
   var colors = ['var(--accent)','var(--accent-deep)','var(--soft-purple)','var(--mint-deep)'];
   var lefts = [5,68,22,85,38,55,12,78];
   var delays = [-1.8,-0.4,-3.1,-2.2,-0.9,-2.7,-1.3,-3.5];
@@ -2608,15 +2682,42 @@ function applyTheme(themeId) {
   const theme = THEMES[themeId] || THEMES.mint;
   const root = document.documentElement;
   for (const key in theme.vars) root.style.setProperty(key, theme.vars[key]);
+  if (theme.simple) {
+    document.body.classList.add('theme-simple');
+  } else {
+    document.body.classList.remove('theme-simple');
+  }
   document.body.style.backgroundImage = paperBackground(theme);
   document.body.style.backgroundSize = paperBackgroundSize(theme);
+  // PC幅用にapp-frameにも反映
+  var appFrame = document.querySelector('.app-frame');
+  if (appFrame) {
+    appFrame.style.backgroundColor = theme.vars['--bg'] || '#FFFFFF';
+    appFrame.style.backgroundImage = paperBackground(theme);
+    appFrame.style.backgroundSize = paperBackgroundSize(theme);
+    if (theme.pattern === 'polka') {
+      appFrame.style.backgroundPosition = '0 0, 23px 23px';
+    } else {
+      appFrame.style.backgroundPosition = '';
+    }
+  }
+  if (theme.pattern === 'polka') {
+    document.body.style.backgroundPosition = '0 0, 23px 23px';
+  } else {
+    document.body.style.backgroundPosition = '';
+  }
   let styleEl = document.getElementById('theme-dynamic');
   if (!styleEl) {
     styleEl = document.createElement('style');
     styleEl.id = 'theme-dynamic';
     document.head.appendChild(styleEl);
   }
-  styleEl.textContent = '.topbar { background: '+theme.headerGrad+' !important; }';
+  // クレヨン色（テーマの3色目＝accent）
+  var crayonColor = (theme.vars && theme.vars['--accent']) ? theme.vars['--accent'] : '#C8956A';
+  var crayonHex = encodeURIComponent(crayonColor);
+  var crayonSvg = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'><path d='M2,4 Q10,2 18,4 T36,4 T54,3 T72,5 T90,4 T108,3 T126,5 T144,4 T162,3 T180,5 T198,4' stroke='"+crayonHex+"' stroke-width='2.5' fill='none' stroke-linecap='round' opacity='0.85'/></svg>\")";
+  styleEl.textContent = '.topbar { background: '+theme.headerGrad+' !important; }'
+    + ' .section-title { background-image: '+crayonSvg+' !important; }';
   // topbarに桜吹雪を追加
   setTimeout(function(){
     document.querySelectorAll('.topbar').forEach(function(tb){
@@ -2631,6 +2732,8 @@ function setTheme(themeId) {
   data.themeId = themeId;
   applyTheme(themeId);
   saveData();
+  _suppressScrollTop = true;
+  render();
 }
 const PET_TYPE_NAMES = { dog: 'いぬ', cat: 'ねこ', rabbit: 'うさぎ', hamster: 'ハム', bird: 'とり', fish: 'さかな', turtle: 'かめ', other: 'そのほか' };
 const PET_TYPES = ['dog','cat','rabbit','hamster','bird','fish','turtle','other'];
@@ -2910,7 +3013,7 @@ function getMemorialsForDate(dateKey, houseId, petId) {
         if (pet.place === 'rainbow') {
           memorials.push('🌷 '+pet.name+'と過ごした記録の日');
         } else {
-          memorials.push('💕 '+pet.name+'、にこわへようこそ！');
+          memorials.push('<span style="color:#E05080;font-weight:700;">♡</span> '+pet.name+'、にこわへようこそ！');
         }
       }
     }
@@ -3306,6 +3409,7 @@ function changeCalMonth(prefix, delta) {
   else if (prefix === 'house') houseCalMonth = { year: y, month: m };
   else if (prefix === 'diary') diaryCalMonth = { year: y, month: m };
   else petCalMonth = { year: y, month: m };
+  _suppressScrollTop = true;
   render();
 }
 function goToToday(prefix) {
@@ -3323,6 +3427,7 @@ function goToToday(prefix) {
     petCalMonth = { year: t.getFullYear(), month: t.getMonth() };
     petCalSelected = todayKey();
   }
+  _suppressScrollTop = true;
   render();
 }
 function selectCalDate(prefix, dateKey) {
@@ -3330,6 +3435,7 @@ function selectCalDate(prefix, dateKey) {
   else if (prefix === 'house') houseCalSelected = (houseCalSelected === dateKey) ? null : dateKey;
   else if (prefix === 'diary') diaryCalSelected = (diaryCalSelected === dateKey) ? null : dateKey;
   else petCalSelected = (petCalSelected === dateKey) ? null : dateKey;
+  _suppressScrollTop = true;
   render();
 }
 
@@ -3371,7 +3477,7 @@ function renderDayDetail(dateKey, scope) {
   html += '<div class="day-detail-head"><span class="day-detail-date">'+dateStr+'</span><span class="day-detail-rel">'+escapeHtml(relativeStr)+'</span></div>';
   if (memorials.length > 0) {
     html += '<div class="day-mem-banner">';
-    html += memorials.map(m => '<div>'+escapeHtml(m)+'</div>').join('');
+    html += memorials.map(m => '<div style="color:var(--soft-purple);font-weight:600;">'+m+'</div>').join('');
     html += '</div>';
   }
   html += '</div>';
@@ -3440,28 +3546,41 @@ function renderHouses() {
   html += '<button class="hero-theme-btn" onclick="openThemeModal()" title="テーマ">🎨</button>';
   html += '</div>';
   // 桜吹雪 + すりガラスカード
-  var petalColors = ['var(--accent)','var(--accent-deep)','var(--soft-purple)','var(--mint-deep)'];
-  var petalHtml = '<div class="hero-petal-layer">';
-  var heroLefts = [3,72,18,91,45,63,8,82,31,56,14,77,40,67];
-  var heroDelays = [-2.1,-0.3,-4.5,-1.8,-3.2,-0.7,-3.9,-2.6,-1.1,-4.0,-0.5,-3.4,-2.3,-1.6];
-  var heroDurs = [6,7,5,8,6,7,5,8,7,6,8,5,7,6];
-  var heroAnims = ['nkPetal','nkPetal2','nkPetal3','nkPetal','nkPetal3','nkPetal2','nkPetal','nkPetal3','nkPetal2','nkPetal','nkPetal2','nkPetal3','nkPetal','nkPetal2'];
-  for (var pi = 0; pi < 14; pi++) {
-    var pSize  = (9 + (pi % 4) * 2);
-    var pColor = petalColors[pi % 4];
-    petalHtml += '<div class="hero-petal" style="left:'+heroLefts[pi]+'%;font-size:'+pSize+'px;color:'+pColor+';animation-name:'+heroAnims[pi]+';animation-duration:'+heroDurs[pi]+'s;animation-delay:'+heroDelays[pi]+'s;">❀</div>';
+  var currentTheme = THEMES[data.themeId || 'mint'] || THEMES.mint;
+  var isSimple = currentTheme.simple === true;
+  var petalHtml = '';
+  if (!isSimple) {
+    var petalColors = ['var(--accent)','var(--accent-deep)','var(--soft-purple)','var(--mint-deep)'];
+    petalHtml = '<div class="hero-petal-layer">';
+    var heroLefts = [3,72,18,91,45,63,8,82,31,56,14,77,40,67];
+    var heroDelays = [-2.1,-0.3,-4.5,-1.8,-3.2,-0.7,-3.9,-2.6,-1.1,-4.0,-0.5,-3.4,-2.3,-1.6];
+    var heroDurs = [6,7,5,8,6,7,5,8,7,6,8,5,7,6];
+    var heroAnims = ['nkPetal','nkPetal2','nkPetal3','nkPetal','nkPetal3','nkPetal2','nkPetal','nkPetal3','nkPetal2','nkPetal','nkPetal2','nkPetal3','nkPetal','nkPetal2'];
+    for (var pi = 0; pi < 14; pi++) {
+      var pSize  = (9 + (pi % 4) * 2);
+      var pColor = petalColors[pi % 4];
+      petalHtml += '<div class="hero-petal" style="left:'+heroLefts[pi]+'%;font-size:'+pSize+'px;color:'+pColor+';animation-name:'+heroAnims[pi]+';animation-duration:'+heroDurs[pi]+'s;animation-delay:'+heroDelays[pi]+'s;">❀</div>';
+    }
+    petalHtml += '</div>';
   }
-  petalHtml += '</div>';
 
-  html += '<div class="hero-glass">' + petalHtml;
+  html += '<div class="hero-glass'+(isSimple?' hero-glass-simple':'')+'">' + petalHtml;
   // ロゴ
   html += '<div class="hero-logo">';
-  html += '<img class="hero-logo-img" src="' + LOGO_DATA_URL + '" alt="にこわ nikowa">';
+  if (isSimple) {
+    html += '<div class="hero-logo-simple">にこわ<span class="hero-logo-simple-en">-nikowa-</span></div>';
+  } else {
+    html += '<img class="hero-logo-img" src="' + LOGO_DATA_URL + '" alt="にこわ nikowa">';
+  }
   html += '</div>';
   // メッセージ
   html += '<div class="hero-message">';
-  html += '<div class="hero-message-main">今日もこの子と、ちゃんと過ごせた。</div>';
-  html += '<div class="hero-message-sub">できる日に、できる分だけで大丈夫</div>';
+  if (isSimple) {
+    html += '<div class="hero-message-main">今日も、この子と。</div>';
+  } else {
+    html += '<div class="hero-message-main">今日もこの子と、ちゃんと過ごせた。</div>';
+    html += '<div class="hero-message-sub">できる日に、できる分だけで大丈夫</div>';
+  }
   html += '</div>';
   html += '</div>'; // hero-glass閉じ
   
@@ -3680,6 +3799,7 @@ function setHouseTab(tab) {
     houseCalMonth = { year: t.getFullYear(), month: t.getMonth() };
     houseCalSelected = todayKey();
   }
+  _suppressScrollTop = true;
   render();
 }
 
@@ -3736,7 +3856,7 @@ function renderHouseHomeTab(house) {
   if (todayMemorials.length > 0) {
     html += '<div class="section"><div class="memorial-card">';
     html += '<div class="memorial-title">✨ 今日は特別な日</div>';
-    html += '<div class="memorial-text">'+todayMemorials.map(m => escapeHtml(m)).join('<br>')+'</div>';
+    html += '<div class="memorial-text">'+todayMemorials.join('<br>')+'</div>';
     html += '</div></div>';
   }
   const dueTasksAll = [];
@@ -3891,7 +4011,7 @@ function renderPet() {
   html += '<div class="pet-detail-place-tag">'+PLACE_ICONS[pet.place]+' '+PLACE_NAMES[pet.place]+'</div></div></div>';
   if (memorials.length > 0) {
     html += '<div class="section"><div class="memorial-card"><div class="memorial-title">✨ 今日は特別な日</div>';
-    html += '<div class="memorial-text">'+memorials.map(m => escapeHtml(m)).join('<br>')+'</div></div></div>';
+    html += '<div class="memorial-text">'+memorials.join('<br>')+'</div></div></div>';
   }
   if (streak >= 3 && pet.place === 'home') {
     html += '<div class="section"><div class="badges-row">';
@@ -5886,6 +6006,7 @@ function renderSidePanel() {
   el.innerHTML = html;
 }
 
+let _suppressScrollTop = false;
 function render() {
   if (currentView === 'houses') renderHouses();
   else if (currentView === 'house') renderHouse();
@@ -5896,7 +6017,8 @@ function render() {
   else if (currentView === 'facility') renderFacility();
   else renderHouses();
   renderSidePanel();
-  window.scrollTo(0, 0);
+  if (!_suppressScrollTop) window.scrollTo(0, 0);
+  _suppressScrollTop = false;
 }
 loadData();
 applyTheme(data.themeId || 'mint');
