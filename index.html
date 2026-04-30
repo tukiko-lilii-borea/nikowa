@@ -2058,6 +2058,81 @@
     background: var(--accent); color: white;
   }
 
+  /* ===== Places API (近くを探す) ===== */
+  .town-tabs { display:flex; gap:4px; padding:0 16px 12px; }
+  .town-tab {
+    flex:1; background:var(--surface); border:1.5px solid var(--line-soft);
+    border-radius:100px; padding:7px 6px; cursor:pointer; font-family:inherit;
+    font-size:11.5px; color:var(--ink-sub); font-weight:600; white-space:nowrap;
+  }
+  .town-tab.active { background:var(--mint-deep); border-color:var(--mint-deep); color:white; }
+  .places-section { padding:0 16px; }
+  .places-cat-chips {
+    display:flex; gap:6px; padding:0 0 10px;
+    overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .places-cat-chips::-webkit-scrollbar { display:none; }
+  .places-cat-chip {
+    background:var(--surface); border:1.5px solid var(--line-soft); border-radius:100px;
+    padding:6px 10px; cursor:pointer; font-family:inherit;
+    font-size:11.5px; color:var(--ink); white-space:nowrap; flex-shrink:0;
+  }
+  .places-cat-chip.active {
+    background:var(--accent-bg); border-color:var(--accent);
+    color:var(--accent-deep); font-weight:700;
+  }
+  .places-text-row { display:flex; gap:8px; margin-bottom:12px; }
+  .places-text-input {
+    flex:1; border:1.5px solid var(--line-soft); border-radius:100px;
+    padding:9px 14px; font-family:inherit; font-size:13px; color:var(--ink-dark);
+    background:var(--surface); outline:none;
+  }
+  .places-text-input:focus { border-color:var(--mint); }
+  .places-search-btn {
+    background:var(--mint-deep); color:white; border:none; border-radius:100px;
+    padding:9px 16px; font-family:inherit; font-size:13px; font-weight:700;
+    cursor:pointer; white-space:nowrap;
+  }
+  .places-loading { text-align:center; padding:32px 0; color:var(--ink-sub); font-size:13px; }
+  .places-error {
+    text-align:center; padding:14px 16px; color:#C62828; font-size:13px;
+    background:#FFEBEE; border-radius:12px; margin:0 0 12px;
+  }
+  .place-cards { display:flex; flex-direction:column; gap:10px; padding:4px 16px 24px; }
+  .place-card {
+    background:var(--surface); border:1.5px solid var(--line-soft);
+    border-radius:14px; padding:13px; box-shadow:var(--shadow-soft);
+  }
+  .place-card-header { display:flex; align-items:flex-start; gap:10px; margin-bottom:8px; }
+  .place-card-icon {
+    width:40px; height:40px; border-radius:10px; background:var(--mint-bg);
+    display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+  }
+  .place-card-info { flex:1; min-width:0; }
+  .place-card-name {
+    font-size:14px; font-weight:700; color:var(--ink-dark);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;
+  }
+  .place-card-addr { font-size:11px; color:var(--ink-sub); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .place-card-meta { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .place-card-rating { font-size:11.5px; color:var(--ink); font-weight:600; }
+  .place-card-open { font-size:10.5px; padding:2px 8px; border-radius:100px; font-weight:600; }
+  .place-card-open.open { background:#E8F5E9; color:#2E7D32; }
+  .place-card-open.closed { background:#FFEBEE; color:#C62828; }
+  .place-card-actions { display:flex; gap:8px; }
+  .place-card-fav-btn {
+    background:var(--surface-warm); border:1.5px solid var(--line-soft); border-radius:100px;
+    padding:6px 12px; font-family:inherit; font-size:12px; color:var(--ink-sub); cursor:pointer; font-weight:600;
+  }
+  .place-card-fav-btn.is-fav { background:var(--accent-bg); border-color:var(--accent); color:var(--accent-deep); }
+  .place-card-map-btn {
+    flex:1; display:flex; align-items:center; justify-content:center; gap:4px;
+    background:var(--mint-bg); border:1.5px solid var(--mint); border-radius:100px; padding:6px 12px;
+    font-family:inherit; font-size:12px; color:var(--mint-deep); font-weight:700; text-decoration:none;
+  }
+  .places-fav-empty { text-align:center; padding:40px 24px; color:var(--ink-sub); font-size:13px; }
+  .places-fav-list { display:flex; flex-direction:column; gap:10px; padding:4px 16px 24px; }
+
   /* 施設カード：お気に入り・♡数 */
   .facility-card.is-fav {
     border-color: var(--accent);
@@ -2225,6 +2300,9 @@
   }
 
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -2959,7 +3037,66 @@ function loadData() {
 function saveData() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
   catch(e) { showToast('保存できませんでした😢'); }
+  saveToFirestore();
 }
+// ===== Firebase =====
+let currentUser = null;
+let db = null;
+
+function initFirebase() {
+  const firebaseConfig = {
+    apiKey: "AIzaSyAhNAZjlyohQaYzB8HjX5qTpW5W29JrOfw",
+    authDomain: "nikowa2525.firebaseapp.com",
+    projectId: "nikowa2525",
+    storageBucket: "nikowa2525.firebasestorage.app",
+    messagingSenderId: "579205168629",
+    appId: "1:579205168629:web:c3fd1ede3a91886d7274bc"
+  };
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    firebase.auth().onAuthStateChanged(user => {
+      currentUser = user;
+      if (user) loadFromFirestore();
+      if (document.getElementById('app')) render();
+    });
+  } catch(e) { console.log('Firebase初期化エラー:', e); }
+}
+
+function loadFromFirestore() {
+  if (!currentUser || !db) return;
+  const docRef = db.collection('users').doc(currentUser.uid).collection('nikowa').doc('main');
+  docRef.get().then(doc => {
+    if (doc.exists) {
+      data = Object.assign(data, doc.data());
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+      render();
+    } else { saveToFirestore(); }
+  }).catch(e => console.log('Firestore読み込みエラー:', e));
+}
+
+function saveToFirestore() {
+  if (!currentUser || !db) return;
+  db.collection('users').doc(currentUser.uid).collection('nikowa').doc('main').set(data)
+    .catch(e => console.log('Firestore保存エラー:', e));
+}
+
+function signInWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider).catch(e => {
+    showToast('ログインできませんでした😢');
+  });
+}
+
+function signOut() {
+  firebase.auth().signOut().then(() => {
+    currentUser = null;
+    showToast('ログアウトしました');
+    render();
+  });
+}
+// ===== Firebase end =====
+
 function savePhotos() {
   try { localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos)); }
   catch(e) {}
@@ -4841,13 +4978,88 @@ let editingFacilityId = null;
 let selectedFacilityCategory = 'hospital';
 let townSearchQuery = '';
 let townCategoryFilter = 'all';
+let townActiveTab = 'my'; // 'my' | 'search' | 'fav'
+let placesSelCat = '';
+let placesText = '';
+let placesResults = [];
+let placesLoading = false;
+let placesError = '';
+let placesResultsMap = {};
+const PLACES_API_KEY = 'AIzaSyAuvEPLh6ih-QWNTVZ90Wlo5f5LNjgXbGk';
+const PLACES_FAV_KEY = 'nikowa_place_favorites';
+const PLACES_CATS = [
+  { id: 'vet',     icon: '🏥', label: '動物病院',       type: 'veterinary_care' },
+  { id: 'trim',    icon: '✂️', label: 'トリミング',     keyword: 'トリミングサロン' },
+  { id: 'cafe',    icon: '☕', label: 'カフェ',          type: 'cafe' },
+  { id: 'petshop', icon: '🛍', label: 'ペットショップ',  type: 'pet_store' },
+  { id: 'park',    icon: '🌳', label: '公園',            type: 'park' },
+  { id: 'dogrun',  icon: '🐾', label: 'ドッグラン',     keyword: 'ドッグラン' },
+];
+let placesFavs = {};
+try { placesFavs = JSON.parse(localStorage.getItem(PLACES_FAV_KEY) || '{}'); } catch(e) {}
 
 function renderTown() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('town');
   let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">🏙 にこわタウン</div><button class="topbar-btn" onclick="openAddFacilityModal()">＋</button></div>';
   html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9.5px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
-  
+
+  // タブバー
+  html += '<div class="town-tabs">';
+  html += '<button class="town-tab '+(townActiveTab==='my'?'active':'')+'" onclick="setTownTab(\'my\')">🏠 マイ場所</button>';
+  html += '<button class="town-tab '+(townActiveTab==='search'?'active':'')+'" onclick="setTownTab(\'search\')">🔍 近くを探す</button>';
+  html += '<button class="town-tab '+(townActiveTab==='fav'?'active':'')+'" onclick="setTownTab(\'fav\')">♡ お気に入り</button>';
+  html += '</div>';
+
+  if (townActiveTab === 'search') {
+    // ===== Places API 検索タブ =====
+    html += '<div class="places-section">';
+    html += '<div class="places-cat-chips">';
+    for (const c of PLACES_CATS) {
+      html += '<button class="places-cat-chip '+(placesSelCat===c.id?'active':'')+'" onclick="setPlacesCat(\''+c.id+'\')">'+c.icon+' '+c.label+'</button>';
+    }
+    html += '</div>';
+    html += '<div class="places-text-row">';
+    html += '<input type="text" class="places-text-input" id="placesTextInput" placeholder="キーワードで検索（任意）" value="'+escapeHtml(placesText)+'">';
+    html += '<button class="places-search-btn" onclick="searchPlaces()">📍 探す</button>';
+    html += '</div>';
+    if (placesError) html += '<div class="places-error">'+escapeHtml(placesError)+'</div>';
+    html += '</div>';
+    if (placesLoading) {
+      html += '<div class="places-loading">📍 現在地を取得して検索中…</div>';
+    } else if (placesResults.length > 0) {
+      const cat = PLACES_CATS.find(c => c.id === placesSelCat);
+      const catIcon = cat ? cat.icon : '📍';
+      html += '<div class="place-cards">';
+      for (const p of placesResults) html += buildPlaceCardHtml(p, catIcon);
+      html += '</div>';
+    } else if (!placesError) {
+      html += '<div class="places-loading">カテゴリを選んで「探す」をタップしてね🐾</div>';
+    }
+    document.getElementById('app').innerHTML = html;
+    const placesInput = document.getElementById('placesTextInput');
+    if (placesInput) {
+      placesInput.oninput = (e) => { placesText = e.target.value; };
+      placesInput.onkeydown = (e) => { if (e.key === 'Enter') searchPlaces(); };
+    }
+    return;
+  }
+
+  if (townActiveTab === 'fav') {
+    // ===== お気に入りタブ =====
+    const favList = Object.values(placesFavs);
+    if (favList.length === 0) {
+      html += '<div class="places-fav-empty">♡ お気に入りがまだないよ<br><span style="font-size:11px;margin-top:8px;display:block;">「近くを探す」で見つけた場所を保存してね🌷</span></div>';
+    } else {
+      html += '<div class="places-fav-list">';
+      for (const p of favList) html += buildFavCardHtml(p);
+      html += '</div>';
+    }
+    document.getElementById('app').innerHTML = html;
+    return;
+  }
+
+  // townActiveTab === 'my': 既存のマイ場所機能
   const facilities = data.facilities || [];
   
   // 検索フィルター適用
@@ -5316,6 +5528,21 @@ function renderSettings() {
   const mb = (bytes / 1024 / 1024).toFixed(2);
   const photoCount = Object.keys(photos).length;
   let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">⚙️ せってい</div><div class="topbar-spacer"></div></div>';
+  // アカウントセクション
+  html += '<div class="section"><div class="section-head"><h2 class="section-title">アカウント</h2></div>';
+  html += '<div class="section-body" style="padding:12px 16px 16px;">';
+  if (currentUser) {
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">';
+    if (currentUser.photoURL) html += '<img src="'+currentUser.photoURL+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">';
+    html += '<div><div style="font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(currentUser.displayName||'ユーザー')+'</div>';
+    html += '<div style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(currentUser.email||'')+'</div></div></div>';
+    html += '<div style="font-size:11.5px;color:var(--mint-deep);margin-bottom:10px;">☁️ クラウドに同期中</div>';
+    html += '<button class="btn btn-secondary" style="width:100%;" onclick="signOut()">ログアウト</button>';
+  } else {
+    html += '<div style="font-size:12px;color:var(--ink-sub);margin-bottom:12px;line-height:1.7;">Googleアカウントでログインすると<br>データをクラウドに保存できます。</div>';
+    html += '<button class="btn btn-primary" style="width:100%;" onclick="signInWithGoogle()">🔑 Googleでログイン</button>';
+  }
+  html += '</div></div>';
   html += '<div class="section"><div class="section-head"><h2 class="section-title">家</h2></div>';
   html += '<div class="houses-list">';
   html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9.5px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
@@ -6216,6 +6443,184 @@ function renderSidePanel() {
   el.innerHTML = html;
 }
 
+// ===== Places API 連携 =====
+function setTownTab(tab) {
+  townActiveTab = tab;
+  renderTown();
+}
+
+function setPlacesCat(catId) {
+  placesSelCat = placesSelCat === catId ? '' : catId;
+  renderTown();
+}
+
+function savePlacesFavs() {
+  try { localStorage.setItem(PLACES_FAV_KEY, JSON.stringify(placesFavs)); } catch(e) {}
+}
+
+function togglePlaceFav(placeId) {
+  const p = placesResultsMap[placeId] || placesFavs[placeId];
+  if (!p) return;
+  if (placesFavs[placeId]) {
+    delete placesFavs[placeId];
+  } else {
+    placesFavs[placeId] = p;
+  }
+  savePlacesFavs();
+  renderTown();
+}
+
+function buildPlaceCardHtml(p, catIcon) {
+  const id = p.id || '';
+  const name = (p.displayName && p.displayName.text) || '名称不明';
+  const addr = p.formattedAddress || '';
+  const rating = p.rating;
+  const isOpen = p.currentOpeningHours && p.currentOpeningHours.openNow;
+  const hasOpenInfo = p.currentOpeningHours != null;
+  const mapsUrl = p.googleMapsUri || '';
+  const isFav = !!placesFavs[id];
+  if (id) {
+    placesResultsMap[id] = { id, name, addr, rating, mapsUrl, catIcon };
+  }
+  let ratingHtml = '';
+  if (rating) {
+    let stars = '';
+    const full = Math.floor(rating);
+    for (let i = 0; i < full; i++) stars += '★';
+    if (rating - full >= 0.5) stars += '☆';
+    ratingHtml = '<span class="place-card-rating">⭐ '+rating.toFixed(1)+' '+escapeHtml(stars)+'</span>';
+  }
+  const openHtml = hasOpenInfo
+    ? '<span class="place-card-open '+(isOpen?'open':'closed')+'">'+(isOpen?'🟢 営業中':'🔴 閉店中')+'</span>'
+    : '';
+  let html = '<div class="place-card">';
+  html += '<div class="place-card-header">';
+  html += '<div class="place-card-icon">'+catIcon+'</div>';
+  html += '<div class="place-card-info">';
+  html += '<div class="place-card-name">'+escapeHtml(name)+'</div>';
+  html += '<div class="place-card-addr">📍 '+escapeHtml(addr)+'</div>';
+  html += '</div></div>';
+  if (ratingHtml || openHtml) {
+    html += '<div class="place-card-meta">'+ratingHtml+openHtml+'</div>';
+  }
+  html += '<div class="place-card-actions">';
+  html += '<button class="place-card-fav-btn '+(isFav?'is-fav':'')+'" onclick="togglePlaceFav(\''+id.replace(/'/g,"\\'")+'\')">'+(isFav?'♥ 保存済':'♡ お気に入り')+'</button>';
+  if (mapsUrl) {
+    html += '<a class="place-card-map-btn" href="'+escapeHtml(mapsUrl)+'" target="_blank" rel="noopener noreferrer">🗺 詳細を見る</a>';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function buildFavCardHtml(p) {
+  const id = p.id || '';
+  const name = p.name || (p.displayName && p.displayName.text) || '名称不明';
+  const addr = p.addr || p.formattedAddress || '';
+  const mapsUrl = p.mapsUrl || p.googleMapsUri || '';
+  const catIcon = p.catIcon || '📍';
+  let html = '<div class="place-card">';
+  html += '<div class="place-card-header">';
+  html += '<div class="place-card-icon">'+catIcon+'</div>';
+  html += '<div class="place-card-info">';
+  html += '<div class="place-card-name">'+escapeHtml(name)+'</div>';
+  html += '<div class="place-card-addr">📍 '+escapeHtml(addr)+'</div>';
+  html += '</div></div>';
+  html += '<div class="place-card-actions">';
+  html += '<button class="place-card-fav-btn is-fav" onclick="togglePlaceFav(\''+id.replace(/'/g,"\\'")+'\')" style="background:var(--accent-bg);border-color:var(--accent);color:var(--accent-deep);">♥ 保存済 (解除)</button>';
+  if (mapsUrl) {
+    html += '<a class="place-card-map-btn" href="'+escapeHtml(mapsUrl)+'" target="_blank" rel="noopener noreferrer">🗺 詳細を見る</a>';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+async function searchPlaces() {
+  const textEl = document.getElementById('placesTextInput');
+  if (textEl) placesText = textEl.value;
+  placesLoading = true;
+  placesError = '';
+  placesResults = [];
+  renderTown();
+
+  let lat, lng;
+  try {
+    const pos = await new Promise((resolve, reject) =>
+      navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
+    );
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+  } catch(e) {
+    placesLoading = false;
+    placesError = '現在地を取得できませんでした。位置情報の許可をご確認ください。';
+    renderTown();
+    return;
+  }
+
+  const cat = PLACES_CATS.find(c => c.id === placesSelCat);
+  try {
+    let places = [];
+    if (placesText.trim()) {
+      const query = (cat ? cat.label + ' ' : '') + placesText.trim();
+      places = await _placesTextSearch(query, lat, lng);
+    } else if (cat) {
+      places = cat.type
+        ? await _placesNearby(cat.type, lat, lng)
+        : await _placesTextSearch(cat.keyword, lat, lng);
+    } else {
+      places = await _placesTextSearch('ペット', lat, lng);
+    }
+    placesResults = places;
+    placesLoading = false;
+    if (places.length === 0) placesError = '近くに見つかりませんでした。';
+  } catch(e) {
+    placesLoading = false;
+    placesError = '検索中にエラーが発生しました。しばらくしてお試しください。';
+  }
+  renderTown();
+}
+
+async function _placesNearby(type, lat, lng) {
+  const resp = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': PLACES_API_KEY,
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.currentOpeningHours,places.googleMapsUri'
+    },
+    body: JSON.stringify({
+      includedTypes: [type],
+      maxResultCount: 20,
+      locationRestriction: {
+        circle: { center: { latitude: lat, longitude: lng }, radius: 2000.0 }
+      }
+    })
+  });
+  const json = await resp.json();
+  if (!resp.ok) throw new Error((json.error && json.error.message) || 'API error');
+  return json.places || [];
+}
+
+async function _placesTextSearch(query, lat, lng) {
+  const resp = await fetch('https://places.googleapis.com/v1/places:searchText', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': PLACES_API_KEY,
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.currentOpeningHours,places.googleMapsUri'
+    },
+    body: JSON.stringify({
+      textQuery: query,
+      maxResultCount: 20,
+      locationBias: {
+        circle: { center: { latitude: lat, longitude: lng }, radius: 2000.0 }
+      }
+    })
+  });
+  const json = await resp.json();
+  if (!resp.ok) throw new Error((json.error && json.error.message) || 'API error');
+  return json.places || [];
+}
+
 let _suppressScrollTop = false;
 function render() {
   if (currentView === 'top') renderTop();
@@ -6234,6 +6639,7 @@ function render() {
 loadData();
 applyTheme(data.themeId || 'mint');
 render();
+initFirebase();
 </script>
 </body>
 </html>
