@@ -1095,7 +1095,92 @@
     font-size: 10.5px; font-weight: 900; letter-spacing: 0.3px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
   }
+  /* スリム横並び版：絵文字＋文字を一行で */
+  .pet-tab-btn-slim {
+    flex-direction: row !important;
+    padding: 5px 8px !important;
+    gap: 5px !important;
+    font-size: 11.5px;
+    font-weight: 700;
+    border-radius: 10px 10px 0 0;
+  }
+  .pet-tab-btn-slim .pet-tab-icon {
+    font-size: 14px;
+  }
   .pet-tab-content { border-top: 2px solid var(--mint); }
+  
+  /* ── きょうのお世話（一括登録） ─────────── */
+  .bulk-care-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    padding: 0 2px;
+  }
+  .bulk-care-btn {
+    background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.50) 100%);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 10px;
+    padding: 6px 2px 4px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.1s ease;
+    min-width: 0;
+  }
+  .bulk-care-btn:active { transform: scale(0.92); }
+  .bulk-care-icon { font-size: 18px; line-height: 1; }
+  .bulk-care-label { 
+    font-size: 8.5px; font-weight: 700; color: var(--ink-dark);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 100%;
+  }
+  .bulk-care-add {
+    background: transparent !important;
+    border: 1.2px dashed var(--line) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  .bulk-care-add .bulk-care-icon { color: var(--accent); font-weight: 700; font-size: 16px; }
+  .bulk-care-add .bulk-care-label { color: var(--ink-sub); }
+  
+  /* ── MEモード メニューグリッド ─────────── */
+  .me-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .me-menu-item {
+    background: linear-gradient(135deg, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.30) 50%, rgba(255,255,255,0.45) 100%);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 16px;
+    padding: 14px 4px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: transform 0.1s ease;
+  }
+  .me-menu-item:active { transform: scale(0.94); }
+  .me-menu-icon { font-size: 28px; line-height: 1; }
+  .me-menu-label {
+    font-size: 10px; font-weight: 700; color: var(--ink-dark);
+    text-align: center; line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 100%;
+  }
+  .me-menu-item-add {
+    background: transparent !important;
+    border: 1.5px dashed var(--line) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  .me-menu-item-add .me-menu-icon { color: var(--accent); font-weight: 700; }
+  .me-menu-item-add .me-menu-label { color: var(--ink-sub); }
 
   /* これからの出来事 */
   .upcoming-list { display: flex; flex-direction: column; gap: 6px; }
@@ -2089,8 +2174,11 @@
     transition:margin-bottom 0.12s ease, background 0.12s ease, color 0.12s ease;
   }
   .town-main-tab.active {
-    background:var(--mint-deep); border-color:var(--mint-deep); color:white;
-    backdrop-filter:none; -webkit-backdrop-filter:none;
+    background:linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.28) 100%);
+    background-color: var(--mint-deep);
+    border-color:rgba(255,255,255,0.5);
+    color:white;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
     margin-bottom:0; z-index:3;
     box-shadow:0 2px 8px rgba(0,0,0,0.10);
   }
@@ -2123,8 +2211,11 @@
     transition:margin-bottom 0.12s ease, background 0.12s ease, color 0.12s ease;
   }
   .mode-idx-tab.active {
-    background:var(--accent); border-color:var(--accent); color:white;
-    backdrop-filter:none; -webkit-backdrop-filter:none;
+    background:linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.28) 100%);
+    background-color: var(--accent);
+    border-color:rgba(255,255,255,0.5);
+    color:white;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
     margin-bottom:0; z-index:3;
     box-shadow:0 2px 8px rgba(0,0,0,0.10);
   }
@@ -2157,8 +2248,11 @@
     transition:background 0.12s ease, color 0.12s ease;
   }
   .house-idx-tab.active {
-    background:var(--accent-deep); color:white; border-color:var(--accent-deep);
-    backdrop-filter:none; -webkit-backdrop-filter:none;
+    background:linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.28) 100%);
+    background-color: var(--accent-deep);
+    border-color:rgba(255,255,255,0.5);
+    color:white;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
     box-shadow:0 2px 6px rgba(0,0,0,0.10);
   }
   .house-idx-tab-icon { font-size:12px; line-height:1; }
@@ -2182,8 +2276,11 @@
     font-size:11.5px; color:var(--ink-sub); font-weight:600; white-space:nowrap;
   }
   .town-sub-tab.active { 
-    background:var(--mint-deep); border-color:var(--mint-deep); color:white;
-    backdrop-filter:none; -webkit-backdrop-filter:none;
+    background:linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.28) 100%);
+    background-color: var(--mint-deep);
+    border-color:rgba(255,255,255,0.5);
+    color:white;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   }
   /* ── 検索エリア ──────────────────────────────── */
   .places-section { padding:8px 16px 0; }
@@ -2925,6 +3022,35 @@
 </div></div>
 
 <input type="file" id="hiddenFileInput" accept="image/*" style="display:none;">
+
+<!-- 一括お世話モーダル -->
+<div class="modal" id="bulkCareModal"><div class="modal-content">
+  <h2 class="modal-title" id="bulkCareModalTitle">まとめてぽん</h2>
+  <div id="bulkCareModalBody"></div>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal('bulkCareModal')">やめる</button>
+    <button class="btn btn-primary" onclick="confirmBulkCare()">きろくする</button>
+  </div>
+</div></div>
+
+<!-- 一括お世話カスタマイズモーダル -->
+<div class="modal" id="bulkCareCustomizeModal"><div class="modal-content">
+  <h2 class="modal-title">まとめてぽんのカスタマイズ</h2>
+  <p class="modal-sub">よく使うお世話を登録できます🌷</p>
+  <div id="bulkCareCustomizeBody"></div>
+  <div class="form-group" style="margin-top:16px;">
+    <label class="form-label">＋ あたらしく追加</label>
+    <div style="display:flex; gap:6px;">
+      <input type="text" class="form-input" id="newBulkActionIcon" placeholder="🌿" maxlength="2" style="width:60px; text-align:center; font-size:20px;">
+      <input type="text" class="form-input" id="newBulkActionName" placeholder="名前（例：おくすり）" maxlength="10" style="flex:1;">
+      <button class="btn btn-primary" style="padding:0 14px;" onclick="addNewBulkAction()">追加</button>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal('bulkCareCustomizeModal')">とじる</button>
+  </div>
+</div></div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2966,50 +3092,82 @@ let STORAGE_KEY = 'nikowa_data_v3';
 let PHOTOS_KEY = 'nikowa_photos_v3';
 const MAX_PHOTO_SIZE = 800;
 const THEMES = {
+  // ===== スイーツ ×8 =====
   mint: { name: 'チョコミント', emoji: '🍃', pattern: 'gingham',
     vars: { '--bg':'#D0FCED', '--surface':'#FFFFFF', '--surface-warm':'#E0F0E5', '--line':'#B8D8C5', '--line-soft':'#CCE4D5', '--ink-dark':'#2D4A3C', '--ink':'#466050', '--ink-sub':'#7A9588', '--ink-light':'#A8BFB2', '--mint':'#8FC9AB', '--mint-deep':'#5FA985', '--mint-bg':'#C2E2D0', '--accent':'#C8956A', '--accent-deep':'#9A6840', '--accent-bg':'#EDD5C0', '--today-bg':'#FCEAEF', '--today-border':'#F4C8D2', '--warm-yellow':'#F8E4A0', '--soft-purple':'#C8B0D8' },
     paperColor: 'rgba(255,255,255,0.55)',
     ginghamColor: 'rgba(255,255,255,0.55)',
     headerGrad: 'linear-gradient(180deg, #EAF6EE 0%, #DCEEE2 50%, #F2D9C8 100%)' },
-  soda: { name: 'ソーダ', emoji: '🥤', pattern: 'polka',
-    vars: { '--bg':'#C8E4F5', '--surface':'#FFFFFF', '--surface-warm':'#D8EAF5', '--line':'#B0D0E8', '--line-soft':'#C8DFF0', '--ink-dark':'#1A3A58', '--ink':'#2A5078', '--ink-sub':'#4A78A0', '--ink-light':'#7898B8', '--mint':'#5AA8D8', '--mint-deep':'#3A8AB8', '--mint-bg':'#A0CCE8', '--accent':'#E8B840', '--accent-deep':'#B88A18', '--accent-bg':'#FCE8A0', '--today-bg':'#FFF0B8', '--today-border':'#E8C860', '--warm-yellow':'#F8E08A', '--soft-purple':'#A8B0D8' },
+  candy_soda: { name: 'キャンディソーダ', emoji: '🍬', pattern: 'polka',
+    vars: { '--bg':'#C8E4F5', '--surface':'#FFFFFF', '--surface-warm':'#DCF0FA', '--line':'#B0D0E8', '--line-soft':'#C8DFF0', '--ink-dark':'#1A3A58', '--ink':'#2A5078', '--ink-sub':'#5888B0', '--ink-light':'#88AAC8', '--mint':'#78C0E8', '--mint-deep':'#4898C8', '--mint-bg':'#A8D8F0', '--accent':'#F7A0C0', '--accent-deep':'#E06890', '--accent-bg':'#FDE0EC', '--today-bg':'#FFF5D0', '--today-border':'#F0D870', '--warm-yellow':'#FCE874', '--soft-purple':'#C8B0E0' },
     paperColor: 'rgba(255,255,255,0.85)',
-    headerGrad: 'linear-gradient(180deg, #EAF4FA 0%, #D6E8F2 50%, #FCEBB8 100%)' },
+    headerGrad: 'linear-gradient(180deg, #E8F4FA 0%, #F8D0E0 50%, #FFF0B8 100%)' },
   strawberry: { name: 'いちごみるく', emoji: '🍓', pattern: 'gingham',
     vars: { '--bg':'#FEEBF8', '--surface':'#FFFFFF', '--surface-warm':'#FCF1F2', '--line':'#F4DCE2', '--line-soft':'#F8E8EC', '--ink-dark':'#7A4A58', '--ink':'#9A6878', '--ink-sub':'#B894A0', '--ink-light':'#D8BAC2', '--mint':'#F4C2CE', '--mint-deep':'#D88AA0', '--mint-bg':'#FDE2E8', '--accent':'#E89AB0', '--accent-deep':'#C26A85', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8C2E0' },
     paperColor: 'rgba(255,255,255,0.55)',
     ginghamColor: 'rgba(255,255,255,0.55)',
     headerGrad: 'linear-gradient(180deg, #FEF4F4 0%, #FBE2E8 50%, #F4BCC8 100%)' },
-  honey: { name: 'ハニーレモン', emoji: '🍯', pattern: 'polka',
-    vars: { '--bg':'#F4F7B4', '--surface':'#FFFFFF', '--surface-warm':'#F5E8B0', '--line':'#E0C870', '--line-soft':'#E8D898', '--ink-dark':'#3E3008', '--ink':'#584818', '--ink-sub':'#806820', '--ink-light':'#A88838', '--mint':'#C89820', '--mint-deep':'#A07810', '--mint-bg':'#E8C858', '--accent':'#F5C060', '--accent-deep':'#C89028', '--accent-bg':'#F8C870', '--today-bg':'#F8E098', '--today-border':'#D8B048', '--warm-yellow':'#F0D870', '--soft-purple':'#B8A068' },
-    paperColor: 'rgba(255,250,225,0.85)',
-    headerGrad: 'linear-gradient(180deg, #F4F7B4 0%, #E8E090 50%, #DCEFE0 100%)' },
+  honey: { name: 'ハニーレモン', emoji: '🍋', pattern: 'polka',
+    vars: { '--bg':'#FFFBD0', '--surface':'#FFFFFF', '--surface-warm':'#FFF8C8', '--line':'#E8E070', '--line-soft':'#F0E890', '--ink-dark':'#4A4008', '--ink':'#6A5818', '--ink-sub':'#907830', '--ink-light':'#B8A058', '--mint':'#70EE7C', '--mint-deep':'#40C848', '--mint-bg':'#B0F0B8', '--accent':'#FF8387', '--accent-deep':'#D85058', '--accent-bg':'#FFD0D2', '--today-bg':'#FFF056', '--today-border':'#D8C820', '--warm-yellow':'#FFF056', '--soft-purple':'#D8C098' },
+    paperColor: 'rgba(255,252,220,0.85)',
+    headerGrad: 'linear-gradient(180deg, #FFFEE0 0%, #FFF056 50%, #70EE7C 100%)' },
   pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham',
     vars: { '--bg':'#FFDFAB', '--surface':'#FFFFFF', '--surface-warm':'#FCF1DA', '--line':'#EBD4A8', '--line-soft':'#F2E2C2', '--ink-dark':'#6B4A28', '--ink':'#8A6440', '--ink-sub':'#B0926A', '--ink-light':'#D4BC98', '--mint':'#E8C088', '--mint-deep':'#C28848', '--mint-bg':'#FBE2B8', '--accent':'#F0A0B2', '--accent-deep':'#C26880', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8B898' },
     paperColor: 'rgba(255,255,255,0.65)',
     ginghamColor: 'rgba(255,255,255,0.65)',
     headerGrad: 'linear-gradient(180deg, #FCEFD2 0%, #F0D4A0 50%, #F4C0CC 100%)' },
-  cola: { name: 'コーラ', emoji: '🥃', pattern: 'polka',
-    vars: { '--bg':'#ECD8C0', '--surface':'#FFFFFF', '--surface-warm':'#ECD5C0', '--line':'#C8A080', '--line-soft':'#D8B898', '--ink-dark':'#3E2418', '--ink':'#5A3828', '--ink-sub':'#8A6850', '--ink-light':'#B89878', '--mint':'#A87850', '--mint-deep':'#704020', '--mint-bg':'#DCC0A0', '--accent':'#D06878', '--accent-deep':'#A04058', '--accent-bg':'#F8C8D0', '--today-bg':'#F8D0D8', '--today-border':'#E08898', '--warm-yellow':'#F8E4A0', '--soft-purple':'#B89080' },
-    paperColor: 'rgba(255,248,238,0.7)',
-    headerGrad: 'linear-gradient(180deg, #F5E8D8 0%, #D4A888 50%, #A06848 100%)' },
+  cream_soda: { name: 'クリームソーダ', emoji: '🍹', pattern: 'polka',
+    vars: { '--bg':'#D8F5D8', '--surface':'#FFFFFF', '--surface-warm':'#E4F8E4', '--line':'#B0D8B0', '--line-soft':'#C8E8C8', '--ink-dark':'#204020', '--ink':'#385838', '--ink-sub':'#608060', '--ink-light':'#90B090', '--mint':'#78C878', '--mint-deep':'#48A048', '--mint-bg':'#A0D8A0', '--accent':'#F06060', '--accent-deep':'#C83838', '--accent-bg':'#FCD0D0', '--today-bg':'#FFF8E0', '--today-border':'#E8D088', '--warm-yellow':'#F8E8A0', '--soft-purple':'#C8B0C8' },
+    paperColor: 'rgba(255,255,255,0.8)',
+    headerGrad: 'linear-gradient(180deg, #E8FAE8 0%, #C8E8C8 50%, #FCE0E0 100%)' },
   lavender: { name: 'ラベンダーマカロン', emoji: '🪻', pattern: 'gingham',
     vars: { '--bg':'#EDE0F5', '--surface':'#FFFFFF', '--surface-warm':'#E4D2F0', '--line':'#C8A8D8', '--line-soft':'#D8C0E8', '--ink-dark':'#3E2858', '--ink':'#5A4070', '--ink-sub':'#887098', '--ink-light':'#B0A0C0', '--mint':'#B090D0', '--mint-deep':'#8060A8', '--mint-bg':'#D0B8E0', '--accent':'#E088A8', '--accent-deep':'#B05870', '--accent-bg':'#F8C8D8', '--today-bg':'#F8D0DC', '--today-border':'#E0A0B8', '--warm-yellow':'#F8E4A0', '--soft-purple':'#8060A8' },
     paperColor: 'rgba(255,255,255,0.6)',
     ginghamColor: 'rgba(255,255,255,0.6)',
     headerGrad: 'linear-gradient(180deg, #F0E2F8 0%, #E0CCEE 50%, #FAD8E2 100%)' },
-  matcha: { name: '抹茶わらび', emoji: '🍵', pattern: 'polka',
-    vars: { '--bg':'#E4ECC0', '--surface':'#FFFFFF', '--surface-warm':'#E0E8B8', '--line':'#B8C880', '--line-soft':'#CCD8A0', '--ink-dark':'#1F2F10', '--ink':'#384828', '--ink-sub':'#5A6838', '--ink-light':'#88A058', '--mint':'#6A8830', '--mint-deep':'#4A6820', '--mint-bg':'#A8C868', '--accent':'#D88AA0', '--accent-deep':'#A86078', '--accent-bg':'#F8C8D8', '--today-bg':'#A8C868', '--today-border':'#E0A0B0', '--warm-yellow':'#D8C070', '--soft-purple':'#A08090' },
-    paperColor: 'rgba(250,252,232,0.8)',
-    headerGrad: 'linear-gradient(180deg, #ECF0D2 0%, #D8E2A8 50%, #F4D2DA 100%)' },
-  kurogoma: { name: 'くろごま', emoji: '⚫', pattern: 'dot', simple: true,
-    vars: { '--bg':'#2A2A30', '--surface':'#7A7A82', '--surface-warm':'#7A7A82', '--line':'#8A8A92', '--line-soft':'#6A6A72', '--ink-dark':'#F8F7F2', '--ink':'#E8E6DE', '--ink-sub':'#C8C6C0', '--ink-light':'#9A9890', '--mint':'#D8D6CE', '--mint-deep':'#B8B6AE', '--mint-bg':'#8A8A92', '--accent':'#D8B868', '--accent-deep':'#B89848', '--accent-bg':'#605840', '--today-bg':'#7A7A82', '--today-border':'#A8A6A0', '--warm-yellow':'#D8B868', '--soft-purple':'#A8A0A8' },
-    paperColor: 'rgba(255,255,255,0.08)',
+  peach: { name: 'ピーチメルバ', emoji: '🍑', pattern: 'polka',
+    vars: { '--bg':'#FFE8D8', '--surface':'#FFFFFF', '--surface-warm':'#FFF0E8', '--line':'#F0C8B0', '--line-soft':'#F8D8C8', '--ink-dark':'#5A3028', '--ink':'#7A4838', '--ink-sub':'#A87060', '--ink-light':'#D0A090', '--mint':'#F0B098', '--mint-deep':'#D88068', '--mint-bg':'#F8D0C0', '--accent':'#E06878', '--accent-deep':'#B84050', '--accent-bg':'#FCC8D0', '--today-bg':'#FFF0E0', '--today-border':'#E8C0A0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D0A8C8' },
+    paperColor: 'rgba(255,255,255,0.7)',
+    headerGrad: 'linear-gradient(180deg, #FFF2EA 0%, #F8D0B8 50%, #F0A0A8 100%)' },
+  // ===== 和食 ×4 =====
+  kurogoma: { name: '黒ごま', emoji: '🖤', pattern: 'dot', simple: true,
+    vars: { '--bg':'#2A2A30', '--surface':'#3A3A42', '--surface-warm':'#3A3A42', '--line':'#58585F', '--line-soft':'#4A4A52', '--ink-dark':'#F8F7F2', '--ink':'#E8E6DE', '--ink-sub':'#C8C6C0', '--ink-light':'#9A9890', '--mint':'#D8D6CE', '--mint-deep':'#B8B6AE', '--mint-bg':'#58585F', '--accent':'#E8C878', '--accent-deep':'#C8A848', '--accent-bg':'#4A4838', '--today-bg':'#4A4A52', '--today-border':'#888880', '--warm-yellow':'#E8C878', '--soft-purple':'#A8A0A8' },
+    paperColor: 'rgba(255,255,255,0.06)',
     headerGrad: 'linear-gradient(180deg, #38383F 0%, #2A2A30 100%)' },
-  tofu: { name: 'とうふ', emoji: '⚪', pattern: 'dot', simple: true,
-    vars: { '--bg':'#FAFAF6', '--surface':'#FFFFFF', '--surface-warm':'#F2F0EA', '--line':'#D8D6D0', '--line-soft':'#E8E6E0', '--ink-dark':'#2A2A28', '--ink':'#48484A', '--ink-sub':'#787876', '--ink-light':'#A8A8A6', '--mint':'#787876', '--mint-deep':'#48484A', '--mint-bg':'#D8D6D0', '--accent':'#8A8068', '--accent-deep':'#5A5040', '--accent-bg':'#E8E2D8', '--today-bg':'#F2F0EA', '--today-border':'#A8A6A0', '--warm-yellow':'#C8B888', '--soft-purple':'#A8A0A8' },
+  tofu: { name: 'おとうふ', emoji: '🤍', pattern: 'dot', simple: true,
+    vars: { '--bg':'#FAFAF6', '--surface':'#FFFFFF', '--surface-warm':'#F2F0EA', '--line':'#D8D6D0', '--line-soft':'#E8E6E0', '--ink-dark':'#2A2A28', '--ink':'#48484A', '--ink-sub':'#787876', '--ink-light':'#A8A8A6', '--mint':'#A0A8C0', '--mint-deep':'#6878A0', '--mint-bg':'#D8DCE8', '--accent':'#8A8068', '--accent-deep':'#5A5040', '--accent-bg':'#E8E2D8', '--today-bg':'#F2F0EA', '--today-border':'#A8A6A0', '--warm-yellow':'#C8B888', '--soft-purple':'#A8A0B0' },
     paperColor: 'rgba(0,0,0,0.04)',
-    headerGrad: 'linear-gradient(180deg, #FAFAF6 0%, #F0EEE8 100%)' }
+    headerGrad: 'linear-gradient(180deg, #FAFAF6 0%, #F0EEE8 100%)' },
+  mitarashi: { name: 'みたらし', emoji: '🍡', pattern: 'seigaiha', simple: true,
+    vars: { '--bg':'#FFF2D8', '--surface':'#FFFFFF', '--surface-warm':'#FFF0D0', '--line':'#E8C890', '--line-soft':'#F0D8A8', '--ink-dark':'#3E2808', '--ink':'#5A4018', '--ink-sub':'#886838', '--ink-light':'#B09060', '--mint':'#D8A850', '--mint-deep':'#B88830', '--mint-bg':'#F0D088', '--accent':'#D07828', '--accent-deep':'#A85810', '--accent-bg':'#FDE0B0', '--today-bg':'#FFF0C0', '--today-border':'#D8B058', '--warm-yellow':'#F0C848', '--soft-purple':'#C0A878' },
+    paperColor: 'rgba(200,160,80,0.12)',
+    headerGrad: 'linear-gradient(180deg, #FFF8E0 0%, #F0D898 50%, #D8A850 100%)' },
+  edamame: { name: '枝豆', emoji: '🥬', pattern: 'asanoha', simple: true,
+    vars: { '--bg':'#E0F0D0', '--surface':'#FFFFFF', '--surface-warm':'#E8F2DA', '--line':'#B8D098', '--line-soft':'#CCE0B0', '--ink-dark':'#1A3010', '--ink':'#2A4820', '--ink-sub':'#507840', '--ink-light':'#80A868', '--mint':'#78B858', '--mint-deep':'#509838', '--mint-bg':'#A8D088', '--accent':'#A0C048', '--accent-deep':'#789828', '--accent-bg':'#D8E8B0', '--today-bg':'#F0F8E0', '--today-border':'#A8C870', '--warm-yellow':'#D8D068', '--soft-purple':'#A8B890' },
+    paperColor: 'rgba(100,160,80,0.1)',
+    headerGrad: 'linear-gradient(180deg, #ECF4E0 0%, #D0E4B0 50%, #B0D080 100%)' },
+  // ===== 大人キレイ目 ×3 =====
+  cinderella: { name: 'シンデレラ', emoji: '👑', pattern: 'fleurdelis',
+    vars: { '--bg':'#F0F4F8', '--surface':'#FFFFFF', '--surface-warm':'#EEF2F8', '--line':'#D0D8E0', '--line-soft':'#DDE4EC', '--ink-dark':'#2A3040', '--ink':'#404858', '--ink-sub':'#707888', '--ink-light':'#A0A8B8', '--mint':'#A8B8D0', '--mint-deep':'#6880A8', '--mint-bg':'#D0D8E8', '--accent':'#A0B8D8', '--accent-deep':'#6888B8', '--accent-bg':'#D8E4F0', '--today-bg':'#E8F0F8', '--today-border':'#A0B8D0', '--warm-yellow':'#E0D8C0', '--soft-purple':'#B0A8C8' },
+    paperColor: 'rgba(160,175,200,0.12)',
+    headerGrad: 'linear-gradient(180deg, #F8FAFC 0%, #E8F0F8 50%, #D0DCE8 100%)' },
+  neon: { name: 'ネオン', emoji: '✨', pattern: 'dot',
+    vars: { '--bg':'#1A1A2E', '--surface':'#252540', '--surface-warm':'#252540', '--line':'#3A3A58', '--line-soft':'#303048', '--ink-dark':'#F0ECF8', '--ink':'#D8D0E8', '--ink-sub':'#B0A8C8', '--ink-light':'#8078A0', '--mint':'#00ABE1', '--mint-deep':'#0090C0', '--mint-bg':'#1A3048', '--accent':'#C8236B', '--accent-deep':'#A01050', '--accent-bg':'#3A1A28', '--today-bg':'#2A2A40', '--today-border':'#00ABE1', '--warm-yellow':'#F1E937', '--soft-purple':'#8078A0' },
+    paperColor: 'rgba(255,255,255,0.04)',
+    headerGrad: 'linear-gradient(180deg, #252540 0%, #1A1A2E 100%)' },
+  night_dress: { name: 'ナイトドレス', emoji: '🌙', pattern: 'damask',
+    vars: { '--bg':'#1A1828', '--surface':'#2A2838', '--surface-warm':'#2A2838', '--line':'#484060', '--line-soft':'#3A3250', '--ink-dark':'#F0ECF8', '--ink':'#D8D0E8', '--ink-sub':'#B0A8C8', '--ink-light':'#8880A0', '--mint':'#C0B0D8', '--mint-deep':'#9080B8', '--mint-bg':'#3A3250', '--accent':'#C8C0D8', '--accent-deep':'#A098B8', '--accent-bg':'#2A2838', '--today-bg':'#3A3250', '--today-border':'#7868A0', '--warm-yellow':'#D0C8A0', '--soft-purple':'#9080B8' },
+    paperColor: 'rgba(200,180,220,0.08)',
+    headerGrad: 'linear-gradient(180deg, #282438 0%, #1A1828 100%)' },
+  // ===== ダルメシアン ×2 =====
+  dalmatian_w: { name: 'ダルメシアン白', emoji: '🐾', pattern: 'dalmatian',
+    vars: { '--bg':'#F8F8F8', '--surface':'#FFFFFF', '--surface-warm':'#F4F4F2', '--line':'#D0D0D0', '--line-soft':'#E0E0E0', '--ink-dark':'#1A1A1A', '--ink':'#333333', '--ink-sub':'#666666', '--ink-light':'#999999', '--mint':'#B0B0B0', '--mint-deep':'#666666', '--mint-bg':'#E0E0E0', '--accent':'#D4AA40', '--accent-deep':'#B08820', '--accent-bg':'#F0E4C0', '--today-bg':'#FFF8E0', '--today-border':'#D8C070', '--warm-yellow':'#E8D068', '--soft-purple':'#A0A0A0' },
+    paperColor: 'rgba(30,30,30,0.12)',
+    headerGrad: 'linear-gradient(180deg, #FAFAFA 0%, #F0F0F0 50%, #E8E8E0 100%)' },
+  dalmatian_b: { name: 'ダルメシアン黒', emoji: '🖤', pattern: 'dalmatian_inv',
+    vars: { '--bg':'#1A1A1A', '--surface':'#2A2A2A', '--surface-warm':'#2A2A2A', '--line':'#484848', '--line-soft':'#3A3A3A', '--ink-dark':'#F8F8F0', '--ink':'#E8E8E0', '--ink-sub':'#C0C0B8', '--ink-light':'#888888', '--mint':'#D0D0C8', '--mint-deep':'#A8A8A0', '--mint-bg':'#484848', '--accent':'#D4AA40', '--accent-deep':'#B08820', '--accent-bg':'#3A3420', '--today-bg':'#3A3A3A', '--today-border':'#808070', '--warm-yellow':'#D4AA40', '--soft-purple':'#888888' },
+    paperColor: 'rgba(255,255,255,0.10)',
+    headerGrad: 'linear-gradient(180deg, #282828 0%, #1A1A1A 100%)' }
 };
 
 function paperBackground(theme) {
@@ -3024,6 +3182,24 @@ function paperBackground(theme) {
       return 'repeating-linear-gradient(45deg, '+c+' 0 1px, transparent 1px 14px)';
     case 'gingham':
       return 'linear-gradient(90deg, '+ginghamC+' 50%, transparent 50%), linear-gradient(0deg, '+ginghamC+' 50%, transparent 50%)';
+    case 'asanoha':
+      // 麻の葉風：三角の繰り返し
+      return 'linear-gradient(30deg, '+c+' 12%, transparent 12.5%, transparent 87%, '+c+' 87.5%), linear-gradient(150deg, '+c+' 12%, transparent 12.5%, transparent 87%, '+c+' 87.5%), linear-gradient(90deg, '+c+' 1px, transparent 1px), linear-gradient(0deg, '+c+' 1px, transparent 1px)';
+    case 'seigaiha':
+      // 青海波風：同心円の繰り返し
+      return 'radial-gradient(circle at 50% 100%, transparent 56%, '+c+' 57%, '+c+' 60%, transparent 61%), radial-gradient(circle at 0% 100%, transparent 56%, '+c+' 57%, '+c+' 60%, transparent 61%), radial-gradient(circle at 100% 100%, transparent 56%, '+c+' 57%, '+c+' 60%, transparent 61%)';
+    case 'dalmatian':
+      // ダルメシアン風：ランダム風ドット（白地に黒）
+      return 'radial-gradient('+c+' 6px, transparent 6.5px), radial-gradient('+c+' 4px, transparent 4.5px), radial-gradient('+c+' 5px, transparent 5.5px)';
+    case 'dalmatian_inv':
+      // ダルメシアン風反転（黒地に白）
+      return 'radial-gradient('+c+' 6px, transparent 6.5px), radial-gradient('+c+' 4px, transparent 4.5px), radial-gradient('+c+' 5px, transparent 5.5px)';
+    case 'fleurdelis':
+      // フルール・ド・リス風（ダイヤモンド＋十字の繰り返し）
+      return 'linear-gradient(45deg, '+c+' 25%, transparent 25%, transparent 75%, '+c+' 75%), linear-gradient(-45deg, '+c+' 25%, transparent 25%, transparent 75%, '+c+' 75%), radial-gradient(circle, '+c+' 2px, transparent 2.5px)';
+    case 'damask':
+      // ダマスク風（ダイヤモンド＋小さなドットの繰り返し）
+      return 'linear-gradient(45deg, '+c+' 25%, transparent 25%, transparent 75%, '+c+' 75%), linear-gradient(-45deg, '+c+' 25%, transparent 25%, transparent 75%, '+c+' 75%), radial-gradient('+c+' 1.5px, transparent 2px), radial-gradient('+c+' 1px, transparent 1.5px)';
     default:
       return 'radial-gradient('+c+' 1px, transparent 1px)';
   }
@@ -3034,6 +3210,12 @@ function paperBackgroundSize(theme) {
     case 'polka': return '46px 46px, 46px 46px';
     case 'stripe': return 'auto';
     case 'gingham': return '22px 22px, 22px 22px';
+    case 'asanoha': return '28px 48px, 28px 48px, 28px 48px, 28px 48px';
+    case 'seigaiha': return '36px 18px, 36px 18px, 36px 18px';
+    case 'dalmatian': return '58px 58px, 38px 38px, 48px 48px';
+    case 'dalmatian_inv': return '58px 58px, 38px 38px, 48px 48px';
+    case 'fleurdelis': return '20px 20px, 20px 20px, 20px 20px';
+    case 'damask': return '24px 24px, 24px 24px, 24px 24px, 12px 12px';
     default: return '10px 10px';
   }
 }
@@ -3073,7 +3255,17 @@ function applyTheme(themeId) {
   }
   const paperBg = paperBackground(theme);
   const paperSize = paperBackgroundSize(theme);
-  const paperPos = (theme.pattern === 'polka') ? '0 0, 23px 23px' : '0 0';
+  const multiPosPatterns = ['polka','dalmatian','dalmatian_inv','seigaiha','asanoha'];
+  const paperPosMap = {
+    'polka': '0 0, 23px 23px',
+    'dalmatian': '0 0, 18px 28px, 38px 12px',
+    'dalmatian_inv': '0 0, 18px 28px, 38px 12px',
+    'seigaiha': '0 0, 18px 0, 36px 0',
+    'asanoha': '0 0, 0 0, 0 0, 0 0',
+    'fleurdelis': '0 0, 10px 10px, 10px 10px',
+    'damask': '0 0, 12px 12px, 0 0, 6px 6px'
+  };
+  const paperPos = paperPosMap[theme.pattern] || '0 0';
   document.body.style.backgroundImage = paperBg;
   document.body.style.backgroundSize = paperSize;
   // PC幅用にapp-frameにも反映
@@ -3082,17 +3274,9 @@ function applyTheme(themeId) {
     appFrame.style.backgroundColor = theme.vars['--bg'] || '#FFFFFF';
     appFrame.style.backgroundImage = paperBackground(theme);
     appFrame.style.backgroundSize = paperBackgroundSize(theme);
-    if (theme.pattern === 'polka') {
-      appFrame.style.backgroundPosition = '0 0, 23px 23px';
-    } else {
-      appFrame.style.backgroundPosition = '';
-    }
+    appFrame.style.backgroundPosition = paperPos;
   }
-  if (theme.pattern === 'polka') {
-    document.body.style.backgroundPosition = '0 0, 23px 23px';
-  } else {
-    document.body.style.backgroundPosition = '';
-  }
+  document.body.style.backgroundPosition = paperPos;
   let styleEl = document.getElementById('theme-dynamic');
   if (!styleEl) {
     styleEl = document.createElement('style');
@@ -3187,6 +3371,35 @@ const MODE_KEYS = {
   me:   { data: 'nikowa_me_data_v3',   photos: 'nikowa_me_photos_v3' },
   kids: { data: 'nikowa_kids_data_v3', photos: 'nikowa_kids_photos_v3' },
 };
+// 一括お世話アクション（モード別保存）
+const BULK_ACTIONS_KEY = { pet: 'nikowa_bulk_pet', kids: 'nikowa_bulk_kids' };
+const DEFAULT_BULK_ACTIONS = {
+  pet:  [
+    { id: 'meal',  icon: '🍚', name: 'ごはん' },
+    { id: 'bath',  icon: '🛁', name: 'おふろ' },
+    { id: 'tooth', icon: '🪥', name: '歯みがき' },
+    { id: 'walk',  icon: '🐾', name: 'さんぽ' }
+  ],
+  kids: [
+    { id: 'meal',  icon: '🍚', name: 'ごはん' },
+    { id: 'bath',  icon: '🛁', name: 'おふろ' },
+    { id: 'tooth', icon: '🪥', name: '歯みがき' },
+    { id: 'nap',   icon: '😴', name: 'おひるね' }
+  ]
+};
+function getBulkActions() {
+  if (currentMode !== 'pet' && currentMode !== 'kids') return [];
+  const key = BULK_ACTIONS_KEY[currentMode];
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) return JSON.parse(stored);
+  } catch(e) {}
+  return DEFAULT_BULK_ACTIONS[currentMode].slice();
+}
+function saveBulkActions(actions) {
+  if (currentMode !== 'pet' && currentMode !== 'kids') return;
+  try { localStorage.setItem(BULK_ACTIONS_KEY[currentMode], JSON.stringify(actions)); } catch(e) {}
+}
 let selectedPetType = 'dog';
 let selectedPlace = 'home';
 let selectedTag = 'ケア';
@@ -4171,18 +4384,42 @@ function renderMeMode() {
   setActiveNav('pet');
   const app = document.getElementById('app');
   let html = renderModeIndexTabs();
-  html += '<div style="padding:8px 16px 8px;">';
-  html += '<button onclick="goMeDiary()" style="width:100%;display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:20px;padding:20px 22px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,0.06);text-align:left;">';
-  html += '<div style="font-size:42px;line-height:1;flex-shrink:0;">📔</div>';
-  html += '<div style="flex:1;">';
-  html += '<div style="font-size:16px;font-weight:800;color:var(--ink-dark);">日記</div>';
-  html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:4px;">わたしのきろく</div>';
-  html += '</div>';
-  html += '<div style="font-size:22px;color:var(--ink-light);">›</div>';
-  html += '</button>';
-  html += '</div>';
+  
+  // MEメニューグリッド（4×2）
+  html += '<div style="padding:12px 12px 8px;">';
+  html += '<div class="me-menu-grid">';
+  
+  // 行1：メイン機能
+  html += renderMeMenuItem('📔', '日記', 'goMeDiary()');
+  html += renderMeMenuItem('📅', 'カレンダー', "showToast('準備中🌷')");
+  html += renderMeMenuItem('⚖️', '体重・体脂肪', "showToast('準備中🌷')");
+  html += renderMeMenuItem('🩺', '健康チェック', "showToast('準備中🌷')");
+  
+  // 行2：プライベート＋コレクション
+  html += renderMeMenuItem('🌸', '生理', "showToast('準備中🌷')");
+  html += renderMeMenuItem('♡', 'ひみつ', "showToast('準備中🌷')");
+  html += renderMeMenuItem('📦', 'コレクション', "showToast('準備中🌷')");
+  html += renderMeMenuItem('＋', '追加', "showToast('準備中🌷')", true);
+  
+  html += '</div></div>';
+  
+  // コレクション一覧（将来：ここにコレクションのグリッドが並ぶ）
+  html += '<div style="padding:4px 16px 8px;">';
+  html += '<div class="section-head"><h2 class="section-title">コレクション</h2></div>';
+  html += '<div style="text-align:center; padding:24px 16px; color:var(--ink-sub); font-size:12px; line-height:1.7;">';
+  html += '靴、アクセサリー、コスメ…<br>あなたの好きなものを集めよう🌷<br><span style="color:var(--ink-light); font-size:11px;">ただいま準備中</span>';
+  html += '</div></div>';
+  
   html += '<div style="height:80px;"></div>';
   app.innerHTML = html;
+}
+
+function renderMeMenuItem(icon, label, onclick, isDashed) {
+  const cls = isDashed ? 'me-menu-item me-menu-item-add' : 'me-menu-item';
+  return '<button class="'+cls+'" onclick="'+onclick+'">'
+    + '<span class="me-menu-icon">'+icon+'</span>'
+    + '<span class="me-menu-label">'+escapeHtml(label)+'</span>'
+    + '</button>';
 }
 
 function goMeDiary() {
@@ -4554,9 +4791,10 @@ function renderHouse() {
   }
   
   // タブバー
-  html += '<div class="pet-tabs-bar" style="margin-top: 12px;">';
-  html += '<button class="pet-tab-btn '+(houseTab==='home'?'active':'')+'" onclick="setHouseTab(\'home\')"><span class="pet-tab-icon">🏠</span><span class="pet-tab-label">ホーム</span></button>';
-  html += '<button class="pet-tab-btn '+(houseTab==='diary'?'active':'')+'" onclick="setHouseTab(\'diary\')"><span class="pet-tab-icon">📖</span><span class="pet-tab-label">みんなの日記</span></button>';
+  const houseName = (house && house.name) ? house.name : 'みんな';
+  html += '<div class="pet-tabs-bar pet-tabs-bar-slim" style="margin-top: 12px;">';
+  html += '<button class="pet-tab-btn pet-tab-btn-slim '+(houseTab==='home'?'active':'')+'" onclick="setHouseTab(\'home\')"><span class="pet-tab-icon">🏠</span>ホーム</button>';
+  html += '<button class="pet-tab-btn pet-tab-btn-slim '+(houseTab==='diary'?'active':'')+'" onclick="setHouseTab(\'diary\')"><span class="pet-tab-icon">📖</span>'+escapeHtml(houseName)+'家の日記</button>';
   html += '</div>';
   html += '<div class="pet-tab-content">';
   
@@ -4684,6 +4922,25 @@ function renderHouseHomeTab(house) {
     }
     html += '</div></div>';
   }
+  // きょうのお世話（一括登録）- PET/KIDSモードかつペットがいる時のみ
+  if ((currentMode === 'pet' || currentMode === 'kids') && homePets.length > 0) {
+    const actions = getBulkActions();
+    html += '<div class="section">';
+    html += '<div class="section-head"><h2 class="section-title">まとめてぽん</h2></div>';
+    html += '<div class="bulk-care-row">';
+    for (const act of actions) {
+      html += '<button class="bulk-care-btn" onclick="openBulkCareModal(\''+act.id+'\')">';
+      html += '<span class="bulk-care-icon">'+act.icon+'</span>';
+      html += '<span class="bulk-care-label">'+escapeHtml(act.name)+'</span>';
+      html += '</button>';
+    }
+    html += '<button class="bulk-care-btn bulk-care-add" onclick="openBulkCareCustomize()">';
+    html += '<span class="bulk-care-icon">＋</span>';
+    html += '<span class="bulk-care-label">追加</span>';
+    html += '</button>';
+    html += '</div></div>';
+  }
+  
   html += '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">うちの子</h2><span class="section-count">'+(homePets.length + digitalPets.length)+'匹</span><button class="section-link" onclick="openAddPetModal()" style="margin-left:auto;">＋ ついか</button></div>';
   if (pets.length === 0) {
@@ -6166,6 +6423,131 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
 }
+
+// ===== 一括お世話 =====
+let bulkCareState = { actionId: null, selectedPetIds: [] };
+
+function openBulkCareModal(actionId) {
+  const actions = getBulkActions();
+  const act = actions.find(a => a.id === actionId);
+  if (!act) return;
+  const house = getActiveHouse();
+  if (!house) return;
+  const pets = getHousePets(house.id).filter(p => p.place === 'home');
+  if (pets.length === 0) { showToast('うちの子がまだいません🌷'); return; }
+  
+  bulkCareState = { actionId: actionId, selectedPetIds: pets.map(p => p.id) }; // デフォルト全員選択
+  
+  document.getElementById('bulkCareModalTitle').textContent = act.icon + ' ' + act.name;
+  let html = '<p class="modal-sub" style="margin-bottom:12px;">きろくする子をえらんでね🌷</p>';
+  // 全員ボタン
+  html += '<button class="btn btn-primary" style="width:100%; margin-bottom:14px;" onclick="bulkCareSelectAll()">';
+  html += '✓ ぜんいんに きろく（' + pets.length + '匹）</button>';
+  html += '<div style="font-size:11.5px; color:var(--ink-sub); text-align:center; margin-bottom:8px;">または個別に選ぶ：</div>';
+  html += '<div id="bulkCarePetList" style="display:flex; flex-direction:column; gap:6px; max-height:280px; overflow-y:auto;">';
+  for (const pet of pets) {
+    html += '<label class="bulk-pet-row" style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--surface-warm); border-radius:10px; cursor:pointer;">';
+    html += '<input type="checkbox" class="bulk-pet-check" data-pet-id="'+pet.id+'" checked onchange="toggleBulkPet(\''+pet.id+'\', this.checked)">';
+    html += '<span style="font-size:18px;">' + (PET_EMOJIS[pet.type] || '✨') + '</span>';
+    html += '<span style="font-weight:700; flex:1;">' + escapeHtml(pet.name) + '</span>';
+    html += '</label>';
+  }
+  html += '</div>';
+  document.getElementById('bulkCareModalBody').innerHTML = html;
+  document.getElementById('bulkCareModal').classList.add('show');
+}
+
+function bulkCareSelectAll() {
+  const checks = document.querySelectorAll('.bulk-pet-check');
+  for (const c of checks) c.checked = true;
+  bulkCareState.selectedPetIds = Array.from(checks).map(c => c.dataset.petId);
+  confirmBulkCare();
+}
+
+function toggleBulkPet(petId, checked) {
+  if (checked) {
+    if (!bulkCareState.selectedPetIds.includes(petId)) bulkCareState.selectedPetIds.push(petId);
+  } else {
+    bulkCareState.selectedPetIds = bulkCareState.selectedPetIds.filter(id => id !== petId);
+  }
+}
+
+function confirmBulkCare() {
+  const actions = getBulkActions();
+  const act = actions.find(a => a.id === bulkCareState.actionId);
+  if (!act) return;
+  const petIds = bulkCareState.selectedPetIds;
+  if (petIds.length === 0) { showToast('子をえらんでね🌷'); return; }
+  const today = todayKey();
+  const ts = Date.now();
+  const author = data.user.name || '';
+  const avatar = data.user.avatar || '🌷';
+  for (const petId of petIds) {
+    if (!data.records[petId]) data.records[petId] = {};
+    if (!data.records[petId][today]) data.records[petId][today] = { care: {}, careLog: [], memo: '', photoIds: [] };
+    if (!data.records[petId][today].careLog) data.records[petId][today].careLog = [];
+    data.records[petId][today].careLog.push({
+      careId: 'bulk_' + act.id,
+      careName: act.name,
+      careIcon: act.icon,
+      timestamp: ts,
+      authorName: author,
+      authorAvatar: avatar,
+      bulk: true
+    });
+  }
+  saveData();
+  closeModal('bulkCareModal');
+  showToast(act.icon + ' ' + petIds.length + '匹に' + act.name + 'をきろく🌸');
+  render();
+}
+
+function openBulkCareCustomize() {
+  renderBulkCareCustomize();
+  document.getElementById('bulkCareCustomizeModal').classList.add('show');
+}
+
+function renderBulkCareCustomize() {
+  const actions = getBulkActions();
+  let html = '<div style="display:flex; flex-direction:column; gap:6px;">';
+  if (actions.length === 0) {
+    html += '<div style="text-align:center; color:var(--ink-sub); padding:20px;">まだお世話メニューがありません</div>';
+  } else {
+    for (let i = 0; i < actions.length; i++) {
+      const a = actions[i];
+      html += '<div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--surface-warm); border-radius:10px;">';
+      html += '<span style="font-size:20px;">'+a.icon+'</span>';
+      html += '<span style="flex:1; font-weight:700;">'+escapeHtml(a.name)+'</span>';
+      html += '<button class="btn btn-secondary" style="padding:4px 10px; font-size:11px;" onclick="removeBulkAction(\''+a.id+'\')">削除</button>';
+      html += '</div>';
+    }
+  }
+  html += '</div>';
+  document.getElementById('bulkCareCustomizeBody').innerHTML = html;
+}
+
+function addNewBulkAction() {
+  const iconEl = document.getElementById('newBulkActionIcon');
+  const nameEl = document.getElementById('newBulkActionName');
+  const icon = (iconEl.value || '').trim() || '🌿';
+  const name = (nameEl.value || '').trim();
+  if (!name) { showToast('名前を入れてね🌷'); return; }
+  const actions = getBulkActions();
+  const id = 'custom_' + Date.now();
+  actions.push({ id: id, icon: icon, name: name });
+  saveBulkActions(actions);
+  iconEl.value = '';
+  nameEl.value = '';
+  renderBulkCareCustomize();
+  showToast('追加したで🌸');
+}
+
+function removeBulkAction(actionId) {
+  const actions = getBulkActions().filter(a => a.id !== actionId);
+  saveBulkActions(actions);
+  renderBulkCareCustomize();
+  showToast('削除したで🌷');
+}
 function openUserModal() {
   document.getElementById('userNameInput').value = data.user.name || '';
   const grid = document.getElementById('avatarGrid');
@@ -7566,6 +7948,10 @@ function render() {
   _suppressScrollTop = false;
 }
 loadData();
+// 旧テーマIDの互換対応
+const THEME_COMPAT = { 'soda':'candy_soda', 'cola':'cream_soda', 'matcha':'edamame', 'rose_garden':'neon' };
+if (data.themeId && THEME_COMPAT[data.themeId]) { data.themeId = THEME_COMPAT[data.themeId]; saveData(); }
+if (data.themeId && !THEMES[data.themeId]) { data.themeId = 'mint'; }
 applyTheme(data.themeId || 'mint');
 render();
 initFirebase();
