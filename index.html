@@ -365,7 +365,9 @@
   /* ===== モード選択カード（トップ画面） ===== */
   .mode-section {
     padding: 0 16px 18px;
-    display: flex; gap: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
   .mode-card {
     flex: 1;
@@ -1181,6 +1183,39 @@
   }
   .me-menu-item-add .me-menu-icon { color: var(--accent); font-weight: 700; }
   .me-menu-item-add .me-menu-label { color: var(--ink-sub); }
+
+  /* ── モードページタブ（2列・下向き） ─────────── */
+  .mode-page-tabs-wrap { padding: 0 12px; }
+  .mode-page-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .mode-page-tab {
+    padding: 5px 4px 7px;
+    border: 1px solid rgba(255,255,255,0.6); border-top: none;
+    border-radius: 0 0 10px 10px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    color: var(--ink-sub);
+    font-family: inherit; font-size: 9.5px; font-weight: 700;
+    cursor: pointer; text-align: center; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 6px;
+    transition: margin-bottom 0.12s ease, background 0.12s ease;
+  }
+  .mode-page-tab.active {
+    background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.28) 100%);
+    background-color: var(--accent);
+    border-color: rgba(255,255,255,0.5); color: white;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    margin-bottom: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+  }
+  .mode-page-tab-edit {
+    display: flex; align-items: center; gap: 2px;
+    margin-bottom: 4px;
+  }
 
   /* これからの出来事 */
   .upcoming-list { display: flex; flex-direction: column; gap: 6px; }
@@ -3364,12 +3399,13 @@ let data = {
 };
 let photos = {};
 let currentView = 'top';
-let currentMode = 'pet'; // 'pet' | 'me' | 'kids'
-let houseSubTab = 'mine'; // 'mine' | 'fav' （自分の家 / お気に入り）
+let currentMode = 'pet'; // 'pet' | 'me' | 'kids' | 'nest'
+let houseSubTab = 'mine';
 const MODE_KEYS = {
   pet:  { data: 'nikowa_data_v3',      photos: 'nikowa_photos_v3' },
   me:   { data: 'nikowa_me_data_v3',   photos: 'nikowa_me_photos_v3' },
   kids: { data: 'nikowa_kids_data_v3', photos: 'nikowa_kids_photos_v3' },
+  nest: { data: 'nikowa_nest_data_v1', photos: 'nikowa_nest_photos_v1' },
 };
 // 一括お世話アクション（モード別保存）
 const BULK_ACTIONS_KEY = { pet: 'nikowa_bulk_pet', kids: 'nikowa_bulk_kids' };
@@ -3518,11 +3554,12 @@ function goToKidsMode() {
 function switchModeFromTab(targetMode) {
   if (currentMode === targetMode) return;
   switchMode(targetMode);
-  houseSubTab = 'mine'; // サブタブをリセット
+  houseSubTab = 'mine';
   if (targetMode === 'me') {
     currentView = 'me';
+  } else if (targetMode === 'nest') {
+    currentView = 'nest';
   } else {
-    // pet/kidsはデフォルトの家へ直行
     const houses = data.houses || [];
     if (houses.length > 0) {
       let targetId = data.lastUsedHouseId || data.activeHouseId;
@@ -3539,6 +3576,7 @@ function switchModeFromTab(targetMode) {
 function renderModeIndexTabs() {
   const tabs = [
     { id: 'me',   icon: '🌱', label: 'ME' },
+    { id: 'nest', icon: '🪺', label: 'Nest' },
     { id: 'pet',  icon: '🐾', label: 'PET' },
     { id: 'kids', icon: '🧸', label: 'KIDS' }
   ];
@@ -4340,7 +4378,7 @@ function renderTop() {
   html += '</div>'; // hero-glass閉じ
   html += '</div>'; // hero-section閉じ
 
-  // モード選択カード
+  // モード選択カード（2×2グリッド）
   html += '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">Welcome</h2></div>';
   html += '</div>';
@@ -4348,13 +4386,16 @@ function renderTop() {
   html += '<button class="mode-card mode-me" onclick="goToMeMode()">';
   html += '<div class="mode-card-icon">🌱</div><div class="mode-card-label">ME</div>';
   html += '</button>';
+  html += '<button class="mode-card mode-nest" onclick="goToNestMode()">';
+  html += '<div class="mode-card-icon">🪺</div><div class="mode-card-label">Nest</div>';
+  html += '</button>';
   html += '<button class="mode-card mode-pet" onclick="goToPetMode()">';
   html += '<div class="mode-card-icon">🐾</div><div class="mode-card-label">PET</div>';
   html += '</button>';
   html += '<button class="mode-card mode-kids" onclick="goToKidsMode()">';
   html += '<div class="mode-card-icon">🧸</div><div class="mode-card-label">KIDS</div>';
   html += '</button>';
-  html += '</div>'; // mode-section閉じ
+  html += '</div>';
 
   html += '<div style="height: 24px;"></div>';
   app.innerHTML = html;
@@ -4385,33 +4426,208 @@ function renderMeMode() {
   const app = document.getElementById('app');
   let html = renderModeIndexTabs();
   
-  // MEメニューグリッド（4×2）
-  html += '<div style="padding:12px 12px 8px;">';
-  html += '<div class="me-menu-grid">';
+  // ページタブ（2列・下向き）
+  html += renderModePageTabs('me');
+  html += '<div style="border-top:2px solid var(--mint);margin:0 12px 0;"></div>';
   
-  // 行1：メイン機能
-  html += renderMeMenuItem('📔', '日記', 'goMeDiary()');
-  html += renderMeMenuItem('📅', 'カレンダー', "showToast('準備中🌷')");
-  html += renderMeMenuItem('⚖️', '体重・体脂肪', "showToast('準備中🌷')");
-  html += renderMeMenuItem('🩺', '健康チェック', "showToast('準備中🌷')");
+  const tab = currentModeTab['me'] || 'stamp';
   
-  // 行2：プライベート＋コレクション
-  html += renderMeMenuItem('🌸', '生理', "showToast('準備中🌷')");
-  html += renderMeMenuItem('♡', 'ひみつ', "showToast('準備中🌷')");
-  html += renderMeMenuItem('📦', 'コレクション', "showToast('準備中🌷')");
-  html += renderMeMenuItem('＋', '追加', "showToast('準備中🌷')", true);
-  
-  html += '</div></div>';
-  
-  // コレクション一覧（将来：ここにコレクションのグリッドが並ぶ）
-  html += '<div style="padding:4px 16px 8px;">';
-  html += '<div class="section-head"><h2 class="section-title">コレクション</h2></div>';
-  html += '<div style="text-align:center; padding:24px 16px; color:var(--ink-sub); font-size:12px; line-height:1.7;">';
-  html += '靴、アクセサリー、コスメ…<br>あなたの好きなものを集めよう🌷<br><span style="color:var(--ink-light); font-size:11px;">ただいま準備中</span>';
-  html += '</div></div>';
+  if (tab === 'stamp') {
+    // ===== Stamp =====
+    html += '<div style="padding:12px 16px 4px;">';
+    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;">';
+    const stampCats = ['生活','美容','体調','仕事','趣味'];
+    for (const cat of stampCats) {
+      const active = (cat === '生活') ? 'background:var(--accent);color:white;border-color:var(--accent);' : '';
+      html += '<button style="flex-shrink:0;padding:4px 14px;border:1px solid var(--line);border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink-sub);background:var(--surface);'+active+'">'+cat+'</button>';
+    }
+    html += '</div></div>';
+    html += '<div style="padding:0 12px 12px;display:grid;grid-template-columns:repeat(8,1fr);gap:4px;">';
+    const stamps = [
+      {icon:'💧',name:'水'},{icon:'🍚',name:'ごはん'},{icon:'🛁',name:'おふろ'},
+      {icon:'🧴',name:'スキンケア'},{icon:'💊',name:'くすり'},{icon:'🏃',name:'運動'},
+      {icon:'😴',name:'睡眠'},{icon:'＋',name:'追加',add:true}
+    ];
+    for (const s of stamps) {
+      if (s.add) {
+        html += '<button onclick="showToast(\'準備中🌷\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1.2px dashed var(--line);border-radius:10px;background:none;cursor:pointer;font-family:inherit;min-width:0;"><span style="font-size:16px;color:var(--accent);font-weight:700;line-height:1;">＋</span><span style="font-size:8.5px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
+      } else {
+        html += '<button onclick="showToast(\''+s.icon+' '+s.name+' きろく！…準備中🌷\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;"><span style="font-size:18px;line-height:1;">'+s.icon+'</span><span style="font-size:8.5px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
+      }
+    }
+    html += '</div>';
+    html += '<div style="padding:4px 16px 8px;">';
+    html += '<div class="section-head"><h2 class="section-title">最近のきろく</h2></div>';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:16px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;padding:24px 16px;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
+    html += '</div>';
+    
+  } else if (tab === 'diary') {
+    html += '<div style="padding:16px;"><button onclick="goMeDiary()" style="width:100%;padding:20px;border:1px solid rgba(255,255,255,0.7);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);">📔 日記を開く</button></div>';
+    
+  } else if (tab === 'planner') {
+    html += '<div style="padding:16px;">';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);">';
+    html += '<div style="font-size:13px;font-weight:800;color:var(--accent-deep);margin-bottom:8px;">朝</div>';
+    html += '<div style="font-size:13px;color:var(--ink-dark);line-height:1.8;">スキンケア ・ 水 ・ 薬</div>';
+    html += '<div style="font-size:13px;font-weight:800;color:var(--accent-deep);margin:12px 0 8px;">昼</div>';
+    html += '<div style="font-size:13px;color:var(--ink-dark);line-height:1.8;">ごはん ・ 水</div>';
+    html += '<div style="font-size:13px;font-weight:800;color:var(--accent-deep);margin:12px 0 8px;">夜</div>';
+    html += '<div style="font-size:13px;color:var(--ink-dark);line-height:1.8;">おふろ ・ パック ・ スキンケア</div>';
+    html += '</div></div>';
+    
+  } else if (tab === 'collection') {
+    html += '<div style="padding:12px 16px;">';
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">';
+    const collections = [{name:'靴',icon:'👟'},{name:'コスメ',icon:'💄'},{name:'アクセ',icon:'💍'}];
+    for (const c of collections) {
+      html += '<button onclick="showToast(\'準備中🌷\')" style="aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(255,255,255,0.6);border-radius:14px;background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;"><span style="font-size:32px;">'+c.icon+'</span><span style="font-size:10px;font-weight:700;color:var(--ink-dark);">'+c.name+'</span></button>';
+    }
+    html += '<button onclick="showToast(\'準備中🌷\')" style="aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed var(--line);border-radius:14px;background:none;cursor:pointer;font-family:inherit;"><span style="font-size:24px;color:var(--accent);font-weight:700;">＋</span><span style="font-size:10px;color:var(--ink-sub);">追加</span></button>';
+    html += '</div></div>';
+    
+  } else if (tab === 'secret') {
+    html += '<div style="padding:16px;"><button onclick="goSecretMemo()" style="width:100%;padding:20px;border:1px solid rgba(255,255,255,0.7);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);">📋 ひみつメモを開く</button></div>';
+    
+  } else {
+    // カスタムタブ
+    const tabs = getModeTabsForMode('me');
+    const tabInfo = tabs.find(t => t.id === tab);
+    html += '<div style="padding:40px 16px;text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.7;">';
+    html += escapeHtml(tabInfo?.label || tab)+'<br><span style="font-size:11px;color:var(--ink-light);">ただいま準備中🌷</span>';
+    html += '</div>';
+  }
   
   html += '<div style="height:80px;"></div>';
   app.innerHTML = html;
+}
+
+function renderNestMode() {
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav('pet');
+  const app = document.getElementById('app');
+  let html = renderModeIndexTabs();
+
+  html += renderModePageTabs('nest');
+  html += '<div style="border-top:2px solid var(--mint);margin:0 12px 0;"></div>';
+
+  const tab = currentModeTab['nest'] || 'memo';
+
+  if (tab === 'memo') {
+    // ===== Memo（伝言メモ） =====
+    html += '<div style="padding:12px 16px 8px;">';
+    html += '<div class="section-head"><h2 class="section-title">伝言メモ</h2><button onclick="showToast(\'準備中🌷\')" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+    html += '「シャンプー買って」<br>「洗濯お願い」<br>パートナーへの伝言をここに🌷<br><span style="font-size:11px;color:var(--ink-light);">ただいま準備中</span>';
+    html += '</div></div>';
+
+  } else if (tab === 'goods') {
+    // ===== Goods（おうち備品） =====
+    html += '<div style="padding:12px 16px 8px;">';
+    html += '<div class="section-head"><h2 class="section-title">おうち備品</h2><button onclick="showToast(\'準備中🌷\')" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
+    // サンプル表示
+    const sampleGoods = [
+      { cat:'バスルーム', name:'シャンプー', brand:'ラックス' },
+      { cat:'バスルーム', name:'コンディショナー', brand:'パンテーン' },
+      { cat:'キッチン', name:'食器洗い洗剤', brand:'ジョイ' }
+    ];
+    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const g of sampleGoods) {
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:12px;backdrop-filter:blur(8px);">';
+      html += '<div style="flex:1;min-width:0;"><div style="font-size:9px;color:var(--ink-light);">'+escapeHtml(g.cat)+'</div><div style="font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(g.name)+'</div><div style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(g.brand)+'</div></div>';
+      html += '<div style="width:44px;height:44px;border-radius:8px;background:var(--surface-warm);border:1px solid var(--line-soft);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink-light);cursor:pointer;">写真</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div style="text-align:center;padding:12px;font-size:11px;color:var(--ink-light);">ただいま準備中🌷</div>';
+    html += '</div>';
+
+  } else if (tab === 'routine') {
+    // ===== Routine（定期メンテ） =====
+    html += '<div style="padding:12px 16px 8px;">';
+    html += '<div class="section-head"><h2 class="section-title">ルーティン</h2><button onclick="showToast(\'準備中🌷\')" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
+    const sampleRoutines = [
+      { name:'洗濯槽クリーニング', last:'4/1', freq:'毎月' },
+      { name:'エアコン掃除', last:'3/15', freq:'年2回' },
+      { name:'カビ取り', last:'7/7', freq:'毎週' }
+    ];
+    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const r of sampleRoutines) {
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:12px;backdrop-filter:blur(8px);">';
+      html += '<div style="flex:1;"><div style="font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(r.name)+'</div><div style="font-size:11px;color:var(--ink-sub);margin-top:2px;">前回：'+escapeHtml(r.last)+' ・ '+escapeHtml(r.freq)+'</div></div>';
+      html += '<button onclick="showToast(\'準備中🌷\')" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">記録</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div style="text-align:center;padding:12px;font-size:11px;color:var(--ink-light);">ただいま準備中🌷</div>';
+    html += '</div>';
+
+  } else if (tab === 'rules') {
+    // ===== Rules（二人のルール） =====
+    html += '<div style="padding:12px 16px 8px;">';
+    html += '<div class="section-head"><h2 class="section-title">二人のルール</h2><button onclick="showToast(\'準備中🌷\')" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
+    const sampleRules = [
+      '靴下は洗濯に入れること！',
+      '喧嘩してもその日に仲直りすること！',
+      '大好きって言うこと！'
+    ];
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:16px;backdrop-filter:blur(8px);">';
+    for (const r of sampleRules) {
+      html += '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);">';
+      html += '<span style="color:var(--accent);font-weight:900;margin-top:1px;">○</span>';
+      html += '<span style="font-size:13px;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(r)+'</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div style="text-align:center;padding:12px;font-size:11px;color:var(--ink-light);">ただいま準備中🌷</div>';
+    html += '</div>';
+
+  } else if (tab === 'diary') {
+    // ===== Diary（二人の日記） =====
+    html += '<div style="padding:12px 16px 8px;">';
+    html += '<div class="section-head"><h2 class="section-title">二人の日記</h2><button onclick="showToast(\'準備中🌷\')" class="section-link" style="margin-left:auto;">書く</button></div>';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:24px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+    html += '二人の思い出を<br>ここに残していこう🪺<br><span style="font-size:11px;color:var(--ink-light);">ただいま準備中</span>';
+    html += '</div></div>';
+
+  } else if (tab === 'collection') {
+    // ===== Collection（思い出コレクション） =====
+    html += '<div style="padding:12px 16px 8px;">';
+    html += '<div class="section-head"><h2 class="section-title">思い出コレクション</h2></div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">';
+    const nestCollections = [
+      { name:'旅行', icon:'✈️' },
+      { name:'ごはん', icon:'🍽️' },
+      { name:'ライブ', icon:'🎵' }
+    ];
+    for (const c of nestCollections) {
+      html += '<button onclick="showToast(\'準備中🌷\')" style="aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(255,255,255,0.6);border-radius:14px;background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(0,0,0,0.05);">';
+      html += '<span style="font-size:32px;">'+c.icon+'</span>';
+      html += '<span style="font-size:10px;font-weight:700;color:var(--ink-dark);">'+c.name+'</span>';
+      html += '</button>';
+    }
+    html += '<button onclick="showToast(\'準備中🌷\')" style="aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed var(--line);border-radius:14px;background:none;cursor:pointer;font-family:inherit;">';
+    html += '<span style="font-size:24px;color:var(--accent);font-weight:700;">＋</span>';
+    html += '<span style="font-size:10px;color:var(--ink-sub);">追加</span>';
+    html += '</button>';
+    html += '</div></div>';
+
+  } else {
+    // カスタムタブ
+    const tabs = getModeTabsForMode('nest');
+    const tabInfo = tabs.find(t => t.id === tab);
+    html += '<div style="padding:40px 16px;text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.7;">';
+    html += escapeHtml(tabInfo?.label || tab)+'<br><span style="font-size:11px;color:var(--ink-light);">ただいま準備中🌷</span>';
+    html += '</div>';
+  }
+
+  html += '<div style="height:80px;"></div>';
+  app.innerHTML = html;
+}
+
+function goToNestMode() {
+  switchMode('nest');
+  currentView = 'nest';
+  render();
 }
 
 function renderMeMenuItem(icon, label, onclick, isDashed) {
@@ -6417,6 +6633,602 @@ document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
   };
 });
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+// ===== モード別インデックスタブシステム =====
+const MODE_TABS_KEY = { me: 'nikowa_me_tabs', pet: 'nikowa_pet_tabs', kids: 'nikowa_kids_tabs' };
+const DEFAULT_MODE_TABS = {
+  me: [
+    { id: 'stamp',      label: 'Stamp' },
+    { id: 'diary',      label: 'Diary' },
+    { id: 'planner',    label: 'Planner' },
+    { id: 'collection', label: 'Collection' },
+    { id: 'secret',     label: 'Secret' }
+  ],
+  pet: [
+    { id: 'home',     label: 'Home' },
+    { id: 'diary',    label: 'Diary' },
+    { id: 'care',     label: 'Care' },
+    { id: 'health',   label: 'Health' },
+    { id: 'town',     label: 'Town' }
+  ],
+  kids: [
+    { id: 'home',    label: 'Home' },
+    { id: 'diary',   label: 'Diary' },
+    { id: 'growth',  label: 'Growth' },
+    { id: 'health',  label: 'Health' },
+    { id: 'school',  label: 'School' }
+  ],
+  nest: [
+    { id: 'memo',       label: 'Memo' },
+    { id: 'goods',      label: 'Goods' },
+    { id: 'routine',    label: 'Routine' },
+    { id: 'rules',      label: 'Rules' },
+    { id: 'diary',      label: 'Diary' },
+    { id: 'collection', label: 'Collection' }
+  ]
+};
+let currentModeTab = { me: 'stamp', pet: 'home', kids: 'home', nest: 'memo' };
+let modeTabEditMode = false;
+
+function getModeTabsForMode(mode) {
+  try {
+    const s = localStorage.getItem(MODE_TABS_KEY[mode]);
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return DEFAULT_MODE_TABS[mode].slice();
+}
+function saveModeTabsForMode(mode, tabs) {
+  try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
+}
+function renderModePageTabs(mode) {
+  const tabs = getModeTabsForMode(mode);
+  const cur = currentModeTab[mode] || tabs[0]?.id;
+  // 2列グリッド
+  let html = '<div class="mode-page-tabs-wrap">';
+  // 編集ボタン
+  html += '<div style="display:flex;justify-content:flex-end;padding:0 16px 2px;">';
+  html += '<button onclick="modeTabEditMode=!modeTabEditMode;_suppressScrollTop=true;render();" style="background:none;border:none;font-size:11px;color:var(--ink-sub);cursor:pointer;font-family:inherit;padding:2px 6px;">';
+  html += modeTabEditMode ? '完了' : '編集';
+  html += '</button></div>';
+
+  html += '<div class="mode-page-tabs">';
+  for (let i = 0; i < tabs.length; i++) {
+    const t = tabs[i];
+    const active = (cur === t.id) ? ' active' : '';
+    if (modeTabEditMode) {
+      html += '<div class="mode-page-tab-edit">';
+      html += '<button onclick="setModePageTab(\''+mode+'\',\''+t.id+'\')" class="mode-page-tab'+active+'" style="flex:1;">'+escapeHtml(t.label)+'</button>';
+      html += '<div style="display:flex;flex-direction:column;gap:1px;">';
+      html += '<button onclick="modeTabMoveUp(\''+mode+'\','+i+')" style="background:none;border:none;font-size:10px;cursor:pointer;color:var(--ink-sub);padding:1px 4px;" '+(i===0?'disabled':'')+'">▲</button>';
+      html += '<button onclick="modeTabMoveDown(\''+mode+'\','+i+')" style="background:none;border:none;font-size:10px;cursor:pointer;color:var(--ink-sub);padding:1px 4px;" '+(i===tabs.length-1?'disabled':'')+'">▼</button>';
+      html += '</div>';
+      html += '<button onclick="modeTabDelete(\''+mode+'\','+i+')" style="background:none;border:none;font-size:13px;cursor:pointer;color:#D05050;padding:2px 6px;">✕</button>';
+      html += '</div>';
+    } else {
+      html += '<button class="mode-page-tab'+active+'" onclick="setModePageTab(\''+mode+'\',\''+t.id+'\')">'+escapeHtml(t.label)+'</button>';
+    }
+  }
+  // ＋追加ボタン（編集モード時のみ）
+  if (modeTabEditMode) {
+    html += '<button onclick="modeTabAdd(\''+mode+'\')" class="mode-page-tab" style="border-style:dashed;color:var(--accent);">＋</button>';
+  }
+  html += '</div></div>';
+  return html;
+}
+function setModePageTab(mode, tabId) {
+  currentModeTab[mode] = tabId;
+  modeTabEditMode = false;
+  _suppressScrollTop = true;
+  render();
+}
+function modeTabMoveUp(mode, idx) {
+  const tabs = getModeTabsForMode(mode);
+  if (idx === 0) return;
+  [tabs[idx-1], tabs[idx]] = [tabs[idx], tabs[idx-1]];
+  saveModeTabsForMode(mode, tabs);
+  _suppressScrollTop = true;
+  render();
+}
+function modeTabMoveDown(mode, idx) {
+  const tabs = getModeTabsForMode(mode);
+  if (idx === tabs.length-1) return;
+  [tabs[idx], tabs[idx+1]] = [tabs[idx+1], tabs[idx]];
+  saveModeTabsForMode(mode, tabs);
+  _suppressScrollTop = true;
+  render();
+}
+function modeTabDelete(mode, idx) {
+  const tabs = getModeTabsForMode(mode);
+  if (tabs.length <= 1) { showToast('最低1つは必要やで🌷'); return; }
+  if (!confirm('「'+tabs[idx].label+'」を削除する？')) return;
+  tabs.splice(idx, 1);
+  saveModeTabsForMode(mode, tabs);
+  currentModeTab[mode] = tabs[0].id;
+  _suppressScrollTop = true;
+  render();
+}
+function modeTabAdd(mode) {
+  const name = prompt('タブの名前は？（英語推奨）');
+  if (!name || !name.trim()) return;
+  const tabs = getModeTabsForMode(mode);
+  const id = 'custom_' + Date.now();
+  tabs.push({ id: id, label: name.trim() });
+  saveModeTabsForMode(mode, tabs);
+  currentModeTab[mode] = id;
+  _suppressScrollTop = true;
+  render();
+}
+const SECRET_MEMO_KEY = 'nikowa_secret_memo';
+let secretMemoPath = []; // フォルダナビゲーション
+let secretMemoEditItem = null; // 編集中のアイテム
+let secretMemoSearch = '';
+let secretMemoIsEditing = false;
+
+function getSecretMemoData() {
+  try {
+    const d = localStorage.getItem(SECRET_MEMO_KEY);
+    return d ? JSON.parse(d) : { folders: [], items: [] };
+  } catch(e) { return { folders: [], items: [] }; }
+}
+function saveSecretMemoData(d) {
+  try { localStorage.setItem(SECRET_MEMO_KEY, JSON.stringify(d)); } catch(e) {}
+}
+function getSecretMemoCurrentFolder() {
+  let node = getSecretMemoData();
+  for (const idx of secretMemoPath) {
+    if (node.folders && node.folders[idx]) node = node.folders[idx];
+    else return node;
+  }
+  return node;
+}
+function goSecretMemo() {
+  secretMemoPath = [];
+  secretMemoEditItem = null;
+  secretMemoSearch = '';
+  currentView = 'secret_memo';
+  render();
+}
+function renderSecretMemo() {
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav('pet');
+  const app = document.getElementById('app');
+  let html = renderModeIndexTabs();
+
+  // 編集画面
+  if (secretMemoEditItem !== null) {
+    html += renderSecretMemoEdit();
+    app.innerHTML = html;
+    return;
+  }
+
+  const root = getSecretMemoData();
+  const current = getSecretMemoCurrentFolder();
+  const isRoot = secretMemoPath.length === 0;
+
+  // ヘッダー
+  html += '<div style="padding:12px 16px 4px; display:flex; align-items:center; gap:8px;">';
+  if (!isRoot) {
+    html += '<button onclick="secretMemoBack()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-dark);padding:4px;">‹</button>';
+  }
+  html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);">📋 ひみつメモ</div>';
+  html += '</div>';
+
+  // パンくず
+  if (!isRoot) {
+    let breadcrumb = 'トップ';
+    let tempNode = root;
+    for (let i = 0; i < secretMemoPath.length; i++) {
+      if (tempNode.folders && tempNode.folders[secretMemoPath[i]]) {
+        tempNode = tempNode.folders[secretMemoPath[i]];
+        breadcrumb += ' ＞ ' + (tempNode.name || '');
+      }
+    }
+    html += '<div style="padding:0 16px 8px;font-size:11px;color:var(--ink-sub);">'+escapeHtml(breadcrumb)+'</div>';
+  }
+
+  // 検索バー
+  html += '<div style="padding:0 16px 8px;">';
+  html += '<input type="text" class="form-input" placeholder="🔍 検索する" value="'+escapeHtml(secretMemoSearch)+'" oninput="secretMemoSearch=this.value; _suppressScrollTop=true; render();" style="font-size:13px;padding:8px 12px;">';
+  html += '</div>';
+
+  // フォルダ＋メモ一覧
+  const folders = current.folders || [];
+  const items = current.items || [];
+  const query = secretMemoSearch.toLowerCase();
+
+  html += '<div style="padding:0 16px;">';
+
+  // フォルダ
+  for (let i = 0; i < folders.length; i++) {
+    const f = folders[i];
+    if (query && !(f.name || '').toLowerCase().includes(query)) continue;
+    const itemCount = (f.items || []).length + (f.folders || []).length;
+    html += '<button onclick="secretMemoEnterFolder('+i+')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 12px;border:none;border-bottom:1px solid var(--line-soft);background:none;cursor:pointer;font-family:inherit;text-align:left;">';
+    html += '<span style="font-size:24px;">📁</span>';
+    html += '<span style="flex:1;font-size:14px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(f.name || 'フォルダ')+'</span>';
+    html += '<span style="font-size:12px;color:var(--ink-sub);">（'+itemCount+'）</span>';
+    html += '</button>';
+  }
+
+  // メモ
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (query && !(item.title || '').toLowerCase().includes(query) && !(item.id_email || '').toLowerCase().includes(query)) continue;
+    html += '<button onclick="secretMemoEditIdx('+i+')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 12px;border:none;border-bottom:1px solid var(--line-soft);background:none;cursor:pointer;font-family:inherit;text-align:left;">';
+    if (item.tag) {
+      const tc = { red:'#E05050', orange:'#E8A030', yellow:'#D8C020', green:'#50A850', blue:'#4888C8', purple:'#8868A8', black:'#404040' };
+      html += '<span style="font-size:10px;line-height:1;color:'+(tc[item.tag]||'#888')+';">●</span>';
+    }
+    html += '<span style="font-size:24px;">🔑</span>';
+    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="font-size:14px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(item.title || '無題')+'</div>';
+    if (item.id_email) html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(item.id_email)+'</div>';
+    html += '</div>';
+    html += '<span style="font-size:18px;color:var(--ink-light);">›</span>';
+    html += '</button>';
+  }
+
+  if (folders.length === 0 && items.length === 0 && !query) {
+    html += '<div style="text-align:center;padding:40px 16px;color:var(--ink-sub);font-size:13px;line-height:1.7;">まだ何もないよ🌷<br>＋ボタンから追加してね</div>';
+  }
+
+  html += '</div>';
+
+  // ＋ボタン
+  html += '<div style="padding:16px;display:flex;gap:8px;">';
+  html += '<button class="btn btn-secondary" style="flex:1;" onclick="secretMemoAddFolder()">📁 フォルダ追加</button>';
+  html += '<button class="btn btn-primary" style="flex:1;" onclick="secretMemoAddItem()">🔑 メモ追加</button>';
+  html += '</div>';
+
+  // バックアップ
+  html += '<div style="padding:0 16px 24px;text-align:center;">';
+  const lastBk = localStorage.getItem('nikowa_secret_backup_date') || '';
+  if (lastBk) {
+    html += '<div style="font-size:10px;color:var(--ink-light);margin-bottom:4px;">最終バックアップ：'+escapeHtml(lastBk)+'</div>';
+  }
+  html += '<button onclick="secretMemoExport()" style="background:none;border:1px solid var(--line);border-radius:100px;padding:6px 16px;font-size:11px;color:var(--ink-sub);cursor:pointer;font-family:inherit;">📤 バックアップ（JSON書き出し）</button>';
+  html += ' <button onclick="document.getElementById(\'secretImportFile\').click()" style="background:none;border:1px solid var(--line);border-radius:100px;padding:6px 16px;font-size:11px;color:var(--ink-sub);cursor:pointer;font-family:inherit;">📥 読み込み</button>';
+  html += '<input type="file" id="secretImportFile" accept=".json" style="display:none;" onchange="secretMemoImport(event)">';
+  html += '</div>';
+
+  html += '<div style="height:80px;"></div>';
+  app.innerHTML = html;
+}
+
+function renderSecretMemoEdit() {
+  const current = getSecretMemoCurrentFolder();
+  const items = current.items || [];
+  const idx = secretMemoEditItem;
+  const item = (idx !== null && idx >= 0 && items[idx]) ? items[idx] : { title:'', id_email:'', password:'', url:'', memo:'', tag:'' };
+  const isNew = (idx === -1);
+  const isEditing = isNew || secretMemoIsEditing;
+  
+  let html = '<div style="padding:12px 16px 4px; display:flex; align-items:center; gap:8px;">';
+  html += '<button onclick="secretMemoEditItem=null; secretMemoIsEditing=false; _suppressScrollTop=true; render();" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-dark);padding:4px;">‹</button>';
+  html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);">'+(isNew?'🔑 あたらしいメモ':'🔑 '+escapeHtml(item.title || '無題'))+'</div>';
+  if (!isNew && !isEditing) {
+    html += '<button onclick="secretMemoIsEditing=true; _suppressScrollTop=true; render();" style="background:none;border:1px solid var(--line);border-radius:100px;padding:4px 14px;font-size:12px;font-weight:700;color:var(--accent-deep);cursor:pointer;font-family:inherit;">編集</button>';
+  }
+  html += '</div>';
+
+  if (isEditing) {
+    // === 編集モード ===
+    html += '<div style="padding:12px 16px;">';
+    html += '<div class="form-group"><label class="form-label">タイトル（必須）</label>';
+    html += '<input type="text" class="form-input" id="smTitle" value="'+escapeHtml(item.title || '')+'" placeholder="例：Amazon"></div>';
+    
+    html += '<div class="form-group"><label class="form-label">カラータグ</label>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;" id="smTagRow">';
+    const tags = [
+      { label:'なし', val:'', color:'' },
+      { label:'●', val:'red', color:'#E05050' },
+      { label:'●', val:'orange', color:'#E8A030' },
+      { label:'●', val:'yellow', color:'#D8C020' },
+      { label:'●', val:'green', color:'#50A850' },
+      { label:'●', val:'blue', color:'#4888C8' },
+      { label:'●', val:'purple', color:'#8868A8' },
+      { label:'●', val:'black', color:'#404040' }
+    ];
+    for (const t of tags) {
+      const sel = ((item.tag||'') === t.val || (!item.tag && t.val==='')) ? 'background:var(--accent-bg);border-color:var(--accent);' : '';
+      const colorStyle = t.color ? 'color:'+t.color+';' : '';
+      html += '<button onclick="document.getElementById(\'smTag\').value=\''+t.val+'\'; document.querySelectorAll(\'#smTagRow button\').forEach(b=>b.style.cssText=\'\'); this.style.cssText=\'background:var(--accent-bg);border-color:var(--accent);\';" style="border:1.5px solid var(--line);border-radius:100px;padding:4px 10px;font-size:14px;cursor:pointer;'+colorStyle+sel+'">'+t.label+'</button>';
+    }
+    html += '</div><input type="hidden" id="smTag" value="'+escapeHtml(item.tag || '')+'"></div>';
+    
+    html += '<div class="form-group"><label class="form-label">ログインID / メール</label>';
+    html += '<input type="text" class="form-input" id="smIdEmail" value="'+escapeHtml(item.id_email || '')+'" placeholder="例：aaa@gmail.com"></div>';
+    
+    html += '<div class="form-group"><label class="form-label">パスワード</label>';
+    html += '<div style="display:flex;gap:6px;">';
+    html += '<input type="password" class="form-input" id="smPassword" value="'+escapeHtml(item.password || '')+'" placeholder="パスワード" style="flex:1;">';
+    html += '<button onclick="var el=document.getElementById(\'smPassword\');el.type=el.type===\'password\'?\'text\':\'password\';this.textContent=el.type===\'password\'?\'表示\':\'隠す\';" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;padding:0 12px;font-size:11px;font-weight:700;cursor:pointer;color:var(--ink-sub);font-family:inherit;white-space:nowrap;">表示</button>';
+    html += '</div></div>';
+    
+    html += '<div class="form-group"><label class="form-label">webページ</label>';
+    html += '<input type="text" class="form-input" id="smUrl" value="'+escapeHtml(item.url || '')+'" placeholder="https://..."></div>';
+    
+    html += '<div class="form-group"><label class="form-label">ノート</label>';
+    html += '<textarea class="form-input" id="smMemo" rows="6" placeholder="自由にメモ🌷&#10;クレカ番号、契約内容、日付や置き場所…" style="resize:vertical;min-height:120px;">'+escapeHtml(item.memo || '')+'</textarea></div>';
+
+    // 写真
+    const photos = item.photos || [];
+    html += '<div class="form-group"><label class="form-label">写真（'+photos.length+'枚）</label>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;" id="smPhotoGrid">';
+    for (let pi = 0; pi < photos.length; pi++) {
+      html += '<div style="position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;border:1px solid var(--line);">';
+      html += '<img src="'+photos[pi]+'" style="width:100%;height:100%;object-fit:cover;">';
+      html += '<button onclick="secretMemoRemovePhoto('+pi+')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.5);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;line-height:1;">✕</button>';
+      html += '</div>';
+    }
+    html += '<button onclick="secretMemoAddPhoto()" style="width:72px;height:72px;border:1.5px dashed var(--line);border-radius:10px;background:none;cursor:pointer;font-size:24px;color:var(--accent);display:flex;align-items:center;justify-content:center;">＋</button>';
+    html += '</div></div>';
+
+    html += '<div style="display:flex;gap:8px;margin-top:16px;">';
+    html += '<button class="btn btn-primary" style="flex:1;" onclick="secretMemoSaveItem()">保存する</button>';
+    if (!isNew) {
+      html += '<button class="btn btn-secondary" style="flex:0;padding:0 16px;color:#D05050;" onclick="secretMemoDeleteItem()">削除</button>';
+    }
+    html += '</div>';
+    html += '</div>';
+  } else {
+    // === 閲覧モード ===
+    html += '<div style="padding:12px 16px;">';
+    
+    // カラータグ
+    if (item.tag) {
+      const tagColors = { red:'#E05050', orange:'#E8A030', yellow:'#D8C020', green:'#50A850', blue:'#4888C8', purple:'#8868A8', black:'#404040' };
+      const tagColor = tagColors[item.tag] || 'var(--ink-dark)';
+      html += '<div style="padding:8px 0 12px;"><span style="font-size:12px;color:var(--ink-sub);">カラータグ</span><br><span style="font-size:22px;color:'+tagColor+';">●</span></div>';
+      html += '<hr style="border:none;border-top:1px solid var(--line-soft);margin:0 0 12px;">';
+    }
+    
+    // タイトル
+    html += '<div style="padding:4px 0 12px;"><span style="font-size:12px;color:var(--accent);">タイトル</span><br><span style="font-size:18px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(item.title || '無題')+'</span></div>';
+    html += '<hr style="border:none;border-top:1px solid var(--line-soft);margin:0 0 12px;">';
+    
+    // ログインID
+    if (item.id_email) {
+      html += '<div style="padding:4px 0 12px;display:flex;align-items:center;">';
+      html += '<div style="flex:1;"><span style="font-size:12px;color:var(--accent);">ログインID</span><br><span style="font-size:15px;color:var(--ink-dark);">'+escapeHtml(item.id_email)+'</span></div>';
+      html += '<button onclick="navigator.clipboard.writeText(\''+escapeHtml(item.id_email).replace(/'/g,"\\'")+'\'); showToast(\'コピーしたで🌸\');" style="background:none;border:1px solid var(--accent);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--accent-deep);cursor:pointer;font-family:inherit;">コピー</button>';
+      html += '</div>';
+      html += '<hr style="border:none;border-top:1px solid var(--line-soft);margin:0 0 12px;">';
+    }
+    
+    // パスワード
+    if (item.password) {
+      html += '<div style="padding:4px 0 12px;display:flex;align-items:center;" id="smPwRow">';
+      html += '<div style="flex:1;"><span style="font-size:12px;color:var(--accent);">パスワード</span><br><span style="font-size:15px;color:var(--ink-dark);" id="smPwDisplay">**********</span></div>';
+      html += '<button onclick="var d=document.getElementById(\'smPwDisplay\');if(d.textContent===\'**********\'){d.textContent=\''+escapeHtml(item.password).replace(/'/g,"\\'")+'\'}else{d.textContent=\'**********\'}" style="background:none;border:1px solid var(--line);border-radius:100px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;font-family:inherit;margin-right:6px;">表示</button>';
+      html += '<button onclick="navigator.clipboard.writeText(\''+escapeHtml(item.password).replace(/'/g,"\\'")+'\'); showToast(\'コピーしたで🌸\');" style="background:none;border:1px solid var(--accent);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--accent-deep);cursor:pointer;font-family:inherit;">コピー</button>';
+      html += '</div>';
+      html += '<hr style="border:none;border-top:1px solid var(--line-soft);margin:0 0 12px;">';
+    }
+    
+    // URL
+    if (item.url) {
+      html += '<div style="padding:4px 0 12px;"><span style="font-size:12px;color:var(--accent);">webページ</span><br><a href="'+escapeHtml(item.url)+'" target="_blank" rel="noopener" style="font-size:14px;color:var(--mint-deep);word-break:break-all;">'+escapeHtml(item.url)+'</a></div>';
+      html += '<hr style="border:none;border-top:1px solid var(--line-soft);margin:0 0 12px;">';
+    }
+    
+    // ノート
+    if (item.memo) {
+      html += '<div style="padding:4px 0 12px;"><span style="font-size:12px;color:var(--accent);">ノート</span><div style="font-size:14px;color:var(--ink-dark);line-height:1.8;margin-top:6px;white-space:pre-wrap;">'+escapeHtml(item.memo)+'</div></div>';
+      html += '<hr style="border:none;border-top:1px solid var(--line-soft);margin:0 0 12px;">';
+    }
+    
+    // 写真
+    const photos = item.photos || [];
+    if (photos.length > 0) {
+      html += '<div style="padding:4px 0 12px;"><span style="font-size:12px;color:var(--accent);">写真（'+photos.length+'枚）</span>';
+      html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">';
+      for (let pi = 0; pi < photos.length; pi++) {
+        html += '<button onclick="secretMemoViewPhoto('+pi+')" style="width:80px;height:80px;border-radius:10px;overflow:hidden;border:1px solid var(--line);cursor:pointer;padding:0;background:none;">';
+        html += '<img src="'+photos[pi]+'" style="width:100%;height:100%;object-fit:cover;">';
+        html += '</button>';
+      }
+      html += '</div></div>';
+      html += '<hr style="border:none;border-top:1px solid var(--line-soft);margin:0 0 12px;">';
+    }
+    
+    // 更新日時
+    if (item.updated_at) {
+      html += '<div style="font-size:10px;color:var(--ink-light);text-align:right;">更新：'+escapeHtml(item.updated_at)+'</div>';
+    }
+    
+    html += '</div>';
+  }
+
+  return html;
+}
+
+function secretMemoEnterFolder(idx) {
+  secretMemoPath.push(idx);
+  secretMemoSearch = '';
+  render();
+}
+function secretMemoBack() {
+  if (secretMemoPath.length > 0) secretMemoPath.pop();
+  secretMemoSearch = '';
+  render();
+}
+function secretMemoAddFolder() {
+  const name = prompt('フォルダの名前は？');
+  if (!name) return;
+  const d = getSecretMemoData();
+  let node = d;
+  for (const idx of secretMemoPath) { node = node.folders[idx]; }
+  if (!node.folders) node.folders = [];
+  node.folders.push({ name: name, folders: [], items: [] });
+  saveSecretMemoData(d);
+  render();
+}
+function secretMemoAddItem() {
+  secretMemoEditItem = -1; // -1 = 新規
+  render();
+}
+function secretMemoEditIdx(idx) {
+  secretMemoEditItem = idx;
+  secretMemoIsEditing = false;
+  render();
+}
+
+// 写真追加
+async function secretMemoAddPhoto() {
+  // 先にフォーム内容を一時保存
+  const tempTitle = document.getElementById('smTitle')?.value || '';
+  const tempIdEmail = document.getElementById('smIdEmail')?.value || '';
+  const tempPassword = document.getElementById('smPassword')?.value || '';
+  const tempUrl = document.getElementById('smUrl')?.value || '';
+  const tempMemo = document.getElementById('smMemo')?.value || '';
+  const tempTag = document.getElementById('smTag')?.value || '';
+  
+  return new Promise(resolve => {
+    const input = document.getElementById('hiddenFileInput');
+    input.value = '';
+    input.multiple = true;
+    input.onchange = async (e) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+      
+      const d = getSecretMemoData();
+      let node = d;
+      for (const idx of secretMemoPath) { node = node.folders[idx]; }
+      if (!node.items) node.items = [];
+      
+      let item;
+      if (secretMemoEditItem === -1) {
+        // 新規：一旦仮保存
+        item = { title: tempTitle, id_email: tempIdEmail, password: tempPassword, url: tempUrl, memo: tempMemo, tag: tempTag, photos: [], updated_at: new Date().toLocaleString('ja-JP') };
+        node.items.push(item);
+        secretMemoEditItem = node.items.length - 1;
+      } else {
+        item = node.items[secretMemoEditItem];
+      }
+      if (!item.photos) item.photos = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const dataUrl = await resizeImage(files[i], 600);
+          item.photos.push(dataUrl);
+        } catch(err) { console.error(err); }
+      }
+      
+      // フォーム内容も反映
+      item.title = tempTitle;
+      item.id_email = tempIdEmail;
+      item.password = tempPassword;
+      item.url = tempUrl;
+      item.memo = tempMemo;
+      item.tag = tempTag;
+      item.updated_at = new Date().toLocaleString('ja-JP');
+      
+      saveSecretMemoData(d);
+      _suppressScrollTop = true;
+      render();
+      resolve();
+    };
+    input.click();
+  });
+}
+
+function secretMemoRemovePhoto(photoIdx) {
+  if (!confirm('この写真を削除する？')) return;
+  const d = getSecretMemoData();
+  let node = d;
+  for (const idx of secretMemoPath) { node = node.folders[idx]; }
+  const item = node.items[secretMemoEditItem];
+  if (item && item.photos) {
+    item.photos.splice(photoIdx, 1);
+    saveSecretMemoData(d);
+    _suppressScrollTop = true;
+    render();
+  }
+}
+
+function secretMemoViewPhoto(photoIdx) {
+  const current = getSecretMemoCurrentFolder();
+  const item = current.items[secretMemoEditItem];
+  if (!item || !item.photos || !item.photos[photoIdx]) return;
+  // 既存のphotoViewerを使う
+  const viewer = document.getElementById('photoViewer');
+  if (viewer) {
+    document.getElementById('photoViewerImg').src = item.photos[photoIdx];
+    viewer.classList.add('show');
+  }
+}
+function secretMemoSaveItem() {
+  const d = getSecretMemoData();
+  let node = d;
+  for (const idx of secretMemoPath) { node = node.folders[idx]; }
+  if (!node.items) node.items = [];
+  const item = {
+    title: (document.getElementById('smTitle').value || '').trim(),
+    id_email: (document.getElementById('smIdEmail').value || '').trim(),
+    password: (document.getElementById('smPassword').value || '').trim(),
+    url: (document.getElementById('smUrl').value || '').trim(),
+    memo: (document.getElementById('smMemo').value || '').trim(),
+    tag: (document.getElementById('smTag').value || '').trim(),
+    updated_at: new Date().toLocaleString('ja-JP')
+  };
+  if (secretMemoEditItem === -1) {
+    node.items.push(item);
+  } else {
+    node.items[secretMemoEditItem] = item;
+  }
+  saveSecretMemoData(d);
+  secretMemoEditItem = null;
+  secretMemoIsEditing = false;
+  showToast('保存したで🌸');
+  render();
+}
+function secretMemoDeleteItem() {
+  if (!confirm('このメモを削除する？')) return;
+  const d = getSecretMemoData();
+  let node = d;
+  for (const idx of secretMemoPath) { node = node.folders[idx]; }
+  node.items.splice(secretMemoEditItem, 1);
+  saveSecretMemoData(d);
+  secretMemoEditItem = null;
+  showToast('削除したで🌷');
+  render();
+}
+function secretMemoExport() {
+  const d = getSecretMemoData();
+  const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'nikowa-secret-memo-' + todayKey() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  localStorage.setItem('nikowa_secret_backup_date', new Date().toLocaleDateString('ja-JP'));
+  showToast('バックアップ完了🌸');
+  render();
+}
+function secretMemoImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (d.folders || d.items) {
+        saveSecretMemoData(d);
+        showToast('読み込み完了🌸');
+        secretMemoPath = [];
+        render();
+      } else {
+        showToast('ファイルの形式が違うかも🌷');
+      }
+    } catch(err) {
+      showToast('読み込みエラー🌷');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -7933,6 +8745,7 @@ let _suppressScrollTop = false;
 function render() {
   if (currentView === 'top') renderTop();
   else if (currentView === 'me') renderMeMode();
+  else if (currentView === 'nest') renderNestMode();
   else if (currentView === 'me_diary') renderMeDiary();
   else if (currentView === 'houses') renderHouses();
   else if (currentView === 'houses_fav') renderHousesFav();
@@ -7942,6 +8755,7 @@ function render() {
   else if (currentView === 'settings') renderSettings();
   else if (currentView === 'town') renderTown();
   else if (currentView === 'facility') renderFacility();
+  else if (currentView === 'secret_memo') renderSecretMemo();
   else renderTop();
   renderSidePanel();
   if (!_suppressScrollTop) window.scrollTo(0, 0);
