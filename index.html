@@ -369,6 +369,21 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
   }
+
+  /* ── 日付・時刻・地域・天気バー ── */
+  .info-bar {
+    padding: 14px 16px 14px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-sub);
+    letter-spacing: 0.3px;
+    font-feature-settings: "tnum";
+  }
+  .info-bar-date { color: var(--ink-dark); }
+  .info-bar-sep { color: var(--ink-light); margin: 0 2px; }
+  .info-bar-region { color: var(--accent-deep); font-weight: 700; }
+  .info-bar-weather { color: var(--ink-sub); }
   .mode-card {
     aspect-ratio: 1;
     display: flex; flex-direction: column;
@@ -4388,8 +4403,32 @@ function renderTop() {
   html += '</div>'; // hero-glass閉じ
   html += '</div>'; // hero-section閉じ
 
-  // モード選択カード（2×2グリッド）
-  html += '<div class="section">';
+  // ===== 日付・時刻・地域・天気バー =====
+  const _now = new Date();
+  const _yyyy = _now.getFullYear();
+  const _mm = String(_now.getMonth()+1).padStart(2,'0');
+  const _dd = String(_now.getDate()).padStart(2,'0');
+  const _wk = ['日','月','火','水','木','金','土'][_now.getDay()];
+  const _hh = String(_now.getHours()).padStart(2,'0');
+  const _mi = String(_now.getMinutes()).padStart(2,'0');
+  const _region = data.userRegion || '大阪';
+  const _wCache = window._weatherCache || null;
+  const _wIcon = _wCache ? _wCache.icon : '';
+  const _wTemp = _wCache ? Math.round(_wCache.temp)+'°' : '';
+  html += '<div class="info-bar" onclick="showWeatherPopup()" style="cursor:pointer;">';
+  html += '<span class="info-bar-date">'+_yyyy+'/'+_mm+'/'+_dd+'（'+_wk+'）'+_hh+':'+_mi+'</span>';
+  html += '<span class="info-bar-sep"> · </span>';
+  html += '<span class="info-bar-region">'+escapeHtml(_region)+'</span>';
+  html += '<span class="info-bar-sep"> · </span>';
+  if (_wCache) {
+    html += '<span class="info-bar-weather">'+_wIcon+' '+_wTemp+'</span>';
+  } else {
+    html += '<span class="info-bar-weather" style="opacity:0.5;">取得中...</span>';
+  }
+  html += '</div>';
+
+  // モード選択カード（横一列）
+  html += '<div class="section" style="padding-top:4px;">';
   html += '<div class="section-head"><h2 class="section-title">Welcome</h2></div>';
   html += '</div>';
   html += '<div class="mode-section">';
@@ -7243,6 +7282,109 @@ function secretMemoImport(event) {
   reader.readAsText(file);
   event.target.value = '';
 }
+
+// ===== 天気機能 =====
+const WEATHER_API_KEY = '09b8e0e5cdae5008f9471a84841b6b51';
+const WEATHER_CITY_MAP = {
+  '北海道':'Sapporo','青森':'Aomori','岩手':'Morioka','宮城':'Sendai',
+  '秋田':'Akita','山形':'Yamagata','福島':'Fukushima','茨城':'Mito',
+  '栃木':'Utsunomiya','群馬':'Maebashi','埼玉':'Saitama','千葉':'Chiba',
+  '東京':'Tokyo','神奈川':'Yokohama','新潟':'Niigata','富山':'Toyama',
+  '石川':'Kanazawa','福井':'Fukui','山梨':'Kofu','長野':'Nagano',
+  '岐阜':'Gifu','静岡':'Shizuoka','愛知':'Nagoya','三重':'Tsu',
+  '滋賀':'Otsu','京都':'Kyoto','大阪':'Osaka','兵庫':'Kobe',
+  '奈良':'Nara','和歌山':'Wakayama','鳥取':'Tottori','島根':'Matsue',
+  '岡山':'Okayama','広島':'Hiroshima','山口':'Yamaguchi','徳島':'Tokushima',
+  '香川':'Takamatsu','愛媛':'Matsuyama','高知':'Kochi','福岡':'Fukuoka',
+  '佐賀':'Saga','長崎':'Nagasaki','熊本':'Kumamoto','大分':'Oita',
+  '宮崎':'Miyazaki','鹿児島':'Kagoshima','沖縄':'Naha'
+};
+const WEATHER_ICON_MAP = {
+  '01d':'☀️','01n':'🌙','02d':'⛅','02n':'⛅','03d':'☁️','03n':'☁️',
+  '04d':'☁️','04n':'☁️','09d':'🌧️','09n':'🌧️','10d':'🌦️','10n':'🌧️',
+  '11d':'⛈️','11n':'⛈️','13d':'❄️','13n':'❄️','50d':'🌫️','50n':'🌫️'
+};
+
+async function fetchWeather() {
+  const region = (data && data.userRegion) || '大阪';
+  const city = WEATHER_CITY_MAP[region] || 'Osaka';
+  try {
+    // 現在の天気
+    const curRes = await fetch('https://api.openweathermap.org/data/2.5/weather?q='+city+',JP&appid='+WEATHER_API_KEY+'&units=metric&lang=ja');
+    const curData = await curRes.json();
+    // 5日間予報（3時間ごと）
+    const fcRes = await fetch('https://api.openweathermap.org/data/2.5/forecast?q='+city+',JP&appid='+WEATHER_API_KEY+'&units=metric&lang=ja&cnt=16');
+    const fcData = await fcRes.json();
+    window._weatherCache = {
+      icon: WEATHER_ICON_MAP[curData.weather[0].icon] || '🌤️',
+      temp: curData.main.temp,
+      feels: curData.main.feels_like,
+      humidity: curData.main.humidity,
+      desc: curData.weather[0].description,
+      forecast: (fcData.list || []).slice(0, 8).map(f => ({
+        time: new Date(f.dt * 1000),
+        icon: WEATHER_ICON_MAP[f.weather[0].icon] || '🌤️',
+        temp: Math.round(f.main.temp),
+        desc: f.weather[0].description
+      }))
+    };
+    _suppressScrollTop = true;
+    render();
+  } catch(e) {
+    console.log('天気取得エラー:', e);
+  }
+}
+
+function showWeatherPopup() {
+  const w = window._weatherCache;
+  const region = (data && data.userRegion) || '大阪';
+  let html = '<div id="weatherPopup" onclick="if(event.target===this)closeWeatherPopup()" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.35);display:flex;align-items:flex-end;justify-content:center;">';
+  html += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;padding:20px 20px 40px;max-height:80vh;overflow-y:auto;">';
+  html += '<div style="display:flex;align-items:center;margin-bottom:16px;">';
+  html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(region)+'の天気</div>';
+  html += '<button onclick="closeWeatherPopup()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  html += '</div>';
+  if (!w) {
+    html += '<div style="text-align:center;padding:24px;color:var(--ink-sub);font-size:13px;">取得中...🌷</div>';
+  } else {
+    // 現在
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:16px;margin-bottom:14px;backdrop-filter:blur(8px);">';
+    html += '<div style="display:flex;align-items:center;gap:12px;">';
+    html += '<span style="font-size:48px;line-height:1;">'+w.icon+'</span>';
+    html += '<div>';
+    html += '<div style="font-size:32px;font-weight:800;color:var(--ink-dark);">'+Math.round(w.temp)+'°</div>';
+    html += '<div style="font-size:12px;color:var(--ink-sub);">体感 '+Math.round(w.feels)+'° · 湿度 '+w.humidity+'%</div>';
+    html += '<div style="font-size:12px;color:var(--ink-sub);">'+escapeHtml(w.desc)+'</div>';
+    html += '</div></div></div>';
+    // 予報
+    if (w.forecast && w.forecast.length > 0) {
+      html += '<div style="font-size:12px;font-weight:700;color:var(--ink-sub);margin-bottom:8px;">今日・明日の予報</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:4px;">';
+      for (const f of w.forecast) {
+        const fh = String(f.time.getHours()).padStart(2,'0');
+        const fd = (f.time.getMonth()+1)+'/'+(f.time.getDate());
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:linear-gradient(135deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0.2) 100%);border-radius:10px;">';
+        html += '<span style="font-size:11px;color:var(--ink-sub);width:52px;">'+fd+' '+fh+'時</span>';
+        html += '<span style="font-size:20px;">'+f.icon+'</span>';
+        html += '<span style="font-size:14px;font-weight:700;color:var(--ink-dark);">'+f.temp+'°</span>';
+        html += '<span style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(f.desc)+'</span>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+  }
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+function closeWeatherPopup() {
+  const el = document.getElementById('weatherPopup');
+  if (el) el.remove();
+}
+
+// 起動時に天気取得
+setTimeout(fetchWeather, 1000);
+// 30分ごとに更新
+setInterval(fetchWeather, 30 * 60 * 1000);
 
 function showToast(msg) {
   const t = document.getElementById('toast');
