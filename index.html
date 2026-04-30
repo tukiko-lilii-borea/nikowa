@@ -2093,6 +2093,13 @@
     padding:9px 16px; font-family:inherit; font-size:13px; font-weight:700;
     cursor:pointer; white-space:nowrap;
   }
+  .places-loc-toggle { display:flex; gap:4px; margin-bottom:10px; }
+  .places-loc-btn {
+    flex:1; background:var(--surface); border:1.5px solid var(--line-soft);
+    border-radius:100px; padding:7px 8px; cursor:pointer; font-family:inherit;
+    font-size:11.5px; color:var(--ink-sub); font-weight:600;
+  }
+  .places-loc-btn.active { background:var(--mint-deep); border-color:var(--mint-deep); color:white; }
   .places-loading { text-align:center; padding:32px 0; color:var(--ink-sub); font-size:13px; }
   .places-error {
     text-align:center; padding:14px 16px; color:#C62828; font-size:13px;
@@ -4985,6 +4992,8 @@ let placesResults = [];
 let placesLoading = false;
 let placesError = '';
 let placesResultsMap = {};
+let placesLocMode = 'geo'; // 'geo' | 'addr'
+let placesAddrText = '';
 const PLACES_API_KEY = 'AIzaSyAuvEPLh6ih-QWNTVZ90Wlo5f5LNjgXbGk';
 const PLACES_FAV_KEY = 'nikowa_place_favorites';
 const PLACES_CATS = [
@@ -5014,19 +5023,28 @@ function renderTown() {
   if (townActiveTab === 'search') {
     // ===== Places API 検索タブ =====
     html += '<div class="places-section">';
+    html += '<div class="places-loc-toggle">';
+    html += '<button class="places-loc-btn '+(placesLocMode==='geo'?'active':'')+'" onclick="setPlacesLocMode(\'geo\')">📍 現在地で探す</button>';
+    html += '<button class="places-loc-btn '+(placesLocMode==='addr'?'active':'')+'" onclick="setPlacesLocMode(\'addr\')">🏙 住所で探す</button>';
+    html += '</div>';
     html += '<div class="places-cat-chips">';
     for (const c of PLACES_CATS) {
       html += '<button class="places-cat-chip '+(placesSelCat===c.id?'active':'')+'" onclick="setPlacesCat(\''+c.id+'\')">'+c.icon+' '+c.label+'</button>';
     }
     html += '</div>';
+    if (placesLocMode === 'addr') {
+      html += '<div class="places-text-row">';
+      html += '<input type="text" class="places-text-input" id="placesAddrInput" placeholder="例：大阪、梅田、新宿…" value="'+escapeHtml(placesAddrText)+'">';
+      html += '</div>';
+    }
     html += '<div class="places-text-row">';
     html += '<input type="text" class="places-text-input" id="placesTextInput" placeholder="キーワードで検索（任意）" value="'+escapeHtml(placesText)+'">';
-    html += '<button class="places-search-btn" onclick="searchPlaces()">📍 探す</button>';
+    html += '<button class="places-search-btn" onclick="searchPlaces()">🔍 探す</button>';
     html += '</div>';
     if (placesError) html += '<div class="places-error">'+escapeHtml(placesError)+'</div>';
     html += '</div>';
     if (placesLoading) {
-      html += '<div class="places-loading">📍 現在地を取得して検索中…</div>';
+      html += '<div class="places-loading">'+(placesLocMode==='addr'?'🏙 住所から検索中…':'📍 現在地を取得して検索中…')+'</div>';
     } else if (placesResults.length > 0) {
       const cat = PLACES_CATS.find(c => c.id === placesSelCat);
       const catIcon = cat ? cat.icon : '📍';
@@ -5041,6 +5059,11 @@ function renderTown() {
     if (placesInput) {
       placesInput.oninput = (e) => { placesText = e.target.value; };
       placesInput.onkeydown = (e) => { if (e.key === 'Enter') searchPlaces(); };
+    }
+    const placesAddrInput = document.getElementById('placesAddrInput');
+    if (placesAddrInput) {
+      placesAddrInput.oninput = (e) => { placesAddrText = e.target.value; };
+      placesAddrInput.onkeydown = (e) => { if (e.key === 'Enter') searchPlaces(); };
     }
     return;
   }
@@ -6537,23 +6560,45 @@ function buildFavCardHtml(p) {
 async function searchPlaces() {
   const textEl = document.getElementById('placesTextInput');
   if (textEl) placesText = textEl.value;
+  const addrEl = document.getElementById('placesAddrInput');
+  if (addrEl) placesAddrText = addrEl.value;
   placesLoading = true;
   placesError = '';
   placesResults = [];
   renderTown();
 
   let lat, lng;
-  try {
-    const pos = await new Promise((resolve, reject) =>
-      navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
-    );
-    lat = pos.coords.latitude;
-    lng = pos.coords.longitude;
-  } catch(e) {
-    placesLoading = false;
-    placesError = '現在地を取得できませんでした。位置情報の許可をご確認ください。';
-    renderTown();
-    return;
+  if (placesLocMode === 'addr') {
+    const addr = placesAddrText.trim();
+    if (!addr) {
+      placesLoading = false;
+      placesError = '住所を入力してください。';
+      renderTown();
+      return;
+    }
+    try {
+      const coords = await _geocodeAddress(addr);
+      lat = coords.lat;
+      lng = coords.lng;
+    } catch(e) {
+      placesLoading = false;
+      placesError = '住所から場所を取得できませんでした。別の住所をお試しください。';
+      renderTown();
+      return;
+    }
+  } else {
+    try {
+      const pos = await new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
+      );
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+    } catch(e) {
+      placesLoading = false;
+      placesError = '現在地を取得できませんでした。位置情報の許可をご確認ください。';
+      renderTown();
+      return;
+    }
   }
 
   const cat = PLACES_CATS.find(c => c.id === placesSelCat);
@@ -6577,6 +6622,25 @@ async function searchPlaces() {
     placesError = '検索中にエラーが発生しました。しばらくしてお試しください。';
   }
   renderTown();
+}
+
+function setPlacesLocMode(mode) {
+  placesLocMode = mode;
+  placesResults = [];
+  placesError = '';
+  renderTown();
+}
+
+async function _geocodeAddress(address) {
+  const url = 'https://maps.googleapis.com/maps/api/geocode/json?address='
+    + encodeURIComponent(address) + '&key=' + PLACES_API_KEY + '&language=ja';
+  const resp = await fetch(url);
+  const json = await resp.json();
+  if (json.status !== 'OK' || !json.results || json.results.length === 0) {
+    throw new Error('Geocoding failed: ' + json.status);
+  }
+  const loc = json.results[0].geometry.location;
+  return { lat: loc.lat, lng: loc.lng };
 }
 
 async function _placesNearby(type, lat, lng) {
