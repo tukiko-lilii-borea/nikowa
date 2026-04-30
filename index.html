@@ -374,25 +374,40 @@
   .mode-card {
     width: 100%;
     display: flex; align-items: center; gap: 14px;
-    background: var(--surface);
-    border: 1.5px solid var(--line-soft);
+    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
+    border: 1px solid rgba(255,255,255,0.7);
     border-radius: 20px;
     padding: 16px 18px;
     margin-bottom: 10px;
     text-align: left;
     cursor: pointer; font-family: inherit;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
     position: relative;
     overflow: hidden;
+    isolation: isolate;
     transition: transform 0.1s ease;
   }
   .mode-card:active { transform: scale(0.98); }
-  .mode-card.mode-me,
-  .mode-card.mode-pet,
-  .mode-card.mode-kids {
+  /* 偽すりガラス：bodyと同じ背景柄＋テーマaccent色をうっすら */
+  .mode-card::before {
+    content: '';
+    position: absolute;
+    inset: -40px;
     background-color: var(--accent-bg);
-    background-image: linear-gradient(rgba(255,255,255,0.55), rgba(255,255,255,0.55));
-    border-color: var(--line-soft);
+    filter: blur(4px);
+    z-index: -2;
+  }
+  .mode-card::after {
+    content: '';
+    position: absolute;
+    inset: -40px;
+    filter: blur(4px);
+    z-index: -1;
+    opacity: 0.7;
+  }
+  .mode-card > * {
+    position: relative;
+    z-index: 1;
   }
   .mode-card-icon {
     font-size: 36px;
@@ -2686,7 +2701,8 @@ const THEMES = {
     headerGrad: 'linear-gradient(180deg, #FCF2C8 0%, #F8E4A0 50%, #DCEFE0 100%)' },
   pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham',
     vars: { '--bg':'#FFDFAB', '--surface':'#FFFFFF', '--surface-warm':'#FCF1DA', '--line':'#EBD4A8', '--line-soft':'#F2E2C2', '--ink-dark':'#6B4A28', '--ink':'#8A6440', '--ink-sub':'#B0926A', '--ink-light':'#D4BC98', '--mint':'#E8C088', '--mint-deep':'#C28848', '--mint-bg':'#FBE2B8', '--accent':'#F0A0B2', '--accent-deep':'#C26880', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8B898' },
-    paperColor: 'rgba(194,136,72,0.08)',
+    paperColor: 'rgba(255,255,255,0.65)',
+    ginghamColor: 'rgba(255,255,255,0.65)',
     headerGrad: 'linear-gradient(180deg, #FCEFD2 0%, #F0D4A0 50%, #F4C0CC 100%)' },
   cola: { name: 'コーラ', emoji: '🥃', pattern: 'polka',
     vars: { '--bg':'#ECD8C0', '--surface':'#FFFFFF', '--surface-warm':'#ECD5C0', '--line':'#C8A080', '--line-soft':'#D8B898', '--ink-dark':'#3E2418', '--ink':'#5A3828', '--ink-sub':'#8A6850', '--ink-light':'#B89878', '--mint':'#A87850', '--mint-deep':'#704020', '--mint-bg':'#DCC0A0', '--accent':'#D06878', '--accent-deep':'#A04058', '--accent-bg':'#F8C8D0', '--today-bg':'#F8D0D8', '--today-border':'#E08898', '--warm-yellow':'#F8E4A0', '--soft-purple':'#B89080' },
@@ -2694,7 +2710,8 @@ const THEMES = {
     headerGrad: 'linear-gradient(180deg, #F5E8D8 0%, #D4A888 50%, #A06848 100%)' },
   lavender: { name: 'ラベンダーマカロン', emoji: '🪻', pattern: 'gingham',
     vars: { '--bg':'#EDE0F5', '--surface':'#FFFFFF', '--surface-warm':'#E4D2F0', '--line':'#C8A8D8', '--line-soft':'#D8C0E8', '--ink-dark':'#3E2858', '--ink':'#5A4070', '--ink-sub':'#887098', '--ink-light':'#B0A0C0', '--mint':'#B090D0', '--mint-deep':'#8060A8', '--mint-bg':'#D0B8E0', '--accent':'#E088A8', '--accent-deep':'#B05870', '--accent-bg':'#F8C8D8', '--today-bg':'#F8D0DC', '--today-border':'#E0A0B8', '--warm-yellow':'#F8E4A0', '--soft-purple':'#8060A8' },
-    paperColor: 'rgba(128,96,168,0.14)',
+    paperColor: 'rgba(255,255,255,0.6)',
+    ginghamColor: 'rgba(255,255,255,0.6)',
     headerGrad: 'linear-gradient(180deg, #F0E2F8 0%, #E0CCEE 50%, #FAD8E2 100%)' },
   matcha: { name: '抹茶わらび', emoji: '🍵', pattern: 'polka',
     vars: { '--bg':'#E4ECC0', '--surface':'#FFFFFF', '--surface-warm':'#E0E8B8', '--line':'#B8C880', '--line-soft':'#CCD8A0', '--ink-dark':'#1F2F10', '--ink':'#384828', '--ink-sub':'#5A6838', '--ink-light':'#88A058', '--mint':'#6A8830', '--mint-deep':'#4A6820', '--mint-bg':'#A8C868', '--accent':'#D88AA0', '--accent-deep':'#A86078', '--accent-bg':'#F8C8D8', '--today-bg':'#A8C868', '--today-border':'#E0A0B0', '--warm-yellow':'#D8C070', '--soft-purple':'#A08090' },
@@ -2803,7 +2820,8 @@ function applyTheme(themeId) {
   var crayonSvg = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'><path d='M2,4 Q10,2 18,4 T36,4 T54,3 T72,5 T90,4 T108,3 T126,5 T144,4 T162,3 T180,5 T198,4' stroke='"+crayonHex+"' stroke-width='2.5' fill='none' stroke-linecap='round' opacity='0.85'/></svg>\")";
   styleEl.textContent = '.topbar { background: '+theme.headerGrad+' !important; }'
     + ' .section-title { background-image: '+crayonSvg+' !important; }'
-    + ' .hero-glass::before { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }';
+    + ' .hero-glass::before { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
+    + ' .mode-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }';
   // topbarに桜吹雪を追加
   setTimeout(function(){
     document.querySelectorAll('.topbar').forEach(function(tb){
@@ -3668,8 +3686,10 @@ function renderTop() {
   html += '</div>'; // hero-section閉じ
 
   // モード選択カード
+  html += '<div class="section">';
+  html += '<div class="section-head"><h2 class="section-title">どこへいく？</h2></div>';
+  html += '</div>';
   html += '<div class="mode-section">';
-  html += '<div class="mode-section-label">どこへいく？</div>';
 
   // ME
   html += '<button class="mode-card mode-me" onclick="openComingSoon(\'ME\')">';
@@ -3701,18 +3721,6 @@ function renderTop() {
   html += '<div class="mode-card-arrow">›</div>';
   html += '</button>';
   html += '</div>'; // mode-section閉じ
-
-  // にこわタウン導線
-  html += '<div class="town-link-section">';
-  html += '<button class="town-link-card" onclick="goTown()">';
-  html += '<span class="town-link-icon">🏙</span>';
-  html += '<span class="town-link-body">';
-  html += '<span class="town-link-title">病院・トリミング・お店を探す</span>';
-  html += '<span class="town-link-sub">いつもの場所をのこそう・にこわタウン</span>';
-  html += '</span>';
-  html += '<span class="town-link-arrow">›</span>';
-  html += '</button>';
-  html += '</div>';
 
   html += '<div style="height: 24px;"></div>';
   app.innerHTML = html;
