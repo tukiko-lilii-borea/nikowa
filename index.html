@@ -421,25 +421,35 @@
   }
   .main-house-card {
     width: 100%;
-    background: var(--surface);
-    border: none;
+    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
+    border: 1px solid rgba(255,255,255,0.7);
     border-radius: 22px;
     padding: 18px 18px 16px;
     text-align: left;
     cursor: pointer; font-family: inherit;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
     position: relative;
     overflow: hidden;
+    isolation: isolate;
   }
   .main-house-card::before {
     content: '';
     position: absolute;
-    top: -40px; right: -40px;
-    width: 140px; height: 140px;
-    background: radial-gradient(circle, var(--mint-bg) 0%, transparent 70%);
-    opacity: 0.6;
-    pointer-events: none;
+    inset: -40px;
+    background-color: var(--accent-bg);
+    filter: blur(4px);
+    z-index: -2;
+    opacity: 0.4;
   }
+  .main-house-card::after {
+    content: '';
+    position: absolute;
+    inset: -40px;
+    filter: blur(4px);
+    z-index: -1;
+    opacity: 0.85;
+  }
+  .main-house-card > * { position: relative; z-index: 1; }
   .main-house-card:active { transform: scale(0.99); }
   .main-house-top {
     display: flex; align-items: center; gap: 12px;
@@ -2023,42 +2033,120 @@
   /* ===== Places API (近くを探す) ===== */
   /* ── タウン メインタブ（インデックスタブ風）──── */
   .town-main-tabs {
-    display:flex; padding:8px 8px 0; gap:3px;
+    display:flex; padding:0 8px 8px; gap:3px;
     position:relative; z-index:1;
   }
   .town-main-tabs::after {
-    content:''; position:absolute; bottom:0; left:0; right:0;
+    content:''; position:absolute; top:0; left:0; right:0;
     height:2px; background:var(--line-soft); z-index:0;
   }
   .town-main-tab {
     flex:1; position:relative; z-index:1;
-    padding:8px 3px 9px;
-    border:1.5px solid var(--line-soft); border-bottom:none;
-    border-radius:12px 12px 0 0;
-    background:var(--surface-warm); color:var(--ink-sub);
+    padding:9px 3px 8px;
+    border:1px solid rgba(255,255,255,0.6); border-top:none;
+    border-radius:0 0 12px 12px;
+    background:linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    color:var(--ink-sub);
     font-family:inherit; font-size:9.5px; font-weight:700;
     cursor:pointer; text-align:center; line-height:1.4; white-space:nowrap;
-    margin-top:8px;
-    transition:margin-top 0.12s ease, background 0.12s ease, color 0.12s ease;
+    margin-bottom:8px;
+    transition:margin-bottom 0.12s ease, background 0.12s ease, color 0.12s ease;
   }
   .town-main-tab.active {
     background:var(--mint-deep); border-color:var(--mint-deep); color:white;
-    margin-top:0; z-index:3;
-    box-shadow:0 -2px 8px rgba(0,0,0,0.10);
+    backdrop-filter:none; -webkit-backdrop-filter:none;
+    margin-bottom:0; z-index:3;
+    box-shadow:0 2px 8px rgba(0,0,0,0.10);
   }
   .town-main-tab.active::after {
-    content:''; position:absolute; bottom:-2px; left:-1px; right:-1px;
+    content:''; position:absolute; top:-2px; left:-1px; right:-1px;
     height:3px; background:var(--bg); z-index:4;
   }
   .town-main-tab-icon { font-size:16px; display:block; margin-bottom:2px; }
+  
+  /* ── モード切替インデックスタブ（ME/PET/KIDS共通） ─────────── */
+  .mode-idx-tabs {
+    display:flex; padding:0 8px 8px; gap:4px;
+    position:relative; z-index:1;
+  }
+  .mode-idx-tabs::after {
+    content:''; position:absolute; top:0; left:0; right:0;
+    height:2px; background:var(--line-soft); z-index:0;
+  }
+  .mode-idx-tab {
+    flex:1; position:relative; z-index:1;
+    padding:10px 4px 10px;
+    border:1px solid rgba(255,255,255,0.6); border-top:none;
+    border-radius:0 0 14px 14px;
+    background:linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    color:var(--ink-sub);
+    font-family:inherit; font-size:11px; font-weight:700;
+    cursor:pointer; text-align:center; line-height:1.4; white-space:nowrap;
+    margin-bottom:8px;
+    transition:margin-bottom 0.12s ease, background 0.12s ease, color 0.12s ease;
+  }
+  .mode-idx-tab.active {
+    background:var(--accent); border-color:var(--accent); color:white;
+    backdrop-filter:none; -webkit-backdrop-filter:none;
+    margin-bottom:0; z-index:3;
+    box-shadow:0 2px 8px rgba(0,0,0,0.10);
+  }
+  .mode-idx-tab.active::after {
+    content:''; position:absolute; top:-2px; left:-1px; right:-1px;
+    height:3px; background:var(--bg); z-index:4;
+  }
+  .mode-idx-tab-icon { font-size:18px; display:block; margin-bottom:2px; }
+  
+  /* ── 家タブ（モードタブの下・小さめ） ─────────── */
+  .house-idx-tabs {
+    display:flex; padding:0 8px; gap:3px;
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    margin-top:-4px;
+  }
+  .house-idx-tabs::-webkit-scrollbar { display:none; }
+  .house-idx-tab {
+    flex-shrink:0;
+    padding:6px 12px 6px;
+    border:1px solid var(--line-soft);
+    border-radius:0 0 10px 10px; border-top:none;
+    background:var(--surface-warm); color:var(--ink-sub);
+    font-family:inherit; font-size:11px; font-weight:600;
+    cursor:pointer; line-height:1.3;
+    display:flex; align-items:center; gap:4px;
+    white-space:nowrap;
+    transition:background 0.12s ease, color 0.12s ease;
+  }
+  .house-idx-tab.active {
+    background:var(--accent-deep); color:white; border-color:var(--accent-deep);
+    box-shadow:0 2px 6px rgba(0,0,0,0.10);
+  }
+  .house-idx-tab-icon { font-size:13px; line-height:1; }
+  .house-idx-tab-add {
+    flex-shrink:0;
+    padding:6px 12px;
+    border:1px dashed var(--line-soft); border-top:none;
+    border-radius:0 0 10px 10px;
+    background:transparent; color:var(--ink-light);
+    font-family:inherit; font-size:14px; font-weight:600;
+    cursor:pointer;
+  }
   /* ── タウン サブタブ ──────────────────────────── */
   .town-sub-tabs { display:flex; gap:6px; padding:10px 16px 2px; }
   .town-sub-tab {
-    flex:1; background:var(--surface); border:1.5px solid var(--line-soft);
+    flex:1; 
+    background:linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,0.6);
     border-radius:100px; padding:7px 4px; cursor:pointer; font-family:inherit;
     font-size:11.5px; color:var(--ink-sub); font-weight:600; white-space:nowrap;
   }
-  .town-sub-tab.active { background:var(--mint-deep); border-color:var(--mint-deep); color:white; }
+  .town-sub-tab.active { 
+    background:var(--mint-deep); border-color:var(--mint-deep); color:white;
+    backdrop-filter:none; -webkit-backdrop-filter:none;
+  }
   /* ── 検索エリア ──────────────────────────────── */
   .places-section { padding:8px 16px 0; }
   .places-cat-chips {
@@ -2618,7 +2706,7 @@
   <h2 class="modal-title">🌷 にこわとは</h2>
   <div class="help-body">
     <p style="text-align:center; font-size:13px; color:var(--ink-dark); line-height:1.8; margin-bottom:16px;">
-      <strong>今日もこの子と、ちゃんと過ごせた。</strong><br>
+      <strong>ちゃんと生きた日を、なかったことにしない。</strong><br>
       <span style="font-size:11.5px; color:var(--ink-sub);">できる日に、できる分だけで大丈夫</span>
     </p>
     <div class="help-section">
@@ -2980,7 +3068,8 @@ function applyTheme(themeId) {
   styleEl.textContent = '.topbar { background: '+theme.headerGrad+' !important; }'
     + ' .section-title { background-image: '+crayonSvg+' !important; }'
     + ' .hero-glass::before { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
-    + ' .mode-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }';
+    + ' .mode-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
+    + ' .main-house-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }';
   // topbarに桜吹雪を追加
   setTimeout(function(){
     document.querySelectorAll('.topbar').forEach(function(tb){
@@ -3054,6 +3143,7 @@ let data = {
 let photos = {};
 let currentView = 'top';
 let currentMode = 'pet'; // 'pet' | 'me' | 'kids'
+let houseSubTab = 'mine'; // 'mine' | 'fav' （自分の家 / お気に入り）
 const MODE_KEYS = {
   pet:  { data: 'nikowa_data_v3',      photos: 'nikowa_photos_v3' },
   me:   { data: 'nikowa_me_data_v3',   photos: 'nikowa_me_photos_v3' },
@@ -3160,7 +3250,59 @@ function goToMeMode() {
 
 function goToKidsMode() {
   switchMode('kids');
-  currentView = 'houses';
+  // デフォルトの家へ直接入る
+  const houses = data.houses || [];
+  if (houses.length > 0) {
+    let targetId = data.lastUsedHouseId || data.activeHouseId;
+    if (!houses.find(h => h.id === targetId)) targetId = houses[0].id;
+    houseTabId = targetId;
+    enterHouse(targetId);
+  } else {
+    currentView = 'houses';
+    render();
+  }
+}
+
+// ===== モード切替インデックスタブ =====
+function switchModeFromTab(targetMode) {
+  if (currentMode === targetMode) return;
+  switchMode(targetMode);
+  houseSubTab = 'mine'; // サブタブをリセット
+  if (targetMode === 'me') {
+    currentView = 'me';
+  } else {
+    // pet/kidsはデフォルトの家へ直行
+    const houses = data.houses || [];
+    if (houses.length > 0) {
+      let targetId = data.lastUsedHouseId || data.activeHouseId;
+      if (!houses.find(h => h.id === targetId)) targetId = houses[0].id;
+      houseTabId = targetId;
+      enterHouse(targetId);
+      return;
+    }
+    currentView = 'houses';
+  }
+  render();
+}
+
+function renderModeIndexTabs() {
+  const tabs = [
+    { id: 'me',   icon: '🌱', label: 'ME' },
+    { id: 'pet',  icon: '🐾', label: 'PET' },
+    { id: 'kids', icon: '🧸', label: 'KIDS' }
+  ];
+  let html = '<div class="mode-idx-tabs">';
+  for (const t of tabs) {
+    const active = (currentMode === t.id) ? ' active' : '';
+    html += '<button class="mode-idx-tab'+active+'" onclick="switchModeFromTab(\''+t.id+'\')">';
+    html += '<span class="mode-idx-tab-icon">'+t.icon+'</span>'+t.label+'</button>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function setHouseSubTab(tab) {
+  houseSubTab = tab;
   render();
 }
 // ===== Firebase =====
@@ -3940,7 +4082,7 @@ function renderTop() {
   if (isSimple) {
     html += '<div class="hero-message-main">今日も、この子と。</div>';
   } else {
-    html += '<div class="hero-message-main">今日もこの子と、ちゃんと過ごせた。</div>';
+    html += '<div class="hero-message-main">ちゃんと生きた日を、なかったことにしない。</div>';
     html += '<div class="hero-message-sub">できる日に、できる分だけで大丈夫</div>';
   }
   html += '</div>';
@@ -3953,7 +4095,7 @@ function renderTop() {
   html += '</div>';
   html += '<div class="mode-section">';
   html += '<button class="mode-card mode-me" onclick="goToMeMode()">';
-  html += '<div class="mode-card-icon">🌸</div><div class="mode-card-label">ME</div>';
+  html += '<div class="mode-card-icon">🌱</div><div class="mode-card-label">ME</div>';
   html += '</button>';
   html += '<button class="mode-card mode-pet" onclick="goToPetMode()">';
   html += '<div class="mode-card-icon">🐾</div><div class="mode-card-label">PET</div>';
@@ -3969,8 +4111,17 @@ function renderTop() {
 
 function goToPetMode() {
   if (currentMode !== 'pet') switchMode('pet');
-  currentView = 'houses';
-  render();
+  // デフォルトの家へ直接入る（lastUsedHouseId > activeHouseId > 1番目）
+  const houses = data.houses || [];
+  if (houses.length > 0) {
+    let targetId = data.lastUsedHouseId || data.activeHouseId;
+    if (!houses.find(h => h.id === targetId)) targetId = houses[0].id;
+    houseTabId = targetId;
+    enterHouse(targetId);
+  } else {
+    currentView = 'houses';
+    render();
+  }
 }
 
 function openComingSoon(modeName) {
@@ -3981,8 +4132,8 @@ function renderMeMode() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('pet');
   const app = document.getElementById('app');
-  let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">🌸 ME</div><div class="topbar-spacer"></div></div>';
-  html += '<div style="padding:24px 16px 8px;">';
+  let html = renderModeIndexTabs();
+  html += '<div style="padding:8px 16px 8px;">';
   html += '<button onclick="goMeDiary()" style="width:100%;display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:20px;padding:20px 22px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,0.06);text-align:left;">';
   html += '<div style="font-size:42px;line-height:1;flex-shrink:0;">📔</div>';
   html += '<div style="flex:1;">';
@@ -4024,16 +4175,23 @@ function renderHouses() {
   const userName = data.user.name || '';
   const greeting = getTimeGreeting();
   
-  let html = '<div class="hero-section">';
-  // 上部チップ
-  html += '<div class="hero-top">';
-  html += '<button class="hero-user-chip" onclick="openUserModal()">';
-  html += '<span>'+(data.user.avatar || '🌷')+'</span>';
-  if (userName) html += '<span>'+escapeHtml(userName)+'</span>';
-  else html += '<span class="hero-user-prompt">名前をつける</span>';
-  html += '</button>';
-  html += '<button class="hero-theme-btn" onclick="openThemeModal()" title="テーマ">🎨</button>';
-  html += '</div>';
+  let html = '';
+  // PET/KIDSモード時はインデックスタブを表示
+  if (currentMode === 'pet' || currentMode === 'kids') {
+    html += renderModeIndexTabs();
+  }
+  html += '<div class="hero-section">';
+  // 上部チップ（PET/KIDSモード時は非表示）
+  if (currentMode !== 'pet' && currentMode !== 'kids') {
+    html += '<div class="hero-top">';
+    html += '<button class="hero-user-chip" onclick="openUserModal()">';
+    html += '<span>'+(data.user.avatar || '🌷')+'</span>';
+    if (userName) html += '<span>'+escapeHtml(userName)+'</span>';
+    else html += '<span class="hero-user-prompt">名前をつける</span>';
+    html += '</button>';
+    html += '<button class="hero-theme-btn" onclick="openThemeModal()" title="テーマ">🎨</button>';
+    html += '</div>';
+  }
   // 桜吹雪 + すりガラスカード
   var currentTheme = THEMES[data.themeId || 'mint'] || THEMES.mint;
   var isSimple = currentTheme.simple === true;
@@ -4053,27 +4211,59 @@ function renderHouses() {
     petalHtml += '</div>';
   }
 
-  html += '<div class="hero-glass'+(isSimple?' hero-glass-simple':'')+'">' + petalHtml;
-  // ロゴ
-  html += '<div class="hero-logo">';
-  if (isSimple) {
-    html += '<div class="hero-logo-simple">にこわ<span class="hero-logo-simple-en">-nikowa-</span></div>';
-  } else {
-    html += '<img class="hero-logo-img" src="' + LOGO_DATA_URL + '" alt="にこわ nikowa">';
+  // ロゴ・メッセージはホーム（topビュー）でのみ表示
+  // PET/KIDSモードのhouses画面では非表示
+  const showLogo = (currentMode !== 'pet' && currentMode !== 'kids');
+  
+  if (showLogo) {
+    html += '<div class="hero-glass'+(isSimple?' hero-glass-simple':'')+'">' + petalHtml;
+    // ロゴ
+    html += '<div class="hero-logo">';
+    if (isSimple) {
+      html += '<div class="hero-logo-simple">にこわ<span class="hero-logo-simple-en">-nikowa-</span></div>';
+    } else {
+      html += '<img class="hero-logo-img" src="' + LOGO_DATA_URL + '" alt="にこわ nikowa">';
+    }
+    html += '</div>';
+    // メッセージ
+    html += '<div class="hero-message">';
+    if (isSimple) {
+      html += '<div class="hero-message-main">今日も、この子と。</div>';
+    } else {
+      html += '<div class="hero-message-main">ちゃんと生きた日を、なかったことにしない。</div>';
+      html += '<div class="hero-message-sub">できる日に、できる分だけで大丈夫</div>';
+    }
+    html += '</div>';
+    html += '</div>'; // hero-glass閉じ
   }
-  html += '</div>';
-  // メッセージ
-  html += '<div class="hero-message">';
-  if (isSimple) {
-    html += '<div class="hero-message-main">今日も、この子と。</div>';
-  } else {
-    html += '<div class="hero-message-main">今日もこの子と、ちゃんと過ごせた。</div>';
-    html += '<div class="hero-message-sub">できる日に、できる分だけで大丈夫</div>';
-  }
-  html += '</div>';
-  html += '</div>'; // hero-glass閉じ
   
   const houses = data.houses;
+  
+  // 家サブタブ（自分の家 / ♡お気に入り）- PET/KIDSモードのみ
+  if (currentMode === 'pet' || currentMode === 'kids') {
+    const favLabel = currentMode === 'kids' ? '👨‍👩‍👧 招待された家' : '☆ お気に入り';
+    html += '<div class="town-sub-tabs" style="padding:8px 16px 4px;">';
+    html += '<button class="town-sub-tab '+(houseSubTab==='mine'?'active':'')+'" onclick="setHouseSubTab(\'mine\')">🏡 自分の家</button>';
+    html += '<button class="town-sub-tab '+(houseSubTab==='fav'?'active':'')+'" onclick="setHouseSubTab(\'fav\')">'+favLabel+'</button>';
+    html += '</div>';
+  }
+  
+  // お気に入りタブ：準備中表示
+  if ((currentMode === 'pet' || currentMode === 'kids') && houseSubTab === 'fav') {
+    html += '<div style="padding:60px 32px;text-align:center;">';
+    html += '<div style="font-size:48px;margin-bottom:16px;">'+(currentMode === 'kids' ? '👨‍👩‍👧' : '☆')+'</div>';
+    html += '<div style="font-size:14px;color:var(--ink-sub);line-height:1.7;">';
+    if (currentMode === 'kids') {
+      html += '祖父母や親戚から招待されたお家がここに表示されます<br><span style="color:var(--ink-light);font-size:12px;">ただいま準備中🌷</span>';
+    } else {
+      html += 'お友達のペットのお家を<br>お気に入り登録できるようになります<br><span style="color:var(--ink-light);font-size:12px;">ただいま準備中🌷</span>';
+    }
+    html += '</div></div>';
+    html += '<div style="height:24px;"></div>';
+    app.innerHTML = html;
+    return;
+  }
+  
   if (houses.length === 0) {
     // 家がまだない時
     html += '<div class="houses-empty-section">';
@@ -4125,19 +4315,6 @@ function renderHouses() {
     }
   }
   
-  // にこわタウン導線
-  if (houses.length > 0) {
-    html += '<div class="town-link-section">';
-    html += '<button class="town-link-card" onclick="goTown()">';
-    html += '<span class="town-link-icon">🏙</span>';
-    html += '<span class="town-link-body">';
-    html += '<span class="town-link-title">病院・トリミング・お店を探す</span>';
-    html += '<span class="town-link-sub">いつもの場所をのこそう・にこわタウン</span>';
-    html += '</span>';
-    html += '<span class="town-link-arrow">›</span>';
-    html += '</button>';
-    html += '</div>';
-  }
   
   html += '<div style="height: 24px;"></div>';
   app.innerHTML = html;
@@ -4232,6 +4409,7 @@ function enterHouse(houseId) {
   data.selectedHouseId = houseId;
   data.activeHouseId = houseId;
   data.lastUsedHouseId = houseId;
+  houseTabId = houseId;
   saveData();
   currentView = 'house';
   render();
@@ -4298,13 +4476,28 @@ function renderHouse() {
   const house = getActiveHouse();
   if (!house) { currentView = 'houses'; render(); return; }
   
-  let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">'+(house.icon || '🏡')+' '+escapeHtml(house.name)+'</div><button class="topbar-btn" onclick="openEditHouseModal(\''+house.id+'\')">⚙️</button></div>';
+  let html = '';
+  // モード切替インデックスタブ（PET/KIDS時のみ・MEには家概念がない）
+  if (currentMode === 'pet' || currentMode === 'kids') {
+    html += renderModeIndexTabs();
+    html += renderHouseTabs(house);
+  } else {
+    html += '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">'+(house.icon || '🏡')+' '+escapeHtml(house.name)+'</div><button class="topbar-btn" onclick="openEditHouseModal(\''+house.id+'\')">⚙️</button></div>';
+  }
   
   // 日付ライン
   html += '<div style="text-align:right; padding:2px 16px 0; font-size:9px; color:var(--ink-sub); font-weight:700; letter-spacing:0.3px;">';
   var _d = new Date();
   html += _d.getFullYear()+'/'+(_d.getMonth()+1)+'/'+_d.getDate()+' ('+['日','月','火','水','木','金','土'][_d.getDay()]+')';
   html += '</div>';
+  
+  // 家編集ボタン
+  if (currentMode === 'pet' || currentMode === 'kids') {
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 0;">';
+    html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);">'+(house.icon || '🏡')+' '+escapeHtml(house.name)+'</div>';
+    html += '<button class="topbar-btn" style="background:transparent;border:none;font-size:18px;cursor:pointer;padding:4px;" onclick="openEditHouseModal(\''+house.id+'\')">⚙️</button>';
+    html += '</div>';
+  }
   
   // タブバー
   html += '<div class="pet-tabs-bar" style="margin-top: 12px;">';
@@ -4322,6 +4515,72 @@ function renderHouse() {
   html += '</div>';
   html += '<div style="height: 16px;"></div>';
   document.getElementById('app').innerHTML = html;
+}
+
+// ===== 家タブ（自分の家＋♡お気に入り） =====
+function renderHouseTabs(currentHouse) {
+  const houses = data.houses || [];
+  const currentId = currentHouse ? currentHouse.id : null;
+  let html = '<div class="house-idx-tabs">';
+  // 自分の家タブ（複数）
+  for (const h of houses) {
+    const active = (currentId === h.id) ? ' active' : '';
+    const label = h.name.length > 6 ? h.name.substring(0, 5) + '…' : h.name;
+    html += '<button class="house-idx-tab'+active+'" onclick="switchHouseFromTab(\''+h.id+'\')">';
+    html += '<span class="house-idx-tab-icon">'+(h.icon || '🏡')+'</span>'+escapeHtml(label)+'</button>';
+  }
+  // ♡お気に入りタブ（友達のペット家・将来用枠）
+  if (currentMode === 'pet') {
+    const isFav = (houseTabId === '__fav');
+    html += '<button class="house-idx-tab'+(isFav?' active':'')+'" onclick="switchHouseFromTab(\'__fav\')">';
+    html += '<span class="house-idx-tab-icon">♡</span>友達</button>';
+  }
+  // ＋追加ボタン
+  html += '<button class="house-idx-tab-add" onclick="openAddHouseModal()" title="家を追加">＋</button>';
+  html += '</div>';
+  return html;
+}
+
+function switchHouseFromTab(targetId) {
+  if (targetId === '__fav') {
+    houseTabId = '__fav';
+    currentView = 'houses_fav';
+    render();
+    return;
+  }
+  if (data.activeHouseId === targetId && currentView === 'house') return;
+  enterHouse(targetId);
+}
+
+// ===== 友達の家一覧（PETモード・お気に入り） =====
+function renderHousesFav() {
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav('house');
+  const app = document.getElementById('app');
+  
+  let html = renderModeIndexTabs();
+  // 家タブ（自分の家＋♡友達）
+  const houses = data.houses || [];
+  html += '<div class="house-idx-tabs">';
+  for (const h of houses) {
+    const label = h.name.length > 6 ? h.name.substring(0, 5) + '…' : h.name;
+    html += '<button class="house-idx-tab" onclick="switchHouseFromTab(\''+h.id+'\')">';
+    html += '<span class="house-idx-tab-icon">'+(h.icon || '🏡')+'</span>'+escapeHtml(label)+'</button>';
+  }
+  html += '<button class="house-idx-tab active" onclick="switchHouseFromTab(\'__fav\')">';
+  html += '<span class="house-idx-tab-icon">☆</span>友達</button>';
+  html += '<button class="house-idx-tab-add" onclick="openAddHouseModal()" title="家を追加">＋</button>';
+  html += '</div>';
+  
+  // お気に入りの家一覧（将来用・今は準備中）
+  html += '<div style="padding:24px 16px;">';
+  html += '<div style="text-align:center;padding:48px 24px;">';
+  html += '<div style="font-size:48px;margin-bottom:12px;">☆</div>';
+  html += '<div style="font-size:15px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;">お気に入りの家</div>';
+  html += '<div style="font-size:12px;color:var(--ink-sub);line-height:1.7;">友達のペットや<br>応援してる家がここに並ぶで🌷<br><br><span style="color:var(--ink-light);font-size:11px;">ただいま準備中🌷</span></div>';
+  html += '</div></div>';
+  html += '<div style="height:80px;"></div>';
+  app.innerHTML = html;
 }
 
 function renderHouseHomeTab(house) {
@@ -5137,8 +5396,11 @@ let placesResults = [];
 let placesLoading = false;
 let placesError = '';
 let placesResultsMap = {};
-let placesLocMode = 'geo'; // 'geo' | 'addr'
+let placesLocMode = 'addr'; // 'geo' | 'addr'
 let placesAddrText = '';
+
+// ===== 家タブの状態 =====
+let houseTabId = null; // 現在選択されてる家タブ ID（'__fav'なら友達の家一覧）
 const PLACES_API_KEY = 'AIzaSyAuvEPLh6ih-QWNTVZ90Wlo5f5LNjgXbGk';
 const PLACES_FAV_KEY = 'nikowa_place_favorites';
 const PLACES_MEMO_KEY = 'nikowa_place_memos';
@@ -5223,7 +5485,7 @@ function renderTown() {
   if (townSubTab === 'town') {
     html += '<div class="town-coming-soon">';
     html += '<img id="townAnzuImg" style="width:90px;height:90px;margin-bottom:12px;" alt="あんず" src="">';
-    html += '<div class="anzu-bubble">ただいま準備中やで🌷</div>';
+    html += '<div class="anzu-bubble">ただいま準備中🌷</div>';
     html += '</div>';
     document.getElementById('app').innerHTML = html;
     (function(){ var el=document.getElementById('townAnzuImg'); if(el) el.src=ANZU_IMG; })();
@@ -5234,8 +5496,8 @@ function renderTown() {
   if (townSubTab === 'search') {
     html += '<div class="places-section">';
     html += '<div class="places-loc-toggle">';
-    html += '<button class="places-loc-btn '+(placesLocMode==='geo'?'active':'')+'" onclick="setPlacesLocMode(\'geo\')">📍 現在地で探す</button>';
     html += '<button class="places-loc-btn '+(placesLocMode==='addr'?'active':'')+'" onclick="setPlacesLocMode(\'addr\')">🏙 住所で探す</button>';
+    html += '<button class="places-loc-btn '+(placesLocMode==='geo'?'active':'')+'" onclick="setPlacesLocMode(\'geo\')">📍 現在地で探す</button>';
     html += '</div>';
     html += '<div class="places-cat-chips">';
     for (const c of (PLACES_CATS_MAP[townMainTab] || [])) {
@@ -6735,6 +6997,10 @@ function savePlaceMemo(placeId, value) {
   placesMemos[placeId] = value;
   try { localStorage.setItem(PLACES_MEMO_KEY, JSON.stringify(placesMemos)); } catch(e) {}
 }
+function savePlaceMemoBtn(placeId, safeId) {
+  var el = document.getElementById('memo-input-' + safeId);
+  if (el) { savePlaceMemo(placeId, el.value); showToast('メモ保存したで🌸'); }
+}
 
 function _buildMapRowHtml(mapsUrl) {
   const mapBtn = mapsUrl
@@ -6746,10 +7012,12 @@ function _buildMapRowHtml(mapsUrl) {
 function _buildMemoHtml(id) {
   if (!currentUser) return '';
   const idEsc = id.replace(/'/g, "\\'");
+  const safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
   const memo = escapeHtml(placesMemos[id] || '');
   return '<div class="place-card-memo-row">'
     + '<span class="place-card-memo-label">✏️</span>'
-    + '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" onblur="savePlaceMemo(\''+idEsc+'\', this.value)">'
+    + '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" id="memo-input-'+safeId+'">'
+    + '<button class="place-card-memo-btn" style="font-size:16px;padding:4px 8px;min-width:36px;" onclick="savePlaceMemoBtn(\''+idEsc+'\', \''+safeId+'\')">💾</button>'
     + '</div>';
 }
 
@@ -6795,7 +7063,7 @@ function buildPlaceCardHtml(p, catIcon) {
   } else {
     html += '<span class="place-card-map-btn" style="opacity:0.4;cursor:default;">🗺 Googleで見る</span>';
   }
-  html += '<button class="place-card-nikowa-btn" onclick="showToast(\'準備中やで🌷\')">🏠 にこわで見る</button>';
+  html += '<button class="place-card-nikowa-btn" onclick="showToast(\'準備中🌷\')">🏠 にこわで見る</button>';
   html += '</div>';
   html += '<div class="place-card-memo-row" id="memo-row-'+safeId+'" style="display:none;">';
   html += '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" onblur="savePlaceMemo(\''+idEsc+'\', this.value)">';
@@ -6832,7 +7100,7 @@ function buildFavCardHtml(p) {
   } else {
     html += '<span class="place-card-map-btn" style="opacity:0.4;cursor:default;">🗺 Googleで見る</span>';
   }
-  html += '<button class="place-card-nikowa-btn" onclick="showToast(\'準備中やで🌷\')">🏠 にこわで見る</button>';
+  html += '<button class="place-card-nikowa-btn" onclick="showToast(\'準備中🌷\')">🏠 にこわで見る</button>';
   html += '</div>';
   html += '<div class="place-card-memo-row" id="memo-row-'+safeId+'" style="display:none;">';
   html += '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" onblur="savePlaceMemo(\''+idEsc+'\', this.value)">';
@@ -7242,6 +7510,7 @@ function render() {
   else if (currentView === 'me') renderMeMode();
   else if (currentView === 'me_diary') renderMeDiary();
   else if (currentView === 'houses') renderHouses();
+  else if (currentView === 'houses_fav') renderHousesFav();
   else if (currentView === 'house') renderHouse();
   else if (currentView === 'pet') renderPet();
   else if (currentView === 'schedule') renderSchedule();
