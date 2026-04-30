@@ -365,21 +365,18 @@
   /* ===== モード選択カード（トップ画面） ===== */
   .mode-section {
     padding: 0 16px 18px;
-  }
-  .mode-section-label {
-    font-size: 10.5px; color: var(--ink-sub);
-    letter-spacing: 2px; font-weight: 700;
-    margin-bottom: 10px; padding-left: 4px;
+    display: flex; gap: 10px;
   }
   .mode-card {
-    width: 100%;
-    display: flex; align-items: center; gap: 14px;
+    flex: 1;
+    aspect-ratio: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px;
     background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
     border: 1px solid rgba(255,255,255,0.7);
     border-radius: 20px;
-    padding: 16px 18px;
-    margin-bottom: 10px;
-    text-align: left;
+    padding: 12px 8px;
     cursor: pointer; font-family: inherit;
     box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
     position: relative;
@@ -387,7 +384,7 @@
     isolation: isolate;
     transition: transform 0.1s ease;
   }
-  .mode-card:active { transform: scale(0.98); }
+  .mode-card:active { transform: scale(0.96); }
   /* 偽すりガラス：bodyと同じ背景柄＋テーマaccent色をうっすら */
   .mode-card::before {
     content: '';
@@ -406,46 +403,11 @@
     z-index: -1;
     opacity: 0.85;
   }
-  .mode-card > * {
-    position: relative;
-    z-index: 1;
-  }
-  .mode-card-icon {
-    font-size: 36px;
-    flex-shrink: 0;
-    width: 52px; height: 52px;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,0.7);
-    border-radius: 16px;
-  }
-  .mode-card-body {
-    flex: 1; min-width: 0;
-  }
-  .mode-card-title {
-    font-size: 16px; font-weight: 700;
-    color: var(--ink-dark);
-    margin-bottom: 3px;
-    letter-spacing: 0.5px;
-  }
-  .mode-card-sub {
-    font-size: 11.5px;
-    color: var(--ink-sub);
-    line-height: 1.4;
-  }
-  .mode-card-arrow {
-    font-size: 22px; color: var(--ink-light);
-    flex-shrink: 0;
-  }
-  .mode-card-badge {
-    display: inline-block;
-    font-size: 9.5px;
-    background: rgba(255,255,255,0.8);
-    color: var(--ink-sub);
-    padding: 2px 8px;
-    border-radius: 10px;
-    margin-left: 6px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+  .mode-card > * { position: relative; z-index: 1; }
+  .mode-card-icon { font-size: 34px; line-height: 1; }
+  .mode-card-label {
+    font-size: 12px; font-weight: 700;
+    color: var(--ink-dark); letter-spacing: 1.5px;
   }
 
   /* ===== 今日の家（メインカード） ===== */
@@ -2059,14 +2021,46 @@
   }
 
   /* ===== Places API (近くを探す) ===== */
-  .town-tabs { display:flex; gap:4px; padding:0 16px 12px; }
-  .town-tab {
+  /* ── タウン メインタブ（インデックスタブ風）──── */
+  .town-main-tabs {
+    display:flex; padding:8px 8px 0; gap:3px;
+    position:relative; z-index:1;
+  }
+  .town-main-tabs::after {
+    content:''; position:absolute; bottom:0; left:0; right:0;
+    height:2px; background:var(--line-soft); z-index:0;
+  }
+  .town-main-tab {
+    flex:1; position:relative; z-index:1;
+    padding:8px 3px 9px;
+    border:1.5px solid var(--line-soft); border-bottom:none;
+    border-radius:12px 12px 0 0;
+    background:var(--surface-warm); color:var(--ink-sub);
+    font-family:inherit; font-size:9.5px; font-weight:700;
+    cursor:pointer; text-align:center; line-height:1.4; white-space:nowrap;
+    margin-top:8px;
+    transition:margin-top 0.12s ease, background 0.12s ease, color 0.12s ease;
+  }
+  .town-main-tab.active {
+    background:var(--mint-deep); border-color:var(--mint-deep); color:white;
+    margin-top:0; z-index:3;
+    box-shadow:0 -2px 8px rgba(0,0,0,0.10);
+  }
+  .town-main-tab.active::after {
+    content:''; position:absolute; bottom:-2px; left:-1px; right:-1px;
+    height:3px; background:var(--bg); z-index:4;
+  }
+  .town-main-tab-icon { font-size:16px; display:block; margin-bottom:2px; }
+  /* ── タウン サブタブ ──────────────────────────── */
+  .town-sub-tabs { display:flex; gap:6px; padding:10px 16px 2px; }
+  .town-sub-tab {
     flex:1; background:var(--surface); border:1.5px solid var(--line-soft);
-    border-radius:100px; padding:7px 6px; cursor:pointer; font-family:inherit;
+    border-radius:100px; padding:7px 4px; cursor:pointer; font-family:inherit;
     font-size:11.5px; color:var(--ink-sub); font-weight:600; white-space:nowrap;
   }
-  .town-tab.active { background:var(--mint-deep); border-color:var(--mint-deep); color:white; }
-  .places-section { padding:0 16px; }
+  .town-sub-tab.active { background:var(--mint-deep); border-color:var(--mint-deep); color:white; }
+  /* ── 検索エリア ──────────────────────────────── */
+  .places-section { padding:8px 16px 0; }
   .places-cat-chips {
     display:flex; gap:6px; padding:0 0 10px;
     overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
@@ -2077,10 +2071,7 @@
     padding:6px 10px; cursor:pointer; font-family:inherit;
     font-size:11.5px; color:var(--ink); white-space:nowrap; flex-shrink:0;
   }
-  .places-cat-chip.active {
-    background:var(--accent-bg); border-color:var(--accent);
-    color:var(--accent-deep); font-weight:700;
-  }
+  .places-cat-chip.active { background:var(--accent-bg); border-color:var(--accent); color:var(--accent-deep); font-weight:700; }
   .places-text-row { display:flex; gap:8px; margin-bottom:12px; }
   .places-text-input {
     flex:1; border:1.5px solid var(--line-soft); border-radius:100px;
@@ -2100,64 +2091,68 @@
     font-size:11.5px; color:var(--ink-sub); font-weight:600;
   }
   .places-loc-btn.active { background:var(--mint-deep); border-color:var(--mint-deep); color:white; }
-  .places-mode-tabs { display:flex; gap:4px; margin-bottom:10px; }
-  .places-mode-tab {
-    flex:1; background:var(--surface); border:1.5px solid var(--line-soft);
-    border-radius:100px; padding:7px 4px; cursor:pointer; font-family:inherit;
-    font-size:10.5px; color:var(--ink-sub); font-weight:700; white-space:nowrap;
-  }
-  .places-mode-tab.active { background:var(--accent); border-color:var(--accent); color:white; }
   .places-loading { text-align:center; padding:32px 0; color:var(--ink-sub); font-size:13px; }
   .places-error {
     text-align:center; padding:14px 16px; color:#C62828; font-size:13px;
     background:#FFEBEE; border-radius:12px; margin:0 0 12px;
   }
-  .place-cards { display:flex; flex-direction:column; gap:10px; padding:4px 16px 24px; }
+  /* ── プレースカード ──────────────────────────── */
+  .place-cards { display:flex; flex-direction:column; gap:8px; padding:4px 16px 24px; }
   .place-card {
     background:var(--surface); border:1.5px solid var(--line-soft);
-    border-radius:14px; padding:13px; box-shadow:var(--shadow-soft);
+    border-radius:14px; padding:11px 12px 10px; box-shadow:var(--shadow-soft);
   }
-  .place-card-header { display:flex; align-items:flex-start; gap:10px; margin-bottom:8px; }
+  .place-card-header { display:flex; align-items:flex-start; gap:9px; margin-bottom:6px; }
   .place-card-icon {
-    width:40px; height:40px; border-radius:10px; background:var(--mint-bg);
-    display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+    width:36px; height:36px; border-radius:9px; background:var(--mint-bg);
+    display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;
   }
   .place-card-info { flex:1; min-width:0; }
   .place-card-name {
-    font-size:14px; font-weight:700; color:var(--ink-dark);
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;
+    font-size:13.5px; font-weight:700; color:var(--ink-dark);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:1px;
   }
-  .place-card-addr { font-size:11px; color:var(--ink-sub); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .place-card-meta { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
-  .place-card-rating { font-size:11.5px; color:var(--ink); font-weight:600; }
-  .place-card-open { font-size:10.5px; padding:2px 8px; border-radius:100px; font-weight:600; }
+  .place-card-addr { font-size:10.5px; color:var(--ink-sub); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .place-card-status-row { display:flex; align-items:center; gap:5px; margin-bottom:7px; flex-wrap:wrap; }
+  .place-card-open { font-size:10px; padding:2px 7px; border-radius:100px; font-weight:600; white-space:nowrap; }
   .place-card-open.open { background:#E8F5E9; color:#2E7D32; }
   .place-card-open.closed { background:#FFEBEE; color:#C62828; }
-  .place-card-actions { display:flex; gap:8px; }
-  .place-card-fav-btn {
+  .place-card-hours { font-size:10.5px; color:var(--ink-sub); }
+  .place-card-status-actions { margin-left:auto; display:flex; gap:4px; align-items:center; flex-shrink:0; }
+  .place-card-fav-sm {
     background:var(--surface-warm); border:1.5px solid var(--line-soft); border-radius:100px;
-    padding:6px 12px; font-family:inherit; font-size:12px; color:var(--ink-sub); cursor:pointer; font-weight:600;
+    padding:3px 9px; font-family:inherit; font-size:14px; color:var(--ink-sub); cursor:pointer; line-height:1;
   }
-  .place-card-fav-btn.is-fav { background:var(--accent-bg); border-color:var(--accent); color:var(--accent-deep); }
+  .place-card-fav-sm.is-fav { background:var(--accent-bg); border-color:var(--accent); color:var(--accent-deep); }
+  .place-card-memo-btn {
+    background:var(--surface-warm); border:1.5px solid var(--line-soft); border-radius:100px;
+    padding:3px 9px; font-family:inherit; font-size:14px; color:var(--ink-sub); cursor:pointer; line-height:1;
+  }
+  .place-card-map-row { display:flex; gap:6px; }
   .place-card-map-btn {
-    flex:1; display:flex; align-items:center; justify-content:center; gap:4px;
-    background:var(--mint-bg); border:1.5px solid var(--mint); border-radius:100px; padding:6px 12px;
-    font-family:inherit; font-size:12px; color:var(--mint-deep); font-weight:700; text-decoration:none;
+    flex:1; display:flex; align-items:center; justify-content:center; gap:3px;
+    background:var(--mint-bg); border:1.5px solid var(--mint); border-radius:100px; padding:6px 8px;
+    font-family:inherit; font-size:11px; color:var(--mint-deep); font-weight:700; text-decoration:none; white-space:nowrap;
   }
-  .place-card-hours { font-size:11px; color:var(--ink-sub); margin-top:2px; }
-  .place-card-map-row { display:flex; gap:6px; margin-top:8px; }
   .place-card-nikowa-btn {
-    flex:1; display:flex; align-items:center; justify-content:center; gap:4px;
+    flex:1; display:flex; align-items:center; justify-content:center; gap:3px;
     background:var(--surface-warm); border:1.5px solid var(--line-soft); border-radius:100px;
-    padding:6px 8px; font-family:inherit; font-size:11.5px; color:var(--ink-light); font-weight:700;
-    cursor:default; opacity:0.5; white-space:nowrap;
+    padding:6px 8px; font-family:inherit; font-size:11px; color:var(--ink-sub); font-weight:700;
+    cursor:pointer; white-space:nowrap;
   }
-  .place-card-memo-row { display:flex; align-items:center; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--line-soft); }
-  .place-card-memo-label { font-size:12px; color:var(--ink-sub); white-space:nowrap; }
-  .place-card-memo-input { flex:1; border:1.5px solid var(--line-soft); border-radius:8px; padding:5px 8px; font-size:12px; font-family:inherit; color:var(--ink); background:var(--bg); outline:none; min-width:0; }
+  .place-card-memo-row {
+    display:flex; align-items:center; gap:8px; margin-top:8px;
+    padding-top:8px; border-top:1px solid var(--line-soft);
+  }
+  .place-card-memo-input {
+    flex:1; border:1.5px solid var(--line-soft); border-radius:8px;
+    padding:5px 8px; font-size:12px; font-family:inherit; color:var(--ink);
+    background:var(--bg); outline:none; min-width:0;
+  }
   .place-card-memo-input:focus { border-color:var(--mint); }
   .places-fav-empty { text-align:center; padding:40px 24px; color:var(--ink-sub); font-size:13px; }
-  .places-fav-list { display:flex; flex-direction:column; gap:10px; padding:4px 16px 24px; }
+  .places-fav-list { display:flex; flex-direction:column; gap:8px; padding:4px 16px 24px; }
+  .town-coming-soon { display:flex; flex-direction:column; align-items:center; padding:48px 24px 32px; }
 
   /* 施設カード：お気に入り・♡数 */
   .facility-card.is-fav {
@@ -2359,9 +2354,9 @@
 
 <nav class="bottom-nav" id="bottomNav" style="display:none;">
   <button class="nav-btn active" data-view="houses"><span class="nav-icon">🏘️</span><span>ホーム</span></button>
-  <button class="nav-btn nav-back-btn" id="navBackBtn" onclick="navBack()" style="display:none;"><span class="nav-icon">‹</span><span>戻る</span></button>
-  <button class="nav-btn" data-view="town"><span class="nav-icon">🏙</span><span>タウン</span></button>
   <button class="nav-btn" data-view="schedule"><span class="nav-icon">📅</span><span>よてい</span></button>
+  <button class="nav-btn" data-view="town"><span class="nav-icon">🏙</span><span>タウン</span></button>
+  <button class="nav-btn nav-back-btn" id="navBackBtn" onclick="navBack()" style="display:none;"><span class="nav-icon">‹</span><span>戻る</span></button>
   <button class="nav-btn" data-view="settings"><span class="nav-icon">⚙️</span><span>せってい</span></button>
 </nav>
 </div>
@@ -2841,8 +2836,8 @@ function spriteSVG(kind, palette, sizeAttr) {
   return '<span class="pet-emoji'+extraClass+'" aria-label="'+kind+'">'+emoji+'</span>';
 }
 
-const STORAGE_KEY = 'nikowa_data_v3';
-const PHOTOS_KEY = 'nikowa_photos_v3';
+let STORAGE_KEY = 'nikowa_data_v3';
+let PHOTOS_KEY = 'nikowa_photos_v3';
 const MAX_PHOTO_SIZE = 800;
 const THEMES = {
   mint: { name: 'チョコミント', emoji: '🍃', pattern: 'gingham',
@@ -3058,6 +3053,12 @@ let data = {
 };
 let photos = {};
 let currentView = 'top';
+let currentMode = 'pet'; // 'pet' | 'me' | 'kids'
+const MODE_KEYS = {
+  pet:  { data: 'nikowa_data_v3',      photos: 'nikowa_photos_v3' },
+  me:   { data: 'nikowa_me_data_v3',   photos: 'nikowa_me_photos_v3' },
+  kids: { data: 'nikowa_kids_data_v3', photos: 'nikowa_kids_photos_v3' },
+};
 let selectedPetType = 'dog';
 let selectedPlace = 'home';
 let selectedTag = 'ケア';
@@ -3112,7 +3113,21 @@ function loadData() {
   } else {
     data.petTab = 'care';
   }
-  if (data.houses.length === 0) {
+  if (currentMode === 'me') {
+    let meChanged = false;
+    if (!data.houses.find(h => h.id === 'me_house')) {
+      data.houses = [{ id: 'me_house', name: 'ME', createdAt: Date.now() }];
+      data.activeHouseId = 'me_house';
+      meChanged = true;
+    }
+    if (!data.pets.find(p => p.id === 'me_diary')) {
+      data.pets.push({ id: 'me_diary', name: data.user.name || 'わたし', kind: 'me', houseId: 'me_house' });
+      meChanged = true;
+    }
+    data.activeHouseId = 'me_house';
+    data.activePetId = 'me_diary';
+    if (meChanged) saveData();
+  } else if (data.houses.length === 0) {
     const h = { id: 'house_' + Date.now(), name: 'マイホーム', createdAt: Date.now() };
     data.houses.push(h);
     data.activeHouseId = h.id;
@@ -3122,7 +3137,31 @@ function loadData() {
 function saveData() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
   catch(e) { showToast('保存できませんでした😢'); }
-  saveToFirestore();
+  if (currentMode === 'pet') saveToFirestore();
+}
+
+function switchMode(targetMode) {
+  const savedThemeId = data.themeId;
+  const savedUser = JSON.parse(JSON.stringify(data.user || { name: '', avatar: '🌷' }));
+  currentMode = targetMode;
+  const keys = MODE_KEYS[targetMode] || MODE_KEYS.pet;
+  STORAGE_KEY = keys.data;
+  PHOTOS_KEY = keys.photos;
+  data = { houses: [], pets: [], records: {}, schedules: [], posts: [], tasks: [], facilities: [], activeHouseId: null, activePetId: null, selectedHouseId: null, lastUsedHouseId: null, themeId: savedThemeId || 'mint', user: savedUser, petTab: 'care' };
+  photos = {};
+  loadData();
+}
+
+function goToMeMode() {
+  switchMode('me');
+  currentView = 'me';
+  render();
+}
+
+function goToKidsMode() {
+  switchMode('kids');
+  currentView = 'houses';
+  render();
 }
 // ===== Firebase =====
 let currentUser = null;
@@ -3910,38 +3949,17 @@ function renderTop() {
 
   // モード選択カード
   html += '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">どこへいく？</h2></div>';
+  html += '<div class="section-head"><h2 class="section-title">Welcome</h2></div>';
   html += '</div>';
   html += '<div class="mode-section">';
-
-  // ME
-  html += '<button class="mode-card mode-me" onclick="openComingSoon(\'ME\')">';
-  html += '<div class="mode-card-icon">🌸</div>';
-  html += '<div class="mode-card-body">';
-  html += '<div class="mode-card-title">ME<span class="mode-card-badge">じゅんびちゅう</span></div>';
-  html += '<div class="mode-card-sub">じぶんのこと・ビューティー・自己投資</div>';
-  html += '</div>';
-  html += '<div class="mode-card-arrow">›</div>';
+  html += '<button class="mode-card mode-me" onclick="goToMeMode()">';
+  html += '<div class="mode-card-icon">🌸</div><div class="mode-card-label">ME</div>';
   html += '</button>';
-
-  // PET
   html += '<button class="mode-card mode-pet" onclick="goToPetMode()">';
-  html += '<div class="mode-card-icon">🐾</div>';
-  html += '<div class="mode-card-body">';
-  html += '<div class="mode-card-title">PET</div>';
-  html += '<div class="mode-card-sub">うちの子のお世話・記録・思い出</div>';
-  html += '</div>';
-  html += '<div class="mode-card-arrow">›</div>';
+  html += '<div class="mode-card-icon">🐾</div><div class="mode-card-label">PET</div>';
   html += '</button>';
-
-  // KIDS
-  html += '<button class="mode-card mode-kids" onclick="openComingSoon(\'KIDS\')">';
-  html += '<div class="mode-card-icon">🧸</div>';
-  html += '<div class="mode-card-body">';
-  html += '<div class="mode-card-title">KIDS<span class="mode-card-badge">じゅんびちゅう</span></div>';
-  html += '<div class="mode-card-sub">こどもの記録・成長・作品・語録</div>';
-  html += '</div>';
-  html += '<div class="mode-card-arrow">›</div>';
+  html += '<button class="mode-card mode-kids" onclick="goToKidsMode()">';
+  html += '<div class="mode-card-icon">🧸</div><div class="mode-card-label">KIDS</div>';
   html += '</button>';
   html += '</div>'; // mode-section閉じ
 
@@ -3950,12 +3968,53 @@ function renderTop() {
 }
 
 function goToPetMode() {
+  if (currentMode !== 'pet') switchMode('pet');
   currentView = 'houses';
   render();
 }
 
 function openComingSoon(modeName) {
-  showToast(modeName + 'モードは準備中やで🌸');
+  showToast(modeName + '準備中やで🌸');
+}
+
+function renderMeMode() {
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav('pet');
+  const app = document.getElementById('app');
+  let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">🌸 ME</div><div class="topbar-spacer"></div></div>';
+  html += '<div style="padding:24px 16px 8px;">';
+  html += '<button onclick="goMeDiary()" style="width:100%;display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:20px;padding:20px 22px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,0.06);text-align:left;">';
+  html += '<div style="font-size:42px;line-height:1;flex-shrink:0;">📔</div>';
+  html += '<div style="flex:1;">';
+  html += '<div style="font-size:16px;font-weight:800;color:var(--ink-dark);">日記</div>';
+  html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:4px;">わたしのきろく</div>';
+  html += '</div>';
+  html += '<div style="font-size:22px;color:var(--ink-light);">›</div>';
+  html += '</button>';
+  html += '</div>';
+  html += '<div style="height:80px;"></div>';
+  app.innerHTML = html;
+}
+
+function goMeDiary() {
+  currentView = 'me_diary';
+  diaryCalMonth = null;
+  diaryCalSelected = null;
+  render();
+}
+
+function renderMeDiary() {
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav('pet');
+  const app = document.getElementById('app');
+  const mePet = data.pets.find(p => p.id === 'me_diary');
+  if (!mePet) { currentView = 'me'; render(); return; }
+  let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">📔 わたしの日記</div><div class="topbar-spacer"></div></div>';
+  html += '<div class="pet-tab-content">';
+  html += renderTabDiary(mePet);
+  html += '</div>';
+  html += '<div style="height:80px;"></div>';
+  app.innerHTML = html;
 }
 
 function renderHouses() {
@@ -4392,13 +4451,16 @@ function backToHouse() {
 }
 
 function navBack() {
-  // 戻る順：pet → house → houses → top、facility → town → top
-  if (currentView === 'pet') backToHouse();
+  if (currentView === 'me_diary') { currentView = 'me'; render(); }
+  else if (currentView === 'me') { switchMode('pet'); currentView = 'top'; render(); }
+  else if (currentView === 'pet') backToHouse();
   else if (currentView === 'house') backToHouses();
-  else if (currentView === 'houses') { currentView = 'top'; render(); }
+  else if (currentView === 'houses') {
+    if (currentMode === 'kids') { switchMode('pet'); currentView = 'top'; render(); }
+    else { currentView = 'top'; render(); }
+  }
   else if (currentView === 'facility') { currentView = 'town'; render(); }
   else if (currentView === 'town' || currentView === 'schedule' || currentView === 'settings') {
-    // タウン・よてい・せっていからはトップに戻る
     currentView = 'top';
     render();
   }
@@ -4670,7 +4732,7 @@ function renderTabDiary(pet) {
     titleSuffix = '（'+(dt.getMonth()+1)+'/'+dt.getDate()+'）';
   }
   html += '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">'+escapeHtml(pet.name)+'のおもいで'+titleSuffix+'</h2><span class="section-count">'+posts.length+'件</span>';
+  html += '<div class="section-head"><h2 class="section-title">'+(pet.id === 'me_diary' ? 'わたしのきろく' : escapeHtml(pet.name)+'のおもいで')+titleSuffix+'</h2><span class="section-count">'+posts.length+'件</span>';
   html += '<button class="section-link" onclick="openDiaryComposeModal(\''+pet.id+'\''+(diaryCalSelected ? ', \''+diaryCalSelected+'\'' : '')+')">＋ 日記を書く</button>';
   if (diaryCalSelected) html += '<button class="cal-clear-btn" onclick="diaryCalSelected=null; render();">×解除</button>';
   html += '</div>';
@@ -4721,7 +4783,7 @@ function renderDiaryComposeModal(pet) {
     }
     html += '</div>';
   }
-  html += '<textarea class="memo-textarea diary-textarea" id="memoInput" placeholder="'+escapeHtml(pet.name)+'は どんな様子？" oninput="postDraft.text = this.value">'+escapeHtml(postDraft.text || '')+'</textarea>';
+  html += '<textarea class="memo-textarea diary-textarea" id="memoInput" placeholder="'+(pet.id === 'me_diary' ? 'きょう どんな日だった？' : escapeHtml(pet.name)+'は どんな様子？')+'" oninput="postDraft.text = this.value">'+escapeHtml(postDraft.text || '')+'</textarea>';
   html += '</div>';
   html += '<div class="diary-actions-row">';
   html += '<button class="diary-photo-add-btn" onclick="addMemoPhotoMultiModal(\''+pet.id+'\')">📷 写真を追加</button>';
@@ -5067,7 +5129,8 @@ let editingFacilityId = null;
 let selectedFacilityCategory = 'hospital';
 let townSearchQuery = '';
 let townCategoryFilter = 'all';
-let townActiveTab = 'my'; // 'my' | 'search' | 'fav'
+let townMainTab = 'me';    // 'me' | 'pet' | 'kids' | 'work'
+let townSubTab  = 'search'; // 'town' | 'search' | 'fav'
 let placesSelCat = '';
 let placesText = '';
 let placesResults = [];
@@ -5079,7 +5142,6 @@ let placesAddrText = '';
 const PLACES_API_KEY = 'AIzaSyAuvEPLh6ih-QWNTVZ90Wlo5f5LNjgXbGk';
 const PLACES_FAV_KEY = 'nikowa_place_favorites';
 const PLACES_MEMO_KEY = 'nikowa_place_memos';
-let placesModeTab = 'me'; // 'me' | 'pet' | 'kids' | 'work'
 const PLACES_CATS_MAP = {
   me: [
     { id: 'beauty',     icon: '💇', label: '美容院',         keyword: '美容院' },
@@ -5119,39 +5181,64 @@ const PLACES_CATS_MAP = {
     { id: 'parking',    icon: '🅿️', label: '駐車場',          type: 'parking' },
   ],
 };
-let placesFavs = {};
-try { placesFavs = JSON.parse(localStorage.getItem(PLACES_FAV_KEY) || '{}'); } catch(e) {}
+let placesFavs = { me: {}, pet: {}, kids: {}, work: {} };
+try {
+  const _pf = JSON.parse(localStorage.getItem(PLACES_FAV_KEY) || '{}');
+  if (_pf && ('me' in _pf || 'pet' in _pf || 'kids' in _pf || 'work' in _pf)) {
+    placesFavs = { me: _pf.me||{}, pet: _pf.pet||{}, kids: _pf.kids||{}, work: _pf.work||{} };
+  }
+} catch(e) {}
 let placesMemos = {};
 try { placesMemos = JSON.parse(localStorage.getItem(PLACES_MEMO_KEY) || '{}'); } catch(e) {}
+
+const TOWN_MAIN_TABS = [
+  { id: 'me',   icon: '🌸', label: 'ME' },
+  { id: 'pet',  icon: '🐾', label: 'PET' },
+  { id: 'kids', icon: '🧸', label: 'KIDS' },
+  { id: 'work', icon: '💼', label: 'OFFICE' },
+];
 
 function renderTown() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('town');
-  let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">🏙 にこわタウン</div><button class="topbar-btn" onclick="openAddFacilityModal()">＋</button></div>';
+  let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">🏙 にこわタウン</div><div class="topbar-spacer"></div></div>';
   html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9.5px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
 
-  // タブバー
-  html += '<div class="town-tabs">';
-  html += '<button class="town-tab '+(townActiveTab==='my'?'active':'')+'" onclick="setTownTab(\'my\')">🏠 マイ場所</button>';
-  html += '<button class="town-tab '+(townActiveTab==='search'?'active':'')+'" onclick="setTownTab(\'search\')">🔍 近くを探す</button>';
-  html += '<button class="town-tab '+(townActiveTab==='fav'?'active':'')+'" onclick="setTownTab(\'fav\')">♡ お気に入り</button>';
+  // ── メインタブ
+  html += '<div class="town-main-tabs">';
+  for (const t of TOWN_MAIN_TABS) {
+    html += '<button class="town-main-tab '+(townMainTab===t.id?'active':'')+'" onclick="setTownMainTab(\''+t.id+'\')">';
+    html += '<span class="town-main-tab-icon">'+t.icon+'</span>'+t.label+'</button>';
+  }
   html += '</div>';
 
-  if (townActiveTab === 'search') {
-    // ===== Places API 検索タブ =====
+  // ── サブタブ
+  html += '<div class="town-sub-tabs">';
+  html += '<button class="town-sub-tab '+(townSubTab==='town'  ?'active':'')+'" onclick="setTownSubTab(\'town\')">🏘 タウン</button>';
+  html += '<button class="town-sub-tab '+(townSubTab==='search'?'active':'')+'" onclick="setTownSubTab(\'search\')">🔍 検索</button>';
+  html += '<button class="town-sub-tab '+(townSubTab==='fav'   ?'active':'')+'" onclick="setTownSubTab(\'fav\')">♡ お気に入り</button>';
+  html += '</div>';
+
+  // ── タウンサブタブ：準備中
+  if (townSubTab === 'town') {
+    html += '<div class="town-coming-soon">';
+    html += '<img id="townAnzuImg" style="width:90px;height:90px;margin-bottom:12px;" alt="あんず" src="">';
+    html += '<div class="anzu-bubble">ただいま準備中やで🌷</div>';
+    html += '</div>';
+    document.getElementById('app').innerHTML = html;
+    (function(){ var el=document.getElementById('townAnzuImg'); if(el) el.src=ANZU_IMG; })();
+    return;
+  }
+
+  // ── 検索サブタブ
+  if (townSubTab === 'search') {
     html += '<div class="places-section">';
     html += '<div class="places-loc-toggle">';
     html += '<button class="places-loc-btn '+(placesLocMode==='geo'?'active':'')+'" onclick="setPlacesLocMode(\'geo\')">📍 現在地で探す</button>';
     html += '<button class="places-loc-btn '+(placesLocMode==='addr'?'active':'')+'" onclick="setPlacesLocMode(\'addr\')">🏙 住所で探す</button>';
     html += '</div>';
-    html += '<div class="places-mode-tabs">';
-    html += '<button class="places-mode-tab '+(placesModeTab==='me'  ?'active':'')+'" onclick="setPlacesModeTab(\'me\')">🌸 ME</button>';
-    html += '<button class="places-mode-tab '+(placesModeTab==='pet' ?'active':'')+'" onclick="setPlacesModeTab(\'pet\')">🐾 PET</button>';
-    html += '<button class="places-mode-tab '+(placesModeTab==='kids'?'active':'')+'" onclick="setPlacesModeTab(\'kids\')">🧸 KIDS</button>';
-    html += '<button class="places-mode-tab '+(placesModeTab==='work'?'active':'')+'" onclick="setPlacesModeTab(\'work\')">💼 WORK</button>';
-    html += '</div>';
     html += '<div class="places-cat-chips">';
-    for (const c of (PLACES_CATS_MAP[placesModeTab] || [])) {
+    for (const c of (PLACES_CATS_MAP[townMainTab] || [])) {
       html += '<button class="places-cat-chip '+(placesSelCat===c.id?'active':'')+'" onclick="setPlacesCat(\''+c.id+'\')">'+c.icon+' '+c.label+'</button>';
     }
     html += '</div>';
@@ -5169,7 +5256,7 @@ function renderTown() {
     if (placesLoading) {
       html += '<div class="places-loading">'+(placesLocMode==='addr'?'🏙 住所から検索中…':'📍 現在地を取得して検索中…')+'</div>';
     } else if (placesResults.length > 0) {
-      const cat = (PLACES_CATS_MAP[placesModeTab] || []).find(c => c.id === placesSelCat);
+      const cat = (PLACES_CATS_MAP[townMainTab] || []).find(c => c.id === placesSelCat);
       const catIcon = cat ? cat.icon : '📍';
       html += '<div class="place-cards">';
       for (const p of placesResults) html += buildPlaceCardHtml(p, catIcon);
@@ -5191,11 +5278,11 @@ function renderTown() {
     return;
   }
 
-  if (townActiveTab === 'fav') {
-    // ===== お気に入りタブ =====
-    const favList = Object.values(placesFavs);
+  // ── お気に入りサブタブ
+  if (townSubTab === 'fav') {
+    const favList = Object.values(placesFavs[townMainTab] || {});
     if (favList.length === 0) {
-      html += '<div class="places-fav-empty">♡ お気に入りがまだないよ<br><span style="font-size:11px;margin-top:8px;display:block;">「近くを探す」で見つけた場所を保存してね🌷</span></div>';
+      html += '<div class="places-fav-empty">♡ お気に入りがまだないよ<br><span style="font-size:11px;margin-top:8px;display:block;">「検索」で見つけた場所を保存してね🌷</span></div>';
     } else {
       html += '<div class="places-fav-list">';
       for (const p of favList) html += buildFavCardHtml(p);
@@ -5205,7 +5292,11 @@ function renderTown() {
     return;
   }
 
-  // townActiveTab === 'my': 既存のマイ場所機能
+  // フォールバック（到達しないはずだが念のため）
+  document.getElementById('app').innerHTML = html;
+  return;
+
+  // ── 旧マイ場所（タブからは非表示・コード保持）
   const facilities = data.facilities || [];
   
   // 検索フィルター適用
@@ -5747,6 +5838,7 @@ document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
   btn.onclick = () => {
     const view = btn.dataset.view;
     if (view === 'houses') {
+      if (currentMode !== 'pet') switchMode('pet');
       currentView = 'top';
       data.selectedHouseId = null;
       saveData();
@@ -6592,16 +6684,16 @@ function renderSidePanel() {
 }
 
 // ===== Places API 連携 =====
-function setTownTab(tab) {
-  townActiveTab = tab;
-  renderTown();
-}
-
-function setPlacesModeTab(tab) {
-  placesModeTab = tab;
+function setTownMainTab(tab) {
+  townMainTab = tab;
   placesSelCat = '';
   placesResults = [];
   placesError = '';
+  renderTown();
+}
+
+function setTownSubTab(tab) {
+  townSubTab = tab;
   renderTown();
 }
 
@@ -6615,12 +6707,14 @@ function savePlacesFavs() {
 }
 
 function togglePlaceFav(placeId) {
-  const p = placesResultsMap[placeId] || placesFavs[placeId];
+  const tab = townMainTab;
+  if (!placesFavs[tab]) placesFavs[tab] = {};
+  const p = placesResultsMap[placeId] || placesFavs[tab][placeId];
   if (!p) return;
-  if (placesFavs[placeId]) {
-    delete placesFavs[placeId];
+  if (placesFavs[tab][placeId]) {
+    delete placesFavs[tab][placeId];
   } else {
-    placesFavs[placeId] = p;
+    placesFavs[tab][placeId] = p;
   }
   savePlacesFavs();
   renderTown();
@@ -6659,57 +6753,90 @@ function _buildMemoHtml(id) {
     + '</div>';
 }
 
+function toggleMemoInput(safeId) {
+  const row = document.getElementById('memo-row-' + safeId);
+  if (!row) return;
+  const isHidden = row.style.display === 'none' || row.style.display === '';
+  row.style.display = isHidden ? 'flex' : 'none';
+  if (isHidden) { const inp = row.querySelector('input'); if (inp) inp.focus(); }
+}
+
 function buildPlaceCardHtml(p, catIcon) {
   const id = p.id || '';
+  const safeId = id.replace(/[^a-zA-Z0-9]/g, '_');
+  const idEsc = id.replace(/'/g, "\\'");
   const name = (p.displayName && p.displayName.text) || '名称不明';
   const addr = p.formattedAddress || '';
   const isOpen = p.currentOpeningHours && p.currentOpeningHours.openNow;
   const hasOpenInfo = p.currentOpeningHours != null;
   const hours = _getTodayHours(p.currentOpeningHours);
   const mapsUrl = p.googleMapsUri || '';
-  const isFav = !!placesFavs[id];
-  if (id) {
-    placesResultsMap[id] = { id, name, addr, mapsUrl, catIcon };
-  }
-  const openHtml = hasOpenInfo
-    ? '<span class="place-card-open '+(isOpen?'open':'closed')+'">'+(isOpen?'🟢 営業中':'🔴 閉店中')+'</span>'
-    : '';
+  const isFav = !!(placesFavs[townMainTab] && placesFavs[townMainTab][id]);
+  const memo = escapeHtml(placesMemos[id] || '');
+  if (id) placesResultsMap[id] = { id, name, addr, mapsUrl, catIcon };
+
   let html = '<div class="place-card">';
   html += '<div class="place-card-header">';
   html += '<div class="place-card-icon">'+catIcon+'</div>';
   html += '<div class="place-card-info">';
   html += '<div class="place-card-name">'+escapeHtml(name)+'</div>';
-  html += '<div class="place-card-addr">📍 '+escapeHtml(addr)+'</div>';
-  if (hours) html += '<div class="place-card-hours">🕐 '+escapeHtml(hours)+'</div>';
+  html += '<div class="place-card-addr">'+escapeHtml(addr)+'</div>';
   html += '</div></div>';
-  if (openHtml) html += '<div class="place-card-meta">'+openHtml+'</div>';
-  html += '<div class="place-card-actions">';
-  html += '<button class="place-card-fav-btn '+(isFav?'is-fav':'')+'" onclick="togglePlaceFav(\''+id.replace(/'/g,"\\'")+'\')">'+( isFav?'♥ 保存済':'♡ お気に入り')+'</button>';
+  html += '<div class="place-card-status-row">';
+  if (hasOpenInfo) html += '<span class="place-card-open '+(isOpen?'open':'closed')+'">'+(isOpen?'🟢 営業中':'🔴 閉店中')+'</span>';
+  if (hours) html += '<span class="place-card-hours">'+escapeHtml(hours)+'</span>';
+  html += '<div class="place-card-status-actions">';
+  html += '<button class="place-card-fav-sm '+(isFav?'is-fav':'')+'" onclick="togglePlaceFav(\''+idEsc+'\')">'+(isFav?'♥':'♡')+'</button>';
+  html += '<button class="place-card-memo-btn" onclick="toggleMemoInput(\''+safeId+'\')">📝</button>';
+  html += '</div></div>';
+  html += '<div class="place-card-map-row">';
+  if (mapsUrl) {
+    html += '<a class="place-card-map-btn" href="'+escapeHtml(mapsUrl)+'" target="_blank" rel="noopener noreferrer">🗺 Googleで見る</a>';
+  } else {
+    html += '<span class="place-card-map-btn" style="opacity:0.4;cursor:default;">🗺 Googleで見る</span>';
+  }
+  html += '<button class="place-card-nikowa-btn" onclick="showToast(\'準備中やで🌷\')">🏠 にこわで見る</button>';
   html += '</div>';
-  html += _buildMapRowHtml(mapsUrl);
-  html += _buildMemoHtml(id);
+  html += '<div class="place-card-memo-row" id="memo-row-'+safeId+'" style="display:none;">';
+  html += '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" onblur="savePlaceMemo(\''+idEsc+'\', this.value)">';
+  html += '</div>';
   html += '</div>';
   return html;
 }
 
 function buildFavCardHtml(p) {
   const id = p.id || '';
+  const safeId = id.replace(/[^a-zA-Z0-9]/g, '_');
+  const idEsc = id.replace(/'/g, "\\'");
   const name = p.name || (p.displayName && p.displayName.text) || '名称不明';
   const addr = p.addr || p.formattedAddress || '';
   const mapsUrl = p.mapsUrl || p.googleMapsUri || '';
   const catIcon = p.catIcon || '📍';
+  const memo = escapeHtml(placesMemos[id] || '');
+
   let html = '<div class="place-card">';
   html += '<div class="place-card-header">';
   html += '<div class="place-card-icon">'+catIcon+'</div>';
   html += '<div class="place-card-info">';
   html += '<div class="place-card-name">'+escapeHtml(name)+'</div>';
-  html += '<div class="place-card-addr">📍 '+escapeHtml(addr)+'</div>';
+  html += '<div class="place-card-addr">'+escapeHtml(addr)+'</div>';
   html += '</div></div>';
-  html += '<div class="place-card-actions">';
-  html += '<button class="place-card-fav-btn is-fav" onclick="togglePlaceFav(\''+id.replace(/'/g,"\\'")+'\')" style="background:var(--accent-bg);border-color:var(--accent);color:var(--accent-deep);">♥ 保存済 (解除)</button>';
+  html += '<div class="place-card-status-row">';
+  html += '<div class="place-card-status-actions" style="margin-left:0;">';
+  html += '<button class="place-card-fav-sm is-fav" onclick="togglePlaceFav(\''+idEsc+'\')">♥</button>';
+  html += '<button class="place-card-memo-btn" onclick="toggleMemoInput(\''+safeId+'\')">📝</button>';
+  html += '</div></div>';
+  html += '<div class="place-card-map-row">';
+  if (mapsUrl) {
+    html += '<a class="place-card-map-btn" href="'+escapeHtml(mapsUrl)+'" target="_blank" rel="noopener noreferrer">🗺 Googleで見る</a>';
+  } else {
+    html += '<span class="place-card-map-btn" style="opacity:0.4;cursor:default;">🗺 Googleで見る</span>';
+  }
+  html += '<button class="place-card-nikowa-btn" onclick="showToast(\'準備中やで🌷\')">🏠 にこわで見る</button>';
   html += '</div>';
-  html += _buildMapRowHtml(mapsUrl);
-  html += _buildMemoHtml(id);
+  html += '<div class="place-card-memo-row" id="memo-row-'+safeId+'" style="display:none;">';
+  html += '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" onblur="savePlaceMemo(\''+idEsc+'\', this.value)">';
+  html += '</div>';
   html += '</div>';
   return html;
 }
@@ -6758,10 +6885,18 @@ async function searchPlaces() {
     }
   }
 
-  const cat = (PLACES_CATS_MAP[placesModeTab] || []).find(c => c.id === placesSelCat);
+  const TAB_PREFIX = { me: '', pet: 'ペット可', kids: '子連れOK', work: 'Wi-Fi' };
+  const tabPrefix = TAB_PREFIX[townMainTab] || '';
+  const cat = (PLACES_CATS_MAP[townMainTab] || []).find(c => c.id === placesSelCat);
   try {
     let places = [];
-    if (placesText.trim()) {
+    if (tabPrefix) {
+      // プレフィックスあり → 常にテキスト検索
+      const catKw = cat ? (cat.keyword || cat.label) : '';
+      const userKw = placesText.trim();
+      const baseKw = [userKw, catKw].filter(Boolean).join(' ') || 'スポット';
+      places = await _placesTextSearch(tabPrefix + ' ' + baseKw, lat, lng);
+    } else if (placesText.trim()) {
       const query = (cat ? cat.label + ' ' : '') + placesText.trim();
       places = await _placesTextSearch(query, lat, lng);
     } else if (cat) {
@@ -6769,7 +6904,7 @@ async function searchPlaces() {
         ? await _placesNearby(cat.type, lat, lng)
         : await _placesTextSearch(cat.keyword, lat, lng);
     } else {
-      places = await _placesTextSearch('ペット', lat, lng);
+      places = await _placesTextSearch('スポット', lat, lng);
     }
     placesResults = places;
     placesLoading = false;
@@ -7104,6 +7239,8 @@ function deleteWeightRecord(petId, recordId) {
 let _suppressScrollTop = false;
 function render() {
   if (currentView === 'top') renderTop();
+  else if (currentView === 'me') renderMeMode();
+  else if (currentView === 'me_diary') renderMeDiary();
   else if (currentView === 'houses') renderHouses();
   else if (currentView === 'house') renderHouse();
   else if (currentView === 'pet') renderPet();
