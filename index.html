@@ -2100,6 +2100,13 @@
     font-size:11.5px; color:var(--ink-sub); font-weight:600;
   }
   .places-loc-btn.active { background:var(--mint-deep); border-color:var(--mint-deep); color:white; }
+  .places-mode-tabs { display:flex; gap:4px; margin-bottom:10px; }
+  .places-mode-tab {
+    flex:1; background:var(--surface); border:1.5px solid var(--line-soft);
+    border-radius:100px; padding:7px 4px; cursor:pointer; font-family:inherit;
+    font-size:10.5px; color:var(--ink-sub); font-weight:700; white-space:nowrap;
+  }
+  .places-mode-tab.active { background:var(--accent); border-color:var(--accent); color:white; }
   .places-loading { text-align:center; padding:32px 0; color:var(--ink-sub); font-size:13px; }
   .places-error {
     text-align:center; padding:14px 16px; color:#C62828; font-size:13px;
@@ -2137,6 +2144,18 @@
     background:var(--mint-bg); border:1.5px solid var(--mint); border-radius:100px; padding:6px 12px;
     font-family:inherit; font-size:12px; color:var(--mint-deep); font-weight:700; text-decoration:none;
   }
+  .place-card-hours { font-size:11px; color:var(--ink-sub); margin-top:2px; }
+  .place-card-map-row { display:flex; gap:6px; margin-top:8px; }
+  .place-card-nikowa-btn {
+    flex:1; display:flex; align-items:center; justify-content:center; gap:4px;
+    background:var(--surface-warm); border:1.5px solid var(--line-soft); border-radius:100px;
+    padding:6px 8px; font-family:inherit; font-size:11.5px; color:var(--ink-light); font-weight:700;
+    cursor:default; opacity:0.5; white-space:nowrap;
+  }
+  .place-card-memo-row { display:flex; align-items:center; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--line-soft); }
+  .place-card-memo-label { font-size:12px; color:var(--ink-sub); white-space:nowrap; }
+  .place-card-memo-input { flex:1; border:1.5px solid var(--line-soft); border-radius:8px; padding:5px 8px; font-size:12px; font-family:inherit; color:var(--ink); background:var(--bg); outline:none; min-width:0; }
+  .place-card-memo-input:focus { border-color:var(--mint); }
   .places-fav-empty { text-align:center; padding:40px 24px; color:var(--ink-sub); font-size:13px; }
   .places-fav-list { display:flex; flex-direction:column; gap:10px; padding:4px 16px 24px; }
 
@@ -2305,6 +2324,28 @@
     margin-bottom: 6px;
     margin-top: 0;
   }
+
+  /* ── Vaccine tab ──────────────────────────────── */
+  .vaccine-card { background: var(--surface); border-radius: 14px; padding: 14px 14px 12px; margin-bottom: 10px; border: 1.5px solid var(--line-soft); }
+  .vaccine-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .vaccine-name { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .vaccine-alert { font-size: 10.5px; background: #fff3cd; color: #856404; border-radius: 6px; padding: 2px 7px; font-weight: 700; flex-shrink: 0; }
+  .vaccine-meta { font-size: 11.5px; color: var(--ink-sub); line-height: 1.8; }
+  .vaccine-photo { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-top: 8px; cursor: pointer; display: block; }
+  .vaccine-btns { display: flex; gap: 8px; margin-top: 10px; }
+  .vaccine-btn-edit { flex: 1; background: var(--surface); border: 1.5px solid var(--line-soft); border-radius: 8px; padding: 6px; font-size: 12px; color: var(--ink-sub); cursor: pointer; font-family: inherit; font-weight: 600; }
+  .vaccine-btn-del { background: var(--surface); border: 1.5px solid #fcc; border-radius: 8px; padding: 6px 10px; font-size: 12px; color: #e06c75; cursor: pointer; font-family: inherit; font-weight: 600; }
+
+  /* ── Weight tab ───────────────────────────────── */
+  .weight-graph-wrap { background: var(--surface); border-radius: 14px; padding: 12px 10px 8px; margin-bottom: 14px; border: 1.5px solid var(--line-soft); overflow: hidden; }
+  .weight-graph-title { font-size: 11px; color: var(--ink-sub); font-weight: 700; margin-bottom: 6px; text-align: center; }
+  .weight-card { background: var(--surface); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; border: 1.5px solid var(--line-soft); display: flex; align-items: center; justify-content: space-between; }
+  .weight-card-left { display: flex; flex-direction: column; gap: 3px; }
+  .weight-date { font-size: 11.5px; color: var(--ink-sub); }
+  .weight-val { font-size: 18px; font-weight: 800; color: var(--mint-deep); }
+  .weight-btns { display: flex; gap: 6px; }
+  .weight-btn-edit { background: var(--surface); border: 1.5px solid var(--line-soft); border-radius: 8px; padding: 5px 9px; font-size: 12px; color: var(--ink-sub); cursor: pointer; font-family: inherit; font-weight: 600; }
+  .weight-btn-del { background: var(--surface); border: 1.5px solid #fcc; border-radius: 8px; padding: 5px 9px; font-size: 12px; color: #e06c75; cursor: pointer; font-family: inherit; font-weight: 600; }
 
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -2723,6 +2764,43 @@
 <!-- 日記投稿モーダル（+日記ボタンで開く） -->
 <div class="modal" id="diaryComposeModal"><div class="modal-content" id="diaryComposeModalContent">
   <!-- 中身は renderDiaryComposeModal() で動的生成 -->
+</div></div>
+
+<div class="modal" id="vaccineModal"><div class="modal-content">
+  <h2 class="modal-title">💉 ワクチン記録</h2>
+  <input type="hidden" id="vaccineRecordId">
+  <input type="hidden" id="vaccinePetId">
+  <div class="form-group"><label class="form-label">ワクチン名 <span style="color:var(--accent-deep);font-size:10px;">*</span></label>
+    <input type="text" class="form-input" id="vaccineNameInput" placeholder="例：混合ワクチン、狂犬病など" maxlength="40"></div>
+  <div class="form-group"><label class="form-label">接種日</label>
+    <input type="date" class="form-input" id="vaccineDateInput"></div>
+  <div class="form-group"><label class="form-label">次回予定日</label>
+    <input type="date" class="form-input" id="vaccineNextDateInput"></div>
+  <div class="form-group"><label class="form-label">メモ</label>
+    <input type="text" class="form-input" id="vaccineMemoInput" placeholder="例：副反応なし、など" maxlength="80"></div>
+  <div class="form-group"><label class="form-label">証明書写真</label>
+    <div id="vaccinePhotoArea">
+      <button class="btn btn-secondary" style="width:100%;" id="vaccinePhotoBtn" onclick="pickVaccinePhoto()">📷 写真をえらぶ</button>
+    </div>
+  </div>
+  <div class="modal-btns">
+    <button class="btn btn-secondary" onclick="closeModal('vaccineModal')">キャンセル</button>
+    <button class="btn btn-primary" onclick="saveVaccineRecord()">保存する</button>
+  </div>
+</div></div>
+
+<div class="modal" id="weightModal"><div class="modal-content">
+  <h2 class="modal-title">⚖️ 体重記録</h2>
+  <input type="hidden" id="weightRecordId">
+  <input type="hidden" id="weightPetId">
+  <div class="form-group"><label class="form-label">日付 <span style="color:var(--accent-deep);font-size:10px;">*</span></label>
+    <input type="date" class="form-input" id="weightDateInput"></div>
+  <div class="form-group"><label class="form-label">体重 (kg) <span style="color:var(--accent-deep);font-size:10px;">*</span></label>
+    <input type="number" class="form-input" id="weightValInput" placeholder="例：3.5" step="0.01" min="0" max="999"></div>
+  <div class="modal-btns">
+    <button class="btn btn-secondary" onclick="closeModal('weightModal')">キャンセル</button>
+    <button class="btn btn-primary" onclick="saveWeightRecord()">保存する</button>
+  </div>
 </div></div>
 
 <input type="file" id="hiddenFileInput" accept="image/*" style="display:none;">
@@ -4380,11 +4458,15 @@ function renderPet() {
     html += '<button class="pet-tab-btn '+(tab==='calendar'?'active':'')+'" onclick="setPetTab(\'calendar\')"><span class="pet-tab-icon">📅</span><span class="pet-tab-label">カレンダー</span></button>';
     html += '<button class="pet-tab-btn '+(tab==='diary'?'active':'')+'" onclick="setPetTab(\'diary\')"><span class="pet-tab-icon">📓</span><span class="pet-tab-label">日記</span></button>';
     html += '<button class="pet-tab-btn '+(tab==='photo'?'active':'')+'" onclick="setPetTab(\'photo\')"><span class="pet-tab-icon">📷</span><span class="pet-tab-label">写真</span></button>';
+    html += '<button class="pet-tab-btn '+(tab==='vaccine'?'active':'')+'" onclick="setPetTab(\'vaccine\')"><span class="pet-tab-icon">💉</span><span class="pet-tab-label">ワクチン</span></button>';
+    html += '<button class="pet-tab-btn '+(tab==='weight'?'active':'')+'" onclick="setPetTab(\'weight\')"><span class="pet-tab-icon">⚖️</span><span class="pet-tab-label">体重</span></button>';
     html += '</div><div class="pet-tab-content">';
     if (tab === 'care') html += renderTabCare(pet, careItems);
     else if (tab === 'calendar') html += renderTabCalendar(pet);
     else if (tab === 'diary') html += renderTabDiary(pet);
     else if (tab === 'photo') html += renderTabPhoto(pet);
+    else if (tab === 'vaccine') html += renderTabVaccine(pet);
+    else if (tab === 'weight') html += renderTabWeight(pet);
     else html += renderTabCare(pet, careItems);
     html += '</div>';
   } else if (pet.place === 'rainbow') {
@@ -4996,16 +5078,51 @@ let placesLocMode = 'geo'; // 'geo' | 'addr'
 let placesAddrText = '';
 const PLACES_API_KEY = 'AIzaSyAuvEPLh6ih-QWNTVZ90Wlo5f5LNjgXbGk';
 const PLACES_FAV_KEY = 'nikowa_place_favorites';
-const PLACES_CATS = [
-  { id: 'vet',     icon: '🏥', label: '動物病院',       type: 'veterinary_care' },
-  { id: 'trim',    icon: '✂️', label: 'トリミング',     keyword: 'トリミングサロン' },
-  { id: 'cafe',    icon: '☕', label: 'カフェ',          type: 'cafe' },
-  { id: 'petshop', icon: '🛍', label: 'ペットショップ',  type: 'pet_store' },
-  { id: 'park',    icon: '🌳', label: '公園',            type: 'park' },
-  { id: 'dogrun',  icon: '🐾', label: 'ドッグラン',     keyword: 'ドッグラン' },
-];
+const PLACES_MEMO_KEY = 'nikowa_place_memos';
+let placesModeTab = 'me'; // 'me' | 'pet' | 'kids' | 'work'
+const PLACES_CATS_MAP = {
+  me: [
+    { id: 'beauty',     icon: '💇', label: '美容院',         keyword: '美容院' },
+    { id: 'cafe',       icon: '☕', label: 'カフェ',          type: 'cafe' },
+    { id: 'restaurant', icon: '🍽', label: 'レストラン',      type: 'restaurant' },
+    { id: 'gym',        icon: '💪', label: 'ジム',            keyword: 'フィットネスジム' },
+    { id: 'shopping',   icon: '🛍', label: 'ショッピング',    type: 'shopping_mall' },
+    { id: 'bookstore',  icon: '📚', label: '本屋',            type: 'book_store' },
+    { id: 'cinema',     icon: '🎬', label: '映画館',          type: 'movie_theater' },
+    { id: 'camp',       icon: '⛺', label: 'キャンプ場',      keyword: 'キャンプ場' },
+    { id: 'anime',      icon: '🎌', label: 'アニメショップ',  keyword: 'アニメショップ' },
+    { id: 'hospital',   icon: '🏥', label: '病院',            type: 'hospital' },
+    { id: 'pharmacy',   icon: '💊', label: '薬局',            type: 'pharmacy' },
+  ],
+  pet: [
+    { id: 'vet',        icon: '🏥', label: '動物病院',        type: 'veterinary_care' },
+    { id: 'trim',       icon: '✂️', label: 'トリミング',      keyword: 'トリミングサロン' },
+    { id: 'petshop',    icon: '🛍', label: 'ペットショップ',  type: 'pet_store' },
+    { id: 'dogrun',     icon: '🐾', label: 'ドッグラン',      keyword: 'ドッグラン' },
+    { id: 'petcafe',    icon: '🐱', label: 'ペットカフェ',    keyword: 'ペットカフェ' },
+  ],
+  kids: [
+    { id: 'pediatric',  icon: '👶', label: '小児科',          keyword: '小児科' },
+    { id: 'dental',     icon: '🦷', label: '歯科',            type: 'dentist' },
+    { id: 'nursery',    icon: '🏫', label: '保育園',          keyword: '保育園' },
+    { id: 'kidscafe',   icon: '☕', label: '子供OKカフェ',    keyword: '子供連れOKカフェ' },
+    { id: 'park',       icon: '🌳', label: '公園',            type: 'park' },
+    { id: 'library',    icon: '📖', label: '図書館',          type: 'library' },
+    { id: 'juku',       icon: '📝', label: '塾',              keyword: '学習塾' },
+  ],
+  work: [
+    { id: 'cityhall',   icon: '🏛', label: '役所',            keyword: '市役所' },
+    { id: 'post',       icon: '📮', label: '郵便局',          type: 'post_office' },
+    { id: 'bank',       icon: '🏦', label: '銀行',            type: 'bank' },
+    { id: 'cowork',     icon: '💻', label: 'コワーキング',    keyword: 'コワーキングスペース' },
+    { id: 'hotel',      icon: '🏨', label: 'ホテル',          type: 'lodging' },
+    { id: 'parking',    icon: '🅿️', label: '駐車場',          type: 'parking' },
+  ],
+};
 let placesFavs = {};
 try { placesFavs = JSON.parse(localStorage.getItem(PLACES_FAV_KEY) || '{}'); } catch(e) {}
+let placesMemos = {};
+try { placesMemos = JSON.parse(localStorage.getItem(PLACES_MEMO_KEY) || '{}'); } catch(e) {}
 
 function renderTown() {
   document.getElementById('bottomNav').style.display = 'flex';
@@ -5027,8 +5144,14 @@ function renderTown() {
     html += '<button class="places-loc-btn '+(placesLocMode==='geo'?'active':'')+'" onclick="setPlacesLocMode(\'geo\')">📍 現在地で探す</button>';
     html += '<button class="places-loc-btn '+(placesLocMode==='addr'?'active':'')+'" onclick="setPlacesLocMode(\'addr\')">🏙 住所で探す</button>';
     html += '</div>';
+    html += '<div class="places-mode-tabs">';
+    html += '<button class="places-mode-tab '+(placesModeTab==='me'  ?'active':'')+'" onclick="setPlacesModeTab(\'me\')">🌸 ME</button>';
+    html += '<button class="places-mode-tab '+(placesModeTab==='pet' ?'active':'')+'" onclick="setPlacesModeTab(\'pet\')">🐾 PET</button>';
+    html += '<button class="places-mode-tab '+(placesModeTab==='kids'?'active':'')+'" onclick="setPlacesModeTab(\'kids\')">🧸 KIDS</button>';
+    html += '<button class="places-mode-tab '+(placesModeTab==='work'?'active':'')+'" onclick="setPlacesModeTab(\'work\')">💼 WORK</button>';
+    html += '</div>';
     html += '<div class="places-cat-chips">';
-    for (const c of PLACES_CATS) {
+    for (const c of (PLACES_CATS_MAP[placesModeTab] || [])) {
       html += '<button class="places-cat-chip '+(placesSelCat===c.id?'active':'')+'" onclick="setPlacesCat(\''+c.id+'\')">'+c.icon+' '+c.label+'</button>';
     }
     html += '</div>';
@@ -5046,7 +5169,7 @@ function renderTown() {
     if (placesLoading) {
       html += '<div class="places-loading">'+(placesLocMode==='addr'?'🏙 住所から検索中…':'📍 現在地を取得して検索中…')+'</div>';
     } else if (placesResults.length > 0) {
-      const cat = PLACES_CATS.find(c => c.id === placesSelCat);
+      const cat = (PLACES_CATS_MAP[placesModeTab] || []).find(c => c.id === placesSelCat);
       const catIcon = cat ? cat.icon : '📍';
       html += '<div class="place-cards">';
       for (const p of placesResults) html += buildPlaceCardHtml(p, catIcon);
@@ -6474,6 +6597,14 @@ function setTownTab(tab) {
   renderTown();
 }
 
+function setPlacesModeTab(tab) {
+  placesModeTab = tab;
+  placesSelCat = '';
+  placesResults = [];
+  placesError = '';
+  renderTown();
+}
+
 function setPlacesCat(catId) {
   placesSelCat = placesSelCat === catId ? '' : catId;
   renderTown();
@@ -6495,25 +6626,50 @@ function togglePlaceFav(placeId) {
   renderTown();
 }
 
+function _getTodayHours(openingHours) {
+  if (!openingHours || !openingHours.periods || !openingHours.periods.length) return '';
+  const day = new Date().getDay();
+  const period = openingHours.periods.find(p => p.open && p.open.day === day);
+  if (!period) return '';
+  const fmt = (h, m) => String(h).padStart(2, '0') + ':' + String(m || 0).padStart(2, '0');
+  const openT = fmt(period.open.hour, period.open.minute);
+  if (!period.close) return openT + '〜';
+  return openT + '〜' + fmt(period.close.hour, period.close.minute);
+}
+
+function savePlaceMemo(placeId, value) {
+  placesMemos[placeId] = value;
+  try { localStorage.setItem(PLACES_MEMO_KEY, JSON.stringify(placesMemos)); } catch(e) {}
+}
+
+function _buildMapRowHtml(mapsUrl) {
+  const mapBtn = mapsUrl
+    ? '<a class="place-card-map-btn" href="'+escapeHtml(mapsUrl)+'" target="_blank" rel="noopener noreferrer">🗺 Googleマップで見る</a>'
+    : '<span class="place-card-map-btn" style="opacity:0.4;cursor:default;">🗺 Googleマップで見る</span>';
+  return '<div class="place-card-map-row">' + mapBtn + '<button class="place-card-nikowa-btn" disabled>🏠 にこわで見る</button></div>';
+}
+
+function _buildMemoHtml(id) {
+  if (!currentUser) return '';
+  const idEsc = id.replace(/'/g, "\\'");
+  const memo = escapeHtml(placesMemos[id] || '');
+  return '<div class="place-card-memo-row">'
+    + '<span class="place-card-memo-label">✏️</span>'
+    + '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" onblur="savePlaceMemo(\''+idEsc+'\', this.value)">'
+    + '</div>';
+}
+
 function buildPlaceCardHtml(p, catIcon) {
   const id = p.id || '';
   const name = (p.displayName && p.displayName.text) || '名称不明';
   const addr = p.formattedAddress || '';
-  const rating = p.rating;
   const isOpen = p.currentOpeningHours && p.currentOpeningHours.openNow;
   const hasOpenInfo = p.currentOpeningHours != null;
+  const hours = _getTodayHours(p.currentOpeningHours);
   const mapsUrl = p.googleMapsUri || '';
   const isFav = !!placesFavs[id];
   if (id) {
-    placesResultsMap[id] = { id, name, addr, rating, mapsUrl, catIcon };
-  }
-  let ratingHtml = '';
-  if (rating) {
-    let stars = '';
-    const full = Math.floor(rating);
-    for (let i = 0; i < full; i++) stars += '★';
-    if (rating - full >= 0.5) stars += '☆';
-    ratingHtml = '<span class="place-card-rating">⭐ '+rating.toFixed(1)+' '+escapeHtml(stars)+'</span>';
+    placesResultsMap[id] = { id, name, addr, mapsUrl, catIcon };
   }
   const openHtml = hasOpenInfo
     ? '<span class="place-card-open '+(isOpen?'open':'closed')+'">'+(isOpen?'🟢 営業中':'🔴 閉店中')+'</span>'
@@ -6524,16 +6680,15 @@ function buildPlaceCardHtml(p, catIcon) {
   html += '<div class="place-card-info">';
   html += '<div class="place-card-name">'+escapeHtml(name)+'</div>';
   html += '<div class="place-card-addr">📍 '+escapeHtml(addr)+'</div>';
+  if (hours) html += '<div class="place-card-hours">🕐 '+escapeHtml(hours)+'</div>';
   html += '</div></div>';
-  if (ratingHtml || openHtml) {
-    html += '<div class="place-card-meta">'+ratingHtml+openHtml+'</div>';
-  }
+  if (openHtml) html += '<div class="place-card-meta">'+openHtml+'</div>';
   html += '<div class="place-card-actions">';
-  html += '<button class="place-card-fav-btn '+(isFav?'is-fav':'')+'" onclick="togglePlaceFav(\''+id.replace(/'/g,"\\'")+'\')">'+(isFav?'♥ 保存済':'♡ お気に入り')+'</button>';
-  if (mapsUrl) {
-    html += '<a class="place-card-map-btn" href="'+escapeHtml(mapsUrl)+'" target="_blank" rel="noopener noreferrer">🗺 詳細を見る</a>';
-  }
-  html += '</div></div>';
+  html += '<button class="place-card-fav-btn '+(isFav?'is-fav':'')+'" onclick="togglePlaceFav(\''+id.replace(/'/g,"\\'")+'\')">'+( isFav?'♥ 保存済':'♡ お気に入り')+'</button>';
+  html += '</div>';
+  html += _buildMapRowHtml(mapsUrl);
+  html += _buildMemoHtml(id);
+  html += '</div>';
   return html;
 }
 
@@ -6552,10 +6707,10 @@ function buildFavCardHtml(p) {
   html += '</div></div>';
   html += '<div class="place-card-actions">';
   html += '<button class="place-card-fav-btn is-fav" onclick="togglePlaceFav(\''+id.replace(/'/g,"\\'")+'\')" style="background:var(--accent-bg);border-color:var(--accent);color:var(--accent-deep);">♥ 保存済 (解除)</button>';
-  if (mapsUrl) {
-    html += '<a class="place-card-map-btn" href="'+escapeHtml(mapsUrl)+'" target="_blank" rel="noopener noreferrer">🗺 詳細を見る</a>';
-  }
-  html += '</div></div>';
+  html += '</div>';
+  html += _buildMapRowHtml(mapsUrl);
+  html += _buildMemoHtml(id);
+  html += '</div>';
   return html;
 }
 
@@ -6603,7 +6758,7 @@ async function searchPlaces() {
     }
   }
 
-  const cat = PLACES_CATS.find(c => c.id === placesSelCat);
+  const cat = (PLACES_CATS_MAP[placesModeTab] || []).find(c => c.id === placesSelCat);
   try {
     let places = [];
     if (placesText.trim()) {
@@ -6653,7 +6808,7 @@ async function _placesNearby(type, lat, lng) {
     headers: {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': PLACES_API_KEY,
-      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.currentOpeningHours,places.googleMapsUri'
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.currentOpeningHours,places.googleMapsUri'
     },
     body: JSON.stringify({
       includedTypes: [type],
@@ -6674,7 +6829,7 @@ async function _placesTextSearch(query, lat, lng) {
     headers: {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': PLACES_API_KEY,
-      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.currentOpeningHours,places.googleMapsUri'
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.currentOpeningHours,places.googleMapsUri'
     },
     body: JSON.stringify({
       textQuery: query,
@@ -6687,6 +6842,263 @@ async function _placesTextSearch(query, lat, lng) {
   const json = await resp.json();
   if (!resp.ok) throw new Error((json.error && json.error.message) || 'API error');
   return json.places || [];
+}
+
+// ── Vaccine Records ──────────────────────────────────────────────────
+function renderTabVaccine(pet) {
+  if (!data.vaccineRecords) data.vaccineRecords = {};
+  const records = (data.vaccineRecords[pet.id] || []).slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let html = '<div class="section">';
+  html += '<div class="section-head"><h2 class="section-title">💉 ワクチン記録</h2>';
+  html += '<button class="section-link" onclick="openVaccineModal(\''+pet.id+'\',null)">＋ 追加</button></div>';
+  if (records.length === 0) {
+    html += '<div class="empty-state" style="margin:0;"><div class="emoji">💉</div>';
+    html += '<div class="empty-state-title">ワクチン記録がありません</div>';
+    html += '<div class="empty-state-text">接種記録をつけよう🌱</div></div>';
+  } else {
+    for (const r of records) {
+      let alertHtml = '';
+      if (r.nextDate) {
+        const nd = new Date(r.nextDate); nd.setHours(0, 0, 0, 0);
+        const diff = Math.floor((nd - today) / 86400000);
+        if (diff <= 30) {
+          const label = diff < 0 ? '期限切れ' : diff === 0 ? '今日' : diff + '日後';
+          alertHtml = '<span class="vaccine-alert">⚠️ ' + label + '</span>';
+        }
+      }
+      html += '<div class="vaccine-card">';
+      html += '<div class="vaccine-card-head"><span class="vaccine-name">' + escapeHtml(r.name) + '</span>' + alertHtml + '</div>';
+      html += '<div class="vaccine-meta">';
+      if (r.date) html += '💉 接種日：' + r.date + '<br>';
+      if (r.nextDate) html += '📅 次回予定：' + r.nextDate + '<br>';
+      if (r.memo) html += '📝 ' + escapeHtml(r.memo) + '<br>';
+      html += '</div>';
+      if (r.photoId && photos[r.photoId]) {
+        html += '<img class="vaccine-photo" src="' + photos[r.photoId] + '" onclick="openPhotoViewer(\'' + r.photoId + '\')" alt="">';
+      }
+      html += '<div class="vaccine-btns">';
+      html += '<button class="vaccine-btn-edit" onclick="openVaccineModal(\'' + pet.id + '\',\'' + r.id + '\')">✏️ 編集</button>';
+      html += '<button class="vaccine-btn-del" onclick="deleteVaccineRecord(\'' + pet.id + '\',\'' + r.id + '\')">🗑</button>';
+      html += '</div></div>';
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+let _vaccinePhotoId = null;
+function openVaccineModal(petId, recordId) {
+  _vaccinePhotoId = null;
+  document.getElementById('vaccinePetId').value = petId;
+  document.getElementById('vaccineRecordId').value = recordId || '';
+  document.getElementById('vaccineNameInput').value = '';
+  document.getElementById('vaccineDateInput').value = '';
+  document.getElementById('vaccineNextDateInput').value = '';
+  document.getElementById('vaccineMemoInput').value = '';
+  document.getElementById('vaccinePhotoBtn').style.display = '';
+  const prevImg = document.getElementById('vaccinePhotoPreview');
+  if (prevImg) prevImg.remove();
+  if (recordId) {
+    const recs = data.vaccineRecords && data.vaccineRecords[petId];
+    const r = recs && recs.find(x => x.id === recordId);
+    if (r) {
+      document.getElementById('vaccineNameInput').value = r.name || '';
+      document.getElementById('vaccineDateInput').value = r.date || '';
+      document.getElementById('vaccineNextDateInput').value = r.nextDate || '';
+      document.getElementById('vaccineMemoInput').value = r.memo || '';
+      if (r.photoId && photos[r.photoId]) {
+        _vaccinePhotoId = r.photoId;
+        _showVaccinePhotoPreview(photos[r.photoId]);
+      }
+    }
+  }
+  document.getElementById('vaccineModal').classList.add('show');
+}
+
+function _showVaccinePhotoPreview(src) {
+  const area = document.getElementById('vaccinePhotoArea');
+  let img = document.getElementById('vaccinePhotoPreview');
+  if (!img) {
+    img = document.createElement('img');
+    img.id = 'vaccinePhotoPreview';
+    img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:10px;display:block;margin-bottom:6px;cursor:pointer;';
+    img.title = 'タップで写真を削除';
+    img.onclick = () => { _vaccinePhotoId = null; img.remove(); document.getElementById('vaccinePhotoBtn').style.display = ''; };
+    area.insertBefore(img, area.firstChild);
+  }
+  img.src = src;
+  document.getElementById('vaccinePhotoBtn').style.display = 'none';
+}
+
+async function pickVaccinePhoto() {
+  const photoId = await pickPhoto();
+  if (photoId) {
+    _vaccinePhotoId = photoId;
+    _showVaccinePhotoPreview(photos[photoId]);
+  }
+}
+
+function saveVaccineRecord() {
+  const petId = document.getElementById('vaccinePetId').value;
+  const recordId = document.getElementById('vaccineRecordId').value;
+  const name = document.getElementById('vaccineNameInput').value.trim();
+  if (!name) { showToast('ワクチン名を入力してね'); return; }
+  if (!data.vaccineRecords) data.vaccineRecords = {};
+  if (!data.vaccineRecords[petId]) data.vaccineRecords[petId] = [];
+  const existing = data.vaccineRecords[petId].find(x => x.id === recordId);
+  const rec = {
+    id: recordId || ('v' + Date.now()),
+    name,
+    date: document.getElementById('vaccineDateInput').value,
+    nextDate: document.getElementById('vaccineNextDateInput').value,
+    memo: document.getElementById('vaccineMemoInput').value.trim(),
+    photoId: _vaccinePhotoId || '',
+    createdAt: existing ? existing.createdAt : Date.now(),
+  };
+  if (recordId && existing) {
+    data.vaccineRecords[petId][data.vaccineRecords[petId].indexOf(existing)] = rec;
+  } else {
+    data.vaccineRecords[petId].push(rec);
+  }
+  closeModal('vaccineModal');
+  saveData();
+  _suppressScrollTop = true;
+  render();
+  showToast('ワクチン記録を保存しました💉');
+}
+
+function deleteVaccineRecord(petId, recordId) {
+  if (!confirm('この記録を削除しますか？')) return;
+  if (data.vaccineRecords && data.vaccineRecords[petId]) {
+    data.vaccineRecords[petId] = data.vaccineRecords[petId].filter(x => x.id !== recordId);
+  }
+  saveData();
+  _suppressScrollTop = true;
+  render();
+  showToast('削除しました');
+}
+
+// ── Weight Records ────────────────────────────────────────────────────
+function renderTabWeight(pet) {
+  if (!data.weightRecords) data.weightRecords = {};
+  const records = (data.weightRecords[pet.id] || []).slice().sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0));
+  let html = '<div class="section">';
+  html += '<div class="section-head"><h2 class="section-title">⚖️ 体重記録</h2>';
+  html += '<button class="section-link" onclick="openWeightModal(\'' + pet.id + '\',null)">＋ 追加</button></div>';
+  if (records.length >= 2) html += _renderWeightGraph(records);
+  if (records.length === 0) {
+    html += '<div class="empty-state" style="margin:0;"><div class="emoji">⚖️</div>';
+    html += '<div class="empty-state-title">体重記録がありません</div>';
+    html += '<div class="empty-state-text">体重を記録して成長を見よう📈</div></div>';
+  } else {
+    for (const r of records.slice().reverse()) {
+      html += '<div class="weight-card">';
+      html += '<div class="weight-card-left"><span class="weight-date">' + r.date + '</span>';
+      html += '<span class="weight-val">' + parseFloat(r.weight).toFixed(2) + ' kg</span></div>';
+      html += '<div class="weight-btns">';
+      html += '<button class="weight-btn-edit" onclick="openWeightModal(\'' + pet.id + '\',\'' + r.id + '\')">✏️</button>';
+      html += '<button class="weight-btn-del" onclick="deleteWeightRecord(\'' + pet.id + '\',\'' + r.id + '\')">🗑</button>';
+      html += '</div></div>';
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+function _renderWeightGraph(records) {
+  const W = 320, H = 160, PL = 46, PR = 12, PT = 12, PB = 32;
+  const gW = W - PL - PR, gH = H - PT - PB;
+  const vals = records.map(r => parseFloat(r.weight));
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const range = maxV - minV || 1;
+  const n = records.length;
+  const xs = records.map((_, i) => PL + (i / (n - 1)) * gW);
+  const ys = vals.map(v => PT + gH - ((v - minV) / range) * gH);
+  const rawStep = range / 4;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep || 1)));
+  const step = Math.max(0.1, Math.ceil(rawStep / magnitude) * magnitude);
+  let gridLines = '';
+  for (let v = Math.floor(minV / step) * step; v <= maxV + step * 0.5; v = Math.round((v + step) * 1000) / 1000) {
+    const y = Math.round(PT + gH - ((v - minV) / range) * gH);
+    if (y < PT - 4 || y > PT + gH + 4) continue;
+    gridLines += '<line x1="' + PL + '" y1="' + y + '" x2="' + (W - PR) + '" y2="' + y + '" stroke="var(--line-soft)" stroke-width="1"/>';
+    gridLines += '<text x="' + (PL - 4) + '" y="' + (y + 4) + '" text-anchor="end" font-size="9" fill="var(--ink-sub)">' + v.toFixed(1) + '</text>';
+  }
+  const pts = xs.map((x, i) => x.toFixed(1) + ',' + ys[i].toFixed(1)).join(' ');
+  let dots = '';
+  for (let i = 0; i < n; i++) {
+    dots += '<circle cx="' + xs[i].toFixed(1) + '" cy="' + ys[i].toFixed(1) + '" r="3.5" fill="var(--mint-deep)" stroke="white" stroke-width="1.5"/>';
+  }
+  let xLabels = '';
+  const labelStep = Math.max(1, Math.floor(n / 4));
+  for (let i = 0; i < n; i += labelStep) {
+    xLabels += '<text x="' + xs[i].toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="9" fill="var(--ink-sub)">' + records[i].date.slice(5) + '</text>';
+  }
+  return '<div class="weight-graph-wrap"><div class="weight-graph-title">体重の変化</div>'
+    + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block;">'
+    + gridLines
+    + '<polyline points="' + pts + '" fill="none" stroke="var(--mint-deep)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'
+    + dots + xLabels
+    + '</svg></div>';
+}
+
+function openWeightModal(petId, recordId) {
+  document.getElementById('weightPetId').value = petId;
+  document.getElementById('weightRecordId').value = recordId || '';
+  const t = new Date();
+  const todayStr = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+  document.getElementById('weightDateInput').value = todayStr;
+  document.getElementById('weightValInput').value = '';
+  if (recordId) {
+    const recs = data.weightRecords && data.weightRecords[petId];
+    const r = recs && recs.find(x => x.id === recordId);
+    if (r) {
+      document.getElementById('weightDateInput').value = r.date || todayStr;
+      document.getElementById('weightValInput').value = r.weight || '';
+    }
+  }
+  document.getElementById('weightModal').classList.add('show');
+}
+
+function saveWeightRecord() {
+  const petId = document.getElementById('weightPetId').value;
+  const recordId = document.getElementById('weightRecordId').value;
+  const date = document.getElementById('weightDateInput').value;
+  const weightStr = document.getElementById('weightValInput').value;
+  const weight = parseFloat(weightStr);
+  if (!date) { showToast('日付を入力してね'); return; }
+  if (!weightStr || isNaN(weight) || weight <= 0) { showToast('体重を正しく入力してね'); return; }
+  if (!data.weightRecords) data.weightRecords = {};
+  if (!data.weightRecords[petId]) data.weightRecords[petId] = [];
+  const existing = data.weightRecords[petId].find(x => x.id === recordId);
+  const rec = {
+    id: recordId || ('w' + Date.now()),
+    date,
+    weight,
+    createdAt: existing ? existing.createdAt : Date.now(),
+  };
+  if (recordId && existing) {
+    data.weightRecords[petId][data.weightRecords[petId].indexOf(existing)] = rec;
+  } else {
+    data.weightRecords[petId].push(rec);
+  }
+  closeModal('weightModal');
+  saveData();
+  _suppressScrollTop = true;
+  render();
+  showToast('体重を記録しました⚖️');
+}
+
+function deleteWeightRecord(petId, recordId) {
+  if (!confirm('この記録を削除しますか？')) return;
+  if (data.weightRecords && data.weightRecords[petId]) {
+    data.weightRecords[petId] = data.weightRecords[petId].filter(x => x.id !== recordId);
+  }
+  saveData();
+  _suppressScrollTop = true;
+  render();
+  showToast('削除しました');
 }
 
 let _suppressScrollTop = false;
