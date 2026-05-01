@@ -1237,7 +1237,7 @@
   }
   .mode-page-tab {
     padding: 5px 4px 7px;
-    border: 1px solid rgba(255,255,255,0.6); border-top: none;
+    border: 1px solid rgba(255,255,255,0.35); border-top: none;
     border-radius: 0 0 10px 10px;
     background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -1249,12 +1249,14 @@
     transition: margin-bottom 0.12s ease, background 0.12s ease;
   }
   .mode-page-tab.active {
-    background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.28) 100%);
-    background-color: var(--accent);
-    border-color: rgba(255,255,255,0.5); color: white;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--accent) 35%, transparent) 0%,
+      color-mix(in srgb, var(--accent-deep) 30%, transparent) 100%);
+    border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+    color: var(--ink-dark);
+    backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%);
     margin-bottom: 0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.10), inset 0 0 0 1px rgba(255,255,255,0.5);
   }
   .mode-page-tab-edit {
     display: flex; align-items: center; gap: 2px;
@@ -1774,23 +1776,30 @@
   .btn-secondary { background: var(--surface-warm); color: var(--ink-dark); border: 1.5px solid var(--line); }
   .btn-danger { background: var(--accent-bg); color: var(--accent-deep); }
   .btn-mini { padding: 6px 10px; font-size: 11px; flex: 0 0 auto; }
-  .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
   .theme-btn {
     background: var(--surface); border: 2px solid var(--line);
-    border-radius: 14px; padding: 10px;
+    border-radius: 12px; padding: 7px 9px;
     cursor: pointer; font-family: inherit;
-    display: flex; flex-direction: column;
-    align-items: center; gap: 6px;
+    display: flex; flex-direction: row;
+    align-items: center; gap: 8px;
+    min-height: 0;
   }
   .theme-btn.selected { border-color: var(--accent); background: var(--accent-bg); }
   .theme-swatch {
-    width: 100%; height: 36px; border-radius: 10px; overflow: hidden;
+    width: 38px; height: 18px; border-radius: 6px; overflow: hidden;
     display: flex; border: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
   }
   .theme-swatch-bg { flex: 2; }
   .theme-swatch-mint { flex: 1; }
   .theme-swatch-accent { flex: 1; }
-  .theme-name { font-size: 12px; color: var(--ink-dark); font-weight: 700; }
+  .theme-name {
+    font-size: 10.5px; color: var(--ink-dark); font-weight: 700;
+    line-height: 1.2;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    min-width: 0;
+  }
   .avatar-grid {
     display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px;
     background: var(--surface-warm); padding: 8px; border-radius: 10px;
@@ -1813,6 +1822,43 @@
     max-width: 90%; text-align: center;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  /* モード切替時のセンタートースト（ME/Nest/PET/KIDS） */
+  .mode-switch-toast {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.85);
+    background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.30) 100%);
+    color: var(--accent-deep);
+    padding: 24px 44px;
+    border-radius: 22px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 4px;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow:
+      0 8px 28px rgba(0,0,0,0.15),
+      inset 0 0 0 1px rgba(255,255,255,0.6);
+    border: 1.5px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  .mode-switch-toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .mode-switch-toast-icon {
+    font-size: 52px; line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.18));
+  }
+  .mode-switch-toast-label {
+    font-size: 19px; font-weight: 800;
+    letter-spacing: 2px;
+    font-family: inherit;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+  }
   .sparkle {
     position: fixed; pointer-events: none;
     font-size: 14px; animation: sparkleFloat 0.9s ease-out forwards;
@@ -2330,7 +2376,7 @@
   .mode-idx-tab {
     flex:1; position:relative; z-index:1;
     padding:6px 4px 6px;
-    border:1px solid rgba(255,255,255,0.6); border-top:none;
+    border:1px solid rgba(255,255,255,0.35); border-top:none;
     border-radius:0 0 12px 12px;
     background:linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
     backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
@@ -2341,13 +2387,14 @@
     transition:margin-bottom 0.12s ease, background 0.12s ease, color 0.12s ease;
   }
   .mode-idx-tab.active {
-    background:linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.28) 100%);
-    background-color: var(--accent);
-    border-color:rgba(255,255,255,0.5);
-    color:white;
-    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--accent) 35%, transparent) 0%,
+      color-mix(in srgb, var(--accent-deep) 30%, transparent) 100%);
+    border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+    color: var(--ink-dark);
+    backdrop-filter:blur(20px) saturate(160%); -webkit-backdrop-filter:blur(20px) saturate(160%);
     margin-bottom:0; z-index:3;
-    box-shadow:0 2px 8px rgba(0,0,0,0.10);
+    box-shadow:0 2px 8px rgba(0,0,0,0.10), inset 0 0 0 1px rgba(255,255,255,0.5);
   }
   .mode-idx-tab.active::after {
     content:''; position:absolute; top:-2px; left:-1px; right:-1px;
@@ -2370,8 +2417,9 @@
   
   /* ── 家タブ（モードタブの下・小さめ） ─────────── */
   .house-idx-tabs {
-    display:flex; padding:0 8px; gap:3px;
-    overflow-x:auto; -webkit-overflow-scrolling:touch;
+    display:flex; padding:0 8px 14px; gap:3px;
+    overflow-x:auto; overflow-y:visible;
+    -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
     margin-top:-4px;
   }
@@ -2379,7 +2427,7 @@
   .house-idx-tab {
     flex-shrink:0;
     padding:5px 11px 5px;
-    border:1px solid rgba(255,255,255,0.6);
+    border:1px solid rgba(255,255,255,0.35);
     border-radius:0 0 10px 10px; border-top:none;
     background:linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
     backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
@@ -2388,15 +2436,31 @@
     cursor:pointer; line-height:1.3;
     display:flex; align-items:center; gap:4px;
     white-space:nowrap;
-    transition:background 0.12s ease, color 0.12s ease;
+    position:relative;
+    transition:transform 0.15s ease, background 0.12s ease, color 0.12s ease, box-shadow 0.15s ease;
   }
   .house-idx-tab.active {
-    background:linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.28) 100%);
-    background-color: var(--accent-deep);
-    border-color:rgba(255,255,255,0.5);
-    color:white;
-    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-    box-shadow:0 2px 6px rgba(0,0,0,0.10);
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--accent) 35%, transparent) 0%,
+      color-mix(in srgb, var(--accent-deep) 30%, transparent) 100%);
+    border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+    color: var(--ink-dark);
+    font-weight:800;
+    backdrop-filter:blur(20px) saturate(160%); -webkit-backdrop-filter:blur(20px) saturate(160%);
+    box-shadow:0 4px 12px rgba(0,0,0,0.18), 0 0 0 2px rgba(255,255,255,0.5), inset 0 0 0 1px rgba(255,255,255,0.5);
+    transform:scale(1.12) translateY(2px);
+    z-index:5;
+  }
+  .house-idx-tab.active::after {
+    content:'';
+    position:absolute;
+    bottom:-7px; left:50%;
+    width:0; height:0;
+    border-left:5px solid transparent;
+    border-right:5px solid transparent;
+    border-top:6px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    transform:translateX(-50%);
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,0.12));
   }
   .house-idx-tab-icon { font-size:12px; line-height:1; }
   .house-idx-tab-add {
@@ -2519,6 +2583,322 @@
   .places-fav-empty { text-align:center; padding:40px 24px; color:var(--ink-sub); font-size:13px; }
   .places-fav-list { display:flex; flex-direction:column; gap:8px; padding:4px 16px 24px; }
   .town-coming-soon { display:flex; flex-direction:column; align-items:center; padding:48px 24px 32px; }
+  /* ── タウン流れるニュース ─────────── */
+  .news-ticker {
+    margin: 8px 12px 4px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.5) 100%);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 14px;
+    padding: 10px 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+  }
+  .news-ticker::before {
+    content: '📢';
+    position: absolute;
+    top: 8px; left: 10px;
+    font-size: 14px;
+    opacity: 0.5;
+  }
+  .news-ticker-inner {
+    transition: opacity 0.25s ease;
+    padding-left: 22px;
+  }
+  .news-line1 {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--ink-sub);
+    margin-bottom: 3px;
+    white-space: nowrap; overflow: hidden;
+  }
+  .news-region {
+    color: var(--accent-deep);
+    font-weight: 800;
+    font-size: 10.5px;
+  }
+  .news-tag {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 10px;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    padding: 1px 7px;
+    border-radius: 100px;
+    flex-shrink: 0;
+  }
+  .news-kind { font-size: 12px; }
+  .news-name {
+    font-weight: 800; color: var(--ink-dark);
+    overflow: hidden; text-overflow: ellipsis;
+    flex: 1; min-width: 0;
+  }
+  .news-time {
+    font-size: 9.5px;
+    color: var(--ink-light);
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .news-line2 {
+    font-size: 12.5px;
+    color: var(--ink-dark);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    font-weight: 600;
+  }
+  .news-dots {
+    display: flex; gap: 3px; justify-content: center;
+    padding: 6px 0 0;
+  }
+  .news-dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: rgba(0,0,0,0.15);
+    transition: background 0.25s ease, width 0.25s ease;
+  }
+  .news-dot.active {
+    background: var(--accent-deep);
+    width: 12px; border-radius: 100px;
+  }
+  /* ── ショップカード一覧 ─────────── */
+  .shop-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 4px 12px 16px;
+  }
+  .shop-card-item {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border: 1px solid rgba(255,255,255,0.8);
+  }
+  .shop-card-item:active {
+    transform: scale(0.97);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .shop-card-img {
+    aspect-ratio: 1.3/1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px;
+    position: relative;
+  }
+  .shop-card-kind-badge {
+    position: absolute; top: 6px; left: 6px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    padding: 2px 7px; border-radius: 100px;
+    font-size: 9px; font-weight: 700;
+    color: var(--ink-dark);
+  }
+  .shop-card-info {
+    padding: 8px 10px 10px;
+  }
+  .shop-card-name {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--ink-dark);
+    margin-bottom: 4px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .shop-card-region {
+    font-size: 9.5px;
+    color: var(--accent-deep);
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+  .shop-card-tags {
+    display: flex; gap: 3px;
+    flex-wrap: wrap;
+  }
+  .shop-card-tag {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 100px;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+  }
+  .shop-list-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 14px 4px;
+    font-size: 11px;
+    color: var(--ink-sub);
+    font-weight: 700;
+  }
+  .shop-back-btn {
+    display: flex; align-items: center; gap: 4px;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.8);
+    border-radius: 100px;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    color: var(--ink-dark);
+    font-size: 11px; font-weight: 700;
+    font-family: inherit; cursor: pointer;
+    margin: 4px 12px 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  /* ── ショップサンプルページ ─────────────── */
+  .shop-sample-wrap {
+    --shop-bg: #FFE4E6;
+    --shop-accent: #D88A9C;
+    --shop-accent-light: #FBC8D2;
+    background: var(--shop-bg);
+    margin: 8px 12px 24px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transition: background 0.25s ease;
+  }
+  .shop-customizer {
+    padding: 12px 14px 8px;
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255,255,255,0.6);
+  }
+  .shop-customizer-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .shop-customizer-row:last-child { margin-bottom:0; }
+  .shop-customizer-label { font-size:10px; font-weight:700; color:var(--ink-dark); min-width:48px; }
+  .shop-color-dots { display:flex; gap:6px; flex-wrap:wrap; }
+  .shop-color-dot {
+    width:22px; height:22px; border-radius:50%;
+    border:2px solid white;
+    cursor:pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    transition: transform 0.15s ease;
+  }
+  .shop-color-dot.active {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 2px var(--ink-dark), 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .shop-kind-chips { display:flex; gap:4px; flex-wrap:wrap; }
+  .shop-kind-chip {
+    padding: 3px 10px; border-radius: 100px;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(0,0,0,0.08);
+    font-size: 10px; font-weight:700;
+    color: var(--ink-sub);
+    font-family: inherit; cursor:pointer;
+    transition: all 0.15s ease;
+  }
+  .shop-kind-chip.active {
+    background: var(--shop-accent);
+    color: white;
+    border-color: var(--shop-accent);
+  }
+  .shop-page { padding: 12px 14px 18px; }
+  .shop-hero {
+    width:100%; aspect-ratio: 16/9;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--shop-accent-light) 0%, var(--shop-bg) 100%);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 64px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .shop-card {
+    background: white;
+    border-radius: 16px;
+    padding: 14px 14px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .shop-name {
+    font-size: 18px; font-weight:800;
+    color: var(--ink-dark);
+    margin-bottom: 6px; line-height: 1.3;
+  }
+  .shop-kind-badge {
+    display:inline-flex; align-items:center; gap:3px;
+    padding: 2px 10px; border-radius: 100px;
+    background: var(--shop-accent-light);
+    color: var(--shop-accent);
+    font-size: 11px; font-weight:700;
+    margin-bottom: 8px;
+  }
+  .shop-address {
+    font-size: 12px; color: var(--ink-sub);
+    margin-bottom: 12px; line-height:1.5;
+  }
+  .shop-contact-grid {
+    display:grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+  }
+  .shop-contact-btn {
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding: 10px 4px;
+    background: rgba(255,255,255,0.8);
+    border: 1px solid var(--shop-accent-light);
+    border-radius: 12px;
+    color: var(--ink-dark);
+    font-size: 9.5px; font-weight:700;
+    font-family: inherit; cursor:pointer;
+  }
+  .shop-contact-btn-icon { font-size: 22px; }
+  .shop-section-title {
+    display:flex; align-items:center; gap:6px;
+    font-size: 13px; font-weight:800;
+    color: var(--shop-accent);
+    margin-bottom: 8px;
+  }
+  .shop-news-item {
+    display:flex; gap:8px; align-items:flex-start;
+    padding: 6px 0;
+    border-bottom: 1px dashed rgba(0,0,0,0.08);
+    font-size: 11.5px;
+  }
+  .shop-news-item:last-child { border-bottom:none; }
+  .shop-news-date {
+    color: var(--shop-accent);
+    font-weight: 800;
+    min-width: 56px;
+    font-size: 10.5px;
+  }
+  .shop-news-text {
+    flex:1; color: var(--ink-dark); line-height:1.5;
+  }
+  .shop-tags-list {
+    display:flex; flex-wrap:wrap; gap:5px;
+  }
+  .shop-tag-chip {
+    padding: 3px 10px; border-radius: 100px;
+    background: var(--shop-accent-light);
+    color: var(--shop-accent);
+    font-size: 10.5px; font-weight:700;
+  }
+  .shop-about-text {
+    font-size: 12px; color: var(--ink-dark);
+    line-height: 1.7;
+  }
+  .shop-photos {
+    display:grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+  }
+  .shop-photo {
+    aspect-ratio: 1/1; border-radius: 10px;
+    background: var(--shop-accent-light);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 32px;
+  }
+  .shop-reserve-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--shop-accent);
+    color: white;
+    border: none; border-radius: 14px;
+    font-size: 14px; font-weight: 800;
+    font-family: inherit; cursor:pointer;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  }
 
   /* 施設カード：お気に入り・♡数 */
   .facility-card.is-fav {
@@ -2752,7 +3132,7 @@
         <div class="onb-theme-label">ソーダ</div>
       </button>
       <button type="button" class="onb-theme-btn" data-theme="cinderella" onclick="setThemeFromOnboarding('cinderella')">
-        <div class="onb-theme-dots"><span style="background:#F0F4F8"></span><span style="background:#A0B8D8"></span><span style="background:#6888B8"></span></div>
+        <div class="onb-theme-dots"><span style="background:#FFFFFF"></span><span style="background:#87CEEB"></span><span style="background:#E8C868"></span></div>
         <div class="onb-theme-label">シンデレラ</div>
       </button>
     </div>
@@ -3317,7 +3697,7 @@ const THEMES = {
     headerGrad: 'linear-gradient(180deg, #FEF4F4 0%, #FBE2E8 50%, #F4BCC8 100%)' },
   honey: { name: 'ハニーレモン', emoji: '🍋', pattern: 'polka', cardShape: 'circle',
     vars: { '--bg':'#FFFBD0', '--surface':'#FFFFFF', '--surface-warm':'#FFF8C8', '--line':'#E8E070', '--line-soft':'#F0E890', '--ink-dark':'#4A4008', '--ink':'#6A5818', '--ink-sub':'#907830', '--ink-light':'#B8A058', '--mint':'#70EE7C', '--mint-deep':'#40C848', '--mint-bg':'#B0F0B8', '--accent':'#FF8387', '--accent-deep':'#D85058', '--accent-bg':'#FFD0D2', '--today-bg':'#FFF056', '--today-border':'#D8C820', '--warm-yellow':'#FFF056', '--soft-purple':'#D8C098' },
-    paperColor: 'rgba(255,252,220,0.85)',
+    paperColor: 'rgba(255,255,255,0.95)',
     headerGrad: 'linear-gradient(180deg, #FFFEE0 0%, #FFF056 50%, #70EE7C 100%)' },
   pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham', cardShape: 'circle',
     vars: { '--bg':'#FFDFAB', '--surface':'#FFFFFF', '--surface-warm':'#FCF1DA', '--line':'#EBD4A8', '--line-soft':'#F2E2C2', '--ink-dark':'#6B4A28', '--ink':'#8A6440', '--ink-sub':'#B0926A', '--ink-light':'#D4BC98', '--mint':'#E8C088', '--mint-deep':'#C28848', '--mint-bg':'#FBE2B8', '--accent':'#F0A0B2', '--accent-deep':'#C26880', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8B898' },
@@ -3355,10 +3735,10 @@ const THEMES = {
     paperColor: 'rgba(100,160,80,0.1)',
     headerGrad: 'linear-gradient(180deg, #ECF4E0 0%, #D0E4B0 50%, #B0D080 100%)' },
   // ===== 大人キレイ目 ×3 =====
-  cinderella: { name: 'シンデレラ', emoji: '👑', pattern: 'fleurdelis', cardShape: 'diamond',
-    vars: { '--bg':'#F0F4F8', '--surface':'#FFFFFF', '--surface-warm':'#EEF2F8', '--line':'#D0D8E0', '--line-soft':'#DDE4EC', '--ink-dark':'#2A3040', '--ink':'#404858', '--ink-sub':'#707888', '--ink-light':'#A0A8B8', '--mint':'#A8B8D0', '--mint-deep':'#6880A8', '--mint-bg':'#D0D8E8', '--accent':'#A0B8D8', '--accent-deep':'#6888B8', '--accent-bg':'#D8E4F0', '--today-bg':'#E8F0F8', '--today-border':'#A0B8D0', '--warm-yellow':'#E0D8C0', '--soft-purple':'#B0A8C8' },
-    paperColor: 'rgba(160,175,200,0.12)',
-    headerGrad: 'linear-gradient(180deg, #F8FAFC 0%, #E8F0F8 50%, #D0DCE8 100%)' },
+  cinderella: { name: 'シンデレラ', emoji: '👑', pattern: 'rhombus', cardShape: 'rounded',
+    vars: { '--bg':'#F5F9FC', '--surface':'#FFFFFF', '--surface-warm':'#E8F2F8', '--line':'#C8DDED', '--line-soft':'#DCE8F0', '--ink-dark':'#1A2838', '--ink':'#2C4258', '--ink-sub':'#5A8098', '--ink-light':'#9CB8C8', '--mint':'#87CEEB', '--mint-deep':'#3F9FD0', '--mint-bg':'#C8E4F0', '--accent':'#E8C868', '--accent-deep':'#C8A848', '--accent-bg':'#F8E8B8', '--today-bg':'#FCEFC8', '--today-border':'#E8C868', '--warm-yellow':'#E8C868', '--soft-purple':'#B0A0C8' },
+    paperColor: '#B8DFEC',
+    headerGrad: 'linear-gradient(180deg, #F5F9FC 0%, #C8E4F0 50%, #87CEEB 100%)' },
   neon: { name: 'ネオン', emoji: '✨', pattern: 'dot', cardShape: 'diamond',
     vars: { '--bg':'#1A1A2E', '--surface':'#252540', '--surface-warm':'#252540', '--line':'#3A3A58', '--line-soft':'#303048', '--ink-dark':'#F0ECF8', '--ink':'#D8D0E8', '--ink-sub':'#B0A8C8', '--ink-light':'#8078A0', '--mint':'#00ABE1', '--mint-deep':'#0090C0', '--mint-bg':'#1A3048', '--accent':'#C8236B', '--accent-deep':'#A01050', '--accent-bg':'#3A1A28', '--today-bg':'#2A2A40', '--today-border':'#00ABE1', '--warm-yellow':'#F1E937', '--soft-purple':'#8078A0' },
     paperColor: 'rgba(255,255,255,0.04)',
@@ -3397,17 +3777,70 @@ function paperBackground(theme) {
       // 青海波風：同心円の繰り返し
       return 'radial-gradient(circle at 50% 100%, transparent 56%, '+c+' 57%, '+c+' 60%, transparent 61%), radial-gradient(circle at 0% 100%, transparent 56%, '+c+' 57%, '+c+' 60%, transparent 61%), radial-gradient(circle at 100% 100%, transparent 56%, '+c+' 57%, '+c+' 60%, transparent 61%)';
     case 'dalmatian':
-      // ダルメシアン風：ランダム風ドット（白地に黒）
-      return 'radial-gradient('+c+' 6px, transparent 6.5px), radial-gradient('+c+' 4px, transparent 4.5px), radial-gradient('+c+' 5px, transparent 5.5px)';
-    case 'dalmatian_inv':
-      // ダルメシアン風反転（黒地に白）
-      return 'radial-gradient('+c+' 6px, transparent 6.5px), radial-gradient('+c+' 4px, transparent 4.5px), radial-gradient('+c+' 5px, transparent 5.5px)';
+    case 'dalmatian_inv': {
+      // ダルメシアン風：有機的なブロブ柄（継ぎ目なしSVGタイリング）
+      // 200×200タイル内に楕円を配置。エッジに置いた楕円は反対側にもミラーで配置して継ぎ目を消す
+      const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'>"
+        // 中央付近のブロブ（傾き・サイズに変化）
+        + "<ellipse cx='35' cy='40' rx='15' ry='11' fill='" + c + "' transform='rotate(20 35 40)'/>"
+        + "<ellipse cx='95' cy='28' rx='9' ry='7' fill='" + c + "' transform='rotate(-12 95 28)'/>"
+        + "<ellipse cx='150' cy='50' rx='13' ry='10' fill='" + c + "' transform='rotate(-25 150 50)'/>"
+        + "<ellipse cx='65' cy='88' rx='10' ry='8' fill='" + c + "' transform='rotate(35 65 88)'/>"
+        + "<ellipse cx='115' cy='100' rx='14' ry='10' fill='" + c + "' transform='rotate(15 115 100)'/>"
+        + "<ellipse cx='168' cy='112' rx='8' ry='6' fill='" + c + "'/>"
+        + "<ellipse cx='40' cy='145' rx='12' ry='9' fill='" + c + "' transform='rotate(-18 40 145)'/>"
+        + "<ellipse cx='90' cy='160' rx='9' ry='7' fill='" + c + "' transform='rotate(40 90 160)'/>"
+        + "<ellipse cx='145' cy='150' rx='11' ry='8' fill='" + c + "' transform='rotate(-30 145 150)'/>"
+        + "<ellipse cx='25' cy='110' rx='6' ry='5' fill='" + c + "'/>"
+        + "<ellipse cx='100' cy='75' rx='5' ry='4' fill='" + c + "'/>"
+        + "<ellipse cx='180' cy='85' rx='6' ry='5' fill='" + c + "'/>"
+        // 横エッジ（左右）：x=0とx=200に同じ位置でミラー配置
+        + "<ellipse cx='0' cy='75' rx='10' ry='8' fill='" + c + "' transform='rotate(15 0 75)'/>"
+        + "<ellipse cx='200' cy='75' rx='10' ry='8' fill='" + c + "' transform='rotate(15 200 75)'/>"
+        + "<ellipse cx='0' cy='185' rx='9' ry='7' fill='" + c + "'/>"
+        + "<ellipse cx='200' cy='185' rx='9' ry='7' fill='" + c + "'/>"
+        // 縦エッジ（上下）：y=0とy=200に同じ位置でミラー配置
+        + "<ellipse cx='75' cy='0' rx='8' ry='6' fill='" + c + "' transform='rotate(20 75 0)'/>"
+        + "<ellipse cx='75' cy='200' rx='8' ry='6' fill='" + c + "' transform='rotate(20 75 200)'/>"
+        + "<ellipse cx='180' cy='0' rx='7' ry='5' fill='" + c + "'/>"
+        + "<ellipse cx='180' cy='200' rx='7' ry='5' fill='" + c + "'/>"
+        + "</svg>";
+      return "url(\"data:image/svg+xml;utf8," + encodeURIComponent(svg) + "\")";
+    }
     case 'fleurdelis':
       // フルール・ド・リス風（ダイヤモンド＋十字の繰り返し）
       return 'linear-gradient(45deg, '+c+' 25%, transparent 25%, transparent 75%, '+c+' 75%), linear-gradient(-45deg, '+c+' 25%, transparent 25%, transparent 75%, '+c+' 75%), radial-gradient(circle, '+c+' 2px, transparent 2.5px)';
     case 'damask':
       // ダマスク風（ダイヤモンド＋小さなドットの繰り返し）
       return 'linear-gradient(45deg, '+c+' 25%, transparent 25%, transparent 75%, '+c+' 75%), linear-gradient(-45deg, '+c+' 25%, transparent 25%, transparent 75%, '+c+' 75%), radial-gradient('+c+' 1.5px, transparent 2px), radial-gradient('+c+' 1px, transparent 1.5px)';
+    case 'rhombus': {
+      // lpeg.info方式：4方向のlinear-gradientでくっきりひし形
+      const bg = (theme.vars && theme.vars['--bg']) || '#FFFFFF';
+      return ''
+        + 'linear-gradient(135deg, ' + c + ' 25%, transparent 25%), '
+        + 'linear-gradient(225deg, ' + c + ' 25%, transparent 25%), '
+        + 'linear-gradient(45deg, ' + c + ' 25%, transparent 25%), '
+        + 'linear-gradient(315deg, ' + c + ' 25%, ' + bg + ' 25%)';
+    }
+    case 'tufted': {
+      // キルティング/タフテッド（シンデレラ専用：宮殿のソファみたいな立体感）
+      const t = theme.tufted || {
+        light:'rgba(255,255,255,0.85)', mid:'rgba(184,205,216,0.6)',
+        glow:'rgba(184,205,216,0.4)', shadow:'rgba(120,144,180,0.35)',
+        deepShadow:'rgba(120,144,180,0.22)', stitch:'rgba(80,100,140,0.18)'
+      };
+      return ''
+        + 'radial-gradient('+t.light+' 4%, '+t.mid+' 9%, transparent 9%), '
+        + 'radial-gradient('+t.light+' 4%, '+t.mid+' 9%, transparent 9%), '
+        + 'radial-gradient('+t.glow+' 20%, transparent 100%), '
+        + 'radial-gradient('+t.glow+' 20%, transparent 100%), '
+        + 'radial-gradient('+t.shadow+' 35%, transparent 60%), '
+        + 'radial-gradient('+t.shadow+' 35%, transparent 60%), '
+        + 'radial-gradient('+t.deepShadow+' 0, transparent 100%), '
+        + 'radial-gradient('+t.deepShadow+' 0, transparent 100%), '
+        + 'linear-gradient(45deg, transparent 49%, '+t.stitch+' 50%, transparent 70%), '
+        + 'linear-gradient(-45deg, transparent 49%, '+t.stitch+' 50%, transparent 70%)';
+    }
     default:
       return 'radial-gradient('+c+' 1px, transparent 1px)';
   }
@@ -3420,10 +3853,12 @@ function paperBackgroundSize(theme) {
     case 'gingham': return '22px 22px, 22px 22px';
     case 'asanoha': return '28px 48px, 28px 48px, 28px 48px, 28px 48px';
     case 'seigaiha': return '36px 18px, 36px 18px, 36px 18px';
-    case 'dalmatian': return '58px 58px, 38px 38px, 48px 48px';
-    case 'dalmatian_inv': return '58px 58px, 38px 38px, 48px 48px';
+    case 'dalmatian': return '200px 200px';
+    case 'dalmatian_inv': return '200px 200px';
     case 'fleurdelis': return '20px 20px, 20px 20px, 20px 20px';
     case 'damask': return '24px 24px, 24px 24px, 24px 24px, 12px 12px';
+    case 'tufted': return '100px 100px';
+    case 'rhombus': return '40px 40px';
     default: return '10px 10px';
   }
 }
@@ -3466,12 +3901,14 @@ function applyTheme(themeId) {
   const multiPosPatterns = ['polka','dalmatian','dalmatian_inv','seigaiha','asanoha'];
   const paperPosMap = {
     'polka': '0 0, 23px 23px',
-    'dalmatian': '0 0, 18px 28px, 38px 12px',
-    'dalmatian_inv': '0 0, 18px 28px, 38px 12px',
+    'dalmatian': '0 0',
+    'dalmatian_inv': '0 0',
     'seigaiha': '0 0, 18px 0, 36px 0',
     'asanoha': '0 0, 0 0, 0 0, 0 0',
     'fleurdelis': '0 0, 10px 10px, 10px 10px',
-    'damask': '0 0, 12px 12px, 0 0, 6px 6px'
+    'damask': '0 0, 12px 12px, 0 0, 6px 6px',
+    'tufted': '0 0, 50px 50px, 50px 0, 0 50px, 50px 0, 100px 50px, 0 0, 50px 50px, 0 0, 0 0',
+    'rhombus': '40px 0, 40px 0, 0 0, 0 0'
   };
   const paperPos = paperPosMap[theme.pattern] || '0 0';
   document.body.style.backgroundImage = paperBg;
@@ -3725,6 +4162,7 @@ function saveData() {
 function switchMode(targetMode) {
   const savedThemeId = data.themeId;
   const savedUser = JSON.parse(JSON.stringify(data.user || { name: '', avatar: '🌷' }));
+  const savedUserRegion = data.userRegion;
   currentMode = targetMode;
   const keys = MODE_KEYS[targetMode] || MODE_KEYS.pet;
   STORAGE_KEY = keys.data;
@@ -3732,6 +4170,22 @@ function switchMode(targetMode) {
   data = { houses: [], pets: [], records: {}, schedules: [], posts: [], tasks: [], facilities: [], activeHouseId: null, activePetId: null, selectedHouseId: null, lastUsedHouseId: null, themeId: savedThemeId || 'mint', user: savedUser, petTab: 'care' };
   photos = {};
   loadData();
+  // ★ 全モード共通のユーザー情報を復元
+  // （モード別localStorageの古いuser情報でloadDataが上書きしてしまうのを防ぐ）
+  let userRestored = false;
+  if (savedUser && (savedUser.name || savedUser.birthday)) {
+    // 元のuser情報を優先（loadDataで読んだ値より新しい可能性が高い）
+    if (!data.user || !data.user.name || !data.user.birthday ||
+        savedUser.name !== data.user.name || savedUser.birthday !== data.user.birthday) {
+      data.user = savedUser;
+      userRestored = true;
+    }
+  }
+  if (savedUserRegion && data.userRegion !== savedUserRegion) {
+    data.userRegion = savedUserRegion;
+    userRestored = true;
+  }
+  if (userRestored) saveData();
 }
 
 function goToMeMode() {
@@ -3759,6 +4213,7 @@ function goToKidsMode() {
 function switchModeFromTab(targetMode) {
   if (currentMode === targetMode) return;
   switchMode(targetMode);
+  showModeSwitchToast(targetMode);
   houseSubTab = 'mine';
   if (targetMode === 'me') {
     currentView = 'me';
@@ -3779,12 +4234,20 @@ function switchModeFromTab(targetMode) {
 }
 
 function renderModeIndexTabs() {
-  const tabs = [
+  const allTabs = [
     { id: 'me',   icon: '🌱', label: 'ME' },
     { id: 'nest', icon: '🪺', label: 'Nest' },
     { id: 'pet',  icon: '🐾', label: 'PET' },
     { id: 'kids', icon: '🧸', label: 'KIDS' }
   ];
+  // 15歳未満はNestタブを非表示
+  const tabs = currentUserIsUnder15() ? allTabs.filter(t => t.id !== 'nest') : allTabs;
+  const catchcopy = {
+    me:   '今日を、そっと残そう',
+    nest: 'だれかとつくる、小さな巣',
+    pet:  'この子の毎日が、世界になる',
+    kids: '大きくなる時間を、抱きしめておく'
+  };
   let html = '<div class="mode-idx-tabs">';
   for (const t of tabs) {
     const active = (currentMode === t.id) ? ' active' : '';
@@ -3792,6 +4255,9 @@ function renderModeIndexTabs() {
     html += '<span class="mode-idx-tab-icon">'+t.icon+'</span>'+t.label+'</button>';
   }
   html += '</div>';
+  if (catchcopy[currentMode]) {
+    html += '<div class="mode-catchcopy">'+catchcopy[currentMode]+'</div>';
+  }
   return html;
 }
 
@@ -4557,6 +5023,35 @@ function renderDayDetail(dateKey, scope) {
   return html;
 }
 
+// 共通：日付・時刻・地域・天気バー
+function infoBarHtml() {
+  const _now = new Date();
+  const _yyyy = _now.getFullYear();
+  const _mm = String(_now.getMonth()+1).padStart(2,'0');
+  const _dd = String(_now.getDate()).padStart(2,'0');
+  const _wk = ['日','月','火','水','木','金','土'][_now.getDay()];
+  const _hh = String(_now.getHours()).padStart(2,'0');
+  const _mi = String(_now.getMinutes()).padStart(2,'0');
+  const _region = (typeof data !== 'undefined' && data.userRegion) ? data.userRegion : '大阪';
+  const _wCache = window._weatherCache || null;
+  const _wIcon = _wCache ? _wCache.icon : '';
+  const _wTemp = _wCache ? Math.round(_wCache.temp)+'°' : '';
+  let html = '<div class="info-bar-wrap">';
+  html += '<div class="info-bar" onclick="showWeatherPopup()" style="cursor:pointer;">';
+  html += '<span class="info-bar-date">'+_yyyy+'/'+_mm+'/'+_dd+'（'+_wk+'）'+_hh+':'+_mi+'</span>';
+  html += '<span class="info-bar-sep"> · </span>';
+  html += '<span class="info-bar-region">'+escapeHtml(_region)+'</span>';
+  html += '<span class="info-bar-sep"> · </span>';
+  if (_wCache) {
+    html += '<span class="info-bar-weather">'+_wIcon+' '+_wTemp+'</span>';
+  } else {
+    html += '<span class="info-bar-weather" style="opacity:0.5;">取得中...</span>';
+  }
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
 function renderTop() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('houses'); // ボトムナビは「ホーム」をアクティブに
@@ -4649,9 +5144,12 @@ function renderTop() {
   html += '<button class="mode-card mode-me'+_shapeClass+'" onclick="goToMeMode()">';
   html += '<div class="mode-card-icon">🌱</div><div class="mode-card-label">ME</div>';
   html += '</button>';
-  html += '<button class="mode-card mode-nest'+_shapeClass+'" onclick="goToNestMode()">';
-  html += '<div class="mode-card-icon">🪺</div><div class="mode-card-label">Nest</div>';
-  html += '</button>';
+  // Nestは15歳未満は非表示（15歳の誕生日に解禁）
+  if (!currentUserIsUnder15()) {
+    html += '<button class="mode-card mode-nest'+_shapeClass+'" onclick="goToNestMode()">';
+    html += '<div class="mode-card-icon">🪺</div><div class="mode-card-label">Nest</div>';
+    html += '</button>';
+  }
   html += '<button class="mode-card mode-pet'+_shapeClass+'" onclick="goToPetMode()">';
   html += '<div class="mode-card-icon">🐾</div><div class="mode-card-label">PET</div>';
   html += '</button>';
@@ -4889,6 +5387,10 @@ function renderNestMode() {
 }
 
 function goToNestMode() {
+  if (currentUserIsUnder15()) {
+    showToast('Nestは15歳の誕生日に解禁されます🪺');
+    return;
+  }
   switchMode('nest');
   currentView = 'nest';
   render();
@@ -5550,6 +6052,8 @@ function backToHouse() {
 function navBack() {
   if (currentView === 'me_diary') { currentView = 'me'; render(); }
   else if (currentView === 'me') { switchMode('pet'); currentView = 'top'; render(); }
+  else if (currentView === 'nest') { switchMode('pet'); currentView = 'top'; render(); }
+  else if (currentView === 'secret_memo') { currentView = 'me'; render(); }
   else if (currentView === 'pet') backToHouse();
   else if (currentView === 'house') backToHouses();
   else if (currentView === 'houses') {
@@ -5558,6 +6062,12 @@ function navBack() {
   }
   else if (currentView === 'facility') { currentView = 'town'; render(); }
   else if (currentView === 'town' || currentView === 'schedule' || currentView === 'settings') {
+    currentView = 'top';
+    render();
+  }
+  else {
+    // 未知のビュー：安全策でホームへ
+    if (currentMode !== 'pet') switchMode('pet');
     currentView = 'top';
     render();
   }
@@ -6250,6 +6760,127 @@ let placesResultsMap = {};
 let placesLocMode = 'addr'; // 'geo' | 'addr'
 let placesAddrText = '';
 
+// ===== ショップサンプルページ用 =====
+let shopSampleColor = 'pink'; // 'pink' | 'sky' | 'mint' | 'butter' | 'lavender' | 'beige'
+let shopSampleKind = 'shop';  // 'shop' | 'personal' | 'marche'
+const SHOP_SAMPLE_COLORS = {
+  pink:     { bg:'#FFE4E6', accent:'#D88A9C', light:'#FBC8D2' },
+  sky:      { bg:'#E0F0FF', accent:'#6BA3D8', light:'#C8DEF4' },
+  mint:     { bg:'#E0F4E0', accent:'#7BC07B', light:'#C4E4C4' },
+  butter:   { bg:'#FFF4D0', accent:'#D4A848', light:'#F4DDA0' },
+  lavender: { bg:'#F0E4F8', accent:'#A878D0', light:'#DFC8EC' },
+  beige:    { bg:'#FCF2E8', accent:'#C8A88A', light:'#EFD8C0' }
+};
+const SHOP_SAMPLE_KINDS = {
+  shop:     { icon:'🏪', label:'ショップ' },
+  personal: { icon:'🌷', label:'個人' },
+  marche:   { icon:'🎪', label:'マルシェ' }
+};
+
+function setShopSampleColor(c) {
+  shopSampleColor = c;
+  _suppressScrollTop = true;
+  render();
+}
+function setShopSampleKind(k) {
+  shopSampleKind = k;
+  _suppressScrollTop = true;
+  render();
+}
+
+// ===== タウン流れるニュース =====
+const SAMPLE_NEWS = [
+  { region:'大阪', tag:'トリミング', kind:'shop',     name:'ふわふわトリミング',    text:'春のふわふわコース始まりました🌸', minutes: 2 },
+  { region:'大阪', tag:'カフェ',     kind:'shop',     name:'カフェ ハナ',           text:'桜パフェはじめました🌸 5/3まで', minutes: 8 },
+  { region:'兵庫', tag:'動物病院',   kind:'shop',     name:'動物病院ぽぷり',         text:'5月の予約枠 公開中💉', minutes: 15 },
+  { region:'大阪', tag:'マルシェ',   kind:'marche',   name:'マルシェ・なにわ',        text:'5/15 中之島マルシェ開催🎪', minutes: 32 },
+  { region:'兵庫', tag:'パン屋',     kind:'shop',     name:'神戸ベーカリー',         text:'焼きたて食パン 朝7時から🍞', minutes: 47 },
+  { region:'京都', tag:'ヨガ',       kind:'personal', name:'ヨガスタジオ華',         text:'朝ヨガ無料体験会 5/10🧘', minutes: 64 },
+];
+let _newsIndex = 0;
+let _newsTimer = null;
+const NEWS_INTERVAL_MS = 10000; // 10秒
+
+function newsItemHtml(n) {
+  const kindIcon = { shop:'🏪', personal:'🌷', marche:'🎪' }[n.kind] || '🏪';
+  const timeStr = n.minutes < 60
+    ? n.minutes + '分前'
+    : Math.floor(n.minutes / 60) + '時間前';
+  const tagHtml = n.tag ? '<span class="news-tag">#'+escapeHtml(n.tag)+'</span>' : '';
+  return '<div class="news-line1">'
+    + '<span class="news-region">📍'+escapeHtml(n.region)+'</span>'
+    + tagHtml
+    + '<span class="news-kind">'+kindIcon+'</span>'
+    + '<span class="news-name">'+escapeHtml(n.name)+'</span>'
+    + '<span class="news-time">'+timeStr+'</span>'
+    + '</div>'
+    + '<div class="news-line2">「'+escapeHtml(n.text)+'」</div>';
+}
+
+function newsDotsHtml() {
+  let html = '<div class="news-dots">';
+  for (let i = 0; i < SAMPLE_NEWS.length; i++) {
+    html += '<div class="news-dot'+(i === _newsIndex ? ' active' : '')+'"></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function tickNewsTicker() {
+  _newsIndex = (_newsIndex + 1) % SAMPLE_NEWS.length;
+  const inner = document.getElementById('newsTickerInner');
+  const dots = document.getElementById('newsTickerDots');
+  if (!inner) return;
+  // フェードアウト→中身更新→フェードイン
+  inner.style.opacity = '0';
+  setTimeout(() => {
+    inner.innerHTML = newsItemHtml(SAMPLE_NEWS[_newsIndex]);
+    inner.style.opacity = '1';
+    if (dots) dots.outerHTML = newsDotsHtml().replace('<div class="news-dots">', '<div class="news-dots" id="newsTickerDots">');
+  }, 250);
+}
+
+function startNewsTicker() {
+  if (_newsTimer) { clearInterval(_newsTimer); _newsTimer = null; }
+  _newsTimer = setInterval(tickNewsTicker, NEWS_INTERVAL_MS);
+}
+function stopNewsTicker() {
+  if (_newsTimer) { clearInterval(_newsTimer); _newsTimer = null; }
+}
+
+// ===== サンプルショップ =====
+const SAMPLE_SHOPS = [
+  { id:'shop1', name:'ふわふわトリミング', region:'大阪', kind:'shop',     emoji:'🐩', tags:['トリミング','シャンプー','犬'],   color:'pink' },
+  { id:'shop2', name:'カフェ ハナ',         region:'大阪', kind:'shop',     emoji:'☕', tags:['カフェ','モーニング'],            color:'butter' },
+  { id:'shop3', name:'動物病院ぽぷり',     region:'兵庫', kind:'shop',     emoji:'🏥', tags:['動物病院','犬','猫'],              color:'sky' },
+  { id:'shop4', name:'マルシェ・なにわ',   region:'大阪', kind:'marche',   emoji:'🎪', tags:['マルシェ','イベント'],            color:'mint' },
+  { id:'shop5', name:'神戸ベーカリー',     region:'兵庫', kind:'shop',     emoji:'🍞', tags:['パン屋','食パン'],                color:'butter' },
+  { id:'shop6', name:'ヨガスタジオ華',     region:'京都', kind:'personal', emoji:'🧘', tags:['ヨガ','朝活'],                    color:'lavender' },
+];
+
+// ショップ画面の表示モード
+let townShopView = 'list';  // 'list' | 'detail'
+let selectedShopId = null;
+
+function openShopDetail(id) {
+  selectedShopId = id;
+  townShopView = 'detail';
+  // 選択ショップの色をサンプルページの色に反映
+  const shop = SAMPLE_SHOPS.find(s => s.id === id);
+  if (shop) {
+    if (shop.color) shopSampleColor = shop.color;
+    if (shop.kind) shopSampleKind = shop.kind;
+  }
+  _suppressScrollTop = false;
+  render();
+}
+function backToShopList() {
+  townShopView = 'list';
+  selectedShopId = null;
+  _suppressScrollTop = true;
+  render();
+}
+
 // ===== 家タブの状態 =====
 let houseTabId = null; // 現在選択されてる家タブ ID（'__fav'なら友達の家一覧）
 const PLACES_API_KEY = 'AIzaSyAuvEPLh6ih-QWNTVZ90Wlo5f5LNjgXbGk';
@@ -6315,7 +6946,7 @@ function renderTown() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('town');
   let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">🏙 にこわタウン</div><div class="topbar-spacer"></div></div>';
-  html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9.5px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
+  html += infoBarHtml();
 
   // ── メインタブ
   html += '<div class="town-main-tabs">';
@@ -6332,16 +6963,147 @@ function renderTown() {
   html += '<button class="town-sub-tab '+(townSubTab==='fav'   ?'active':'')+'" onclick="setTownSubTab(\'fav\')">♡ お気に入り</button>';
   html += '</div>';
 
-  // ── タウンサブタブ：準備中
+  // ── タウンサブタブ：ショップ一覧 or 詳細
   if (townSubTab === 'town') {
-    html += '<div class="town-coming-soon">';
-    html += '<img id="townAnzuImg" style="width:90px;height:90px;margin-bottom:12px;" alt="あんず" src="">';
-    html += '<div class="anzu-bubble">ただいま準備中🌷</div>';
+    // ── 流れるニュース（list/detail両方で表示）
+    html += '<div class="news-ticker" id="newsTicker" onclick="showToast(\'サンプル：'+escapeHtml(SAMPLE_NEWS[_newsIndex].name)+'のページへ🌷\')">';
+    html += '<div class="news-ticker-inner" id="newsTickerInner">';
+    html += newsItemHtml(SAMPLE_NEWS[_newsIndex]);
     html += '</div>';
+    html += '<div class="news-dots" id="newsTickerDots">';
+    for (let i = 0; i < SAMPLE_NEWS.length; i++) {
+      html += '<div class="news-dot'+(i === _newsIndex ? ' active' : '')+'"></div>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    if (townShopView === 'list') {
+      // ── ショップカード一覧
+      html += '<div class="shop-list-header">';
+      html += '<span>📍 近くのお店（サンプル）</span>';
+      html += '<span style="font-size:10px;opacity:0.6;">'+SAMPLE_SHOPS.length+'件</span>';
+      html += '</div>';
+      html += '<div class="shop-card-grid">';
+      for (const s of SAMPLE_SHOPS) {
+        const sc = SHOP_SAMPLE_COLORS[s.color] || SHOP_SAMPLE_COLORS.pink;
+        const sk = SHOP_SAMPLE_KINDS[s.kind] || SHOP_SAMPLE_KINDS.shop;
+        html += '<div class="shop-card-item" onclick="openShopDetail(\''+s.id+'\')">';
+        // 画像エリア（仮：絵文字＋色背景）
+        html += '<div class="shop-card-img" style="background:linear-gradient(135deg,'+sc.light+' 0%,'+sc.bg+' 100%);">';
+        html += '<span class="shop-card-kind-badge">'+sk.icon+' '+sk.label+'</span>';
+        html += s.emoji;
+        html += '</div>';
+        html += '<div class="shop-card-info">';
+        html += '<div class="shop-card-name">'+escapeHtml(s.name)+'</div>';
+        html += '<div class="shop-card-region">📍'+escapeHtml(s.region)+'</div>';
+        html += '<div class="shop-card-tags">';
+        for (const t of s.tags.slice(0, 3)) {
+          html += '<span class="shop-card-tag">#'+escapeHtml(t)+'</span>';
+        }
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+
+      document.getElementById('app').innerHTML = html;
+      startNewsTicker();
+      return;
+    }
+
+    // ── ショップ詳細（既存のミニホームページ）
+    // 戻るボタン
+    html += '<button class="shop-back-btn" onclick="backToShopList()">‹ 一覧に戻る</button>';
+
+    const _sc = SHOP_SAMPLE_COLORS[shopSampleColor] || SHOP_SAMPLE_COLORS.pink;
+    const _sk = SHOP_SAMPLE_KINDS[shopSampleKind] || SHOP_SAMPLE_KINDS.shop;
+    html += '<div class="shop-sample-wrap" style="--shop-bg:'+_sc.bg+';--shop-accent:'+_sc.accent+';--shop-accent-light:'+_sc.light+';">';
+
+    // ── カスタマイザー（色・種類選択）
+    html += '<div class="shop-customizer">';
+    // 色ドット
+    html += '<div class="shop-customizer-row"><span class="shop-customizer-label">カラー</span><div class="shop-color-dots">';
+    for (const k in SHOP_SAMPLE_COLORS) {
+      const c = SHOP_SAMPLE_COLORS[k];
+      const active = (shopSampleColor === k) ? ' active' : '';
+      html += '<button class="shop-color-dot'+active+'" onclick="setShopSampleColor(\''+k+'\')" style="background:'+c.accent+';" title="'+k+'"></button>';
+    }
+    html += '</div></div>';
+    // 種類チップ
+    html += '<div class="shop-customizer-row"><span class="shop-customizer-label">しゅるい</span><div class="shop-kind-chips">';
+    for (const k in SHOP_SAMPLE_KINDS) {
+      const sk = SHOP_SAMPLE_KINDS[k];
+      const active = (shopSampleKind === k) ? ' active' : '';
+      html += '<button class="shop-kind-chip'+active+'" onclick="setShopSampleKind(\''+k+'\')">'+sk.icon+' '+sk.label+'</button>';
+    }
+    html += '</div></div>';
+    html += '</div>'; // /customizer
+
+    // ── 店舗ページ本体
+    html += '<div class="shop-page">';
+
+    // 選択中のショップ（fallback: 1番目）
+    const _selShop = SAMPLE_SHOPS.find(s => s.id === selectedShopId) || SAMPLE_SHOPS[0];
+
+    // ヒーロー画像（仮）
+    html += '<div class="shop-hero">'+_selShop.emoji+'</div>';
+
+    // 基本情報カード
+    html += '<div class="shop-card">';
+    html += '<div class="shop-name">'+escapeHtml(_selShop.name)+'</div>';
+    html += '<span class="shop-kind-badge">'+_sk.icon+' '+_sk.label+'</span>';
+    html += '<div class="shop-address">📍 '+escapeHtml(_selShop.region)+'〇〇区〇〇町1-2-3<br>🕐 10:00 - 19:00（火曜定休）</div>';
+    // 連絡ボタン4つ
+    html += '<div class="shop-contact-grid">';
+    html += '<button class="shop-contact-btn" onclick="showToast(\'サンプル：電話に発信🌷\')"><span class="shop-contact-btn-icon">📞</span>でんわ</button>';
+    html += '<button class="shop-contact-btn" onclick="showToast(\'サンプル：LINEを開く🌷\')"><span class="shop-contact-btn-icon">💬</span>LINE</button>';
+    html += '<button class="shop-contact-btn" onclick="showToast(\'サンプル：Instagramを開く🌷\')"><span class="shop-contact-btn-icon">📷</span>Insta</button>';
+    html += '<button class="shop-contact-btn" onclick="showToast(\'サンプル：地図を開く🌷\')"><span class="shop-contact-btn-icon">📍</span>ちず</button>';
+    html += '</div>';
+    html += '</div>';
+
+    // NEWS
+    html += '<div class="shop-card">';
+    html += '<div class="shop-section-title">📢 おしらせ</div>';
+    html += '<div class="shop-news-item"><span class="shop-news-date">05/09</span><span class="shop-news-text">5月のご予約枠を公開しました</span></div>';
+    html += '<div class="shop-news-item"><span class="shop-news-date">05/02</span><span class="shop-news-text">春のふわふわコースが登場しました🌸</span></div>';
+    html += '<div class="shop-news-item"><span class="shop-news-date">04/25</span><span class="shop-news-text">ゴールデンウィークの営業について</span></div>';
+    html += '</div>';
+
+    // できること（タグ）
+    html += '<div class="shop-card">';
+    html += '<div class="shop-section-title">🏷 できること</div>';
+    html += '<div class="shop-tags-list">';
+    const tags = ['シャンプー','カット','爪切り','部分ケア','炭酸泉','ふわふわ仕上げ'];
+    for (const t of tags) html += '<span class="shop-tag-chip">'+t+'</span>';
+    html += '</div></div>';
+
+    // お店について
+    html += '<div class="shop-card">';
+    html += '<div class="shop-section-title">🐾 おみせについて</div>';
+    html += '<div class="shop-about-text">わんちゃん・ねこちゃんにやさしいトリミングサロンです。<br>その子の性格や体調に合わせて、ゆったり丁寧にケアします。<br>はじめての子も安心してご利用いただけます🌷</div>';
+    html += '</div>';
+
+    // フォトギャラリー
+    html += '<div class="shop-card">';
+    html += '<div class="shop-section-title">📸 フォトギャラリー</div>';
+    html += '<div class="shop-photos">';
+    html += '<div class="shop-photo">🐩</div>';
+    html += '<div class="shop-photo">✂️</div>';
+    html += '<div class="shop-photo">🐱</div>';
+    html += '</div></div>';
+
+    // 予約ボタン（外部URL）
+    html += '<button class="shop-reserve-btn" onclick="showToast(\'サンプル：外部の予約フォームに飛ぶ🌷\')">📅 予約する（外部サイト）</button>';
+
+    html += '</div>'; // /shop-page
+    html += '</div>'; // /shop-sample-wrap
     document.getElementById('app').innerHTML = html;
-    (function(){ var el=document.getElementById('townAnzuImg'); if(el) el.src=ANZU_IMG; })();
+    startNewsTicker();
     return;
   }
+  // 'town'サブタブ以外ならニュースタイマー停止
+  stopNewsTicker();
 
   // ── 検索サブタブ
   if (townSubTab === 'search') {
@@ -6858,8 +7620,8 @@ function renderSchedule() {
   }
   if (!schedCalSelected) schedCalSelected = todayKey();
   let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">📅 よてい</div><button class="topbar-btn" onclick="openAddScheduleModal()">＋</button></div>';
+  html += infoBarHtml();
   html += '<div class="section">';
-  html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9.5px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
   html += '<div class="section-head"><h2 class="section-title">'+(house ? escapeHtml(house.name) : '')+'</h2></div>';
   html += renderCalendar(schedCalMonth, schedCalSelected, { houseId: houseId }, 'sched');
   if (schedCalSelected) html += renderDayDetail(schedCalSelected, { houseId: houseId });
@@ -7698,6 +8460,35 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2000);
 }
 
+// モード切替時の中央表示トースト
+function showModeSwitchToast(mode) {
+  const labels = {
+    me:   { icon: '🌱', label: 'ME' },
+    nest: { icon: '🪺', label: 'Nest' },
+    pet:  { icon: '🐾', label: 'PET' },
+    kids: { icon: '🧸', label: 'KIDS' }
+  };
+  const info = labels[mode];
+  if (!info) return;
+  // 既存があれば削除
+  const existing = document.getElementById('modeSwitchToast');
+  if (existing) existing.remove();
+  // 新規作成
+  const toast = document.createElement('div');
+  toast.className = 'mode-switch-toast';
+  toast.id = 'modeSwitchToast';
+  toast.innerHTML = '<div class="mode-switch-toast-icon">'+info.icon+'</div>'
+                  + '<div class="mode-switch-toast-label">'+info.label+'</div>';
+  document.body.appendChild(toast);
+  // フェードイン
+  requestAnimationFrame(() => { toast.classList.add('show'); });
+  // フェードアウト後削除
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 180);
+  }, 350);
+}
+
 // ===== 一括お世話 =====
 let bulkCareState = { actionId: null, selectedPetIds: [] };
 
@@ -7853,6 +8644,12 @@ function isUnder15(birthday) {
   const m = today.getMonth() - bd.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) age--;
   return age < 15;
+}
+
+// 現在のユーザーが15歳未満かを判定（誕生日未登録なら表示OK＝falseを返す）
+function currentUserIsUnder15() {
+  if (!data || !data.user || !data.user.birthday) return false;
+  return isUnder15(data.user.birthday);
 }
 
 function updateOnboardingTerms() {
@@ -8022,6 +8819,9 @@ function saveOnboarding() {
   if (region) { try { fetchWeather(); } catch(e) {} }
   closeModal('onboardingModal');
   showToast('ようこそ、'+name+'さん🌸');
+  // ホームに飛ばす（MEなどの個別モードに入っていてもリセット）
+  currentView = 'top';
+  currentMode = 'pet';
   render();
 }
 
