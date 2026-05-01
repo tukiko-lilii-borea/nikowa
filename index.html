@@ -5474,6 +5474,10 @@ function renderMeMode() {
     // ===== ToDay =====
     html += renderTodayTab();
     
+  } else if (tab === 'news') {
+    // ===== News =====
+    html += renderNewsTab();
+    
   } else if (tab === 'stamp') {
     // ===== Stamp =====
     html += '<div style="padding:12px 16px 4px;">';
@@ -6334,11 +6338,6 @@ function renderHouseHomeTab(house) {
       }
       html += '</div></div>';
     }
-    
-    // ペットニュースセクション
-    html += '<div class="section" style="padding-top:0;">';
-    html += renderNewsSection('pet', 'ペットのニュース');
-    html += '</div>';
   }
   
   if (todayMemorials.length > 0) {
@@ -9588,6 +9587,7 @@ const MODE_TABS_KEY = { me: 'nikowa_me_tabs', pet: 'nikowa_pet_tabs', kids: 'nik
 const DEFAULT_MODE_TABS = {
   me: [
     { id: 'today',      label: 'ToDay' },
+    { id: 'news',       label: 'News' },
     { id: 'stamp',      label: 'Stamp' },
     { id: 'routine',    label: 'Routine' },
     { id: 'diary',      label: 'Diary' },
@@ -9629,6 +9629,13 @@ function getModeTabsForMode(mode) {
       // ME: ToDayタブが無ければ先頭に追加（既存ユーザー向けマイグレーション）
       if (mode === 'me' && tabs.length > 0 && !tabs.find(t => t.id === 'today')) {
         tabs.unshift({ id: 'today', label: 'ToDay' });
+        try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
+      }
+      // ME: Newsタブが無ければToDayの直後に追加（既存ユーザー向けマイグレーション）
+      if (mode === 'me' && tabs.length > 0 && !tabs.find(t => t.id === 'news')) {
+        const todayIdx = tabs.findIndex(t => t.id === 'today');
+        const insertAt = todayIdx >= 0 ? todayIdx + 1 : 0;
+        tabs.splice(insertAt, 0, { id: 'news', label: 'News' });
         try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
       }
       return tabs;
@@ -10597,9 +10604,6 @@ function renderTodayTab() {
     html += renderTodayCard('💨', '大気質', null, w.airQuality.label, w.airQuality.comment);
   }
   
-  // ===== ニュース =====
-  html += renderNewsSection('general', '今日のニュース');
-  
   // 予報セクション
   if (w.forecast && w.forecast.length > 0) {
     html += '<div style="padding:8px 4px 4px;">';
@@ -10618,8 +10622,29 @@ function renderTodayTab() {
     html += '</div></div>';
   }
   
-  // ニュースセクション
-  html += renderNewsSection('general', 'きょうのニュース');
+  html += '</div>';
+  return html;
+}
+
+// ===== Newsタブのレンダラー =====
+function renderNewsTab() {
+  const now = new Date();
+  const dateStr = (now.getMonth()+1)+'/'+now.getDate();
+  const wd = ['日','月','火','水','木','金','土'][now.getDay()];
+  
+  let html = '<div style="padding:12px 16px 8px;">';
+  
+  // ヘッダー
+  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:14px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:12px;">';
+  html += '<div style="display:flex;align-items:center;gap:10px;">';
+  html += '<span style="font-size:28px;line-height:1;">📰</span>';
+  html += '<div>';
+  html += '<div style="font-size:15px;font-weight:800;color:var(--ink-dark);">きょうのニュース</div>';
+  html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;">'+dateStr+'('+wd+') 更新</div>';
+  html += '</div></div></div>';
+  
+  // ニュース一覧（一般）
+  html += renderNewsSection('general', 'トップニュース');
   
   html += '</div>';
   return html;
