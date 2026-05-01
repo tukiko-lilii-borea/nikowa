@@ -4173,6 +4173,19 @@ function _isDarkColor(hex) {
   return (r*299 + g*587 + b*114) / 1000 < 128;
 }
 
+// hexカラーをrgba文字列に変換
+function _hexToRgba(hex, alpha) {
+  if (!hex) return 'rgba(120,140,130,'+alpha+')';
+  let h = String(hex).replace('#', '').trim();
+  if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  if (h.length !== 6) return 'rgba(120,140,130,'+alpha+')';
+  const r = parseInt(h.substring(0,2), 16);
+  const g = parseInt(h.substring(2,4), 16);
+  const b = parseInt(h.substring(4,6), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(120,140,130,'+alpha+')';
+  return 'rgba('+r+','+g+','+b+','+alpha+')';
+}
+
 function applyTheme(themeId) {
   const theme = THEMES[themeId] || THEMES.mint;
   const root = document.documentElement;
@@ -4180,16 +4193,20 @@ function applyTheme(themeId) {
   
   // ダークテーマ判定（カード背景色を切替）
   const isDark = _isDarkColor(theme.vars['--bg']);
+  // 区切り線はテーマのaccent色（3色目）の薄めで統一
+  const accentColor = theme.vars['--accent'] || '#C8956A';
+  const dividerColor = _hexToRgba(accentColor, isDark ? 0.35 : 0.28);
+  
   if (isDark) {
     // 暗いテーマ：黒寄りの半透明カード
     root.style.setProperty('--card-bg', 'rgba(40,38,55,0.55)');
     root.style.setProperty('--card-border', 'rgba(180,170,210,0.25)');
-    root.style.setProperty('--card-divider', 'rgba(255,255,255,0.10)');
+    root.style.setProperty('--card-divider', dividerColor);
   } else {
     // 明るいテーマ：白寄りの半透明カード
     root.style.setProperty('--card-bg', 'rgba(255,255,255,0.78)');
     root.style.setProperty('--card-border', 'rgba(255,255,255,0.9)');
-    root.style.setProperty('--card-divider', 'rgba(120,140,130,0.18)');
+    root.style.setProperty('--card-divider', dividerColor);
   }
   
   // シンデレラテーマだけ背景色を薄める（柄が濃いから見にくい対策）
