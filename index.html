@@ -460,8 +460,8 @@
   }
   .main-house-card {
     width: 100%;
-    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
-    border: 1px solid rgba(255,255,255,0.7);
+    background: linear-gradient(135deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.82) 50%, rgba(255,255,255,0.88) 100%);
+    border: 1px solid rgba(255,255,255,0.95);
     border-radius: 22px;
     padding: 18px 18px 16px;
     text-align: left;
@@ -6218,12 +6218,17 @@ function renderHouse() {
   const houseName = (house && house.name) ? house.name : 'みんな';
   html += '<div class="pet-tabs-bar pet-tabs-bar-slim" style="margin-top: 12px;">';
   html += '<button class="pet-tab-btn pet-tab-btn-slim '+(houseTab==='home'?'active':'')+'" onclick="setHouseTab(\'home\')"><span class="pet-tab-icon">🏠</span>ホーム</button>';
+  if (currentMode === 'pet') {
+    html += '<button class="pet-tab-btn pet-tab-btn-slim '+(houseTab==='news'?'active':'')+'" onclick="setHouseTab(\'news\')"><span class="pet-tab-icon">📰</span>ニュース</button>';
+  }
   html += '<button class="pet-tab-btn pet-tab-btn-slim '+(houseTab==='diary'?'active':'')+'" onclick="setHouseTab(\'diary\')"><span class="pet-tab-icon">📖</span>'+escapeHtml(houseName)+'家の日記</button>';
   html += '</div>';
   html += '<div class="pet-tab-content">';
   
   if (houseTab === 'diary') {
     html += renderHouseDiaryTab(house);
+  } else if (houseTab === 'news' && currentMode === 'pet') {
+    html += renderHouseNewsTab(house);
   } else {
     html += renderHouseHomeTab(house);
   }
@@ -6325,15 +6330,15 @@ function renderHouseHomeTab(house) {
     if (advices && advices.length > 0) {
       html += '<div class="section">';
       html += '<div class="section-head"><h2 class="section-title">きょうのお散歩メモ</h2></div>';
-      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">';
+      html += '<div style="background:rgba(255,255,255,0.88);border:1px solid rgba(255,255,255,0.9);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;">';
       for (let i = 0; i < advices.length; i++) {
         const a = advices[i];
-        if (i > 0) html += '<div style="height:1px;background:rgba(255,255,255,0.6);margin:8px 0;"></div>';
-        html += '<div style="display:flex;align-items:flex-start;gap:8px;">';
-        html += '<span style="font-size:16px;line-height:1.3;flex-shrink:0;">'+a.icon+'</span>';
+        if (i > 0) html += '<div style="height:1px;background:rgba(120,140,130,0.18);margin:0 14px;"></div>';
+        html += '<div style="padding:11px 14px;display:flex;align-items:flex-start;gap:10px;">';
+        html += '<span style="font-size:18px;line-height:1.3;flex-shrink:0;">'+a.icon+'</span>';
         html += '<div style="flex:1;min-width:0;">';
-        html += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(a.text)+'</div>';
-        html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:2px;line-height:1.5;">'+escapeHtml(a.comment)+'</div>';
+        html += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(a.text)+'</div>';
+        html += '<div style="font-size:11px;color:var(--ink);margin-top:3px;line-height:1.5;">'+escapeHtml(a.comment)+'</div>';
         html += '</div></div>';
       }
       html += '</div></div>';
@@ -6402,13 +6407,6 @@ function renderHouseHomeTab(house) {
   }
   html += '</div>';
   
-  // PETモード時のみ、ペット関連ニュースを表示
-  if (currentMode === 'pet' && homePets.length > 0) {
-    html += '<div class="section" style="padding:0 16px;">';
-    html += renderNewsSection('pet', 'ペットのニュース');
-    html += '</div>';
-  }
-  
   if (rainbowPets.length > 0) {
     html += '<div class="section" style="padding-bottom: 24px;">';
     html += '<div class="section-head"><h2 class="section-title">虹の橋のひろば</h2><span class="section-count">'+rainbowPets.length+'匹</span></div>';
@@ -6424,6 +6422,14 @@ function renderHouseHomeTab(house) {
     }
     html += '</div></div></div>';
   }
+  return html;
+}
+
+// PETモードの「ニュース」タブ
+function renderHouseNewsTab(house) {
+  let html = '<div style="padding:12px 16px 8px;">';
+  html += renderNewsSection('pet', 'ペットのニュース');
+  html += '</div>';
   return html;
 }
 
@@ -10553,67 +10559,65 @@ function renderTodayTab() {
   
   let html = '<div style="padding:12px 16px 8px;">';
   
-  // ヘッダー（日付＋地域＋天気）
-  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:14px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:12px;">';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;">';
-  html += '<div>';
-  html += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;letter-spacing:0.5px;">'+dateStr+'('+wd+') · '+escapeHtml(region)+'</div>';
-  if (w) {
-    html += '<div style="display:flex;align-items:center;gap:10px;margin-top:4px;">';
-    html += '<span style="font-size:32px;line-height:1;">'+w.icon+'</span>';
-    html += '<div>';
-    html += '<div style="font-size:24px;font-weight:800;color:var(--ink-dark);line-height:1;">'+Math.round(w.temp)+'°</div>';
-    html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;">'+escapeHtml(w.desc)+' · 湿度'+w.humidity+'%</div>';
-    html += '</div></div>';
-  } else {
-    html += '<div style="font-size:13px;color:var(--ink-sub);margin-top:6px;">天気を取得中...🌷</div>';
-  }
-  html += '</div></div></div>';
-  
   // データ取得中
   if (!w) {
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:24px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">';
+    html += '<div style="background:rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:24px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">';
     html += '今日の情報を取得中だよ🌷<br><span style="font-size:10px;color:var(--ink-light);">少し待ってね</span>';
     html += '</div></div>';
     return html;
   }
   
-  // 各情報カード
-  // 洗濯指数
-  if (w.laundry) {
-    html += renderTodayCard('🧺', '洗濯指数', w.laundry.score, w.laundry.label, w.laundry.comment);
-  }
+  // ===== セクション1: 今日の天気 =====
+  html += '<div class="section-head" style="margin-bottom:8px;"><h2 class="section-title">今日の天気</h2></div>';
   
-  // UV指数
-  if (w.uv) {
-    html += renderTodayCard('☀️', 'UV指数', w.uv.index, w.uv.label, w.uv.comment);
-  }
+  html += '<div style="background:rgba(255,255,255,0.88);border:1px solid rgba(255,255,255,0.9);border-radius:16px;padding:0;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;overflow:hidden;">';
   
-  // 花粉レベル
-  if (w.pollen) {
-    html += renderTodayCard('🌼', '花粉レベル', null, w.pollen.label, w.pollen.comment);
-  }
+  // 天気ヘッダー
+  html += '<div style="padding:14px 16px;">';
+  html += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">'+dateStr+'('+wd+') · '+escapeHtml(region)+'</div>';
+  html += '<div style="display:flex;align-items:center;gap:10px;">';
+  html += '<span style="font-size:36px;line-height:1;">'+w.icon+'</span>';
+  html += '<div>';
+  html += '<div style="font-size:26px;font-weight:800;color:var(--ink-dark);line-height:1;">'+Math.round(w.temp)+'°</div>';
+  html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:3px;">'+escapeHtml(w.desc)+' · 湿度'+w.humidity+'%</div>';
+  html += '</div></div></div>';
   
-  // 黄砂
-  if (w.dust) {
-    html += renderTodayCard('🌫️', '黄砂', null, w.dust.label, w.dust.comment);
-  }
+  // 各指数を区切り線で並べる
+  const items = [];
+  if (w.laundry) items.push({icon:'🧺', title:'洗濯指数', value:w.laundry.score, label:w.laundry.label, comment:w.laundry.comment});
+  if (w.uv) items.push({icon:'☀️', title:'UV指数', value:w.uv.index, label:w.uv.label, comment:w.uv.comment});
+  if (w.pollen) items.push({icon:'🌼', title:'花粉レベル', value:null, label:w.pollen.label, comment:w.pollen.comment});
+  if (w.dust) items.push({icon:'🌫️', title:'黄砂', value:null, label:w.dust.label, comment:w.dust.comment});
+  if (w.airQuality && w.airQuality.level !== 'unknown') items.push({icon:'💨', title:'大気質', value:null, label:w.airQuality.label, comment:w.airQuality.comment});
   
-  // 大気質
-  if (w.airQuality && w.airQuality.level !== 'unknown') {
-    html += renderTodayCard('💨', '大気質', null, w.airQuality.label, w.airQuality.comment);
-  }
-  
-  // 予報セクション
-  if (w.forecast && w.forecast.length > 0) {
-    html += '<div style="padding:8px 4px 4px;">';
-    html += '<div class="section-head"><h2 class="section-title">これからの天気</h2></div>';
+  for (const it of items) {
+    html += '<div style="height:1px;background:rgba(120,140,130,0.18);margin:0 14px;"></div>';
+    html += '<div style="padding:11px 16px;display:flex;align-items:flex-start;gap:10px;">';
+    html += '<span style="font-size:20px;line-height:1.2;flex-shrink:0;">'+it.icon+'</span>';
+    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">';
+    html += '<span style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+it.title+'</span>';
+    if (it.value !== null && it.value !== undefined) {
+      html += '<span style="font-size:14px;font-weight:800;color:var(--accent-deep);">'+it.value+'</span>';
+    }
+    html += '<span style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(it.label)+'</span>';
     html += '</div>';
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:8px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">';
-    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:4px;">';
+    if (it.comment) {
+      html += '<div style="font-size:11px;color:var(--ink);margin-top:3px;line-height:1.5;">'+escapeHtml(it.comment)+'</div>';
+    }
+    html += '</div></div>';
+  }
+  
+  html += '</div>'; // セクション1終わり
+  
+  // ===== セクション2: これからの天気 =====
+  if (w.forecast && w.forecast.length > 0) {
+    html += '<div class="section-head" style="margin-bottom:8px;"><h2 class="section-title">これからの天気</h2></div>';
+    html += '<div style="background:rgba(255,255,255,0.88);border:1px solid rgba(255,255,255,0.9);border-radius:16px;padding:10px 8px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;">';
+    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px;">';
     for (const f of w.forecast.slice(0, 8)) {
       const fh = String(f.time.getHours()).padStart(2,'0');
-      html += '<div style="flex-shrink:0;min-width:54px;text-align:center;padding:6px 4px;background:rgba(255,255,255,0.5);border-radius:10px;">';
+      html += '<div style="flex-shrink:0;min-width:54px;text-align:center;padding:8px 4px;background:rgba(255,255,255,0.7);border-radius:10px;">';
       html += '<div style="font-size:10px;color:var(--ink-sub);">'+fh+'時</div>';
       html += '<div style="font-size:22px;line-height:1.2;margin:2px 0;">'+f.icon+'</div>';
       html += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+f.temp+'°</div>';
@@ -10635,16 +10639,11 @@ function renderNewsTab() {
   let html = '<div style="padding:12px 16px 8px;">';
   
   // ヘッダー
-  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:14px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:12px;">';
-  html += '<div style="display:flex;align-items:center;gap:10px;">';
-  html += '<span style="font-size:28px;line-height:1;">📰</span>';
-  html += '<div>';
-  html += '<div style="font-size:15px;font-weight:800;color:var(--ink-dark);">きょうのニュース</div>';
-  html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;">'+dateStr+'('+wd+') 更新</div>';
-  html += '</div></div></div>';
+  html += '<div class="section-head" style="margin-bottom:8px;"><h2 class="section-title">きょうのニュース</h2></div>';
+  html += '<div style="font-size:10px;color:var(--ink-sub);margin:0 0 10px 14px;">📰 '+dateStr+'('+wd+') 更新</div>';
   
-  // ニュース一覧（一般）
-  html += renderNewsSection('general', 'トップニュース');
+  // ニュース本体（区切り線スタイル）
+  html += renderNewsSection('general', null);
   
   html += '</div>';
   return html;
@@ -10821,29 +10820,31 @@ function renderNewsSection(category, title) {
     cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
   } catch(e) {}
   
-  let html = '<div style="padding:8px 4px 4px;">';
-  html += '<div class="section-head"><h2 class="section-title">'+escapeHtml(title)+'</h2></div>';
-  html += '</div>';
+  let html = '';
+  // タイトル指定があれば見出し追加（クレヨンライン）
+  if (title) {
+    html += '<div class="section-head" style="margin-bottom:8px;"><h2 class="section-title">'+escapeHtml(title)+'</h2></div>';
+  }
   
   if (!cached || !cached.news || cached.news.length === 0) {
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:18px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:11px;line-height:1.6;margin-bottom:8px;">';
+    html += '<div style="background:rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.9);border-radius:14px;padding:18px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:11px;line-height:1.6;margin-bottom:8px;">';
     html += 'ニュースを取得中だよ🌷<br><span style="font-size:10px;color:var(--ink-light);">少し待ってね</span>';
     html += '</div>';
     return html;
   }
   
-  // 5件まで表示
+  // 5件まで表示（区切り線スタイル）
   const items = cached.news.slice(0, 5);
-  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:6px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">';
+  html += '<div style="background:rgba(255,255,255,0.88);border:1px solid rgba(255,255,255,0.9);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
   
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (i > 0) html += '<div style="height:1px;background:rgba(255,255,255,0.6);margin:0 8px;"></div>';
+    if (i > 0) html += '<div style="height:1px;background:rgba(120,140,130,0.18);margin:0 14px;"></div>';
     const safeLink = (item.link || '').replace(/"/g, '&quot;');
     const time = _newsRelativeTime(item.pubDate);
-    html += '<a href="'+safeLink+'" target="_blank" rel="noopener noreferrer" style="display:block;padding:10px 12px;text-decoration:none;color:inherit;">';
-    html += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);line-height:1.5;margin-bottom:3px;">'+escapeHtml(item.title)+'</div>';
-    html += '<div style="font-size:10px;color:var(--ink-light);">';
+    html += '<a href="'+safeLink+'" target="_blank" rel="noopener noreferrer" style="display:block;padding:11px 14px;text-decoration:none;color:inherit;">';
+    html += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);line-height:1.5;margin-bottom:4px;">'+escapeHtml(item.title)+'</div>';
+    html += '<div style="font-size:10px;color:var(--ink-sub);">';
     html += escapeHtml(item.source);
     if (time) html += ' · ' + time;
     html += '</div>';
