@@ -1017,9 +1017,26 @@
   }
   .pet-room-streak {
     position: absolute; top: 6px; left: 6px; z-index: 4;
-    background: var(--warm-yellow); color: #6B5544;
-    font-size: 9.5px; font-weight: 700;
-    padding: 2px 7px; border-radius: 999px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    color: var(--ink-sub);
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 0.8px;
+    padding: 2px 9px; border-radius: 100px;
+    border: 1px solid rgba(0,0,0,0.04);
+    text-transform: lowercase;
+  }
+  /* ペット詳細用の英語バッジ */
+  .badge-en {
+    display: inline-flex; align-items: center;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    color: var(--ink-sub);
+    font-size: 10.5px; font-weight: 600;
+    letter-spacing: 1px;
+    padding: 4px 12px; border-radius: 100px;
+    border: 1px solid rgba(0,0,0,0.05);
+    text-transform: lowercase;
   }
   .pet-room-nameplate {
     display: flex; align-items: baseline; justify-content: space-between;
@@ -4662,6 +4679,15 @@ function calcStreak(petId) {
   }
   return streak;
 }
+
+// streak日数を英語の上品なラベルに変換
+function streakLabelEn(streak) {
+  if (streak >= 365) return Math.floor(streak / 365) + ' year' + (streak >= 730 ? 's' : '');
+  if (streak >= 30) return Math.floor(streak / 30) + ' month' + (streak >= 60 ? 's' : '');
+  if (streak >= 14) return Math.floor(streak / 7) + ' weeks';
+  if (streak >= 7) return '1 week';
+  return streak + ' days';
+}
 function getTodayMemorial(pet) {
   return getMemorialsForDate(todayKey(), null, pet.id);
 }
@@ -5836,7 +5862,7 @@ function renderPetRoomCard(pet) {
   let html = '<button class="pet-room-card '+(pet.place==='rainbow'?'rainbow':'')+'" onclick="enterPet(\''+pet.id+'\')">';
   html += renderRoomBox(pet);
   if (memorials.length > 0) html += '<div class="pet-room-badge">🎉</div>';
-  // 🔥連続日数バッジは世界観に合わないため非表示
+  if (streak >= 3 && pet.place === 'home') html += '<div class="pet-room-streak">'+streakLabelEn(streak)+'</div>';
   html += '<div class="pet-room-nameplate"><span class="pet-room-name">';
   if (pet.place !== 'home') html += PLACE_ICONS[pet.place]+' ';
   html += escapeHtml(pet.name)+' '+(PET_EMOJIS[pet.type] || '✨')+'</span><span class="pet-room-species">'+(pet.breed ? escapeHtml(pet.breed) : PET_TYPE_NAMES[pet.type])+'</span></div>';
@@ -5854,7 +5880,7 @@ function renderPetRoomCardCompact(pet) {
   let html = '<button class="pet-room-card pet-room-card-compact '+(pet.place==='rainbow'?'rainbow':'')+'" onclick="enterPet(\''+pet.id+'\')">';
   html += renderRoomBox(pet);
   if (memorials.length > 0) html += '<div class="pet-room-badge" style="font-size:11px;width:20px;height:20px;">🎉</div>';
-  // 🔥連続日数バッジは世界観に合わないため非表示
+  if (streak >= 3 && pet.place === 'home') html += '<div class="pet-room-streak" style="font-size:8px;padding:1px 6px;">'+streakLabelEn(streak)+'</div>';
   html += '<div class="pet-room-name-compact">';
   if (pet.place !== 'home') html += PLACE_ICONS[pet.place]+' ';
   html += escapeHtml(pet.name);
@@ -6216,7 +6242,10 @@ function renderPet() {
     html += '<div class="section"><div class="memorial-card"><div class="memorial-title">✨ 今日は特別な日</div>';
     html += '<div class="memorial-text">'+memorials.join('<br>')+'</div></div></div>';
   }
-  // 🔥連続日数バッジ・週間・1ヶ月バッジは世界観に合わないため非表示
+  // streak表示（英語シンプルver）
+  if (streak >= 3 && pet.place === 'home') {
+    html += '<div class="section" style="padding:0 16px;"><span class="badge-en">'+streakLabelEn(streak)+'</span></div>';
+  }
   if (pet.place === 'home') {
     html += '<div class="pet-tabs-bar">';
     html += '<button class="pet-tab-btn '+(tab==='care'?'active':'')+'" onclick="setPetTab(\'care\')"><span class="pet-tab-icon">🌿</span><span class="pet-tab-label">お世話</span></button>';
