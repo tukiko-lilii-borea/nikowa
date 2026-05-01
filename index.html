@@ -10835,7 +10835,7 @@ async function fetchNews(category) {
     const data = await res.json();
     
     if (data.status === 'ok' && data.items) {
-      const news = data.items.slice(0, 10).map(item => {
+      const news = data.items.slice(0, 30).map(item => {
         // タイトルから出典を抽出（「タイトル - 出典」形式が多い）
         const titleParts = (item.title || '').split(' - ');
         let title, source;
@@ -10918,8 +10918,8 @@ function renderNewsSection(category, title) {
     return html;
   }
   
-  // 5件まで表示（区切り線スタイル）
-  const items = cached.news.slice(0, 5);
+  // 30件まで表示（区切り線スタイル）
+  const items = cached.news.slice(0, 30);
   html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
   
   for (let i = 0; i < items.length; i++) {
