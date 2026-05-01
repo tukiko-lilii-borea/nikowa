@@ -1796,6 +1796,14 @@
   .btn-danger { background: var(--accent-bg); color: var(--accent-deep); }
   .btn-mini { padding: 6px 10px; font-size: 11px; flex: 0 0 auto; }
   .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  /* テーマモーダル：選択中テーマの背景色に変わる */
+  #themeModal .modal-content {
+    background: var(--bg);
+    transition: background 0.3s ease;
+  }
+  #themeModal .modal-title {
+    color: var(--ink-dark);
+  }
   .theme-btn {
     background: var(--surface); border: 2px solid var(--line);
     border-radius: 12px; padding: 7px 9px;
@@ -5447,7 +5455,7 @@ function goToPetMode() {
 }
 
 function openComingSoon(modeName) {
-  showToast(modeName + '準備中やで🌸');
+  showToast(modeName + '準備中だよ🌸');
 }
 
 function renderMeMode() {
@@ -5460,9 +5468,13 @@ function renderMeMode() {
   html += renderModePageTabs('me');
   html += '<div style="border-top:2px solid var(--mint);margin:0 12px 0;"></div>';
   
-  const tab = currentModeTab['me'] || 'stamp';
+  const tab = currentModeTab['me'] || 'today';
   
-  if (tab === 'stamp') {
+  if (tab === 'today') {
+    // ===== ToDay =====
+    html += renderTodayTab();
+    
+  } else if (tab === 'stamp') {
     // ===== Stamp =====
     html += '<div style="padding:12px 16px 4px;">';
     html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;">';
@@ -6277,7 +6289,7 @@ function renderHousesFav() {
   html += '<div style="text-align:center;padding:48px 24px;">';
   html += '<div style="font-size:48px;margin-bottom:12px;">☆</div>';
   html += '<div style="font-size:15px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;">お気に入りの家</div>';
-  html += '<div style="font-size:12px;color:var(--ink-sub);line-height:1.7;">友達のペットや<br>応援してる家がここに並ぶで🌷<br><br><span style="color:var(--ink-light);font-size:11px;">ただいま準備中🌷</span></div>';
+  html += '<div style="font-size:12px;color:var(--ink-sub);line-height:1.7;">友達のペットや<br>応援してる家がここに並ぶよ🌷<br><br><span style="color:var(--ink-light);font-size:11px;">ただいま準備中🌷</span></div>';
   html += '</div></div>';
   html += '<div style="height:80px;"></div>';
   app.innerHTML = html;
@@ -6301,6 +6313,34 @@ function renderHouseHomeTab(house) {
   for (const pet of pets) todayMemorials.push.apply(todayMemorials, getTodayMemorial(pet));
   
   let html = '';
+  
+  // PETモードの時、お散歩アドバイス表示
+  if (currentMode === 'pet' && homePets.length > 0) {
+    const w = window._weatherCache;
+    const advices = w ? getPetWalkAdvice(w) : null;
+    if (advices && advices.length > 0) {
+      html += '<div class="section">';
+      html += '<div class="section-head"><h2 class="section-title">きょうのお散歩メモ</h2></div>';
+      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">';
+      for (let i = 0; i < advices.length; i++) {
+        const a = advices[i];
+        if (i > 0) html += '<div style="height:1px;background:rgba(255,255,255,0.6);margin:8px 0;"></div>';
+        html += '<div style="display:flex;align-items:flex-start;gap:8px;">';
+        html += '<span style="font-size:16px;line-height:1.3;flex-shrink:0;">'+a.icon+'</span>';
+        html += '<div style="flex:1;min-width:0;">';
+        html += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(a.text)+'</div>';
+        html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:2px;line-height:1.5;">'+escapeHtml(a.comment)+'</div>';
+        html += '</div></div>';
+      }
+      html += '</div></div>';
+    }
+    
+    // ペットニュースセクション
+    html += '<div class="section" style="padding-top:0;">';
+    html += renderNewsSection('pet', 'ペットのニュース');
+    html += '</div>';
+  }
+  
   if (todayMemorials.length > 0) {
     html += '<div class="section"><div class="memorial-card">';
     html += '<div class="memorial-title">✨ 今日は特別な日</div>';
@@ -6362,6 +6402,14 @@ function renderHouseHomeTab(house) {
     html += '<button class="pet-add-card pet-add-card-compact" onclick="openAddPetModal()"><span class="icon">＋</span><span class="label">あたらしい子</span></button></div>';
   }
   html += '</div>';
+  
+  // PETモード時のみ、ペット関連ニュースを表示
+  if (currentMode === 'pet' && homePets.length > 0) {
+    html += '<div class="section" style="padding:0 16px;">';
+    html += renderNewsSection('pet', 'ペットのニュース');
+    html += '</div>';
+  }
+  
   if (rainbowPets.length > 0) {
     html += '<div class="section" style="padding-bottom: 24px;">';
     html += '<div class="section-head"><h2 class="section-title">虹の橋のひろば</h2><span class="section-count">'+rainbowPets.length+'匹</span></div>';
@@ -6678,7 +6726,7 @@ function renderPet() {
     html += '</div></div>';
   } else {
     html += '<div class="section"><div class="empty-state" style="margin: 0;"><div class="emoji">✨</div>';
-    html += '<div class="empty-state-title">アプリの中の子</div><div class="empty-state-text">育成機能はもう少し先で🌷</div></div></div>';
+    html += '<div class="empty-state-title">アプリの中の子</div><div class="empty-state-text">育成機能はもう少し先だよ🌷</div></div></div>';
   }
   html += '<div class="section" style="padding-bottom: 24px;">';
   html += '<button class="btn btn-secondary" style="width:100%; max-width: 200px; margin: 48px auto 24px; display: block; color: var(--ink-light); font-size: 11px; padding: 8px 12px; border: 1px dashed var(--line-soft);" onclick="openTidyPetModal(\''+pet.id+'\')">この子の記録を整理する</button></div>';
@@ -7560,11 +7608,11 @@ function saveShopMemoFromModal() {
       });
     }
     savePlaceMemo(memoKey, value);
-    showToast('メモ保存したで🌸');
+    showToast('メモ保存したよ🌸');
   } else if (placesMemos[memoKey]) {
     delete placesMemos[memoKey];
     try { localStorage.setItem(PLACES_MEMO_KEY, JSON.stringify(placesMemos)); } catch(e) {}
-    showToast('メモ削除したで🌷');
+    showToast('メモ削除したよ🌷');
   }
   closeShopMemoModal();
   _suppressScrollTop = true;
@@ -7577,7 +7625,7 @@ function deleteShopMemo() {
   if (!confirm('このメモを削除する？')) return;
   delete placesMemos[memoKey];
   try { localStorage.setItem(PLACES_MEMO_KEY, JSON.stringify(placesMemos)); } catch(e) {}
-  showToast('メモ削除したで🌷');
+  showToast('メモ削除したよ🌷');
   closeShopMemoModal();
   _suppressScrollTop = true;
   render();
@@ -7672,7 +7720,7 @@ function saveNestMemoFromModal() {
       memo.body = body;
       memo.updatedAt = now;
     }
-    showToast('メモ更新したで🌸');
+    showToast('メモ更新したよ🌸');
   } else {
     // 新規
     data.nestMemos[_nestId].push({
@@ -7682,7 +7730,7 @@ function saveNestMemoFromModal() {
       createdAt: now,
       updatedAt: now
     });
-    showToast('メモ保存したで🌸');
+    showToast('メモ保存したよ🌸');
   }
   
   saveData();
@@ -7701,7 +7749,7 @@ function deleteNestMemo() {
   
   data.nestMemos[_nestId] = data.nestMemos[_nestId].filter(m => m.id !== _editingNestMemoId);
   saveData();
-  showToast('メモ削除したで🌷');
+  showToast('メモ削除したよ🌷');
   closeNestMemoModal();
   _suppressScrollTop = true;
   render();
@@ -7816,7 +7864,7 @@ function saveNestGoodsFromModal() {
       g.icon = _editingNestGoodsIcon;
       g.updatedAt = now;
     }
-    showToast('備品更新したで🌸');
+    showToast('備品更新したよ🌸');
   } else {
     data.nestGoods[_nestId].push({
       id: 'goods_' + now + '_' + Math.floor(Math.random()*1000),
@@ -7828,7 +7876,7 @@ function saveNestGoodsFromModal() {
       createdAt: now,
       updatedAt: now
     });
-    showToast('備品追加したで🌸');
+    showToast('備品追加したよ🌸');
   }
   
   saveData();
@@ -7847,7 +7895,7 @@ function deleteNestGoods() {
   
   data.nestGoods[_nestId] = data.nestGoods[_nestId].filter(g => g.id !== _editingNestGoodsId);
   saveData();
-  showToast('備品削除したで🌷');
+  showToast('備品削除したよ🌷');
   closeNestGoodsModal();
   _suppressScrollTop = true;
   render();
@@ -7968,7 +8016,7 @@ function saveNestRoutineFromModal() {
       r.icon = _editingNestRoutineIcon;
       r.updatedAt = now;
     }
-    showToast('ルーティン更新したで🌸');
+    showToast('ルーティン更新したよ🌸');
   } else {
     data.nestRoutines[_nestId].push({
       id: 'routine_' + now + '_' + Math.floor(Math.random()*1000),
@@ -7980,7 +8028,7 @@ function saveNestRoutineFromModal() {
       createdAt: now,
       updatedAt: now
     });
-    showToast('ルーティン追加したで🌸');
+    showToast('ルーティン追加したよ🌸');
   }
   
   saveData();
@@ -7998,7 +8046,7 @@ function deleteNestRoutine() {
   
   data.nestRoutines[_nestId] = data.nestRoutines[_nestId].filter(r => r.id !== _editingNestRoutineId);
   saveData();
-  showToast('ルーティン削除したで🌷');
+  showToast('ルーティン削除したよ🌷');
   closeNestRoutineModal();
   _suppressScrollTop = true;
   render();
@@ -8418,7 +8466,7 @@ function saveDailyRoutineFromModal() {
       item.icon = _editingDailyRoutineIcon;
       item.updatedAt = now;
     }
-    showToast('更新したで🌸');
+    showToast('更新したよ🌸');
   } else {
     data.dailyRoutines[_editingDailyRoutineKey].push({
       id: 'daily_' + now + '_' + Math.floor(Math.random()*1000),
@@ -8434,7 +8482,7 @@ function saveDailyRoutineFromModal() {
       createdAt: now,
       updatedAt: now
     });
-    showToast('追加したで🌸');
+    showToast('追加したよ🌸');
   }
   
   saveData();
@@ -8450,7 +8498,7 @@ function deleteDailyRoutine() {
   
   data.dailyRoutines[_editingDailyRoutineKey] = data.dailyRoutines[_editingDailyRoutineKey].filter(x => x.id !== _editingDailyRoutineId);
   saveData();
-  showToast('削除したで🌷');
+  showToast('削除したよ🌷');
   closeDailyRoutineModal();
   _suppressScrollTop = true;
   render();
@@ -8525,6 +8573,32 @@ try {
     placesFavs = { me: _pf.me||{}, pet: _pf.pet||{}, kids: _pf.kids||{}, work: _pf.work||{} };
   }
 } catch(e) {}
+
+// ===== フォルダ管理（カテゴリ別） =====
+const PLACES_FOLDERS_KEY = 'nikowa_place_folders';
+let placesFolders = { me: [], pet: [], kids: [], work: [] };
+try {
+  const _pf = JSON.parse(localStorage.getItem(PLACES_FOLDERS_KEY) || '{}');
+  if (_pf) {
+    placesFolders = { me: _pf.me||[], pet: _pf.pet||[], kids: _pf.kids||[], work: _pf.work||[] };
+  }
+} catch(e) {}
+function savePlacesFolders() {
+  try { localStorage.setItem(PLACES_FOLDERS_KEY, JSON.stringify(placesFolders)); } catch(e) {}
+}
+
+// ===== カスタム場所（友達の家・オフィスなど個人登録） =====
+const PLACES_CUSTOM_KEY = 'nikowa_place_custom';
+let placesCustom = { me: {}, pet: {}, kids: {}, work: {} };
+try {
+  const _pc = JSON.parse(localStorage.getItem(PLACES_CUSTOM_KEY) || '{}');
+  if (_pc) {
+    placesCustom = { me: _pc.me||{}, pet: _pc.pet||{}, kids: _pc.kids||{}, work: _pc.work||{} };
+  }
+} catch(e) {}
+function savePlacesCustom() {
+  try { localStorage.setItem(PLACES_CUSTOM_KEY, JSON.stringify(placesCustom)); } catch(e) {}
+}
 let placesMemos = {};
 try { placesMemos = JSON.parse(localStorage.getItem(PLACES_MEMO_KEY) || '{}'); } catch(e) {}
 // メモ済み店の最小情報（fav外でも一覧に出すため）
@@ -8809,8 +8883,13 @@ function renderTown() {
 
   // ── お気に入りサブタブ
   if (townSubTab === 'fav') {
-    const favMap = placesFavs[townMainTab] || {};
+    const cat = townMainTab;
+    const favMap = placesFavs[cat] || {};
     const favList = Object.values(favMap);
+    const folders = placesFolders[cat] || [];
+    const customMap = placesCustom[cat] || {};
+    const customList = Object.values(customMap);
+    
     // にこわショップのお気に入り
     const nikowaFavList = [];
     for (const id in shopFavs) {
@@ -8823,7 +8902,6 @@ function renderTown() {
     for (const id in placesMemos) {
       if (!placesMemos[id]) continue;
       if (favMap[id]) continue;
-      // にこわショップのfav済みなら別セクションに出てるからスキップ
       if (id.indexOf('nikowa_') === 0) {
         const shopId = id.replace('nikowa_', '');
         if (shopFavs[shopId]) continue;
@@ -8831,28 +8909,86 @@ function renderTown() {
       const stub = placesMemoStubs[id];
       if (stub) memoOnlyList.push(stub);
     }
-    if (favList.length === 0 && nikowaFavList.length === 0 && memoOnlyList.length === 0) {
-      html += '<div class="places-fav-empty">♡ お気に入りがまだないよ<br><span style="font-size:11px;margin-top:8px;display:block;">「検索」で見つけた場所を保存してね🌷<br>📝メモを書いた場所もここに集まるよ</span></div>';
+    
+    // ➕ボタン行（フォルダ追加・場所追加）
+    html += '<div style="padding:12px 16px 8px;display:flex;gap:8px;">';
+    html += '<button onclick="openFolderAddModal(\''+cat+'\')" style="flex:1;padding:10px;border:1.5px dashed var(--accent);border-radius:12px;background:var(--accent-bg);color:var(--accent-deep);font-weight:700;font-family:inherit;font-size:12px;cursor:pointer;">📁 ＋フォルダ</button>';
+    html += '<button onclick="openCustomPlaceModal(\''+cat+'\')" style="flex:1;padding:10px;border:1.5px dashed var(--accent);border-radius:12px;background:var(--accent-bg);color:var(--accent-deep);font-weight:700;font-family:inherit;font-size:12px;cursor:pointer;">📍 ＋場所</button>';
+    html += '</div>';
+    
+    const totalCount = favList.length + nikowaFavList.length + memoOnlyList.length + customList.length;
+    if (totalCount === 0 && folders.length === 0) {
+      html += '<div class="places-fav-empty">♡ お気に入りがまだないよ<br><span style="font-size:11px;margin-top:8px;display:block;">「検索」で見つけた場所を保存したり<br>📁フォルダや📍場所を追加してね🌷</span></div>';
     } else {
-      // にこわショップのお気に入り
-      if (nikowaFavList.length > 0) {
-        html += '<div style="padding:12px 16px 4px;font-size:11px;color:var(--ink-sub);font-weight:700;">🌷 にこわタウンのお気に入り（'+nikowaFavList.length+'件）</div>';
-        html += '<div class="place-cards">';
-        for (const s of nikowaFavList) html += buildNikowaShopCardHtml(s);
-        html += '</div>';
+      // フォルダ別に整理
+      // 各場所をfolderIdで仕分け
+      const itemsByFolder = {};  // folderId → [items...]
+      const unassigned = [];     // フォルダ未分類
+      
+      // にこわショップ（フォルダ機能なし、未分類扱い）
+      for (const s of nikowaFavList) {
+        const folderId = s._folderId || null;
+        if (folderId && folders.find(f => f.id === folderId)) {
+          if (!itemsByFolder[folderId]) itemsByFolder[folderId] = [];
+          itemsByFolder[folderId].push({type:'nikowa', data:s});
+        } else {
+          unassigned.push({type:'nikowa', data:s});
+        }
       }
-      // 通常のお気に入り
-      if (favList.length > 0) {
-        html += '<div style="padding:12px 16px 4px;font-size:11px;color:var(--ink-sub);font-weight:700;">♥ お気に入り（'+favList.length+'件）</div>';
-        html += '<div class="places-fav-list">';
-        for (const p of favList) html += buildFavCardHtml(p);
-        html += '</div>';
+      
+      // 通常お気に入り
+      for (const p of favList) {
+        const folderId = p.folderId || null;
+        if (folderId && folders.find(f => f.id === folderId)) {
+          if (!itemsByFolder[folderId]) itemsByFolder[folderId] = [];
+          itemsByFolder[folderId].push({type:'fav', data:p});
+        } else {
+          unassigned.push({type:'fav', data:p});
+        }
       }
-      // メモ済み（お気に入り外）
-      if (memoOnlyList.length > 0) {
-        html += '<div style="padding:14px 16px 4px;font-size:11px;color:var(--ink-sub);font-weight:700;">📝 メモ済み（'+memoOnlyList.length+'件）</div>';
+      
+      // カスタム場所
+      for (const c of customList) {
+        const folderId = c.folderId || null;
+        if (folderId && folders.find(f => f.id === folderId)) {
+          if (!itemsByFolder[folderId]) itemsByFolder[folderId] = [];
+          itemsByFolder[folderId].push({type:'custom', data:c});
+        } else {
+          unassigned.push({type:'custom', data:c});
+        }
+      }
+      
+      // メモのみ（未分類扱い）
+      for (const p of memoOnlyList) {
+        unassigned.push({type:'memo', data:p});
+      }
+      
+      // フォルダ別表示
+      for (const folder of folders) {
+        const items = itemsByFolder[folder.id] || [];
+        html += '<div style="padding:14px 16px 4px;display:flex;align-items:center;justify-content:space-between;">';
+        html += '<div style="font-size:12px;color:var(--ink-dark);font-weight:800;">'+escapeHtml(folder.icon||'📁')+' '+escapeHtml(folder.name)+' <span style="color:var(--ink-light);font-weight:500;">('+items.length+'件)</span></div>';
+        html += '<div style="display:flex;gap:6px;">';
+        html += '<button onclick="openFolderEditModal(\''+cat+'\',\''+folder.id+'\')" style="background:none;border:none;font-size:11px;color:var(--ink-sub);cursor:pointer;padding:2px 6px;">編集</button>';
+        html += '</div></div>';
+        if (items.length === 0) {
+          html += '<div style="padding:8px 16px 4px;font-size:11px;color:var(--ink-light);">空フォルダ。♡や場所追加で入れてね</div>';
+        } else {
+          html += '<div class="places-fav-list">';
+          for (const item of items) {
+            html += renderFolderItemCard(item, cat);
+          }
+          html += '</div>';
+        }
+      }
+      
+      // 未分類
+      if (unassigned.length > 0) {
+        html += '<div style="padding:14px 16px 4px;font-size:12px;color:var(--ink-sub);font-weight:700;">📂 未分類 ('+unassigned.length+'件)</div>';
         html += '<div class="places-fav-list">';
-        for (const p of memoOnlyList) html += buildFavCardHtml(p);
+        for (const item of unassigned) {
+          html += renderFolderItemCard(item, cat);
+        }
         html += '</div>';
       }
     }
@@ -9384,7 +9520,7 @@ function renderSettings() {
     html += '<option value="'+pref+'"'+sel+'>'+pref+'</option>';
   }
   html += '</select>';
-  html += '<button onclick="fetchWeather();showToast(\'天気を更新したで🌸\');" style="width:100%;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:12px;font-weight:700;color:var(--accent-deep);background:var(--accent-bg);cursor:pointer;font-family:inherit;">天気を今すぐ更新</button>';
+  html += '<button onclick="fetchWeather();showToast(\'天気を更新したよ🌸\');" style="width:100%;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:12px;font-weight:700;color:var(--accent-deep);background:var(--accent-bg);cursor:pointer;font-family:inherit;">天気を今すぐ更新</button>';
   html += '</div></div>';
 
   // ヘルプセクション
@@ -9414,7 +9550,7 @@ function saveUserRegion(region) {
   data.userRegion = region;
   saveData();
   fetchWeather();
-  showToast(escapeHtml(region)+'に変更したで🌸');
+  showToast(escapeHtml(region)+'に変更したよ🌸');
 }
 
 function setActiveNav(view) {
@@ -9451,6 +9587,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('show'); 
 const MODE_TABS_KEY = { me: 'nikowa_me_tabs', pet: 'nikowa_pet_tabs', kids: 'nikowa_kids_tabs' };
 const DEFAULT_MODE_TABS = {
   me: [
+    { id: 'today',      label: 'ToDay' },
     { id: 'stamp',      label: 'Stamp' },
     { id: 'routine',    label: 'Routine' },
     { id: 'diary',      label: 'Diary' },
@@ -9481,13 +9618,21 @@ const DEFAULT_MODE_TABS = {
     { id: 'collection', label: 'Collection' }
   ]
 };
-let currentModeTab = { me: 'stamp', pet: 'home', kids: 'home', nest: 'memo' };
+let currentModeTab = { me: 'today', pet: 'home', kids: 'home', nest: 'memo' };
 let modeTabEditMode = false;
 
 function getModeTabsForMode(mode) {
   try {
     const s = localStorage.getItem(MODE_TABS_KEY[mode]);
-    if (s) return JSON.parse(s);
+    if (s) {
+      const tabs = JSON.parse(s);
+      // ME: ToDayタブが無ければ先頭に追加（既存ユーザー向けマイグレーション）
+      if (mode === 'me' && tabs.length > 0 && !tabs.find(t => t.id === 'today')) {
+        tabs.unshift({ id: 'today', label: 'ToDay' });
+        try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
+      }
+      return tabs;
+    }
   } catch(e) {}
   return DEFAULT_MODE_TABS[mode].slice();
 }
@@ -9553,7 +9698,7 @@ function modeTabMoveDown(mode, idx) {
 }
 function modeTabDelete(mode, idx) {
   const tabs = getModeTabsForMode(mode);
-  if (tabs.length <= 1) { showToast('最低1つは必要やで🌷'); return; }
+  if (tabs.length <= 1) { showToast('最低1つは必要だよ🌷'); return; }
   if (!confirm('「'+tabs[idx].label+'」を削除する？')) return;
   tabs.splice(idx, 1);
   saveModeTabsForMode(mode, tabs);
@@ -9805,7 +9950,7 @@ function renderSecretMemoEdit() {
     if (item.id_email) {
       html += '<div style="padding:4px 0 12px;display:flex;align-items:center;">';
       html += '<div style="flex:1;"><span style="font-size:12px;color:var(--accent);">ログインID</span><br><span style="font-size:15px;color:var(--ink-dark);">'+escapeHtml(item.id_email)+'</span></div>';
-      html += '<button onclick="navigator.clipboard.writeText(\''+escapeHtml(item.id_email).replace(/'/g,"\\'")+'\'); showToast(\'コピーしたで🌸\');" style="background:none;border:1px solid var(--accent);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--accent-deep);cursor:pointer;font-family:inherit;">コピー</button>';
+      html += '<button onclick="navigator.clipboard.writeText(\''+escapeHtml(item.id_email).replace(/'/g,"\\'")+'\'); showToast(\'コピーしたよ🌸\');" style="background:none;border:1px solid var(--accent);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--accent-deep);cursor:pointer;font-family:inherit;">コピー</button>';
       html += '</div>';
       html += '<hr style="border:none;border-top:1px solid var(--line-soft);margin:0 0 12px;">';
     }
@@ -9815,7 +9960,7 @@ function renderSecretMemoEdit() {
       html += '<div style="padding:4px 0 12px;display:flex;align-items:center;" id="smPwRow">';
       html += '<div style="flex:1;"><span style="font-size:12px;color:var(--accent);">パスワード</span><br><span style="font-size:15px;color:var(--ink-dark);" id="smPwDisplay">**********</span></div>';
       html += '<button onclick="var d=document.getElementById(\'smPwDisplay\');if(d.textContent===\'**********\'){d.textContent=\''+escapeHtml(item.password).replace(/'/g,"\\'")+'\'}else{d.textContent=\'**********\'}" style="background:none;border:1px solid var(--line);border-radius:100px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;font-family:inherit;margin-right:6px;">表示</button>';
-      html += '<button onclick="navigator.clipboard.writeText(\''+escapeHtml(item.password).replace(/'/g,"\\'")+'\'); showToast(\'コピーしたで🌸\');" style="background:none;border:1px solid var(--accent);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--accent-deep);cursor:pointer;font-family:inherit;">コピー</button>';
+      html += '<button onclick="navigator.clipboard.writeText(\''+escapeHtml(item.password).replace(/'/g,"\\'")+'\'); showToast(\'コピーしたよ🌸\');" style="background:none;border:1px solid var(--accent);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--accent-deep);cursor:pointer;font-family:inherit;">コピー</button>';
       html += '</div>';
       html += '<hr style="border:none;border-top:1px solid var(--line-soft);margin:0 0 12px;">';
     }
@@ -9994,7 +10139,7 @@ function secretMemoSaveItem() {
   saveSecretMemoData(d);
   secretMemoEditItem = null;
   secretMemoIsEditing = false;
-  showToast('保存したで🌸');
+  showToast('保存したよ🌸');
   render();
 }
 function secretMemoDeleteItem() {
@@ -10005,7 +10150,7 @@ function secretMemoDeleteItem() {
   node.items.splice(secretMemoEditItem, 1);
   saveSecretMemoData(d);
   secretMemoEditItem = null;
-  showToast('削除したで🌷');
+  showToast('削除したよ🌷');
   render();
 }
 function secretMemoExport() {
@@ -10046,6 +10191,7 @@ function secretMemoImport(event) {
 
 // ===== 天気機能 =====
 const WEATHER_API_KEY = '09b8e0e5cdae5008f9471a84841b6b51';
+
 const WEATHER_CITY_MAP = {
   '北海道':'Sapporo','青森':'Aomori','岩手':'Morioka','宮城':'Sendai',
   '秋田':'Akita','山形':'Yamagata','福島':'Fukushima','茨城':'Mito',
@@ -10076,12 +10222,58 @@ async function fetchWeather() {
     // 5日間予報（3時間ごと）
     const fcRes = await fetch('https://api.openweathermap.org/data/2.5/forecast?q='+city+',JP&appid='+WEATHER_API_KEY+'&units=metric&lang=ja&cnt=16');
     const fcData = await fcRes.json();
+    
+    const lat = curData.coord.lat;
+    const lon = curData.coord.lon;
+    const weatherMain = curData.weather[0].main; // 'Clear', 'Rain', 'Snow', 'Clouds', etc
+    const weatherIcon = curData.weather[0].icon;
+    const humidity = curData.main.humidity;
+    const windSpeed = (curData.wind && curData.wind.speed) || 0;
+    const temp = curData.main.temp;
+    
+    // ===== 大気汚染データ取得（PM2.5/PM10/各種大気成分）=====
+    let pm25 = null, pm10 = null, aqi = null;
+    try {
+      const airRes = await fetch('https://api.openweathermap.org/data/2.5/air_pollution?lat='+lat+'&lon='+lon+'&appid='+WEATHER_API_KEY);
+      const airData = await airRes.json();
+      if (airData.list && airData.list[0]) {
+        pm25 = airData.list[0].components.pm2_5;
+        pm10 = airData.list[0].components.pm10;
+        aqi = airData.list[0].main.aqi; // 1=良好 2=普通 3=やや悪い 4=悪い 5=非常に悪い
+      }
+    } catch(e) {
+      console.log('大気質取得エラー:', e);
+    }
+    
+    // ===== 各指数を計算 =====
+    const now = new Date();
+    const month = now.getMonth() + 1; // 1-12
+    const hour = now.getHours();
+    
+    const laundry = calculateLaundryIndex(weatherMain, humidity, windSpeed, temp);
+    const uv = estimateUVIndex(month, hour, weatherMain);
+    const pollen = estimatePollenLevel(month);
+    const dust = estimateDustLevel(pm10, month);
+    
     window._weatherCache = {
-      icon: WEATHER_ICON_MAP[curData.weather[0].icon] || '🌤️',
-      temp: curData.main.temp,
+      icon: WEATHER_ICON_MAP[weatherIcon] || '🌤️',
+      temp: temp,
       feels: curData.main.feels_like,
-      humidity: curData.main.humidity,
+      humidity: humidity,
+      windSpeed: windSpeed,
       desc: curData.weather[0].description,
+      weatherMain: weatherMain,
+      lat: lat,
+      lon: lon,
+      // 拡張データ
+      pm25: pm25,
+      pm10: pm10,
+      aqi: aqi,
+      laundry: laundry,        // {score: 0-100, label, comment}
+      uv: uv,                  // {index, label, comment}
+      pollen: pollen,          // {level, label, comment}
+      dust: dust,              // {level, label, comment}
+      airQuality: getAirQualityInfo(pm25, aqi),
       forecast: (fcData.list || []).slice(0, 8).map(f => ({
         time: new Date(f.dt * 1000),
         icon: WEATHER_ICON_MAP[f.weather[0].icon] || '🌤️',
@@ -10094,6 +10286,363 @@ async function fetchWeather() {
   } catch(e) {
     console.log('天気取得エラー:', e);
   }
+}
+
+// ===== 各種指数の計算関数 =====
+
+// 洗濯指数（0-100）：天気・湿度・風速・気温から計算
+function calculateLaundryIndex(weatherMain, humidity, windSpeed, temp) {
+  let score = 100;
+  
+  // 天気による減点
+  if (weatherMain === 'Rain' || weatherMain === 'Drizzle') score -= 60;
+  else if (weatherMain === 'Snow') score -= 70;
+  else if (weatherMain === 'Thunderstorm') score -= 65;
+  else if (weatherMain === 'Clouds') score -= 15;
+  else if (weatherMain === 'Mist' || weatherMain === 'Fog') score -= 25;
+  
+  // 湿度による減点
+  if (humidity >= 80) score -= 25;
+  else if (humidity >= 70) score -= 15;
+  else if (humidity >= 60) score -= 8;
+  else if (humidity < 40) score += 5;
+  
+  // 風速による加点
+  if (windSpeed >= 5) score += 10;
+  else if (windSpeed >= 3) score += 5;
+  
+  // 気温による調整
+  if (temp >= 25) score += 5;
+  else if (temp < 5) score -= 10;
+  
+  score = Math.max(0, Math.min(100, score));
+  
+  let label, comment;
+  if (score >= 85) {
+    label = '絶好の洗濯日和';
+    comment = 'カラッと乾く。シーツも洗えそう';
+  } else if (score >= 70) {
+    label = '洗濯日和';
+    comment = 'よく乾きそう。外干しおすすめ';
+  } else if (score >= 50) {
+    label = 'まあまあ';
+    comment = '外干しできるけど、乾きはふつう';
+  } else if (score >= 30) {
+    label = '乾きにくい';
+    comment = '乾きにくいかも。部屋干しor様子見て';
+  } else {
+    label = '部屋干し推奨';
+    comment = '外干しは避けて、部屋干しがおすすめ';
+  }
+  
+  return { score: score, label: label, comment: comment };
+}
+
+// UV指数を季節・時間・天気から推測
+function estimateUVIndex(month, hour, weatherMain) {
+  let baseUV = 0;
+  
+  // 季節ベース（日本の平均的なUV指数）
+  if (month >= 5 && month <= 8) baseUV = 9;       // 5-8月：非常に強い
+  else if (month === 4 || month === 9) baseUV = 7; // 4,9月：強い
+  else if (month === 3 || month === 10) baseUV = 5; // 3,10月：中程度
+  else if (month === 11 || month === 2) baseUV = 3; // 11,2月：弱い
+  else baseUV = 2;                                  // 12,1月：弱い
+  
+  // 時間による調整（10-14時がピーク）
+  if (hour >= 10 && hour <= 14) {
+    // ピーク時間そのまま
+  } else if ((hour >= 8 && hour < 10) || (hour > 14 && hour <= 16)) {
+    baseUV = Math.max(0, baseUV - 2);
+  } else if (hour < 8 || hour > 16) {
+    baseUV = Math.max(0, baseUV - 5);
+  }
+  
+  // 天気による減衰
+  if (weatherMain === 'Clouds') baseUV = Math.max(0, baseUV - 2);
+  else if (weatherMain === 'Rain' || weatherMain === 'Drizzle') baseUV = Math.max(0, baseUV - 3);
+  else if (weatherMain === 'Snow') baseUV = Math.max(0, baseUV - 1);
+  else if (weatherMain === 'Thunderstorm') baseUV = Math.max(0, baseUV - 4);
+  
+  let label, comment;
+  if (baseUV >= 11) {
+    label = '極端に強い';
+    comment = '日焼け止め＋帽子＋日傘推奨。長時間の外出は避けて';
+  } else if (baseUV >= 8) {
+    label = '非常に強い';
+    comment = '日焼け止め＋帽子推奨。散歩は朝夕がおすすめ';
+  } else if (baseUV >= 6) {
+    label = '強い';
+    comment = '日焼け止め忘れずに';
+  } else if (baseUV >= 3) {
+    label = '中程度';
+    comment = 'お出かけなら日焼け止めあると安心';
+  } else if (baseUV >= 1) {
+    label = '弱い';
+    comment = 'UV弱めだけど、乾燥してるから保湿忘れずに';
+  } else {
+    label = 'ごく弱い';
+    comment = '紫外線の心配は少ない時間帯';
+  }
+  
+  return { index: baseUV, label: label, comment: comment };
+}
+
+// 花粉レベルを季節から推測（日本の花粉カレンダー）
+function estimatePollenLevel(month) {
+  let level, label, comment;
+  
+  // スギ・ヒノキ：2-5月（特に3-4月ピーク）
+  // ブタクサ・ヨモギ：8-10月
+  // イネ科：5-7月
+  
+  if (month === 3 || month === 4) {
+    level = 'high';
+    label = '多い';
+    comment = 'マスク・目薬あると安心';
+  } else if (month === 2 || month === 5) {
+    level = 'medium';
+    label = 'やや多い';
+    comment = '花粉症の方は対策あると安心';
+  } else if (month === 9 || month === 10) {
+    level = 'medium';
+    label = 'やや多い';
+    comment = '秋の花粉（ブタクサ等）に注意';
+  } else if (month === 6 || month === 8) {
+    level = 'low';
+    label = '少なめ';
+    comment = 'イネ科花粉が少しあるかも';
+  } else {
+    level = 'low';
+    label = '少ない';
+    comment = '今は花粉の心配なし';
+  }
+  
+  return { level: level, label: label, comment: comment };
+}
+
+// 黄砂レベルをPM10と季節から推測
+function estimateDustLevel(pm10, month) {
+  // 黄砂シーズン：3-5月がピーク、たまに10-11月
+  const isDustSeason = (month >= 3 && month <= 5) || month === 10 || month === 11;
+  
+  let level, label, comment;
+  
+  if (pm10 === null || pm10 === undefined) {
+    // データなし時は季節から
+    if (isDustSeason) {
+      level = 'unknown';
+      label = '注意期';
+      comment = '黄砂シーズン中。洗濯物は様子見て';
+    } else {
+      level = 'low';
+      label = '心配なし';
+      comment = '黄砂の心配は少ない時期';
+    }
+    return { level: level, label: label, comment: comment };
+  }
+  
+  if (pm10 >= 100) {
+    level = 'high';
+    label = '多い';
+    comment = '黄砂が飛んでるかも。外干しは避けて';
+  } else if (pm10 >= 50 && isDustSeason) {
+    level = 'medium';
+    label = 'やや多い';
+    comment = '黄砂が飛んでるかも。洗濯物は様子見て';
+  } else if (pm10 >= 50) {
+    level = 'medium';
+    label = 'やや多い';
+    comment = 'PM10やや高め';
+  } else {
+    level = 'low';
+    label = '少ない';
+    comment = '空気きれいな日';
+  }
+  
+  return { level: level, label: label, comment: comment, pm10: pm10 };
+}
+
+// 大気質情報
+function getAirQualityInfo(pm25, aqi) {
+  if (pm25 === null || pm25 === undefined) {
+    return { level: 'unknown', label: '取得中', comment: '' };
+  }
+  
+  let level, label, comment;
+  
+  if (pm25 >= 75) {
+    level = 'verybad';
+    label = '非常に悪い';
+    comment = '外出は控えめに、マスク推奨';
+  } else if (pm25 >= 35) {
+    level = 'bad';
+    label = '悪い';
+    comment = '敏感な方はマスクあると安心';
+  } else if (pm25 >= 15) {
+    level = 'medium';
+    label = '普通';
+    comment = '特に問題なし';
+  } else {
+    level = 'good';
+    label = '良好';
+    comment = '空気きれいな日';
+  }
+  
+  return { level: level, label: label, comment: comment, pm25: pm25 };
+}
+
+// PETモード向けのお散歩アドバイス
+function getPetWalkAdvice(w) {
+  if (!w) return null;
+  const month = (new Date()).getMonth() + 1;
+  const advices = [];
+  
+  // 気温
+  if (w.temp >= 30) {
+    advices.push({ icon: '🌡️', text: '気温'+Math.round(w.temp)+'°', comment: '暑いので散歩は朝夕がおすすめ。アスファルトの熱に注意' });
+  } else if (w.temp >= 25) {
+    advices.push({ icon: '🌡️', text: '気温'+Math.round(w.temp)+'°', comment: '日中は暑め。日陰のあるコースがおすすめ' });
+  } else if (w.temp <= 5) {
+    advices.push({ icon: '🥶', text: '気温'+Math.round(w.temp)+'°', comment: '寒いのでシニア犬は注意。短めの散歩でも大丈夫' });
+  }
+  
+  // UV
+  if (w.uv && w.uv.index >= 8) {
+    advices.push({ icon: '☀️', text: 'UV指数'+w.uv.index+'（'+w.uv.label+'）', comment: '散歩は朝夕がおすすめ' });
+  }
+  
+  // 大気質
+  if (w.airQuality && (w.airQuality.level === 'bad' || w.airQuality.level === 'verybad')) {
+    advices.push({ icon: '💨', text: '大気質 '+w.airQuality.label, comment: '今日は短めの散歩がいいかも' });
+  } else if (w.airQuality && w.airQuality.level === 'good') {
+    advices.push({ icon: '💨', text: '大気質 良好', comment: 'お散歩日和' });
+  }
+  
+  // 黄砂
+  if (w.dust && w.dust.level === 'high') {
+    advices.push({ icon: '🌫️', text: '黄砂 多い', comment: '帰ったら毛をブラッシングで払ってあげて' });
+  }
+  
+  // 天気
+  if (w.weatherMain === 'Rain' || w.weatherMain === 'Drizzle') {
+    advices.push({ icon: '🌧️', text: '雨', comment: 'レインコートあると安心。短めの散歩で' });
+  } else if (w.weatherMain === 'Snow') {
+    advices.push({ icon: '❄️', text: '雪', comment: '足が冷えやすいので短めに' });
+  } else if (w.weatherMain === 'Thunderstorm') {
+    advices.push({ icon: '⛈️', text: '雷雨', comment: '今日は散歩はお休みがいいかも' });
+  }
+  
+  return advices;
+}
+
+// ===== ToDayタブのレンダラー =====
+function renderTodayTab() {
+  const w = window._weatherCache;
+  const region = (data && data.userRegion) || '大阪';
+  const now = new Date();
+  const dateStr = (now.getMonth()+1)+'/'+now.getDate();
+  const wd = ['日','月','火','水','木','金','土'][now.getDay()];
+  
+  let html = '<div style="padding:12px 16px 8px;">';
+  
+  // ヘッダー（日付＋地域＋天気）
+  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:14px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:12px;">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;">';
+  html += '<div>';
+  html += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;letter-spacing:0.5px;">'+dateStr+'('+wd+') · '+escapeHtml(region)+'</div>';
+  if (w) {
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-top:4px;">';
+    html += '<span style="font-size:32px;line-height:1;">'+w.icon+'</span>';
+    html += '<div>';
+    html += '<div style="font-size:24px;font-weight:800;color:var(--ink-dark);line-height:1;">'+Math.round(w.temp)+'°</div>';
+    html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;">'+escapeHtml(w.desc)+' · 湿度'+w.humidity+'%</div>';
+    html += '</div></div>';
+  } else {
+    html += '<div style="font-size:13px;color:var(--ink-sub);margin-top:6px;">天気を取得中...🌷</div>';
+  }
+  html += '</div></div></div>';
+  
+  // データ取得中
+  if (!w) {
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:24px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">';
+    html += '今日の情報を取得中だよ🌷<br><span style="font-size:10px;color:var(--ink-light);">少し待ってね</span>';
+    html += '</div></div>';
+    return html;
+  }
+  
+  // 各情報カード
+  // 洗濯指数
+  if (w.laundry) {
+    html += renderTodayCard('🧺', '洗濯指数', w.laundry.score, w.laundry.label, w.laundry.comment);
+  }
+  
+  // UV指数
+  if (w.uv) {
+    html += renderTodayCard('☀️', 'UV指数', w.uv.index, w.uv.label, w.uv.comment);
+  }
+  
+  // 花粉レベル
+  if (w.pollen) {
+    html += renderTodayCard('🌼', '花粉レベル', null, w.pollen.label, w.pollen.comment);
+  }
+  
+  // 黄砂
+  if (w.dust) {
+    html += renderTodayCard('🌫️', '黄砂', null, w.dust.label, w.dust.comment);
+  }
+  
+  // 大気質
+  if (w.airQuality && w.airQuality.level !== 'unknown') {
+    html += renderTodayCard('💨', '大気質', null, w.airQuality.label, w.airQuality.comment);
+  }
+  
+  // ===== ニュース =====
+  html += renderNewsSection('general', '今日のニュース');
+  
+  // 予報セクション
+  if (w.forecast && w.forecast.length > 0) {
+    html += '<div style="padding:8px 4px 4px;">';
+    html += '<div class="section-head"><h2 class="section-title">これからの天気</h2></div>';
+    html += '</div>';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:8px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">';
+    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:4px;">';
+    for (const f of w.forecast.slice(0, 8)) {
+      const fh = String(f.time.getHours()).padStart(2,'0');
+      html += '<div style="flex-shrink:0;min-width:54px;text-align:center;padding:6px 4px;background:rgba(255,255,255,0.5);border-radius:10px;">';
+      html += '<div style="font-size:10px;color:var(--ink-sub);">'+fh+'時</div>';
+      html += '<div style="font-size:22px;line-height:1.2;margin:2px 0;">'+f.icon+'</div>';
+      html += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+f.temp+'°</div>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+  }
+  
+  // ニュースセクション
+  html += renderNewsSection('general', 'きょうのニュース');
+  
+  html += '</div>';
+  return html;
+}
+
+// ToDay情報カードの個別レンダラー
+function renderTodayCard(icon, title, value, label, comment) {
+  let html = '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:8px;">';
+  html += '<div style="display:flex;align-items:flex-start;gap:10px;">';
+  html += '<span style="font-size:22px;line-height:1.2;flex-shrink:0;">'+icon+'</span>';
+  html += '<div style="flex:1;min-width:0;">';
+  html += '<div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">';
+  html += '<span style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+title+'</span>';
+  if (value !== null && value !== undefined) {
+    html += '<span style="font-size:14px;font-weight:800;color:var(--accent-deep);">'+value+'</span>';
+  }
+  html += '<span style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(label)+'</span>';
+  html += '</div>';
+  if (comment) {
+    html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:3px;line-height:1.5;">'+escapeHtml(comment)+'</div>';
+  }
+  html += '</div></div></div>';
+  return html;
 }
 
 function showWeatherPopup() {
@@ -10142,10 +10691,159 @@ function closeWeatherPopup() {
   if (el) el.remove();
 }
 
+// ===== ニュース機能（rss2json.com経由でGoogle News RSS取得） =====
+const NEWS_CACHE_KEY = 'nikowa_news_cache';
+const NEWS_CACHE_HOURS = 1; // 1時間ごとに更新
+
+async function fetchNews(category) {
+  // category: 'general' | 'pet' | 'kids' | 'entertainment'
+  const cacheKey = NEWS_CACHE_KEY + '_' + category;
+  let cached = null;
+  try {
+    cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+  } catch(e) {}
+  
+  // キャッシュが有効ならそれを使う
+  if (cached && (Date.now() - cached.timestamp) < NEWS_CACHE_HOURS * 60 * 60 * 1000) {
+    return cached.news;
+  }
+  
+  // RSSのURL（カテゴリ別）
+  let rssUrl;
+  if (category === 'pet') {
+    rssUrl = 'https://news.google.com/rss/search?q=' + encodeURIComponent('ペット OR 犬 OR 猫') + '&hl=ja&gl=JP&ceid=JP:ja';
+  } else if (category === 'kids') {
+    rssUrl = 'https://news.google.com/rss/search?q=' + encodeURIComponent('子育て OR 育児') + '&hl=ja&gl=JP&ceid=JP:ja';
+  } else if (category === 'entertainment') {
+    rssUrl = 'https://news.google.com/rss/headlines/section/topic/ENTERTAINMENT?hl=ja&gl=JP&ceid=JP:ja';
+  } else {
+    rssUrl = 'https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja';
+  }
+  
+  try {
+    const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+    
+    if (data.status === 'ok' && data.items) {
+      const news = data.items.slice(0, 10).map(item => {
+        // タイトルから出典を抽出（「タイトル - 出典」形式が多い）
+        const titleParts = (item.title || '').split(' - ');
+        let title, source;
+        if (titleParts.length >= 2) {
+          source = titleParts[titleParts.length - 1];
+          title = titleParts.slice(0, -1).join(' - ');
+        } else {
+          title = item.title || '';
+          source = 'Google News';
+        }
+        return {
+          title: title.trim(),
+          source: source.trim(),
+          link: item.link || '',
+          pubDate: item.pubDate || ''
+        };
+      });
+      
+      // キャッシュに保存
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({
+          timestamp: Date.now(),
+          news: news
+        }));
+      } catch(e) {}
+      
+      // 取得完了したら画面更新（スクロール位置維持）
+      _suppressScrollTop = true;
+      try { render(); } catch(e) {}
+      
+      return news;
+    }
+  } catch(e) {
+    console.log('ニュース取得エラー:', e);
+  }
+  
+  // エラー時は古いキャッシュでも返す
+  return cached ? cached.news : [];
+}
+
+// 相対時間表示（3時間前・昨日など）
+function _newsRelativeTime(pubDate) {
+  if (!pubDate) return '';
+  try {
+    const t = new Date(pubDate).getTime();
+    if (isNaN(t)) return '';
+    const diff = Date.now() - t;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (minutes < 1) return 'たった今';
+    if (minutes < 60) return minutes + '分前';
+    if (hours < 24) return hours + '時間前';
+    if (days < 7) return days + '日前';
+    const d = new Date(t);
+    return (d.getMonth()+1) + '/' + d.getDate();
+  } catch(e) {
+    return '';
+  }
+}
+
+// ニュースセクションのHTMLレンダラー
+function renderNewsSection(category, title) {
+  const cacheKey = NEWS_CACHE_KEY + '_' + category;
+  let cached = null;
+  try {
+    cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+  } catch(e) {}
+  
+  let html = '<div style="padding:8px 4px 4px;">';
+  html += '<div class="section-head"><h2 class="section-title">'+escapeHtml(title)+'</h2></div>';
+  html += '</div>';
+  
+  if (!cached || !cached.news || cached.news.length === 0) {
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:18px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:11px;line-height:1.6;margin-bottom:8px;">';
+    html += 'ニュースを取得中だよ🌷<br><span style="font-size:10px;color:var(--ink-light);">少し待ってね</span>';
+    html += '</div>';
+    return html;
+  }
+  
+  // 5件まで表示
+  const items = cached.news.slice(0, 5);
+  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:6px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">';
+  
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (i > 0) html += '<div style="height:1px;background:rgba(255,255,255,0.6);margin:0 8px;"></div>';
+    const safeLink = (item.link || '').replace(/"/g, '&quot;');
+    const time = _newsRelativeTime(item.pubDate);
+    html += '<a href="'+safeLink+'" target="_blank" rel="noopener noreferrer" style="display:block;padding:10px 12px;text-decoration:none;color:inherit;">';
+    html += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);line-height:1.5;margin-bottom:3px;">'+escapeHtml(item.title)+'</div>';
+    html += '<div style="font-size:10px;color:var(--ink-light);">';
+    html += escapeHtml(item.source);
+    if (time) html += ' · ' + time;
+    html += '</div>';
+    html += '</a>';
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+// 起動時にニュース取得（モード別）
+function fetchAllNews() {
+  fetchNews('general');
+  fetchNews('pet');
+  fetchNews('kids');
+}
+
 // 起動時に天気取得
 setTimeout(fetchWeather, 1000);
 // 30分ごとに更新
 setInterval(fetchWeather, 30 * 60 * 1000);
+// 起動時にニュース取得（少し遅らせる）
+setTimeout(fetchAllNews, 2000);
+// 1時間ごとにニュース更新
+setInterval(fetchAllNews, 60 * 60 * 1000);
 
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -10298,14 +10996,14 @@ function addNewBulkAction() {
   iconEl.value = '';
   nameEl.value = '';
   renderBulkCareCustomize();
-  showToast('追加したで🌸');
+  showToast('追加したよ🌸');
 }
 
 function removeBulkAction(actionId) {
   const actions = getBulkActions().filter(a => a.id !== actionId);
   saveBulkActions(actions);
   renderBulkCareCustomize();
-  showToast('削除したで🌷');
+  showToast('削除したよ🌷');
 }
 // 現在のアバタータブ（'emoji' | 'people'）
 let _avatarTabMode = 'emoji';
@@ -10625,22 +11323,60 @@ function openThemeModal() {
   let html = '';
   for (const id in THEMES) {
     const theme = THEMES[id];
-    html += '<button class="theme-btn '+(data.themeId===id?'selected':'')+'" data-theme-id="'+id+'">';
+    const bgColor = theme.vars['--bg'];
+    const textColor = theme.vars['--ink-dark'];
+    const lineColor = theme.vars['--line'];
+    const accentColor = theme.vars['--accent'];
+    const isSelected = data.themeId === id;
+    // 柄も反映（背景パターン）
+    const pattern = paperBackground(theme).replace(/'/g, '&#39;');
+    const patternSize = paperBackgroundSize(theme);
+    // 選択中はaccent borderで強調、それ以外はそのテーマのline色で控えめに
+    const borderStyle = isSelected 
+      ? 'border:2.5px solid '+accentColor+';' 
+      : 'border:1.5px solid '+lineColor+';';
+    html += '<button class="theme-btn '+(isSelected?'selected':'')+'" data-theme-id="'+id+'" style="background-color:'+bgColor+';background-image:'+pattern+';background-size:'+patternSize+';color:'+textColor+';'+borderStyle+'transition:background 0.25s ease, border 0.25s ease;">';
     html += '<div class="theme-swatch">';
     html += '<div class="theme-swatch-bg" style="background:'+theme.vars['--bg']+'"></div>';
     html += '<div class="theme-swatch-mint" style="background:'+theme.vars['--mint']+'"></div>';
     html += '<div class="theme-swatch-accent" style="background:'+theme.vars['--accent']+'"></div>';
-    html += '</div><div class="theme-name">'+theme.emoji+' '+theme.name+'</div></button>';
+    html += '</div><div class="theme-name" style="color:'+textColor+';font-weight:700;">'+theme.emoji+' '+theme.name+'</div></button>';
   }
   grid.innerHTML = html;
+  // モーダル全体にも現在のテーマの柄を反映
+  _updateThemeModalBg(THEMES[data.themeId] || THEMES.mint);
   for (const btn of grid.querySelectorAll('.theme-btn')) {
     btn.onclick = () => {
-      setTheme(btn.dataset.theme_id || btn.dataset.themeId);
-      grid.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
+      const themeId = btn.dataset.theme_id || btn.dataset.themeId;
+      setTheme(themeId);
+      // モーダル背景にも柄を反映
+      _updateThemeModalBg(THEMES[themeId] || THEMES.mint);
+      // 選択状態の更新（borderだけ調整、背景はそのまま）
+      grid.querySelectorAll('.theme-btn').forEach(b => {
+        const tid = b.dataset.theme_id || b.dataset.themeId;
+        const t = THEMES[tid];
+        if (!t) return;
+        if (tid === themeId) {
+          b.classList.add('selected');
+          b.style.border = '2.5px solid ' + t.vars['--accent'];
+        } else {
+          b.classList.remove('selected');
+          b.style.border = '1.5px solid ' + t.vars['--line'];
+        }
+      });
     };
   }
   document.getElementById('themeModal').classList.add('show');
+}
+
+// テーマモーダルの背景に柄を適用するヘルパー
+function _updateThemeModalBg(theme) {
+  if (!theme) return;
+  const content = document.querySelector('#themeModal .modal-content');
+  if (!content) return;
+  content.style.backgroundColor = theme.vars['--bg'];
+  content.style.backgroundImage = paperBackground(theme);
+  content.style.backgroundSize = paperBackgroundSize(theme);
 }
 const HOUSE_ICONS = ['🏡','🏠','🏘️','🏢','🏤','⛺','🏯','🏰','🌳','🌸','🌷','🌿','⭐','💕','🌙','☀️'];
 let selectedHouseIcon = '🏡';
@@ -11446,12 +12182,24 @@ function togglePlaceFav(placeId) {
   const p = placesResultsMap[placeId] || placesFavs[tab][placeId];
   if (!p) return;
   if (placesFavs[tab][placeId]) {
+    // お気に入り解除
     delete placesFavs[tab][placeId];
+    savePlacesFavs();
+    renderTown();
+    showToast('お気に入りから外したよ');
   } else {
-    placesFavs[tab][placeId] = p;
+    // お気に入りに追加（folderIdは未分類で初期化）
+    placesFavs[tab][placeId] = Object.assign({}, p, { folderId: null });
+    savePlacesFavs();
+    renderTown();
+    // フォルダがある場合は選択モーダル表示
+    const folders = placesFolders[tab] || [];
+    if (folders.length > 0) {
+      openFolderSelectModal(tab, placeId, 'fav');
+    } else {
+      showToast('お気に入りに追加🌸');
+    }
   }
-  savePlacesFavs();
-  renderTown();
 }
 
 function _getTodayHours(openingHours) {
@@ -11476,7 +12224,7 @@ function savePlaceMemo(placeId, value) {
 }
 function savePlaceMemoBtn(placeId, safeId) {
   var el = document.getElementById('memo-input-' + safeId);
-  if (el) { savePlaceMemo(placeId, el.value); showToast('メモ保存したで🌸'); }
+  if (el) { savePlaceMemo(placeId, el.value); showToast('メモ保存したよ🌸'); }
 }
 
 function _buildMapRowHtml(mapsUrl) {
@@ -11595,6 +12343,434 @@ function buildFavCardHtml(p) {
   html += '</div>';
   return html;
 }
+
+// ===== フォルダ機能 ＆ カスタム場所 =====
+
+// フォルダ内のアイテムカード（type別に表示）
+function renderFolderItemCard(item, cat) {
+  if (item.type === 'nikowa') return buildNikowaShopCardHtml(item.data);
+  if (item.type === 'fav' || item.type === 'memo') return buildFavCardHtmlWithFolder(item.data, cat);
+  if (item.type === 'custom') return buildCustomPlaceCardHtml(item.data, cat);
+  return '';
+}
+
+// お気に入りカード（フォルダボタン付き版）
+function buildFavCardHtmlWithFolder(p, cat) {
+  const id = p.id || '';
+  const safeId = id.replace(/[^a-zA-Z0-9]/g, '_');
+  const idEsc = id.replace(/'/g, "\\'");
+  const name = p.name || (p.displayName && p.displayName.text) || '名称不明';
+  const addr = p.addr || p.formattedAddress || '';
+  const mapsUrl = p.mapsUrl || p.googleMapsUri || '';
+  const catIcon = p.catIcon || '📍';
+  const memo = escapeHtml(placesMemos[id] || '');
+  const isFav = !!(placesFavs[cat] && placesFavs[cat][id]);
+
+  let html = '<div class="place-card">';
+  html += '<div class="place-card-header">';
+  html += '<div class="place-card-icon">'+catIcon+'</div>';
+  html += '<div class="place-card-info">';
+  html += '<div class="place-card-name">'+escapeHtml(name)+'</div>';
+  html += '<div class="place-card-addr">'+escapeHtml(addr)+'</div>';
+  html += '</div></div>';
+  html += '<div class="place-card-status-row">';
+  html += '<div class="place-card-status-actions" style="margin-left:0;">';
+  if (isFav) {
+    html += '<button class="place-card-fav-sm is-fav" onclick="togglePlaceFav(\''+idEsc+'\')">♥</button>';
+  }
+  html += '<button class="place-card-memo-btn" onclick="toggleMemoInput(\''+safeId+'\')">📝</button>';
+  html += '<button class="place-card-memo-btn" onclick="openFolderSelectModal(\''+cat+'\',\''+idEsc+'\',\'fav\')" title="フォルダ移動">📁</button>';
+  html += '</div></div>';
+  html += '<div class="place-card-map-row">';
+  if (mapsUrl) {
+    html += '<a class="place-card-map-btn" href="'+escapeHtml(mapsUrl)+'" target="_blank" rel="noopener noreferrer">🗺 Googleで見る</a>';
+  } else {
+    html += '<span class="place-card-map-btn" style="opacity:0.4;cursor:default;">🗺 Googleで見る</span>';
+  }
+  const _nikowaShopFav = findNikowaShopByName(name);
+  if (_nikowaShopFav) {
+    html += '<button class="place-card-nikowa-btn" onclick="openShopDetailFromSearch(\''+_nikowaShopFav.id+'\')">🏠 にこわで見る</button>';
+  }
+  html += '</div>';
+  html += '<div class="place-card-memo-row" id="memo-row-'+safeId+'" style="display:'+(memo?'flex':'none')+';">';
+  html += '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" id="memo-input-'+safeId+'">';
+  html += '<button class="place-card-memo-btn" style="font-size:16px;padding:4px 8px;min-width:36px;" onclick="savePlaceMemoBtn(\''+idEsc+'\', \''+safeId+'\')">💾</button>';
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+// カスタム場所のカード
+function buildCustomPlaceCardHtml(c, cat) {
+  const idEsc = c.id.replace(/'/g, "\\'");
+  const mapsQuery = encodeURIComponent(c.addr || c.name);
+  const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + mapsQuery;
+  
+  let html = '<div class="place-card">';
+  html += '<div class="place-card-header">';
+  html += '<div class="place-card-icon">'+escapeHtml(c.icon||'📍')+'</div>';
+  html += '<div class="place-card-info">';
+  html += '<div class="place-card-name">'+escapeHtml(c.name)+'</div>';
+  if (c.addr) html += '<div class="place-card-addr">'+escapeHtml(c.addr)+'</div>';
+  html += '</div></div>';
+  
+  // 連絡先など
+  const contacts = [];
+  if (c.phone) contacts.push('📞 '+escapeHtml(c.phone));
+  if (c.fax) contacts.push('FAX '+escapeHtml(c.fax));
+  if (c.email) contacts.push('✉ '+escapeHtml(c.email));
+  if (c.postal) contacts.push('〒'+escapeHtml(c.postal));
+  if (contacts.length > 0) {
+    html += '<div style="padding:8px 14px;font-size:11px;color:var(--ink-sub);line-height:1.7;">'+contacts.join(' · ')+'</div>';
+  }
+  if (c.memo) {
+    html += '<div style="padding:0 14px 8px;font-size:11px;color:var(--ink-sub);line-height:1.6;">📝 '+escapeHtml(c.memo)+'</div>';
+  }
+  
+  // ボタン行
+  html += '<div class="place-card-status-row">';
+  html += '<div class="place-card-status-actions" style="margin-left:0;">';
+  html += '<button class="place-card-memo-btn" onclick="openCustomPlaceModal(\''+cat+'\',\''+idEsc+'\')" title="編集">✏️</button>';
+  html += '<button class="place-card-memo-btn" onclick="openFolderSelectModal(\''+cat+'\',\''+idEsc+'\',\'custom\')" title="フォルダ移動">📁</button>';
+  html += '<button class="place-card-memo-btn" onclick="deleteCustomPlace(\''+cat+'\',\''+idEsc+'\')" title="削除" style="color:#D85050;">🗑</button>';
+  html += '</div></div>';
+  
+  // マップで開く
+  html += '<div class="place-card-map-row">';
+  if (c.addr) {
+    html += '<a class="place-card-map-btn" href="'+escapeHtml(mapsUrl)+'" target="_blank" rel="noopener noreferrer">🗺 Googleマップで開く</a>';
+  } else {
+    html += '<span class="place-card-map-btn" style="opacity:0.4;cursor:default;">🗺 住所未設定</span>';
+  }
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+// フォルダ追加モーダル
+function openFolderAddModal(cat) {
+  const _icons = ['📁','💕','👨‍👩‍👧','🏥','🏠','🏢','☕','🛍','🎨','🌸','✨','🐾','🌿','🎬','📚','🎀'];
+  let html = '<div id="_folderModal" onclick="if(event.target===this)closeFolderModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;padding-bottom:80px;">';
+  html += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;padding:20px;max-height:80vh;overflow-y:auto;">';
+  html += '<div style="display:flex;align-items:center;margin-bottom:14px;">';
+  html += '<div style="flex:1;font-size:15px;font-weight:800;color:var(--ink-dark);">📁 フォルダを作る</div>';
+  html += '<button onclick="closeFolderModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  html += '</div>';
+  html += '<div style="margin-bottom:14px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:6px;">フォルダ名</label>';
+  html += '<input id="_folderNameInput" type="text" placeholder="例：デート・友達の家・病院" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;">';
+  html += '</div>';
+  html += '<div style="margin-bottom:14px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:6px;">アイコン</label>';
+  html += '<div id="_folderIconGrid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px;">';
+  for (const ic of _icons) {
+    const sel = ic === '📁' ? 'background:var(--accent-bg);border-color:var(--accent);' : '';
+    html += '<button class="_folderIconBtn" data-icon="'+ic+'" onclick="_selectFolderIcon(\''+ic+'\')" style="aspect-ratio:1/1;font-size:20px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface-warm);cursor:pointer;'+sel+'">'+ic+'</button>';
+  }
+  html += '</div></div>';
+  html += '<button onclick="saveFolderFromModal(\''+cat+'\')" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-weight:800;font-family:inherit;font-size:14px;cursor:pointer;">のこす</button>';
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(() => { const el = document.getElementById('_folderNameInput'); if (el) el.focus(); }, 50);
+}
+let _selectedFolderIcon = '📁';
+function _selectFolderIcon(icon) {
+  _selectedFolderIcon = icon;
+  document.querySelectorAll('._folderIconBtn').forEach(b => {
+    if (b.dataset.icon === icon) {
+      b.style.background = 'var(--accent-bg)';
+      b.style.borderColor = 'var(--accent)';
+    } else {
+      b.style.background = 'var(--surface-warm)';
+      b.style.borderColor = 'var(--line)';
+    }
+  });
+}
+function saveFolderFromModal(cat) {
+  const name = (document.getElementById('_folderNameInput').value || '').trim();
+  if (!name) { showToast('名前を入れてね🌷'); return; }
+  if (!placesFolders[cat]) placesFolders[cat] = [];
+  // 編集モード対応
+  if (window._editingFolderId) {
+    const folder = placesFolders[cat].find(f => f.id === window._editingFolderId);
+    if (folder) {
+      folder.name = name;
+      folder.icon = _selectedFolderIcon;
+    }
+    window._editingFolderId = null;
+  } else {
+    placesFolders[cat].push({
+      id: 'folder_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+      name: name,
+      icon: _selectedFolderIcon,
+      createdAt: Date.now()
+    });
+  }
+  savePlacesFolders();
+  closeFolderModal();
+  _selectedFolderIcon = '📁';
+  renderTown();
+  showToast('フォルダ作ったよ🌸');
+}
+function closeFolderModal() {
+  const el = document.getElementById('_folderModal');
+  if (el) el.remove();
+  window._editingFolderId = null;
+}
+
+// フォルダ編集モーダル
+function openFolderEditModal(cat, folderId) {
+  const folder = (placesFolders[cat] || []).find(f => f.id === folderId);
+  if (!folder) return;
+  window._editingFolderId = folderId;
+  _selectedFolderIcon = folder.icon || '📁';
+  
+  const _icons = ['📁','💕','👨‍👩‍👧','🏥','🏠','🏢','☕','🛍','🎨','🌸','✨','🐾','🌿','🎬','📚','🎀'];
+  let html = '<div id="_folderModal" onclick="if(event.target===this)closeFolderModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;padding-bottom:80px;">';
+  html += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;padding:20px;max-height:80vh;overflow-y:auto;">';
+  html += '<div style="display:flex;align-items:center;margin-bottom:14px;">';
+  html += '<div style="flex:1;font-size:15px;font-weight:800;color:var(--ink-dark);">📁 フォルダを編集</div>';
+  html += '<button onclick="closeFolderModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  html += '</div>';
+  html += '<div style="margin-bottom:14px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:6px;">フォルダ名</label>';
+  html += '<input id="_folderNameInput" type="text" value="'+escapeHtml(folder.name)+'" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;">';
+  html += '</div>';
+  html += '<div style="margin-bottom:14px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:6px;">アイコン</label>';
+  html += '<div id="_folderIconGrid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px;">';
+  for (const ic of _icons) {
+    const sel = ic === folder.icon ? 'background:var(--accent-bg);border-color:var(--accent);' : '';
+    html += '<button class="_folderIconBtn" data-icon="'+ic+'" onclick="_selectFolderIcon(\''+ic+'\')" style="aspect-ratio:1/1;font-size:20px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface-warm);cursor:pointer;'+sel+'">'+ic+'</button>';
+  }
+  html += '</div></div>';
+  html += '<div style="display:flex;gap:8px;">';
+  html += '<button onclick="deleteFolderConfirm(\''+cat+'\',\''+folderId+'\')" style="flex:0 0 auto;padding:12px 16px;background:var(--surface-warm);color:#D85050;border:1px solid var(--line);border-radius:12px;font-weight:700;font-family:inherit;font-size:13px;cursor:pointer;">🗑 削除</button>';
+  html += '<button onclick="saveFolderFromModal(\''+cat+'\')" style="flex:1;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-weight:800;font-family:inherit;font-size:14px;cursor:pointer;">保存</button>';
+  html += '</div>';
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+function deleteFolderConfirm(cat, folderId) {
+  if (!confirm('このフォルダを削除する？\n（中身の場所は「未分類」に移動するよ）')) return;
+  if (!placesFolders[cat]) return;
+  // フォルダ削除
+  placesFolders[cat] = placesFolders[cat].filter(f => f.id !== folderId);
+  savePlacesFolders();
+  // 中の場所のfolderIdをクリア
+  if (placesFavs[cat]) {
+    for (const id in placesFavs[cat]) {
+      if (placesFavs[cat][id].folderId === folderId) placesFavs[cat][id].folderId = null;
+    }
+    savePlacesFavs();
+  }
+  if (placesCustom[cat]) {
+    for (const id in placesCustom[cat]) {
+      if (placesCustom[cat][id].folderId === folderId) placesCustom[cat][id].folderId = null;
+    }
+    savePlacesCustom();
+  }
+  closeFolderModal();
+  renderTown();
+  showToast('フォルダ削除したよ🌷');
+}
+
+// カスタム場所追加・編集モーダル
+function openCustomPlaceModal(cat, customId) {
+  const isEdit = !!customId;
+  const existing = isEdit ? (placesCustom[cat] || {})[customId] : null;
+  window._editingCustomId = isEdit ? customId : null;
+  
+  const _icons = ['📍','🏠','🏢','🏫','🏥','🏪','☕','🍽','🛒','🎀','🌸','💼','🎨','🐾','💕','✨'];
+  const curIcon = (existing && existing.icon) || '📍';
+  _selectedCustomIcon = curIcon;
+  
+  let html = '<div id="_customPlaceModal" onclick="if(event.target===this)closeCustomPlaceModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;padding-bottom:90px;box-sizing:border-box;">';
+  html += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;padding:20px;max-height:calc(90vh - 90px);overflow-y:auto;">';
+  html += '<div style="display:flex;align-items:center;margin-bottom:14px;">';
+  html += '<div style="flex:1;font-size:15px;font-weight:800;color:var(--ink-dark);">📍 '+(isEdit?'場所を編集':'場所を追加')+'</div>';
+  html += '<button onclick="closeCustomPlaceModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  html += '</div>';
+  
+  // 名前
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:4px;">名前 <span style="color:#D85050;">*</span></label>';
+  html += '<input id="_cpName" type="text" value="'+escapeHtml((existing&&existing.name)||'')+'" placeholder="例：ユキちゃんち・○○商店" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;">';
+  html += '</div>';
+  
+  // アイコン
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:4px;">アイコン</label>';
+  html += '<div id="_cpIconGrid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:5px;">';
+  for (const ic of _icons) {
+    const sel = ic === curIcon ? 'background:var(--accent-bg);border-color:var(--accent);' : '';
+    html += '<button class="_cpIconBtn" data-icon="'+ic+'" onclick="_selectCustomIcon(\''+ic+'\')" style="aspect-ratio:1/1;font-size:18px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface-warm);cursor:pointer;'+sel+'">'+ic+'</button>';
+  }
+  html += '</div></div>';
+  
+  // 住所
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:4px;">住所</label>';
+  html += '<input id="_cpAddr" type="text" value="'+escapeHtml((existing&&existing.addr)||'')+'" placeholder="例：大阪市北区..." style="width:100%;padding:9px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;">';
+  html += '<div style="font-size:10px;color:var(--ink-light);margin-top:3px;">住所を入れるとGoogleマップで開けるよ🌷</div>';
+  html += '</div>';
+  
+  // 郵便番号
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:4px;">郵便番号</label>';
+  html += '<input id="_cpPostal" type="text" value="'+escapeHtml((existing&&existing.postal)||'')+'" placeholder="例：530-0001" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;">';
+  html += '</div>';
+  
+  // 電話
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:4px;">電話番号</label>';
+  html += '<input id="_cpPhone" type="tel" value="'+escapeHtml((existing&&existing.phone)||'')+'" placeholder="例：06-1234-5678" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;">';
+  html += '</div>';
+  
+  // FAX
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:4px;">FAX</label>';
+  html += '<input id="_cpFax" type="tel" value="'+escapeHtml((existing&&existing.fax)||'')+'" placeholder="例：06-1234-5679" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;">';
+  html += '</div>';
+  
+  // メール
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:4px;">メール</label>';
+  html += '<input id="_cpEmail" type="email" value="'+escapeHtml((existing&&existing.email)||'')+'" placeholder="例：info@example.com" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;">';
+  html += '</div>';
+  
+  // メモ
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:4px;">メモ</label>';
+  html += '<textarea id="_cpMemo" placeholder="例：奥の角の家・営業時間など" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;box-sizing:border-box;min-height:60px;">'+escapeHtml((existing&&existing.memo)||'')+'</textarea>';
+  html += '</div>';
+  
+  // フォルダ
+  html += '<div style="margin-bottom:14px;"><label style="font-size:11px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:4px;">フォルダ</label>';
+  html += '<select id="_cpFolder" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;background:var(--surface);">';
+  const curFolderId = (existing && existing.folderId) || '';
+  html += '<option value=""'+(curFolderId===''?' selected':'')+'>未分類</option>';
+  for (const f of (placesFolders[cat] || [])) {
+    html += '<option value="'+f.id+'"'+(curFolderId===f.id?' selected':'')+'>'+escapeHtml(f.icon||'📁')+' '+escapeHtml(f.name)+'</option>';
+  }
+  html += '</select>';
+  html += '</div>';
+  
+  // ボタン
+  html += '<div style="display:flex;gap:8px;">';
+  if (isEdit) {
+    html += '<button onclick="deleteCustomPlace(\''+cat+'\',\''+customId+'\')" style="flex:0 0 auto;padding:12px 16px;background:var(--surface-warm);color:#D85050;border:1px solid var(--line);border-radius:12px;font-weight:700;font-family:inherit;font-size:13px;cursor:pointer;">🗑 削除</button>';
+  }
+  html += '<button onclick="saveCustomPlaceFromModal(\''+cat+'\')" style="flex:1;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-weight:800;font-family:inherit;font-size:14px;cursor:pointer;">のこす</button>';
+  html += '</div>';
+  
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(() => { const el = document.getElementById('_cpName'); if (el && !isEdit) el.focus(); }, 50);
+}
+let _selectedCustomIcon = '📍';
+function _selectCustomIcon(icon) {
+  _selectedCustomIcon = icon;
+  document.querySelectorAll('._cpIconBtn').forEach(b => {
+    if (b.dataset.icon === icon) {
+      b.style.background = 'var(--accent-bg)';
+      b.style.borderColor = 'var(--accent)';
+    } else {
+      b.style.background = 'var(--surface-warm)';
+      b.style.borderColor = 'var(--line)';
+    }
+  });
+}
+function saveCustomPlaceFromModal(cat) {
+  const name = (document.getElementById('_cpName').value || '').trim();
+  if (!name) { showToast('名前は入れてね🌷'); return; }
+  
+  const data = {
+    name: name,
+    icon: _selectedCustomIcon,
+    addr: (document.getElementById('_cpAddr').value || '').trim(),
+    postal: (document.getElementById('_cpPostal').value || '').trim(),
+    phone: (document.getElementById('_cpPhone').value || '').trim(),
+    fax: (document.getElementById('_cpFax').value || '').trim(),
+    email: (document.getElementById('_cpEmail').value || '').trim(),
+    memo: (document.getElementById('_cpMemo').value || '').trim(),
+    folderId: document.getElementById('_cpFolder').value || null
+  };
+  
+  if (!placesCustom[cat]) placesCustom[cat] = {};
+  
+  if (window._editingCustomId) {
+    // 編集
+    const existing = placesCustom[cat][window._editingCustomId];
+    if (existing) {
+      Object.assign(existing, data, { updatedAt: Date.now() });
+    }
+    window._editingCustomId = null;
+  } else {
+    // 新規
+    const id = 'custom_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+    data.id = id;
+    data.createdAt = Date.now();
+    placesCustom[cat][id] = data;
+  }
+  
+  savePlacesCustom();
+  closeCustomPlaceModal();
+  _selectedCustomIcon = '📍';
+  renderTown();
+  showToast('場所を保存したよ🌸');
+}
+function closeCustomPlaceModal() {
+  const el = document.getElementById('_customPlaceModal');
+  if (el) el.remove();
+  window._editingCustomId = null;
+}
+function deleteCustomPlace(cat, customId) {
+  if (!confirm('この場所を削除する？')) return;
+  if (placesCustom[cat] && placesCustom[cat][customId]) {
+    delete placesCustom[cat][customId];
+    savePlacesCustom();
+  }
+  closeCustomPlaceModal();
+  renderTown();
+  showToast('削除したよ🌷');
+}
+
+// ♡押した時のフォルダ選択モーダル
+function openFolderSelectModal(cat, placeId, type) {
+  // type: 'fav' or 'custom'
+  const folders = placesFolders[cat] || [];
+  
+  let html = '<div id="_folderSelectModal" onclick="if(event.target===this)closeFolderSelectModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;padding-bottom:80px;">';
+  html += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;padding:20px;max-height:70vh;overflow-y:auto;">';
+  html += '<div style="display:flex;align-items:center;margin-bottom:14px;">';
+  html += '<div style="flex:1;font-size:15px;font-weight:800;color:var(--ink-dark);">📁 どのフォルダに入れる？</div>';
+  html += '<button onclick="closeFolderSelectModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  html += '</div>';
+  
+  // 未分類オプション
+  html += '<button onclick="assignToFolder(\''+cat+'\',\''+placeId+'\',\''+type+'\',\'\')" style="display:block;width:100%;padding:12px;margin-bottom:6px;background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;text-align:left;font-family:inherit;font-size:13px;color:var(--ink-dark);cursor:pointer;">📂 未分類</button>';
+  
+  // 既存フォルダ
+  for (const f of folders) {
+    html += '<button onclick="assignToFolder(\''+cat+'\',\''+placeId+'\',\''+type+'\',\''+f.id+'\')" style="display:block;width:100%;padding:12px;margin-bottom:6px;background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;text-align:left;font-family:inherit;font-size:13px;color:var(--ink-dark);cursor:pointer;">'+escapeHtml(f.icon||'📁')+' '+escapeHtml(f.name)+'</button>';
+  }
+  
+  // 新しいフォルダを作る
+  html += '<button onclick="closeFolderSelectModal();openFolderAddModal(\''+cat+'\')" style="display:block;width:100%;padding:12px;margin-top:8px;background:var(--accent-bg);border:1.5px dashed var(--accent);border-radius:10px;text-align:center;font-family:inherit;font-size:13px;color:var(--accent-deep);font-weight:700;cursor:pointer;">＋ 新しいフォルダを作る</button>';
+  
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+function closeFolderSelectModal() {
+  const el = document.getElementById('_folderSelectModal');
+  if (el) el.remove();
+}
+function assignToFolder(cat, placeId, type, folderId) {
+  if (type === 'fav') {
+    if (placesFavs[cat] && placesFavs[cat][placeId]) {
+      placesFavs[cat][placeId].folderId = folderId || null;
+      savePlacesFavs();
+    }
+  } else if (type === 'custom') {
+    if (placesCustom[cat] && placesCustom[cat][placeId]) {
+      placesCustom[cat][placeId].folderId = folderId || null;
+      savePlacesCustom();
+    }
+  }
+  closeFolderSelectModal();
+  renderTown();
+  showToast('フォルダに入れたよ🌸');
+}
+
 
 async function searchPlaces() {
   const textEl = document.getElementById('placesTextInput');
