@@ -1698,7 +1698,7 @@
     position: fixed; inset: 0;
     background: rgba(45,74,60,0.4);
     display: none; align-items: flex-end; justify-content: center;
-    z-index: 100; backdrop-filter: blur(4px);
+    z-index: 2000; backdrop-filter: blur(4px);
     padding-bottom: calc(75px + env(safe-area-inset-bottom));
     box-sizing: border-box;
   }
@@ -3197,9 +3197,9 @@
 
 <!-- 初回登録モーダル（オンボーディング） -->
 <div class="modal" id="onboardingModal" style="z-index:200;"><div class="modal-content">
-  <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;">
+  <div style="display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:6px;">
     <img id="onbAnzuImg" style="width:56px;height:56px;flex-shrink:0;" alt="あんず">
-    <h2 class="modal-title" style="margin:0;">ようこそ、にこわへ🌸</h2>
+    <h2 class="modal-title" style="margin:0;text-align:left;">ようこそ、にこわへ🌸</h2>
   </div>
   <p class="modal-sub">まずは あなたのことを 教えてね<br><span style="font-size:10.5px;color:var(--ink-light);">登録は最初の1回だけです</span></p>
   
@@ -3224,8 +3224,8 @@
     </div>
   </div>
   
-  <div class="form-group"><label class="form-label">お名前<span style="color:var(--accent);font-size:10px;margin-left:6px;">必須</span></label>
-    <input type="text" class="form-input" id="onbNameInput" maxlength="14" placeholder="例：しほ"></div>
+  <div class="form-group"><label class="form-label">おなまえ<span style="color:var(--ink-sub);font-weight:500;font-size:10.5px;margin-left:6px;">（ニックネームOK）</span><span style="color:var(--accent);font-size:10px;margin-left:6px;">必須</span></label>
+    <input type="text" class="form-input" id="onbNameInput" maxlength="14" placeholder="例：あんず"></div>
   
   <div class="form-group"><label class="form-label">生年月日<span style="color:var(--accent);font-size:10px;margin-left:6px;">必須</span></label>
     <div style="display:flex;gap:6px;">
@@ -3323,12 +3323,11 @@
   <div class="form-group"><label class="form-label">居場所</label>
     <div class="place-grid">
       <button class="place-btn selected" data-place="home"><span class="icon">🏠</span><span class="label">おうち</span></button>
-      <button class="place-btn" data-place="rainbow"><span class="icon">🌈</span><span class="label">虹の橋</span></button>
-      <button class="place-btn" data-place="digital"><span class="icon">✨</span><span class="label">デジタル</span></button>
+      <button class="place-btn" data-place="rainbow" id="addPetRainbowBtn"><span class="icon">🌈</span><span class="label" id="addPetRainbowLabel">虹の橋</span></button>
     </div></div>
   <div class="form-group"><label class="form-label">なまえ</label>
     <input type="text" class="form-input" id="petNameInput" placeholder="例：もも" maxlength="12"></div>
-  <div class="form-group"><label class="form-label">しゅるい</label>
+  <div class="form-group"><label class="form-label">カテゴリー</label>
     <div class="pet-type-grid" id="petTypeGrid"></div></div>
   <div class="form-group"><label class="form-label">種類 <span style="color:var(--ink-sub); font-weight:500; font-size:10.5px;">（犬種・猫種など、自由）</span></label>
     <input type="text" class="form-input" id="petBreedInput" maxlength="40" placeholder="例：トイプードル、MIX"></div>
@@ -3383,6 +3382,202 @@
   <div class="modal-actions">
     <button class="btn btn-secondary" onclick="closeModal('editPetModal')">やめる</button>
     <button class="btn btn-primary" onclick="saveEditPet()">ほぞん</button>
+  </div>
+</div></div>
+
+<div class="modal" id="addHouseModal"><div class="modal-content">
+
+<!-- Resume（履歴書）編集モーダル -->
+<div class="modal" id="resumeEditModal"><div class="modal-content" style="max-height:calc(90vh - 100px);overflow-y:auto;padding-bottom:90px;">
+  <h2 class="modal-title">📋 履歴書を編集</h2>
+  
+  <div class="form-group"><label class="form-label">本名（フルネーム）</label>
+    <input type="text" class="form-input" id="resumeFullNameInput" maxlength="40" placeholder="例：山田 花子">
+  </div>
+  
+  <div class="form-group"><label class="form-label">ふりがな</label>
+    <input type="text" class="form-input" id="resumeFullNameKanaInput" maxlength="60" placeholder="例：やまだ はなこ">
+  </div>
+  
+  <div class="form-group"><label class="form-label">性別</label>
+    <select class="form-input" id="resumeGenderInput">
+      <option value="">未登録</option>
+      <option value="女">女</option>
+      <option value="男">男</option>
+      <option value="その他">その他</option>
+    </select>
+  </div>
+  
+  <div class="form-group"><label class="form-label">住所</label>
+    <input type="text" class="form-input" id="resumeAddressInput" maxlength="100" placeholder="例：大阪府大阪市○○区...">
+  </div>
+  
+  <div class="form-group"><label class="form-label">電話番号</label>
+    <input type="tel" class="form-input" id="resumePhoneInput" maxlength="20" placeholder="例：090-1234-5678">
+  </div>
+  
+  <div class="form-group"><label class="form-label">メールアドレス</label>
+    <input type="email" class="form-input" id="resumeEmailInput" maxlength="80" placeholder="例：example@example.com">
+  </div>
+  
+  <div class="form-group">
+    <label class="form-label">📚 学歴</label>
+    <div id="resumeList_education" style="margin-top:6px;"></div>
+  </div>
+  
+  <div class="form-group">
+    <label class="form-label">💼 職歴</label>
+    <div id="resumeList_career" style="margin-top:6px;"></div>
+  </div>
+  
+  <div class="form-group">
+    <label class="form-label">🎓 資格・免許</label>
+    <div id="resumeList_licenses" style="margin-top:6px;"></div>
+  </div>
+  
+  <div class="form-group"><label class="form-label">自己PR</label>
+    <textarea class="form-input" id="resumeSelfPrInput" rows="4" maxlength="500" style="resize:vertical;" placeholder="例：精密部品製造業で経営・現場を経験..."></textarea>
+  </div>
+  
+  <div class="form-group"><label class="form-label">趣味・特技</label>
+    <textarea class="form-input" id="resumeHobbiesInput" rows="3" maxlength="300" style="resize:vertical;" placeholder="例：アプリ開発、読書、カラオケ"></textarea>
+  </div>
+  
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal('resumeEditModal')">やめる</button>
+    <button class="btn btn-primary" onclick="saveResume()">ほぞん</button>
+  </div>
+</div></div>
+
+<!-- 予防接種クイック入力モーダル -->
+<div class="modal" id="quickVaccineModal"><div class="modal-content">
+  <h2 class="modal-title" id="quickVaccineTitle" style="margin-bottom:4px;">💉 予防接種</h2>
+  <p class="modal-sub" id="quickVaccineSubtitle" style="margin-bottom:14px;">推奨年齢</p>
+  
+  <div class="form-group">
+    <label class="form-label">これまでの接種記録</label>
+    <div id="quickVaccineList" style="margin-top:6px;"></div>
+  </div>
+  
+  <div class="form-group">
+    <label class="form-label">新しい接種日を追加</label>
+    <input type="date" class="form-input" id="quickVaccineDateInput">
+  </div>
+  
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal('quickVaccineModal')">とじる</button>
+    <button class="btn btn-primary" onclick="saveQuickVaccine()">＋ 接種記録</button>
+  </div>
+</div></div>
+
+<!-- KIDSカルテ編集モーダル -->
+<div class="modal" id="kidsChartEditModal"><div class="modal-content" style="max-height:calc(90vh - 100px);overflow-y:auto;">
+  <h2 class="modal-title">📋 カルテを編集</h2>
+  
+  <div class="form-group"><label class="form-label">血液型</label>
+    <select class="form-input" id="kidsChartBloodInput">
+      <option value="">未登録</option>
+      <option value="A型">A型</option>
+      <option value="B型">B型</option>
+      <option value="O型">O型</option>
+      <option value="AB型">AB型</option>
+    </select>
+  </div>
+  
+  <div class="form-group"><label class="form-label">身長 (cm)</label>
+    <input type="number" class="form-input" id="kidsChartHeightInput" step="0.1" placeholder="例：120.5">
+  </div>
+  
+  <div class="form-group"><label class="form-label">アレルギー</label>
+    <input type="text" class="form-input" id="kidsChartAllergyInput" maxlength="100" placeholder="例：卵、牛乳、特になし">
+  </div>
+  
+  <div class="form-group"><label class="form-label">既往症・通院歴</label>
+    <textarea class="form-input" id="kidsChartMedicalInput" rows="2" maxlength="200" style="resize:vertical;" placeholder="例：喘息、アトピー"></textarea>
+  </div>
+  
+  <div class="form-group"><label class="form-label">常用薬</label>
+    <input type="text" class="form-input" id="kidsChartMedicationInput" maxlength="100" placeholder="例：吸入器、抗ヒスタミン薬">
+  </div>
+  
+  <div class="form-group"><label class="form-label">かかりつけ小児科</label>
+    <input type="text" class="form-input" id="kidsChartHospitalInput" maxlength="50" placeholder="例：○○こどもクリニック">
+  </div>
+  
+  <div class="form-group"><label class="form-label">小児科の電話番号</label>
+    <input type="tel" class="form-input" id="kidsChartHospitalPhoneInput" maxlength="20" placeholder="例：06-1234-5678">
+  </div>
+  
+  <div class="form-group"><label class="form-label">かかりつけ歯医者</label>
+    <input type="text" class="form-input" id="kidsChartDentistInput" maxlength="50" placeholder="例：○○歯科">
+  </div>
+  
+  <div class="form-group"><label class="form-label">保険証番号</label>
+    <input type="text" class="form-input" id="kidsChartInsuranceNumberInput" maxlength="30" placeholder="例：123-456789">
+  </div>
+  
+  <div class="form-group"><label class="form-label">緊急連絡先</label>
+    <input type="text" class="form-input" id="kidsChartEmergencyInput" maxlength="50" placeholder="例：おばあちゃん 090-xxxx">
+  </div>
+  
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal('kidsChartEditModal')">やめる</button>
+    <button class="btn btn-primary" onclick="saveKidsChart()">ほぞん</button>
+  </div>
+</div></div>
+
+<!-- ペットカルテ編集モーダル -->
+<div class="modal" id="petChartEditModal"><div class="modal-content" style="max-height:calc(90vh - 100px);overflow-y:auto;">
+  <h2 class="modal-title">📋 カルテを編集</h2>
+  
+  <div class="form-group"><label class="form-label">性別</label>
+    <div class="place-grid" id="chartGenderGrid">
+      <button type="button" class="place-btn" data-gender=""><span class="icon">❓</span><span class="label">未登録</span></button>
+      <button type="button" class="place-btn" data-gender="♂ オス"><span class="icon">♂️</span><span class="label">オス</span></button>
+      <button type="button" class="place-btn" data-gender="♀ メス"><span class="icon">♀️</span><span class="label">メス</span></button>
+    </div>
+  </div>
+  
+  <div class="form-group"><label class="form-label">避妊・去勢手術</label>
+    <div class="place-grid" id="chartNeuterGrid">
+      <button type="button" class="place-btn" data-neuter=""><span class="icon">❓</span><span class="label">未登録</span></button>
+      <button type="button" class="place-btn" data-neuter="yes"><span class="icon">✂️</span><span class="label">済</span></button>
+      <button type="button" class="place-btn" data-neuter="no"><span class="icon">🌱</span><span class="label">未実施</span></button>
+    </div>
+  </div>
+  
+  <div class="form-group" id="chartNeuterDateGroup" style="display:none;">
+    <label class="form-label">実施日（にんいです）</label>
+    <input type="date" class="form-input" id="chartNeuterDateInput">
+  </div>
+  
+  <div class="form-group"><label class="form-label">マイクロチップ番号</label>
+    <input type="text" class="form-input" id="chartMicrochipInput" maxlength="20" placeholder="例：123456789012345">
+  </div>
+  
+  <div class="form-group"><label class="form-label">アレルギー</label>
+    <input type="text" class="form-input" id="chartAllergyInput" maxlength="100" placeholder="例：鶏肉、特になし">
+  </div>
+  
+  <div class="form-group"><label class="form-label">既往症・通院歴</label>
+    <textarea class="form-input" id="chartMedicalInput" rows="2" maxlength="200" style="resize:vertical;" placeholder="例：膝蓋骨脱臼、皮膚炎"></textarea>
+  </div>
+  
+  <div class="form-group"><label class="form-label">かかりつけ病院</label>
+    <input type="text" class="form-input" id="chartHospitalInput" maxlength="50" placeholder="例：○○動物病院">
+  </div>
+  
+  <div class="form-group"><label class="form-label">病院の電話番号</label>
+    <input type="tel" class="form-input" id="chartHospitalPhoneInput" maxlength="20" placeholder="例：06-1234-5678">
+  </div>
+  
+  <div class="form-group"><label class="form-label">ペット保険</label>
+    <input type="text" class="form-input" id="chartInsuranceInput" maxlength="50" placeholder="例：アニコム、加入なし">
+  </div>
+  
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal('petChartEditModal')">やめる</button>
+    <button class="btn btn-primary" onclick="savePetChart()">ほぞん</button>
   </div>
 </div></div>
 
@@ -3791,7 +3986,8 @@
     </div>
     <input type="text" id="dailyRoutineTimingTextInput" placeholder="（自由記入：朝食後30分など）" maxlength="20" style="width:100%;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
     
-    <textarea id="dailyRoutineNoteInput" placeholder="メモ（薬の名前、量、注意点など）" style="width:100%;min-height:60px;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:13px;color:var(--ink-dark);background:var(--surface-warm);resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
+    <label style="font-size:11px;color:var(--ink-sub);font-weight:700;margin:8px 0 4px;display:block;">📝 メモ</label>
+    <textarea id="dailyRoutineNoteInput" placeholder="例：化粧水→乳液→クリーム / 水400ml / 食後30分" style="width:100%;min-height:60px;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:13px;color:var(--ink-dark);background:var(--surface-warm);resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
     
     <div style="display:flex;gap:8px;margin-top:16px;">
       <button class="btn btn-secondary" onclick="closeDailyRoutineModal()" style="flex:1;">キャンセル</button>
@@ -3906,16 +4102,24 @@ const SPRITES = {
 const PET_PALETTES = {
   dog: { 1:"#D4A87A", 2:"#F5E2C8", 3:"#3B2A1B", 4:"#FFFFFF", 5:"#E88AA0" },
   cat: { 1:"#5A4A40", 2:"#FFFCF6", 3:"#1A1410", 4:"#FFFFFF", 5:"#E88AA0" },
-  rabbit: { 1:"#FAF1E1", 2:"#EAD9BF", 3:"#3B2A1B", 4:"#FFFFFF", 5:"#E88AA0" },
-  hamster: { 1:"#E0B070", 2:"#F5DAB0", 3:"#3B2A1B", 4:"#FFFFFF", 5:"#E88AA0" },
+  small: { 1:"#E0B070", 2:"#F5DAB0", 3:"#3B2A1B", 4:"#FFFFFF", 5:"#E88AA0" },
+  aquatic: { 1:"#E88AA0", 2:"#F5C2CD", 3:"#3B2A1B", 4:"#FFFFFF", 5:"#F5D77A" },
   bird: { 1:"#8FC9AB", 2:"#F5D77A", 3:"#3B2A1B", 4:"#FFFFFF", 5:"#E88AA0" },
-  fish: { 1:"#E88AA0", 2:"#F5C2CD", 3:"#3B2A1B", 4:"#FFFFFF", 5:"#F5D77A" },
-  turtle: { 1:"#7FA88A", 2:"#A8C8B5", 3:"#2D4A3C", 4:"#C8DEC8", 5:"#E88AA0" },
+  reptile: { 1:"#7FA88A", 2:"#A8C8B5", 3:"#2D4A3C", 4:"#C8DEC8", 5:"#E88AA0" },
+  amphibian: { 1:"#8FC9AB", 2:"#A8DEB8", 3:"#2D4A3C", 4:"#C8DEC8", 5:"#E88AA0" },
+  insect: { 1:"#A88AC8", 2:"#D8C2E0", 3:"#3B2A1B", 4:"#FFFFFF", 5:"#F5D77A" },
+  plant: { 1:"#7FA88A", 2:"#C2E2D0", 3:"#2D4A3C", 4:"#FFFFFF", 5:"#F5D77A" },
+  livestock: { 1:"#D4A87A", 2:"#F5E2C8", 3:"#3B2A1B", 4:"#FFFFFF", 5:"#E88AA0" },
+  boy: { 1:"#78C0E8", 2:"#C8E4F5", 3:"#1A3A58", 4:"#FFFFFF", 5:"#F5D77A" },
+  girl: { 1:"#F4C2CE", 2:"#FDE2E8", 3:"#7A4A58", 4:"#FFFFFF", 5:"#F5D77A" },
   other: { 1:"#A8B5C8", 2:"#D8DFE8", 3:"#3B2A1B", 4:"#FFFFFF", 5:"#E88AA0" }
 };
 const PET_EMOJIS = {
-  dog: '🐶', cat: '🐱', rabbit: '🐰', hamster: '🐹',
-  bird: '🐦', fish: '🐟', turtle: '🐢', other: '✨'
+  dog: '🐕', cat: '🐈', small: '🐹', aquatic: '🐠',
+  bird: '🐦', reptile: '🦎', amphibian: '🐸', insect: '🐛',
+  plant: '🌱', livestock: '🐄', other: '✨',
+  // KIDS用
+  boy: '👦', girl: '👧'
 };
 
 function spriteSVG(kind, palette, sizeAttr) {
@@ -3947,8 +4151,8 @@ const THEMES = {
     ginghamColor: 'rgba(255,255,255,0.55)',
     headerGrad: 'linear-gradient(180deg, #FEF4F4 0%, #FBE2E8 50%, #F4BCC8 100%)' },
   honey: { name: 'ハニーレモン', emoji: '🍋', pattern: 'polka', cardShape: 'circle',
-    vars: { '--bg':'#FFFBD0', '--surface':'#FFFFFF', '--surface-warm':'#FFF8C8', '--line':'#E8E070', '--line-soft':'#F0E890', '--ink-dark':'#4A4008', '--ink':'#6A5818', '--ink-sub':'#907830', '--ink-light':'#B8A058', '--mint':'#70EE7C', '--mint-deep':'#40C848', '--mint-bg':'#B0F0B8', '--accent':'#FF8387', '--accent-deep':'#D85058', '--accent-bg':'#FFD0D2', '--today-bg':'#FFF056', '--today-border':'#D8C820', '--warm-yellow':'#FFF056', '--soft-purple':'#D8C098' },
-    paperColor: 'rgba(255,255,255,0.95)',
+    vars: { '--bg':'#FFF080', '--surface':'#FFFFFF', '--surface-warm':'#FFF8C8', '--line':'#E8E070', '--line-soft':'#F0E890', '--ink-dark':'#4A4008', '--ink':'#6A5818', '--ink-sub':'#907830', '--ink-light':'#B8A058', '--mint':'#70EE7C', '--mint-deep':'#40C848', '--mint-bg':'#B0F0B8', '--accent':'#FF8387', '--accent-deep':'#D85058', '--accent-bg':'#FFD0D2', '--today-bg':'#FFF056', '--today-border':'#D8C820', '--warm-yellow':'#FFF056', '--soft-purple':'#D8C098' },
+    paperColor: 'rgba(255,255,255,1)',
     headerGrad: 'linear-gradient(180deg, #FFFEE0 0%, #FFF056 50%, #70EE7C 100%)' },
   pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham', cardShape: 'circle',
     vars: { '--bg':'#FFDFAB', '--surface':'#FFFFFF', '--surface-warm':'#FCF1DA', '--line':'#EBD4A8', '--line-soft':'#F2E2C2', '--ink-dark':'#6B4A28', '--ink':'#8A6440', '--ink-sub':'#B0926A', '--ink-light':'#D4BC98', '--mint':'#E8C088', '--mint-deep':'#C28848', '--mint-bg':'#FBE2B8', '--accent':'#F0A0B2', '--accent-deep':'#C26880', '--accent-bg':'#FCDCE4', '--today-bg':'#FCE4EA', '--today-border':'#F2B0C0', '--warm-yellow':'#F8E4A0', '--soft-purple':'#D8B898' },
@@ -4305,10 +4509,17 @@ function highlightOnbThemeBtn() {
   const btns = document.querySelectorAll('#onbThemeRow .onb-theme-btn');
   btns.forEach(b => b.classList.toggle('selected', b.dataset.theme === cur));
 }
-const PET_TYPE_NAMES = { dog: 'いぬ', cat: 'ねこ', rabbit: 'うさぎ', hamster: 'ハム', bird: 'とり', fish: 'さかな', turtle: 'かめ', other: 'そのほか' };
-const PET_TYPES = ['dog','cat','rabbit','hamster','bird','fish','turtle','other'];
+const PET_TYPE_NAMES = { 
+  dog: 'いぬ', cat: 'ねこ', small: '小動物', aquatic: '水生生物',
+  bird: '鳥類', reptile: '爬虫類', amphibian: '両生類', insect: '昆虫',
+  plant: '植物', livestock: '家畜', other: 'そのほか',
+  boy: '男の子', girl: '女の子'
+};
+const PET_TYPES = ['dog','cat','small','aquatic','bird','reptile','amphibian','insect','plant','livestock'];
+const KIDS_TYPES = ['boy','girl'];
 
-const PLACE_NAMES = { home: 'おうち', rainbow: '虹の橋', digital: 'デジタル' };
+const PLACE_NAMES = { home: 'おうち', rainbow: '虹の橋' };
+const PLACE_NAMES_KIDS = { home: 'おうち', rainbow: '星のひろば' };
 
 // にこわタウン：施設カテゴリ
 const FACILITY_CATEGORIES = [
@@ -4325,7 +4536,7 @@ const FACILITY_CATEGORIES = [
 ];
 const FACILITY_CAT_MAP = {};
 for (const c of FACILITY_CATEGORIES) FACILITY_CAT_MAP[c.id] = c;
-const PLACE_ICONS = { home: '🏠', rainbow: '🌈', digital: '✨' };
+const PLACE_ICONS = { home: '🏠', rainbow: '🌈', star: '⭐' };
 const DEFAULT_CARE_ITEMS = [
   { id: 'food', icon: '🍚', label: 'ごはん' },
   { id: 'water', icon: '💧', label: 'おみず' },
@@ -5563,6 +5774,10 @@ function renderMeMode() {
     // ===== News =====
     html += renderNewsTab();
     
+  } else if (tab === 'resume') {
+    // ===== Resume（履歴書） =====
+    html += renderResumeTab();
+    
   } else if (tab === 'stamp') {
     // ===== Stamp =====
     html += '<div style="padding:12px 16px 4px;">';
@@ -5596,7 +5811,7 @@ function renderMeMode() {
     html += '<div style="padding:16px;"><button onclick="goMeDiary()" style="width:100%;padding:20px;border:1px solid rgba(255,255,255,0.7);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);">📔 日記を開く</button></div>';
     
   } else if (tab === 'routine') {
-    // ===== MEルーティン：日常 / 生活 サブタブ =====
+    // ===== MEルーティン：日常 / 生活 / メモ サブタブ =====
     if (!data.routineSubTab) data.routineSubTab = {};
     const _meSubTabKey = 'me';
     const _meSubTab = data.routineSubTab[_meSubTabKey] || 'daily';
@@ -5604,14 +5819,18 @@ function renderMeMode() {
     html += '<div style="padding:10px 16px 0;display:flex;gap:6px;">';
     const _meDailyActive = (_meSubTab === 'daily');
     const _meLifeActive = (_meSubTab === 'life');
-    html += '<button onclick="switchRoutineSubTab(\'me\',\'daily\')" style="flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_meDailyActive?'var(--accent)':'var(--line)')+';background:'+(_meDailyActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_meDailyActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🌅 日常</button>';
-    html += '<button onclick="switchRoutineSubTab(\'me\',\'life\')" style="flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_meLifeActive?'var(--accent)':'var(--line)')+';background:'+(_meLifeActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_meLifeActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🔁 生活</button>';
+    const _meMemoActive = (_meSubTab === 'memo');
+    html += '<button onclick="switchRoutineSubTab(\'me\',\'daily\')" style="flex:1;padding:8px 8px;border-radius:10px;border:1.5px solid '+(_meDailyActive?'var(--accent)':'var(--line)')+';background:'+(_meDailyActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_meDailyActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🌅 日常</button>';
+    html += '<button onclick="switchRoutineSubTab(\'me\',\'life\')" style="flex:1;padding:8px 8px;border-radius:10px;border:1.5px solid '+(_meLifeActive?'var(--accent)':'var(--line)')+';background:'+(_meLifeActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_meLifeActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🔁 生活</button>';
+    html += '<button onclick="switchRoutineSubTab(\'me\',\'memo\')" style="flex:1;padding:8px 8px;border-radius:10px;border:1.5px solid '+(_meMemoActive?'var(--accent)':'var(--line)')+';background:'+(_meMemoActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_meMemoActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📋 メモ</button>';
     html += '</div>';
     
     if (_meSubTab === 'daily') {
       html += renderDailyRoutines('me', 'me', 'わたし');
-    } else {
+    } else if (_meSubTab === 'life') {
       html += renderLifeRoutines('me', 'わたし');
+    } else if (_meSubTab === 'memo') {
+      html += renderRoutineMemo('me', 'me', 'わたし');
     }
     
   } else if (tab === 'planner') {
@@ -6230,7 +6449,7 @@ function renderPetRoomCard(pet) {
     : null;
   let html = '<button class="pet-room-card '+(pet.place==='rainbow'?'rainbow':'')+'" onclick="enterPet(\''+pet.id+'\')">';
   html += renderRoomBox(pet);
-  if (memorials.length > 0) html += '<div class="pet-room-badge">🎉</div>';
+  if (memorials.length > 0) html += '';
   if (streak >= 3 && pet.place === 'home') html += '<div class="pet-room-streak">'+streakLabelEn(streak)+'</div>';
   html += '<div class="pet-room-nameplate"><span class="pet-room-name">';
   if (pet.place !== 'home') html += PLACE_ICONS[pet.place]+' ';
@@ -6248,7 +6467,7 @@ function renderPetRoomCardCompact(pet) {
   const streak = calcStreak(pet.id);
   let html = '<button class="pet-room-card pet-room-card-compact '+(pet.place==='rainbow'?'rainbow':'')+'" onclick="enterPet(\''+pet.id+'\')">';
   html += renderRoomBox(pet);
-  if (memorials.length > 0) html += '<div class="pet-room-badge" style="font-size:11px;width:20px;height:20px;">🎉</div>';
+  if (memorials.length > 0) html += '';
   if (streak >= 3 && pet.place === 'home') html += '<div class="pet-room-streak" style="font-size:8px;padding:1px 6px;">'+streakLabelEn(streak)+'</div>';
   html += '<div class="pet-room-name-compact">';
   if (pet.place !== 'home') html += PLACE_ICONS[pet.place]+' ';
@@ -6393,7 +6612,7 @@ function renderHouseHomeTab(house) {
   const pets = getHousePets(house.id);
   const homePets = pets.filter(p => p.place === 'home');
   const rainbowPets = pets.filter(p => p.place === 'rainbow');
-  const digitalPets = pets.filter(p => p.place === 'digital');
+  const digitalPets = []; // デジタルペット廃止
   const todayK = todayKey();
   const upcoming = data.schedules
     .filter(s => {
@@ -6479,7 +6698,9 @@ function renderHouseHomeTab(house) {
   }
   
   html += '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">うちの子</h2><span class="section-count">'+(homePets.length + digitalPets.length)+'匹</span><button class="section-link" onclick="openAddPetModal()" style="margin-left:auto;">＋ ついか</button></div>';
+  const isKidsMode = (currentMode === 'kids');
+  const childCountSuffix = isKidsMode ? '人' : '匹';
+  html += '<div class="section-head"><h2 class="section-title">うちの子</h2><span class="section-count">'+(homePets.length + digitalPets.length)+childCountSuffix+'</span><button class="section-link" onclick="openAddPetModal()" style="margin-left:auto;">＋ ついか</button></div>';
   if (pets.length === 0) {
     html += '<div class="empty-state" style="margin: 0;"><div class="emoji">🌷</div>';
     html += '<div class="empty-state-title">まずは、いっしょに暮らす子を</div>';
@@ -6493,11 +6714,17 @@ function renderHouseHomeTab(house) {
   html += '</div>';
   
   if (rainbowPets.length > 0) {
+    const isKids = (currentMode === 'kids');
+    const sectionTitle = isKids ? '星のひろば' : '虹の橋のひろば';
+    const meadowTitle = isKids ? 'いつでも、会いに来られる場所' : 'いつでも、会いに来られる場所';
+    const meadowSub = isKids ? '夜空の星に見守られて、みんな仲良く過ごしています⭐' : '空のお花畑で、みんな仲良く過ごしています🌸';
+    const countSuffix = isKids ? '人' : '匹';
+    
     html += '<div class="section" style="padding-bottom: 24px;">';
-    html += '<div class="section-head"><h2 class="section-title">虹の橋のひろば</h2><span class="section-count">'+rainbowPets.length+'匹</span></div>';
+    html += '<div class="section-head"><h2 class="section-title">'+sectionTitle+'</h2><span class="section-count">'+rainbowPets.length+countSuffix+'</span></div>';
     html += '<div class="rainbow-meadow">';
-    html += '<div class="rainbow-meadow-title">いつでも、会いに来られる場所</div>';
-    html += '<div class="rainbow-meadow-sub">空のお花畑で、みんな仲良く過ごしています🌸</div>';
+    html += '<div class="rainbow-meadow-title">'+meadowTitle+'</div>';
+    html += '<div class="rainbow-meadow-sub">'+meadowSub+'</div>';
     html += '<div class="rainbow-pets">';
     for (const pet of rainbowPets) {
       const palette = pet.palette || PET_PALETTES[pet.type] || PET_PALETTES.other;
@@ -6751,7 +6978,7 @@ function renderPet() {
       'care':     { label: 'お世話',     icon: '🌿', children: ['care','routine'] },
       'memory':   { label: 'おもいで',   icon: '💕', children: ['diary','photo','outing'] },
       'calendar': { label: 'カレンダー', icon: '📅', children: ['calendar'] },
-      'health':   { label: '健康',       icon: '💉', children: ['vaccine','weight'] },
+      'health':   { label: '健康',       icon: '💉', children: ['vaccine','weight','chart'] },
       'town':     { label: 'タウン',     icon: '🏘', children: ['town'] }
     };
     const _childLabels = {
@@ -6763,6 +6990,7 @@ function renderPet() {
       'calendar': { label: 'カレンダー', icon: '📅' },
       'vaccine':  { label: 'ワクチン',   icon: '💉' },
       'weight':   { label: '体重',       icon: '⚖️' },
+      'chart':    { label: 'カルテ',     icon: '📋' },
       'town':     { label: 'タウン',     icon: '🏘' }
     };
     
@@ -6804,6 +7032,7 @@ function renderPet() {
     else if (tab === 'photo') html += renderTabPhoto(pet);
     else if (tab === 'vaccine') html += renderTabVaccine(pet);
     else if (tab === 'weight') html += renderTabWeight(pet);
+    else if (tab === 'chart') html += (currentMode === 'kids' ? renderTabKidsChart(pet) : renderTabPetChart(pet));
     else if (tab === 'routine') html += renderTabPetRoutine(pet);
     else if (tab === 'outing') html += renderTabPetOuting(pet);
     else if (tab === 'town') html += renderTabPetTown(pet);
@@ -8295,12 +8524,100 @@ function isDailyDoneToday(item) {
   return item.lastDoneDate === todayDateKey();
 }
 
+// ===== ルーティンメモ（パッと見一覧表示） =====
+function renderRoutineMemo(scope, scopeId, scopeName) {
+  if (!data.dailyRoutines) data.dailyRoutines = {};
+  const _key = scope+'_'+scopeId;
+  const _items = data.dailyRoutines[_key] || [];
+  
+  let html = '<div style="padding:12px 16px 8px;">';
+  html += '<div class="section-head"><h2 class="section-title">📋 '+escapeHtml(scopeName)+'のメモ</h2></div>';
+  html += '<div style="font-size:10.5px;color:var(--ink-sub);margin:0 0 10px 14px;line-height:1.6;">パッと見られる、あなたの毎日<br>📋アイコンで「メモのみ」（チェックリストから外す）切替できるよ</div>';
+  
+  if (_items.length === 0) {
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+    html += '📋 ルーティンを登録するとここに表示されるよ<br>';
+    html += '<span style="font-size:11px;color:var(--ink-light);">「日常」タブから登録してみてね</span>';
+    html += '</div></div>';
+    return html;
+  }
+  
+  // 時間帯ごとにまとめる
+  const _byTime = {};
+  for (const t of DAILY_TIMES) _byTime[t.id] = [];
+  for (const item of _items) {
+    const tid = item.timeOfDay || 'morning';
+    if (!_byTime[tid]) _byTime[tid] = [];
+    _byTime[tid].push(item);
+  }
+  
+  // メモ風カード（時間帯ブロック）
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:16px 18px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;">';
+  
+  let firstTime = true;
+  for (const t of DAILY_TIMES) {
+    const _arr = _byTime[t.id];
+    if (!_arr || _arr.length === 0) continue;
+    
+    if (!firstTime) html += '<div style="height:1px;background:var(--card-divider);margin:12px 0;"></div>';
+    firstTime = false;
+    
+    // 時間帯見出し
+    html += '<div style="font-size:13px;font-weight:800;color:var(--accent-deep);margin-bottom:6px;">'+t.icon+' '+t.label+'</div>';
+    
+    // アイテム一覧（・で区切る）＋メモのみトグル
+    for (let i = 0; i < _arr.length; i++) {
+      const item = _arr[i];
+      const isMemoOnly = item.memoOnly === true;
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">';
+      // メモのみトグル
+      const toggleColor = isMemoOnly ? '#d8800a' : 'var(--ink-light)';
+      const toggleTitle = isMemoOnly ? 'メモのみ（タップでチェックON）' : 'メモ＋チェック（タップでメモのみ）';
+      html += '<button onclick="toggleRoutineMemoOnly(\''+scope+'\',\''+scopeId+'\',\''+item.id+'\')" style="background:transparent;border:none;cursor:pointer;padding:2px 4px;color:'+toggleColor+';font-size:13px;" title="'+toggleTitle+'">📋</button>';
+      // アイテム名
+      const opacity = isMemoOnly ? '0.7' : '1';
+      const memoText = item.note || item.memo || '';
+      const memo = memoText ? ' <span style="color:var(--ink-light);font-size:11px;">（'+escapeHtml(memoText)+'）</span>' : '';
+      const timing = item.timingText ? ' <span style="color:var(--accent);font-size:10.5px;">'+escapeHtml(item.timingText)+'</span>' : '';
+      html += '<span style="font-size:13px;color:var(--ink-dark);opacity:'+opacity+';flex:1;">'+(item.icon||'•')+' '+escapeHtml(item.name)+memo+timing;
+      if (isMemoOnly) html += ' <span style="color:#d8800a;font-size:10px;font-weight:700;">[メモのみ]</span>';
+      html += '</span>';
+      html += '</div>';
+    }
+  }
+  
+  html += '</div>';
+  
+  // 簡単な編集導線
+  html += '<div style="text-align:center;margin-bottom:14px;">';
+  html += '<button onclick="switchRoutineSubTab(\''+scope+'\',\'daily\')" class="btn btn-secondary" style="font-size:11px;padding:8px 16px;">📝 日常タブで編集する</button>';
+  html += '</div>';
+  
+  html += '</div>';
+  return html;
+}
+
+// メモのみフラグ切替
+function toggleRoutineMemoOnly(scope, scopeId, itemId) {
+  if (!data.dailyRoutines) return;
+  const key = scope+'_'+scopeId;
+  if (!data.dailyRoutines[key]) return;
+  const item = data.dailyRoutines[key].find(x => x.id === itemId);
+  if (!item) return;
+  item.memoOnly = !item.memoOnly;
+  saveData();
+  showToast(item.memoOnly ? '📋 メモのみに変更したよ' : '✅ チェックリストに戻したよ');
+  render();
+}
+
 function renderDailyRoutines(scope, scopeId, scopeName) {
   // データ初期化
   if (!data.dailyRoutines) data.dailyRoutines = {};
   const _key = scope+'_'+scopeId;
   if (!data.dailyRoutines[_key]) data.dailyRoutines[_key] = [];
-  const _items = data.dailyRoutines[_key];
+  const _allItems = data.dailyRoutines[_key];
+  // メモのみフラグ付きはチェックリストから除外
+  const _items = _allItems.filter(it => !it.memoOnly);
   
   // 今日のチェック数 / 全体
   const _doneCount = _items.filter(it => isDailyDoneToday(it)).length;
@@ -8313,11 +8630,16 @@ function renderDailyRoutines(scope, scopeId, scopeName) {
   }
   html += '<button onclick="openDailyRoutineModal(null,\''+scope+'\',\''+scopeId+'\')" class="section-link" style="margin-left:'+(_totalCount>0?'8px':'auto')+';">＋ 追加</button></div>';
   
-  if (_totalCount === 0) {
+  if (_totalCount === 0 && _allItems.length === 0) {
     html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
     html += '🌅 '+escapeHtml(scopeName)+' の毎日の流れ<br>';
     html += '<span style="font-size:11px;color:var(--ink-light);">朝 → 昼 → 夕 → 夜 → 寝る前<br>「次なんだっけ？」を防ぐリスト</span><br><br>';
-    html += '<button onclick="openDailyRoutineModal(null,\''+scope+'\',\''+scopeId+'\')" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 最初のルーティンを追加</button>';
+    html += '<button type="button" onclick="openDailyRoutineModal(null,\''+scope+'\',\''+scopeId+'\')" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;position:relative;z-index:5;pointer-events:auto;-webkit-tap-highlight-color:rgba(0,0,0,0.1);">＋ 最初のルーティンを追加</button>';
+    html += '</div>';
+  } else if (_totalCount === 0) {
+    // 全部メモのみフラグ付きの場合
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:18px 14px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">';
+    html += '🌷 すべて「メモのみ」になってるよ<br><span style="font-size:11px;color:var(--ink-light);">「📋 メモ」タブで確認できるよ</span>';
     html += '</div>';
   } else {
     // 時間帯ごとに表示
@@ -9699,6 +10021,7 @@ const DEFAULT_MODE_TABS = {
     { id: 'diary',      label: 'Diary' },
     { id: 'planner',    label: 'Planner' },
     { id: 'collection', label: 'Collection' },
+    { id: 'resume',     label: 'Resume' },
     { id: 'secret',     label: 'Secret' }
   ],
   pet: [
@@ -9742,6 +10065,13 @@ function getModeTabsForMode(mode) {
         const todayIdx = tabs.findIndex(t => t.id === 'today');
         const insertAt = todayIdx >= 0 ? todayIdx + 1 : 0;
         tabs.splice(insertAt, 0, { id: 'news', label: 'News' });
+        try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
+      }
+      // ME: Resumeタブが無ければCollectionの直後（またはSecretの前）に追加
+      if (mode === 'me' && tabs.length > 0 && !tabs.find(t => t.id === 'resume')) {
+        const collectionIdx = tabs.findIndex(t => t.id === 'collection');
+        const insertAt = collectionIdx >= 0 ? collectionIdx + 1 : tabs.length;
+        tabs.splice(insertAt, 0, { id: 'resume', label: 'Resume' });
         try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
       }
       return tabs;
@@ -10758,6 +11088,278 @@ function renderNewsTab() {
   return html;
 }
 
+// ===== Resume（履歴書）タブ =====
+function renderResumeTab() {
+  if (!data.resume) data.resume = {};
+  const r = data.resume;
+  
+  // ユーザー情報を取得（onboardingデータ）
+  const user = data.user || {};
+  const userName = user.name || (data.userName) || '';
+  const userBirth = user.birth || (data.userBirth) || '';
+  const userRegion = data.userRegion || '';
+  
+  let html = '<div style="padding:12px 16px 8px;">';
+  
+  // ヘッダー
+  html += '<div class="section-head"><h2 class="section-title">📋 わたしの履歴書</h2>';
+  html += '<button class="section-link" onclick="openResumeEdit()">✏️ 編集</button></div>';
+  
+  // 基本情報
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+  html += _chartRow('🏷️', 'なまえ', userName);
+  if (r.fullName) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('🆔', '本名', r.fullName);
+  }
+  if (r.fullNameKana) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('🔤', 'ふりがな', r.fullNameKana);
+  }
+  if (userBirth) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('🎂', '生年月日', userBirth.replace(/-/g,'/'));
+    const ageStr = _calcDetailedAge(userBirth);
+    if (ageStr) {
+      html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+      html += _chartRow('🌱', '年齢', ageStr);
+    }
+  }
+  if (r.gender) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('⚧', '性別', r.gender);
+  }
+  if (r.address) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('🏠', '住所', r.address);
+  } else if (userRegion) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('📍', '地域', userRegion);
+  }
+  if (r.phone) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('📞', '電話', r.phone);
+  }
+  if (r.email) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('📧', 'メール', r.email);
+  }
+  html += '</div>';
+  
+  // 学歴
+  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">学歴</h2></div>';
+  if (!r.education || r.education.length === 0) {
+    html += _resumeEmpty('📚', 'まだ学歴が登録されてないよ');
+  } else {
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+    // 古い順にソート
+    const sorted = r.education.slice().sort((a, b) => (a.date||'').localeCompare(b.date||''));
+    for (let i = 0; i < sorted.length; i++) {
+      const e = sorted[i];
+      if (i > 0) html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+      html += '<div style="padding:11px 14px;">';
+      html += '<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">';
+      if (e.date) html += '<span style="font-size:11px;color:var(--ink-sub);font-weight:700;min-width:60px;">'+e.date.replace(/-/g,'/')+'</span>';
+      html += '<span style="font-size:13px;font-weight:700;color:var(--ink-dark);flex:1;">'+escapeHtml(e.school || '')+'</span>';
+      html += '</div>';
+      if (e.detail) html += '<div style="font-size:11px;color:var(--ink);margin-top:2px;margin-left:68px;">'+escapeHtml(e.detail)+'</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  
+  // 職歴
+  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">職歴</h2></div>';
+  if (!r.career || r.career.length === 0) {
+    html += _resumeEmpty('💼', 'まだ職歴が登録されてないよ');
+  } else {
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+    const sorted = r.career.slice().sort((a, b) => (a.date||'').localeCompare(b.date||''));
+    for (let i = 0; i < sorted.length; i++) {
+      const e = sorted[i];
+      if (i > 0) html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+      html += '<div style="padding:11px 14px;">';
+      html += '<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">';
+      if (e.date) html += '<span style="font-size:11px;color:var(--ink-sub);font-weight:700;min-width:60px;">'+e.date.replace(/-/g,'/')+'</span>';
+      html += '<span style="font-size:13px;font-weight:700;color:var(--ink-dark);flex:1;">'+escapeHtml(e.company || '')+'</span>';
+      html += '</div>';
+      if (e.position) html += '<div style="font-size:11px;color:var(--ink);margin-top:2px;margin-left:68px;">'+escapeHtml(e.position)+'</div>';
+      if (e.detail) html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:2px;margin-left:68px;">'+escapeHtml(e.detail)+'</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  
+  // 資格・免許
+  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">資格・免許</h2></div>';
+  if (!r.licenses || r.licenses.length === 0) {
+    html += _resumeEmpty('🎓', 'まだ資格・免許が登録されてないよ');
+  } else {
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+    const sorted = r.licenses.slice().sort((a, b) => (a.date||'').localeCompare(b.date||''));
+    for (let i = 0; i < sorted.length; i++) {
+      const e = sorted[i];
+      if (i > 0) html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+      html += '<div style="padding:11px 14px;">';
+      html += '<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">';
+      if (e.date) html += '<span style="font-size:11px;color:var(--ink-sub);font-weight:700;min-width:60px;">'+e.date.replace(/-/g,'/')+'</span>';
+      html += '<span style="font-size:13px;font-weight:700;color:var(--ink-dark);flex:1;">'+escapeHtml(e.name || '')+'</span>';
+      html += '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  
+  // 自己PR
+  if (r.selfPr) {
+    html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">自己PR</h2></div>';
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;font-size:12px;color:var(--ink-dark);line-height:1.7;white-space:pre-wrap;word-break:break-word;">';
+    html += escapeHtml(r.selfPr);
+    html += '</div>';
+  }
+  
+  // 趣味・特技
+  if (r.hobbies) {
+    html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">趣味・特技</h2></div>';
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;font-size:12px;color:var(--ink-dark);line-height:1.7;white-space:pre-wrap;word-break:break-word;">';
+    html += escapeHtml(r.hobbies);
+    html += '</div>';
+  }
+  
+  // 印刷予告
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:11px;line-height:1.6;margin-bottom:14px;">';
+  html += '🖨️ 印刷・PDF出力は近日対応予定だよ🌷<br><span style="font-size:10px;color:var(--ink-light);">書類書く時の参考にしてね</span>';
+  html += '</div>';
+  
+  html += '</div>';
+  return html;
+}
+
+function _resumeEmpty(icon, text) {
+  return '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:16px 14px;text-align:center;color:var(--ink-sub);font-size:11px;line-height:1.6;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;">'+icon+' '+text+'</div>';
+}
+
+// ===== Resume編集 =====
+function openResumeEdit() {
+  if (!data.resume) data.resume = {};
+  const r = data.resume;
+  
+  document.getElementById('resumeFullNameInput').value = r.fullName || '';
+  document.getElementById('resumeFullNameKanaInput').value = r.fullNameKana || '';
+  document.getElementById('resumeGenderInput').value = r.gender || '';
+  document.getElementById('resumeAddressInput').value = r.address || '';
+  document.getElementById('resumePhoneInput').value = r.phone || '';
+  document.getElementById('resumeEmailInput').value = r.email || '';
+  document.getElementById('resumeSelfPrInput').value = r.selfPr || '';
+  document.getElementById('resumeHobbiesInput').value = r.hobbies || '';
+  
+  _renderResumeListEditor('education', r.education || []);
+  _renderResumeListEditor('career', r.career || []);
+  _renderResumeListEditor('licenses', r.licenses || []);
+  
+  document.getElementById('resumeEditModal').classList.add('show');
+}
+
+// 学歴・職歴・資格のリストエディタを描画
+function _renderResumeListEditor(type, items) {
+  const container = document.getElementById('resumeList_' + type);
+  if (!container) return;
+  
+  let html = '';
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    html += '<div class="resume-edit-row" data-idx="'+i+'" style="background:rgba(255,255,255,0.5);border-radius:10px;padding:8px 10px;margin-bottom:6px;">';
+    html += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">';
+    html += '<input type="month" class="form-input resume-edit-date" value="'+(item.date||'')+'" style="font-size:11px;padding:4px 6px;flex:1;" placeholder="年月">';
+    html += '<button onclick="_resumeRemoveItem(\''+type+'\','+i+')" style="background:transparent;border:none;color:var(--ink-light);font-size:14px;cursor:pointer;padding:0 4px;">×</button>';
+    html += '</div>';
+    
+    if (type === 'education') {
+      html += '<input type="text" class="form-input resume-edit-school" value="'+escapeHtml(item.school||'')+'" style="font-size:12px;padding:6px 8px;margin-bottom:4px;width:100%;box-sizing:border-box;" placeholder="学校名（例：大阪府立○○高校）">';
+      html += '<input type="text" class="form-input resume-edit-detail" value="'+escapeHtml(item.detail||'')+'" style="font-size:11px;padding:6px 8px;width:100%;box-sizing:border-box;" placeholder="学部・卒業/入学（例：文学部 卒業）">';
+    } else if (type === 'career') {
+      html += '<input type="text" class="form-input resume-edit-company" value="'+escapeHtml(item.company||'')+'" style="font-size:12px;padding:6px 8px;margin-bottom:4px;width:100%;box-sizing:border-box;" placeholder="会社名">';
+      html += '<input type="text" class="form-input resume-edit-position" value="'+escapeHtml(item.position||'')+'" style="font-size:11px;padding:6px 8px;margin-bottom:4px;width:100%;box-sizing:border-box;" placeholder="役職・部署">';
+      html += '<input type="text" class="form-input resume-edit-detail" value="'+escapeHtml(item.detail||'')+'" style="font-size:11px;padding:6px 8px;width:100%;box-sizing:border-box;" placeholder="入社/退社など">';
+    } else if (type === 'licenses') {
+      html += '<input type="text" class="form-input resume-edit-name" value="'+escapeHtml(item.name||'')+'" style="font-size:12px;padding:6px 8px;width:100%;box-sizing:border-box;" placeholder="資格名（例：普通自動車免許）">';
+    }
+    html += '</div>';
+  }
+  html += '<button onclick="_resumeAddItem(\''+type+'\')" class="btn btn-secondary" style="width:100%;font-size:11px;padding:8px;">＋ 追加</button>';
+  container.innerHTML = html;
+}
+
+// リストアイテム追加
+function _resumeAddItem(type) {
+  // 現在の入力を保存してから追加
+  const items = _resumeReadList(type);
+  items.push({});
+  _renderResumeListEditor(type, items);
+}
+
+// リストアイテム削除
+function _resumeRemoveItem(type, idx) {
+  const items = _resumeReadList(type);
+  items.splice(idx, 1);
+  _renderResumeListEditor(type, items);
+}
+
+// リストエディタから現在の値を取得
+function _resumeReadList(type) {
+  const container = document.getElementById('resumeList_' + type);
+  if (!container) return [];
+  const rows = container.querySelectorAll('.resume-edit-row');
+  const items = [];
+  for (const row of rows) {
+    const date = row.querySelector('.resume-edit-date')?.value || '';
+    if (type === 'education') {
+      items.push({
+        date: date,
+        school: row.querySelector('.resume-edit-school')?.value.trim() || '',
+        detail: row.querySelector('.resume-edit-detail')?.value.trim() || ''
+      });
+    } else if (type === 'career') {
+      items.push({
+        date: date,
+        company: row.querySelector('.resume-edit-company')?.value.trim() || '',
+        position: row.querySelector('.resume-edit-position')?.value.trim() || '',
+        detail: row.querySelector('.resume-edit-detail')?.value.trim() || ''
+      });
+    } else if (type === 'licenses') {
+      items.push({
+        date: date,
+        name: row.querySelector('.resume-edit-name')?.value.trim() || ''
+      });
+    }
+  }
+  return items;
+}
+
+function saveResume() {
+  if (!data.resume) data.resume = {};
+  const r = data.resume;
+  
+  r.fullName = document.getElementById('resumeFullNameInput').value.trim();
+  r.fullNameKana = document.getElementById('resumeFullNameKanaInput').value.trim();
+  r.gender = document.getElementById('resumeGenderInput').value;
+  r.address = document.getElementById('resumeAddressInput').value.trim();
+  r.phone = document.getElementById('resumePhoneInput').value.trim();
+  r.email = document.getElementById('resumeEmailInput').value.trim();
+  r.selfPr = document.getElementById('resumeSelfPrInput').value.trim();
+  r.hobbies = document.getElementById('resumeHobbiesInput').value.trim();
+  
+  // リスト系（空の項目は除外）
+  r.education = _resumeReadList('education').filter(e => e.school || e.detail);
+  r.career = _resumeReadList('career').filter(e => e.company || e.position);
+  r.licenses = _resumeReadList('licenses').filter(e => e.name);
+  
+  saveData();
+  closeModal('resumeEditModal');
+  showToast('履歴書を保存したよ📋');
+  render();
+}
+
 // ToDay情報カードの個別レンダラー
 function renderTodayCard(icon, title, value, label, comment) {
   let html = '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:8px;">';
@@ -11712,7 +12314,10 @@ function anzuGuideBubbleTopHtml(message, sub) {
 }
 
 function openAddPetModal() {
-  selectedPetType = 'dog'; selectedPlace = 'home';
+  const isKids = (currentMode === 'kids');
+  const types = isKids ? KIDS_TYPES : PET_TYPES;
+  const defaultType = types[0];
+  selectedPetType = defaultType; selectedPlace = 'home';
   document.getElementById('petNameInput').value = '';
   document.getElementById('petBreedInput').value = '';
   document.getElementById('petBirthInput').value = '';
@@ -11720,10 +12325,29 @@ function openAddPetModal() {
   document.getElementById('rainbowDateGroup').style.display = 'none';
   setupYmdSelectors('petBirth', '');
   setupYmdSelectors('petRainbow', '');
+  
+  // KIDSモードでは「種類」（breed）欄を非表示、虹の橋ラベルを「星のひろば」に
+  const breedGroup = document.getElementById('petBreedInput');
+  if (breedGroup && breedGroup.closest('.form-group')) {
+    breedGroup.closest('.form-group').style.display = isKids ? 'none' : '';
+  }
+  const rainbowLabel = document.getElementById('addPetRainbowLabel');
+  const rainbowBtn = document.getElementById('addPetRainbowBtn');
+  if (rainbowLabel) rainbowLabel.textContent = isKids ? '星のひろば' : '虹の橋';
+  if (rainbowBtn) {
+    const iconEl = rainbowBtn.querySelector('.icon');
+    if (iconEl) iconEl.textContent = isKids ? '⭐' : '🌈';
+  }
+  // 「虹の橋の日」のラベルもKIDS時は変更
+  const rainbowDateLabel = document.querySelector('#rainbowDateGroup .form-label');
+  if (rainbowDateLabel) {
+    rainbowDateLabel.textContent = isKids ? '星のひろばの日（にんいです）' : '虹の橋の日（にんいです）';
+  }
+  
   const grid = document.getElementById('petTypeGrid');
   let html = '';
-  for (const type of PET_TYPES) {
-    html += '<button class="pet-type-btn '+(type==='dog'?'selected':'')+'" data-type="'+type+'">';
+  for (const type of types) {
+    html += '<button class="pet-type-btn '+(type===defaultType?'selected':'')+'" data-type="'+type+'">';
     html += spriteSVG(type, PET_PALETTES[type], 'class="sprite-mini"');
     html += '<span class="label">'+PET_TYPE_NAMES[type]+'</span></button>';
   }
@@ -11734,7 +12358,8 @@ function openAddPetModal() {
       btn.classList.add('selected');
       selectedPetType = btn.dataset.type;
     };
-  }  for (const btn of document.querySelectorAll('#addPetModal .place-btn')) {
+  }
+  for (const btn of document.querySelectorAll('#addPetModal .place-btn')) {
     btn.classList.toggle('selected', btn.dataset.place === 'home');
     btn.onclick = () => {
       document.querySelectorAll('#addPetModal .place-btn').forEach(b => b.classList.remove('selected'));
@@ -11773,17 +12398,42 @@ function openEditPetModal(petId) {
   editingPetId = petId;
   const pet = data.pets.find(p => p.id === petId);
   if (!pet) return;
+  
+  // KIDSタイプ判定
+  const isKidsType = (pet.type === 'boy' || pet.type === 'girl');
+  
   document.getElementById('editPetNameInput').value = pet.name;
   document.getElementById('editPetBreedInput').value = pet.breed || '';
   document.getElementById('editPetBirthInput').value = pet.birth || '';
   document.getElementById('editPetRainbowDateInput').value = pet.rainbowDate || '';
   document.getElementById('editRainbowDateGroup').style.display = pet.place === 'rainbow' ? 'block' : 'none';
   setupYmdSelectors('editPetBirth', pet.birth || '');
-  setupYmdSelectors('editPetRainbow', pet.rainbowDate || '');  const placeContent = document.getElementById('editPlaceContent');
+  setupYmdSelectors('editPetRainbow', pet.rainbowDate || '');
+  
+  // KIDSモードでは「種類」欄非表示、虹の橋ラベルを「星のひろば」に
+  const breedGroup = document.getElementById('editPetBreedInput');
+  if (breedGroup && breedGroup.closest('.form-group')) {
+    breedGroup.closest('.form-group').style.display = isKidsType ? 'none' : '';
+  }
+  // 虹の橋の日のラベル変更
+  const rainbowDateLabel = document.querySelector('#editRainbowDateGroup .form-label');
+  if (rainbowDateLabel) {
+    rainbowDateLabel.textContent = isKidsType ? '星のひろばの日' : '虹の橋の日';
+  }
+  
+  const placeContent = document.getElementById('editPlaceContent');
   if (pet.place === 'home') {
-    placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px; margin-bottom:6px;"><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">🏠 おうちにいます</span></div><button class="btn btn-secondary" style="width:100%; font-size:12px; color:var(--soft-purple);" onclick="askMoveToRainbow()">🌈 虹の橋へ移す</button>';
+    if (isKidsType) {
+      placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px; margin-bottom:6px;"><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">🏠 おうちにいます</span></div><button class="btn btn-secondary" style="width:100%; font-size:12px; color:var(--soft-purple);" onclick="askMoveToRainbow()">⭐ 星のひろばへ移す</button>';
+    } else {
+      placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px; margin-bottom:6px;"><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">🏠 おうちにいます</span></div><button class="btn btn-secondary" style="width:100%; font-size:12px; color:var(--soft-purple);" onclick="askMoveToRainbow()">🌈 虹の橋へ移す</button>';
+    }
   } else if (pet.place === 'rainbow') {
-    placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px;"><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">🌈 虹の橋にいます</span></div>';
+    if (isKidsType) {
+      placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px;"><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">⭐ 星のひろばにいます</span></div>';
+    } else {
+      placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px;"><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">🌈 虹の橋にいます</span></div>';
+    }
   } else {
     placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px;"><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">✨ アプリの中の子</span></div>';
   }
@@ -13097,6 +13747,628 @@ async function _placesTextSearch(query, lat, lng) {
 }
 
 // ── Vaccine Records ──────────────────────────────────────────────────
+// ===== ペットのカルテ（健康・基本情報） =====
+// ===== ペットカルテ編集 =====
+let _editingChartPetId = null;
+
+function openPetChartEdit(petId) {
+  const pet = data.pets.find(p => p.id === petId);
+  if (!pet) return;
+  if (!pet.chart) pet.chart = {};
+  const c = pet.chart;
+  _editingChartPetId = petId;
+  
+  // 各フィールド初期化
+  document.getElementById('chartMicrochipInput').value = c.microchip || '';
+  document.getElementById('chartAllergyInput').value = c.allergy || '';
+  document.getElementById('chartMedicalInput').value = c.medicalHistory || '';
+  document.getElementById('chartHospitalInput').value = c.hospital || '';
+  document.getElementById('chartHospitalPhoneInput').value = c.hospitalPhone || '';
+  document.getElementById('chartInsuranceInput').value = c.insurance || '';
+  document.getElementById('chartNeuterDateInput').value = c.neuteredDate || '';
+  
+  // 性別ボタン初期化
+  for (const btn of document.querySelectorAll('#chartGenderGrid .place-btn')) {
+    btn.classList.toggle('selected', (btn.dataset.gender || '') === (c.gender || ''));
+    btn.onclick = () => {
+      document.querySelectorAll('#chartGenderGrid .place-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+  }
+  
+  // 避妊去勢ボタン初期化
+  for (const btn of document.querySelectorAll('#chartNeuterGrid .place-btn')) {
+    btn.classList.toggle('selected', (btn.dataset.neuter || '') === (c.neutered || ''));
+    btn.onclick = () => {
+      document.querySelectorAll('#chartNeuterGrid .place-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      // 「済」の時だけ日付欄表示
+      const dateGroup = document.getElementById('chartNeuterDateGroup');
+      dateGroup.style.display = (btn.dataset.neuter === 'yes') ? '' : 'none';
+    };
+  }
+  
+  // 「済」の時は日付欄初期表示
+  document.getElementById('chartNeuterDateGroup').style.display = (c.neutered === 'yes') ? '' : 'none';
+  
+  document.getElementById('petChartEditModal').classList.add('show');
+}
+
+function savePetChart() {
+  if (!_editingChartPetId) return;
+  const pet = data.pets.find(p => p.id === _editingChartPetId);
+  if (!pet) return;
+  if (!pet.chart) pet.chart = {};
+  const c = pet.chart;
+  
+  // 性別
+  const genderBtn = document.querySelector('#chartGenderGrid .place-btn.selected');
+  c.gender = genderBtn ? (genderBtn.dataset.gender || '') : '';
+  
+  // 避妊去勢
+  const neuterBtn = document.querySelector('#chartNeuterGrid .place-btn.selected');
+  c.neutered = neuterBtn ? (neuterBtn.dataset.neuter || '') : '';
+  c.neuteredDate = document.getElementById('chartNeuterDateInput').value || '';
+  
+  // 各種フィールド
+  c.microchip = document.getElementById('chartMicrochipInput').value.trim();
+  c.allergy = document.getElementById('chartAllergyInput').value.trim();
+  c.medicalHistory = document.getElementById('chartMedicalInput').value.trim();
+  c.hospital = document.getElementById('chartHospitalInput').value.trim();
+  c.hospitalPhone = document.getElementById('chartHospitalPhoneInput').value.trim();
+  c.insurance = document.getElementById('chartInsuranceInput').value.trim();
+  
+  saveData();
+  closeModal('petChartEditModal');
+  showToast('カルテを保存したよ📋');
+  render();
+}
+
+// ===== KIDSのカルテ =====
+// ===== 日本の定期予防接種スケジュール（2025-2026年度版） =====
+// 出典：日本小児科学会2025年12月版、厚生労働省、国立健康危機管理研究機構
+const KIDS_VACCINE_SCHEDULE = [
+  // 0歳～1歳の定期接種
+  { id:'hepb', name:'B型肝炎', shortName:'B肝', type:'定期', doses:3, ageMonthsMin:2, ageMonthsMax:12, recommendedAge:'生後2か月〜', icon:'💉' },
+  { id:'rota', name:'ロタウイルス', shortName:'ロタ', type:'定期', doses:3, ageMonthsMin:2, ageMonthsMax:8, recommendedAge:'生後2か月〜（2回または3回）', icon:'💧' },
+  { id:'fivecombo', name:'五種混合（DPT-IPV-Hib）', shortName:'五種混合', type:'定期', doses:4, ageMonthsMin:2, ageMonthsMax:90, recommendedAge:'生後2か月〜', icon:'💉', note:'2024年4月から開始。旧四種混合とヒブを統合' },
+  { id:'pcv', name:'小児用肺炎球菌（PCV）', shortName:'肺炎球菌', type:'定期', doses:4, ageMonthsMin:2, ageMonthsMax:60, recommendedAge:'生後2か月〜', icon:'🫁' },
+  { id:'bcg', name:'BCG（結核）', shortName:'BCG', type:'定期', doses:1, ageMonthsMin:5, ageMonthsMax:12, recommendedAge:'生後5〜8か月', icon:'🦠' },
+  
+  // 1歳の定期接種
+  { id:'mr1', name:'MR（麻しん風しん）第1期', shortName:'MR①', type:'定期', doses:1, ageMonthsMin:12, ageMonthsMax:24, recommendedAge:'1歳になったらすぐ', icon:'🌸' },
+  { id:'varicella', name:'水痘（水ぼうそう）', shortName:'水痘', type:'定期', doses:2, ageMonthsMin:12, ageMonthsMax:36, recommendedAge:'1〜3歳', icon:'💧' },
+  
+  // 3歳～
+  { id:'je1', name:'日本脳炎 第1期', shortName:'日脳①', type:'定期', doses:3, ageMonthsMin:36, ageMonthsMax:90, recommendedAge:'3〜4歳（1期初回2回・追加1回）', icon:'🧠' },
+  
+  // 就学前
+  { id:'mr2', name:'MR第2期', shortName:'MR②', type:'定期', doses:1, ageMonthsMin:60, ageMonthsMax:84, recommendedAge:'小学校入学前1年間', icon:'🌸' },
+  
+  // 9歳
+  { id:'je2', name:'日本脳炎 第2期', shortName:'日脳②', type:'定期', doses:1, ageMonthsMin:108, ageMonthsMax:156, recommendedAge:'9〜12歳', icon:'🧠' },
+  
+  // 小学6年～
+  { id:'dt', name:'二種混合（DT）', shortName:'DT', type:'定期', doses:1, ageMonthsMin:132, ageMonthsMax:156, recommendedAge:'11〜12歳（小6相当）', icon:'💉' },
+  
+  // 小6女子～高1女子
+  { id:'hpv', name:'HPV（子宮頸がん）', shortName:'HPV', type:'定期', doses:3, ageMonthsMin:144, ageMonthsMax:192, recommendedAge:'小6〜高1（女子・男子は任意）', icon:'🎀', note:'2回または3回接種' },
+  
+  // 任意接種
+  { id:'mumps', name:'おたふくかぜ', shortName:'おたふく', type:'任意', doses:2, ageMonthsMin:12, ageMonthsMax:84, recommendedAge:'1歳・小学校入学前', icon:'🐹' },
+  
+  // 季節性（毎年）
+  { id:'flu', name:'インフルエンザ', shortName:'インフル', type:'季節性', doses:1, perYear:true, recommendedAge:'毎年秋冬', icon:'🤧', note:'13歳未満は2回、13歳以上は1回' },
+  { id:'covid', name:'新型コロナ', shortName:'コロナ', type:'季節性', doses:1, perYear:true, recommendedAge:'状況による', icon:'😷' }
+];
+
+// 詳細年齢計算（○歳○ヶ月）
+function _calcDetailedAge(birthDate) {
+  if (!birthDate) return null;
+  const b = new Date(birthDate);
+  if (isNaN(b.getTime())) return null;
+  const now = new Date();
+  let years = now.getFullYear() - b.getFullYear();
+  let months = now.getMonth() - b.getMonth();
+  let days = now.getDate() - b.getDate();
+  if (days < 0) months--;
+  if (months < 0) { years--; months += 12; }
+  
+  if (years === 0 && months === 0) {
+    // 1ヶ月未満は日数で
+    const diffDays = Math.floor((now - b) / 86400000);
+    return diffDays + '日';
+  }
+  if (years === 0) {
+    return months + 'ヶ月';
+  }
+  if (months === 0) {
+    return years + '歳';
+  }
+  return years + '歳' + months + 'ヶ月';
+}
+
+// 子供の月齢を計算
+function _kidsAgeInMonths(birthDate) {
+  if (!birthDate) return null;
+  const b = new Date(birthDate);
+  if (isNaN(b.getTime())) return null;
+  const now = new Date();
+  let months = (now.getFullYear() - b.getFullYear()) * 12 + (now.getMonth() - b.getMonth());
+  if (now.getDate() < b.getDate()) months--;
+  return months;
+}
+
+// ワクチンの状態判定
+function _getVaccineStatus(scheduleItem, doneCount, ageMonths) {
+  // 季節性（毎年）は別ロジック
+  if (scheduleItem.type === '季節性') {
+    return { status: 'seasonal', label: '毎年' };
+  }
+  
+  const required = scheduleItem.doses;
+  
+  if (doneCount >= required) {
+    return { status: 'done', label: '全完了 ✅' };
+  }
+  
+  if (ageMonths === null || ageMonths === undefined) {
+    return { status: 'unknown', label: '誕生日未登録' };
+  }
+  
+  // まだ推奨年齢前
+  if (ageMonths < scheduleItem.ageMonthsMin) {
+    return { status: 'pending', label: 'もうすこし' };
+  }
+  
+  // 推奨年齢過ぎてて未接種
+  if (ageMonths > scheduleItem.ageMonthsMax && doneCount < required) {
+    return { status: 'overdue', label: '⚠️ 期限超過' };
+  }
+  
+  // 推奨年齢内で一部接種済み
+  if (doneCount > 0 && doneCount < required) {
+    return { status: 'partial', label: doneCount + '/' + required + '回 接種済み' };
+  }
+  
+  // 推奨年齢内で未接種
+  return { status: 'recommended', label: '接種時期 ✨' };
+}
+
+// 予防接種クイック入力（カルテからタップで起動）
+let _quickVaccinePetId = null;
+let _quickVaccineScheduleId = null;
+
+function openVaccineQuickEntry(petId, scheduleId) {
+  _quickVaccinePetId = petId;
+  _quickVaccineScheduleId = scheduleId;
+  
+  const schedule = KIDS_VACCINE_SCHEDULE.find(s => s.id === scheduleId);
+  if (!schedule) return;
+  
+  if (!data.vaccineRecords) data.vaccineRecords = {};
+  const records = (data.vaccineRecords[petId] || []).filter(r => r.scheduleId === scheduleId);
+  
+  document.getElementById('quickVaccineTitle').textContent = '💉 ' + schedule.name;
+  document.getElementById('quickVaccineSubtitle').textContent = schedule.recommendedAge;
+  
+  // 既存の接種履歴表示
+  const listEl = document.getElementById('quickVaccineList');
+  if (records.length === 0) {
+    listEl.innerHTML = '<div style="font-size:11px;color:var(--ink-sub);padding:8px 0;">まだ記録がないよ</div>';
+  } else {
+    let html = '';
+    for (let i = 0; i < records.length; i++) {
+      const r = records[i];
+      html += '<div style="padding:8px 10px;background:rgba(255,255,255,0.5);border-radius:8px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">';
+      html += '<div><span style="font-size:11px;color:var(--ink-sub);">' + (i+1) + '回目：</span>';
+      html += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-left:6px;">' + (r.date || '日付なし') + '</span></div>';
+      html += '<button onclick="_quickDeleteVaccine(\'' + r.id + '\')" style="background:transparent;border:none;color:var(--ink-light);font-size:14px;cursor:pointer;padding:0 4px;">×</button>';
+      html += '</div>';
+    }
+    if (schedule.doses && records.length >= schedule.doses) {
+      html += '<div style="font-size:10px;color:#3a8a3e;font-weight:700;margin-top:4px;">✅ 全' + schedule.doses + '回完了！</div>';
+    } else if (schedule.doses) {
+      html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:4px;">あと ' + (schedule.doses - records.length) + '回</div>';
+    }
+    listEl.innerHTML = html;
+  }
+  
+  // 日付欄を今日にリセット
+  const today = new Date();
+  document.getElementById('quickVaccineDateInput').value = 
+    today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+  
+  document.getElementById('quickVaccineModal').classList.add('show');
+}
+
+function _quickDeleteVaccine(recordId) {
+  if (!_quickVaccinePetId) return;
+  if (!confirm('この接種記録を削除する？')) return;
+  
+  if (data.vaccineRecords && data.vaccineRecords[_quickVaccinePetId]) {
+    data.vaccineRecords[_quickVaccinePetId] = data.vaccineRecords[_quickVaccinePetId].filter(r => r.id !== recordId);
+  }
+  saveData();
+  // モーダルを再表示してリスト更新
+  openVaccineQuickEntry(_quickVaccinePetId, _quickVaccineScheduleId);
+}
+
+function saveQuickVaccine() {
+  if (!_quickVaccinePetId || !_quickVaccineScheduleId) return;
+  
+  const schedule = KIDS_VACCINE_SCHEDULE.find(s => s.id === _quickVaccineScheduleId);
+  if (!schedule) return;
+  
+  const date = document.getElementById('quickVaccineDateInput').value;
+  if (!date) {
+    showToast('日付を入れてね🌷');
+    return;
+  }
+  
+  if (!data.vaccineRecords) data.vaccineRecords = {};
+  if (!data.vaccineRecords[_quickVaccinePetId]) data.vaccineRecords[_quickVaccinePetId] = [];
+  
+  data.vaccineRecords[_quickVaccinePetId].push({
+    id: 'vac_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    scheduleId: _quickVaccineScheduleId,
+    name: schedule.name,
+    date: date,
+    createdAt: Date.now()
+  });
+  
+  saveData();
+  showToast('💉 接種記録を保存したよ');
+  closeModal('quickVaccineModal');
+  render();
+}
+
+function renderTabKidsChart(pet) {
+  if (!pet.chart) pet.chart = {};
+  const c = pet.chart;
+  
+  if (!data.vaccineRecords) data.vaccineRecords = {};
+  const vaccines = (data.vaccineRecords[pet.id] || []).slice()
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .slice(0, 5);
+  
+  if (!data.weightRecords) data.weightRecords = {};
+  const weights = (data.weightRecords[pet.id] || []).slice()
+    .sort((a, b) => new Date(b.date||0) - new Date(a.date||0));
+  const latestWeight = weights.length > 0 ? weights[0] : null;
+  
+  let html = '<div class="section">';
+  html += '<div class="section-head"><h2 class="section-title">📋 '+escapeHtml(pet.name)+'のカルテ</h2>';
+  html += '<button class="section-link" onclick="openKidsChartEdit(\''+pet.id+'\')">✏️ 編集</button></div>';
+  
+  // 基本情報
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+  html += _chartRow('🏷️', 'なまえ', pet.name);
+  html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+  html += _chartRow(pet.type === 'boy' ? '👦' : '👧', 'カテゴリー', PET_TYPE_NAMES[pet.type] || '-');
+  if (pet.birth) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('🎂', 'お誕生日', pet.birth.replace(/-/g,'/'));
+    // 年齢表示
+    const ageStr = _calcDetailedAge(pet.birth);
+    if (ageStr) {
+      html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+      html += _chartRow('🌱', '年齢', ageStr);
+    }
+  }
+  if (c.bloodType) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('🩸', '血液型', c.bloodType);
+  }
+  if (latestWeight) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('⚖️', '最新体重', latestWeight.weight + 'kg ('+(latestWeight.date||'')+')');
+  }
+  if (c.height) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('📏', '身長', c.height + 'cm');
+  }
+  html += '</div>';
+  
+  // 医療情報
+  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">医療情報</h2></div>';
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+  html += _chartRow('🤧', 'アレルギー', c.allergy || '-');
+  html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+  html += _chartRow('🩺', '既往症・通院歴', c.medicalHistory || '-');
+  html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+  html += _chartRow('💊', '常用薬', c.medication || '-');
+  html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+  html += _chartRow('🏥', 'かかりつけ小児科', c.hospital || '-');
+  if (c.hospitalPhone) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('📞', '小児科TEL', c.hospitalPhone);
+  }
+  if (c.dentist) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('🦷', '歯医者', c.dentist);
+  }
+  if (c.insuranceNumber) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('📄', '保険証番号', c.insuranceNumber);
+  }
+  if (c.emergencyContact) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('🆘', '緊急連絡先', c.emergencyContact);
+  }
+  html += '</div>';
+  
+  // 予防接種スケジュール（政府基準・全期間）
+  const ageMonths = _kidsAgeInMonths(pet.birth);
+  
+  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">予防接種スケジュール</h2>';
+  if (ageMonths !== null) {
+    const ageY = Math.floor(ageMonths / 12);
+    const ageM = ageMonths % 12;
+    let ageStr = '';
+    if (ageY > 0) ageStr += ageY + '歳';
+    if (ageM > 0 || ageY === 0) ageStr += ageM + 'か月';
+    html += '<span class="section-count">'+ageStr+'</span>';
+  }
+  html += '</div>';
+  
+  // 接種記録のカウント取得（vaccineRecordsから集計）
+  const doneByVaccineId = {};
+  if (data.vaccineRecords && data.vaccineRecords[pet.id]) {
+    for (const v of data.vaccineRecords[pet.id]) {
+      const vid = v.scheduleId || v.name;
+      doneByVaccineId[vid] = (doneByVaccineId[vid] || 0) + 1;
+    }
+  }
+  
+  // 凡例
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:10px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:8px;font-size:10px;color:var(--ink-sub);line-height:1.7;">';
+  html += '<div>✅ 全完了 / ✨ 接種時期 / ⏳ もうすこし / ⚠️ 期限超過</div>';
+  html += '<div style="margin-top:2px;color:var(--ink-light);">タップで接種日を記録できるよ</div>';
+  html += '</div>';
+  
+  // スケジュール一覧
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+  
+  for (let i = 0; i < KIDS_VACCINE_SCHEDULE.length; i++) {
+    const v = KIDS_VACCINE_SCHEDULE[i];
+    const doneCount = doneByVaccineId[v.id] || 0;
+    const stat = _getVaccineStatus(v, doneCount, ageMonths);
+    
+    if (i > 0) html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    
+    // 状態別の色
+    let statusColor = 'var(--ink-sub)';
+    let statusBg = 'transparent';
+    if (stat.status === 'done') statusColor = '#3a8a3e';
+    else if (stat.status === 'recommended') { statusColor = '#d8800a'; statusBg = 'rgba(255,200,80,0.12)'; }
+    else if (stat.status === 'overdue') { statusColor = '#c8423a'; statusBg = 'rgba(255,100,80,0.10)'; }
+    else if (stat.status === 'partial') statusColor = '#5a8acf';
+    
+    html += '<div onclick="openVaccineQuickEntry(\''+pet.id+'\',\''+v.id+'\')" style="padding:11px 14px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:'+statusBg+';">';
+    html += '<span style="font-size:18px;line-height:1.3;flex-shrink:0;width:22px;text-align:center;">'+v.icon+'</span>';
+    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">';
+    html += '<span style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(v.name)+'</span>';
+    html += '<span style="font-size:10px;color:var(--ink-light);">('+v.type+')</span>';
+    html += '</div>';
+    html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:1px;">'+escapeHtml(v.recommendedAge)+'</div>';
+    if (v.note) {
+      html += '<div style="font-size:9.5px;color:var(--ink-light);margin-top:1px;line-height:1.4;">'+escapeHtml(v.note)+'</div>';
+    }
+    html += '<div style="font-size:11px;font-weight:700;color:'+statusColor+';margin-top:3px;">'+stat.label+'</div>';
+    html += '</div></div>';
+  }
+  
+  html += '</div>';
+  
+  // 季節性ワクチンの最新表示
+  const seasonalIds = KIDS_VACCINE_SCHEDULE.filter(v => v.type === '季節性').map(v => v.id);
+  const recentSeasonals = (data.vaccineRecords && data.vaccineRecords[pet.id] || [])
+    .filter(r => seasonalIds.includes(r.scheduleId))
+    .slice(0, 3);
+  
+  if (recentSeasonals.length > 0) {
+    html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">最新の季節性ワクチン</h2></div>';
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+    for (let i = 0; i < recentSeasonals.length; i++) {
+      const r = recentSeasonals[i];
+      if (i > 0) html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+      html += '<div style="padding:11px 14px;font-size:12px;color:var(--ink-dark);">';
+      html += '💉 ' + escapeHtml(r.name) + ' - ' + (r.date || '') + '</div>';
+    }
+    html += '</div>';
+  }
+  
+  // 全履歴へリンク
+  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">全接種履歴</h2>';
+  html += '<button class="section-link" onclick="setPetTab(\'vaccine\')">ワクチンタブで管理 ›</button></div>';
+  
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:11px;line-height:1.6;margin-bottom:14px;">';
+  html += '🖨️ 印刷・PDF出力は近日対応予定だよ🌷';
+  html += '</div>';
+  
+  html += '</div>';
+  return html;
+}
+
+let _editingKidsChartPetId = null;
+
+function openKidsChartEdit(petId) {
+  const pet = data.pets.find(p => p.id === petId);
+  if (!pet) return;
+  if (!pet.chart) pet.chart = {};
+  const c = pet.chart;
+  _editingKidsChartPetId = petId;
+  
+  document.getElementById('kidsChartBloodInput').value = c.bloodType || '';
+  document.getElementById('kidsChartHeightInput').value = c.height || '';
+  document.getElementById('kidsChartAllergyInput').value = c.allergy || '';
+  document.getElementById('kidsChartMedicalInput').value = c.medicalHistory || '';
+  document.getElementById('kidsChartMedicationInput').value = c.medication || '';
+  document.getElementById('kidsChartHospitalInput').value = c.hospital || '';
+  document.getElementById('kidsChartHospitalPhoneInput').value = c.hospitalPhone || '';
+  document.getElementById('kidsChartDentistInput').value = c.dentist || '';
+  document.getElementById('kidsChartInsuranceNumberInput').value = c.insuranceNumber || '';
+  document.getElementById('kidsChartEmergencyInput').value = c.emergencyContact || '';
+  
+  document.getElementById('kidsChartEditModal').classList.add('show');
+}
+
+function saveKidsChart() {
+  if (!_editingKidsChartPetId) return;
+  const pet = data.pets.find(p => p.id === _editingKidsChartPetId);
+  if (!pet) return;
+  if (!pet.chart) pet.chart = {};
+  const c = pet.chart;
+  
+  c.bloodType = document.getElementById('kidsChartBloodInput').value.trim();
+  c.height = document.getElementById('kidsChartHeightInput').value.trim();
+  c.allergy = document.getElementById('kidsChartAllergyInput').value.trim();
+  c.medicalHistory = document.getElementById('kidsChartMedicalInput').value.trim();
+  c.medication = document.getElementById('kidsChartMedicationInput').value.trim();
+  c.hospital = document.getElementById('kidsChartHospitalInput').value.trim();
+  c.hospitalPhone = document.getElementById('kidsChartHospitalPhoneInput').value.trim();
+  c.dentist = document.getElementById('kidsChartDentistInput').value.trim();
+  c.insuranceNumber = document.getElementById('kidsChartInsuranceNumberInput').value.trim();
+  c.emergencyContact = document.getElementById('kidsChartEmergencyInput').value.trim();
+  
+  saveData();
+  closeModal('kidsChartEditModal');
+  showToast('カルテを保存したよ📋');
+  render();
+}
+
+function renderTabPetChart(pet) {
+  if (!pet.chart) pet.chart = {};
+  const c = pet.chart;
+  
+  // ワクチン履歴（最新3件）
+  if (!data.vaccineRecords) data.vaccineRecords = {};
+  const vaccines = (data.vaccineRecords[pet.id] || []).slice()
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .slice(0, 3);
+  
+  // 体重（最新）
+  if (!data.weightRecords) data.weightRecords = {};
+  const weights = (data.weightRecords[pet.id] || []).slice()
+    .sort((a, b) => new Date(b.date||0) - new Date(a.date||0));
+  const latestWeight = weights.length > 0 ? weights[0] : null;
+  
+  let html = '<div class="section">';
+  
+  // ヘッダー
+  html += '<div class="section-head"><h2 class="section-title">📋 '+escapeHtml(pet.name)+'のカルテ</h2>';
+  html += '<button class="section-link" onclick="openPetChartEdit(\''+pet.id+'\')">✏️ 編集</button></div>';
+  
+  // 基本情報カード
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+  html += _chartRow('🏷️', '名前', pet.name);
+  html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+  html += _chartRow('📂', 'カテゴリー', PET_TYPE_NAMES[pet.type] || '-');
+  if (pet.breed) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('🔖', '品種', pet.breed);
+  }
+  if (pet.birth) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('🎂', '誕生日', pet.birth.replace(/-/g,'/'));
+    // 年齢表示
+    const ageStr = _calcDetailedAge(pet.birth);
+    if (ageStr) {
+      html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+      html += _chartRow('🌱', '年齢', ageStr);
+    }
+  }
+  if (c.gender) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('⚧', '性別', c.gender);
+  }
+  if (latestWeight) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('⚖️', '最新体重', latestWeight.weight + 'kg ('+(latestWeight.date||'')+')');
+  }
+  html += '</div>';
+  
+  // 医療情報カード
+  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">医療情報</h2></div>';
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+  
+  // 避妊・去勢
+  let neuterText = '未登録';
+  if (c.neutered === 'yes') neuterText = '済' + (c.neuteredDate ? '（'+c.neuteredDate.replace(/-/g,'/')+'）' : '');
+  else if (c.neutered === 'no') neuterText = '未実施';
+  html += _chartRow('✂️', '避妊・去勢', neuterText);
+  
+  html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+  html += _chartRow('🔢', 'マイクロチップ番号', c.microchip || '-');
+  
+  html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+  html += _chartRow('🤧', 'アレルギー', c.allergy || '-');
+  
+  html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+  html += _chartRow('🩺', '既往症', c.medicalHistory || '-');
+  
+  html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+  html += _chartRow('🏥', 'かかりつけ病院', c.hospital || '-');
+  
+  if (c.hospitalPhone) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('📞', '病院TEL', c.hospitalPhone);
+  }
+  if (c.insurance) {
+    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += _chartRow('📄', 'ペット保険', c.insurance);
+  }
+  
+  html += '</div>';
+  
+  // ワクチン履歴（最新）
+  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">ワクチン履歴（最新3件）</h2>';
+  html += '<button class="section-link" onclick="setPetTab(\'vaccine\')">すべて見る ›</button></div>';
+  
+  if (vaccines.length === 0) {
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:18px 14px;text-align:center;color:var(--ink-sub);font-size:11px;line-height:1.6;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;">';
+    html += 'まだワクチン記録がないよ💉<br><span style="font-size:10px;color:var(--ink-light);">「ワクチン」タブから登録してね</span>';
+    html += '</div>';
+  } else {
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+    for (let i = 0; i < vaccines.length; i++) {
+      const v = vaccines[i];
+      if (i > 0) html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+      html += '<div style="padding:11px 14px;">';
+      html += '<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">';
+      html += '<span style="font-size:13px;font-weight:800;color:var(--ink-dark);">💉 '+escapeHtml(v.name)+'</span>';
+      if (v.date) html += '<span style="font-size:11px;color:var(--ink-sub);">'+v.date.replace(/-/g,'/')+'</span>';
+      html += '</div>';
+      if (v.nextDate) {
+        html += '<div style="font-size:11px;color:var(--ink);margin-top:2px;">📅 次回：'+v.nextDate.replace(/-/g,'/')+'</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  
+  // 印刷予告
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:11px;line-height:1.6;margin-bottom:14px;">';
+  html += '🖨️ 印刷・PDF出力は近日対応予定だよ🌷';
+  html += '</div>';
+  
+  html += '</div>';
+  return html;
+}
+
+// カルテの1行レンダラー
+function _chartRow(icon, label, value) {
+  let html = '<div style="padding:10px 14px;display:flex;align-items:flex-start;gap:10px;">';
+  html += '<span style="font-size:16px;line-height:1.3;flex-shrink:0;width:22px;text-align:center;">'+icon+'</span>';
+  html += '<div style="flex:1;min-width:0;">';
+  html += '<div style="font-size:10px;color:var(--ink-sub);font-weight:600;margin-bottom:1px;">'+escapeHtml(label)+'</div>';
+  html += '<div style="font-size:13px;font-weight:700;color:var(--ink-dark);word-break:break-word;line-height:1.5;">'+escapeHtml(value || '-')+'</div>';
+  html += '</div></div>';
+  return html;
+}
+
 function renderTabVaccine(pet) {
   if (!data.vaccineRecords) data.vaccineRecords = {};
   const records = (data.vaccineRecords[pet.id] || []).slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
