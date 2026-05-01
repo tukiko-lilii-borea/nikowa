@@ -10817,57 +10817,104 @@ async function fetchNews(category) {
     return cached.news;
   }
   
-  // RSSのURL（カテゴリ別）
-  let rssUrl;
+  // 複数のRSSフィードを混ぜて30件を確保
+  let rssUrls;
   if (category === 'pet') {
-    rssUrl = 'https://news.google.com/rss/search?q=' + encodeURIComponent('ペット OR 犬 OR 猫') + '&hl=ja&gl=JP&ceid=JP:ja';
+    rssUrls = [
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('ペット') + '&hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('犬') + '&hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('猫') + '&hl=ja&gl=JP&ceid=JP:ja'
+    ];
   } else if (category === 'kids') {
-    rssUrl = 'https://news.google.com/rss/search?q=' + encodeURIComponent('子育て OR 育児') + '&hl=ja&gl=JP&ceid=JP:ja';
+    rssUrls = [
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('子育て') + '&hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('育児') + '&hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('教育 子ども') + '&hl=ja&gl=JP&ceid=JP:ja'
+    ];
   } else if (category === 'entertainment') {
-    rssUrl = 'https://news.google.com/rss/headlines/section/topic/ENTERTAINMENT?hl=ja&gl=JP&ceid=JP:ja';
+    rssUrls = [
+      'https://news.google.com/rss/headlines/section/topic/ENTERTAINMENT?hl=ja&gl=JP&ceid=JP:ja'
+    ];
   } else {
-    rssUrl = 'https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja';
+    // general: トップ + 国内 + 国際 で30件確保
+    rssUrls = [
+      'https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/headlines/section/topic/NATION?hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/headlines/section/topic/WORLD?hl=ja&gl=JP&ceid=JP:ja'
+    ];
   }
   
   try {
-    const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
-    const res = await fetch(apiUrl);
-    const data = await res.json();
+    // 並列取得
+    const promises = rssUrls.map(rssUrl => {
+      const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
+      return fetch(apiUrl).then(r => r.json()).catch(() => null);
+    });
+    const results = await Promise.all(promises);
     
-    if (data.status === 'ok' && data.items) {
-      const news = data.items.slice(0, 30).map(item => {
-        // タイトルから出典を抽出（「タイトル - 出典」形式が多い）
-        const titleParts = (item.title || '').split(' - ');
-        let title, source;
-        if (titleParts.length >= 2) {
-          source = titleParts[titleParts.length - 1];
-          title = titleParts.slice(0, -1).join(' - ');
-        } else {
-          title = item.title || '';
-          source = 'Google News';
-        }
-        return {
-          title: title.trim(),
-          source: source.trim(),
-          link: item.link || '',
-          pubDate: item.pubDate || ''
-        };
-      });
-      
-      // キャッシュに保存
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify({
-          timestamp: Date.now(),
-          news: news
-        }));
-      } catch(e) {}
-      
-      // 取得完了したら画面更新（スクロール位置維持）
-      _suppressScrollTop = true;
-      try { render(); } catch(e) {}
-      
-      return news;
+    // 全件マージ
+    const allItems = [];
+    for (const data of results) {
+      if (data && data.status === 'ok' && data.items) {
+        for (const item of data.items) allItems.push(item);
+      }
     }
+    
+    if (allItems.length === 0) {
+      console.log('ニュース取得失敗: 全フィード空');
+      return cached ? cached.news : [];
+    }
+    
+    // 重複除外（タイトル先頭40文字で判定）
+    const seen = new Set();
+    const dedup = [];
+    for (const item of allItems) {
+      const key = (item.title || '').substring(0, 40);
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        dedup.push(item);
+      }
+    }
+    
+    // pubDate降順ソート（新しい順）
+    dedup.sort((a, b) => {
+      const ta = new Date(a.pubDate || 0).getTime();
+      const tb = new Date(b.pubDate || 0).getTime();
+      return tb - ta;
+    });
+    
+    // 30件まで＋整形
+    const news = dedup.slice(0, 30).map(item => {
+      const titleParts = (item.title || '').split(' - ');
+      let title, source;
+      if (titleParts.length >= 2) {
+        source = titleParts[titleParts.length - 1];
+        title = titleParts.slice(0, -1).join(' - ');
+      } else {
+        title = item.title || '';
+        source = 'Google News';
+      }
+      return {
+        title: title.trim(),
+        source: source.trim(),
+        link: item.link || '',
+        pubDate: item.pubDate || ''
+      };
+    });
+    
+    // キャッシュに保存
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({
+        timestamp: Date.now(),
+        news: news
+      }));
+    } catch(e) {}
+    
+    // 取得完了したら画面更新（スクロール位置維持）
+    _suppressScrollTop = true;
+    try { render(); } catch(e) {}
+    
+    return news;
   } catch(e) {
     console.log('ニュース取得エラー:', e);
   }
