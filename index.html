@@ -372,13 +372,25 @@
 
   /* ── 日付・時刻・地域・天気バー ── */
   .info-bar {
-    padding: 14px 16px 14px;
+    margin: 0 16px 0;
+    padding: 8px 18px;
     text-align: center;
     font-size: 11px;
     font-weight: 600;
-    color: var(--ink-sub);
     letter-spacing: 0.3px;
     font-feature-settings: "tnum";
+    /* すりガラス＋pill型 */
+    background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.38) 50%, rgba(255,255,255,0.52) 100%);
+    border: 1px solid rgba(255,255,255,0.75);
+    border-radius: 100px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+    display: inline-block;
+  }
+  .info-bar-wrap {
+    padding: 14px 16px 14px;
+    text-align: center;
   }
   .info-bar-date { color: var(--ink-dark); }
   .info-bar-sep { color: var(--ink-light); margin: 0 2px; }
@@ -4415,6 +4427,7 @@ function renderTop() {
   const _wCache = window._weatherCache || null;
   const _wIcon = _wCache ? _wCache.icon : '';
   const _wTemp = _wCache ? Math.round(_wCache.temp)+'°' : '';
+  html += '<div class="info-bar-wrap">';
   html += '<div class="info-bar" onclick="showWeatherPopup()" style="cursor:pointer;">';
   html += '<span class="info-bar-date">'+_yyyy+'/'+_mm+'/'+_dd+'（'+_wk+'）'+_hh+':'+_mi+'</span>';
   html += '<span class="info-bar-sep"> · </span>';
@@ -4425,6 +4438,7 @@ function renderTop() {
   } else {
     html += '<span class="info-bar-weather" style="opacity:0.5;">取得中...</span>';
   }
+  html += '</div>';
   html += '</div>';
 
   // モード選択カード（横一列）
@@ -6634,6 +6648,21 @@ function renderSettings() {
     }
     html += '</div></div>';
   }
+  // 地域設定セクション
+  html += '<div class="section"><div class="section-head"><h2 class="section-title">地域・天気</h2></div>';
+  html += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;">';
+  html += '<div style="font-size:12px;color:var(--ink-sub);margin-bottom:10px;">天気予報の地域を設定します</div>';
+  html += '<select onchange="saveUserRegion(this.value)" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink-dark);appearance:none;-webkit-appearance:none;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=\\\'http://www.w3.org/2000/svg\\\' width=\\\'12\\\' height=\\\'8\\\' viewBox=\\\'0 0 12 8\\\'><path d=\\\'M1 1l5 5 5-5\\\' stroke=\\\'%23888\\\' stroke-width=\\\'1.5\\\' fill=\\\'none\\\'/></svg>\');background-repeat:no-repeat;background-position:right 12px center;">';
+  const prefectures = ['北海道','青森','岩手','宮城','秋田','山形','福島','茨城','栃木','群馬','埼玉','千葉','東京','神奈川','新潟','富山','石川','福井','山梨','長野','岐阜','静岡','愛知','三重','滋賀','京都','大阪','兵庫','奈良','和歌山','鳥取','島根','岡山','広島','山口','徳島','香川','愛媛','高知','福岡','佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄'];
+  const currentRegion = data.userRegion || '大阪';
+  for (const pref of prefectures) {
+    const sel = pref === currentRegion ? ' selected' : '';
+    html += '<option value="'+pref+'"'+sel+'>'+pref+'</option>';
+  }
+  html += '</select>';
+  html += '<button onclick="fetchWeather();showToast(\'天気を更新したで🌸\');" style="width:100%;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:12px;font-weight:700;color:var(--accent-deep);background:var(--accent-bg);cursor:pointer;font-family:inherit;">天気を今すぐ更新</button>';
+  html += '</div></div>';
+
   // ヘルプセクション
   html += '<div class="section"><div class="section-head"><h2 class="section-title">ヘルプ</h2></div>';
   html += '<div class="help-list">';
@@ -6655,6 +6684,13 @@ function renderSettings() {
   html += '<strong style="color:var(--ink-dark);">にこわ -nikowa-</strong><br>version 1.0.0<br><br>';
   html += '虹（に）・心（こ）・輪（わ）<br>ニコニコな輪が広がりますように🌈</div></div>';
   document.getElementById('app').innerHTML = html;
+}
+
+function saveUserRegion(region) {
+  data.userRegion = region;
+  saveData();
+  fetchWeather();
+  showToast(escapeHtml(region)+'に変更したで🌸');
 }
 
 function setActiveNav(view) {
