@@ -846,6 +846,13 @@
   .cal-day-num {
     font-size: 12.5px; font-weight: 700; color: var(--ink-dark);
     line-height: 1; margin-top: 2px;
+    display: inline-flex; align-items: center; gap: 1px;
+  }
+  .cal-day-weather {
+    font-size: 8.5px;
+    line-height: 1;
+    opacity: 0.9;
+    margin-left: 0;
   }
   .cal-cell.sun .cal-day-num { color: var(--accent-deep); }
   .cal-cell.sat .cal-day-num { color: #5C8FB5; }
@@ -1650,11 +1657,21 @@
     border-radius: 12px; font-weight: 600;
   }
   .nav-btn .nav-icon { font-size: 20px; }
+  .nav-btn .nav-en {
+    font-size: 9.5px;
+    color: var(--ink-sub);
+    font-weight: 700;
+    line-height: 1;
+    margin-top: 2px;
+    letter-spacing: 0.4px;
+  }
   .nav-btn.active { color: var(--mint-deep); background: var(--mint-bg); }
+  .nav-btn.active .nav-en { color: var(--mint-deep); }
   .nav-back-btn {
     color: var(--accent-deep) !important;
     background: var(--accent-bg) !important;
   }
+  .nav-back-btn .nav-en { color: var(--accent-deep); }
   .nav-back-btn:active { transform: scale(0.92); }
   .modal {
     position: fixed; inset: 0;
@@ -2297,6 +2314,19 @@
   }
   .mode-idx-tab-icon { font-size:14px; display:block; margin-bottom:1px; }
   
+  /* ── モードキャッチコピー（タブ下のひと言） ─────────── */
+  .mode-catchcopy {
+    text-align: left;
+    font-size: 11px;
+    color: var(--ink-sub);
+    font-weight: 500;
+    padding: 2px 16px 8px;
+    letter-spacing: 0.3px;
+    line-height: 1.4;
+  }
+  .mode-catchcopy::before { content: '「 '; opacity: 0.5; }
+  .mode-catchcopy::after { content: ' 」'; opacity: 0.5; }
+  
   /* ── 家タブ（モードタブの下・小さめ） ─────────── */
   .house-idx-tabs {
     display:flex; padding:0 8px; gap:3px;
@@ -2648,15 +2678,30 @@
 <div class="app" id="app"></div>
 
 <nav class="bottom-nav" id="bottomNav" style="display:none;">
-  <button class="nav-btn active" data-view="houses"><span class="nav-icon">🏘️</span><span>ホーム</span></button>
-  <button class="nav-btn" data-view="schedule"><span class="nav-icon">📅</span><span>よてい</span></button>
-  <button class="nav-btn" data-view="town"><span class="nav-icon">🏙</span><span>タウン</span></button>
-  <button class="nav-btn nav-back-btn" id="navBackBtn" onclick="navBack()" style="display:none;"><span class="nav-icon">‹</span><span>戻る</span></button>
-  <button class="nav-btn" data-view="settings"><span class="nav-icon">⚙️</span><span>せってい</span></button>
+  <button class="nav-btn nav-back-btn" id="navBackBtn" onclick="navBack()" style="display:none;"><span class="nav-icon">‹</span><span class="nav-en">Back</span></button>
+  <button class="nav-btn active" data-view="houses"><span class="nav-icon">🏘️</span><span class="nav-en">Home</span></button>
+  <button class="nav-btn" data-view="schedule"><span class="nav-icon">📅</span><span class="nav-en">Schedule</span></button>
+  <button class="nav-btn" data-view="town"><span class="nav-icon">🏙</span><span class="nav-en">Town</span></button>
+  <button class="nav-btn" data-view="settings"><span class="nav-icon">⚙️</span><span class="nav-en">Settings</span></button>
 </nav>
 </div>
 
 <aside class="side-panel" id="sidePanel"></aside>
+
+<!-- 初回登録モーダル（オンボーディング） -->
+<div class="modal" id="onboardingModal" style="z-index:200;"><div class="modal-content">
+  <h2 class="modal-title">ようこそ、にこわへ🌸</h2>
+  <p class="modal-sub">まずは あなたのことを 教えてね<br><span style="font-size:10.5px;color:var(--ink-light);">登録は最初の1回だけです</span></p>
+  <div class="form-group"><label class="form-label">お名前（ニックネームでもOK）</label>
+    <input type="text" class="form-input" id="onbNameInput" maxlength="14" placeholder="例：しほ"></div>
+  <div class="form-group"><label class="form-label">生年月日</label>
+    <input type="date" class="form-input" id="onbBirthdayInput"></div>
+  <div class="form-group"><label class="form-label">アバター</label>
+    <div class="avatar-grid" id="onbAvatarGrid"></div></div>
+  <div class="modal-actions" style="margin-top:16px;">
+    <button class="btn btn-primary" style="width:100%;" onclick="saveOnboarding()">はじめる🌷</button>
+  </div>
+</div></div>
 
 <div class="modal" id="userModal"><div class="modal-content">
   <h2 class="modal-title">あなたのこと</h2>
@@ -3437,6 +3482,7 @@ let data = {
 let photos = {};
 let currentView = 'top';
 let currentMode = 'pet'; // 'pet' | 'me' | 'kids' | 'nest'
+let careRecentTab = 'today'; // 'today' | 'yesterday'
 let houseSubTab = 'mine';
 const MODE_KEYS = {
   pet:  { data: 'nikowa_data_v3',      photos: 'nikowa_photos_v3' },
@@ -3541,6 +3587,20 @@ function loadData() {
     data.activeHouseId = 'me_house';
     data.activePetId = 'me_diary';
     if (meChanged) saveData();
+  } else if (currentMode === 'nest') {
+    // Nestモードの初期データ：恋人・友人・仕事
+    if (!data.nests || data.nests.length === 0) {
+      data.nests = [
+        { id: 'nest_1', name: '恋人', icon: '💕', createdAt: Date.now() },
+        { id: 'nest_2', name: '友人', icon: '👯', createdAt: Date.now() },
+        { id: 'nest_3', name: '仕事', icon: '💼', createdAt: Date.now() }
+      ];
+      data.activeNestId = 'nest_1';
+      saveData();
+    }
+    if (!data.activeNestId || !data.nests.find(n => n.id === data.activeNestId)) {
+      data.activeNestId = data.nests[0].id;
+    }
   } else if (data.houses.length === 0) {
     const h = { id: 'house_' + Date.now(), name: 'マイホーム', createdAt: Date.now() };
     data.houses.push(h);
@@ -3766,6 +3826,32 @@ function getRecent24hCareLogs(petId) {
   const all = getAllCareLogs(petId);
   const cutoff = Date.now() - 24 * 60 * 60 * 1000;
   return all.filter(l => l.timestamp >= cutoff);
+}
+function yesterdayKey() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return dateToKey(d);
+}
+function getDateWeatherIcon(dateKey) {
+  // その日に書かれた日記の天気アイコンを返す（最後に書かれたもの優先）
+  if (!data.posts || !data.posts.length) return null;
+  let found = null;
+  let foundTs = 0;
+  for (const p of data.posts) {
+    if (!p.weather) continue;
+    const d = new Date(p.createdAt);
+    const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    if (k === dateKey && p.createdAt > foundTs) {
+      found = p.weather;
+      foundTs = p.createdAt;
+    }
+  }
+  return found;
+}
+function setCareRecentTab(tab) {
+  careRecentTab = tab;
+  _suppressScrollTop = true;
+  render();
 }
 function getCareLogsForDate(petId, dateKey) {
   const records = data.records[petId] || {};
@@ -4210,7 +4296,8 @@ function renderCalendar(monthYear, selectedDate, scope, idPrefix) {
     if (isSelected) cls += ' selected';
     if (isFuture) cls += ' future';
     html += '<button class="cal-cell'+cls+'" onclick="selectCalDate(\''+idPrefix+'\', \''+key+'\')">';
-    html += '<span class="cal-day-num">'+d+'</span>';
+    const _wIcon = getDateWeatherIcon(key);
+    html += '<span class="cal-day-num">'+d+(_wIcon ? '<span class="cal-day-weather">'+_wIcon+'</span>' : '')+'</span>';
     html += '<div class="cal-dots">';
     if (sum.sched) html += '<span class="cal-dot sched"></span>';
     if (sum.care) html += '<span class="cal-dot care"></span>';
@@ -4574,6 +4661,7 @@ function renderNestMode() {
   setActiveNav('pet');
   const app = document.getElementById('app');
   let html = renderModeIndexTabs();
+  html += renderNestTabs();
 
   html += renderModePageTabs('nest');
   html += '<div style="border-top:2px solid var(--mint);margin:0 12px 0;"></div>';
@@ -4696,6 +4784,66 @@ function goToNestMode() {
   switchMode('nest');
   currentView = 'nest';
   render();
+}
+
+function getActiveNest() {
+  if (!data.nests || data.nests.length === 0) return null;
+  return data.nests.find(n => n.id === data.activeNestId) || data.nests[0];
+}
+
+function renderNestTabs() {
+  const nests = data.nests || [];
+  const currentId = data.activeNestId;
+  let html = '<div class="house-idx-tabs">';
+  for (const n of nests) {
+    const active = (currentId === n.id) ? ' active' : '';
+    const label = n.name.length > 6 ? n.name.substring(0, 5) + '…' : n.name;
+    html += '<button class="house-idx-tab'+active+'" onclick="switchNestFromTab(\''+n.id+'\')" ondblclick="openEditNestModal(\''+n.id+'\')">';
+    html += '<span class="house-idx-tab-icon">'+(n.icon || '🪺')+'</span>'+escapeHtml(label)+'</button>';
+  }
+  html += '<button class="house-idx-tab-add" onclick="openAddNestModal()" title="Nestを追加">＋</button>';
+  html += '</div>';
+  return html;
+}
+
+function switchNestFromTab(nestId) {
+  data.activeNestId = nestId;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+
+function openAddNestModal() {
+  const nests = data.nests || [];
+  if (nests.length >= 3) {
+    showToast('4つ目以降は有料予定です🌷');
+    return;
+  }
+  const name = prompt('Nestの名前は？\n（例：両親・親友グループ・チーム）');
+  if (!name || !name.trim()) return;
+  data.nests.push({
+    id: 'nest_' + Date.now(),
+    name: name.trim(),
+    icon: '🪺',
+    createdAt: Date.now()
+  });
+  data.activeNestId = data.nests[data.nests.length - 1].id;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+
+function openEditNestModal(nestId) {
+  const nest = (data.nests || []).find(n => n.id === nestId);
+  if (!nest) return;
+  const newName = prompt('Nestの名前を編集', nest.name);
+  if (newName === null) return;
+  if (newName.trim()) {
+    nest.name = newName.trim();
+    saveData();
+    _suppressScrollTop = true;
+    render();
+  }
 }
 
 function renderMeMenuItem(icon, label, onclick, isDashed) {
@@ -5403,6 +5551,8 @@ function renderPet() {
 
 function renderTabCare(pet, careItems) {
   const recent = getRecent24hCareLogs(pet.id);
+  const recentTodayLogs = getCareLogsForDate(pet.id, todayKey());
+  const recentYesterdayLogs = getCareLogsForDate(pet.id, yesterdayKey());
   const careMap = {};
   for (const c of careItems) careMap[c.id] = c;
   const tasks = getUpcomingTasks(pet.id);
@@ -5464,18 +5614,27 @@ function renderTabCare(pet, careItems) {
     html += '<div class="schedule-empty" style="padding:14px;">'+anzuGuideBubbleTopHtml('まだタスクがないよ', 'ヘッダーの＋ついかから追加してね')+'</div>';
   }
   html += '</div>';
-  // 最近のお世話
+  // 最近のお世話（今日／昨日タブ式）
+  const careTabLogs = (careRecentTab === 'yesterday') ? recentYesterdayLogs : recentTodayLogs;
+  // 新しい順（時刻降順）
+  const careTabLogsSorted = careTabLogs.slice().sort((a,b) => b.timestamp - a.timestamp);
   html += '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">最近のお世話</h2><span class="section-count">直近24時間</span></div>';
-  if (recent.length === 0) {
-    html += '<div class="schedule-empty">'+anzuGuideBubbleTopHtml('まだ記録がないよ〜', 'クイックお世話から記録してみよう🐾')+'</div>';
+  html += '<div class="section-head" style="align-items:center;">';
+  html += '<h2 class="section-title">最近のお世話</h2>';
+  html += '<div style="display:flex;gap:4px;margin-left:auto;">';
+  html += '<button onclick="setCareRecentTab(\'today\')" style="font-family:inherit;font-size:11px;font-weight:700;padding:4px 12px;border-radius:100px;border:1px solid '+(careRecentTab==='today'?'var(--mint-deep)':'var(--line)')+';background:'+(careRecentTab==='today'?'var(--mint-bg)':'var(--surface)')+';color:'+(careRecentTab==='today'?'var(--mint-deep)':'var(--ink-sub)')+';cursor:pointer;">今日</button>';
+  html += '<button onclick="setCareRecentTab(\'yesterday\')" style="font-family:inherit;font-size:11px;font-weight:700;padding:4px 12px;border-radius:100px;border:1px solid '+(careRecentTab==='yesterday'?'var(--mint-deep)':'var(--line)')+';background:'+(careRecentTab==='yesterday'?'var(--mint-bg)':'var(--surface)')+';color:'+(careRecentTab==='yesterday'?'var(--mint-deep)':'var(--ink-sub)')+';cursor:pointer;">昨日</button>';
+  html += '</div>';
+  html += '</div>';
+  if (careTabLogsSorted.length === 0) {
+    const emptyMsg = (careRecentTab === 'yesterday') ? '昨日の記録はないよ〜' : 'まだ記録がないよ〜';
+    html += '<div class="schedule-empty">'+anzuGuideBubbleTopHtml(emptyMsg, 'クイックお世話から記録してみよう🐾')+'</div>';
   } else {
+    const targetDateKey = (careRecentTab === 'yesterday') ? yesterdayKey() : todayKey();
     html += '<div class="recent-care-list">';
-    for (const log of recent) {
+    for (const log of careTabLogsSorted) {
       const care = careMap[log.careId];
       const time = new Date(log.timestamp);
-      const isToday = log.date === todayKey();
-      const dayLabel = isToday ? '' : (formatDate(log.date) + ' ');
       const timeStr = time.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
       // 自分が記録したログは現在のユーザー名・アバターを使う（名前変更を反映）
       const isMe = !log.authorName || log.authorName === '' || log.authorName === data.user.name || log.authorAvatar === data.user.avatar;
@@ -5487,10 +5646,10 @@ function renderTabCare(pet, careItems) {
       const icon = care ? care.icon : (log.careIcon || '🌿');
       const name = care ? care.label : (log.careName || '不明');
       html += '<div class="recent-care-item">';
-      html += '<button class="recent-care-time recent-care-time-btn" onclick="openCareTimeEditModal(\''+log.date+'\', '+log.timestamp+')" title="タップで時間を編集">'+dayLabel+timeStr+'</button>';
+      html += '<button class="recent-care-time recent-care-time-btn" onclick="openCareTimeEditModal(\''+targetDateKey+'\', '+log.timestamp+')" title="タップで時間を編集">'+timeStr+'</button>';
       html += '<div class="recent-care-icon">'+escapeHtml(icon)+'</div>';
       html += '<div class="recent-care-name">';
-      html += '<div class="recent-care-name"><span class="recent-care-name-text">'+escapeHtml(name)+'</span>'+(authorTag ? '<div class="recent-care-author-wrap">'+authorTag+'</div>' : '<div class="recent-care-author-wrap"></div>')+'<button class="recent-care-delete" onclick="deleteCareLog(\''+log.date+'\', '+log.timestamp+')">✕</button></div>';
+      html += '<div class="recent-care-name"><span class="recent-care-name-text">'+escapeHtml(name)+'</span>'+(authorTag ? '<div class="recent-care-author-wrap">'+authorTag+'</div>' : '<div class="recent-care-author-wrap"></div>')+'<button class="recent-care-delete" onclick="deleteCareLog(\''+targetDateKey+'\', '+log.timestamp+')">✕</button></div>';
       html += '</div>';
       html += '</div>';
     }
@@ -5689,6 +5848,7 @@ function saveMemoFromModal() {
     type: postDraft.photoIds.length > 0 ? 'photo' : 'note',
     text: text, photoIds: postDraft.photoIds.slice(),
     visibility: postDraft.visibility || 'house',
+    weather: (window._weatherCache && window._weatherCache.icon) ? window._weatherCache.icon : null,
     authorName: data.user.name || '', authorAvatar: data.user.avatar || '🌷'
   };
   data.posts.push(post);
@@ -5885,6 +6045,7 @@ function saveMemo() {
     type: postDraft.photoIds.length > 0 ? 'photo' : 'note',
     text: text, photoIds: postDraft.photoIds.slice(),
     visibility: postDraft.visibility || 'house',
+    weather: (window._weatherCache && window._weatherCache.icon) ? window._weatherCache.icon : null,
     authorName: data.user.name || '', authorAvatar: data.user.avatar || '🌷'
   };
   data.posts.push(post);
@@ -7569,6 +7730,59 @@ function openUserModal() {
   }
   document.getElementById('userModal').classList.add('show');
 }
+
+// ===== オンボーディング（初回登録） =====
+function needsOnboarding() {
+  return !data.user || !data.user.name || !data.user.birthday;
+}
+
+function maybeShowOnboarding() {
+  if (!needsOnboarding()) return;
+  const m = document.getElementById('onboardingModal');
+  if (!m) return;
+  if (m.classList.contains('show')) return; // 既に表示中なら再描画しない
+  // アバターグリッド初期化
+  const grid = document.getElementById('onbAvatarGrid');
+  if (grid && !grid.dataset.initialized) {
+    let html = '';
+    const defaultAvatar = data.user.avatar || '🌷';
+    for (const a of AVATAR_CHOICES) {
+      html += '<button class="avatar-btn '+(defaultAvatar===a?'selected':'')+'" data-avatar="'+a+'">'+a+'</button>';
+    }
+    grid.innerHTML = html;
+    for (const btn of grid.querySelectorAll('.avatar-btn')) {
+      btn.onclick = () => {
+        grid.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      };
+    }
+    grid.dataset.initialized = '1';
+  }
+  // 既存値を入力欄にセット
+  const nameInput = document.getElementById('onbNameInput');
+  const bdInput = document.getElementById('onbBirthdayInput');
+  if (nameInput && data.user.name) nameInput.value = data.user.name;
+  if (bdInput && data.user.birthday) bdInput.value = data.user.birthday;
+  m.classList.add('show');
+}
+
+function saveOnboarding() {
+  const name = document.getElementById('onbNameInput').value.trim();
+  const birthday = document.getElementById('onbBirthdayInput').value;
+  if (!name) { showToast('お名前を入れてね🌷'); return; }
+  if (!birthday) { showToast('生年月日を入れてね🌷'); return; }
+  // 未来日チェック
+  if (birthday > todayKey()) { showToast('生年月日が未来になってるよ🌷'); return; }
+  const sel = document.querySelector('#onbAvatarGrid .avatar-btn.selected');
+  data.user.name = name;
+  data.user.birthday = birthday;
+  data.user.avatar = sel ? sel.dataset.avatar : (data.user.avatar || '🌷');
+  saveData();
+  closeModal('onboardingModal');
+  showToast('ようこそ、'+name+'さん🌸');
+  render();
+}
+
 function saveUser() {
   data.user.name = document.getElementById('userNameInput').value.trim();
   const sel = document.querySelector('#avatarGrid .avatar-btn.selected');
@@ -8936,6 +9150,8 @@ function deleteWeightRecord(petId, recordId) {
 
 let _suppressScrollTop = false;
 function render() {
+  // 初回起動時はオンボーディングモーダル表示
+  maybeShowOnboarding();
   if (currentView === 'top') renderTop();
   else if (currentView === 'me') renderMeMode();
   else if (currentView === 'nest') renderNestMode();
