@@ -3741,6 +3741,147 @@
   </div>
 </div>
 
+<!-- 日常ルーティンモーダル -->
+<div class="modal" id="dailyRoutineModal">
+  <div class="modal-content">
+    <h3 class="modal-title" id="dailyRoutineTitle">日常ルーティン</h3>
+    <p class="modal-sub">毎日の流れを整える🌷</p>
+    
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
+      <div id="dailyRoutineIconPreview" style="width:48px;height:48px;border-radius:12px;background:var(--accent-bg);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">🌷</div>
+      <button type="button" onclick="openDailyRoutineIconPicker()" style="flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">アイコン変更</button>
+    </div>
+    
+    <div id="dailyRoutineIconGrid" style="display:none;flex-wrap:wrap;gap:4px;padding:8px;background:var(--surface-warm);border-radius:10px;margin-bottom:10px;max-height:160px;overflow-y:auto;"></div>
+    
+    <input type="text" id="dailyRoutineNameInput" placeholder="名前（例：水を飲む / 血圧の薬）" maxlength="30" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
+    
+    <label style="font-size:11px;color:var(--ink-sub);font-weight:700;margin:6px 0 4px;display:block;">時間帯</label>
+    <select id="dailyRoutineTimeInput" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
+      <option value="morning">🌅 朝</option>
+      <option value="noon">☀️ 昼</option>
+      <option value="evening">🌇 夕</option>
+      <option value="night">🌙 夜</option>
+      <option value="bedtime">😴 寝る前</option>
+    </select>
+    
+    <label style="font-size:11px;color:var(--ink-sub);font-weight:700;margin:6px 0 4px;display:block;">タイミング（任意）</label>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;" id="dailyTimingPresets">
+      <button type="button" class="daily-timing-chip" data-timing="食前" onclick="selectDailyTimingPreset('食前')" style="padding:5px 11px;border-radius:100px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">食前</button>
+      <button type="button" class="daily-timing-chip" data-timing="食後" onclick="selectDailyTimingPreset('食後')" style="padding:5px 11px;border-radius:100px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">食後</button>
+      <button type="button" class="daily-timing-chip" data-timing="食間" onclick="selectDailyTimingPreset('食間')" style="padding:5px 11px;border-radius:100px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">食間</button>
+      <button type="button" class="daily-timing-chip" data-timing="起床後" onclick="selectDailyTimingPreset('起床後')" style="padding:5px 11px;border-radius:100px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">起床後</button>
+      <button type="button" class="daily-timing-chip" data-timing="寝る前" onclick="selectDailyTimingPreset('寝る前')" style="padding:5px 11px;border-radius:100px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">寝る前</button>
+      <button type="button" class="daily-timing-chip" data-timing="頓服" onclick="selectDailyTimingPreset('頓服')" style="padding:5px 11px;border-radius:100px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">頓服</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+      <span style="font-size:10.5px;color:var(--ink-light);">または時間指定：</span>
+      <input type="time" id="dailyRoutineTimeOfDayInput" style="padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink-dark);background:var(--surface-warm);">
+      <button type="button" onclick="clearDailyRoutineTime()" style="background:none;border:none;color:var(--ink-light);font-size:11px;font-family:inherit;cursor:pointer;text-decoration:underline;">クリア</button>
+    </div>
+    <input type="text" id="dailyRoutineTimingTextInput" placeholder="（自由記入：朝食後30分など）" maxlength="20" style="width:100%;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
+    
+    <textarea id="dailyRoutineNoteInput" placeholder="メモ（薬の名前、量、注意点など）" style="width:100%;min-height:60px;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:13px;color:var(--ink-dark);background:var(--surface-warm);resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
+    
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeDailyRoutineModal()" style="flex:1;">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveDailyRoutineFromModal()" style="flex:1;">💾 保存</button>
+    </div>
+    <button onclick="deleteDailyRoutine()" id="dailyRoutineDeleteBtn" style="margin-top:10px;width:100%;background:none;border:none;color:var(--ink-light);font-size:11.5px;font-family:inherit;cursor:pointer;text-decoration:underline;display:none;">このルーティンを削除する</button>
+  </div>
+</div>
+
+<!-- Nestルーチン（定期メンテ）モーダル -->
+<div class="modal" id="nestRoutineModal">
+  <div class="modal-content">
+    <h3 class="modal-title" id="nestRoutineTitle">定期ルーティン</h3>
+    <p class="modal-sub" id="nestRoutineSub">忘れがちなおうち仕事🔁</p>
+    
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
+      <div id="nestRoutineIconPreview" style="width:48px;height:48px;border-radius:12px;background:var(--accent-bg);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">🔁</div>
+      <button type="button" onclick="openNestRoutineIconPicker()" style="flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">アイコン変更</button>
+    </div>
+    
+    <div id="nestRoutineIconGrid" style="display:none;flex-wrap:wrap;gap:4px;padding:8px;background:var(--surface-warm);border-radius:10px;margin-bottom:10px;max-height:160px;overflow-y:auto;"></div>
+    
+    <input type="text" id="nestRoutineNameInput" placeholder="名前（例：エアコン掃除）" maxlength="30" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
+    
+    <label style="font-size:11px;color:var(--ink-sub);font-weight:700;margin:6px 0 4px;display:block;">頻度</label>
+    <select id="nestRoutineFrequencyInput" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
+      <option value="daily">毎日</option>
+      <option value="weekly">毎週</option>
+      <option value="biweekly">隔週</option>
+      <option value="monthly" selected>毎月</option>
+      <option value="bimonthly">隔月</option>
+      <option value="halfyear">半年に1回</option>
+      <option value="twice_a_year">年2回</option>
+      <option value="yearly">年1回</option>
+    </select>
+    
+    <textarea id="nestRoutineNoteInput" placeholder="メモ（やり方、コツ、必要なもの）" style="width:100%;min-height:70px;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
+    
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeNestRoutineModal()" style="flex:1;">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveNestRoutineFromModal()" style="flex:1;">💾 保存</button>
+    </div>
+    <button onclick="deleteNestRoutine()" id="nestRoutineDeleteBtn" style="margin-top:10px;width:100%;background:none;border:none;color:var(--ink-light);font-size:11.5px;font-family:inherit;cursor:pointer;text-decoration:underline;display:none;">このルーティンを削除する</button>
+  </div>
+</div>
+
+<!-- Nestグッズ（おうち備品）モーダル -->
+<div class="modal" id="nestGoodsModal">
+  <div class="modal-content">
+    <h3 class="modal-title" id="nestGoodsTitle">おうち備品</h3>
+    <p class="modal-sub" id="nestGoodsSub">いつも使ってるもの🛍</p>
+    
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
+      <div id="nestGoodsIconPreview" style="width:48px;height:48px;border-radius:12px;background:var(--accent-bg);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📦</div>
+      <button type="button" onclick="openNestGoodsIconPicker()" style="flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">アイコン変更</button>
+    </div>
+    
+    <div id="nestGoodsIconGrid" style="display:none;flex-wrap:wrap;gap:4px;padding:8px;background:var(--surface-warm);border-radius:10px;margin-bottom:10px;max-height:160px;overflow-y:auto;"></div>
+    
+    <input type="text" id="nestGoodsNameInput" placeholder="名前（例：シャンプー）" maxlength="30" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
+    
+    <input type="text" id="nestGoodsBrandInput" placeholder="ブランド・銘柄（任意）" maxlength="30" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
+    
+    <select id="nestGoodsCategoryInput" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
+      <option value="バスルーム">🛁 バスルーム</option>
+      <option value="キッチン">🍳 キッチン</option>
+      <option value="リビング">🛋 リビング</option>
+      <option value="ベッドルーム">🛏 ベッドルーム</option>
+      <option value="トイレ">🚽 トイレ</option>
+      <option value="洗濯">🧺 洗濯</option>
+      <option value="掃除">🧹 掃除</option>
+      <option value="文房具">✏️ 文房具</option>
+      <option value="その他">📦 その他</option>
+    </select>
+    
+    <textarea id="nestGoodsNoteInput" placeholder="メモ（買う場所、サイズ、注意点など）" style="width:100%;min-height:80px;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
+    
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeNestGoodsModal()" style="flex:1;">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveNestGoodsFromModal()" style="flex:1;">💾 保存</button>
+    </div>
+    <button onclick="deleteNestGoods()" id="nestGoodsDeleteBtn" style="margin-top:10px;width:100%;background:none;border:none;color:var(--ink-light);font-size:11.5px;font-family:inherit;cursor:pointer;text-decoration:underline;display:none;">この備品を削除する</button>
+  </div>
+</div>
+
+<!-- Nest伝言メモモーダル -->
+<div class="modal" id="nestMemoModal">
+  <div class="modal-content">
+    <h3 class="modal-title" id="nestMemoTitle">伝言メモ</h3>
+    <p class="modal-sub" id="nestMemoSub">家族への伝言🌷</p>
+    <input type="text" id="nestMemoTitleInput" placeholder="タイトル（例：シャンプー買って）" maxlength="30" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:10px;">
+    <textarea id="nestMemoBodyInput" placeholder="詳しく書きたいときはここに…（任意）" style="width:100%;min-height:120px;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeNestMemoModal()" style="flex:1;">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveNestMemoFromModal()" style="flex:1;">💾 保存</button>
+    </div>
+    <button onclick="deleteNestMemo()" id="nestMemoDeleteBtn" style="margin-top:10px;width:100%;background:none;border:none;color:var(--ink-light);font-size:11.5px;font-family:inherit;cursor:pointer;text-decoration:underline;display:none;">このメモを削除する</button>
+  </div>
+</div>
+
 <script>
 const SPRITES = {
   dog: ["................................","................................","................................","................................","....111..............111........","...11111............11111.......","...11211............11211.......","...12221...111111...12221.......","....111..11111111....111........",".........11111111...............",".......1111111111...............","......111111111111..............",".....11211111112111.............",".....1132111113111..............",".....11211111112111.............",".....1112255211111..............","......111155551111..............",".......1111111111...............","........11111111................",".........222222.................","................................","................................","................................","................................","................................","................................","................................","................................","................................","................................","................................","................................"],
@@ -4261,12 +4402,12 @@ function loadData() {
     data.activePetId = 'me_diary';
     if (meChanged) saveData();
   } else if (currentMode === 'nest') {
-    // Nestモードの初期データ：恋人・友人・仕事
+    // Nestモードの初期データ：大切な人・実家・お気に入りの場所
     if (!data.nests || data.nests.length === 0) {
       data.nests = [
-        { id: 'nest_1', name: '恋人', icon: '💕', createdAt: Date.now() },
-        { id: 'nest_2', name: '友人', icon: '👯', createdAt: Date.now() },
-        { id: 'nest_3', name: '仕事', icon: '💼', createdAt: Date.now() }
+        { id: 'nest_1', name: '大切な人', icon: '🪺', createdAt: Date.now() },
+        { id: 'nest_2', name: '実家', icon: '🏡', createdAt: Date.now() },
+        { id: 'nest_3', name: 'お気に入りの場所', icon: '☕', createdAt: Date.now() }
       ];
       data.activeNestId = 'nest_1';
       saveData();
@@ -4370,12 +4511,6 @@ function renderModeIndexTabs() {
   ];
   // 15歳未満はNestタブを非表示
   const tabs = currentUserIsUnder15() ? allTabs.filter(t => t.id !== 'nest') : allTabs;
-  const catchcopy = {
-    me:   '今日を、そっと残そう',
-    nest: 'だれかとつくる、小さな巣',
-    pet:  'この子の毎日が、世界になる',
-    kids: '大きくなる時間を、抱きしめておく'
-  };
   let html = '<div class="mode-idx-tabs">';
   for (const t of tabs) {
     const active = (currentMode === t.id) ? ' active' : '';
@@ -4383,9 +4518,6 @@ function renderModeIndexTabs() {
     html += '<span class="mode-idx-tab-icon">'+t.icon+'</span>'+t.label+'</button>';
   }
   html += '</div>';
-  if (catchcopy[currentMode]) {
-    html += '<div class="mode-catchcopy">'+catchcopy[currentMode]+'</div>';
-  }
   return html;
 }
 
@@ -5362,6 +5494,25 @@ function renderMeMode() {
   } else if (tab === 'diary') {
     html += '<div style="padding:16px;"><button onclick="goMeDiary()" style="width:100%;padding:20px;border:1px solid rgba(255,255,255,0.7);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);">📔 日記を開く</button></div>';
     
+  } else if (tab === 'routine') {
+    // ===== MEルーティン：日常 / 生活 サブタブ =====
+    if (!data.routineSubTab) data.routineSubTab = {};
+    const _meSubTabKey = 'me';
+    const _meSubTab = data.routineSubTab[_meSubTabKey] || 'daily';
+    
+    html += '<div style="padding:10px 16px 0;display:flex;gap:6px;">';
+    const _meDailyActive = (_meSubTab === 'daily');
+    const _meLifeActive = (_meSubTab === 'life');
+    html += '<button onclick="switchRoutineSubTab(\'me\',\'daily\')" style="flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_meDailyActive?'var(--accent)':'var(--line)')+';background:'+(_meDailyActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_meDailyActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🌅 日常</button>';
+    html += '<button onclick="switchRoutineSubTab(\'me\',\'life\')" style="flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_meLifeActive?'var(--accent)':'var(--line)')+';background:'+(_meLifeActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_meLifeActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🔁 生活</button>';
+    html += '</div>';
+    
+    if (_meSubTab === 'daily') {
+      html += renderDailyRoutines('me', 'me', 'わたし');
+    } else {
+      html += renderLifeRoutines('me', 'わたし');
+    }
+    
   } else if (tab === 'planner') {
     html += '<div style="padding:16px;">';
     html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);">';
@@ -5413,57 +5564,134 @@ function renderNestMode() {
 
   if (tab === 'memo') {
     // ===== Memo（伝言メモ） =====
+    const _activeNest = getActiveNest();
+    const _nestId = _activeNest ? _activeNest.id : 'nest_1';
+    const _nestName = _activeNest ? _activeNest.name : 'こおり';
+    // Nestごとのメモ取得
+    if (!data.nestMemos) data.nestMemos = {};
+    if (!data.nestMemos[_nestId]) data.nestMemos[_nestId] = [];
+    const _memos = data.nestMemos[_nestId];
+    // 新しい順
+    const _sorted = [..._memos].sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+    
     html += '<div style="padding:12px 16px 8px;">';
-    html += '<div class="section-head"><h2 class="section-title">伝言メモ</h2><button onclick="showToast(\'準備中🌷\')" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
-    html += '「シャンプー買って」<br>「洗濯お願い」<br>パートナーへの伝言をここに🌷<br><span style="font-size:11px;color:var(--ink-light);">ただいま準備中</span>';
-    html += '</div></div>';
+    html += '<div class="section-head"><h2 class="section-title">伝言メモ</h2><button onclick="openNestMemoModal()" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
+    
+    if (_sorted.length === 0) {
+      // 空状態：使い方ヒント
+      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+      html += '🌷 '+escapeHtml(_nestName)+' の伝言メモ<br>';
+      html += '<span style="font-size:11px;color:var(--ink-light);">「シャンプー買って」「洗濯お願い」など<br>家族への伝言をここに残せるよ</span><br><br>';
+      html += '<button onclick="openNestMemoModal()" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 最初のメモを書く</button>';
+      html += '</div>';
+    } else {
+      // メモ一覧：カード式
+      html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+      for (const m of _sorted) {
+        const _dateStr = m.updatedAt ? formatRelativeTime(m.updatedAt) : '';
+        const _bodyShort = m.body ? (m.body.length > 60 ? m.body.substring(0, 60) + '…' : m.body) : '';
+        html += '<div onclick="openNestMemoModal(\''+m.id+'\')" style="background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);cursor:pointer;">';
+        html += '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:4px;">';
+        html += '<div style="flex:1;min-width:0;">';
+        if (m.title) html += '<div style="font-size:13px;font-weight:700;color:var(--ink-dark);line-height:1.4;">'+escapeHtml(m.title)+'</div>';
+        if (_bodyShort) html += '<div style="font-size:12px;color:var(--ink-sub);line-height:1.5;margin-top:2px;">'+escapeHtml(_bodyShort)+'</div>';
+        html += '</div>';
+        html += '<div style="font-size:10px;color:var(--ink-light);white-space:nowrap;flex-shrink:0;">'+escapeHtml(_dateStr)+'</div>';
+        html += '</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
 
   } else if (tab === 'goods') {
     // ===== Goods（おうち備品） =====
+    const _activeNest = getActiveNest();
+    const _nestId = _activeNest ? _activeNest.id : 'nest_1';
+    const _nestName = _activeNest ? _activeNest.name : 'こおり';
+    if (!data.nestGoods) data.nestGoods = {};
+    if (!data.nestGoods[_nestId]) data.nestGoods[_nestId] = [];
+    const _goods = data.nestGoods[_nestId];
+    const _sorted = [..._goods].sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+    
     html += '<div style="padding:12px 16px 8px;">';
-    html += '<div class="section-head"><h2 class="section-title">おうち備品</h2><button onclick="showToast(\'準備中🌷\')" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
-    // サンプル表示
-    const sampleGoods = [
-      { cat:'バスルーム', name:'シャンプー', brand:'ラックス' },
-      { cat:'バスルーム', name:'コンディショナー', brand:'パンテーン' },
-      { cat:'キッチン', name:'食器洗い洗剤', brand:'ジョイ' }
-    ];
-    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
-    for (const g of sampleGoods) {
-      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:12px;backdrop-filter:blur(8px);">';
-      html += '<div style="flex:1;min-width:0;"><div style="font-size:9px;color:var(--ink-light);">'+escapeHtml(g.cat)+'</div><div style="font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(g.name)+'</div><div style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(g.brand)+'</div></div>';
-      html += '<div style="width:44px;height:44px;border-radius:8px;background:var(--surface-warm);border:1px solid var(--line-soft);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink-light);cursor:pointer;">写真</div>';
+    html += '<div class="section-head"><h2 class="section-title">おうち備品</h2><button onclick="openNestGoodsModal()" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
+    
+    if (_sorted.length === 0) {
+      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+      html += '🛍 '+escapeHtml(_nestName)+' のおうち備品<br>';
+      html += '<span style="font-size:11px;color:var(--ink-light);">シャンプー・洗剤・電球など<br>「あれ何使ってたっけ？」を防ぐリスト</span><br><br>';
+      html += '<button onclick="openNestGoodsModal()" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 最初のグッズを追加</button>';
       html += '</div>';
+    } else {
+      // カテゴリ別グルーピング
+      const _catEmoji = { 'バスルーム':'🛁', 'キッチン':'🍳', 'リビング':'🛋', 'ベッドルーム':'🛏', 'トイレ':'🚽', '洗濯':'🧺', '掃除':'🧹', '文房具':'✏️', 'その他':'📦' };
+      // カテゴリ表示順
+      const _catOrder = ['バスルーム','キッチン','リビング','ベッドルーム','トイレ','洗濯','掃除','文房具','その他'];
+      const _byCategory = {};
+      for (const g of _sorted) {
+        const cat = g.category || 'その他';
+        if (!_byCategory[cat]) _byCategory[cat] = [];
+        _byCategory[cat].push(g);
+      }
+      
+      // 順序通りに表示
+      for (const cat of _catOrder) {
+        if (!_byCategory[cat]) continue;
+        const _emoji = _catEmoji[cat] || '📦';
+        const _count = _byCategory[cat].length;
+        html += '<div style="display:flex;align-items:center;gap:6px;margin:14px 4px 8px;">';
+        html += '<span style="font-size:14px;">'+_emoji+'</span>';
+        html += '<span style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(cat)+'</span>';
+        html += '<span style="font-size:10px;color:var(--ink-light);">'+_count+'件</span>';
+        html += '</div>';
+        html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+        for (const g of _byCategory[cat]) {
+          html += '<div onclick="openNestGoodsModal(\''+g.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:12px;backdrop-filter:blur(8px);cursor:pointer;">';
+          // アイコン
+          html += '<div style="width:40px;height:40px;border-radius:10px;background:var(--accent-bg);border:1px solid var(--line-soft);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">'+(g.icon || '📦')+'</div>';
+          // 情報
+          html += '<div style="flex:1;min-width:0;">';
+          html += '<div style="font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(g.name || '名前なし')+'</div>';
+          if (g.brand) html += '<div style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(g.brand)+'</div>';
+          if (g.note) html += '<div style="font-size:10px;color:var(--ink-light);margin-top:2px;">📝 '+escapeHtml(g.note.length > 30 ? g.note.substring(0, 30) + '…' : g.note)+'</div>';
+          html += '</div>';
+          html += '</div>';
+        }
+        html += '</div>';
+      }
     }
-    html += '</div>';
-    html += '<div style="text-align:center;padding:12px;font-size:11px;color:var(--ink-light);">ただいま準備中🌷</div>';
     html += '</div>';
 
   } else if (tab === 'routine') {
-    // ===== Routine（定期メンテ） =====
-    html += '<div style="padding:12px 16px 8px;">';
-    html += '<div class="section-head"><h2 class="section-title">ルーティン</h2><button onclick="showToast(\'準備中🌷\')" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
-    const sampleRoutines = [
-      { name:'洗濯槽クリーニング', last:'4/1', freq:'毎月' },
-      { name:'エアコン掃除', last:'3/15', freq:'年2回' },
-      { name:'カビ取り', last:'7/7', freq:'毎週' }
-    ];
-    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
-    for (const r of sampleRoutines) {
-      html += '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:12px;backdrop-filter:blur(8px);">';
-      html += '<div style="flex:1;"><div style="font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(r.name)+'</div><div style="font-size:11px;color:var(--ink-sub);margin-top:2px;">前回：'+escapeHtml(r.last)+' ・ '+escapeHtml(r.freq)+'</div></div>';
-      html += '<button onclick="showToast(\'準備中🌷\')" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">記録</button>';
-      html += '</div>';
+    // ===== Routine（ルーティン）：日常 / 生活 サブタブ =====
+    const _activeNest = getActiveNest();
+    const _nestId = _activeNest ? _activeNest.id : 'nest_1';
+    const _nestName = _activeNest ? _activeNest.name : 'こおり';
+    
+    // 現在のサブタブ（日常 or 生活）
+    if (!data.routineSubTab) data.routineSubTab = {};
+    const _subTabKey = 'nest_'+_nestId;
+    const _subTab = data.routineSubTab[_subTabKey] || 'daily';
+    
+    // サブタブUI
+    html += '<div style="padding:10px 16px 0;display:flex;gap:6px;">';
+    const _dailyActive = (_subTab === 'daily');
+    const _lifeActive = (_subTab === 'life');
+    html += '<button onclick="switchRoutineSubTab(\''+_subTabKey+'\',\'daily\')" style="flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_dailyActive?'var(--accent)':'var(--line)')+';background:'+(_dailyActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_dailyActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🌅 日常</button>';
+    html += '<button onclick="switchRoutineSubTab(\''+_subTabKey+'\',\'life\')" style="flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_lifeActive?'var(--accent)':'var(--line)')+';background:'+(_lifeActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_lifeActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🔁 生活</button>';
+    html += '</div>';
+    
+    if (_subTab === 'daily') {
+      html += renderDailyRoutines('nest', _nestId, _nestName);
+    } else {
+      html += renderLifeRoutines(_nestId, _nestName);
     }
-    html += '</div>';
-    html += '<div style="text-align:center;padding:12px;font-size:11px;color:var(--ink-light);">ただいま準備中🌷</div>';
-    html += '</div>';
 
   } else if (tab === 'rules') {
-    // ===== Rules（二人のルール） =====
+    // ===== Rules（大切なひととのルール） =====
     html += '<div style="padding:12px 16px 8px;">';
-    html += '<div class="section-head"><h2 class="section-title">二人のルール</h2><button onclick="showToast(\'準備中🌷\')" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
+    html += '<div class="section-head"><h2 class="section-title">大切なひととのルール</h2><button onclick="showToast(\'準備中🌷\')" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
     const sampleRules = [
       '靴下は洗濯に入れること！',
       '喧嘩してもその日に仲直りすること！',
@@ -5955,17 +6183,18 @@ function renderHouse() {
     html += '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">'+(house.icon || '🏡')+' '+escapeHtml(house.name)+'</div><button class="topbar-btn" onclick="openEditHouseModal(\''+house.id+'\')">⚙️</button></div>';
   }
   
-  // 日付ライン
-  html += '<div style="text-align:right; padding:2px 16px 0; font-size:9px; color:var(--ink-sub); font-weight:700; letter-spacing:0.3px;">';
-  var _d = new Date();
-  html += _d.getFullYear()+'/'+(_d.getMonth()+1)+'/'+_d.getDate()+' ('+['日','月','火','水','木','金','土'][_d.getDay()]+')';
-  html += '</div>';
-  
-  // 家編集ボタン
+  // 日付ライン＋家設定ボタン（コンパクト1行に統合）
   if (currentMode === 'pet' || currentMode === 'kids') {
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 0;">';
-    html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);">'+(house.icon || '🏡')+' '+escapeHtml(house.name)+'</div>';
-    html += '<button class="topbar-btn" style="background:transparent;border:none;font-size:18px;cursor:pointer;padding:4px;" onclick="openEditHouseModal(\''+house.id+'\')">⚙️</button>';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 16px 0;">';
+    var _d = new Date();
+    html += '<div style="font-size:9px;color:var(--ink-sub);font-weight:700;letter-spacing:0.3px;">'+_d.getFullYear()+'/'+(_d.getMonth()+1)+'/'+_d.getDate()+' ('+['日','月','火','水','木','金','土'][_d.getDay()]+')</div>';
+    html += '<button class="topbar-btn" style="background:transparent;border:none;font-size:16px;cursor:pointer;padding:2px;" onclick="openEditHouseModal(\''+house.id+'\')" title="家の設定">⚙️</button>';
+    html += '</div>';
+  } else {
+    // ME系：日付のみ
+    html += '<div style="text-align:right; padding:2px 16px 0; font-size:9px; color:var(--ink-sub); font-weight:700; letter-spacing:0.3px;">';
+    var _d = new Date();
+    html += _d.getFullYear()+'/'+(_d.getMonth()+1)+'/'+_d.getDate()+' ('+['日','月','火','水','木','金','土'][_d.getDay()]+')';
     html += '</div>';
   }
   
@@ -6193,6 +6422,18 @@ function navBack() {
   // ショップメモモーダルが開いてたら閉じる
   const _memoModal = document.getElementById('shopMemoModal');
   if (_memoModal && _memoModal.classList.contains('show')) { closeShopMemoModal(); return; }
+  // Nestメモモーダルが開いてたら閉じる
+  const _nestMemoModal = document.getElementById('nestMemoModal');
+  if (_nestMemoModal && _nestMemoModal.classList.contains('show')) { closeNestMemoModal(); return; }
+  // Nestグッズモーダルが開いてたら閉じる
+  const _nestGoodsModal = document.getElementById('nestGoodsModal');
+  if (_nestGoodsModal && _nestGoodsModal.classList.contains('show')) { closeNestGoodsModal(); return; }
+  // Nestルーチンモーダルが開いてたら閉じる
+  const _nestRoutineModal = document.getElementById('nestRoutineModal');
+  if (_nestRoutineModal && _nestRoutineModal.classList.contains('show')) { closeNestRoutineModal(); return; }
+  // 日常ルーティンモーダルが開いてたら閉じる
+  const _dailyRoutineModal = document.getElementById('dailyRoutineModal');
+  if (_dailyRoutineModal && _dailyRoutineModal.classList.contains('show')) { closeDailyRoutineModal(); return; }
   // その他、開いてる全モーダル（テーマ・ユーザー設定・ペット追加など）を閉じる
   // ※ オンボーディングモーダルは閉じない（必須項目だから）
   const _openModals = document.querySelectorAll('.modal.show');
@@ -6260,6 +6501,57 @@ function setPetTab(tab) {
   renderPet();
 }
 
+// 親タブ切替：その親の最初の子タブを開く
+function setPetParentTab(parentId) {
+  const _map = {
+    'care':     ['care','routine'],
+    'memory':   ['diary','photo','outing'],
+    'calendar': ['calendar'],
+    'health':   ['vaccine','weight'],
+    'town':     ['town']
+  };
+  const _children = _map[parentId];
+  if (!_children) return;
+  // 現在のタブが該当親の子なら何もしない（無駄な再描画防止）
+  if (_children.indexOf(data.petTab) !== -1) return;
+  data.petTab = _children[0];
+  saveData();
+  renderPet();
+}
+
+// 仮実装：PETルーティン
+function renderTabPetRoutine(pet) {
+  let html = '<div style="padding:16px;">';
+  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:24px 20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.8;">';
+  html += '🔁 '+escapeHtml(pet.name)+'のルーティン<br>';
+  html += '<span style="font-size:11px;color:var(--ink-light);">朝のごはん・夜のお散歩など<br>毎日のお世話の流れを記録</span><br><br>';
+  html += '<span style="font-size:11px;color:var(--ink-light);">🌷 ただいま準備中</span>';
+  html += '</div></div>';
+  return html;
+}
+
+// 仮実装：PETおでかけ
+function renderTabPetOuting(pet) {
+  let html = '<div style="padding:16px;">';
+  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:24px 20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.8;">';
+  html += '🌷 '+escapeHtml(pet.name)+'とのおでかけ<br>';
+  html += '<span style="font-size:11px;color:var(--ink-light);">公園・カフェ・ドッグラン・旅行<br>楽しかった場所を残せる</span><br><br>';
+  html += '<span style="font-size:11px;color:var(--ink-light);">🌷 ただいま準備中</span>';
+  html += '</div></div>';
+  return html;
+}
+
+// 仮実装：PETタウン（既存にこわタウンへの誘導）
+function renderTabPetTown(pet) {
+  let html = '<div style="padding:16px;">';
+  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:24px 20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.8;">';
+  html += '🏘 '+escapeHtml(pet.name)+'のタウン<br>';
+  html += '<span style="font-size:11px;color:var(--ink-light);">かかりつけ動物病院・トリミング店<br>お気に入りのお店をまとめる</span><br><br>';
+  html += '<button onclick="goToTown()" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🏘 にこわタウンを開く</button>';
+  html += '</div></div>';
+  return html;
+}
+
 function renderPet() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('pet');
@@ -6301,20 +6593,67 @@ function renderPet() {
     html += '<div class="section" style="padding:0 16px;"><span class="badge-en">'+streakLabelEn(streak)+'</span></div>';
   }
   if (pet.place === 'home') {
+    // 親タブ⇄子タブのマッピング
+    const _petParentTabs = {
+      'care':     { label: 'お世話',     icon: '🌿', children: ['care','routine'] },
+      'memory':   { label: 'おもいで',   icon: '💕', children: ['diary','photo','outing'] },
+      'calendar': { label: 'カレンダー', icon: '📅', children: ['calendar'] },
+      'health':   { label: '健康',       icon: '💉', children: ['vaccine','weight'] },
+      'town':     { label: 'タウン',     icon: '🏘', children: ['town'] }
+    };
+    const _childLabels = {
+      'care':     { label: 'お世話',     icon: '🌿' },
+      'routine':  { label: 'ルーティン', icon: '🔁' },
+      'diary':    { label: '日記',       icon: '📓' },
+      'photo':    { label: '写真',       icon: '📷' },
+      'outing':   { label: 'おでかけ',   icon: '🌷' },
+      'calendar': { label: 'カレンダー', icon: '📅' },
+      'vaccine':  { label: 'ワクチン',   icon: '💉' },
+      'weight':   { label: '体重',       icon: '⚖️' },
+      'town':     { label: 'タウン',     icon: '🏘' }
+    };
+    
+    // 現在の子タブから親を逆引き
+    let _currentParent = 'care';
+    for (const pid in _petParentTabs) {
+      if (_petParentTabs[pid].children.indexOf(tab) !== -1) {
+        _currentParent = pid;
+        break;
+      }
+    }
+    
+    // 親タブ（5つ均等割り）
     html += '<div class="pet-tabs-bar">';
-    html += '<button class="pet-tab-btn '+(tab==='care'?'active':'')+'" onclick="setPetTab(\'care\')"><span class="pet-tab-icon">🌿</span><span class="pet-tab-label">お世話</span></button>';
-    html += '<button class="pet-tab-btn '+(tab==='calendar'?'active':'')+'" onclick="setPetTab(\'calendar\')"><span class="pet-tab-icon">📅</span><span class="pet-tab-label">カレンダー</span></button>';
-    html += '<button class="pet-tab-btn '+(tab==='diary'?'active':'')+'" onclick="setPetTab(\'diary\')"><span class="pet-tab-icon">📓</span><span class="pet-tab-label">日記</span></button>';
-    html += '<button class="pet-tab-btn '+(tab==='photo'?'active':'')+'" onclick="setPetTab(\'photo\')"><span class="pet-tab-icon">📷</span><span class="pet-tab-label">写真</span></button>';
-    html += '<button class="pet-tab-btn '+(tab==='vaccine'?'active':'')+'" onclick="setPetTab(\'vaccine\')"><span class="pet-tab-icon">💉</span><span class="pet-tab-label">ワクチン</span></button>';
-    html += '<button class="pet-tab-btn '+(tab==='weight'?'active':'')+'" onclick="setPetTab(\'weight\')"><span class="pet-tab-icon">⚖️</span><span class="pet-tab-label">体重</span></button>';
-    html += '</div><div class="pet-tab-content">';
+    for (const pid in _petParentTabs) {
+      const p = _petParentTabs[pid];
+      const _isActive = (pid === _currentParent);
+      html += '<button class="pet-tab-btn '+(_isActive?'active':'')+'" onclick="setPetParentTab(\''+pid+'\')"><span class="pet-tab-icon">'+p.icon+'</span><span class="pet-tab-label">'+p.label+'</span></button>';
+    }
+    html += '</div>';
+    
+    // サブタブ（子タブが2つ以上ある場合のみ表示・ノートインデックス風）
+    const _children = _petParentTabs[_currentParent].children;
+    if (_children.length > 1) {
+      html += '<div class="mode-page-tabs-wrap" style="margin-top:2px;">';
+      html += '<div class="mode-page-tabs" style="grid-template-columns:repeat('+_children.length+',1fr);">';
+      for (const cid of _children) {
+        const c = _childLabels[cid];
+        const _isActive = (cid === tab);
+        html += '<button class="mode-page-tab'+(_isActive?' active':'')+'" onclick="setPetTab(\''+cid+'\')">'+c.icon+' '+c.label+'</button>';
+      }
+      html += '</div></div>';
+    }
+    
+    html += '<div class="pet-tab-content">';
     if (tab === 'care') html += renderTabCare(pet, careItems);
     else if (tab === 'calendar') html += renderTabCalendar(pet);
     else if (tab === 'diary') html += renderTabDiary(pet);
     else if (tab === 'photo') html += renderTabPhoto(pet);
     else if (tab === 'vaccine') html += renderTabVaccine(pet);
     else if (tab === 'weight') html += renderTabWeight(pet);
+    else if (tab === 'routine') html += renderTabPetRoutine(pet);
+    else if (tab === 'outing') html += renderTabPetOuting(pet);
+    else if (tab === 'town') html += renderTabPetTown(pet);
     else html += renderTabCare(pet, careItems);
     html += '</div>';
   } else if (pet.place === 'rainbow') {
@@ -7240,6 +7579,879 @@ function deleteShopMemo() {
   try { localStorage.setItem(PLACES_MEMO_KEY, JSON.stringify(placesMemos)); } catch(e) {}
   showToast('メモ削除したで🌷');
   closeShopMemoModal();
+  _suppressScrollTop = true;
+  render();
+}
+
+// ===== Nest伝言メモ =====
+let _editingNestMemoId = null;
+
+function formatRelativeTime(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  const h = Math.floor(diff / 3600000);
+  const d = Math.floor(diff / 86400000);
+  if (m < 1) return 'たった今';
+  if (m < 60) return m + '分前';
+  if (h < 24) return h + '時間前';
+  if (d < 7) return d + '日前';
+  // 1週間以上前は日付表示
+  const date = new Date(ts);
+  return (date.getMonth()+1) + '/' + date.getDate();
+}
+
+function openNestMemoModal(memoId) {
+  const _activeNest = getActiveNest();
+  if (!_activeNest) return;
+  const _nestId = _activeNest.id;
+  if (!data.nestMemos) data.nestMemos = {};
+  if (!data.nestMemos[_nestId]) data.nestMemos[_nestId] = [];
+  
+  _editingNestMemoId = memoId || null;
+  
+  let title = '', body = '';
+  if (memoId) {
+    const memo = data.nestMemos[_nestId].find(m => m.id === memoId);
+    if (memo) {
+      title = memo.title || '';
+      body = memo.body || '';
+    }
+  }
+  
+  document.getElementById('nestMemoTitle').textContent = memoId ? '伝言メモを編集' : '新しい伝言メモ';
+  document.getElementById('nestMemoSub').textContent = '🪺 ' + _activeNest.name + ' への伝言';
+  document.getElementById('nestMemoTitleInput').value = title;
+  document.getElementById('nestMemoBodyInput').value = body;
+  document.getElementById('nestMemoDeleteBtn').style.display = memoId ? 'block' : 'none';
+  
+  const m = document.getElementById('nestMemoModal');
+  m.style.display = '';
+  m.classList.add('show');
+  m.onclick = function(ev) {
+    if (ev.target === m) closeNestMemoModal();
+  };
+  setTimeout(function() {
+    document.getElementById('nestMemoTitleInput').focus();
+  }, 100);
+}
+
+function closeNestMemoModal() {
+  const t = document.getElementById('nestMemoTitleInput');
+  const b = document.getElementById('nestMemoBodyInput');
+  if (t) t.blur();
+  if (b) b.blur();
+  const m = document.getElementById('nestMemoModal');
+  m.classList.remove('show');
+  m.style.display = 'none';
+  m.onclick = null;
+  _editingNestMemoId = null;
+}
+
+function saveNestMemoFromModal() {
+  const _activeNest = getActiveNest();
+  if (!_activeNest) { closeNestMemoModal(); return; }
+  const _nestId = _activeNest.id;
+  if (!data.nestMemos) data.nestMemos = {};
+  if (!data.nestMemos[_nestId]) data.nestMemos[_nestId] = [];
+  
+  const title = document.getElementById('nestMemoTitleInput').value.trim();
+  const body = document.getElementById('nestMemoBodyInput').value.trim();
+  
+  if (!title && !body) {
+    showToast('タイトルか本文を入れてね🌷');
+    return;
+  }
+  
+  const now = Date.now();
+  if (_editingNestMemoId) {
+    // 編集
+    const memo = data.nestMemos[_nestId].find(m => m.id === _editingNestMemoId);
+    if (memo) {
+      memo.title = title;
+      memo.body = body;
+      memo.updatedAt = now;
+    }
+    showToast('メモ更新したで🌸');
+  } else {
+    // 新規
+    data.nestMemos[_nestId].push({
+      id: 'memo_' + now + '_' + Math.floor(Math.random()*1000),
+      title: title,
+      body: body,
+      createdAt: now,
+      updatedAt: now
+    });
+    showToast('メモ保存したで🌸');
+  }
+  
+  saveData();
+  closeNestMemoModal();
+  _suppressScrollTop = true;
+  render();
+}
+
+function deleteNestMemo() {
+  if (!_editingNestMemoId) return;
+  const _activeNest = getActiveNest();
+  if (!_activeNest) return;
+  const _nestId = _activeNest.id;
+  if (!data.nestMemos || !data.nestMemos[_nestId]) return;
+  if (!confirm('このメモを削除する？')) return;
+  
+  data.nestMemos[_nestId] = data.nestMemos[_nestId].filter(m => m.id !== _editingNestMemoId);
+  saveData();
+  showToast('メモ削除したで🌷');
+  closeNestMemoModal();
+  _suppressScrollTop = true;
+  render();
+}
+
+// ===== Nestおうち備品（Goods） =====
+let _editingNestGoodsId = null;
+let _editingNestGoodsIcon = '📦';
+
+const GOODS_ICONS = ['📦','🧴','🧼','🪥','🧻','🧺','🧹','🧽','🧯','🧴','🪒','🧖','🧖‍♀️','🛁','🚿','🚽','🪞','🍳','🥘','🍴','🥄','🔪','🥢','🍽','🫖','☕','🧊','🧂','🥫','🍶','🛋','🛏','🪑','💡','🔌','🪴','🧸','📺','🪟','📚','📖','📒','✏️','🖊','🖌','📎','✂️','🧷','🩹','💊','🌡','🧴','🪥','🧻','🧼','🧴','🧊','🌿','🍃','🌷','🌸','🌼','💐','🪷'];
+
+function openNestGoodsIconPicker() {
+  const grid = document.getElementById('nestGoodsIconGrid');
+  if (grid.style.display === 'none') {
+    let html = '';
+    for (const icon of GOODS_ICONS) {
+      html += '<button type="button" onclick="selectNestGoodsIcon(\''+icon+'\')" style="width:36px;height:36px;border-radius:8px;border:1.5px solid '+(icon === _editingNestGoodsIcon ? 'var(--accent)' : 'var(--line)')+';background:'+(icon === _editingNestGoodsIcon ? 'var(--accent-bg)' : 'white')+';font-size:18px;cursor:pointer;font-family:inherit;">'+icon+'</button>';
+    }
+    grid.innerHTML = html;
+    grid.style.display = 'flex';
+  } else {
+    grid.style.display = 'none';
+  }
+}
+
+function selectNestGoodsIcon(icon) {
+  _editingNestGoodsIcon = icon;
+  document.getElementById('nestGoodsIconPreview').textContent = icon;
+  document.getElementById('nestGoodsIconGrid').style.display = 'none';
+}
+
+function openNestGoodsModal(goodsId) {
+  const _activeNest = getActiveNest();
+  if (!_activeNest) return;
+  const _nestId = _activeNest.id;
+  if (!data.nestGoods) data.nestGoods = {};
+  if (!data.nestGoods[_nestId]) data.nestGoods[_nestId] = [];
+  
+  _editingNestGoodsId = goodsId || null;
+  _editingNestGoodsIcon = '📦';
+  
+  let name = '', brand = '', category = 'バスルーム', note = '';
+  if (goodsId) {
+    const g = data.nestGoods[_nestId].find(x => x.id === goodsId);
+    if (g) {
+      name = g.name || '';
+      brand = g.brand || '';
+      category = g.category || 'バスルーム';
+      note = g.note || '';
+      _editingNestGoodsIcon = g.icon || '📦';
+    }
+  }
+  
+  document.getElementById('nestGoodsTitle').textContent = goodsId ? 'おうち備品を編集' : '新しいおうち備品';
+  document.getElementById('nestGoodsSub').textContent = '🪺 ' + _activeNest.name + ' の備品';
+  document.getElementById('nestGoodsIconPreview').textContent = _editingNestGoodsIcon;
+  document.getElementById('nestGoodsNameInput').value = name;
+  document.getElementById('nestGoodsBrandInput').value = brand;
+  document.getElementById('nestGoodsCategoryInput').value = category;
+  document.getElementById('nestGoodsNoteInput').value = note;
+  document.getElementById('nestGoodsDeleteBtn').style.display = goodsId ? 'block' : 'none';
+  document.getElementById('nestGoodsIconGrid').style.display = 'none';
+  
+  const m = document.getElementById('nestGoodsModal');
+  m.style.display = '';
+  m.classList.add('show');
+  m.onclick = function(ev) {
+    if (ev.target === m) closeNestGoodsModal();
+  };
+  setTimeout(function() {
+    document.getElementById('nestGoodsNameInput').focus();
+  }, 100);
+}
+
+function closeNestGoodsModal() {
+  ['nestGoodsNameInput','nestGoodsBrandInput','nestGoodsNoteInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.blur();
+  });
+  const m = document.getElementById('nestGoodsModal');
+  m.classList.remove('show');
+  m.style.display = 'none';
+  m.onclick = null;
+  _editingNestGoodsId = null;
+}
+
+function saveNestGoodsFromModal() {
+  const _activeNest = getActiveNest();
+  if (!_activeNest) { closeNestGoodsModal(); return; }
+  const _nestId = _activeNest.id;
+  if (!data.nestGoods) data.nestGoods = {};
+  if (!data.nestGoods[_nestId]) data.nestGoods[_nestId] = [];
+  
+  const name = document.getElementById('nestGoodsNameInput').value.trim();
+  const brand = document.getElementById('nestGoodsBrandInput').value.trim();
+  const category = document.getElementById('nestGoodsCategoryInput').value;
+  const note = document.getElementById('nestGoodsNoteInput').value.trim();
+  
+  if (!name) {
+    showToast('名前を入れてね🌷');
+    return;
+  }
+  
+  const now = Date.now();
+  if (_editingNestGoodsId) {
+    const g = data.nestGoods[_nestId].find(x => x.id === _editingNestGoodsId);
+    if (g) {
+      g.name = name;
+      g.brand = brand;
+      g.category = category;
+      g.note = note;
+      g.icon = _editingNestGoodsIcon;
+      g.updatedAt = now;
+    }
+    showToast('備品更新したで🌸');
+  } else {
+    data.nestGoods[_nestId].push({
+      id: 'goods_' + now + '_' + Math.floor(Math.random()*1000),
+      name: name,
+      brand: brand,
+      category: category,
+      note: note,
+      icon: _editingNestGoodsIcon,
+      createdAt: now,
+      updatedAt: now
+    });
+    showToast('備品追加したで🌸');
+  }
+  
+  saveData();
+  closeNestGoodsModal();
+  _suppressScrollTop = true;
+  render();
+}
+
+function deleteNestGoods() {
+  if (!_editingNestGoodsId) return;
+  const _activeNest = getActiveNest();
+  if (!_activeNest) return;
+  const _nestId = _activeNest.id;
+  if (!data.nestGoods || !data.nestGoods[_nestId]) return;
+  if (!confirm('この備品を削除する？')) return;
+  
+  data.nestGoods[_nestId] = data.nestGoods[_nestId].filter(g => g.id !== _editingNestGoodsId);
+  saveData();
+  showToast('備品削除したで🌷');
+  closeNestGoodsModal();
+  _suppressScrollTop = true;
+  render();
+}
+
+// ===== Nestルーティン =====
+let _editingNestRoutineId = null;
+let _editingNestRoutineNestId = null;
+let _editingNestRoutineIcon = '🔁';
+
+const ROUTINE_ICONS = ['🔁','🧺','🧹','🧽','🧴','🛁','🪥','🧻','🧯','🪟','🛏','🛋','🚿','🚽','🪑','💡','🔌','🪴','🧊','🧂','🍳','🥘','🍴','🔪','☕','🌡','🧴','🧖‍♀️','🧖','🪒','🌷','🌸','🌼','💐','🪷','🌿','🍃','✨','💕','🌟'];
+
+function openNestRoutineIconPicker() {
+  const grid = document.getElementById('nestRoutineIconGrid');
+  if (grid.style.display === 'none') {
+    let html = '';
+    for (const icon of ROUTINE_ICONS) {
+      html += '<button type="button" onclick="selectNestRoutineIcon(\''+icon+'\')" style="width:36px;height:36px;border-radius:8px;border:1.5px solid '+(icon === _editingNestRoutineIcon ? 'var(--accent)' : 'var(--line)')+';background:'+(icon === _editingNestRoutineIcon ? 'var(--accent-bg)' : 'white')+';font-size:18px;cursor:pointer;font-family:inherit;">'+icon+'</button>';
+    }
+    grid.innerHTML = html;
+    grid.style.display = 'flex';
+  } else {
+    grid.style.display = 'none';
+  }
+}
+
+function selectNestRoutineIcon(icon) {
+  _editingNestRoutineIcon = icon;
+  document.getElementById('nestRoutineIconPreview').textContent = icon;
+  document.getElementById('nestRoutineIconGrid').style.display = 'none';
+}
+
+function openNestRoutineModal(routineId, explicitNestId) {
+  let _nestId = explicitNestId;
+  let _nestName = 'こおり';
+  if (!_nestId) {
+    const _activeNest = getActiveNest();
+    if (!_activeNest) return;
+    _nestId = _activeNest.id;
+    _nestName = _activeNest.name;
+  } else {
+    const _n = (data.nests || []).find(n => n.id === _nestId);
+    if (_n) _nestName = _n.name;
+    else if (_nestId === 'me') _nestName = 'わたし';
+  }
+  if (!data.nestRoutines) data.nestRoutines = {};
+  if (!data.nestRoutines[_nestId]) data.nestRoutines[_nestId] = [];
+  
+  _editingNestRoutineId = routineId || null;
+  _editingNestRoutineNestId = _nestId;
+  _editingNestRoutineIcon = '🔁';
+  
+  let name = '', frequency = 'monthly', note = '';
+  if (routineId) {
+    const r = data.nestRoutines[_nestId].find(x => x.id === routineId);
+    if (r) {
+      name = r.name || '';
+      frequency = r.frequency || 'monthly';
+      note = r.note || '';
+      _editingNestRoutineIcon = r.icon || '🔁';
+    }
+  }
+  
+  document.getElementById('nestRoutineTitle').textContent = routineId ? 'ルーティンを編集' : '新しいルーティン';
+  document.getElementById('nestRoutineSub').textContent = '🪺 ' + _nestName + ' の生活ルーティン';
+  document.getElementById('nestRoutineIconPreview').textContent = _editingNestRoutineIcon;
+  document.getElementById('nestRoutineNameInput').value = name;
+  document.getElementById('nestRoutineFrequencyInput').value = frequency;
+  document.getElementById('nestRoutineNoteInput').value = note;
+  document.getElementById('nestRoutineDeleteBtn').style.display = routineId ? 'block' : 'none';
+  document.getElementById('nestRoutineIconGrid').style.display = 'none';
+  
+  const m = document.getElementById('nestRoutineModal');
+  m.style.display = '';
+  m.classList.add('show');
+  m.onclick = function(ev) {
+    if (ev.target === m) closeNestRoutineModal();
+  };
+  setTimeout(function() {
+    document.getElementById('nestRoutineNameInput').focus();
+  }, 100);
+}
+
+function closeNestRoutineModal() {
+  ['nestRoutineNameInput','nestRoutineNoteInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.blur();
+  });
+  const m = document.getElementById('nestRoutineModal');
+  m.classList.remove('show');
+  m.style.display = 'none';
+  m.onclick = null;
+  _editingNestRoutineId = null;
+}
+
+function saveNestRoutineFromModal() {
+  const _nestId = _editingNestRoutineNestId;
+  if (!_nestId) { closeNestRoutineModal(); return; }
+  if (!data.nestRoutines) data.nestRoutines = {};
+  if (!data.nestRoutines[_nestId]) data.nestRoutines[_nestId] = [];
+  
+  const name = document.getElementById('nestRoutineNameInput').value.trim();
+  const frequency = document.getElementById('nestRoutineFrequencyInput').value;
+  const note = document.getElementById('nestRoutineNoteInput').value.trim();
+  
+  if (!name) {
+    showToast('名前を入れてね🌷');
+    return;
+  }
+  
+  const now = Date.now();
+  if (_editingNestRoutineId) {
+    const r = data.nestRoutines[_nestId].find(x => x.id === _editingNestRoutineId);
+    if (r) {
+      r.name = name;
+      r.frequency = frequency;
+      r.note = note;
+      r.icon = _editingNestRoutineIcon;
+      r.updatedAt = now;
+    }
+    showToast('ルーティン更新したで🌸');
+  } else {
+    data.nestRoutines[_nestId].push({
+      id: 'routine_' + now + '_' + Math.floor(Math.random()*1000),
+      name: name,
+      frequency: frequency,
+      note: note,
+      icon: _editingNestRoutineIcon,
+      lastDoneAt: null,
+      createdAt: now,
+      updatedAt: now
+    });
+    showToast('ルーティン追加したで🌸');
+  }
+  
+  saveData();
+  closeNestRoutineModal();
+  _suppressScrollTop = true;
+  render();
+}
+
+function deleteNestRoutine() {
+  if (!_editingNestRoutineId) return;
+  const _nestId = _editingNestRoutineNestId;
+  if (!_nestId) return;
+  if (!data.nestRoutines || !data.nestRoutines[_nestId]) return;
+  if (!confirm('このルーティンを削除する？')) return;
+  
+  data.nestRoutines[_nestId] = data.nestRoutines[_nestId].filter(r => r.id !== _editingNestRoutineId);
+  saveData();
+  showToast('ルーティン削除したで🌷');
+  closeNestRoutineModal();
+  _suppressScrollTop = true;
+  render();
+}
+
+// ルーティンを「やった！」で記録
+function markNestRoutineDone(routineId) {
+  const _activeNest = getActiveNest();
+  if (!_activeNest) return;
+  const _nestId = _activeNest.id;
+  if (!data.nestRoutines || !data.nestRoutines[_nestId]) return;
+  
+  const r = data.nestRoutines[_nestId].find(x => x.id === routineId);
+  if (!r) return;
+  
+  r.lastDoneAt = Date.now();
+  r.updatedAt = Date.now();
+  saveData();
+  showToast('お疲れさま〜🌸');
+  _suppressScrollTop = true;
+  render();
+}
+
+// ===== ルーティン：日常/生活 サブタブ切替 =====
+function switchRoutineSubTab(key, subTab) {
+  if (!data.routineSubTab) data.routineSubTab = {};
+  data.routineSubTab[key] = subTab;
+  saveData();
+  // スクロール位置保存→render後に復元
+  const _scrollY = window.scrollY || window.pageYOffset || 0;
+  _suppressScrollTop = true;
+  render();
+  // render後にスクロール位置を確実に戻す
+  window.scrollTo(0, _scrollY);
+  setTimeout(() => window.scrollTo(0, _scrollY), 0);
+}
+
+// ===== 生活ルーティン（既存の機能を関数化） =====
+function renderLifeRoutines(nestId, nestName) {
+  if (!data.nestRoutines) data.nestRoutines = {};
+  if (!data.nestRoutines[nestId]) data.nestRoutines[nestId] = [];
+  const _routines = data.nestRoutines[nestId];
+  
+  const _freqDays = { 'daily':1, 'weekly':7, 'biweekly':14, 'monthly':30, 'bimonthly':60, 'halfyear':180, 'yearly':365, 'twice_a_year':182 };
+  const _freqLabel = { 'daily':'毎日', 'weekly':'毎週', 'biweekly':'隔週', 'monthly':'毎月', 'bimonthly':'隔月', 'halfyear':'半年に1回', 'yearly':'年1回', 'twice_a_year':'年2回' };
+  
+  const _enriched = _routines.map(r => {
+    const interval = _freqDays[r.frequency] || 30;
+    const lastTs = r.lastDoneAt || r.createdAt || Date.now();
+    const nextTs = lastTs + interval * 86400000;
+    const daysLeft = Math.floor((nextTs - Date.now()) / 86400000);
+    return Object.assign({}, r, { _daysLeft: daysLeft, _interval: interval });
+  });
+  _enriched.sort((a,b) => a._daysLeft - b._daysLeft);
+  
+  let html = '<div style="padding:12px 16px 8px;">';
+  html += '<div class="section-head"><h2 class="section-title">生活ルーティン</h2><button onclick="openNestRoutineModal(null,\''+nestId+'\')" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
+  
+  if (_enriched.length === 0) {
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+    html += '🔁 '+escapeHtml(nestName)+' の定期ルーティン<br>';
+    html += '<span style="font-size:11px;color:var(--ink-light);">エアコン掃除・洗濯槽クリーニング・美容院など<br>「忘れがちな定期メンテ」を見える化</span><br><br>';
+    html += '<button onclick="openNestRoutineModal(null,\''+nestId+'\')" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 最初のルーティンを追加</button>';
+    html += '</div>';
+  } else {
+    const _formatDate = (ts) => {
+      const d = new Date(ts);
+      return (d.getMonth()+1) + '/' + d.getDate();
+    };
+    const _formatDateTime = (ts) => {
+      const d = new Date(ts);
+      return (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    };
+    
+    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const r of _enriched) {
+      let _statusColor, _statusBg, _statusLabel;
+      const _nextTs = (r.lastDoneAt || r.createdAt || Date.now()) + r._interval * 86400000;
+      const _nextDateStr = _formatDate(_nextTs);
+      
+      if (r._daysLeft < 0) {
+        _statusColor = '#d97777';
+        _statusBg = 'rgba(217,119,119,0.12)';
+        _statusLabel = Math.abs(r._daysLeft) + '日Over';
+      } else if (r._daysLeft === 0) {
+        _statusColor = '#e6a851';
+        _statusBg = 'rgba(230,168,81,0.18)';
+        _statusLabel = '今日';
+      } else if (r._daysLeft <= 7) {
+        _statusColor = '#e6a851';
+        _statusBg = 'rgba(230,168,81,0.15)';
+        _statusLabel = 'あと'+r._daysLeft+'日';
+      } else {
+        _statusColor = 'var(--ink-light)';
+        _statusBg = 'rgba(0,0,0,0.04)';
+        _statusLabel = 'あと'+r._daysLeft+'日';
+      }
+      
+      const _lastStr = r.lastDoneAt ? _formatDateTime(r.lastDoneAt) : '未記録';
+      
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:12px;backdrop-filter:blur(8px);">';
+      html += '<div onclick="openNestRoutineModal(\''+r.id+'\',\''+nestId+'\')" style="flex:1;cursor:pointer;min-width:0;">';
+      html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">';
+      html += '<span style="font-size:16px;">'+(r.icon || '🔁')+'</span>';
+      html += '<span style="font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(r.name || '名前なし')+'</span>';
+      html += '</div>';
+      html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
+      html += '<span style="font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:100px;background:'+_statusBg+';color:'+_statusColor+';">'+_statusLabel+'</span>';
+      html += '<span style="font-size:10px;color:var(--ink-sub);">'+(_freqLabel[r.frequency]||'毎月')+'</span>';
+      html += '<span style="font-size:10px;color:var(--ink-light);margin-left:4px;">'+escapeHtml(_lastStr)+'</span>';
+      html += '<span style="font-size:10px;color:var(--ink-light);">→</span>';
+      html += '<span style="font-size:10px;color:var(--ink-sub);font-weight:700;">'+_nextDateStr+'</span>';
+      html += '</div>';
+      html += '</div>';
+      html += '<button onclick="markNestRoutineDoneById(\''+r.id+'\',\''+nestId+'\')" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;">✓ 記録</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// ===== 日常ルーティン =====
+const DAILY_TIMES = [
+  { id: 'morning',   label: '朝',     icon: '🌅' },
+  { id: 'noon',      label: '昼',     icon: '☀️' },
+  { id: 'evening',   label: '夕',     icon: '🌇' },
+  { id: 'night',     label: '夜',     icon: '🌙' },
+  { id: 'bedtime',   label: '寝る前', icon: '😴' }
+];
+
+function todayDateKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// 各ルーチンが「今日チェック済みか」判定
+function isDailyDoneToday(item) {
+  if (!item.lastDoneDate) return false;
+  return item.lastDoneDate === todayDateKey();
+}
+
+function renderDailyRoutines(scope, scopeId, scopeName) {
+  // データ初期化
+  if (!data.dailyRoutines) data.dailyRoutines = {};
+  const _key = scope+'_'+scopeId;
+  if (!data.dailyRoutines[_key]) data.dailyRoutines[_key] = [];
+  const _items = data.dailyRoutines[_key];
+  
+  // 今日のチェック数 / 全体
+  const _doneCount = _items.filter(it => isDailyDoneToday(it)).length;
+  const _totalCount = _items.length;
+  
+  let html = '<div style="padding:12px 16px 8px;">';
+  html += '<div class="section-head"><h2 class="section-title">日常ルーティン</h2>';
+  if (_totalCount > 0) {
+    html += '<span style="margin-left:auto;font-size:11px;color:var(--ink-sub);font-weight:700;">'+_doneCount+' / '+_totalCount+' ✓</span>';
+  }
+  html += '<button onclick="openDailyRoutineModal(null,\''+scope+'\',\''+scopeId+'\')" class="section-link" style="margin-left:'+(_totalCount>0?'8px':'auto')+';">＋ 追加</button></div>';
+  
+  if (_totalCount === 0) {
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+    html += '🌅 '+escapeHtml(scopeName)+' の毎日の流れ<br>';
+    html += '<span style="font-size:11px;color:var(--ink-light);">朝 → 昼 → 夕 → 夜 → 寝る前<br>「次なんだっけ？」を防ぐリスト</span><br><br>';
+    html += '<button onclick="openDailyRoutineModal(null,\''+scope+'\',\''+scopeId+'\')" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 最初のルーティンを追加</button>';
+    html += '</div>';
+  } else {
+    // 時間帯ごとに表示
+    const _byTime = {};
+    for (const t of DAILY_TIMES) _byTime[t.id] = [];
+    for (const item of _items) {
+      const tid = item.timeOfDay || 'morning';
+      if (!_byTime[tid]) _byTime[tid] = [];
+      _byTime[tid].push(item);
+    }
+    
+    for (const t of DAILY_TIMES) {
+      const _arr = _byTime[t.id];
+      if (!_arr || _arr.length === 0) continue;
+      
+      // 時間帯見出し
+      const _timeDone = _arr.filter(it => isDailyDoneToday(it)).length;
+      const _timeAllDone = _timeDone === _arr.length;
+      html += '<div style="display:flex;align-items:center;gap:6px;margin:14px 4px 8px;">';
+      html += '<span style="font-size:16px;">'+t.icon+'</span>';
+      html += '<span style="font-size:13px;color:var(--ink-dark);font-weight:700;">'+t.label+'</span>';
+      html += '<span style="font-size:10px;color:'+(_timeAllDone?'var(--accent-deep)':'var(--ink-light)')+';">'+_timeDone+'/'+_arr.length+(_timeAllDone?' ✨':'')+'</span>';
+      html += '</div>';
+      
+      html += '<div style="display:flex;flex-direction:column;gap:5px;">';
+      for (const item of _arr) {
+        const _done = isDailyDoneToday(item);
+        const _bgStyle = _done 
+          ? 'background:rgba(0,0,0,0.04);opacity:0.55;' 
+          : 'background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);';
+        const _textDeco = _done ? 'text-decoration:line-through;color:var(--ink-light);' : 'color:var(--ink-dark);';
+        
+        // タイミング情報を組み立て
+        let _timingStr = '';
+        if (item.timingPreset) _timingStr += item.timingPreset;
+        if (item.timingTime) _timingStr += (_timingStr?' ・ ':'') + item.timingTime;
+        if (item.timingText) _timingStr += (_timingStr?' ・ ':'') + item.timingText;
+        
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;'+_bgStyle+'border:1px solid rgba(255,255,255,0.7);border-radius:12px;backdrop-filter:blur(8px);">';
+        // チェックボタン
+        html += '<button onclick="toggleDailyRoutineDone(\''+item.id+'\',\''+_key+'\')" style="width:28px;height:28px;border-radius:50%;border:2px solid '+(_done?'var(--accent)':'var(--line)')+';background:'+(_done?'var(--accent)':'transparent')+';color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;">'+(_done?'✓':'')+'</button>';
+        // アイコン+名前+タイミング
+        html += '<div onclick="openDailyRoutineModal(\''+item.id+'\',\''+scope+'\',\''+scopeId+'\')" style="flex:1;cursor:pointer;min-width:0;">';
+        html += '<div style="display:flex;align-items:center;gap:6px;">';
+        html += '<span style="font-size:15px;'+(_done?'opacity:0.5;':'')+'">'+(item.icon || '🌷')+'</span>';
+        html += '<span style="font-size:13px;font-weight:600;'+_textDeco+'">'+escapeHtml(item.name || '名前なし')+'</span>';
+        html += '</div>';
+        if (_timingStr) {
+          html += '<div style="font-size:10px;color:'+(_done?'var(--ink-light)':'var(--accent-deep)')+';margin-top:2px;margin-left:21px;">'+escapeHtml(_timingStr)+'</div>';
+        }
+        if (item.note) {
+          html += '<div style="font-size:10px;color:var(--ink-light);margin-top:2px;margin-left:21px;">📝 '+escapeHtml(item.note.length > 25 ? item.note.substring(0, 25) + '…' : item.note)+'</div>';
+        }
+        html += '</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+// 日常ルーティンのチェック切替
+function toggleDailyRoutineDone(itemId, key) {
+  if (!data.dailyRoutines || !data.dailyRoutines[key]) return;
+  const item = data.dailyRoutines[key].find(x => x.id === itemId);
+  if (!item) return;
+  
+  if (isDailyDoneToday(item)) {
+    // 解除
+    item.lastDoneDate = null;
+    item.lastDoneAt = null;
+  } else {
+    // 達成
+    item.lastDoneDate = todayDateKey();
+    item.lastDoneAt = Date.now();
+  }
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+
+// 生活ルーチン記録（scope対応版）
+function markNestRoutineDoneById(routineId, nestId) {
+  if (!data.nestRoutines || !data.nestRoutines[nestId]) return;
+  const r = data.nestRoutines[nestId].find(x => x.id === routineId);
+  if (!r) return;
+  r.lastDoneAt = Date.now();
+  r.updatedAt = Date.now();
+  saveData();
+  showToast('お疲れさま〜🌸');
+  _suppressScrollTop = true;
+  render();
+}
+
+// ===== 日常ルーティンのモーダル =====
+let _editingDailyRoutineId = null;
+let _editingDailyRoutineKey = null;
+let _editingDailyRoutineIcon = '🌷';
+
+const DAILY_ICONS = ['🌷','💧','🍚','🍵','💊','🧴','🪥','🛁','🚿','💄','🧖','🧖‍♀️','🥗','☕','🍱','🍵','🍎','🥛','🥪','🍳','🥬','💪','🏃','🚶','🧘','📖','📓','✏️','💻','📱','🌿','🪴','🌸','🌼','💕','✨','⭐','🌟','😴','🛏','🌙','☀️','🌅','🌇','🪞','👗','👕','🧦','💼','🎒','🔑','📿','💎'];
+
+function openDailyRoutineIconPicker() {
+  const grid = document.getElementById('dailyRoutineIconGrid');
+  if (grid.style.display === 'none') {
+    let html = '';
+    for (const icon of DAILY_ICONS) {
+      html += '<button type="button" onclick="selectDailyRoutineIcon(\''+icon+'\')" style="width:36px;height:36px;border-radius:8px;border:1.5px solid '+(icon === _editingDailyRoutineIcon ? 'var(--accent)' : 'var(--line)')+';background:'+(icon === _editingDailyRoutineIcon ? 'var(--accent-bg)' : 'white')+';font-size:18px;cursor:pointer;font-family:inherit;">'+icon+'</button>';
+    }
+    grid.innerHTML = html;
+    grid.style.display = 'flex';
+  } else {
+    grid.style.display = 'none';
+  }
+}
+
+function selectDailyRoutineIcon(icon) {
+  _editingDailyRoutineIcon = icon;
+  document.getElementById('dailyRoutineIconPreview').textContent = icon;
+  document.getElementById('dailyRoutineIconGrid').style.display = 'none';
+}
+
+function openDailyRoutineModal(itemId, scope, scopeId) {
+  if (!data.dailyRoutines) data.dailyRoutines = {};
+  const _key = scope + '_' + scopeId;
+  if (!data.dailyRoutines[_key]) data.dailyRoutines[_key] = [];
+  
+  _editingDailyRoutineId = itemId || null;
+  _editingDailyRoutineKey = _key;
+  _editingDailyRoutineIcon = '🌷';
+  
+  let name = '', timeOfDay = 'morning', timingPreset = '', timingTime = '', timingText = '', note = '';
+  if (itemId) {
+    const item = data.dailyRoutines[_key].find(x => x.id === itemId);
+    if (item) {
+      name = item.name || '';
+      timeOfDay = item.timeOfDay || 'morning';
+      timingPreset = item.timingPreset || '';
+      timingTime = item.timingTime || '';
+      timingText = item.timingText || '';
+      note = item.note || '';
+      _editingDailyRoutineIcon = item.icon || '🌷';
+    }
+  }
+  
+  document.getElementById('dailyRoutineTitle').textContent = itemId ? '日常ルーティンを編集' : '新しい日常ルーティン';
+  document.getElementById('dailyRoutineIconPreview').textContent = _editingDailyRoutineIcon;
+  document.getElementById('dailyRoutineNameInput').value = name;
+  document.getElementById('dailyRoutineTimeInput').value = timeOfDay;
+  document.getElementById('dailyRoutineTimeOfDayInput').value = timingTime;
+  document.getElementById('dailyRoutineTimingTextInput').value = timingText;
+  document.getElementById('dailyRoutineNoteInput').value = note;
+  document.getElementById('dailyRoutineDeleteBtn').style.display = itemId ? 'block' : 'none';
+  document.getElementById('dailyRoutineIconGrid').style.display = 'none';
+  
+  // プリセットチップの選択状態
+  document.querySelectorAll('#dailyTimingPresets .daily-timing-chip').forEach(b => {
+    if (b.dataset.timing === timingPreset) {
+      b.style.background = 'var(--accent)';
+      b.style.color = 'white';
+      b.style.borderColor = 'var(--accent)';
+    } else {
+      b.style.background = 'var(--surface-warm)';
+      b.style.color = 'var(--ink-sub)';
+      b.style.borderColor = 'var(--line)';
+    }
+  });
+  
+  const m = document.getElementById('dailyRoutineModal');
+  m.style.display = '';
+  m.classList.add('show');
+  m.onclick = function(ev) {
+    if (ev.target === m) closeDailyRoutineModal();
+  };
+  setTimeout(function() {
+    document.getElementById('dailyRoutineNameInput').focus();
+  }, 100);
+}
+
+function selectDailyTimingPreset(preset) {
+  document.querySelectorAll('#dailyTimingPresets .daily-timing-chip').forEach(b => {
+    if (b.dataset.timing === preset) {
+      // すでに選択されてたら解除
+      const isSelected = (b.style.background === 'var(--accent)') || (b.style.background.indexOf('rgb') === 0 && b.style.background.indexOf('255') === -1);
+      if (b.dataset._selected === '1') {
+        b.style.background = 'var(--surface-warm)';
+        b.style.color = 'var(--ink-sub)';
+        b.style.borderColor = 'var(--line)';
+        b.dataset._selected = '';
+      } else {
+        b.style.background = 'var(--accent)';
+        b.style.color = 'white';
+        b.style.borderColor = 'var(--accent)';
+        b.dataset._selected = '1';
+      }
+    } else {
+      b.style.background = 'var(--surface-warm)';
+      b.style.color = 'var(--ink-sub)';
+      b.style.borderColor = 'var(--line)';
+      b.dataset._selected = '';
+    }
+  });
+}
+
+function clearDailyRoutineTime() {
+  document.getElementById('dailyRoutineTimeOfDayInput').value = '';
+}
+
+function closeDailyRoutineModal() {
+  const el = document.getElementById('dailyRoutineNameInput');
+  if (el) el.blur();
+  const m = document.getElementById('dailyRoutineModal');
+  m.classList.remove('show');
+  m.style.display = 'none';
+  m.onclick = null;
+  _editingDailyRoutineId = null;
+}
+
+function saveDailyRoutineFromModal() {
+  if (!_editingDailyRoutineKey) { closeDailyRoutineModal(); return; }
+  if (!data.dailyRoutines) data.dailyRoutines = {};
+  if (!data.dailyRoutines[_editingDailyRoutineKey]) data.dailyRoutines[_editingDailyRoutineKey] = [];
+  
+  const name = document.getElementById('dailyRoutineNameInput').value.trim();
+  const timeOfDay = document.getElementById('dailyRoutineTimeInput').value;
+  const timingTime = document.getElementById('dailyRoutineTimeOfDayInput').value;
+  const timingText = document.getElementById('dailyRoutineTimingTextInput').value.trim();
+  const note = document.getElementById('dailyRoutineNoteInput').value.trim();
+  // プリセット選択中のチップ取得
+  let timingPreset = '';
+  document.querySelectorAll('#dailyTimingPresets .daily-timing-chip').forEach(b => {
+    if (b.dataset._selected === '1') timingPreset = b.dataset.timing;
+  });
+  
+  if (!name) {
+    showToast('名前を入れてね🌷');
+    return;
+  }
+  
+  const now = Date.now();
+  if (_editingDailyRoutineId) {
+    const item = data.dailyRoutines[_editingDailyRoutineKey].find(x => x.id === _editingDailyRoutineId);
+    if (item) {
+      item.name = name;
+      item.timeOfDay = timeOfDay;
+      item.timingPreset = timingPreset;
+      item.timingTime = timingTime;
+      item.timingText = timingText;
+      item.note = note;
+      item.icon = _editingDailyRoutineIcon;
+      item.updatedAt = now;
+    }
+    showToast('更新したで🌸');
+  } else {
+    data.dailyRoutines[_editingDailyRoutineKey].push({
+      id: 'daily_' + now + '_' + Math.floor(Math.random()*1000),
+      name: name,
+      timeOfDay: timeOfDay,
+      timingPreset: timingPreset,
+      timingTime: timingTime,
+      timingText: timingText,
+      note: note,
+      icon: _editingDailyRoutineIcon,
+      lastDoneDate: null,
+      lastDoneAt: null,
+      createdAt: now,
+      updatedAt: now
+    });
+    showToast('追加したで🌸');
+  }
+  
+  saveData();
+  closeDailyRoutineModal();
+  _suppressScrollTop = true;
+  render();
+}
+
+function deleteDailyRoutine() {
+  if (!_editingDailyRoutineId || !_editingDailyRoutineKey) return;
+  if (!data.dailyRoutines || !data.dailyRoutines[_editingDailyRoutineKey]) return;
+  if (!confirm('このルーティンを削除する？')) return;
+  
+  data.dailyRoutines[_editingDailyRoutineKey] = data.dailyRoutines[_editingDailyRoutineKey].filter(x => x.id !== _editingDailyRoutineId);
+  saveData();
+  showToast('削除したで🌷');
+  closeDailyRoutineModal();
   _suppressScrollTop = true;
   render();
 }
@@ -8240,6 +9452,7 @@ const MODE_TABS_KEY = { me: 'nikowa_me_tabs', pet: 'nikowa_pet_tabs', kids: 'nik
 const DEFAULT_MODE_TABS = {
   me: [
     { id: 'stamp',      label: 'Stamp' },
+    { id: 'routine',    label: 'Routine' },
     { id: 'diary',      label: 'Diary' },
     { id: 'planner',    label: 'Planner' },
     { id: 'collection', label: 'Collection' },
