@@ -6512,8 +6512,23 @@ function renderHouseHomeTab(house) {
 
 // PETモードの「ニュース」タブ
 function renderHouseNewsTab(house) {
+  // キャッシュから最終更新時刻を取得
+  let updatedStr = '取得中だよ🌷';
+  try {
+    const cached = JSON.parse(localStorage.getItem(NEWS_CACHE_KEY + '_pet') || 'null');
+    if (cached && cached.timestamp) {
+      const d = new Date(cached.timestamp);
+      const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      updatedStr = (d.getMonth()+1)+'/'+d.getDate()+'('+wd+') '+hh+':'+mm+' 更新';
+    }
+  } catch(e) {}
+  
   let html = '<div style="padding:12px 16px 8px;">';
-  html += renderNewsSection('pet', 'ペットのニュース');
+  html += '<div class="section-head" style="margin-bottom:8px;"><h2 class="section-title">ペットのニュース</h2></div>';
+  html += '<div style="font-size:10px;color:var(--ink-sub);margin:0 0 10px 14px;">📰 '+updatedStr+'</div>';
+  html += renderNewsSection('pet', null);
   html += '</div>';
   return html;
 }
@@ -10717,15 +10732,24 @@ function renderTodayTab() {
 
 // ===== Newsタブのレンダラー =====
 function renderNewsTab() {
-  const now = new Date();
-  const dateStr = (now.getMonth()+1)+'/'+now.getDate();
-  const wd = ['日','月','火','水','木','金','土'][now.getDay()];
+  // キャッシュから最終更新時刻を取得
+  let updatedStr = '取得中だよ🌷';
+  try {
+    const cached = JSON.parse(localStorage.getItem(NEWS_CACHE_KEY + '_general') || 'null');
+    if (cached && cached.timestamp) {
+      const d = new Date(cached.timestamp);
+      const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      updatedStr = (d.getMonth()+1)+'/'+d.getDate()+'('+wd+') '+hh+':'+mm+' 更新';
+    }
+  } catch(e) {}
   
   let html = '<div style="padding:12px 16px 8px;">';
   
   // ヘッダー
   html += '<div class="section-head" style="margin-bottom:8px;"><h2 class="section-title">きょうのニュース</h2></div>';
-  html += '<div style="font-size:10px;color:var(--ink-sub);margin:0 0 10px 14px;">📰 '+dateStr+'('+wd+') 更新</div>';
+  html += '<div style="font-size:10px;color:var(--ink-sub);margin:0 0 10px 14px;">📰 '+updatedStr+'</div>';
   
   // ニュース本体（区切り線スタイル）
   html += renderNewsSection('general', null);
@@ -10782,10 +10806,14 @@ function showWeatherPopup() {
       for (const f of w.forecast) {
         const fh = String(f.time.getHours()).padStart(2,'0');
         const fd = (f.time.getMonth()+1)+'/'+(f.time.getDate());
+        const fw = ['日','月','火','水','木','金','土'][f.time.getDay()];
         html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:linear-gradient(135deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0.2) 100%);border-radius:10px;">';
-        html += '<span style="font-size:11px;color:var(--ink-sub);width:52px;">'+fd+' '+fh+'時</span>';
-        html += '<span style="font-size:20px;">'+f.icon+'</span>';
-        html += '<span style="font-size:14px;font-weight:700;color:var(--ink-dark);">'+f.temp+'°</span>';
+        html += '<div style="width:54px;text-align:center;flex-shrink:0;line-height:1.15;">';
+        html += '<div style="font-size:9px;color:var(--ink-light);font-weight:600;">'+fd+'('+fw+')</div>';
+        html += '<div style="font-size:14px;font-weight:700;color:var(--ink-dark);margin-top:1px;">'+fh+'<span style="font-size:10px;font-weight:600;">時</span></div>';
+        html += '</div>';
+        html += '<span style="font-size:22px;">'+f.icon+'</span>';
+        html += '<span style="font-size:15px;font-weight:700;color:var(--ink-dark);min-width:34px;">'+f.temp+'°</span>';
         html += '<span style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(f.desc)+'</span>';
         html += '</div>';
       }
