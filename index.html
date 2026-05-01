@@ -2689,16 +2689,31 @@
 <aside class="side-panel" id="sidePanel"></aside>
 
 <!-- 初回登録モーダル（オンボーディング） -->
-<div class="modal" id="onboardingModal" style="z-index:200;"><div class="modal-content">
+<div class="modal" id="onboardingModal" style="z-index:200;"><div class="modal-content" style="max-height:85vh;overflow-y:auto;">
   <h2 class="modal-title">ようこそ、にこわへ🌸</h2>
   <p class="modal-sub">まずは あなたのことを 教えてね<br><span style="font-size:10.5px;color:var(--ink-light);">登録は最初の1回だけです</span></p>
-  <div class="form-group"><label class="form-label">お名前（ニックネームでもOK）</label>
+  
+  <div class="form-group"><label class="form-label">お名前<span style="color:var(--accent);font-size:10px;margin-left:6px;">必須</span></label>
     <input type="text" class="form-input" id="onbNameInput" maxlength="14" placeholder="例：しほ"></div>
-  <div class="form-group"><label class="form-label">生年月日</label>
-    <input type="date" class="form-input" id="onbBirthdayInput"></div>
+  
+  <div class="form-group"><label class="form-label">生年月日<span style="color:var(--accent);font-size:10px;margin-left:6px;">必須</span></label>
+    <input type="date" class="form-input" id="onbBirthdayInput" onchange="updateOnboardingTerms()"></div>
+  
+  <div class="form-group"><label class="form-label">住んでいる地域<span style="color:var(--ink-light);font-size:10px;margin-left:6px;">任意・天気がわかるよ☀️</span></label>
+    <select class="form-input" id="onbRegionInput" style="appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path d=\'M1 1l5 5 5-5\' stroke=\'%23888\' stroke-width=\'1.5\' fill=\'none\'/></svg>');background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;">
+      <option value="">選択しない</option>
+    </select></div>
+  
+  <div class="form-group"><label class="form-label">クラウド保存<span style="color:var(--ink-light);font-size:10px;margin-left:6px;">任意・あとからでもOK</span></label>
+    <button type="button" class="btn btn-secondary" onclick="signInWithGoogle()" style="width:100%;">🔑 Googleアカウントで連携</button>
+    <p style="font-size:10.5px;color:var(--ink-light);margin-top:6px;line-height:1.6;">機種変更してもデータが残るよ</p></div>
+  
   <div class="form-group"><label class="form-label">アバター</label>
     <div class="avatar-grid" id="onbAvatarGrid"></div></div>
-  <div class="modal-actions" style="margin-top:16px;">
+  
+  <div class="form-group" id="onbTermsContainer"></div>
+  
+  <div class="modal-actions" style="margin-top:8px;">
     <button class="btn btn-primary" style="width:100%;" onclick="saveOnboarding()">はじめる🌷</button>
   </div>
 </div></div>
@@ -7736,11 +7751,48 @@ function needsOnboarding() {
   return !data.user || !data.user.name || !data.user.birthday;
 }
 
+function isUnder15(birthday) {
+  if (!birthday) return false;
+  const bd = new Date(birthday);
+  if (isNaN(bd.getTime())) return false;
+  const today = new Date();
+  let age = today.getFullYear() - bd.getFullYear();
+  const m = today.getMonth() - bd.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) age--;
+  return age < 15;
+}
+
+function updateOnboardingTerms() {
+  const birthday = document.getElementById('onbBirthdayInput').value;
+  const container = document.getElementById('onbTermsContainer');
+  if (!container) return;
+  if (!birthday) { container.innerHTML = ''; return; }
+  
+  const under15 = isUnder15(birthday);
+  let html = '';
+  if (under15) {
+    html += '<div style="background:var(--accent-bg);border:1px solid var(--accent);border-radius:12px;padding:12px;font-size:11.5px;line-height:1.7;color:var(--ink-dark);margin-bottom:8px;">';
+    html += '<div style="font-weight:700;color:var(--accent-deep);margin-bottom:6px;">🌷 15歳未満のかたへ</div>';
+    html += 'にこわはSNSではないので、見知らぬ人とつながることはありません。<br>';
+    html += 'ご家族やお友達と、きろくをいっしょに見られます。<br>';
+    html += '「Nest（だれかと共有）」モードは、15歳のお誕生日に解禁されます。';
+    html += '</div>';
+    html += '<label style="display:flex;align-items:flex-start;gap:8px;padding:10px;background:var(--surface-warm);border-radius:10px;cursor:pointer;font-size:12px;line-height:1.6;">';
+    html += '<input type="checkbox" id="onbTermsCheck" style="margin-top:3px;flex-shrink:0;">';
+    html += '<span>保護者の同意のもと、にこわの利用規約に同意します</span></label>';
+  } else {
+    html += '<label style="display:flex;align-items:flex-start;gap:8px;padding:10px;background:var(--surface-warm);border-radius:10px;cursor:pointer;font-size:12px;line-height:1.6;">';
+    html += '<input type="checkbox" id="onbTermsCheck" style="margin-top:3px;flex-shrink:0;">';
+    html += '<span>にこわの<a href="javascript:void(0)" onclick="event.preventDefault();showToast(\'準備中🌷\');" style="color:var(--accent-deep);text-decoration:underline;">利用規約</a>に同意します</span></label>';
+  }
+  container.innerHTML = html;
+}
+
 function maybeShowOnboarding() {
   if (!needsOnboarding()) return;
   const m = document.getElementById('onboardingModal');
   if (!m) return;
-  if (m.classList.contains('show')) return; // 既に表示中なら再描画しない
+  if (m.classList.contains('show')) return;
   // アバターグリッド初期化
   const grid = document.getElementById('onbAvatarGrid');
   if (grid && !grid.dataset.initialized) {
@@ -7758,26 +7810,47 @@ function maybeShowOnboarding() {
     }
     grid.dataset.initialized = '1';
   }
+  // 地域セレクト初期化
+  const regionSel = document.getElementById('onbRegionInput');
+  if (regionSel && !regionSel.dataset.initialized) {
+    const prefectures = ['北海道','青森','岩手','宮城','秋田','山形','福島','茨城','栃木','群馬','埼玉','千葉','東京','神奈川','新潟','富山','石川','福井','山梨','長野','岐阜','静岡','愛知','三重','滋賀','京都','大阪','兵庫','奈良','和歌山','鳥取','島根','岡山','広島','山口','徳島','香川','愛媛','高知','福岡','佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄'];
+    let opts = '<option value="">選択しない</option>';
+    const cur = data.userRegion || '';
+    for (const p of prefectures) opts += '<option value="'+p+'"'+(cur===p?' selected':'')+'>'+p+'</option>';
+    regionSel.innerHTML = opts;
+    regionSel.dataset.initialized = '1';
+  }
   // 既存値を入力欄にセット
   const nameInput = document.getElementById('onbNameInput');
   const bdInput = document.getElementById('onbBirthdayInput');
   if (nameInput && data.user.name) nameInput.value = data.user.name;
-  if (bdInput && data.user.birthday) bdInput.value = data.user.birthday;
+  if (bdInput && data.user.birthday) {
+    bdInput.value = data.user.birthday;
+    updateOnboardingTerms();
+  }
   m.classList.add('show');
 }
 
 function saveOnboarding() {
   const name = document.getElementById('onbNameInput').value.trim();
   const birthday = document.getElementById('onbBirthdayInput').value;
+  const region = document.getElementById('onbRegionInput').value;
+  const termsCheck = document.getElementById('onbTermsCheck');
+  
   if (!name) { showToast('お名前を入れてね🌷'); return; }
   if (!birthday) { showToast('生年月日を入れてね🌷'); return; }
-  // 未来日チェック
   if (birthday > todayKey()) { showToast('生年月日が未来になってるよ🌷'); return; }
+  if (!termsCheck || !termsCheck.checked) { showToast('規約に同意してね🌷'); return; }
+  
   const sel = document.querySelector('#onbAvatarGrid .avatar-btn.selected');
   data.user.name = name;
   data.user.birthday = birthday;
   data.user.avatar = sel ? sel.dataset.avatar : (data.user.avatar || '🌷');
+  data.user.under15AtRegistration = isUnder15(birthday);
+  data.user.termsAcceptedAt = Date.now();
+  if (region) data.userRegion = region;
   saveData();
+  if (region) { try { fetchWeather(); } catch(e) {} }
   closeModal('onboardingModal');
   showToast('ようこそ、'+name+'さん🌸');
   render();
