@@ -2717,6 +2717,63 @@
     font-weight: 700;
     margin-bottom: 5px;
   }
+  .shop-card-bottom-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 5px;
+  }
+  .shop-card-bottom-row .shop-card-region { margin-bottom: 0; }
+  .shop-card-fav-btn {
+    position: absolute; top: 6px; right: 6px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    border: none; border-radius: 50%;
+    width: 28px; height: 28px;
+    font-size: 14px; color: var(--ink-light);
+    font-family: inherit; cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.12s ease;
+  }
+  .shop-card-fav-btn:active { transform: scale(0.88); }
+  .shop-card-fav-btn.is-fav {
+    background: white;
+    color: #E06880;
+  }
+  .shop-card-memo-btn {
+    background: rgba(0,0,0,0.04);
+    border: none; border-radius: 8px;
+    padding: 3px 6px;
+    font-size: 12px;
+    font-family: inherit; cursor: pointer;
+    position: relative;
+    transition: background 0.12s ease, transform 0.12s ease;
+  }
+  .shop-card-memo-btn:active { transform: scale(0.92); }
+  .shop-card-memo-btn.has-memo {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  .shop-card-memo-btn.has-memo::after {
+    content: ''; position: absolute;
+    top: 2px; right: 2px;
+    width: 5px; height: 5px;
+    background: var(--accent-deep);
+    border-radius: 50%;
+  }
+  .shop-card-memo-display {
+    margin-top: 6px;
+    padding: 5px 8px;
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border-left: 2.5px solid var(--accent);
+    border-radius: 6px;
+    font-size: 10px;
+    color: var(--ink-dark);
+    line-height: 1.4;
+    cursor: pointer;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
   .shop-card-tags {
     display: flex; gap: 3px;
     flex-wrap: wrap;
@@ -3640,6 +3697,20 @@
 </div></div>
 
 <div class="toast" id="toast"></div>
+
+<!-- ショップメモモーダル -->
+<div class="modal" id="shopMemoModal">
+  <div class="modal-content" style="max-height:80vh;">
+    <h3 class="modal-title" id="shopMemoTitle">メモ</h3>
+    <p class="modal-sub" id="shopMemoSub">気になったこと、メモしとこ🌷</p>
+    <textarea id="shopMemoTextarea" placeholder="例：駐車場あり、犬OK、混む時間…" style="width:100%;min-height:140px;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeShopMemoModal()" style="flex:1;">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveShopMemoFromModal()" style="flex:1;">💾 保存</button>
+    </div>
+    <button onclick="deleteShopMemo()" id="shopMemoDeleteBtn" style="margin-top:10px;width:100%;background:none;border:none;color:var(--ink-light);font-size:11.5px;font-family:inherit;cursor:pointer;text-decoration:underline;display:none;">メモを削除する</button>
+  </div>
+</div>
 
 <script>
 const SPRITES = {
@@ -6053,7 +6124,21 @@ function navBack() {
   if (currentView === 'me_diary') { currentView = 'me'; render(); }
   else if (currentView === 'me') { switchMode('pet'); currentView = 'top'; render(); }
   else if (currentView === 'nest') { switchMode('pet'); currentView = 'top'; render(); }
-  else if (currentView === 'secret_memo') { currentView = 'me'; render(); }
+  else if (currentView === 'secret_memo') {
+    // フォルダの中なら親フォルダへ、ルートなら ME に戻る
+    if (typeof secretMemoEditItem !== 'undefined' && secretMemoEditItem !== null) {
+      // 編集画面 → 編集解除でフォルダビューへ
+      secretMemoEditItem = null;
+      render();
+    } else if (typeof secretMemoPath !== 'undefined' && secretMemoPath && secretMemoPath.length > 0) {
+      // フォルダ階層を1つ上へ
+      secretMemoPath.pop();
+      render();
+    } else {
+      currentView = 'me';
+      render();
+    }
+  }
   else if (currentView === 'pet') backToHouse();
   else if (currentView === 'house') backToHouses();
   else if (currentView === 'houses') {
@@ -6061,7 +6146,18 @@ function navBack() {
     else { currentView = 'top'; render(); }
   }
   else if (currentView === 'facility') { currentView = 'town'; render(); }
-  else if (currentView === 'town' || currentView === 'schedule' || currentView === 'settings') {
+  else if (currentView === 'town') {
+    // ショップ詳細表示中なら一覧に戻る、それ以外はホームへ
+    if (townShopView === 'detail') {
+      townShopView = 'list';
+      selectedShopId = null;
+      render();
+    } else {
+      currentView = 'top';
+      render();
+    }
+  }
+  else if (currentView === 'schedule' || currentView === 'settings') {
     currentView = 'top';
     render();
   }
@@ -6777,6 +6873,89 @@ const SHOP_SAMPLE_KINDS = {
   marche:   { icon:'🎪', label:'マルシェ' }
 };
 
+// 検索条件にマッチするにこわ登録個人店を抽出
+function getMatchingNikowaShops(category, locText, kwText) {
+  const results = [];
+  // 検索カテゴリの定義を取得（PLACES_CATS_MAPから）
+  let catLabel = '';
+  if (category && typeof PLACES_CATS_MAP !== 'undefined') {
+    for (const mode in PLACES_CATS_MAP) {
+      const cat = (PLACES_CATS_MAP[mode] || []).find(c => c.id === category);
+      if (cat) { catLabel = cat.label; break; }
+    }
+  }
+  for (const s of SAMPLE_SHOPS) {
+    // カテゴリマッチング：catLabelが店のtagsに部分一致
+    if (catLabel) {
+      const catMatch = s.tags.some(t => t.includes(catLabel) || catLabel.includes(t));
+      if (!catMatch) continue;
+    }
+    // 地域マッチング
+    if (locText && locText.trim()) {
+      const loc = locText.trim();
+      if (!s.region.includes(loc) && !loc.includes(s.region)) continue;
+    }
+    // キーワードマッチング（店名・タグ）
+    if (kwText && kwText.trim()) {
+      const kw = kwText.trim();
+      const kwMatch = s.name.includes(kw) || s.tags.some(t => t.includes(kw));
+      if (!kwMatch) continue;
+    }
+    results.push(s);
+  }
+  return results;
+}
+
+// にこわ個人店専用のカードHTML生成
+function buildNikowaShopCardHtml(s) {
+  const sk = SHOP_SAMPLE_KINDS[s.kind] || SHOP_SAMPLE_KINDS.shop;
+  const sc = SHOP_SAMPLE_COLORS[s.color] || SHOP_SAMPLE_COLORS.pink;
+  const memoKey = 'nikowa_'+s.id;
+  const memo = placesMemos[memoKey] || '';
+  const isFav = !!shopFavs[s.id];
+  // にこわ店としてstub登録（一覧に出すため）
+  if (!placesMemoStubs[memoKey]) {
+    savePlaceMemoStubFromObj(memoKey, {
+      name: s.name,
+      addr: '📍'+s.region+' ・ '+sk.icon+' '+sk.label,
+      catIcon: s.emoji,
+      _isNikowa: true,
+      _nikowaShopId: s.id
+    });
+  }
+  let html = '<div class="place-card" style="border:2px solid '+sc.accent+';position:relative;">';
+  // にこわ限定バッジ
+  html += '<div style="position:absolute;top:-8px;right:10px;background:'+sc.accent+';color:white;font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:100px;letter-spacing:0.5px;box-shadow:0 1px 3px rgba(0,0,0,0.15);">にこわ限定</div>';
+  html += '<div class="place-card-header">';
+  html += '<div class="place-card-icon" style="background:linear-gradient(135deg,'+sc.light+' 0%,'+sc.bg+' 100%);">'+s.emoji+'</div>';
+  html += '<div class="place-card-info">';
+  html += '<div class="place-card-name">'+escapeHtml(s.name)+'</div>';
+  html += '<div class="place-card-addr">📍'+escapeHtml(s.region)+' ・ '+sk.icon+' '+sk.label+'</div>';
+  html += '</div></div>';
+  // タグ表示＋お気に入り＋メモ編集ボタン
+  html += '<div style="display:flex;align-items:center;gap:6px;padding:2px 0 8px;">';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:4px;flex:1;">';
+  for (const t of (s.tags || []).slice(0, 4)) {
+    html += '<span style="font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:100px;background:color-mix(in srgb,'+sc.accent+' 12%, transparent);color:'+sc.accent+';">#'+escapeHtml(t)+'</span>';
+  }
+  html += '</div>';
+  // お気に入りボタン
+  html += '<button onclick="toggleShopFav(\''+s.id+'\', event)" style="background:'+(isFav?sc.accent:'rgba(0,0,0,0.04)')+';color:'+(isFav?'white':'var(--ink-light)')+';border:none;border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;font-family:inherit;flex-shrink:0;">'+(isFav?'♥':'♡')+'</button>';
+  // メモ編集ボタン
+  html += '<button onclick="openShopMemoPrompt(\''+s.id+'\', event)" style="background:'+(memo?'color-mix(in srgb,'+sc.accent+' 18%, transparent)':'rgba(0,0,0,0.04)')+';border:none;border-radius:8px;padding:3px 8px;font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0;">📝</button>';
+  html += '</div>';
+  // メモ常時表示（あれば）
+  if (memo) {
+    html += '<div onclick="openShopMemoPrompt(\''+s.id+'\', event)" style="background:color-mix(in srgb,'+sc.accent+' 10%, transparent);border-left:3px solid '+sc.accent+';border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:12px;color:var(--ink-dark);line-height:1.6;cursor:pointer;"><span style="font-weight:800;color:'+sc.accent+';font-size:10.5px;">📝 メモ</span><br>'+escapeHtml(memo)+'</div>';
+  }
+  // にこわで見るボタン
+  html += '<div class="place-card-map-row">';
+  html += '<button class="place-card-nikowa-btn" style="flex:1;background:'+sc.accent+';color:white;" onclick="openShopDetailFromSearch(\''+s.id+'\')">🏠 にこわで見る</button>';
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
 function setShopSampleColor(c) {
   shopSampleColor = c;
   _suppressScrollTop = true;
@@ -6881,6 +7060,125 @@ function backToShopList() {
   render();
 }
 
+// にこわショップ用お気に入り
+const SHOP_FAVS_KEY = 'nikowa_shop_favs';
+let shopFavs = {};
+try { shopFavs = JSON.parse(localStorage.getItem(SHOP_FAVS_KEY) || '{}'); } catch(e) {}
+function saveShopFavs() {
+  try { localStorage.setItem(SHOP_FAVS_KEY, JSON.stringify(shopFavs)); } catch(e) {}
+}
+function toggleShopFav(shopId, e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
+  if (shopFavs[shopId]) {
+    delete shopFavs[shopId];
+    showToast('お気に入り解除🌷');
+  } else {
+    shopFavs[shopId] = true;
+    showToast('お気に入りに追加🌸');
+  }
+  saveShopFavs();
+  _suppressScrollTop = true;
+  render();
+}
+
+// ショップメモ（カスタムモーダルで入力）
+let _editingMemoShopId = null;
+function openShopMemoPrompt(shopId, e) {
+  if (e) { e.stopPropagation(); }
+  const shop = SAMPLE_SHOPS.find(s => s.id === shopId);
+  if (!shop) return;
+  const memoKey = 'nikowa_'+shopId;
+  const current = placesMemos[memoKey] || '';
+  _editingMemoShopId = shopId;
+  // モーダルに値セット
+  document.getElementById('shopMemoTitle').textContent = shop.name;
+  document.getElementById('shopMemoSub').textContent = '気になったこと、メモしとこ🌷';
+  document.getElementById('shopMemoTextarea').value = current;
+  document.getElementById('shopMemoDeleteBtn').style.display = current ? 'block' : 'none';
+  // モーダル表示（inline styleクリア→classで表示）
+  const m = document.getElementById('shopMemoModal');
+  m.style.display = '';
+  m.classList.add('show');
+  // 背景タップで閉じる
+  m.onclick = function(ev) {
+    if (ev.target === m) closeShopMemoModal();
+  };
+  setTimeout(function() {
+    document.getElementById('shopMemoTextarea').focus();
+  }, 100);
+}
+
+function closeShopMemoModal() {
+  // textareaのフォーカスを外す（iOSキーボード残留対策）
+  const ta = document.getElementById('shopMemoTextarea');
+  if (ta) ta.blur();
+  // モーダル閉じる（classと明示styleの両方）
+  const m = document.getElementById('shopMemoModal');
+  m.classList.remove('show');
+  m.style.display = 'none';
+  m.onclick = null;
+  _editingMemoShopId = null;
+}
+
+function saveShopMemoFromModal() {
+  if (!_editingMemoShopId) return;
+  const shop = SAMPLE_SHOPS.find(s => s.id === _editingMemoShopId);
+  if (!shop) { closeShopMemoModal(); return; }
+  const memoKey = 'nikowa_'+_editingMemoShopId;
+  const value = document.getElementById('shopMemoTextarea').value.trim();
+  if (value) {
+    if (!placesMemoStubs[memoKey]) {
+      const sk = SHOP_SAMPLE_KINDS[shop.kind] || SHOP_SAMPLE_KINDS.shop;
+      savePlaceMemoStubFromObj(memoKey, {
+        name: shop.name,
+        addr: '📍'+shop.region+' ・ '+sk.icon+' '+sk.label,
+        catIcon: shop.emoji,
+        _isNikowa: true,
+        _nikowaShopId: shop.id
+      });
+    }
+    savePlaceMemo(memoKey, value);
+    showToast('メモ保存したで🌸');
+  } else if (placesMemos[memoKey]) {
+    delete placesMemos[memoKey];
+    try { localStorage.setItem(PLACES_MEMO_KEY, JSON.stringify(placesMemos)); } catch(e) {}
+    showToast('メモ削除したで🌷');
+  }
+  closeShopMemoModal();
+  _suppressScrollTop = true;
+  render();
+}
+
+function deleteShopMemo() {
+  if (!_editingMemoShopId) return;
+  const memoKey = 'nikowa_'+_editingMemoShopId;
+  if (!confirm('このメモを削除する？')) return;
+  delete placesMemos[memoKey];
+  try { localStorage.setItem(PLACES_MEMO_KEY, JSON.stringify(placesMemos)); } catch(e) {}
+  showToast('メモ削除したで🌷');
+  closeShopMemoModal();
+  _suppressScrollTop = true;
+  render();
+}
+
+// 検索結果の店名がにこわタウンに登録されてるかチェック
+// 部分一致で判定（後でplace_idベースに変更予定）
+function findNikowaShopByName(name) {
+  if (!name) return null;
+  for (const s of SAMPLE_SHOPS) {
+    if (name.includes(s.name) || s.name.includes(name)) {
+      return s;
+    }
+  }
+  return null;
+}
+
+// 検索結果から「にこわで見る」を開く
+function openShopDetailFromSearch(shopId) {
+  townSubTab = 'town';
+  openShopDetail(shopId);
+}
+
 // ===== 家タブの状態 =====
 let houseTabId = null; // 現在選択されてる家タブ ID（'__fav'なら友達の家一覧）
 const PLACES_API_KEY = 'AIzaSyAuvEPLh6ih-QWNTVZ90Wlo5f5LNjgXbGk';
@@ -6934,6 +7232,26 @@ try {
 } catch(e) {}
 let placesMemos = {};
 try { placesMemos = JSON.parse(localStorage.getItem(PLACES_MEMO_KEY) || '{}'); } catch(e) {}
+// メモ済み店の最小情報（fav外でも一覧に出すため）
+const PLACES_MEMO_STUBS_KEY = 'nikowa_place_memo_stubs';
+let placesMemoStubs = {};
+try { placesMemoStubs = JSON.parse(localStorage.getItem(PLACES_MEMO_STUBS_KEY) || '{}'); } catch(e) {}
+function savePlacesMemoStubs() {
+  try { localStorage.setItem(PLACES_MEMO_STUBS_KEY, JSON.stringify(placesMemoStubs)); } catch(e) {}
+}
+function savePlaceMemoStubFromObj(placeId, p) {
+  if (!placeId) return;
+  placesMemoStubs[placeId] = {
+    id: placeId,
+    name: p.name || (p.displayName && p.displayName.text) || '',
+    addr: p.addr || p.formattedAddress || '',
+    mapsUrl: p.mapsUrl || p.googleMapsUri || '',
+    catIcon: p.catIcon || '📍',
+    _isNikowa: !!p._isNikowa,
+    _nikowaShopId: p._nikowaShopId || null
+  };
+  savePlacesMemoStubs();
+}
 
 const TOWN_MAIN_TABS = [
   { id: 'me',   icon: '🌸', label: 'ME' },
@@ -6987,20 +7305,31 @@ function renderTown() {
       for (const s of SAMPLE_SHOPS) {
         const sc = SHOP_SAMPLE_COLORS[s.color] || SHOP_SAMPLE_COLORS.pink;
         const sk = SHOP_SAMPLE_KINDS[s.kind] || SHOP_SAMPLE_KINDS.shop;
+        const _isFav = !!shopFavs[s.id];
+        const _memoText = placesMemos['nikowa_'+s.id] || '';
+        const _hasMemo = !!_memoText;
         html += '<div class="shop-card-item" onclick="openShopDetail(\''+s.id+'\')">';
         // 画像エリア（仮：絵文字＋色背景）
         html += '<div class="shop-card-img" style="background:linear-gradient(135deg,'+sc.light+' 0%,'+sc.bg+' 100%);">';
         html += '<span class="shop-card-kind-badge">'+sk.icon+' '+sk.label+'</span>';
+        html += '<button class="shop-card-fav-btn'+(_isFav?' is-fav':'')+'" onclick="toggleShopFav(\''+s.id+'\', event)">'+(_isFav?'♥':'♡')+'</button>';
         html += s.emoji;
         html += '</div>';
         html += '<div class="shop-card-info">';
         html += '<div class="shop-card-name">'+escapeHtml(s.name)+'</div>';
+        html += '<div class="shop-card-bottom-row">';
         html += '<div class="shop-card-region">📍'+escapeHtml(s.region)+'</div>';
+        html += '<button class="shop-card-memo-btn'+(_hasMemo?' has-memo':'')+'" onclick="openShopMemoPrompt(\''+s.id+'\', event)" title="メモ">📝</button>';
+        html += '</div>';
         html += '<div class="shop-card-tags">';
         for (const t of s.tags.slice(0, 3)) {
           html += '<span class="shop-card-tag">#'+escapeHtml(t)+'</span>';
         }
         html += '</div>';
+        // メモ常時表示（あれば）
+        if (_hasMemo) {
+          html += '<div class="shop-card-memo-display" onclick="openShopMemoPrompt(\''+s.id+'\', event)">'+escapeHtml(_memoText)+'</div>';
+        }
         html += '</div>';
         html += '</div>';
       }
@@ -7050,9 +7379,19 @@ function renderTown() {
 
     // 基本情報カード
     html += '<div class="shop-card">';
-    html += '<div class="shop-name">'+escapeHtml(_selShop.name)+'</div>';
+    const _detailFav = !!shopFavs[_selShop.id];
+    const _detailHasMemo = !!placesMemos['nikowa_'+_selShop.id];
+    html += '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">';
+    html += '<div class="shop-name" style="flex:1;margin-bottom:0;">'+escapeHtml(_selShop.name)+'</div>';
+    html += '<button onclick="toggleShopFav(\''+_selShop.id+'\', event)" style="background:'+(_detailFav?'var(--shop-accent)':'rgba(255,255,255,0.7)')+';color:'+(_detailFav?'white':'var(--shop-accent)')+';border:1.5px solid var(--shop-accent);border-radius:100px;width:36px;height:36px;font-size:16px;cursor:pointer;font-family:inherit;flex-shrink:0;">'+(_detailFav?'♥':'♡')+'</button>';
+    html += '<button onclick="openShopMemoPrompt(\''+_selShop.id+'\', event)" style="background:'+(_detailHasMemo?'var(--shop-accent-light)':'rgba(255,255,255,0.7)')+';border:1.5px solid var(--shop-accent);border-radius:100px;width:36px;height:36px;font-size:14px;cursor:pointer;font-family:inherit;flex-shrink:0;position:relative;">📝'+(_detailHasMemo?'<span style="position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--shop-accent);border-radius:50%;border:1.5px solid white;"></span>':'')+'</button>';
+    html += '</div>';
     html += '<span class="shop-kind-badge">'+_sk.icon+' '+_sk.label+'</span>';
     html += '<div class="shop-address">📍 '+escapeHtml(_selShop.region)+'〇〇区〇〇町1-2-3<br>🕐 10:00 - 19:00（火曜定休）</div>';
+    // メモがあれば表示
+    if (_detailHasMemo) {
+      html += '<div style="background:var(--shop-accent-light);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--ink-dark);line-height:1.5;"><span style="font-weight:800;color:var(--shop-accent);">📝 メモ：</span>'+escapeHtml(placesMemos['nikowa_'+_selShop.id])+'</div>';
+    }
     // 連絡ボタン4つ
     html += '<div class="shop-contact-grid">';
     html += '<button class="shop-contact-btn" onclick="showToast(\'サンプル：電話に発信🌷\')"><span class="shop-contact-btn-icon">📞</span>でんわ</button>';
@@ -7133,11 +7472,31 @@ function renderTown() {
     } else if (placesResults.length > 0) {
       const cat = (PLACES_CATS_MAP[townMainTab] || []).find(c => c.id === placesSelCat);
       const catIcon = cat ? cat.icon : '📍';
+      // にこわ登録個人店を抽出してGoogle結果より先に表示
+      const _locText = placesLocMode === 'addr' ? placesAddrText : '';
+      const nikowaMatched = getMatchingNikowaShops(placesSelCat, _locText, placesText);
       html += '<div class="place-cards">';
+      // にこわ店を先頭に
+      for (const s of nikowaMatched) {
+        html += buildNikowaShopCardHtml(s);
+      }
+      // Google結果
       for (const p of placesResults) html += buildPlaceCardHtml(p, catIcon);
       html += '</div>';
     } else if (!placesError) {
-      html += '<div class="places-loading">カテゴリを選んで「探す」をタップしてね🐾</div>';
+      // 検索前でも、カテゴリだけ選んでたらにこわ店だけ先に見せる
+      const _locText = placesLocMode === 'addr' ? placesAddrText : '';
+      const nikowaMatched = placesSelCat ? getMatchingNikowaShops(placesSelCat, _locText, placesText) : [];
+      if (nikowaMatched.length > 0) {
+        html += '<div style="padding:8px 16px 4px;font-size:11px;color:var(--ink-sub);font-weight:700;">🌷 にこわタウン登録のお店</div>';
+        html += '<div class="place-cards">';
+        for (const s of nikowaMatched) {
+          html += buildNikowaShopCardHtml(s);
+        }
+        html += '</div>';
+      } else {
+        html += '<div class="places-loading">カテゴリを選んで「探す」をタップしてね🐾</div>';
+      }
     }
     document.getElementById('app').innerHTML = html;
     const placesInput = document.getElementById('placesTextInput');
@@ -7155,13 +7514,52 @@ function renderTown() {
 
   // ── お気に入りサブタブ
   if (townSubTab === 'fav') {
-    const favList = Object.values(placesFavs[townMainTab] || {});
-    if (favList.length === 0) {
-      html += '<div class="places-fav-empty">♡ お気に入りがまだないよ<br><span style="font-size:11px;margin-top:8px;display:block;">「検索」で見つけた場所を保存してね🌷</span></div>';
+    const favMap = placesFavs[townMainTab] || {};
+    const favList = Object.values(favMap);
+    // にこわショップのお気に入り
+    const nikowaFavList = [];
+    for (const id in shopFavs) {
+      if (!shopFavs[id]) continue;
+      const sh = SAMPLE_SHOPS.find(s => s.id === id);
+      if (sh) nikowaFavList.push(sh);
+    }
+    // メモ済みでお気に入り外の店を抽出
+    const memoOnlyList = [];
+    for (const id in placesMemos) {
+      if (!placesMemos[id]) continue;
+      if (favMap[id]) continue;
+      // にこわショップのfav済みなら別セクションに出てるからスキップ
+      if (id.indexOf('nikowa_') === 0) {
+        const shopId = id.replace('nikowa_', '');
+        if (shopFavs[shopId]) continue;
+      }
+      const stub = placesMemoStubs[id];
+      if (stub) memoOnlyList.push(stub);
+    }
+    if (favList.length === 0 && nikowaFavList.length === 0 && memoOnlyList.length === 0) {
+      html += '<div class="places-fav-empty">♡ お気に入りがまだないよ<br><span style="font-size:11px;margin-top:8px;display:block;">「検索」で見つけた場所を保存してね🌷<br>📝メモを書いた場所もここに集まるよ</span></div>';
     } else {
-      html += '<div class="places-fav-list">';
-      for (const p of favList) html += buildFavCardHtml(p);
-      html += '</div>';
+      // にこわショップのお気に入り
+      if (nikowaFavList.length > 0) {
+        html += '<div style="padding:12px 16px 4px;font-size:11px;color:var(--ink-sub);font-weight:700;">🌷 にこわタウンのお気に入り（'+nikowaFavList.length+'件）</div>';
+        html += '<div class="place-cards">';
+        for (const s of nikowaFavList) html += buildNikowaShopCardHtml(s);
+        html += '</div>';
+      }
+      // 通常のお気に入り
+      if (favList.length > 0) {
+        html += '<div style="padding:12px 16px 4px;font-size:11px;color:var(--ink-sub);font-weight:700;">♥ お気に入り（'+favList.length+'件）</div>';
+        html += '<div class="places-fav-list">';
+        for (const p of favList) html += buildFavCardHtml(p);
+        html += '</div>';
+      }
+      // メモ済み（お気に入り外）
+      if (memoOnlyList.length > 0) {
+        html += '<div style="padding:14px 16px 4px;font-size:11px;color:var(--ink-sub);font-weight:700;">📝 メモ済み（'+memoOnlyList.length+'件）</div>';
+        html += '<div class="places-fav-list">';
+        for (const p of memoOnlyList) html += buildFavCardHtml(p);
+        html += '</div>';
+      }
     }
     document.getElementById('app').innerHTML = html;
     return;
@@ -9681,6 +10079,11 @@ function _getTodayHours(openingHours) {
 function savePlaceMemo(placeId, value) {
   placesMemos[placeId] = value;
   try { localStorage.setItem(PLACES_MEMO_KEY, JSON.stringify(placesMemos)); } catch(e) {}
+  // メモ書いた店の情報も保存（fav外でも一覧に出すため）
+  if (value) {
+    let p = placesResultsMap[placeId] || (placesFavs[townMainTab] && placesFavs[townMainTab][placeId]) || placesMemoStubs[placeId];
+    if (p) savePlaceMemoStubFromObj(placeId, p);
+  }
 }
 function savePlaceMemoBtn(placeId, safeId) {
   var el = document.getElementById('memo-input-' + safeId);
@@ -9748,7 +10151,11 @@ function buildPlaceCardHtml(p, catIcon) {
   } else {
     html += '<span class="place-card-map-btn" style="opacity:0.4;cursor:default;">🗺 Googleで見る</span>';
   }
-  html += '<button class="place-card-nikowa-btn" onclick="showToast(\'準備中🌷\')">🏠 にこわで見る</button>';
+  // にこわタウン登録店だけ「にこわで見る」表示
+  const _nikowaShop = findNikowaShopByName(name);
+  if (_nikowaShop) {
+    html += '<button class="place-card-nikowa-btn" onclick="openShopDetailFromSearch(\''+_nikowaShop.id+'\')">🏠 にこわで見る</button>';
+  }
   html += '</div>';
   html += '<div class="place-card-memo-row" id="memo-row-'+safeId+'" style="display:'+(memo?'flex':'none')+';">';
   html += '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" id="memo-input-'+safeId+'">';
@@ -9786,7 +10193,11 @@ function buildFavCardHtml(p) {
   } else {
     html += '<span class="place-card-map-btn" style="opacity:0.4;cursor:default;">🗺 Googleで見る</span>';
   }
-  html += '<button class="place-card-nikowa-btn" onclick="showToast(\'準備中🌷\')">🏠 にこわで見る</button>';
+  // にこわタウン登録店だけ「にこわで見る」表示
+  const _nikowaShopFav = findNikowaShopByName(name);
+  if (_nikowaShopFav) {
+    html += '<button class="place-card-nikowa-btn" onclick="openShopDetailFromSearch(\''+_nikowaShopFav.id+'\')">🏠 にこわで見る</button>';
+  }
   html += '</div>';
   html += '<div class="place-card-memo-row" id="memo-row-'+safeId+'" style="display:'+(memo?'flex':'none')+';">';
   html += '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" id="memo-input-'+safeId+'">';
