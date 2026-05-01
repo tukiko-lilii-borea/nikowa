@@ -1648,7 +1648,7 @@
     display: flex; justify-content: space-around;
     padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--line-soft);
-    border-radius: 20px 20px 0 0; z-index: 20;
+    border-radius: 20px 20px 0 0; z-index: 1500;
   }
   .nav-btn {
     background: none; border: none; font-family: inherit;
@@ -5836,7 +5836,7 @@ function renderPetRoomCard(pet) {
   let html = '<button class="pet-room-card '+(pet.place==='rainbow'?'rainbow':'')+'" onclick="enterPet(\''+pet.id+'\')">';
   html += renderRoomBox(pet);
   if (memorials.length > 0) html += '<div class="pet-room-badge">🎉</div>';
-  if (streak >= 3 && pet.place === 'home') html += '<div class="pet-room-streak">🔥'+streak+'日</div>';
+  // 🔥連続日数バッジは世界観に合わないため非表示
   html += '<div class="pet-room-nameplate"><span class="pet-room-name">';
   if (pet.place !== 'home') html += PLACE_ICONS[pet.place]+' ';
   html += escapeHtml(pet.name)+' '+(PET_EMOJIS[pet.type] || '✨')+'</span><span class="pet-room-species">'+(pet.breed ? escapeHtml(pet.breed) : PET_TYPE_NAMES[pet.type])+'</span></div>';
@@ -5854,7 +5854,7 @@ function renderPetRoomCardCompact(pet) {
   let html = '<button class="pet-room-card pet-room-card-compact '+(pet.place==='rainbow'?'rainbow':'')+'" onclick="enterPet(\''+pet.id+'\')">';
   html += renderRoomBox(pet);
   if (memorials.length > 0) html += '<div class="pet-room-badge" style="font-size:11px;width:20px;height:20px;">🎉</div>';
-  if (streak >= 3 && pet.place === 'home') html += '<div class="pet-room-streak" style="font-size:8.5px;padding:1px 5px;">🔥'+streak+'</div>';
+  // 🔥連続日数バッジは世界観に合わないため非表示
   html += '<div class="pet-room-name-compact">';
   if (pet.place !== 'home') html += PLACE_ICONS[pet.place]+' ';
   html += escapeHtml(pet.name);
@@ -6121,6 +6121,12 @@ function backToHouse() {
 }
 
 function navBack() {
+  // 天気ポップアップが開いてたら、まずそれを閉じる
+  const _weatherEl = document.getElementById('weatherPopup');
+  if (_weatherEl) { closeWeatherPopup(); return; }
+  // ショップメモモーダルが開いてたら閉じる
+  const _memoModal = document.getElementById('shopMemoModal');
+  if (_memoModal && _memoModal.classList.contains('show')) { closeShopMemoModal(); return; }
   if (currentView === 'me_diary') { currentView = 'me'; render(); }
   else if (currentView === 'me') { switchMode('pet'); currentView = 'top'; render(); }
   else if (currentView === 'nest') { switchMode('pet'); currentView = 'top'; render(); }
@@ -6210,13 +6216,7 @@ function renderPet() {
     html += '<div class="section"><div class="memorial-card"><div class="memorial-title">✨ 今日は特別な日</div>';
     html += '<div class="memorial-text">'+memorials.join('<br>')+'</div></div></div>';
   }
-  if (streak >= 3 && pet.place === 'home') {
-    html += '<div class="section"><div class="badges-row">';
-    html += '<div class="badge">🔥 '+streak+'日連続</div>';
-    if (streak >= 7) html += '<div class="badge">🌟 1週間つづいた</div>';
-    if (streak >= 30) html += '<div class="badge">💕 1ヶ月つづいた</div>';
-    html += '</div></div>';
-  }
+  // 🔥連続日数バッジ・週間・1ヶ月バッジは世界観に合わないため非表示
   if (pet.place === 'home') {
     html += '<div class="pet-tabs-bar">';
     html += '<button class="pet-tab-btn '+(tab==='care'?'active':'')+'" onclick="setPetTab(\'care\')"><span class="pet-tab-icon">🌿</span><span class="pet-tab-label">お世話</span></button>';
@@ -8803,8 +8803,8 @@ async function fetchWeather() {
 function showWeatherPopup() {
   const w = window._weatherCache;
   const region = (data && data.userRegion) || '大阪';
-  let html = '<div id="weatherPopup" onclick="if(event.target===this)closeWeatherPopup()" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.35);display:flex;align-items:flex-end;justify-content:center;">';
-  html += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;padding:20px 20px 40px;max-height:80vh;overflow-y:auto;">';
+  let html = '<div id="weatherPopup" onclick="if(event.target===this)closeWeatherPopup()" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.35);display:flex;align-items:flex-end;justify-content:center;padding-bottom:90px;box-sizing:border-box;">';
+  html += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;padding:20px 20px 24px;max-height:calc(80vh - 60px);overflow-y:auto;">';
   html += '<div style="display:flex;align-items:center;margin-bottom:16px;">';
   html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(region)+'の天気</div>';
   html += '<button onclick="closeWeatherPopup()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-sub);">✕</button>';
