@@ -3216,6 +3216,17 @@
   .weight-btn-edit { background: var(--surface); border: 1.5px solid var(--line-soft); border-radius: 8px; padding: 5px 9px; font-size: 12px; color: var(--ink-sub); cursor: pointer; font-family: inherit; font-weight: 600; }
   .weight-btn-del { background: var(--surface); border: 1.5px solid #fcc; border-radius: 8px; padding: 5px 9px; font-size: 12px; color: #e06c75; cursor: pointer; font-family: inherit; font-weight: 600; }
 
+  /* Material Symbols 共通スタイル */
+  .ms {
+    font-family: 'Material Symbols Rounded';
+    font-size: inherit;
+    font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+    line-height: 1;
+  }
+  .ms-fill {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -4650,6 +4661,22 @@ const DEFAULT_CARE_ITEMS = [
   { id: 'walk', icon: '🌿', label: 'おさんぽ' },
   { id: 'treat', icon: '🍪', label: 'おやつ' }
 ];
+const CARE_LABEL_TO_MS = {
+  'ごはん': 'restaurant',
+  'お水': 'water_drop', 'おみず': 'water_drop',
+  'おふろ': 'bathtub',
+  '歯みがき': 'dentistry',
+  'さんぽ': 'pets', 'おさんぽ': 'pets',
+  'くすり': 'medication',
+  'トイレ': 'wc',
+  'ブラッシング': 'content_cut',
+  'ワクチン': 'vaccines'
+};
+function renderCareIcon(icon, label) {
+  const ms = label && CARE_LABEL_TO_MS[label];
+  if (ms) return '<span class="material-symbols-rounded" style="font-size:inherit;vertical-align:middle;">'+ms+'</span>';
+  return escapeHtml(icon || '');
+}
 const ICON_CHOICES = ['🍚','🥣','🍖','🥩','🐟','🍗','🥚','🥕','🥬','🍯','🍪','🦴','💧','🚰','🍵','🚽','🛁','🪥','🧴','🧼','🌿','🌱','🌸','🌷','🌻','🌳','🍀','✂️','💅','🧹','💊','💉','🏥','🌡️','🩺','🦷','📷','🎀','🎈','🎁','🎂','✨','💕','💖','⭐','🌟','🎵','🌞','🌙','☀️','⏰','🕐','🐾','🍂','❄️','🌧️','☂️'];
 const AVATAR_CHOICES = ['🌷','🐰','🐱','🐶','🌸','🌼','🌻','🌹','🍀','🌱','🌿','🍃','✨','💕','⭐','🌙','☀️','🌈','🦋','🐝','🐞','🍰','🍓','🍑','🍎','🥕','☕','🎀','🎈','💫','🌺','🐾'];
 // 人物アイコン（フリー素材・SVG）— サンプル8個
@@ -5677,7 +5704,7 @@ function renderDayDetail(dateKey, scope) {
     for (const entry of careEntries) {
       const time = new Date(entry.timestamp).toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
       const petLabel = (!petId && entry.pet) ? ' '+entry.pet.name : '';
-      html += '<div class="day-care-tile">'+escapeHtml(entry.icon)+' '+escapeHtml(entry.name)+petLabel+' <span style="opacity:0.7;">'+time+'</span></div>';
+      html += '<div class="day-care-tile">'+renderCareIcon(entry.icon, entry.name)+' '+escapeHtml(entry.name)+petLabel+' <span style="opacity:0.7;">'+time+'</span></div>';
     }
     html += '</div></div>';
   }
@@ -5964,7 +5991,7 @@ function renderMeMode() {
     html += '</div></div>';
     
   } else if (tab === 'secret') {
-    html += '<div style="padding:16px;"><button onclick="goSecretMemo()" style="width:100%;padding:20px;border:1.5px solid var(--card-border);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);">📋 ひみつメモを開く</button></div>';
+    html += '<div style="padding:16px;"><button onclick="goSecretMemo()" style="width:100%;padding:20px;border:1.5px solid var(--card-border);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:middle;">lock</span> ひみつメモを開く</button></div>';
     
   } else {
     // カスタムタブ
@@ -6799,7 +6826,7 @@ function renderHouseHomeTab(house) {
     html += '<div class="bulk-care-row">';
     for (const act of actions) {
       html += '<button class="bulk-care-btn" onclick="openBulkCareModal(\''+act.id+'\')">';
-      html += '<span class="bulk-care-icon">'+act.icon+'</span>';
+      html += '<span class="bulk-care-icon">'+renderCareIcon(act.icon, act.name)+'</span>';
       html += '<span class="bulk-care-label">'+escapeHtml(act.name)+'</span>';
       html += '</button>';
     }
@@ -7217,12 +7244,12 @@ function renderTabCare(pet, careItems) {
   html += '<div class="quick-care-grid">';
   for (const item of careItems) {
     html += '<button class="quick-care-btn" onclick="logCare(\''+item.id+'\', event)">';
-    html += '<span class="quick-care-icon">'+escapeHtml(item.icon)+'</span>';
+    html += '<span class="quick-care-icon">'+renderCareIcon(item.icon, item.label)+'</span>';
     html += '<span class="quick-care-label">'+escapeHtml(item.label)+'</span>';
     html += '</button>';
   }
   html += '</div>';
-  html += '<button class="care-edit-btn" onclick="openCareEditModal()">✏️ お世話項目をへんしゅう</button>';
+  html += '<button class="care-edit-btn" onclick="openCareEditModal()"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">edit</span> お世話項目をへんしゅう</button>';
   html += '</div>';
   // 繰り返しタスク
   html += '<div class="section" id="taskListSection">';
@@ -7278,7 +7305,7 @@ function renderTabCare(pet, careItems) {
       const name = care ? care.label : (log.careName || '不明');
       html += '<div class="recent-care-item">';
       html += '<button class="recent-care-time recent-care-time-btn" onclick="openCareTimeEditModal(\''+targetDateKey+'\', '+log.timestamp+')" title="タップで時間を編集">'+timeStr+'</button>';
-      html += '<div class="recent-care-icon">'+escapeHtml(icon)+'</div>';
+      html += '<div class="recent-care-icon">'+renderCareIcon(icon, name)+'</div>';
       html += '<div class="recent-care-name">';
       html += '<div class="recent-care-name"><span class="recent-care-name-text">'+escapeHtml(name)+'</span>'+(authorTag ? '<div class="recent-care-author-wrap">'+authorTag+'</div>' : '<div class="recent-care-author-wrap"></div>')+'<button class="recent-care-delete" onclick="deleteCareLog(\''+targetDateKey+'\', '+log.timestamp+')">✕</button></div>';
       html += '</div>';
@@ -9185,10 +9212,10 @@ function renderTown() {
 
   // ── サブタブ
   html += '<div class="town-sub-tabs">';
-  html += '<button class="town-sub-tab '+(townSubTab==='town'  ?'active':'')+'" onclick="setTownSubTab(\'town\')">🏘 タウン</button>';
-  html += '<button class="town-sub-tab '+(townSubTab==='search'?'active':'')+'" onclick="setTownSubTab(\'search\')">🔍 検索</button>';
-  html += '<button class="town-sub-tab '+(townSubTab==='transit'?'active':'')+'" onclick="setTownSubTab(\'transit\')">🚆 路線</button>';
-  html += '<button class="town-sub-tab '+(townSubTab==='fav'   ?'active':'')+'" onclick="setTownSubTab(\'fav\')">♡ お気に入り</button>';
+  html += '<button class="town-sub-tab '+(townSubTab==='town'  ?'active':'')+'" onclick="setTownSubTab(\'town\')"><span class="material-symbols-rounded">location_city</span></button>';
+  html += '<button class="town-sub-tab '+(townSubTab==='search'?'active':'')+'" onclick="setTownSubTab(\'search\')"><span class="material-symbols-rounded">search</span></button>';
+  html += '<button class="town-sub-tab '+(townSubTab==='transit'?'active':'')+'" onclick="setTownSubTab(\'transit\')"><span class="material-symbols-rounded">train</span></button>';
+  html += '<button class="town-sub-tab '+(townSubTab==='fav'   ?'active':'')+'" onclick="setTownSubTab(\'fav\')"><span class="material-symbols-rounded">favorite</span></button>';
   html += '</div>';
 
   // コンテンツエリア（白い角丸背景）
@@ -9518,7 +9545,7 @@ function renderTown() {
         html += '<div style="padding:14px 16px 4px;display:flex;align-items:center;justify-content:space-between;">';
         html += '<div style="font-size:12px;color:var(--ink-dark);font-weight:800;">'+escapeHtml(folder.icon||'📁')+' '+escapeHtml(folder.name)+' <span style="color:var(--ink-light);font-weight:500;">('+items.length+'件)</span></div>';
         html += '<div style="display:flex;gap:6px;">';
-        html += '<button onclick="openFolderEditModal(\''+cat+'\',\''+folder.id+'\')" style="background:none;border:none;font-size:11px;color:var(--ink-sub);cursor:pointer;padding:2px 6px;">✏️</button>';
+        html += '<button onclick="openFolderEditModal(\''+cat+'\',\''+folder.id+'\')" style="background:none;border:none;font-size:11px;color:var(--ink-sub);cursor:pointer;padding:2px 6px;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button>';
         html += '</div></div>';
         if (items.length === 0) {
           html += '<div style="padding:8px 16px 4px;font-size:11px;color:var(--ink-light);">空フォルダ。♡や場所追加で入れてね</div>';
@@ -9581,7 +9608,7 @@ function renderTown() {
     // 検索バー
     html += '<div class="town-search-wrap">';
     html += '<div class="town-search-input-wrap">';
-    html += '<span class="town-search-icon">🔍</span>';
+    html += '<span class="town-search-icon"><span class="material-symbols-rounded" style="font-size:16px;">search</span></span>';
     html += '<input type="text" class="town-search-input" id="townSearchInput" placeholder="場所のなまえ・住所・メモで探す" value="'+escapeHtml(townSearchQuery)+'">';
     if (townSearchQuery) html += '<button class="town-search-clear" onclick="clearTownSearch()">✕</button>';
     html += '</div>';
@@ -10041,7 +10068,7 @@ function renderSettings() {
     html += '<div class="house-card" style="cursor:default;"><div class="house-icon" style="font-size:22px;">'+(h.icon || '🏡')+'</div>';
     html += '<div class="house-info"><div class="house-name" style="font-size:14px;">'+escapeHtml(h.name)+'</div>';
     html += '<div class="house-sub">'+petCount+'匹</div></div>';
-    html += '<button class="btn btn-secondary btn-mini" style="margin-right:4px;" onclick="openEditHouseModal(\''+h.id+'\')">✏️</button>';
+    html += '<button class="btn btn-secondary btn-mini" style="margin-right:4px;" onclick="openEditHouseModal(\''+h.id+'\')"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button>';
     if (data.houses.length > 1) html += '<button class="btn btn-danger btn-mini" onclick="confirmDeleteHouse(\''+h.id+'\')">削除</button>';
     html += '</div>';
   }
@@ -10204,6 +10231,14 @@ function getModeTabsForMode(mode) {
 function saveModeTabsForMode(mode, tabs) {
   try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
 }
+const TAB_ICONS = {
+  today: 'wb_sunny', news: 'newspaper', stamp: 'check_circle',
+  routine: 'repeat', diary: 'edit_note', planner: 'event_note',
+  collection: 'collections_bookmark', resume: 'person', secret: 'lock',
+  memo: 'sticky_note_2', goods: 'shopping_cart', rules: 'gavel',
+  home: 'home', care: 'pets', health: 'health_and_safety',
+  town: 'location_city', growth: 'trending_up', school: 'school'
+};
 function renderModePageTabs(mode) {
   const tabs = getModeTabsForMode(mode);
   const cur = currentModeTab[mode] || tabs[0]?.id;
@@ -10212,7 +10247,7 @@ function renderModePageTabs(mode) {
   // 編集ボタン
   html += '<div style="display:flex;justify-content:flex-end;padding:0 16px 2px;">';
   html += '<button onclick="modeTabEditMode=!modeTabEditMode;_suppressScrollTop=true;render();" style="background:none;border:none;font-size:11px;color:var(--ink-sub);cursor:pointer;font-family:inherit;padding:2px 6px;">';
-  html += modeTabEditMode ? '完了' : '✏️';
+  html += modeTabEditMode ? '完了' : '<span class="material-symbols-rounded" style="font-size:14px;">edit</span>';
   html += '</button></div>';
 
   html += '<div class="mode-page-tabs">';
@@ -10221,7 +10256,9 @@ function renderModePageTabs(mode) {
     const active = (cur === t.id) ? ' active' : '';
     if (modeTabEditMode) {
       html += '<div class="mode-page-tab-edit">';
-      html += '<button onclick="setModePageTab(\''+mode+'\',\''+t.id+'\')" class="mode-page-tab'+active+'" style="flex:1;">'+escapeHtml(t.label)+'</button>';
+      const iconNameE = TAB_ICONS[t.id];
+      const iconHtmlE = iconNameE ? '<span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;margin-right:3px;">'+iconNameE+'</span>' : '';
+      html += '<button onclick="setModePageTab(\''+mode+'\',\''+t.id+'\')" class="mode-page-tab'+active+'" style="flex:1;">'+iconHtmlE+escapeHtml(t.label)+'</button>';
       html += '<div style="display:flex;flex-direction:column;gap:1px;">';
       html += '<button onclick="modeTabMoveUp(\''+mode+'\','+i+')" style="background:none;border:none;font-size:10px;cursor:pointer;color:var(--ink-sub);padding:1px 4px;" '+(i===0?'disabled':'')+'">▲</button>';
       html += '<button onclick="modeTabMoveDown(\''+mode+'\','+i+')" style="background:none;border:none;font-size:10px;cursor:pointer;color:var(--ink-sub);padding:1px 4px;" '+(i===tabs.length-1?'disabled':'')+'">▼</button>';
@@ -10229,7 +10266,9 @@ function renderModePageTabs(mode) {
       html += '<button onclick="modeTabDelete(\''+mode+'\','+i+')" style="background:none;border:none;font-size:13px;cursor:pointer;color:#D05050;padding:2px 6px;">✕</button>';
       html += '</div>';
     } else {
-      html += '<button class="mode-page-tab'+active+'" onclick="setModePageTab(\''+mode+'\',\''+t.id+'\')">'+escapeHtml(t.label)+'</button>';
+      const iconName = TAB_ICONS[t.id];
+      const iconHtml = iconName ? '<span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;margin-right:3px;">'+iconName+'</span>' : '';
+      html += '<button class="mode-page-tab'+active+'" onclick="setModePageTab(\''+mode+'\',\''+t.id+'\')">'+iconHtml+escapeHtml(t.label)+'</button>';
     }
   }
   // ＋追加ボタン（編集モード時のみ）
@@ -10435,7 +10474,7 @@ function renderSecretMemoEdit() {
   html += '<button onclick="secretMemoEditItem=null; secretMemoIsEditing=false; _suppressScrollTop=true; render();" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-dark);padding:4px;">‹</button>';
   html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);">'+(isNew?'🔑 あたらしいメモ':'🔑 '+escapeHtml(item.title || '無題'))+'</div>';
   if (!isNew && !isEditing) {
-    html += '<button onclick="secretMemoIsEditing=true; _suppressScrollTop=true; render();" style="background:none;border:1px solid var(--line);border-radius:100px;padding:4px 14px;font-size:12px;font-weight:700;color:var(--accent-deep);cursor:pointer;font-family:inherit;">✏️</button>';
+    html += '<button onclick="secretMemoIsEditing=true; _suppressScrollTop=true; render();" style="background:none;border:1px solid var(--line);border-radius:100px;padding:4px 14px;font-size:12px;font-weight:700;color:var(--accent-deep);cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button>';
   }
   html += '</div>';
 
@@ -11229,7 +11268,7 @@ function renderResumeTab() {
   
   // ヘッダー
   html += '<div class="section-head"><h2 class="section-title">📋 わたしの履歴書</h2>';
-  html += '<button class="section-link" onclick="openResumeEdit()">✏️</button></div>';
+  html += '<button class="section-link" onclick="openResumeEdit()"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button></div>';
   
   // 基本情報
   html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
@@ -13221,7 +13260,7 @@ function renderTransitSubTab() {
       html += '</div>';
       
       // 編集ボタン
-      html += '<button type="button" onclick="openTransitRouteModal(\''+r.id+'\')" style="background:transparent;border:none;color:var(--ink-light);font-size:14px;cursor:pointer;padding:4px 8px;">✏️</button>';
+      html += '<button type="button" onclick="openTransitRouteModal(\''+r.id+'\')" style="background:transparent;border:none;color:var(--ink-light);font-size:14px;cursor:pointer;padding:4px 8px;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button>';
       html += '</div>';
     }
     html += '</div>';
@@ -13635,7 +13674,7 @@ function buildCustomPlaceCardHtml(c, cat) {
   // ボタン行
   html += '<div class="place-card-status-row">';
   html += '<div class="place-card-status-actions" style="margin-left:0;">';
-  html += '<button class="place-card-memo-btn" onclick="openCustomPlaceModal(\''+cat+'\',\''+idEsc+'\')" title="編集">✏️</button>';
+  html += '<button class="place-card-memo-btn" onclick="openCustomPlaceModal(\''+cat+'\',\''+idEsc+'\')" title="編集"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button>';
   html += '<button class="place-card-memo-btn" onclick="openFolderSelectModal(\''+cat+'\',\''+idEsc+'\',\'custom\')" title="フォルダ移動">📁</button>';
   html += '<button class="place-card-memo-btn" onclick="deleteCustomPlace(\''+cat+'\',\''+idEsc+'\')" title="削除" style="color:#D85050;">🗑</button>';
   html += '</div></div>';
@@ -14408,7 +14447,7 @@ function renderTabKidsChart(pet) {
   
   let html = '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">📋 '+escapeHtml(pet.name)+'のカルテ</h2>';
-  html += '<button class="section-link" onclick="openKidsChartEdit(\''+pet.id+'\')">✏️</button></div>';
+  html += '<button class="section-link" onclick="openKidsChartEdit(\''+pet.id+'\')"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button></div>';
   
   // 基本情報
   html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
@@ -14628,7 +14667,7 @@ function renderTabPetChart(pet) {
   
   // ヘッダー
   html += '<div class="section-head"><h2 class="section-title">📋 '+escapeHtml(pet.name)+'のカルテ</h2>';
-  html += '<button class="section-link" onclick="openPetChartEdit(\''+pet.id+'\')">✏️</button></div>';
+  html += '<button class="section-link" onclick="openPetChartEdit(\''+pet.id+'\')"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button></div>';
   
   // 基本情報カード
   html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
@@ -14771,7 +14810,7 @@ function renderTabVaccine(pet) {
         html += '<img class="vaccine-photo" src="' + photos[r.photoId] + '" onclick="openPhotoViewer(\'' + r.photoId + '\')" alt="">';
       }
       html += '<div class="vaccine-btns">';
-      html += '<button class="vaccine-btn-edit" onclick="openVaccineModal(\'' + pet.id + '\',\'' + r.id + '\')">✏️</button>';
+      html += '<button class="vaccine-btn-edit" onclick="openVaccineModal(\'' + pet.id + '\',\'' + r.id + '\')"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button>';
       html += '<button class="vaccine-btn-del" onclick="deleteVaccineRecord(\'' + pet.id + '\',\'' + r.id + '\')">🗑</button>';
       html += '</div></div>';
     }
@@ -14890,7 +14929,7 @@ function renderTabWeight(pet) {
       html += '<div class="weight-card-left"><span class="weight-date">' + r.date + '</span>';
       html += '<span class="weight-val">' + parseFloat(r.weight).toFixed(2) + ' kg</span></div>';
       html += '<div class="weight-btns">';
-      html += '<button class="weight-btn-edit" onclick="openWeightModal(\'' + pet.id + '\',\'' + r.id + '\')">✏️</button>';
+      html += '<button class="weight-btn-edit" onclick="openWeightModal(\'' + pet.id + '\',\'' + r.id + '\')"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button>';
       html += '<button class="weight-btn-del" onclick="deleteWeightRecord(\'' + pet.id + '\',\'' + r.id + '\')">🗑</button>';
       html += '</div></div>';
     }
