@@ -234,7 +234,7 @@
     padding: 20px 12px 22px;
     margin: 0 -4px 8px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.7);
+    border:1.5px solid var(--card-border);
     box-shadow: 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
     isolation: isolate;
   }
@@ -265,7 +265,7 @@
   .hero-user-chip {
     display: inline-flex; align-items: center; gap: 6px;
     background: rgba(255,255,255,0.6);
-    border: 1px solid rgba(255,255,255,0.7);
+    border:1.5px solid var(--card-border);
     padding: 6px 12px;
     border-radius: 100px;
     font-family: inherit;
@@ -280,7 +280,7 @@
   .hero-theme-btn {
     width: 34px; height: 34px;
     background: rgba(255,255,255,0.6);
-    border: 1px solid rgba(255,255,255,0.7);
+    border:1.5px solid var(--card-border);
     border-radius: 50%;
     font-size: 14px;
     cursor: pointer; font-family: inherit;
@@ -404,7 +404,7 @@
     align-items: center; justify-content: center;
     gap: 6px;
     background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
-    border: 1px solid rgba(255,255,255,0.7);
+    border:1.5px solid var(--card-border);
     border-radius: 20px;
     padding: 8px 4px;
     cursor: pointer; font-family: inherit;
@@ -716,24 +716,36 @@
     0%, 100% { opacity: 0.55; transform: scale(0.9) rotate(var(--rot, 0deg)); }
     50% { opacity: 1; transform: scale(1.1) rotate(var(--rot, 0deg)); }
   }
-  .section { padding: 18px 16px 0; }
+  .section { padding: 14px 14px 0; }
+  /* コンテンツエリアの白い角丸背景（全モード共通） */
+  .mode-content-wrap {
+    margin: 10px 10px 0;
+    background: rgba(255,255,255,0.72);
+    border-radius: 20px 20px 0 0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.8);
+    border-bottom: none;
+    min-height: 60vh;
+    padding-bottom: 100px;
+  }
   .section-head {
     display: flex; align-items: flex-end; justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
   .section-title {
-    font-size: 15px; font-weight: 700; color: var(--ink-dark);
-    letter-spacing: 1.2px; margin: 0;
-    display: flex; align-items: center; gap: 6px;
-    padding-bottom: 6px;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'><path d='M2,4 Q10,2 18,4 T36,4 T54,3 T72,5 T90,4 T108,3 T126,5 T144,4 T162,3 T180,5 T198,4' stroke='%23C8956A' stroke-width='2.5' fill='none' stroke-linecap='round' opacity='0.85'/></svg>");
+    font-size: 13px; font-weight: 700; color: var(--ink-dark);
+    letter-spacing: 0.8px; margin: 0;
+    display: flex; align-items: center; gap: 5px;
+    padding-bottom: 5px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'><path d='M2,4 Q10,2 18,4 T36,4 T54,3 T72,5 T90,4 T108,3 T126,5 T144,4 T162,3 T180,5 T198,4' stroke='%23C8956A' stroke-width='2' fill='none' stroke-linecap='round' opacity='0.7'/></svg>");
     background-repeat: no-repeat;
     background-position: 0 100%;
-    background-size: auto 6px;
+    background-size: auto 5px;
   }
   .section-title::before {
     content: ''; display: inline-block;
-    width: 6px; height: 6px; background: var(--accent); border-radius: 50%;
+    width: 5px; height: 5px; background: var(--accent); border-radius: 50%;
   }
   .section-link {
     background: none; border: none;
@@ -1172,7 +1184,17 @@
   .pet-tab-btn-slim .pet-tab-icon {
     font-size: 14px;
   }
-  .pet-tab-content { border-top: 2px solid var(--mint); }
+  .pet-tab-content {
+    margin: 10px 10px 0;
+    background: rgba(255,255,255,0.72);
+    border-radius: 20px 20px 0 0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.8);
+    border-bottom: none;
+    min-height: 40vh;
+    padding-bottom: 100px;
+  }
   
   /* ── きょうのお世話（一括登録） ─────────── */
   .bulk-care-row {
@@ -1184,7 +1206,7 @@
   .bulk-care-btn {
     background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.50) 100%);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.7);
+    border:1.5px solid var(--card-border);
     border-radius: 10px;
     padding: 6px 2px 4px;
     cursor: pointer;
@@ -1220,7 +1242,7 @@
   .me-menu-item {
     background: linear-gradient(135deg, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.30) 50%, rgba(255,255,255,0.45) 100%);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.7);
+    border:1.5px solid var(--card-border);
     border-radius: 16px;
     padding: 14px 4px 10px;
     cursor: pointer;
@@ -1665,26 +1687,40 @@
     width: 100%; max-width: 480px;
     background: var(--surface);
     display: flex; justify-content: space-around;
-    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--line-soft);
-    border-radius: 20px 20px 0 0; z-index: 1500;
+    border-radius: 16px 16px 0 0; z-index: 1500;
   }
   .nav-btn {
     background: none; border: none; font-family: inherit;
     color: var(--ink-sub); font-size: 10px;
     display: flex; flex-direction: column;
-    align-items: center; gap: 2px;
-    cursor: pointer; padding: 6px 14px;
-    border-radius: 12px; font-weight: 600;
+    align-items: center; gap: 1px;
+    cursor: pointer; padding: 4px 14px;
+    border-radius: 10px; font-weight: 600;
   }
-  .nav-btn .nav-icon { font-size: 20px; }
+  .nav-btn .nav-icon {
+    font-size: 22px;
+    /* シルエット化：絵文字を黒く塗りつぶし */
+    color: transparent;
+    text-shadow: 0 0 0 var(--ink-dark);
+    transition: text-shadow 0.2s ease;
+  }
+  .nav-btn.active .nav-icon {
+    /* アクティブ時はテーマカラーで色付け */
+    text-shadow: 0 0 0 var(--mint-deep);
+  }
+  .nav-back-btn .nav-icon {
+    text-shadow: 0 0 0 var(--accent-deep) !important;
+  }
   .nav-btn .nav-en {
-    font-size: 9.5px;
-    color: var(--ink-sub);
+    font-size: 9px;
+    color: transparent;
     font-weight: 700;
     line-height: 1;
-    margin-top: 2px;
+    margin-top: 1px;
     letter-spacing: 0.4px;
+    height: 11px;
   }
   .nav-btn.active { color: var(--mint-deep); background: var(--mint-bg); }
   .nav-btn.active .nav-en { color: var(--mint-deep); }
@@ -1692,7 +1728,7 @@
     color: var(--accent-deep) !important;
     background: var(--accent-bg) !important;
   }
-  .nav-back-btn .nav-en { color: var(--accent-deep); }
+  .nav-back-btn .nav-en { color: var(--accent-deep) !important; }
   .nav-back-btn:active { transform: scale(0.92); }
   .modal {
     position: fixed; inset: 0;
@@ -1711,8 +1747,8 @@
     animation: slideUp 0.3s ease;
   }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal-title { font-size: 17px; font-weight: 700; color: var(--ink-dark); margin: 0 0 4px; text-align: center; letter-spacing: 1px; }
-  .modal-sub { text-align: center; color: var(--ink-sub); font-size: 11.5px; margin-bottom: 18px; }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--ink-dark); margin: 0 0 4px; text-align: center; letter-spacing: 0.8px; }
+  .modal-sub { text-align: center; color: var(--ink-sub); font-size: 11px; margin-bottom: 16px; }
   .form-group { margin-bottom: 14px; }
   .form-label { display: block; font-size: 11.5px; font-weight: 700; color: var(--ink-dark); margin-bottom: 6px; }
   
@@ -1898,13 +1934,14 @@
     100% { opacity: 0; transform: translate(var(--dx,0), var(--dy,-40px)) scale(1.1); }
   }
   .empty-state {
-    background: var(--surface); border: 1px dashed var(--line);
-    border-radius: 16px; padding: 36px 20px;
-    text-align: center; color: var(--ink-sub); margin: 16px;
+    background: rgba(255,255,255,0.5);
+    border: 1.5px dashed var(--accent);
+    border-radius: 14px; padding: 24px 16px;
+    text-align: center; color: var(--ink-sub); margin: 12px;
   }
-  .empty-state .emoji { font-size: 44px; margin-bottom: 12px; }
-  .empty-state-title { color: var(--ink-dark); font-weight: 700; margin-bottom: 6px; font-size: 15px; }
-  .empty-state-text { font-size: 12.5px; line-height: 1.7; margin-bottom: 16px; }
+  .empty-state .emoji { font-size: 32px; margin-bottom: 8px; }
+  .empty-state-title { color: var(--ink-dark); font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+  .empty-state-text { font-size: 11.5px; line-height: 1.6; margin-bottom: 14px; }
   .badges-row { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; }
   .badge {
     flex-shrink: 0; background: var(--surface);
@@ -2616,7 +2653,7 @@
   .news-ticker {
     margin: 8px 12px 4px;
     background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.5) 100%);
-    border: 1px solid rgba(255,255,255,0.7);
+    border:1.5px solid var(--card-border);
     border-radius: 14px;
     padding: 10px 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -3204,24 +3241,7 @@
   <p class="modal-sub">まずは あなたのことを 教えてね<br><span style="font-size:10.5px;color:var(--ink-light);">登録は最初の1回だけです</span></p>
   
   <div class="form-group"><label class="form-label">テーマ<span style="color:var(--ink-light);font-size:10px;margin-left:6px;">タップで色がわるよ</span></label>
-    <div class="onb-theme-row" id="onbThemeRow">
-      <button type="button" class="onb-theme-btn" data-theme="kurogoma" onclick="setThemeFromOnboarding('kurogoma')">
-        <div class="onb-theme-dots"><span style="background:#2A2A30"></span><span style="background:#58585F"></span><span style="background:#E8C878"></span></div>
-        <div class="onb-theme-label">黒ごま</div>
-      </button>
-      <button type="button" class="onb-theme-btn" data-theme="tofu" onclick="setThemeFromOnboarding('tofu')">
-        <div class="onb-theme-dots"><span style="background:#FAFAF6"></span><span style="background:#8A8068"></span><span style="background:#6878A0"></span></div>
-        <div class="onb-theme-label">おとうふ</div>
-      </button>
-      <button type="button" class="onb-theme-btn" data-theme="cream_soda" onclick="setThemeFromOnboarding('cream_soda')">
-        <div class="onb-theme-dots"><span style="background:#D8F5D8"></span><span style="background:#48A048"></span><span style="background:#F06060"></span></div>
-        <div class="onb-theme-label">ソーダ</div>
-      </button>
-      <button type="button" class="onb-theme-btn" data-theme="cinderella" onclick="setThemeFromOnboarding('cinderella')">
-        <div class="onb-theme-dots"><span style="background:#FFFFFF"></span><span style="background:#87CEEB"></span><span style="background:#E8C868"></span></div>
-        <div class="onb-theme-label">シンデレラ</div>
-      </button>
-    </div>
+    <div class="theme-grid" id="onbThemeGrid"></div>
   </div>
   
   <div class="form-group"><label class="form-label">おなまえ<span style="color:var(--ink-sub);font-weight:500;font-size:10.5px;margin-left:6px;">（ニックネームOK）</span><span style="color:var(--accent);font-size:10px;margin-left:6px;">必須</span></label>
@@ -3467,6 +3487,40 @@
   <div class="modal-actions">
     <button class="btn btn-secondary" onclick="closeModal('quickVaccineModal')">とじる</button>
     <button class="btn btn-primary" onclick="saveQuickVaccine()">＋ 接種記録</button>
+  </div>
+</div></div>
+
+<!-- 🚆 路線編集モーダル -->
+<div class="modal" id="transitRouteModal"><div class="modal-content">
+  <h2 class="modal-title" id="transitRouteModalTitle">新しい路線</h2>
+  
+  <div class="form-group"><label class="form-label">ルート名</label>
+    <input type="text" class="form-input" id="transitRouteNameInput" maxlength="30" placeholder="例：自宅 → ゆきちゃんの家">
+  </div>
+  
+  <div class="form-group"><label class="form-label">ジャンル</label>
+    <div class="place-grid" id="transitRouteGenreGrid"></div>
+  </div>
+  
+  <div class="form-group"><label class="form-label">出発駅・地点</label>
+    <input type="text" class="form-input" id="transitRouteFromInput" maxlength="40" placeholder="例：JR茨木">
+  </div>
+  
+  <div class="form-group"><label class="form-label">到着駅・地点</label>
+    <input type="text" class="form-input" id="transitRouteToInput" maxlength="40" placeholder="例：南草津">
+  </div>
+  
+  <div class="form-group"><label class="form-label">メモ（任意）</label>
+    <input type="text" class="form-input" id="transitRouteMemoInput" maxlength="60" placeholder="例：水曜の夜に行く">
+  </div>
+  
+  <div id="transitRouteDeleteBtn" style="display:none;margin-top:8px;">
+    <button class="btn btn-secondary" style="width:100%;color:var(--accent-deep);font-size:12px;" onclick="deleteTransitRoute()">この路線を削除する</button>
+  </div>
+  
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal('transitRouteModal')">やめる</button>
+    <button class="btn btn-primary" onclick="saveTransitRoute()">ほぞん</button>
   </div>
 </div></div>
 
@@ -4210,13 +4264,32 @@ const THEMES = {
   dalmatian_b: { name: 'ダルメシアン黒', emoji: '🖤', pattern: 'dalmatian_inv', cardShape: 'diamond',
     vars: { '--bg':'#1A1A1A', '--surface':'#2A2A2A', '--surface-warm':'#2A2A2A', '--line':'#484848', '--line-soft':'#3A3A3A', '--ink-dark':'#F8F8F0', '--ink':'#E8E8E0', '--ink-sub':'#C0C0B8', '--ink-light':'#888888', '--mint':'#D0D0C8', '--mint-deep':'#A8A8A0', '--mint-bg':'#484848', '--accent':'#D4AA40', '--accent-deep':'#B08820', '--accent-bg':'#3A3420', '--today-bg':'#3A3A3A', '--today-border':'#808070', '--warm-yellow':'#D4AA40', '--soft-purple':'#888888' },
     paperColor: 'rgba(255,255,255,0.10)',
-    headerGrad: 'linear-gradient(180deg, #282828 0%, #1A1A1A 100%)' }
+    headerGrad: 'linear-gradient(180deg, #282828 0%, #1A1A1A 100%)' },
+  // ===== 無地（柄なし）×4 =====
+  plain_white: { name: 'シロ', emoji: '🤍', pattern: 'plain', simple: true, cardShape: 'square',
+    vars: { '--bg':'#FAFAFA', '--surface':'#FFFFFF', '--surface-warm':'#F4F4F2', '--line':'#E0E0E0', '--line-soft':'#EAEAEA', '--ink-dark':'#2A2A2A', '--ink':'#48484A', '--ink-sub':'#787878', '--ink-light':'#A8A8A8', '--mint':'#A0B8D0', '--mint-deep':'#6080A8', '--mint-bg':'#D8DCE8', '--accent':'#A89880', '--accent-deep':'#785838', '--accent-bg':'#EAE2D6', '--today-bg':'#FFF6E8', '--today-border':'#E8D8B8', '--warm-yellow':'#E8D080', '--soft-purple':'#B0A0C0' },
+    paperColor: 'rgba(0,0,0,0)',
+    headerGrad: 'linear-gradient(180deg, #FFFFFF 0%, #F4F4F2 100%)' },
+  plain_pink: { name: 'モモ', emoji: '🌸', pattern: 'plain', cardShape: 'square',
+    vars: { '--bg':'#FCE8EE', '--surface':'#FFFFFF', '--surface-warm':'#FCE0E8', '--line':'#F0C8D2', '--line-soft':'#F8D8DE', '--ink-dark':'#5A2838', '--ink':'#7A4050', '--ink-sub':'#A06878', '--ink-light':'#D0A0AC', '--mint':'#F0A8B8', '--mint-deep':'#D08090', '--mint-bg':'#FACCD8', '--accent':'#D85878', '--accent-deep':'#B03050', '--accent-bg':'#FCD0DC', '--today-bg':'#FCE8EE', '--today-border':'#F0B0BC', '--warm-yellow':'#F8D8A8', '--soft-purple':'#C8A0B8' },
+    paperColor: 'rgba(0,0,0,0)',
+    headerGrad: 'linear-gradient(180deg, #FFF0F4 0%, #FCDCE4 100%)' },
+  plain_mint: { name: 'ハッカ', emoji: '🌿', pattern: 'plain', cardShape: 'square',
+    vars: { '--bg':'#DCF4E8', '--surface':'#FFFFFF', '--surface-warm':'#E0F0E5', '--line':'#B8D8C5', '--line-soft':'#CCE4D5', '--ink-dark':'#1F4030', '--ink':'#365840', '--ink-sub':'#608868', '--ink-light':'#90B098', '--mint':'#80C8A0', '--mint-deep':'#509878', '--mint-bg':'#B8DCC8', '--accent':'#D89878', '--accent-deep':'#A06848', '--accent-bg':'#F0DCC8', '--today-bg':'#FCEAEF', '--today-border':'#F4C8D2', '--warm-yellow':'#F8E4A0', '--soft-purple':'#B0A0C8' },
+    paperColor: 'rgba(0,0,0,0)',
+    headerGrad: 'linear-gradient(180deg, #E8F8EE 0%, #D0EEDA 100%)' },
+  plain_gray: { name: 'グレー', emoji: '🩶', pattern: 'plain', simple: true, cardShape: 'square',
+    vars: { '--bg':'#EEEEEE', '--surface':'#FFFFFF', '--surface-warm':'#E8E8E6', '--line':'#C8C8C8', '--line-soft':'#DCDCDC', '--ink-dark':'#202020', '--ink':'#383838', '--ink-sub':'#686868', '--ink-light':'#A0A0A0', '--mint':'#9090A8', '--mint-deep':'#606078', '--mint-bg':'#D0D0D8', '--accent':'#888080', '--accent-deep':'#585050', '--accent-bg':'#D8D2D2', '--today-bg':'#F0EAEA', '--today-border':'#B8A8A8', '--warm-yellow':'#C8B888', '--soft-purple':'#A09098' },
+    paperColor: 'rgba(0,0,0,0)',
+    headerGrad: 'linear-gradient(180deg, #F4F4F4 0%, #E0E0E0 100%)' }
 };
 
 function paperBackground(theme) {
   const c = theme.paperColor;
   const ginghamC = theme.ginghamColor || c;
   switch (theme.pattern) {
+    case 'plain':
+      return 'none';
     case 'dot':
       return 'radial-gradient('+c+' 1px, transparent 1px)';
     case 'polka':
@@ -4302,6 +4375,7 @@ function paperBackground(theme) {
 }
 function paperBackgroundSize(theme) {
   switch (theme.pattern) {
+    case 'plain': return 'auto';
     case 'dot': return '10px 10px';
     case 'polka': return '46px 46px, 46px 46px';
     case 'stripe': return 'auto';
@@ -4407,9 +4481,9 @@ function applyTheme(themeId) {
     root.style.setProperty('--card-border', 'rgba(180,170,210,0.25)');
     root.style.setProperty('--card-divider', dividerColor);
   } else {
-    // 明るいテーマ：白寄りの半透明カード
+    // 明るいテーマ：白寄りの半透明カード＋アクセントカラーの枠線
     root.style.setProperty('--card-bg', 'rgba(255,255,255,0.78)');
-    root.style.setProperty('--card-border', 'rgba(255,255,255,0.9)');
+    root.style.setProperty('--card-border', _hexToRgba(accentColor, 0.22));
     root.style.setProperty('--card-divider', dividerColor);
   }
   
@@ -4499,15 +4573,42 @@ function setThemeFromOnboarding(themeId) {
   data.themeId = themeId;
   applyTheme(themeId);
   saveData();
-  // 選択状態を更新
-  const btns = document.querySelectorAll('#onbThemeRow .onb-theme-btn');
-  btns.forEach(b => b.classList.toggle('selected', b.dataset.theme === themeId));
+  // 選択状態を更新（描画し直し）
+  highlightOnbThemeBtn();
+  // モーダル背景もテーマに合わせる
+  _updateOnbModalBg(THEMES[themeId]);
 }
 
+// オンボーディング用の無料テーマ一覧（4既存＋4無地）
+const ONB_FREE_THEMES = ['kurogoma', 'tofu', 'cream_soda', 'cinderella', 'plain_white', 'plain_pink', 'plain_mint', 'plain_gray'];
+
 function highlightOnbThemeBtn() {
+  const grid = document.getElementById('onbThemeGrid');
+  if (!grid) return;
   const cur = data.themeId || 'mint';
-  const btns = document.querySelectorAll('#onbThemeRow .onb-theme-btn');
-  btns.forEach(b => b.classList.toggle('selected', b.dataset.theme === cur));
+  
+  let html = '';
+  for (const id of ONB_FREE_THEMES) {
+    const theme = THEMES[id];
+    if (!theme) continue;
+    const bgColor = theme.vars['--bg'];
+    const textColor = theme.vars['--ink-dark'];
+    const lineColor = theme.vars['--line'];
+    const accentColor = theme.vars['--accent'];
+    const isSelected = cur === id;
+    const pattern = paperBackground(theme).replace(/'/g, '&#39;');
+    const patternSize = paperBackgroundSize(theme);
+    const borderStyle = isSelected
+      ? 'border:2.5px solid '+accentColor+';'
+      : 'border:1.5px solid '+lineColor+';';
+    html += '<button type="button" class="theme-btn '+(isSelected?'selected':'')+'" data-theme-id="'+id+'" onclick="setThemeFromOnboarding(\''+id+'\')" style="background-color:'+bgColor+';background-image:'+pattern+';background-size:'+patternSize+';color:'+textColor+';'+borderStyle+'transition:background 0.25s ease, border 0.25s ease;">';
+    html += '<div class="theme-swatch">';
+    html += '<div class="theme-swatch-bg" style="background:'+theme.vars['--bg']+'"></div>';
+    html += '<div class="theme-swatch-mint" style="background:'+theme.vars['--mint']+'"></div>';
+    html += '<div class="theme-swatch-accent" style="background:'+theme.vars['--accent']+'"></div>';
+    html += '</div><div class="theme-name" style="color:'+textColor+';font-weight:700;">'+theme.emoji+' '+theme.name+'</div></button>';
+  }
+  grid.innerHTML = html;
 }
 const PET_TYPE_NAMES = { 
   dog: 'いぬ', cat: 'ねこ', small: '小動物', aquatic: '水生生物',
@@ -5762,7 +5863,10 @@ function renderMeMode() {
   
   // ページタブ（2列・下向き）
   html += renderModePageTabs('me');
-  html += '<div style="border-top:2px solid var(--mint);margin:0 12px 0;"></div>';
+  html += '<div style="height:2px;background:linear-gradient(90deg,transparent,var(--mint),var(--accent),var(--mint),transparent);margin:0 0 0;opacity:0.6;"></div>';
+  
+  // コンテンツエリア（白い角丸背景）
+  html += '<div class="mode-content-wrap">';
   
   const tab = currentModeTab['me'] || 'today';
   
@@ -5804,11 +5908,11 @@ function renderMeMode() {
     html += '</div>';
     html += '<div style="padding:4px 16px 8px;">';
     html += '<div class="section-head"><h2 class="section-title">最近のきろく</h2></div>';
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:16px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;padding:24px 16px;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:16px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;padding:24px 16px;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
     html += '</div>';
     
   } else if (tab === 'diary') {
-    html += '<div style="padding:16px;"><button onclick="goMeDiary()" style="width:100%;padding:20px;border:1px solid rgba(255,255,255,0.7);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);">📔 日記を開く</button></div>';
+    html += '<div style="padding:16px;"><button onclick="goMeDiary()" style="width:100%;padding:20px;border:1.5px solid var(--card-border);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);">📔 日記を開く</button></div>';
     
   } else if (tab === 'routine') {
     // ===== MEルーティン：日常 / 生活 / メモ サブタブ =====
@@ -5835,7 +5939,7 @@ function renderMeMode() {
     
   } else if (tab === 'planner') {
     html += '<div style="padding:16px;">';
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);">';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:20px;backdrop-filter:blur(8px);">';
     html += '<div style="font-size:13px;font-weight:800;color:var(--accent-deep);margin-bottom:8px;">朝</div>';
     html += '<div style="font-size:13px;color:var(--ink-dark);line-height:1.8;">スキンケア ・ 水 ・ 薬</div>';
     html += '<div style="font-size:13px;font-weight:800;color:var(--accent-deep);margin:12px 0 8px;">昼</div>';
@@ -5855,7 +5959,7 @@ function renderMeMode() {
     html += '</div></div>';
     
   } else if (tab === 'secret') {
-    html += '<div style="padding:16px;"><button onclick="goSecretMemo()" style="width:100%;padding:20px;border:1px solid rgba(255,255,255,0.7);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);">📋 ひみつメモを開く</button></div>';
+    html += '<div style="padding:16px;"><button onclick="goSecretMemo()" style="width:100%;padding:20px;border:1.5px solid var(--card-border);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);">📋 ひみつメモを開く</button></div>';
     
   } else {
     // カスタムタブ
@@ -5866,6 +5970,7 @@ function renderMeMode() {
     html += '</div>';
   }
   
+  html += '</div>'; // コンテンツエリア閉じ
   html += '<div style="height:80px;"></div>';
   app.innerHTML = html;
 }
@@ -5878,7 +5983,9 @@ function renderNestMode() {
   html += renderNestTabs();
 
   html += renderModePageTabs('nest');
-  html += '<div style="border-top:2px solid var(--mint);margin:0 12px 0;"></div>';
+  html += '<div style="height:2px;background:linear-gradient(90deg,transparent,var(--mint),var(--accent),var(--mint),transparent);margin:0 0 0;opacity:0.6;"></div>';
+  // コンテンツエリア（白い角丸背景）
+  html += '<div class="mode-content-wrap">';
 
   const tab = currentModeTab['nest'] || 'memo';
 
@@ -5899,7 +6006,7 @@ function renderNestMode() {
     
     if (_sorted.length === 0) {
       // 空状態：使い方ヒント
-      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
       html += '🌷 '+escapeHtml(_nestName)+' の伝言メモ<br>';
       html += '<span style="font-size:11px;color:var(--ink-light);">「シャンプー買って」「洗濯お願い」など<br>家族への伝言をここに残せるよ</span><br><br>';
       html += '<button onclick="openNestMemoModal()" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 最初のメモを書く</button>';
@@ -5910,7 +6017,7 @@ function renderNestMode() {
       for (const m of _sorted) {
         const _dateStr = m.updatedAt ? formatRelativeTime(m.updatedAt) : '';
         const _bodyShort = m.body ? (m.body.length > 60 ? m.body.substring(0, 60) + '…' : m.body) : '';
-        html += '<div onclick="openNestMemoModal(\''+m.id+'\')" style="background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);cursor:pointer;">';
+        html += '<div onclick="openNestMemoModal(\''+m.id+'\')" style="background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);border:1.5px solid var(--card-border);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);cursor:pointer;">';
         html += '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:4px;">';
         html += '<div style="flex:1;min-width:0;">';
         if (m.title) html += '<div style="font-size:13px;font-weight:700;color:var(--ink-dark);line-height:1.4;">'+escapeHtml(m.title)+'</div>';
@@ -5938,7 +6045,7 @@ function renderNestMode() {
     html += '<div class="section-head"><h2 class="section-title">おうち備品</h2><button onclick="openNestGoodsModal()" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
     
     if (_sorted.length === 0) {
-      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
       html += '🛍 '+escapeHtml(_nestName)+' のおうち備品<br>';
       html += '<span style="font-size:11px;color:var(--ink-light);">シャンプー・洗剤・電球など<br>「あれ何使ってたっけ？」を防ぐリスト</span><br><br>';
       html += '<button onclick="openNestGoodsModal()" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 最初のグッズを追加</button>';
@@ -5967,7 +6074,7 @@ function renderNestMode() {
         html += '</div>';
         html += '<div style="display:flex;flex-direction:column;gap:6px;">';
         for (const g of _byCategory[cat]) {
-          html += '<div onclick="openNestGoodsModal(\''+g.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:12px;backdrop-filter:blur(8px);cursor:pointer;">';
+          html += '<div onclick="openNestGoodsModal(\''+g.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);border:1.5px solid var(--card-border);border-radius:12px;backdrop-filter:blur(8px);cursor:pointer;">';
           // アイコン
           html += '<div style="width:40px;height:40px;border-radius:10px;background:var(--accent-bg);border:1px solid var(--line-soft);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">'+(g.icon || '📦')+'</div>';
           // 情報
@@ -6017,7 +6124,7 @@ function renderNestMode() {
       '喧嘩してもその日に仲直りすること！',
       '大好きって言うこと！'
     ];
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:16px;backdrop-filter:blur(8px);">';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:16px;backdrop-filter:blur(8px);">';
     for (const r of sampleRules) {
       html += '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);">';
       html += '<span style="color:var(--accent);font-weight:900;margin-top:1px;">○</span>';
@@ -6032,7 +6139,7 @@ function renderNestMode() {
     // ===== Diary（二人の日記） =====
     html += '<div style="padding:12px 16px 8px;">';
     html += '<div class="section-head"><h2 class="section-title">二人の日記</h2><button onclick="showToast(\'準備中🌷\')" class="section-link" style="margin-left:auto;">書く</button></div>';
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:24px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
     html += '二人の思い出を<br>ここに残していこう🪺<br><span style="font-size:11px;color:var(--ink-light);">ただいま準備中</span>';
     html += '</div></div>';
 
@@ -6067,6 +6174,7 @@ function renderNestMode() {
     html += '</div>';
   }
 
+  html += '</div>'; // コンテンツエリア閉じ
   html += '<div style="height:80px;"></div>';
   app.innerHTML = html;
 }
@@ -6902,7 +7010,7 @@ function setPetParentTab(parentId) {
 // 仮実装：PETルーティン
 function renderTabPetRoutine(pet) {
   let html = '<div style="padding:16px;">';
-  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:24px 20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.8;">';
+  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px 20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.8;">';
   html += '🔁 '+escapeHtml(pet.name)+'のルーティン<br>';
   html += '<span style="font-size:11px;color:var(--ink-light);">朝のごはん・夜のお散歩など<br>毎日のお世話の流れを記録</span><br><br>';
   html += '<span style="font-size:11px;color:var(--ink-light);">🌷 ただいま準備中</span>';
@@ -6913,7 +7021,7 @@ function renderTabPetRoutine(pet) {
 // 仮実装：PETおでかけ
 function renderTabPetOuting(pet) {
   let html = '<div style="padding:16px;">';
-  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:24px 20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.8;">';
+  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px 20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.8;">';
   html += '🌷 '+escapeHtml(pet.name)+'とのおでかけ<br>';
   html += '<span style="font-size:11px;color:var(--ink-light);">公園・カフェ・ドッグラン・旅行<br>楽しかった場所を残せる</span><br><br>';
   html += '<span style="font-size:11px;color:var(--ink-light);">🌷 ただいま準備中</span>';
@@ -6924,7 +7032,7 @@ function renderTabPetOuting(pet) {
 // 仮実装：PETタウン（既存にこわタウンへの誘導）
 function renderTabPetTown(pet) {
   let html = '<div style="padding:16px;">';
-  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:24px 20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.8;">';
+  html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px 20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.8;">';
   html += '🏘 '+escapeHtml(pet.name)+'のタウン<br>';
   html += '<span style="font-size:11px;color:var(--ink-light);">かかりつけ動物病院・トリミング店<br>お気に入りのお店をまとめる</span><br><br>';
   html += '<button onclick="goToTown()" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🏘 にこわタウンを開く</button>';
@@ -7650,7 +7758,7 @@ let selectedFacilityCategory = 'hospital';
 let townSearchQuery = '';
 let townCategoryFilter = 'all';
 let townMainTab = 'me';    // 'me' | 'pet' | 'kids' | 'work'
-let townSubTab  = 'search'; // 'town' | 'search' | 'fav'
+let townSubTab  = 'search'; // 'town' | 'search' | 'transit' | 'fav'
 let placesSelCat = '';
 let placesText = '';
 let placesResults = [];
@@ -8440,7 +8548,7 @@ function renderLifeRoutines(nestId, nestName) {
   html += '<div class="section-head"><h2 class="section-title">生活ルーティン</h2><button onclick="openNestRoutineModal(null,\''+nestId+'\')" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
   
   if (_enriched.length === 0) {
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
     html += '🔁 '+escapeHtml(nestName)+' の定期ルーティン<br>';
     html += '<span style="font-size:11px;color:var(--ink-light);">エアコン掃除・洗濯槽クリーニング・美容院など<br>「忘れがちな定期メンテ」を見える化</span><br><br>';
     html += '<button onclick="openNestRoutineModal(null,\''+nestId+'\')" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 最初のルーティンを追加</button>';
@@ -8481,7 +8589,7 @@ function renderLifeRoutines(nestId, nestName) {
       
       const _lastStr = r.lastDoneAt ? _formatDateTime(r.lastDoneAt) : '未記録';
       
-      html += '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:12px;backdrop-filter:blur(8px);">';
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);border:1.5px solid var(--card-border);border-radius:12px;backdrop-filter:blur(8px);">';
       html += '<div onclick="openNestRoutineModal(\''+r.id+'\',\''+nestId+'\')" style="flex:1;cursor:pointer;min-width:0;">';
       html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">';
       html += '<span style="font-size:16px;">'+(r.icon || '🔁')+'</span>';
@@ -8631,7 +8739,7 @@ function renderDailyRoutines(scope, scopeId, scopeName) {
   html += '<button onclick="openDailyRoutineModal(null,\''+scope+'\',\''+scopeId+'\')" class="section-link" style="margin-left:'+(_totalCount>0?'8px':'auto')+';">＋ 追加</button></div>';
   
   if (_totalCount === 0 && _allItems.length === 0) {
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
     html += '🌅 '+escapeHtml(scopeName)+' の毎日の流れ<br>';
     html += '<span style="font-size:11px;color:var(--ink-light);">朝 → 昼 → 夕 → 夜 → 寝る前<br>「次なんだっけ？」を防ぐリスト</span><br><br>';
     html += '<button type="button" onclick="openDailyRoutineModal(null,\''+scope+'\',\''+scopeId+'\')" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;position:relative;z-index:5;pointer-events:auto;-webkit-tap-highlight-color:rgba(0,0,0,0.1);">＋ 最初のルーティンを追加</button>';
@@ -8678,7 +8786,7 @@ function renderDailyRoutines(scope, scopeId, scopeName) {
         if (item.timingTime) _timingStr += (_timingStr?' ・ ':'') + item.timingTime;
         if (item.timingText) _timingStr += (_timingStr?' ・ ':'') + item.timingText;
         
-        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;'+_bgStyle+'border:1px solid rgba(255,255,255,0.7);border-radius:12px;backdrop-filter:blur(8px);">';
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;'+_bgStyle+'border:1.5px solid var(--card-border);border-radius:12px;backdrop-filter:blur(8px);">';
         // チェックボタン
         html += '<button onclick="toggleDailyRoutineDone(\''+item.id+'\',\''+_key+'\')" style="width:28px;height:28px;border-radius:50%;border:2px solid '+(_done?'var(--accent)':'var(--line)')+';background:'+(_done?'var(--accent)':'transparent')+';color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;">'+(_done?'✓':'')+'</button>';
         // アイコン+名前+タイミング
@@ -9074,8 +9182,12 @@ function renderTown() {
   html += '<div class="town-sub-tabs">';
   html += '<button class="town-sub-tab '+(townSubTab==='town'  ?'active':'')+'" onclick="setTownSubTab(\'town\')">🏘 タウン</button>';
   html += '<button class="town-sub-tab '+(townSubTab==='search'?'active':'')+'" onclick="setTownSubTab(\'search\')">🔍 検索</button>';
+  html += '<button class="town-sub-tab '+(townSubTab==='transit'?'active':'')+'" onclick="setTownSubTab(\'transit\')">🚆 路線</button>';
   html += '<button class="town-sub-tab '+(townSubTab==='fav'   ?'active':'')+'" onclick="setTownSubTab(\'fav\')">♡ お気に入り</button>';
   html += '</div>';
+
+  // コンテンツエリア（白い角丸背景）
+  html += '<div class="mode-content-wrap">';
 
   // ── タウンサブタブ：ショップ一覧 or 詳細
   if (townSubTab === 'town') {
@@ -9308,6 +9420,11 @@ function renderTown() {
     return;
   }
 
+  // ── 🚆 路線サブタブ
+  if (townSubTab === 'transit') {
+    html += renderTransitSubTab();
+  }
+
   // ── お気に入りサブタブ
   if (townSubTab === 'fav') {
     const cat = townMainTab;
@@ -9396,7 +9513,7 @@ function renderTown() {
         html += '<div style="padding:14px 16px 4px;display:flex;align-items:center;justify-content:space-between;">';
         html += '<div style="font-size:12px;color:var(--ink-dark);font-weight:800;">'+escapeHtml(folder.icon||'📁')+' '+escapeHtml(folder.name)+' <span style="color:var(--ink-light);font-weight:500;">('+items.length+'件)</span></div>';
         html += '<div style="display:flex;gap:6px;">';
-        html += '<button onclick="openFolderEditModal(\''+cat+'\',\''+folder.id+'\')" style="background:none;border:none;font-size:11px;color:var(--ink-sub);cursor:pointer;padding:2px 6px;">編集</button>';
+        html += '<button onclick="openFolderEditModal(\''+cat+'\',\''+folder.id+'\')" style="background:none;border:none;font-size:11px;color:var(--ink-sub);cursor:pointer;padding:2px 6px;">✏️</button>';
         html += '</div></div>';
         if (items.length === 0) {
           html += '<div style="padding:8px 16px 4px;font-size:11px;color:var(--ink-light);">空フォルダ。♡や場所追加で入れてね</div>';
@@ -9919,7 +10036,7 @@ function renderSettings() {
     html += '<div class="house-card" style="cursor:default;"><div class="house-icon" style="font-size:22px;">'+(h.icon || '🏡')+'</div>';
     html += '<div class="house-info"><div class="house-name" style="font-size:14px;">'+escapeHtml(h.name)+'</div>';
     html += '<div class="house-sub">'+petCount+'匹</div></div>';
-    html += '<button class="btn btn-secondary btn-mini" style="margin-right:4px;" onclick="openEditHouseModal(\''+h.id+'\')">編集</button>';
+    html += '<button class="btn btn-secondary btn-mini" style="margin-right:4px;" onclick="openEditHouseModal(\''+h.id+'\')">✏️</button>';
     if (data.houses.length > 1) html += '<button class="btn btn-danger btn-mini" onclick="confirmDeleteHouse(\''+h.id+'\')">削除</button>';
     html += '</div>';
   }
@@ -10090,7 +10207,7 @@ function renderModePageTabs(mode) {
   // 編集ボタン
   html += '<div style="display:flex;justify-content:flex-end;padding:0 16px 2px;">';
   html += '<button onclick="modeTabEditMode=!modeTabEditMode;_suppressScrollTop=true;render();" style="background:none;border:none;font-size:11px;color:var(--ink-sub);cursor:pointer;font-family:inherit;padding:2px 6px;">';
-  html += modeTabEditMode ? '完了' : '編集';
+  html += modeTabEditMode ? '完了' : '✏️';
   html += '</button></div>';
 
   html += '<div class="mode-page-tabs">';
@@ -10207,6 +10324,9 @@ function renderSecretMemo() {
   const current = getSecretMemoCurrentFolder();
   const isRoot = secretMemoPath.length === 0;
 
+  // コンテンツエリア（白い角丸背景）
+  html += '<div class="mode-content-wrap">';
+
   // ヘッダー
   html += '<div style="padding:12px 16px 4px; display:flex; align-items:center; gap:8px;">';
   if (!isRoot) {
@@ -10293,6 +10413,7 @@ function renderSecretMemo() {
   html += '<input type="file" id="secretImportFile" accept=".json" style="display:none;" onchange="secretMemoImport(event)">';
   html += '</div>';
 
+  html += '</div>'; // コンテンツエリア閉じ
   html += '<div style="height:80px;"></div>';
   app.innerHTML = html;
 }
@@ -10309,7 +10430,7 @@ function renderSecretMemoEdit() {
   html += '<button onclick="secretMemoEditItem=null; secretMemoIsEditing=false; _suppressScrollTop=true; render();" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-dark);padding:4px;">‹</button>';
   html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);">'+(isNew?'🔑 あたらしいメモ':'🔑 '+escapeHtml(item.title || '無題'))+'</div>';
   if (!isNew && !isEditing) {
-    html += '<button onclick="secretMemoIsEditing=true; _suppressScrollTop=true; render();" style="background:none;border:1px solid var(--line);border-radius:100px;padding:4px 14px;font-size:12px;font-weight:700;color:var(--accent-deep);cursor:pointer;font-family:inherit;">編集</button>';
+    html += '<button onclick="secretMemoIsEditing=true; _suppressScrollTop=true; render();" style="background:none;border:1px solid var(--line);border-radius:100px;padding:4px 14px;font-size:12px;font-weight:700;color:var(--accent-deep);cursor:pointer;font-family:inherit;">✏️</button>';
   }
   html += '</div>';
 
@@ -11103,7 +11224,7 @@ function renderResumeTab() {
   
   // ヘッダー
   html += '<div class="section-head"><h2 class="section-title">📋 わたしの履歴書</h2>';
-  html += '<button class="section-link" onclick="openResumeEdit()">✏️ 編集</button></div>';
+  html += '<button class="section-link" onclick="openResumeEdit()">✏️</button></div>';
   
   // 基本情報
   html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
@@ -11362,7 +11483,7 @@ function saveResume() {
 
 // ToDay情報カードの個別レンダラー
 function renderTodayCard(icon, title, value, label, comment) {
-  let html = '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:8px;">';
+  let html = '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1.5px solid var(--card-border);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:8px;">';
   html += '<div style="display:flex;align-items:flex-start;gap:10px;">';
   html += '<span style="font-size:22px;line-height:1.2;flex-shrink:0;">'+icon+'</span>';
   html += '<div style="flex:1;min-width:0;">';
@@ -11393,7 +11514,7 @@ function showWeatherPopup() {
     html += '<div style="text-align:center;padding:24px;color:var(--ink-sub);font-size:13px;">取得中...🌷</div>';
   } else {
     // 現在
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1px solid rgba(255,255,255,0.7);border-radius:16px;padding:16px;margin-bottom:14px;backdrop-filter:blur(8px);">';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:16px;margin-bottom:14px;backdrop-filter:blur(8px);">';
     html += '<div style="display:flex;align-items:center;gap:12px;">';
     html += '<span style="font-size:48px;line-height:1;">'+w.icon+'</span>';
     html += '<div>';
@@ -11430,9 +11551,9 @@ function closeWeatherPopup() {
   if (el) el.remove();
 }
 
-// ===== ニュース機能（rss2json.com経由でGoogle News RSS取得） =====
-const NEWS_CACHE_KEY = 'nikowa_news_cache';
-const NEWS_CACHE_HOURS = 1; // 1時間ごとに更新
+// ===== ニュース機能（rss2json.com経由でGoogle News + NHK RSS取得） =====
+const NEWS_CACHE_KEY = 'nikowa_news_cache_v2'; // v2 = NHK追加版
+const NEWS_CACHE_HOURS = 0.5; // 30分ごとに更新（速報性重視）
 
 async function fetchNews(category) {
   // category: 'general' | 'pet' | 'kids' | 'entertainment'
@@ -11451,24 +11572,35 @@ async function fetchNews(category) {
   let rssUrls;
   if (category === 'pet') {
     rssUrls = [
-      'https://news.google.com/rss/search?q=' + encodeURIComponent('ペット') + '&hl=ja&gl=JP&ceid=JP:ja',
-      'https://news.google.com/rss/search?q=' + encodeURIComponent('犬') + '&hl=ja&gl=JP&ceid=JP:ja',
-      'https://news.google.com/rss/search?q=' + encodeURIComponent('猫') + '&hl=ja&gl=JP&ceid=JP:ja'
+      // Google News（テーマ検索：ペット・犬・猫）
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('ペット when:1d') + '&hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('犬 when:1d') + '&hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('猫 when:1d') + '&hl=ja&gl=JP&ceid=JP:ja',
+      // 動物関連メディア
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('動物 保護 when:1d') + '&hl=ja&gl=JP&ceid=JP:ja'
     ];
   } else if (category === 'kids') {
     rssUrls = [
-      'https://news.google.com/rss/search?q=' + encodeURIComponent('子育て') + '&hl=ja&gl=JP&ceid=JP:ja',
-      'https://news.google.com/rss/search?q=' + encodeURIComponent('育児') + '&hl=ja&gl=JP&ceid=JP:ja',
-      'https://news.google.com/rss/search?q=' + encodeURIComponent('教育 子ども') + '&hl=ja&gl=JP&ceid=JP:ja'
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('子育て when:1d') + '&hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('育児 when:1d') + '&hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('教育 子ども when:1d') + '&hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('小学校 学校 when:1d') + '&hl=ja&gl=JP&ceid=JP:ja'
     ];
   } else if (category === 'entertainment') {
     rssUrls = [
-      'https://news.google.com/rss/headlines/section/topic/ENTERTAINMENT?hl=ja&gl=JP&ceid=JP:ja'
+      'https://news.google.com/rss/headlines/section/topic/ENTERTAINMENT?hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('芸能 when:1d') + '&hl=ja&gl=JP&ceid=JP:ja',
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('音楽 映画 when:1d') + '&hl=ja&gl=JP&ceid=JP:ja'
     ];
   } else {
-    // general: トップ + 国内 + 国際 で30件確保
+    // general: 速報性重視の各社RSSを混ぜる
     rssUrls = [
-      'https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja',
+      // NHKニュース（最速・速報）
+      'https://www.nhk.or.jp/rss/news/cat0.xml',
+      'https://www.nhk.or.jp/rss/news/cat1.xml',  // 国内
+      'https://www.nhk.or.jp/rss/news/cat6.xml',  // 国際
+      // Google News：直近1日に絞る（速報重視）
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('when:1d') + '&hl=ja&gl=JP&ceid=JP:ja',
       'https://news.google.com/rss/headlines/section/topic/NATION?hl=ja&gl=JP&ceid=JP:ja',
       'https://news.google.com/rss/headlines/section/topic/WORLD?hl=ja&gl=JP&ceid=JP:ja'
     ];
@@ -12055,6 +12187,8 @@ function maybeShowOnboarding() {
   }
   // 現在のテーマボタンをハイライト
   highlightOnbThemeBtn();
+  // モーダル背景も現在のテーマに合わせる
+  _updateOnbModalBg(THEMES[data.themeId] || THEMES.mint);
   m.classList.add('show');
 }
 
@@ -12161,6 +12295,16 @@ function openThemeModal() {
 function _updateThemeModalBg(theme) {
   if (!theme) return;
   const content = document.querySelector('#themeModal .modal-content');
+  if (!content) return;
+  content.style.backgroundColor = theme.vars['--bg'];
+  content.style.backgroundImage = paperBackground(theme);
+  content.style.backgroundSize = paperBackgroundSize(theme);
+}
+
+// オンボーディングモーダルの背景もテーマ反映
+function _updateOnbModalBg(theme) {
+  if (!theme) return;
+  const content = document.querySelector('#onboardingModal .modal-content');
   if (!content) return;
   content.style.backgroundColor = theme.vars['--bg'];
   content.style.backgroundImage = paperBackground(theme);
@@ -13001,6 +13145,226 @@ function setTownMainTab(tab) {
 function setTownSubTab(tab) {
   townSubTab = tab;
   renderTown();
+}
+
+// ===== 🚆 路線サブタブ =====
+const TRANSIT_GENRES = [
+  { id: 'work',    icon: '💼', label: '仕事',    color: '#7B9CC8' },
+  { id: 'school',  icon: '🎒', label: '学校',    color: '#9CB87B' },
+  { id: 'friend',  icon: '👯', label: '友達',    color: '#E8A0B4' },
+  { id: 'shop',    icon: '🛍', label: 'お買い物', color: '#D8A878' },
+  { id: 'travel',  icon: '✈️', label: '旅行',    color: '#88BFD0' },
+  { id: 'other',   icon: '🌷', label: 'その他',   color: '#B8A0C8' }
+];
+const TRANSIT_GENRE_MAP = {};
+for (const g of TRANSIT_GENRES) TRANSIT_GENRE_MAP[g.id] = g;
+
+function renderTransitSubTab() {
+  if (!data.transitRoutes) data.transitRoutes = [];
+  const routes = data.transitRoutes;
+  
+  let html = '<div style="padding:12px 16px 8px;">';
+  
+  // ── 今すぐ検索ブロック
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:14px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;">';
+  html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;">🔍 今すぐ検索</div>';
+  
+  // 出発駅
+  html += '<div style="margin-bottom:8px;">';
+  html += '<label style="font-size:10.5px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:3px;">出発駅・地点</label>';
+  html += '<div style="display:flex;gap:6px;align-items:center;">';
+  html += '<input type="text" id="transitFromInput" class="form-input" placeholder="例：JR茨木 / 博多駅 / ホテル名" maxlength="40" style="flex:1;font-size:13px;padding:8px 10px;">';
+  html += '<button type="button" onclick="useCurrentLocationForTransit()" style="background:var(--accent-bg);color:var(--accent-deep);border:1.5px solid var(--accent);border-radius:10px;padding:8px 10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">📍 現在地</button>';
+  html += '</div></div>';
+  
+  // 到着駅
+  html += '<div style="margin-bottom:10px;">';
+  html += '<label style="font-size:10.5px;color:var(--ink-sub);font-weight:700;display:block;margin-bottom:3px;">到着駅・地点</label>';
+  html += '<input type="text" id="transitToInput" class="form-input" placeholder="例：南草津 / 東京駅 / ハウステンボス" maxlength="40" style="width:100%;font-size:13px;padding:8px 10px;box-sizing:border-box;">';
+  html += '</div>';
+  
+  // 検索ボタン
+  html += '<button type="button" onclick="searchTransitNow()" style="width:100%;background:var(--accent);color:white;border:none;border-radius:12px;padding:11px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">🚆 Yahoo!路線情報で検索</button>';
+  html += '</div>';
+  
+  // ── よく使う路線ブロック
+  html += '<div class="section-head"><h2 class="section-title">⭐ よく使う路線</h2>';
+  html += '<button class="section-link" onclick="openTransitRouteModal(null)">＋ 追加</button></div>';
+  
+  if (routes.length === 0) {
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:18px 14px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;margin-bottom:14px;">';
+    html += '🚆 よく使う路線を登録しよう<br>';
+    html += '<span style="font-size:10.5px;color:var(--ink-light);">仕事・学校・友達の家・旅行先など、<br>登録するとワンタップで検索できるよ</span><br><br>';
+    html += '<button type="button" onclick="openTransitRouteModal(null)" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 最初の路線を追加</button>';
+    html += '</div>';
+  } else {
+    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
+    for (let i = 0; i < routes.length; i++) {
+      const r = routes[i];
+      const genre = TRANSIT_GENRE_MAP[r.genre] || TRANSIT_GENRE_MAP.other;
+      if (i > 0) html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+      
+      html += '<div style="padding:11px 14px;display:flex;align-items:center;gap:10px;">';
+      // ジャンルアイコン（色付き丸）
+      html += '<div style="width:34px;height:34px;border-radius:50%;background:'+genre.color+';color:white;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">'+genre.icon+'</div>';
+      
+      // 中身
+      html += '<div style="flex:1;min-width:0;cursor:pointer;" onclick="openTransitRouteUrl(\''+r.id+'\')">';
+      html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(r.name)+'</div>';
+      html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:2px;">'+escapeHtml(r.from)+' → '+escapeHtml(r.to)+'</div>';
+      if (r.memo) html += '<div style="font-size:10.5px;color:var(--ink-light);margin-top:1px;">'+escapeHtml(r.memo)+'</div>';
+      html += '</div>';
+      
+      // 編集ボタン
+      html += '<button type="button" onclick="openTransitRouteModal(\''+r.id+'\')" style="background:transparent;border:none;color:var(--ink-light);font-size:14px;cursor:pointer;padding:4px 8px;">✏️</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+// 「今すぐ検索」ボタン
+function searchTransitNow() {
+  const from = document.getElementById('transitFromInput').value.trim();
+  const to = document.getElementById('transitToInput').value.trim();
+  if (!from || !to) {
+    showToast('出発と到着を入れてね🌷');
+    return;
+  }
+  const url = 'https://transit.yahoo.co.jp/search/result?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to);
+  window.open(url, '_blank', 'noopener');
+}
+
+// 現在地ボタン
+function useCurrentLocationForTransit() {
+  if (!navigator.geolocation) {
+    showToast('位置情報が使えない端末です');
+    return;
+  }
+  showToast('現在地を取得中...📍');
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      // 「現在地」と入れる（Yahoo!路線情報で対応されてる場合がある）
+      // ※実際はYahoo!路線情報側で「現在地」キーワードの扱いは限定的
+      // → 緯度経度から最寄り駅取得は別APIが要るので、ひとまず「現在地」テキスト入れる
+      document.getElementById('transitFromInput').value = '現在地';
+      showToast('「現在地」を入れたよ📍 検索すると最寄り駅が候補に出るかも');
+    },
+    function(err) {
+      showToast('現在地が取れませんでした🥲');
+    },
+    { timeout: 8000 }
+  );
+}
+
+// 登録路線をタップ→Yahoo開く
+function openTransitRouteUrl(routeId) {
+  const r = (data.transitRoutes || []).find(x => x.id === routeId);
+  if (!r) return;
+  const url = 'https://transit.yahoo.co.jp/search/result?from=' + encodeURIComponent(r.from) + '&to=' + encodeURIComponent(r.to);
+  window.open(url, '_blank', 'noopener');
+}
+
+// 路線追加・編集モーダル
+let _editingTransitRouteId = null;
+function openTransitRouteModal(routeId) {
+  _editingTransitRouteId = routeId;
+  let name = '', from = '', to = '', memo = '', genre = 'other';
+  if (routeId) {
+    const r = (data.transitRoutes || []).find(x => x.id === routeId);
+    if (r) {
+      name = r.name || '';
+      from = r.from || '';
+      to = r.to || '';
+      memo = r.memo || '';
+      genre = r.genre || 'other';
+    }
+  }
+  document.getElementById('transitRouteModalTitle').textContent = routeId ? '路線を編集' : '新しい路線';
+  document.getElementById('transitRouteNameInput').value = name;
+  document.getElementById('transitRouteFromInput').value = from;
+  document.getElementById('transitRouteToInput').value = to;
+  document.getElementById('transitRouteMemoInput').value = memo;
+  document.getElementById('transitRouteDeleteBtn').style.display = routeId ? '' : 'none';
+  
+  // ジャンルボタン
+  const grid = document.getElementById('transitRouteGenreGrid');
+  let html = '';
+  for (const g of TRANSIT_GENRES) {
+    const sel = (g.id === genre) ? 'selected' : '';
+    html += '<button type="button" class="place-btn '+sel+'" data-genre="'+g.id+'" style="border-color:'+(g.id===genre?g.color:'var(--line)')+';">';
+    html += '<span class="icon">'+g.icon+'</span><span class="label">'+g.label+'</span></button>';
+  }
+  grid.innerHTML = html;
+  for (const btn of grid.querySelectorAll('.place-btn')) {
+    btn.onclick = () => {
+      grid.querySelectorAll('.place-btn').forEach(b => {
+        b.classList.remove('selected');
+        b.style.borderColor = 'var(--line)';
+      });
+      btn.classList.add('selected');
+      const g = TRANSIT_GENRE_MAP[btn.dataset.genre];
+      if (g) btn.style.borderColor = g.color;
+    };
+  }
+  
+  document.getElementById('transitRouteModal').classList.add('show');
+}
+
+function saveTransitRoute() {
+  const name = document.getElementById('transitRouteNameInput').value.trim();
+  const from = document.getElementById('transitRouteFromInput').value.trim();
+  const to = document.getElementById('transitRouteToInput').value.trim();
+  const memo = document.getElementById('transitRouteMemoInput').value.trim();
+  const genreBtn = document.querySelector('#transitRouteGenreGrid .place-btn.selected');
+  const genre = genreBtn ? genreBtn.dataset.genre : 'other';
+  
+  if (!name || !from || !to) {
+    showToast('名前・出発・到着を入れてね🌷');
+    return;
+  }
+  
+  if (!data.transitRoutes) data.transitRoutes = [];
+  
+  if (_editingTransitRouteId) {
+    const r = data.transitRoutes.find(x => x.id === _editingTransitRouteId);
+    if (r) {
+      r.name = name;
+      r.from = from;
+      r.to = to;
+      r.memo = memo;
+      r.genre = genre;
+    }
+  } else {
+    data.transitRoutes.push({
+      id: 'tr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      name: name,
+      from: from,
+      to: to,
+      memo: memo,
+      genre: genre,
+      createdAt: Date.now()
+    });
+  }
+  
+  saveData();
+  closeModal('transitRouteModal');
+  showToast('🚆 路線を保存したよ');
+  render();
+}
+
+function deleteTransitRoute() {
+  if (!_editingTransitRouteId) return;
+  if (!confirm('この路線を削除する？')) return;
+  if (data.transitRoutes) {
+    data.transitRoutes = data.transitRoutes.filter(x => x.id !== _editingTransitRouteId);
+  }
+  saveData();
+  closeModal('transitRouteModal');
+  render();
 }
 
 function setPlacesCat(catId) {
@@ -14039,7 +14403,7 @@ function renderTabKidsChart(pet) {
   
   let html = '<div class="section">';
   html += '<div class="section-head"><h2 class="section-title">📋 '+escapeHtml(pet.name)+'のカルテ</h2>';
-  html += '<button class="section-link" onclick="openKidsChartEdit(\''+pet.id+'\')">✏️ 編集</button></div>';
+  html += '<button class="section-link" onclick="openKidsChartEdit(\''+pet.id+'\')">✏️</button></div>';
   
   // 基本情報
   html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
@@ -14259,7 +14623,7 @@ function renderTabPetChart(pet) {
   
   // ヘッダー
   html += '<div class="section-head"><h2 class="section-title">📋 '+escapeHtml(pet.name)+'のカルテ</h2>';
-  html += '<button class="section-link" onclick="openPetChartEdit(\''+pet.id+'\')">✏️ 編集</button></div>';
+  html += '<button class="section-link" onclick="openPetChartEdit(\''+pet.id+'\')">✏️</button></div>';
   
   // 基本情報カード
   html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;">';
@@ -14402,7 +14766,7 @@ function renderTabVaccine(pet) {
         html += '<img class="vaccine-photo" src="' + photos[r.photoId] + '" onclick="openPhotoViewer(\'' + r.photoId + '\')" alt="">';
       }
       html += '<div class="vaccine-btns">';
-      html += '<button class="vaccine-btn-edit" onclick="openVaccineModal(\'' + pet.id + '\',\'' + r.id + '\')">✏️ 編集</button>';
+      html += '<button class="vaccine-btn-edit" onclick="openVaccineModal(\'' + pet.id + '\',\'' + r.id + '\')">✏️</button>';
       html += '<button class="vaccine-btn-del" onclick="deleteVaccineRecord(\'' + pet.id + '\',\'' + r.id + '\')">🗑</button>';
       html += '</div></div>';
     }
