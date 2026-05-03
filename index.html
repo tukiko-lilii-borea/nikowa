@@ -11262,74 +11262,40 @@ function renderTodayTab() {
   const dateStr = (now.getMonth()+1)+'/'+now.getDate();
   const wd = ['日','月','火','水','木','金','土'][now.getDay()];
   
-  let html = '<div style="padding:12px 16px 8px;">';
+  let html = '<div style="padding:12px 14px 8px;">';
   
-  // データ取得中
   if (!w) {
-    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:24px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">';
-    html += '今日の情報を取得中だよ🌷<br><span style="font-size:10px;color:var(--ink-light);">少し待ってね</span>';
-    html += '</div></div>';
+    html += '<div style="text-align:center;padding:24px;color:var(--ink-sub);font-size:12px;">取得中だよ🌷</div></div>';
     return html;
   }
   
-  // ===== セクション1: 今日の天気 =====
-  html += '<div class="section-head" style="margin-bottom:8px;"><h2 class="section-title">今日の天気</h2></div>';
-  
-  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:0;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;overflow:hidden;">';
-  
-  // 天気ヘッダー
-  html += '<div style="padding:14px 16px;">';
-  html += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">'+dateStr+'('+wd+') · '+escapeHtml(region)+'</div>';
-  html += '<div style="display:flex;align-items:center;gap:10px;">';
-  html += '<span style="font-size:36px;line-height:1;">'+w.icon+'</span>';
-  html += '<div>';
-  html += '<div style="font-size:26px;font-weight:800;color:var(--ink-dark);line-height:1;">'+Math.round(w.temp)+'°</div>';
-  html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:3px;">'+escapeHtml(w.desc)+' · 湿度'+w.humidity+'%</div>';
-  html += '</div></div></div>';
-  
-  // 各指数を区切り線で並べる
+  // 各指数を独立カードで表示
   const items = [];
   if (w.laundry) items.push({icon:'🧺', title:'洗濯指数', value:w.laundry.score, label:w.laundry.label, comment:w.laundry.comment});
   if (w.uv) items.push({icon:'☀️', title:'UV指数', value:w.uv.index, label:w.uv.label, comment:w.uv.comment});
-  if (w.pollen) items.push({icon:'🌼', title:'花粉レベル', value:null, label:w.pollen.label, comment:w.pollen.comment});
+  if (w.pollen) items.push({icon:'🌼', title:'花粉', value:null, label:w.pollen.label, comment:w.pollen.comment});
   if (w.dust) items.push({icon:'🌫️', title:'黄砂', value:null, label:w.dust.label, comment:w.dust.comment});
   if (w.airQuality && w.airQuality.level !== 'unknown') items.push({icon:'💨', title:'大気質', value:null, label:w.airQuality.label, comment:w.airQuality.comment});
   
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
   for (const it of items) {
-    html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
-    html += '<div style="padding:11px 16px;display:flex;align-items:flex-start;gap:10px;">';
-    html += '<span style="font-size:20px;line-height:1.2;flex-shrink:0;">'+it.icon+'</span>';
-    html += '<div style="flex:1;min-width:0;">';
-    html += '<div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">';
-    html += '<span style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+it.title+'</span>';
+    html += '<div style="background:var(--card-bg);border:1.5px solid var(--card-border);border-radius:14px;padding:12px;backdrop-filter:blur(8px);">';
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">';
+    html += '<span style="font-size:20px;">'+it.icon+'</span>';
+    html += '<span style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+it.title+'</span>';
+    html += '</div>';
+    html += '<div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">';
     if (it.value !== null && it.value !== undefined) {
-      html += '<span style="font-size:14px;font-weight:800;color:var(--accent-deep);">'+it.value+'</span>';
+      html += '<span style="font-size:22px;font-weight:800;color:var(--accent-deep);">'+it.value+'</span>';
     }
-    html += '<span style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(it.label)+'</span>';
+    html += '<span style="font-size:11px;font-weight:700;color:var(--ink);">'+escapeHtml(it.label)+'</span>';
     html += '</div>';
     if (it.comment) {
-      html += '<div style="font-size:11px;color:var(--ink);margin-top:3px;line-height:1.5;">'+escapeHtml(it.comment)+'</div>';
+      html += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.4;">'+escapeHtml(it.comment)+'</div>';
     }
-    html += '</div></div>';
+    html += '</div>';
   }
-  
-  html += '</div>'; // セクション1終わり
-  
-  // ===== セクション2: これからの天気 =====
-  if (w.forecast && w.forecast.length > 0) {
-    html += '<div class="section-head" style="margin-bottom:8px;"><h2 class="section-title">これからの天気</h2></div>';
-    html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:10px 8px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;">';
-    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:2px;">';
-    for (const f of w.forecast.slice(0, 8)) {
-      const fh = String(f.time.getHours()).padStart(2,'0');
-      html += '<div style="flex-shrink:0;min-width:54px;text-align:center;padding:8px 4px;background:var(--card-bg);border-radius:10px;">';
-      html += '<div style="font-size:10px;color:var(--ink-sub);">'+fh+'時</div>';
-      html += '<div style="font-size:22px;line-height:1.2;margin:2px 0;">'+f.icon+'</div>';
-      html += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+f.temp+'°</div>';
-      html += '</div>';
-    }
-    html += '</div></div>';
-  }
+  html += '</div>';
   
   html += '</div>';
   return html;
@@ -11675,6 +11641,9 @@ function showWeatherPopup() {
 
   // タブコンテンツ
   if (tab === 'weather') {
+    html += '<div style="padding:0 14px;">';
+    html += '<div class="section-head" style="margin-bottom:8px;"><h2 class="section-title">今日の天気</h2></div>';
+    html += '</div>';
     if (!w) {
       html += '<div style="text-align:center;padding:24px;color:var(--ink-sub);font-size:13px;">取得中...🌷</div>';
     } else {
