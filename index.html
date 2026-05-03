@@ -5895,6 +5895,12 @@ function switchStampSubTab(sub) {
   render();
 }
 
+function switchStampCat(cat) {
+  data.stampSelCat = cat;
+  saveData();
+  render();
+}
+
 const PLANNER_CATEGORIES = [
   { id: 'morning',  label: 'Morning',  icon: '🌅', jp: '朝' },
   { id: 'noon',     label: 'Noon',     icon: '☀️', jp: '昼' },
@@ -6133,21 +6139,77 @@ function completePlannerItem(id) {
   if (!data.planner) data.planner = { items: [] };
   const item = data.planner.items.find(i => i.id === id);
   if (!item) return;
+  const scrollY = window.scrollY;
   item.completed = true;
   item.completedAt = new Date().toDateString();
+  // スタンプ履歴に記録
+  addStampRecord(item.icon || '📋', item.task, 'planner', item.id);
   saveData();
   showToast('完了！スタンプにも記録したよ🌷');
   render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
 }
 
 function uncompletePlannerItem(id) {
   if (!data.planner) data.planner = { items: [] };
   const item = data.planner.items.find(i => i.id === id);
   if (!item) return;
+  const scrollY = window.scrollY;
   item.completed = false;
   item.completedAt = null;
+  // 紐づくスタンプ履歴も削除
+  if (data.stampHistory) {
+    data.stampHistory = data.stampHistory.filter(r => !(r.source === 'planner' && r.plannerId === id && new Date(r.timestamp).toDateString() === new Date().toDateString()));
+  }
   saveData();
   render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+// ===== スタンプ機能 =====
+function addStampRecord(icon, name, source, plannerId) {
+  if (!data.stampHistory) data.stampHistory = [];
+  data.stampHistory.unshift({
+    id: 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    icon: icon,
+    name: name,
+    timestamp: Date.now(),
+    source: source || 'stamp',
+    plannerId: plannerId || null
+  });
+  // 直近100件まで保持
+  if (data.stampHistory.length > 100) data.stampHistory = data.stampHistory.slice(0, 100);
+  saveData();
+}
+
+function tapStamp(icon, name) {
+  const scrollY = window.scrollY;
+  addStampRecord(icon, name, 'stamp');
+  showToast(icon + ' ' + name + ' きろく！🌷');
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function deleteStampRecord(id) {
+  if (!data.stampHistory) return;
+  const scrollY = window.scrollY;
+  data.stampHistory = data.stampHistory.filter(r => r.id !== id);
+  saveData();
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function _formatStampTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  if (isToday) return hh + ':' + mm;
+  if (isYesterday) return '昨日 ' + hh + ':' + mm;
+  return (d.getMonth()+1) + '/' + d.getDate() + ' ' + hh + ':' + mm;
 }
 
 function renderMeMode() {
@@ -6191,32 +6253,89 @@ function renderMeMode() {
     html += '</div>';
     
     if (ssTab === 'stamp') {
-      // ───── スタンプ画面（既存）─────
+      // ───── スタンプ画面 ─────
+      if (!data.stampSelCat) data.stampSelCat = '生活';
+      const selCat = data.stampSelCat;
+      const STAMP_CATS = {
+        '生活': [
+          {icon:'💧',name:'水'},{icon:'🍚',name:'ごはん'},{icon:'🛁',name:'おふろ'},
+          {icon:'😴',name:'睡眠'},{icon:'☕',name:'コーヒー'},{icon:'🍵',name:'お茶'}
+        ],
+        '美容': [
+          {icon:'🧴',name:'スキンケア'},{icon:'💄',name:'メイク'},{icon:'💇',name:'美容院'},
+          {icon:'💅',name:'ネイル'},{icon:'🧖',name:'マッサージ'},{icon:'🪞',name:'おしゃれ'}
+        ],
+        '体調': [
+          {icon:'💊',name:'くすり'},{icon:'🌹',name:'生理'},{icon:'🤒',name:'体調不良'},
+          {icon:'🩺',name:'通院'},{icon:'🏃',name:'運動'},{icon:'🧘',name:'ヨガ'}
+        ],
+        '家事': [
+          {icon:'🧹',name:'掃除'},{icon:'🧺',name:'洗濯'},{icon:'🍳',name:'料理'},
+          {icon:'🛒',name:'買い物'},{icon:'🗑️',name:'ゴミ出し'},{icon:'🍽️',name:'食器洗い'}
+        ],
+        '仕事': [
+          {icon:'💼',name:'仕事'},{icon:'📞',name:'電話'},{icon:'✉️',name:'メール'},
+          {icon:'📊',name:'会議'},{icon:'📝',name:'書類'},{icon:'💻',name:'PC作業'}
+        ],
+        '趣味': [
+          {icon:'🎮',name:'ゲーム'},{icon:'📖',name:'読書'},{icon:'🎵',name:'音楽'},
+          {icon:'🎨',name:'お絵描き'},{icon:'📺',name:'動画'},{icon:'🎤',name:'カラオケ'}
+        ]
+      };
+      
+      // カテゴリチップ
       html += '<div style="padding:12px 16px 4px;">';
       html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
-      const stampCats = ['生活','美容','体調','仕事','趣味'];
+      const stampCats = ['生活','美容','体調','家事','仕事','趣味'];
       for (const cat of stampCats) {
-        const active = (cat === '生活') ? 'background:var(--accent);color:white;border-color:var(--accent);' : '';
-        html += '<button style="flex-shrink:0;padding:4px 14px;border:1px solid var(--line);border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink-sub);background:var(--surface);'+active+'">'+cat+'</button>';
+        const isAct = (cat === selCat);
+        const activeStyle = isAct ? 'background:var(--accent);color:white;border-color:var(--accent);' : 'color:var(--ink-sub);background:var(--surface);';
+        html += '<button onclick="switchStampCat(\''+cat+'\')" style="flex-shrink:0;padding:4px 14px;border:1px solid var(--line);border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;'+activeStyle+'">'+cat+'</button>';
       }
       html += '</div></div>';
+      
+      // スタンプボタン（選択カテゴリのもの＋＋追加）
       html += '<div style="padding:0 12px 12px;display:grid;grid-template-columns:repeat(8,1fr);gap:4px;">';
-      const stamps = [
-        {icon:'💧',name:'水'},{icon:'🍚',name:'ごはん'},{icon:'🛁',name:'おふろ'},
-        {icon:'🧴',name:'スキンケア'},{icon:'💊',name:'くすり'},{icon:'🏃',name:'運動'},
-        {icon:'😴',name:'睡眠'},{icon:'＋',name:'追加',add:true}
-      ];
+      const stamps = (STAMP_CATS[selCat] || []).concat([{icon:'＋',name:'追加',add:true}]);
       for (const s of stamps) {
         if (s.add) {
-          html += '<button onclick="showToast(\'準備中🌷\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1.2px dashed var(--line);border-radius:10px;background:none;cursor:pointer;font-family:inherit;min-width:0;"><span style="font-size:16px;color:var(--accent);font-weight:700;line-height:1;">＋</span><span style="font-size:8.5px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
+          html += '<button onclick="showToast(\'カスタム追加は準備中🌷\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1.2px dashed var(--line);border-radius:10px;background:none;cursor:pointer;font-family:inherit;min-width:0;"><span style="font-size:16px;color:var(--accent);font-weight:700;line-height:1;">＋</span><span style="font-size:8.5px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
         } else {
-          html += '<button onclick="showToast(\''+s.icon+' '+s.name+' きろく！…準備中🌷\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;"><span style="font-size:18px;line-height:1;">'+s.icon+'</span><span style="font-size:8.5px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
+          html += '<button onclick="tapStamp(\''+s.icon+'\',\''+s.name+'\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;"><span style="font-size:18px;line-height:1;">'+s.icon+'</span><span style="font-size:8.5px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
         }
       }
       html += '</div>';
+      // ===== 最近のきろく（実データ表示） =====
       html += '<div style="padding:4px 16px 8px;">';
       html += '<div class="section-head"><h2 class="section-title">最近のきろく</h2></div>';
-      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:16px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;padding:24px 16px;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
+      const history = (data.stampHistory || []);
+      // 今日のきろくだけ表示
+      const todayStr = new Date().toDateString();
+      const todayHistory = history.filter(r => new Date(r.timestamp).toDateString() === todayStr);
+      if (todayHistory.length === 0) {
+        html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px 16px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
+      } else {
+        // 件数表示
+        html += '<div style="font-size:10px;color:var(--ink-light);margin-bottom:6px;">今日の記録: '+todayHistory.length+'件</div>';
+        html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+        for (const r of todayHistory) {
+          const timeStr = _formatStampTime(r.timestamp);
+          const sourceTag = r.source === 'planner' ? '<span style="font-size:9px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 5px;border-radius:100px;font-weight:700;">📋</span>' : '';
+          html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--card-border);border-radius:12px;">';
+          html += '<span style="font-size:18px;flex-shrink:0;">'+r.icon+'</span>';
+          html += '<span style="flex:1;font-size:12px;font-weight:600;color:var(--ink-dark);">'+escapeHtml(r.name)+'</span>';
+          if (sourceTag) html += sourceTag;
+          html += '<span style="font-size:10px;color:var(--ink-sub);font-variant-numeric:tabular-nums;">'+timeStr+'</span>';
+          html += '<button onclick="deleteStampRecord(\''+r.id+'\')" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:0 2px;font-size:13px;line-height:1;">×</button>';
+          html += '</div>';
+        }
+        html += '</div>';
+        // 過去の記録があれば件数だけ表示
+        const pastCount = history.length - todayHistory.length;
+        if (pastCount > 0) {
+          html += '<div style="font-size:10px;color:var(--ink-light);margin-top:8px;text-align:center;">過去の記録: '+pastCount+'件</div>';
+        }
+      }
       html += '</div>';
     } else if (ssTab === 'planner') {
       // ───── プランナー画面（新規）─────
