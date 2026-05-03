@@ -13352,7 +13352,7 @@ async function searchNearbyPlaces() {
       : new google.maps.LatLng(window._nearbyLat, window._nearbyLng);
     const request = {
       textQuery: query,
-      fields: ['displayName', 'formattedAddress', 'location', 'businessStatus', 'googleMapsURI', 'currentOpeningHours', 'nationalPhoneNumber'],
+      fields: ['displayName', 'formattedAddress', 'location', 'businessStatus', 'googleMapsURI'],
       locationBias: center,
       maxResultCount: 20
     };
@@ -13375,7 +13375,7 @@ async function searchNearbyPlaces() {
         distance: nearbyDistance(window._nearbyLat, window._nearbyLng, pos.lat, pos.lng),
         isOpen: p.currentOpeningHours ? p.currentOpeningHours.openNow : null,
         hours: _getTodayHours(p.currentOpeningHours),
-        phone: p.nationalPhoneNumber || ''
+        phone: ''
       });
     }
 
