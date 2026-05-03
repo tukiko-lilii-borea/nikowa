@@ -11656,7 +11656,7 @@ function renderTodayCard(icon, title, value, label, comment) {
 }
 
 function showWeatherPopup() {
-  if (!window._todayHubTab) window._todayHubTab = 'today';
+  if (!window._todayHubTab) window._todayHubTab = 'weather';
   const tab = window._todayHubTab;
   const w = window._weatherCache;
   const region = (data && data.userRegion) || '大阪';
@@ -11666,7 +11666,7 @@ function showWeatherPopup() {
   html += '<div style="display:flex;justify-content:flex-end;margin-bottom:4px;"><button onclick="closeWeatherPopup()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-sub);">✕</button></div>';
   // ミニタブ
   html += '<div style="display:flex;gap:4px;margin-bottom:12px;">';
-  const tabs = [{id:'today',label:'Today'},{id:'news',label:'ニュース'},{id:'animal',label:'アニマル'}];
+  const tabs = [{id:'weather',label:'Weather'},{id:'today',label:'ToDay'},{id:'news',label:'ニュース'},{id:'animal',label:'🐾 ニュース'}];
   for (const t of tabs) {
     const isActive = tab === t.id;
     html += '<button onclick="window._todayHubTab=\''+t.id+'\';showWeatherPopup()" style="flex:1;padding:8px 0;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;border:'+(isActive?'1.5px solid var(--accent)':'1px solid var(--line)')+';background:'+(isActive?'var(--accent-bg)':'var(--surface)')+';color:'+(isActive?'var(--accent-deep)':'var(--ink-sub)')+';">'+t.label+'</button>';
@@ -11674,7 +11674,7 @@ function showWeatherPopup() {
   html += '</div>';
 
   // タブコンテンツ
-  if (tab === 'today') {
+  if (tab === 'weather') {
     if (!w) {
       html += '<div style="text-align:center;padding:24px;color:var(--ink-sub);font-size:13px;">取得中...🌷</div>';
     } else {
@@ -11706,6 +11706,8 @@ function showWeatherPopup() {
         html += '</div>';
       }
     }
+  } else if (tab === 'today') {
+    html += renderTodayTab();
   } else if (tab === 'news') {
     html += renderNewsSection('general', null);
   } else if (tab === 'animal') {
