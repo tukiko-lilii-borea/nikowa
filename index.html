@@ -13353,7 +13353,10 @@ async function searchNearbyPlaces() {
     const request = {
       textQuery: query,
       fields: ['displayName', 'formattedAddress', 'location', 'businessStatus', 'googleMapsURI'],
-      locationBias: center,
+      locationRestriction: new google.maps.LatLngBounds(
+        new google.maps.LatLng(center.lat() - 0.005, center.lng() - 0.006),
+        new google.maps.LatLng(center.lat() + 0.005, center.lng() + 0.006)
+      ),
       maxResultCount: 20
     };
     const response = await Place.searchByText(request);
