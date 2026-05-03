@@ -5888,6 +5888,134 @@ function openComingSoon(modeName) {
   showToast(modeName + '準備中だよ🌸');
 }
 
+// ===== プランナー機能（Stampのサブサブタブ） =====
+function switchStampSubTab(sub) {
+  data.stampSubTab = sub;
+  saveData();
+  render();
+}
+
+const PLANNER_CATEGORIES = [
+  { id: 'morning',  label: 'Morning',  icon: '🌅', jp: '朝' },
+  { id: 'noon',     label: 'Noon',     icon: '☀️', jp: '昼' },
+  { id: 'evening',  label: 'Evening',  icon: '🌇', jp: '夕' },
+  { id: 'night',    label: 'Night',    icon: '🌙', jp: '夜' },
+  { id: 'midnight', label: 'Midnight', icon: '🌃', jp: '深夜' }
+];
+
+function renderPlannerView() {
+  if (!data.planner) data.planner = { items: [] };
+  const items = data.planner.items || [];
+  const today = new Date().toDateString();
+  
+  let html = '<div style="padding:12px 14px 8px;">';
+  
+  // 説明
+  html += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:10px;line-height:1.5;">時間帯ごとに今日やることを管理。完了したらスタンプにも記録されるよ🌷</div>';
+  
+  // 追加ボタン
+  html += '<button onclick="openPlannerAddModal()" style="width:100%;padding:10px;border:1.5px dashed var(--accent);background:var(--accent-bg);color:var(--accent-deep);border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:14px;">＋ 予定を追加</button>';
+  
+  // カテゴリごとに表示
+  for (const cat of PLANNER_CATEGORIES) {
+    const catItems = items.filter(i => i.category === cat.id);
+    if (catItems.length === 0) continue;
+    
+    // 時間順でソート（時間なしは最後）
+    catItems.sort((a, b) => {
+      if (!a.time && !b.time) return 0;
+      if (!a.time) return 1;
+      if (!b.time) return -1;
+      return a.time.localeCompare(b.time);
+    });
+    
+    // 完了/未完了で並び替え（未完了が上）
+    const incomplete = catItems.filter(i => !i.completed || i.completedAt !== today);
+    const complete = catItems.filter(i => i.completed && i.completedAt === today);
+    const sorted = [...incomplete, ...complete];
+    
+    // カテゴリ見出し
+    html += '<div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px;">';
+    html += '<span style="font-size:18px;">'+cat.icon+'</span>';
+    html += '<span style="font-size:13px;font-weight:800;color:var(--ink-dark);letter-spacing:0.5px;">'+cat.label+'</span>';
+    html += '<span style="font-size:10px;color:var(--ink-light);">'+cat.jp+'</span>';
+    html += '<div style="flex:1;height:1px;background:linear-gradient(90deg,var(--accent) 0%,transparent 100%);opacity:0.4;"></div>';
+    html += '</div>';
+    
+    // アイテムリスト
+    for (const item of sorted) {
+      const isDone = item.completed && item.completedAt === today;
+      const opacity = isDone ? '0.5' : '1';
+      const textDeco = isDone ? 'text-decoration:line-through;color:var(--ink-light);' : '';
+      const bg = isDone ? 'var(--surface-warm)' : 'var(--surface)';
+      
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:'+bg+';border:1px solid var(--card-border);border-radius:12px;margin-bottom:6px;opacity:'+opacity+';" onclick="openPlannerEditModal(\''+item.id+'\')">';
+      
+      // 時間
+      if (item.time) {
+        html += '<span style="display:flex;align-items:center;gap:2px;background:var(--accent-bg);color:var(--accent-deep);font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:11px;">schedule</span>'+item.time+'</span>';
+      }
+      
+      // アイコン
+      html += '<span style="font-size:18px;flex-shrink:0;">'+(item.icon||'📋')+'</span>';
+      
+      // タスク名
+      html += '<span style="flex:1;font-size:13px;font-weight:600;color:var(--ink-dark);'+textDeco+'">'+escapeHtml(item.task)+'</span>';
+      
+      // 通知マーク
+      if (item.notify) html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);">notifications</span>';
+      
+      // スタンプボタン
+      if (!isDone) {
+        html += '<button onclick="event.stopPropagation();completePlannerItem(\''+item.id+'\')" style="background:var(--accent);color:white;border:none;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">check</span></button>';
+      } else {
+        html += '<button onclick="event.stopPropagation();uncompletePlannerItem(\''+item.id+'\')" style="background:var(--surface-warm);color:var(--ink-light);border:1px solid var(--line);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;">undo</span></button>';
+      }
+      
+      html += '</div>';
+    }
+  }
+  
+  // 空の状態
+  if (items.length === 0) {
+    html += '<div style="background:var(--surface-warm);border:1.5px solid var(--card-border);border-radius:16px;padding:32px 16px;text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;margin-top:8px;">';
+    html += '🌷 まだ予定がないよ<br><span style="font-size:10px;color:var(--ink-light);">「予定を追加」から作れるよ</span>';
+    html += '</div>';
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+function openPlannerAddModal() {
+  showToast('編集機能は次回追加するね🌷');
+}
+
+function openPlannerEditModal(id) {
+  showToast('編集機能は次回追加するね🌷');
+}
+
+function completePlannerItem(id) {
+  if (!data.planner) data.planner = { items: [] };
+  const item = data.planner.items.find(i => i.id === id);
+  if (!item) return;
+  item.completed = true;
+  item.completedAt = new Date().toDateString();
+  saveData();
+  showToast('完了！スタンプにも記録したよ🌷');
+  render();
+}
+
+function uncompletePlannerItem(id) {
+  if (!data.planner) data.planner = { items: [] };
+  const item = data.planner.items.find(i => i.id === id);
+  if (!item) return;
+  item.completed = false;
+  item.completedAt = null;
+  saveData();
+  render();
+}
+
 function renderMeMode() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('pet');
@@ -5916,33 +6044,50 @@ function renderMeMode() {
     html += renderResumeTab();
     
   } else if (tab === 'stamp') {
-    // ===== Stamp =====
-    html += '<div style="padding:12px 16px 4px;">';
-    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
-    const stampCats = ['生活','美容','体調','仕事','趣味'];
-    for (const cat of stampCats) {
-      const active = (cat === '生活') ? 'background:var(--accent);color:white;border-color:var(--accent);' : '';
-      html += '<button style="flex-shrink:0;padding:4px 14px;border:1px solid var(--line);border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink-sub);background:var(--surface);'+active+'">'+cat+'</button>';
-    }
-    html += '</div></div>';
-    html += '<div style="padding:0 12px 12px;display:grid;grid-template-columns:repeat(8,1fr);gap:4px;">';
-    const stamps = [
-      {icon:'💧',name:'水'},{icon:'🍚',name:'ごはん'},{icon:'🛁',name:'おふろ'},
-      {icon:'🧴',name:'スキンケア'},{icon:'💊',name:'くすり'},{icon:'🏃',name:'運動'},
-      {icon:'😴',name:'睡眠'},{icon:'＋',name:'追加',add:true}
-    ];
-    for (const s of stamps) {
-      if (s.add) {
-        html += '<button onclick="showToast(\'準備中🌷\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1.2px dashed var(--line);border-radius:10px;background:none;cursor:pointer;font-family:inherit;min-width:0;"><span style="font-size:16px;color:var(--accent);font-weight:700;line-height:1;">＋</span><span style="font-size:8.5px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
-      } else {
-        html += '<button onclick="showToast(\''+s.icon+' '+s.name+' きろく！…準備中🌷\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;"><span style="font-size:18px;line-height:1;">'+s.icon+'</span><span style="font-size:8.5px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
+    // ===== Stamp（サブサブタブ：スタンプ / プランナー） =====
+    if (!data.stampSubTab) data.stampSubTab = 'stamp';
+    const ssTab = data.stampSubTab;
+    
+    // サブサブタブ
+    html += '<div style="padding:10px 14px 0;display:flex;gap:6px;">';
+    const _sActive = ssTab === 'stamp';
+    const _pActive = ssTab === 'planner';
+    html += '<button onclick="switchStampSubTab(\'stamp\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_sActive?'var(--accent)':'var(--line)')+';background:'+(_sActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_sActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🌷 スタンプ</button>';
+    html += '<button onclick="switchStampSubTab(\'planner\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_pActive?'var(--accent)':'var(--line)')+';background:'+(_pActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_pActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📋 プランナー</button>';
+    html += '</div>';
+    
+    if (ssTab === 'stamp') {
+      // ───── スタンプ画面（既存）─────
+      html += '<div style="padding:12px 16px 4px;">';
+      html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
+      const stampCats = ['生活','美容','体調','仕事','趣味'];
+      for (const cat of stampCats) {
+        const active = (cat === '生活') ? 'background:var(--accent);color:white;border-color:var(--accent);' : '';
+        html += '<button style="flex-shrink:0;padding:4px 14px;border:1px solid var(--line);border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink-sub);background:var(--surface);'+active+'">'+cat+'</button>';
       }
+      html += '</div></div>';
+      html += '<div style="padding:0 12px 12px;display:grid;grid-template-columns:repeat(8,1fr);gap:4px;">';
+      const stamps = [
+        {icon:'💧',name:'水'},{icon:'🍚',name:'ごはん'},{icon:'🛁',name:'おふろ'},
+        {icon:'🧴',name:'スキンケア'},{icon:'💊',name:'くすり'},{icon:'🏃',name:'運動'},
+        {icon:'😴',name:'睡眠'},{icon:'＋',name:'追加',add:true}
+      ];
+      for (const s of stamps) {
+        if (s.add) {
+          html += '<button onclick="showToast(\'準備中🌷\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1.2px dashed var(--line);border-radius:10px;background:none;cursor:pointer;font-family:inherit;min-width:0;"><span style="font-size:16px;color:var(--accent);font-weight:700;line-height:1;">＋</span><span style="font-size:8.5px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
+        } else {
+          html += '<button onclick="showToast(\''+s.icon+' '+s.name+' きろく！…準備中🌷\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;"><span style="font-size:18px;line-height:1;">'+s.icon+'</span><span style="font-size:8.5px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
+        }
+      }
+      html += '</div>';
+      html += '<div style="padding:4px 16px 8px;">';
+      html += '<div class="section-head"><h2 class="section-title">最近のきろく</h2></div>';
+      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:16px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;padding:24px 16px;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
+      html += '</div>';
+    } else if (ssTab === 'planner') {
+      // ───── プランナー画面（新規）─────
+      html += renderPlannerView();
     }
-    html += '</div>';
-    html += '<div style="padding:4px 16px 8px;">';
-    html += '<div class="section-head"><h2 class="section-title">最近のきろく</h2></div>';
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:16px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;padding:24px 16px;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
-    html += '</div>';
     
   } else if (tab === 'diary') {
     html += '<div style="padding:16px;"><button onclick="goMeDiary()" style="width:100%;padding:20px;border:1.5px solid var(--card-border);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);">📔 日記を開く</button></div>';
@@ -10274,9 +10419,7 @@ const MODE_TABS_KEY = { me: 'nikowa_me_tabs', pet: 'nikowa_pet_tabs', kids: 'nik
 const DEFAULT_MODE_TABS = {
   me: [
     { id: 'stamp',      label: 'Stamp' },
-    { id: 'routine',    label: 'Routine' },
     { id: 'diary',      label: 'Diary' },
-    { id: 'planner',    label: 'Planner' },
     { id: 'collection', label: 'Collection' },
     { id: 'resume',     label: 'Resume' },
     { id: 'secret',     label: 'Secret' }
@@ -10312,10 +10455,10 @@ function getModeTabsForMode(mode) {
     const s = localStorage.getItem(MODE_TABS_KEY[mode]);
     if (s) {
       const tabs = JSON.parse(s);
-      // ME: ToDay/Newsタブを削除（天気ポップアップに統合済み）
+      // ME: ToDay/News/Routine/Plannerタブを削除（天気ポップアップ・Stamp内に統合済み）
       if (mode === 'me') {
         const before = tabs.length;
-        const filtered = tabs.filter(t => t.id !== 'today' && t.id !== 'news');
+        const filtered = tabs.filter(t => t.id !== 'today' && t.id !== 'news' && t.id !== 'routine' && t.id !== 'planner');
         if (filtered.length !== before) {
           try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(filtered)); } catch(e) {}
           return filtered;
