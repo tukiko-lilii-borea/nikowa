@@ -9469,7 +9469,7 @@ function renderTown() {
     const selCat = window._nearbyCat || '喫煙所';
     html += '<div class="town-cat-chips" style="padding:0 0 8px;flex-wrap:wrap;">';
     for (const c of nearbyCats) {
-      html += '<button class="town-cat-chip '+(selCat===c?'selected':'')+'" onclick="window._nearbyCat=\''+c+'\';searchNearbyPlaces();">'+escapeHtml(c)+'</button>';
+      html += '<button class="town-cat-chip '+(selCat===c?'selected':'')+'" onclick="window._nearbyCat=\''+c+'\';window._nearbyCustomQuery=\'\';window._nearbyResults=[];renderTown();if(window._nearbyGeoStatus===\'ok\')setTimeout(searchNearbyPlaces,200);">'+escapeHtml(c)+'</button>';
     }
     html += '</div>';
     // 自由検索バー
