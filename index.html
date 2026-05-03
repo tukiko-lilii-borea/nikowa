@@ -13492,8 +13492,12 @@ function initNearbyMap() {
   };
   const infoWindow = new google.maps.InfoWindow();
   const results = window._nearbyResults || [];
-  for (const r of results) _addNearbyMarker(map, infoWindow, pinIcon, r);
-  console.log('nearby map markers rendered:', results.length);
+  window._nearbyMarkers = [];
+  for (const r of results) {
+    const marker = _addNearbyMarker(map, infoWindow, pinIcon, r);
+    if (marker) window._nearbyMarkers.push(marker);
+  }
+  console.log('nearby map markers rendered:', window._nearbyMarkers.length);
 
   // ピンは全部打つが、近い3件が見えるようにbounds調整
   if (results.length > 0) {
