@@ -7128,6 +7128,1390 @@ function deleteMemo(memoId) {
   render();
 }
 
+// ===== Money機能（保険・ローン・出費・サブスク） =====
+function _ensureMoneyStructure() {
+  if (!data.money) data.money = {};
+  if (!data.money.insurance) data.money.insurance = [];
+  if (!data.money.loans) data.money.loans = [];
+  if (!data.money.expenses) data.money.expenses = [];
+  if (!data.money.subscriptions) data.money.subscriptions = [];
+}
+
+function switchMoneySubTab(sub) {
+  const scrollY = window.scrollY;
+  data.moneySubTab = sub;
+  saveData();
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function renderMoneyTab() {
+  _ensureMoneyStructure();
+  if (!data.moneySubTab) data.moneySubTab = 'insurance';
+  const sub = data.moneySubTab;
+  
+  let h = '';
+  
+  // サブサブタブ（横スクロール）
+  h += '<div style="padding:10px 14px 0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;">';
+  const subTabs = [
+    {id:'insurance', icon:'🛡', label:'保険'},
+    {id:'loans',     icon:'🏠', label:'ローン'},
+    {id:'expenses',  icon:'📒', label:'出費'},
+    {id:'subscriptions', icon:'🔁', label:'固定費'}
+  ];
+  for (const t of subTabs) {
+    const isAct = sub === t.id;
+    h += '<button onclick="switchMoneySubTab(\''+t.id+'\')" style="flex-shrink:0;padding:8px 14px;border-radius:10px;border:1.5px solid '+(isAct?'var(--accent)':'var(--line)')+';background:'+(isAct?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(isAct?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">'+t.icon+' '+t.label+'</button>';
+  }
+  h += '</div>';
+  
+  if (sub === 'insurance') {
+    h += renderInsuranceList();
+  } else if (sub === 'loans') {
+    h += renderLoansList();
+  } else if (sub === 'expenses') {
+    h += renderExpensesList();
+  } else if (sub === 'subscriptions') {
+    h += renderSubscriptionsList();
+  }
+  
+  return h;
+}
+
+// ===== 保険 =====
+const INSURANCE_TYPES = ['生命', '医療', 'がん', '自動車', '火災', '学資', '個人年金', 'ペット', 'その他'];
+
+function renderInsuranceList() {
+  _ensureMoneyStructure();
+  const list = data.money.insurance.slice().sort((a,b) => (a.type||'').localeCompare(b.type||''));
+  
+  let h = '<div style="padding:8px 16px 16px;">';
+  
+  // 月額合計
+  const monthlySum = list.reduce((sum, i) => sum + (parseFloat(i.monthlyFee)||0), 0);
+  const annualSum = monthlySum * 12;
+  
+  h += '<div style="background:linear-gradient(135deg,var(--accent-bg) 0%,var(--surface-warm) 100%);border:1.5px solid var(--accent);border-radius:14px;padding:14px;margin-bottom:12px;">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:baseline;">';
+  h += '<div><div style="font-size:10px;color:var(--ink-sub);font-weight:700;">月額合計</div><div style="font-size:22px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">¥'+monthlySum.toLocaleString()+'</div></div>';
+  h += '<div style="text-align:right;"><div style="font-size:10px;color:var(--ink-sub);font-weight:700;">年額換算</div><div style="font-size:14px;font-weight:700;color:var(--ink-dark);font-variant-numeric:tabular-nums;">¥'+annualSum.toLocaleString()+'</div></div>';
+  h += '</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);margin-top:6px;">'+list.length+'件の保険</div>';
+  h += '</div>';
+  
+  // 追加ボタン
+  h += '<button onclick="openInsuranceEditModal(null)" style="width:100%;padding:12px;border:none;background:var(--accent);color:white;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">add</span>保険を追加</button>';
+  
+  if (list.length === 0) {
+    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65) 0%,rgba(255,255,255,0.45) 100%);border:1.5px solid var(--accent);border-radius:16px;padding:30px 16px;text-align:center;color:var(--accent-deep);font-size:14px;line-height:1.7;font-weight:700;">保険はまだ登録されてないよ🌷<br><span style="font-size:11px;color:#666;font-weight:500;">上のボタンから追加してね</span></div>';
+    h += '</div>';
+    return h;
+  }
+  
+  // 一覧
+  h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+  for (const ins of list) {
+    h += '<button onclick="openInsuranceEditModal(\''+ins.id+'\')" style="text-align:left;padding:12px;border:1.5px solid var(--card-border);border-radius:12px;background:var(--surface);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:4px;">';
+    h += '<div style="display:flex;align-items:center;gap:6px;">';
+    h += '<span style="font-size:9px;font-weight:800;color:var(--accent-deep);background:var(--accent-bg);padding:2px 8px;border-radius:100px;flex-shrink:0;">'+escapeHtml(ins.type||'その他')+'</span>';
+    h += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(ins.productName || ins.company || '無題')+'</span>';
+    if (ins.monthlyFee) h += '<span style="flex-shrink:0;font-size:13px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">¥'+parseFloat(ins.monthlyFee).toLocaleString()+'/月</span>';
+    h += '</div>';
+    const detailParts = [];
+    if (ins.company && ins.productName) detailParts.push(escapeHtml(ins.company));
+    if (ins.expiryDate) detailParts.push('満期: '+escapeHtml(ins.expiryDate));
+    if (ins.paymentDate) detailParts.push('引落: '+escapeHtml(ins.paymentDate)+'日');
+    if (detailParts.length > 0) {
+      h += '<div style="font-size:10px;color:var(--ink-sub);">'+detailParts.join(' / ')+'</div>';
+    }
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  h += '</div>';
+  return h;
+}
+
+function openInsuranceEditModal(insuranceId) {
+  _ensureMoneyStructure();
+  const isEdit = insuranceId !== null && insuranceId !== undefined && insuranceId !== 'null';
+  const cur = isEdit ? data.money.insurance.find(i => i.id === insuranceId) : 
+    { type:'生命', company:'', productName:'', monthlyFee:'', paymentDate:'', contractDate:'', expiryDate:'', certNumber:'', beneficiary:'', memo:'' };
+  if (isEdit && !cur) return;
+  
+  const ex = document.getElementById('insuranceEditModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="insuranceEditModal" onclick="if(event.target===this)closeInsuranceEditModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">🛡 '+(isEdit?'保険を編集':'保険を追加')+'</div>';
+  h += '<button onclick="closeInsuranceEditModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  
+  // 種類
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">種類</label>';
+  h += '<select id="insType" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  for (const t of INSURANCE_TYPES) {
+    h += '<option value="'+t+'"'+(cur.type===t?' selected':'')+'>'+t+'</option>';
+  }
+  h += '</select></div>';
+  
+  // 会社
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">保険会社</label>';
+  h += '<input id="insCompany" type="text" value="'+escapeHtml(cur.company||'')+'" placeholder="例：日本生命" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // 商品名
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">商品名</label>';
+  h += '<input id="insProductName" type="text" value="'+escapeHtml(cur.productName||'')+'" placeholder="例：みらいのカタチ" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // 月額・引落日
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:2;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">月額（円）</label>';
+  h += '<input id="insMonthlyFee" type="number" inputmode="numeric" value="'+escapeHtml(String(cur.monthlyFee||''))+'" placeholder="0" min="0" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">引落日</label>';
+  h += '<input id="insPaymentDate" type="number" inputmode="numeric" value="'+escapeHtml(String(cur.paymentDate||''))+'" placeholder="27" min="1" max="31" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // 契約日・満期日
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">契約日</label>';
+  h += '<input id="insContractDate" type="date" value="'+escapeHtml(cur.contractDate||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">満期日</label>';
+  h += '<input id="insExpiryDate" type="date" value="'+escapeHtml(cur.expiryDate||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // 証券番号
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">証券番号（任意）</label>';
+  h += '<input id="insCertNumber" type="text" value="'+escapeHtml(cur.certNumber||'')+'" placeholder="例：123-456-789" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // 受取人
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">受取人（任意）</label>';
+  h += '<input id="insBeneficiary" type="text" value="'+escapeHtml(cur.beneficiary||'')+'" placeholder="例：配偶者" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // メモ
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メモ（任意）</label>';
+  h += '<textarea id="insMemo" placeholder="備考・特約など" style="width:100%;min-height:60px;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(cur.memo||'')+'</textarea>';
+  h += '</div>';
+  
+  // ボタン
+  h += '<div style="display:flex;gap:8px;margin-top:8px;">';
+  if (isEdit) {
+    h += '<button onclick="deleteInsurance(\''+insuranceId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="closeInsuranceEditModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveInsurance('+(isEdit?'\''+insuranceId+'\'':'null')+')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+
+function closeInsuranceEditModal() {
+  const el = document.getElementById('insuranceEditModal');
+  if (el) el.remove();
+}
+
+function saveInsurance(insuranceId) {
+  _ensureMoneyStructure();
+  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const obj = {
+    type: get('insType') || 'その他',
+    company: get('insCompany'),
+    productName: get('insProductName'),
+    monthlyFee: get('insMonthlyFee'),
+    paymentDate: get('insPaymentDate'),
+    contractDate: get('insContractDate'),
+    expiryDate: get('insExpiryDate'),
+    certNumber: get('insCertNumber'),
+    beneficiary: get('insBeneficiary'),
+    memo: get('insMemo')
+  };
+  if (!obj.company && !obj.productName) {
+    showToast('保険会社か商品名を入れてね');
+    return;
+  }
+  const isEdit = insuranceId !== null && insuranceId !== undefined && insuranceId !== 'null';
+  if (isEdit) {
+    const ins = data.money.insurance.find(i => i.id === insuranceId);
+    if (ins) Object.assign(ins, obj, { updatedAt: Date.now() });
+  } else {
+    obj.id = 'ins_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    obj.createdAt = Date.now();
+    obj.updatedAt = Date.now();
+    data.money.insurance.push(obj);
+  }
+  saveData();
+  closeInsuranceEditModal();
+  showToast('保存したよ🌷');
+  render();
+}
+
+function deleteInsurance(insuranceId) {
+  if (!confirm('この保険を削除する？')) return;
+  _ensureMoneyStructure();
+  data.money.insurance = data.money.insurance.filter(i => i.id !== insuranceId);
+  saveData();
+  closeInsuranceEditModal();
+  showToast('削除したよ');
+  render();
+}
+
+// ===== ローン =====
+const LOAN_TYPES = ['住宅', '自動車', '教育', 'カードリボ', 'フリーローン', '事業', '奨学金', 'その他'];
+
+function renderLoansList() {
+  _ensureMoneyStructure();
+  const list = data.money.loans.slice().sort((a,b) => (a.type||'').localeCompare(b.type||''));
+  
+  let h = '<div style="padding:8px 16px 16px;">';
+  
+  // 月額・残高合計
+  const monthlySum = list.reduce((sum, l) => sum + (parseFloat(l.monthlyPayment)||0), 0);
+  const balanceSum = list.reduce((sum, l) => sum + (parseFloat(l.currentBalance)||0), 0);
+  
+  h += '<div style="background:linear-gradient(135deg,var(--accent-bg) 0%,var(--surface-warm) 100%);border:1.5px solid var(--accent);border-radius:14px;padding:14px;margin-bottom:12px;">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:baseline;">';
+  h += '<div><div style="font-size:10px;color:var(--ink-sub);font-weight:700;">月返済合計</div><div style="font-size:22px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">¥'+monthlySum.toLocaleString()+'</div></div>';
+  h += '<div style="text-align:right;"><div style="font-size:10px;color:var(--ink-sub);font-weight:700;">残高合計</div><div style="font-size:14px;font-weight:700;color:#c4506b;font-variant-numeric:tabular-nums;">¥'+balanceSum.toLocaleString()+'</div></div>';
+  h += '</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);margin-top:6px;">'+list.length+'件のローン</div>';
+  h += '</div>';
+  
+  // 追加ボタン
+  h += '<button onclick="openLoanEditModal(null)" style="width:100%;padding:12px;border:none;background:var(--accent);color:white;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">add</span>ローンを追加</button>';
+  
+  if (list.length === 0) {
+    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65) 0%,rgba(255,255,255,0.45) 100%);border:1.5px solid var(--accent);border-radius:16px;padding:30px 16px;text-align:center;color:var(--accent-deep);font-size:14px;line-height:1.7;font-weight:700;">ローンはまだ登録されてないよ🌷<br><span style="font-size:11px;color:#666;font-weight:500;">上のボタンから追加してね</span></div>';
+    h += '</div>';
+    return h;
+  }
+  
+  // 一覧
+  h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+  for (const loan of list) {
+    const balance = parseFloat(loan.currentBalance)||0;
+    const original = parseFloat(loan.loanAmount)||0;
+    const progress = original > 0 ? Math.max(0, Math.min(100, ((original-balance)/original)*100)) : 0;
+    
+    h += '<button onclick="openLoanEditModal(\''+loan.id+'\')" style="text-align:left;padding:12px;border:1.5px solid var(--card-border);border-radius:12px;background:var(--surface);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:6px;">';
+    h += '<div style="display:flex;align-items:center;gap:6px;">';
+    h += '<span style="font-size:9px;font-weight:800;color:var(--accent-deep);background:var(--accent-bg);padding:2px 8px;border-radius:100px;flex-shrink:0;">'+escapeHtml(loan.type||'その他')+'</span>';
+    h += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(loan.lender || '無題')+'</span>';
+    if (loan.monthlyPayment) h += '<span style="flex-shrink:0;font-size:13px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">¥'+parseFloat(loan.monthlyPayment).toLocaleString()+'/月</span>';
+    h += '</div>';
+    
+    if (original > 0) {
+      // 返済進捗バー
+      h += '<div style="display:flex;align-items:center;gap:8px;font-size:10px;">';
+      h += '<div style="flex:1;height:6px;background:var(--surface-warm);border-radius:100px;overflow:hidden;"><div style="width:'+progress.toFixed(1)+'%;height:100%;background:linear-gradient(90deg,var(--mint),var(--mint-deep));"></div></div>';
+      h += '<span style="color:var(--ink-sub);font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;">'+progress.toFixed(0)+'%</span>';
+      h += '</div>';
+      h += '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-sub);">';
+      h += '<span>残高: <span style="color:#c4506b;font-weight:700;">¥'+balance.toLocaleString()+'</span></span>';
+      h += '<span>借入: ¥'+original.toLocaleString()+'</span>';
+      h += '</div>';
+    }
+    
+    const detailParts = [];
+    if (loan.interestRate) detailParts.push('金利: '+escapeHtml(loan.interestRate)+'%');
+    if (loan.endDate) detailParts.push('完済: '+escapeHtml(loan.endDate));
+    if (detailParts.length > 0) {
+      h += '<div style="font-size:10px;color:var(--ink-sub);">'+detailParts.join(' / ')+'</div>';
+    }
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  h += '</div>';
+  return h;
+}
+
+function openLoanEditModal(loanId) {
+  _ensureMoneyStructure();
+  const isEdit = loanId !== null && loanId !== undefined && loanId !== 'null';
+  const cur = isEdit ? data.money.loans.find(l => l.id === loanId) : 
+    { type:'住宅', lender:'', loanAmount:'', currentBalance:'', monthlyPayment:'', interestRate:'', startDate:'', endDate:'', memo:'' };
+  if (isEdit && !cur) return;
+  
+  const ex = document.getElementById('loanEditModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="loanEditModal" onclick="if(event.target===this)closeLoanEditModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">🏠 '+(isEdit?'ローンを編集':'ローンを追加')+'</div>';
+  h += '<button onclick="closeLoanEditModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  
+  // 種類
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">種類</label>';
+  h += '<select id="loanType" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  for (const t of LOAN_TYPES) {
+    h += '<option value="'+t+'"'+(cur.type===t?' selected':'')+'>'+t+'</option>';
+  }
+  h += '</select></div>';
+  
+  // 借入先
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">借入先</label>';
+  h += '<input id="loanLender" type="text" value="'+escapeHtml(cur.lender||'')+'" placeholder="例：三菱UFJ銀行" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // 借入額・残高
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">借入額（円）</label>';
+  h += '<input id="loanAmount" type="number" inputmode="numeric" value="'+escapeHtml(String(cur.loanAmount||''))+'" placeholder="0" min="0" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">現在の残高（円）</label>';
+  h += '<input id="loanCurrentBalance" type="number" inputmode="numeric" value="'+escapeHtml(String(cur.currentBalance||''))+'" placeholder="0" min="0" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // 月返済・金利
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:2;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">月返済額（円）</label>';
+  h += '<input id="loanMonthlyPayment" type="number" inputmode="numeric" value="'+escapeHtml(String(cur.monthlyPayment||''))+'" placeholder="0" min="0" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">金利（%）</label>';
+  h += '<input id="loanInterestRate" type="number" inputmode="decimal" value="'+escapeHtml(String(cur.interestRate||''))+'" placeholder="1.5" min="0" step="0.01" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // 開始日・完済予定
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">借入開始</label>';
+  h += '<input id="loanStartDate" type="date" value="'+escapeHtml(cur.startDate||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">完済予定</label>';
+  h += '<input id="loanEndDate" type="date" value="'+escapeHtml(cur.endDate||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // メモ
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メモ（任意）</label>';
+  h += '<textarea id="loanMemo" placeholder="連帯保証人・繰上げ返済予定など" style="width:100%;min-height:60px;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(cur.memo||'')+'</textarea>';
+  h += '</div>';
+  
+  // ボタン
+  h += '<div style="display:flex;gap:8px;margin-top:8px;">';
+  if (isEdit) {
+    h += '<button onclick="deleteLoan(\''+loanId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="closeLoanEditModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveLoan('+(isEdit?'\''+loanId+'\'':'null')+')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+
+function closeLoanEditModal() {
+  const el = document.getElementById('loanEditModal');
+  if (el) el.remove();
+}
+
+function saveLoan(loanId) {
+  _ensureMoneyStructure();
+  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const obj = {
+    type: get('loanType') || 'その他',
+    lender: get('loanLender'),
+    loanAmount: get('loanAmount'),
+    currentBalance: get('loanCurrentBalance'),
+    monthlyPayment: get('loanMonthlyPayment'),
+    interestRate: get('loanInterestRate'),
+    startDate: get('loanStartDate'),
+    endDate: get('loanEndDate'),
+    memo: get('loanMemo')
+  };
+  if (!obj.lender) {
+    showToast('借入先を入れてね');
+    return;
+  }
+  const isEdit = loanId !== null && loanId !== undefined && loanId !== 'null';
+  if (isEdit) {
+    const loan = data.money.loans.find(l => l.id === loanId);
+    if (loan) Object.assign(loan, obj, { updatedAt: Date.now() });
+  } else {
+    obj.id = 'loan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    obj.createdAt = Date.now();
+    obj.updatedAt = Date.now();
+    data.money.loans.push(obj);
+  }
+  saveData();
+  closeLoanEditModal();
+  showToast('保存したよ🌷');
+  render();
+}
+
+function deleteLoan(loanId) {
+  if (!confirm('このローンを削除する？')) return;
+  _ensureMoneyStructure();
+  data.money.loans = data.money.loans.filter(l => l.id !== loanId);
+  saveData();
+  closeLoanEditModal();
+  showToast('削除したよ');
+  render();
+}
+
+// ===== 出費メモ =====
+const EXPENSE_CATEGORIES = [
+  {id:'food',     icon:'kitchen',           label:'食費',   color:'#E07058'},
+  {id:'daily',    icon:'shopping_cart',     label:'日用品', color:'#E89A4A'},
+  {id:'eatout',   icon:'restaurant',        label:'外食',   color:'#D8C040'},
+  {id:'transport',icon:'directions_subway', label:'交通',   color:'#5FA985'},
+  {id:'medical',  icon:'medication',        label:'医療',   color:'#5888B0'},
+  {id:'beauty',   icon:'palette',           label:'美容',   color:'#C8709A'},
+  {id:'clothes',  icon:'checkroom',         label:'衣類',   color:'#8868A8'},
+  {id:'hobby',    icon:'sports_esports',    label:'趣味',   color:'#48A8B8'},
+  {id:'social',   icon:'card_giftcard',     label:'交際',   color:'#D88AA0'},
+  {id:'kids',     icon:'child_care',        label:'子供',   color:'#F0A0C0'},
+  {id:'pet',      icon:'pets',              label:'ペット', color:'#9890C8'},
+  {id:'other',    icon:'more_horiz',        label:'その他', color:'#888888'}
+];
+
+function _getExpenseCategoryInfo(catId) {
+  return EXPENSE_CATEGORIES.find(c => c.id === catId) || EXPENSE_CATEGORIES[EXPENSE_CATEGORIES.length-1];
+}
+
+function _todayDateStr() {
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function switchExpenseMonth(delta) {
+  const scrollY = window.scrollY;
+  if (!window._expenseMonth) {
+    const d = new Date();
+    window._expenseMonth = { y: d.getFullYear(), m: d.getMonth() };
+  }
+  let y = window._expenseMonth.y, m = window._expenseMonth.m + delta;
+  while (m < 0) { m += 12; y -= 1; }
+  while (m > 11) { m -= 12; y += 1; }
+  window._expenseMonth = { y, m };
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function renderExpensesList() {
+  _ensureMoneyStructure();
+  if (!window._expenseMonth) {
+    const d = new Date();
+    window._expenseMonth = { y: d.getFullYear(), m: d.getMonth() };
+  }
+  const { y, m } = window._expenseMonth;
+  const monthStart = new Date(y, m, 1).getTime();
+  const monthEnd = new Date(y, m+1, 1).getTime();
+  
+  // 該当月の出費を抽出
+  const all = data.money.expenses || [];
+  const monthExpenses = all.filter(e => {
+    const d = e.date ? new Date(e.date).getTime() : 0;
+    return d >= monthStart && d < monthEnd;
+  }).sort((a,b) => (b.date||'').localeCompare(a.date||'') || (b.createdAt||0)-(a.createdAt||0));
+  
+  let h = '<div style="padding:8px 16px 16px;">';
+  
+  // 月切替＋合計ダッシュボード
+  const monthSum = monthExpenses.reduce((sum,e) => sum + (parseFloat(e.amount)||0), 0);
+  
+  h += '<div style="background:linear-gradient(135deg,var(--accent-bg) 0%,var(--surface-warm) 100%);border:1.5px solid var(--accent);border-radius:14px;padding:14px;margin-bottom:12px;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
+  h += '<button onclick="switchExpenseMonth(-1)" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--ink-dark);font-size:11px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:2px;">‹ 前月</button>';
+  h += '<div style="flex:1;text-align:center;font-size:14px;font-weight:800;color:var(--ink-dark);">'+y+'年'+(m+1)+'月</div>';
+  const isCurrentMonth = (y === new Date().getFullYear() && m === new Date().getMonth());
+  if (!isCurrentMonth) {
+    h += '<button onclick="switchExpenseMonth(1)" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--ink-dark);font-size:11px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:2px;">翌月 ›</button>';
+  } else {
+    h += '<button disabled style="background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--ink-light);font-size:11px;font-weight:700;font-family:inherit;opacity:0.5;cursor:not-allowed;">翌月 ›</button>';
+  }
+  h += '</div>';
+  h += '<div style="text-align:center;"><div style="font-size:10px;color:var(--ink-sub);font-weight:700;">合計</div><div style="font-size:26px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">¥'+monthSum.toLocaleString()+'</div></div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);text-align:center;margin-top:4px;">'+monthExpenses.length+'件の出費</div>';
+  h += '</div>';
+  
+  // カテゴリ別集計（横棒グラフ）
+  if (monthExpenses.length > 0) {
+    const byCat = {};
+    for (const e of monthExpenses) {
+      const cat = e.category || 'other';
+      byCat[cat] = (byCat[cat]||0) + (parseFloat(e.amount)||0);
+    }
+    const catList = Object.entries(byCat).map(([id, sum]) => ({id, sum, info: _getExpenseCategoryInfo(id)})).sort((a,b) => b.sum - a.sum);
+    const maxSum = Math.max(...catList.map(c => c.sum));
+    
+    h += '<div style="background:var(--surface);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:12px;">';
+    h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:8px;">カテゴリ別</div>';
+    for (const c of catList) {
+      const pct = (c.sum / monthSum) * 100;
+      const barWidth = (c.sum / maxSum) * 100;
+      h += '<div style="margin-bottom:6px;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:2px;">';
+      h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:'+c.info.color+';color:white;flex-shrink:0;">'+renderStampIcon(c.info.icon,'font-size:14px;line-height:1;')+'</span>';
+      h += '<span style="flex:1;font-weight:700;color:var(--ink-dark);">'+c.info.label+'</span>';
+      h += '<span style="font-weight:800;color:var(--ink-dark);font-variant-numeric:tabular-nums;">¥'+c.sum.toLocaleString()+'</span>';
+      h += '<span style="font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;min-width:30px;text-align:right;">'+pct.toFixed(0)+'%</span>';
+      h += '</div>';
+      h += '<div style="height:5px;background:var(--surface-warm);border-radius:100px;overflow:hidden;"><div style="width:'+barWidth.toFixed(1)+'%;height:100%;background:'+c.info.color+';"></div></div>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  
+  // 追加ボタン
+  h += '<button onclick="openExpenseEditModal(null)" style="width:100%;padding:12px;border:none;background:var(--accent);color:white;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">add</span>出費を記録</button>';
+  
+  if (monthExpenses.length === 0) {
+    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65) 0%,rgba(255,255,255,0.45) 100%);border:1.5px solid var(--accent);border-radius:16px;padding:30px 16px;text-align:center;color:var(--accent-deep);font-size:14px;line-height:1.7;font-weight:700;">'+y+'年'+(m+1)+'月の出費はないよ🌷<br><span style="font-size:11px;color:#666;font-weight:500;">上のボタンから記録してね</span></div>';
+    h += '</div>';
+    return h;
+  }
+  
+  // 日別グルーピング
+  const byDate = {};
+  for (const e of monthExpenses) {
+    const key = e.date || 'unknown';
+    if (!byDate[key]) byDate[key] = [];
+    byDate[key].push(e);
+  }
+  const dateKeys = Object.keys(byDate).sort().reverse();
+  
+  h += '<div style="display:flex;flex-direction:column;gap:14px;">';
+  for (const dKey of dateKeys) {
+    const items = byDate[dKey];
+    const daySum = items.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+    const d = new Date(dKey);
+    const wd = isNaN(d.getTime()) ? '' : ['日','月','火','水','木','金','土'][d.getDay()];
+    const dateLabel = isNaN(d.getTime()) ? '日付未設定' : (d.getMonth()+1)+'/'+d.getDate()+'('+wd+')';
+    
+    h += '<div>';
+    h += '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--line-soft);">';
+    h += '<span style="font-size:13px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">'+dateLabel+'</span>';
+    h += '<span style="flex:1;"></span>';
+    h += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);font-variant-numeric:tabular-nums;">¥'+daySum.toLocaleString()+'</span>';
+    h += '</div>';
+    
+    h += '<div style="display:flex;flex-direction:column;gap:4px;">';
+    for (const e of items) {
+      const info = _getExpenseCategoryInfo(e.category);
+      h += '<button onclick="openExpenseEditModal(\''+e.id+'\')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--card-border);background:var(--surface);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+      h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:'+info.color+';color:white;flex-shrink:0;">'+renderStampIcon(info.icon,'font-size:16px;line-height:1;')+'</span>';
+      h += '<span style="flex-shrink:0;font-size:9px;font-weight:800;color:white;background:'+info.color+';padding:2px 6px;border-radius:100px;">'+info.label+'</span>';
+      h += '<span style="flex:1;font-size:11px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(e.memo||'')+'</span>';
+      h += '<span style="flex-shrink:0;font-size:13px;font-weight:800;color:var(--ink-dark);font-variant-numeric:tabular-nums;">¥'+(parseFloat(e.amount)||0).toLocaleString()+'</span>';
+      h += '</button>';
+    }
+    h += '</div>';
+    h += '</div>';
+  }
+  h += '</div>';
+  
+  h += '</div>';
+  return h;
+}
+
+function openExpenseEditModal(expenseId) {
+  _ensureMoneyStructure();
+  const isEdit = expenseId !== null && expenseId !== undefined && expenseId !== 'null';
+  const cur = isEdit ? data.money.expenses.find(e => e.id === expenseId) : 
+    { date:_todayDateStr(), amount:'', category:'food', memo:'' };
+  if (isEdit && !cur) return;
+  
+  const ex = document.getElementById('expenseEditModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="expenseEditModal" onclick="if(event.target===this)closeExpenseEditModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">📒 '+(isEdit?'出費を編集':'出費を記録')+'</div>';
+  h += '<button onclick="closeExpenseEditModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  
+  // 金額（大きく）
+  h += '<div style="background:var(--surface-warm);border-radius:12px;padding:14px;display:flex;align-items:baseline;gap:8px;">';
+  h += '<span style="font-size:24px;font-weight:800;color:var(--accent-deep);">¥</span>';
+  h += '<input id="expAmount" type="number" inputmode="numeric" value="'+escapeHtml(String(cur.amount||''))+'" placeholder="0" min="0" style="flex:1;font-size:32px;font-weight:800;color:var(--accent-deep);background:transparent;border:none;outline:none;font-family:inherit;text-align:right;min-width:0;font-variant-numeric:tabular-nums;">';
+  h += '</div>';
+  
+  // カテゴリ（グリッド選択）
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">カテゴリ</label>';
+  h += '<input id="expCategory" type="hidden" value="'+escapeHtml(cur.category||'food')+'">';
+  h += '<div id="expCategoryGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+  for (const c of EXPENSE_CATEGORIES) {
+    const isSel = (cur.category === c.id) || (!cur.category && c.id === 'food');
+    h += '<button type="button" data-cat="'+c.id+'" onclick="_selectExpenseCategory(\''+c.id+'\')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border:1.5px solid '+(isSel?'var(--accent)':'var(--line)')+';background:'+(isSel?'var(--accent-bg)':'var(--surface)')+';border-radius:10px;cursor:pointer;font-family:inherit;">';
+    h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:'+c.color+';color:white;">'+renderStampIcon(c.icon,'font-size:18px;line-height:1;')+'</span>';
+    h += '<span style="font-size:10px;font-weight:700;color:'+(isSel?'var(--accent-deep)':'var(--ink-sub)')+';">'+c.label+'</span>';
+    h += '</button>';
+  }
+  h += '</div></div>';
+  
+  // 日付
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">日付</label>';
+  h += '<input id="expDate" type="date" value="'+escapeHtml(cur.date||_todayDateStr())+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // メモ
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メモ（任意）</label>';
+  h += '<input id="expMemo" type="text" value="'+escapeHtml(cur.memo||'')+'" placeholder="例：イオンで買い物" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // ボタン
+  h += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  if (isEdit) {
+    h += '<button onclick="deleteExpense(\''+expenseId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="closeExpenseEditModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveExpense('+(isEdit?'\''+expenseId+'\'':'null')+')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('expAmount'); if (i && !isEdit) i.focus(); }, 80);
+}
+
+function _selectExpenseCategory(catId) {
+  const hidden = document.getElementById('expCategory');
+  if (hidden) hidden.value = catId;
+  const grid = document.getElementById('expCategoryGrid');
+  if (grid) {
+    grid.querySelectorAll('button').forEach(b => {
+      const isSel = b.dataset.cat === catId;
+      b.style.borderColor = isSel ? 'var(--accent)' : 'var(--line)';
+      b.style.background = isSel ? 'var(--accent-bg)' : 'var(--surface)';
+      const label = b.querySelector('span:last-child');
+      if (label) label.style.color = isSel ? 'var(--accent-deep)' : 'var(--ink-sub)';
+    });
+  }
+}
+
+function closeExpenseEditModal() {
+  const el = document.getElementById('expenseEditModal');
+  if (el) el.remove();
+}
+
+function saveExpense(expenseId) {
+  _ensureMoneyStructure();
+  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const amount = get('expAmount');
+  if (!amount || parseFloat(amount) <= 0) {
+    showToast('金額を入れてね');
+    return;
+  }
+  const obj = {
+    date: get('expDate') || _todayDateStr(),
+    amount: amount,
+    category: get('expCategory') || 'food',
+    memo: get('expMemo')
+  };
+  const isEdit = expenseId !== null && expenseId !== undefined && expenseId !== 'null';
+  if (isEdit) {
+    const exp = data.money.expenses.find(e => e.id === expenseId);
+    if (exp) Object.assign(exp, obj, { updatedAt: Date.now() });
+  } else {
+    obj.id = 'exp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    obj.createdAt = Date.now();
+    obj.updatedAt = Date.now();
+    data.money.expenses.push(obj);
+  }
+  saveData();
+  closeExpenseEditModal();
+  showToast('¥'+parseFloat(amount).toLocaleString()+' きろく🌷');
+  render();
+}
+
+function deleteExpense(expenseId) {
+  if (!confirm('この出費を削除する？')) return;
+  _ensureMoneyStructure();
+  data.money.expenses = data.money.expenses.filter(e => e.id !== expenseId);
+  saveData();
+  closeExpenseEditModal();
+  showToast('削除したよ');
+  render();
+}
+
+// ===== 固定費（旧サブスク） =====
+const SUBSCRIPTION_CATEGORIES = [
+  {id:'rent',     icon:'home',            label:'家賃',     color:'#E07058'},
+  {id:'comm',     icon:'wifi',            label:'通信費',   color:'#5888B0'},
+  {id:'utility',  icon:'bolt',            label:'公共料金', color:'#E89A4A'},
+  {id:'lesson',   icon:'school',          label:'習い事',   color:'#48A8B8'},
+  {id:'cram',     icon:'menu_book',       label:'塾・月謝', color:'#5FA985'},
+  {id:'daycare',  icon:'child_care',      label:'保育園',   color:'#F0A0C0'},
+  {id:'sub',      icon:'smart_display',   label:'サブスク', color:'#C8709A'},
+  {id:'membership',icon:'card_membership',label:'月会費',   color:'#D8C040'},
+  {id:'parking',  icon:'local_parking',   label:'駐車場',   color:'#8868A8'},
+  {id:'news',     icon:'newspaper',       label:'新聞',     color:'#9890C8'},
+  {id:'other',    icon:'more_horiz',      label:'その他',   color:'#888888'}
+];
+
+function _getSubCategoryInfo(catId) {
+  return SUBSCRIPTION_CATEGORIES.find(c => c.id === catId) || SUBSCRIPTION_CATEGORIES[SUBSCRIPTION_CATEGORIES.length-1];
+}
+
+function toggleSubInactiveView() {
+  const scrollY = window.scrollY;
+  window._showInactiveSubs = !window._showInactiveSubs;
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function toggleSubActive(subId) {
+  _ensureMoneyStructure();
+  const s = data.money.subscriptions.find(x => x.id === subId);
+  if (!s) return;
+  const scrollY = window.scrollY;
+  s.active = (s.active === false) ? true : false;
+  s.updatedAt = Date.now();
+  saveData();
+  showToast(s.active ? '再開したよ🌷' : '停止中にしたよ');
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function renderSubscriptionsList() {
+  _ensureMoneyStructure();
+  const all = data.money.subscriptions;
+  // active=undefined は active=true 扱い
+  const activeList = all.filter(s => s.active !== false).sort((a,b) => (a.category||'').localeCompare(b.category||''));
+  const inactiveList = all.filter(s => s.active === false).sort((a,b) => (a.category||'').localeCompare(b.category||''));
+  const showInactive = !!window._showInactiveSubs;
+  
+  let h = '<div style="padding:8px 16px 16px;">';
+  
+  // 月額・年額合計
+  const monthlySum = activeList.reduce((sum,s) => sum + (parseFloat(s.monthlyFee)||0), 0);
+  const annualSum = monthlySum * 12;
+  
+  h += '<div style="background:linear-gradient(135deg,var(--accent-bg) 0%,var(--surface-warm) 100%);border:1.5px solid var(--accent);border-radius:14px;padding:14px;margin-bottom:12px;">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:baseline;">';
+  h += '<div><div style="font-size:10px;color:var(--ink-sub);font-weight:700;">月額合計</div><div style="font-size:22px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">¥'+monthlySum.toLocaleString()+'</div></div>';
+  h += '<div style="text-align:right;"><div style="font-size:10px;color:var(--ink-sub);font-weight:700;">年額換算</div><div style="font-size:14px;font-weight:700;color:var(--ink-dark);font-variant-numeric:tabular-nums;">¥'+annualSum.toLocaleString()+'</div></div>';
+  h += '</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);margin-top:6px;">継続中 '+activeList.length+' 件'+(inactiveList.length>0?' / 停止中 '+inactiveList.length+' 件':'')+'</div>';
+  h += '</div>';
+  
+  // カテゴリ別集計（active分のみ）
+  if (activeList.length > 0) {
+    const byCat = {};
+    for (const s of activeList) {
+      const cat = s.category || 'other';
+      byCat[cat] = (byCat[cat]||0) + (parseFloat(s.monthlyFee)||0);
+    }
+    const catList = Object.entries(byCat).map(([id, sum]) => ({id, sum, info: _getSubCategoryInfo(id)})).sort((a,b) => b.sum - a.sum);
+    const maxSum = Math.max(...catList.map(c => c.sum));
+    
+    h += '<div style="background:var(--surface);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:12px;">';
+    h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:8px;">カテゴリ別</div>';
+    for (const c of catList) {
+      const pct = (c.sum / monthlySum) * 100;
+      const barWidth = (c.sum / maxSum) * 100;
+      h += '<div style="margin-bottom:6px;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:2px;">';
+      h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:'+c.info.color+';color:white;flex-shrink:0;">'+renderStampIcon(c.info.icon,'font-size:14px;line-height:1;')+'</span>';
+      h += '<span style="flex:1;font-weight:700;color:var(--ink-dark);">'+c.info.label+'</span>';
+      h += '<span style="font-weight:800;color:var(--ink-dark);font-variant-numeric:tabular-nums;">¥'+c.sum.toLocaleString()+'</span>';
+      h += '<span style="font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;min-width:30px;text-align:right;">'+pct.toFixed(0)+'%</span>';
+      h += '</div>';
+      h += '<div style="height:5px;background:var(--surface-warm);border-radius:100px;overflow:hidden;"><div style="width:'+barWidth.toFixed(1)+'%;height:100%;background:'+c.info.color+';"></div></div>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  
+  // 追加ボタン
+  h += '<button onclick="openSubscriptionEditModal(null)" style="width:100%;padding:12px;border:none;background:var(--accent);color:white;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">add</span>固定費を追加</button>';
+  
+  if (activeList.length === 0 && inactiveList.length === 0) {
+    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65) 0%,rgba(255,255,255,0.45) 100%);border:1.5px solid var(--accent);border-radius:16px;padding:30px 16px;text-align:center;color:var(--accent-deep);font-size:14px;line-height:1.7;font-weight:700;">固定費はまだ登録されてないよ🌷<br><span style="font-size:11px;color:#666;font-weight:500;">家賃・通信費・習い事・サブスクなど</span></div>';
+    h += '</div>';
+    return h;
+  }
+  
+  // アクティブ一覧
+  if (activeList.length > 0) {
+    h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:6px;">継続中</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">';
+    for (const s of activeList) {
+      const info = _getSubCategoryInfo(s.category);
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--card-border);background:var(--surface);border-radius:12px;">';
+      h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:'+info.color+';color:white;flex-shrink:0;">'+renderStampIcon(info.icon,'font-size:18px;line-height:1;')+'</span>';
+      h += '<button onclick="openSubscriptionEditModal(\''+s.id+'\')" style="flex:1;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:2px;min-width:0;padding:0;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;">';
+      h += '<span style="font-size:9px;font-weight:800;color:white;background:'+info.color+';padding:1px 6px;border-radius:100px;flex-shrink:0;">'+info.label+'</span>';
+      h += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.name||'無題')+'</span>';
+      h += '</div>';
+      const detailParts = [];
+      if (s.billingDate) detailParts.push('引落: '+escapeHtml(s.billingDate)+'日');
+      if (s.memo) detailParts.push(escapeHtml(s.memo).slice(0,30));
+      if (detailParts.length > 0) h += '<div style="font-size:10px;color:var(--ink-sub);">'+detailParts.join(' / ')+'</div>';
+      h += '</button>';
+      h += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;">';
+      h += '<span style="font-size:13px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">¥'+(parseFloat(s.monthlyFee)||0).toLocaleString()+'</span>';
+      h += '<button onclick="toggleSubActive(\''+s.id+'\')" title="停止" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:2px 8px;font-size:9px;font-weight:700;cursor:pointer;font-family:inherit;">停止</button>';
+      h += '</div>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  
+  // 停止中の表示切替
+  if (inactiveList.length > 0) {
+    h += '<button onclick="toggleSubInactiveView()" style="width:100%;padding:8px;border:1px dashed var(--line);background:none;color:var(--ink-sub);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:8px;">'+(showInactive?'▲ 停止中を隠す':'▼ 停止中を見る ('+inactiveList.length+'件)')+'</button>';
+    
+    if (showInactive) {
+      h += '<div style="display:flex;flex-direction:column;gap:6px;opacity:0.6;">';
+      for (const s of inactiveList) {
+        const info = _getSubCategoryInfo(s.category);
+        h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);background:var(--surface-warm);border-radius:10px;">';
+        h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;background:'+info.color+';color:white;flex-shrink:0;opacity:0.7;">'+renderStampIcon(info.icon,'font-size:14px;line-height:1;')+'</span>';
+        h += '<button onclick="openSubscriptionEditModal(\''+s.id+'\')" style="flex:1;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;color:var(--ink-sub);text-decoration:line-through;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0;">'+escapeHtml(s.name||'無題')+' (¥'+(parseFloat(s.monthlyFee)||0).toLocaleString()+')</button>';
+        h += '<button onclick="toggleSubActive(\''+s.id+'\')" title="再開" style="background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:2px 8px;font-size:9px;font-weight:800;cursor:pointer;font-family:inherit;flex-shrink:0;">再開</button>';
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+  }
+  
+  h += '</div>';
+  return h;
+}
+
+function openSubscriptionEditModal(subId) {
+  _ensureMoneyStructure();
+  const isEdit = subId !== null && subId !== undefined && subId !== 'null';
+  const cur = isEdit ? data.money.subscriptions.find(s => s.id === subId) : 
+    { name:'', category:'sub', monthlyFee:'', billingDate:'', active:true, memo:'' };
+  if (isEdit && !cur) return;
+  
+  const ex = document.getElementById('subEditModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="subEditModal" onclick="if(event.target===this)closeSubEditModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">🔁 '+(isEdit?'固定費を編集':'固定費を追加')+'</div>';
+  h += '<button onclick="closeSubEditModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  
+  // 名前
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">名前</label>';
+  h += '<input id="subName" type="text" value="'+escapeHtml(cur.name||'')+'" placeholder="例：Netflix / 長男ピアノ / 駐車場" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // カテゴリ（グリッド）
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">カテゴリ</label>';
+  h += '<input id="subCategory" type="hidden" value="'+escapeHtml(cur.category||'sub')+'">';
+  h += '<div id="subCategoryGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+  for (const c of SUBSCRIPTION_CATEGORIES) {
+    const isSel = (cur.category === c.id) || (!cur.category && c.id === 'sub');
+    h += '<button type="button" data-cat="'+c.id+'" onclick="_selectSubCategory(\''+c.id+'\')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border:1.5px solid '+(isSel?'var(--accent)':'var(--line)')+';background:'+(isSel?'var(--accent-bg)':'var(--surface)')+';border-radius:10px;cursor:pointer;font-family:inherit;">';
+    h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:'+c.color+';color:white;">'+renderStampIcon(c.icon,'font-size:18px;line-height:1;')+'</span>';
+    h += '<span style="font-size:10px;font-weight:700;color:'+(isSel?'var(--accent-deep)':'var(--ink-sub)')+';">'+c.label+'</span>';
+    h += '</button>';
+  }
+  h += '</div></div>';
+  
+  // 月額・引落日
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:2;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">月額（円）</label>';
+  h += '<input id="subMonthlyFee" type="number" inputmode="numeric" value="'+escapeHtml(String(cur.monthlyFee||''))+'" placeholder="0" min="0" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">引落日</label>';
+  h += '<input id="subBillingDate" type="number" inputmode="numeric" value="'+escapeHtml(String(cur.billingDate||''))+'" placeholder="27" min="1" max="31" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // メモ
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メモ（任意）</label>';
+  h += '<textarea id="subMemo" placeholder="プラン詳細・解約方法など" style="width:100%;min-height:50px;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(cur.memo||'')+'</textarea>';
+  h += '</div>';
+  
+  // ボタン
+  h += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  if (isEdit) {
+    h += '<button onclick="deleteSubscription(\''+subId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="closeSubEditModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveSubscription('+(isEdit?'\''+subId+'\'':'null')+')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('subName'); if (i && !isEdit) i.focus(); }, 80);
+}
+
+function _selectSubCategory(catId) {
+  const hidden = document.getElementById('subCategory');
+  if (hidden) hidden.value = catId;
+  const grid = document.getElementById('subCategoryGrid');
+  if (grid) {
+    grid.querySelectorAll('button').forEach(b => {
+      const isSel = b.dataset.cat === catId;
+      b.style.borderColor = isSel ? 'var(--accent)' : 'var(--line)';
+      b.style.background = isSel ? 'var(--accent-bg)' : 'var(--surface)';
+      const label = b.querySelector('span:last-child');
+      if (label) label.style.color = isSel ? 'var(--accent-deep)' : 'var(--ink-sub)';
+    });
+  }
+}
+
+function closeSubEditModal() {
+  const el = document.getElementById('subEditModal');
+  if (el) el.remove();
+}
+
+function saveSubscription(subId) {
+  _ensureMoneyStructure();
+  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const obj = {
+    name: get('subName'),
+    category: get('subCategory') || 'sub',
+    monthlyFee: get('subMonthlyFee'),
+    billingDate: get('subBillingDate'),
+    memo: get('subMemo')
+  };
+  if (!obj.name) {
+    showToast('名前を入れてね');
+    return;
+  }
+  const isEdit = subId !== null && subId !== undefined && subId !== 'null';
+  if (isEdit) {
+    const sub = data.money.subscriptions.find(s => s.id === subId);
+    if (sub) Object.assign(sub, obj, { updatedAt: Date.now() });
+  } else {
+    obj.id = 'sub_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    obj.active = true;
+    obj.createdAt = Date.now();
+    obj.updatedAt = Date.now();
+    data.money.subscriptions.push(obj);
+  }
+  saveData();
+  closeSubEditModal();
+  showToast('保存したよ🌷');
+  render();
+}
+
+function deleteSubscription(subId) {
+  if (!confirm('この固定費を削除する？')) return;
+  _ensureMoneyStructure();
+  data.money.subscriptions = data.money.subscriptions.filter(s => s.id !== subId);
+  saveData();
+  closeSubEditModal();
+  showToast('削除したよ');
+  render();
+}
+
+// ===== 家電（Nestグッズの新サブサブタブ） =====
+const APPLIANCE_CATEGORIES = [
+  {id:'kitchen',  icon:'kitchen',          label:'キッチン', color:'#E07058'},
+  {id:'living',   icon:'tv',               label:'リビング', color:'#5888B0'},
+  {id:'bedroom',  icon:'bed',              label:'寝室',     color:'#8868A8'},
+  {id:'bath',     icon:'bathtub',          label:'お風呂',   color:'#48A8B8'},
+  {id:'laundry',  icon:'local_laundry_service', label:'洗濯', color:'#5FA985'},
+  {id:'aircon',   icon:'ac_unit',          label:'空調',     color:'#7FB8E8'},
+  {id:'cleaning', icon:'cleaning_services',label:'掃除',     color:'#D8C040'},
+  {id:'beauty',   icon:'spa',              label:'美容家電', color:'#C8709A'},
+  {id:'pc',       icon:'laptop',           label:'PC・周辺', color:'#888888'},
+  {id:'other',    icon:'devices',          label:'その他',   color:'#9890C8'}
+];
+
+function _getApplianceCategoryInfo(catId) {
+  return APPLIANCE_CATEGORIES.find(c => c.id === catId) || APPLIANCE_CATEGORIES[APPLIANCE_CATEGORIES.length-1];
+}
+
+function switchGoodsSubTab(sub) {
+  const scrollY = window.scrollY;
+  data.goodsSubTab = sub;
+  saveData();
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function renderApplianceList(nestId, nestName) {
+  if (!data.appliances) data.appliances = {};
+  if (!data.appliances[nestId]) data.appliances[nestId] = [];
+  const list = data.appliances[nestId].slice().sort((a,b) => (b.updatedAt||0)-(a.updatedAt||0));
+  
+  let h = '<div style="padding:12px 16px 16px;">';
+  
+  // 追加ボタン
+  h += '<button onclick="openApplianceEditModal(\''+nestId+'\',null)" style="width:100%;padding:12px;border:none;background:var(--accent);color:white;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">add</span>家電を追加</button>';
+  
+  if (list.length === 0) {
+    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65) 0%,rgba(255,255,255,0.45) 100%);border:1.5px solid var(--accent);border-radius:16px;padding:24px 16px;text-align:center;color:var(--accent-deep);font-size:13px;line-height:1.7;font-weight:700;">🔌 '+escapeHtml(nestName)+' の家電<br><span style="font-size:11px;color:#666;font-weight:500;">型番・写真・取説URL・保証期限を整理<br>「修理依頼で型番聞かれた」がなくなる</span></div>';
+    h += '</div>';
+    return h;
+  }
+  
+  // カテゴリ別グルーピング
+  const byCat = {};
+  for (const a of list) {
+    const cat = a.category || 'other';
+    if (!byCat[cat]) byCat[cat] = [];
+    byCat[cat].push(a);
+  }
+  
+  for (const c of APPLIANCE_CATEGORIES) {
+    if (!byCat[c.id]) continue;
+    const items = byCat[c.id];
+    
+    h += '<div style="margin-bottom:14px;">';
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">';
+    h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:'+c.color+';color:white;">'+renderStampIcon(c.icon,'font-size:14px;line-height:1;')+'</span>';
+    h += '<span style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+c.label+'</span>';
+    h += '<span style="font-size:10px;color:var(--ink-sub);">（'+items.length+'）</span>';
+    h += '</div>';
+    
+    h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const a of items) {
+      // 保証残日数計算
+      let warrantyBadge = '';
+      if (a.warrantyEndDate) {
+        const end = new Date(a.warrantyEndDate).getTime();
+        const days = Math.floor((end - Date.now()) / (24*60*60*1000));
+        if (days < 0) {
+          warrantyBadge = '<span style="font-size:9px;font-weight:700;color:#888;background:#eee;padding:1px 6px;border-radius:100px;">保証切れ</span>';
+        } else if (days <= 30) {
+          warrantyBadge = '<span style="font-size:9px;font-weight:800;color:white;background:#E08868;padding:1px 6px;border-radius:100px;">残'+days+'日</span>';
+        } else {
+          warrantyBadge = '<span style="font-size:9px;font-weight:700;color:var(--mint-deep);background:var(--mint-bg);padding:1px 6px;border-radius:100px;">保証中</span>';
+        }
+      }
+      
+      h += '<button onclick="openApplianceEditModal(\''+nestId+'\',\''+a.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--card-border);background:var(--surface);border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;">';
+      // 写真サムネ or プレースホルダー
+      if (a.photo) {
+        h += '<img src="'+a.photo+'" style="flex-shrink:0;width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--line);" />';
+      } else {
+        h += '<span style="flex-shrink:0;width:48px;height:48px;display:inline-flex;align-items:center;justify-content:center;background:'+c.color+';color:white;border-radius:8px;">'+renderStampIcon(c.icon,'font-size:24px;line-height:1;')+'</span>';
+      }
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;">';
+      h += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(a.name||'無題')+'</span>';
+      if (warrantyBadge) h += warrantyBadge;
+      h += '</div>';
+      const subParts = [];
+      if (a.brand) subParts.push(escapeHtml(a.brand));
+      if (a.model) subParts.push(escapeHtml(a.model));
+      if (subParts.length > 0) h += '<div style="font-size:11px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+subParts.join(' / ')+'</div>';
+      h += '</div>';
+      h += '</button>';
+    }
+    h += '</div></div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+
+function openApplianceEditModal(nestId, applianceId) {
+  if (!data.appliances) data.appliances = {};
+  if (!data.appliances[nestId]) data.appliances[nestId] = [];
+  const isEdit = applianceId !== null && applianceId !== undefined && applianceId !== 'null';
+  const cur = isEdit ? data.appliances[nestId].find(a => a.id === applianceId) : 
+    { name:'', brand:'', model:'', category:'kitchen', photo:'', purchaseDate:'', warrantyEndDate:'', manualUrl:'', supportPhone:'', memo:'' };
+  if (isEdit && !cur) return;
+  
+  const ex = document.getElementById('applianceEditModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="applianceEditModal" onclick="if(event.target===this)closeApplianceEditModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">🔌 '+(isEdit?'家電を編集':'家電を追加')+'</div>';
+  h += '<button onclick="closeApplianceEditModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  
+  // 名前
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">名前</label>';
+  h += '<input id="appName" type="text" value="'+escapeHtml(cur.name||'')+'" placeholder="例：リビングのエアコン" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // カテゴリ
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">カテゴリ</label>';
+  h += '<input id="appCategory" type="hidden" value="'+escapeHtml(cur.category||'kitchen')+'">';
+  h += '<div id="appCategoryGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">';
+  for (const c of APPLIANCE_CATEGORIES) {
+    const isSel = (cur.category === c.id) || (!cur.category && c.id === 'kitchen');
+    h += '<button type="button" data-cat="'+c.id+'" onclick="_selectAppCategory(\''+c.id+'\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border:1.5px solid '+(isSel?'var(--accent)':'var(--line)')+';background:'+(isSel?'var(--accent-bg)':'var(--surface)')+';border-radius:10px;cursor:pointer;font-family:inherit;">';
+    h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:'+c.color+';color:white;">'+renderStampIcon(c.icon,'font-size:16px;line-height:1;')+'</span>';
+    h += '<span style="font-size:9px;font-weight:700;color:'+(isSel?'var(--accent-deep)':'var(--ink-sub)')+';">'+c.label+'</span>';
+    h += '</button>';
+  }
+  h += '</div></div>';
+  
+  // メーカー・型番
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メーカー</label>';
+  h += '<input id="appBrand" type="text" value="'+escapeHtml(cur.brand||'')+'" placeholder="パナソニック" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">型番</label>';
+  h += '<input id="appModel" type="text" value="'+escapeHtml(cur.model||'')+'" placeholder="CS-XXXX" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // 写真
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">📷 写真（型番ラベル等）</label>';
+  h += '<div id="appPhotoArea" style="display:flex;align-items:center;gap:10px;">';
+  if (cur.photo) {
+    h += '<button type="button" onclick="openPhotoPreview(window._appPhotoData)" style="flex-shrink:0;width:80px;height:80px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+cur.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+    h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+    h += '<button type="button" onclick="document.getElementById(\'appPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">📷 変更</button>';
+    h += '<button type="button" onclick="window._appPhotoData=null;document.getElementById(\'appPhotoArea\').innerHTML=_appPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+    h += '</div>';
+    window._appPhotoData = cur.photo;
+  } else {
+    h += _appPhotoEmptyHtml();
+    window._appPhotoData = null;
+  }
+  h += '</div>';
+  h += '<input type="file" id="appPhotoFile" accept="image/*" style="display:none;" onchange="_handleAppPhotoSelect(event)">';
+  h += '</div>';
+  
+  // 購入日・保証期限
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">購入日</label>';
+  h += '<input id="appPurchaseDate" type="date" value="'+escapeHtml(cur.purchaseDate||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">保証期限</label>';
+  h += '<input id="appWarrantyEndDate" type="date" value="'+escapeHtml(cur.warrantyEndDate||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // 取説URL
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">取説URL（任意）</label>';
+  h += '<input id="appManualUrl" type="url" value="'+escapeHtml(cur.manualUrl||'')+'" placeholder="https://..." style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  if (cur.manualUrl) {
+    h += '<a href="'+escapeHtml(cur.manualUrl)+'" target="_blank" style="display:inline-block;margin-top:6px;font-size:11px;color:var(--accent-deep);font-weight:700;text-decoration:underline;">📖 取説を開く</a>';
+  }
+  h += '</div>';
+  
+  // 修理問い合わせ電話
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">修理問い合わせ電話（任意）</label>';
+  h += '<input id="appSupportPhone" type="tel" value="'+escapeHtml(cur.supportPhone||'')+'" placeholder="0120-..." style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  if (cur.supportPhone) {
+    h += '<a href="tel:'+escapeHtml(cur.supportPhone)+'" style="display:inline-block;margin-top:6px;font-size:11px;color:var(--accent-deep);font-weight:700;text-decoration:underline;">📞 電話する</a>';
+  }
+  h += '</div>';
+  
+  // メモ
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メモ（任意）</label>';
+  h += '<textarea id="appMemo" placeholder="購入店・フィルター掃除のタイミングなど" style="width:100%;min-height:50px;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(cur.memo||'')+'</textarea>';
+  h += '</div>';
+  
+  // ボタン
+  h += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  if (isEdit) {
+    h += '<button onclick="deleteAppliance(\''+nestId+'\',\''+applianceId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="closeApplianceEditModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveAppliance(\''+nestId+'\','+(isEdit?'\''+applianceId+'\'':'null')+')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('appName'); if (i && !isEdit) i.focus(); }, 80);
+}
+
+function _selectAppCategory(catId) {
+  const hidden = document.getElementById('appCategory');
+  if (hidden) hidden.value = catId;
+  const grid = document.getElementById('appCategoryGrid');
+  if (grid) {
+    grid.querySelectorAll('button').forEach(b => {
+      const isSel = b.dataset.cat === catId;
+      b.style.borderColor = isSel ? 'var(--accent)' : 'var(--line)';
+      b.style.background = isSel ? 'var(--accent-bg)' : 'var(--surface)';
+      const label = b.querySelector('span:last-child');
+      if (label) label.style.color = isSel ? 'var(--accent-deep)' : 'var(--ink-sub)';
+    });
+  }
+}
+
+function _appPhotoEmptyHtml() {
+  return '<button type="button" onclick="document.getElementById(\'appPhotoFile\').click()" style="flex:1;padding:14px;background:var(--surface-warm);color:var(--ink-sub);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📷 型番ラベルや本体の写真を追加</button>';
+}
+
+async function _handleAppPhotoSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast('画像ファイルを選んでね');
+    return;
+  }
+  showToast('写真を処理中...');
+  try {
+    const dataUrl = await resizeImageToBase64(file, 480, 0.75);
+    window._appPhotoData = dataUrl;
+    const area = document.getElementById('appPhotoArea');
+    if (area) {
+      let h = '';
+      h += '<button type="button" onclick="openPhotoPreview(window._appPhotoData)" style="flex-shrink:0;width:80px;height:80px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+      h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+      h += '<button type="button" onclick="document.getElementById(\'appPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">📷 変更</button>';
+      h += '<button type="button" onclick="window._appPhotoData=null;document.getElementById(\'appPhotoArea\').innerHTML=_appPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+      h += '</div>';
+      area.innerHTML = h;
+    }
+    showToast('写真OK🌷');
+  } catch(err) {
+    console.error(err);
+    showToast('写真の読み込みに失敗');
+  }
+  event.target.value = '';
+}
+
+function closeApplianceEditModal() {
+  const el = document.getElementById('applianceEditModal');
+  if (el) el.remove();
+  window._appPhotoData = null;
+}
+
+function saveAppliance(nestId, applianceId) {
+  if (!data.appliances) data.appliances = {};
+  if (!data.appliances[nestId]) data.appliances[nestId] = [];
+  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const obj = {
+    name: get('appName'),
+    brand: get('appBrand'),
+    model: get('appModel'),
+    category: get('appCategory') || 'other',
+    photo: window._appPhotoData || '',
+    purchaseDate: get('appPurchaseDate'),
+    warrantyEndDate: get('appWarrantyEndDate'),
+    manualUrl: get('appManualUrl'),
+    supportPhone: get('appSupportPhone'),
+    memo: get('appMemo')
+  };
+  if (!obj.name) {
+    showToast('名前を入れてね');
+    return;
+  }
+  const isEdit = applianceId !== null && applianceId !== undefined && applianceId !== 'null';
+  if (isEdit) {
+    const a = data.appliances[nestId].find(x => x.id === applianceId);
+    if (a) Object.assign(a, obj, { updatedAt: Date.now() });
+  } else {
+    obj.id = 'app_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    obj.createdAt = Date.now();
+    obj.updatedAt = Date.now();
+    data.appliances[nestId].push(obj);
+  }
+  saveData();
+  closeApplianceEditModal();
+  showToast('保存したよ🌷');
+  render();
+}
+
+function deleteAppliance(nestId, applianceId) {
+  if (!confirm('この家電を削除する？')) return;
+  if (!data.appliances || !data.appliances[nestId]) return;
+  data.appliances[nestId] = data.appliances[nestId].filter(a => a.id !== applianceId);
+  saveData();
+  closeApplianceEditModal();
+  showToast('削除したよ');
+  render();
+}
+
+// ===== ME用 Goods タブ（日用品＋家電、nestId='__me__'で管理） =====
+function renderMeGoodsTab() {
+  const _meId = '__me__';
+  const _meName = '自分';
+  // モーダルから参照されるコンテキストを設定（既存関数を流用するため）
+  window._activeGoodsNestId = _meId;
+  window._activeGoodsNestName = _meName;
+  
+  if (!data.goodsSubTab) data.goodsSubTab = 'daily';
+  const sub = data.goodsSubTab;
+  
+  let h = '';
+  
+  // サブサブタブ
+  h += '<div style="padding:10px 14px 0;display:flex;gap:6px;">';
+  const _dActive = sub === 'daily';
+  const _aActive = sub === 'appliance';
+  h += '<button onclick="switchGoodsSubTab(\'daily\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_dActive?'var(--accent)':'var(--line)')+';background:'+(_dActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_dActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">soap</span>日用品</button>';
+  h += '<button onclick="switchGoodsSubTab(\'appliance\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_aActive?'var(--accent)':'var(--line)')+';background:'+(_aActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_aActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">power</span>家電</button>';
+  h += '</div>';
+  
+  if (sub === 'appliance') {
+    h += renderApplianceList(_meId, _meName);
+  } else {
+    // 日用品
+    if (!data.nestGoods) data.nestGoods = {};
+    if (!data.nestGoods[_meId]) data.nestGoods[_meId] = [];
+    const _goods = data.nestGoods[_meId];
+    const _sorted = [..._goods].sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+    
+    h += '<div style="padding:12px 16px 8px;">';
+    h += '<div class="section-head"><h2 class="section-title">自分のおうち備品</h2><button onclick="openNestGoodsModal()" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
+    
+    if (_sorted.length === 0) {
+      h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
+      h += '🛍 自分のおうち備品<br>';
+      h += '<span style="font-size:11px;color:var(--ink-light);">シャンプー・洗剤・電球など<br>「あれ何使ってたっけ？」を防ぐリスト</span><br><br>';
+      h += '<button onclick="openNestGoodsModal()" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 最初のグッズを追加</button>';
+      h += '</div>';
+    } else {
+      const _catEmoji = { 'バスルーム':'🛁', 'キッチン':'🍳', 'リビング':'🛋', 'ベッドルーム':'🛏', 'トイレ':'🚽', '洗濯':'🧺', '掃除':'🧹', '文房具':'✏️', 'その他':'📦' };
+      const _catOrder = ['バスルーム','キッチン','リビング','ベッドルーム','トイレ','洗濯','掃除','文房具','その他'];
+      const _byCategory = {};
+      for (const g of _sorted) {
+        const cat = g.category || 'その他';
+        if (!_byCategory[cat]) _byCategory[cat] = [];
+        _byCategory[cat].push(g);
+      }
+      
+      for (const cat of _catOrder) {
+        if (!_byCategory[cat]) continue;
+        const _emoji = _catEmoji[cat] || '📦';
+        const _count = _byCategory[cat].length;
+        h += '<div style="display:flex;align-items:center;gap:6px;margin:14px 4px 8px;">';
+        h += '<span style="font-size:14px;">'+_emoji+'</span>';
+        h += '<span style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(cat)+'</span>';
+        h += '<span style="font-size:10px;color:var(--ink-light);">'+_count+'件</span>';
+        h += '</div>';
+        h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+        for (const g of _byCategory[cat]) {
+          h += '<div onclick="openNestGoodsModal(\''+g.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);border:1.5px solid var(--card-border);border-radius:12px;backdrop-filter:blur(8px);cursor:pointer;">';
+          h += '<div style="width:40px;height:40px;border-radius:10px;background:var(--accent-bg);border:1px solid var(--line-soft);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">'+(g.icon || '📦')+'</div>';
+          h += '<div style="flex:1;min-width:0;">';
+          h += '<div style="font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(g.name || '名前なし')+'</div>';
+          if (g.brand) h += '<div style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(g.brand)+'</div>';
+          if (g.note) h += '<div style="font-size:10px;color:var(--ink-light);margin-top:2px;">📝 '+escapeHtml(g.note.length > 30 ? g.note.substring(0, 30) + '…' : g.note)+'</div>';
+          h += '</div>';
+          h += '</div>';
+        }
+        h += '</div>';
+      }
+    }
+    h += '</div>';
+  }
+  
+  return h;
+}
+
 function renderStampIcon(icon, sizeStyle) {
   if (!icon) return '';
   if (/^[a-z][a-z0-9_]*$/.test(icon)) {
@@ -7432,7 +8816,7 @@ function renderMeMode() {
   // コンテンツエリア（白い角丸背景）
   html += '<div class="mode-content-wrap">';
   
-  const validMeTabs = ['stamp','diary','collection','resume','secret'];
+  const validMeTabs = ['stamp','diary','money','goods','collection','resume','secret'];
   let tab = currentModeTab['me'] || 'stamp';
   if (!validMeTabs.includes(tab)) {
     tab = 'stamp';
@@ -7711,6 +9095,14 @@ function renderMeMode() {
     html += '<button onclick="showToast(\'準備中🌷\')" style="aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed var(--line);border-radius:14px;background:none;cursor:pointer;font-family:inherit;"><span style="font-size:24px;color:var(--accent);font-weight:700;">＋</span><span style="font-size:10px;color:var(--ink-sub);">追加</span></button>';
     html += '</div></div>';
     
+  } else if (tab === 'money') {
+    // ===== Money タブ（サブサブタブ：保険 / ローン / 出費 / サブスク） =====
+    html += renderMoneyTab();
+    
+  } else if (tab === 'goods') {
+    // ===== Goods タブ（自分用：日用品＋家電） =====
+    html += renderMeGoodsTab();
+    
   } else if (tab === 'secret') {
     // ===== Memo タブ（サブサブタブ：memo / secret） =====
     if (!data.memoSubTab) data.memoSubTab = 'memo';
@@ -7807,10 +9199,27 @@ function renderNestMode() {
     html += '</div>';
 
   } else if (tab === 'goods') {
-    // ===== Goods（おうち備品） =====
+    // ===== Goods（おうち備品＋家電） =====
     const _activeNest = getActiveNest();
     const _nestId = _activeNest ? _activeNest.id : 'nest_1';
     const _nestName = _activeNest ? _activeNest.name : 'こおり';
+    // モーダルから参照されるコンテキストを設定
+    window._activeGoodsNestId = _nestId;
+    window._activeGoodsNestName = _nestName;
+    if (!data.goodsSubTab) data.goodsSubTab = 'daily';
+    const _gsTab = data.goodsSubTab;
+    
+    // サブサブタブ
+    html += '<div style="padding:10px 14px 0;display:flex;gap:6px;">';
+    const _dActive = _gsTab === 'daily';
+    const _aActive = _gsTab === 'appliance';
+    html += '<button onclick="switchGoodsSubTab(\'daily\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_dActive?'var(--accent)':'var(--line)')+';background:'+(_dActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_dActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">soap</span>日用品</button>';
+    html += '<button onclick="switchGoodsSubTab(\'appliance\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_aActive?'var(--accent)':'var(--line)')+';background:'+(_aActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_aActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">power</span>家電</button>';
+    html += '</div>';
+    
+    if (_gsTab === 'appliance') {
+      html += renderApplianceList(_nestId, _nestName);
+    } else {
     if (!data.nestGoods) data.nestGoods = {};
     if (!data.nestGoods[_nestId]) data.nestGoods[_nestId] = [];
     const _goods = data.nestGoods[_nestId];
@@ -7864,7 +9273,8 @@ function renderNestMode() {
       }
     }
     html += '</div>';
-
+    }
+    
   } else if (tab === 'routine') {
     // ===== Routine（ルーティン）：日常 / 生活 サブタブ =====
     const _activeNest = getActiveNest();
@@ -9999,9 +11409,17 @@ function selectNestGoodsIcon(icon) {
 }
 
 function openNestGoodsModal(goodsId) {
-  const _activeNest = getActiveNest();
-  if (!_activeNest) return;
-  const _nestId = _activeNest.id;
+  // 現在表示中のグッズタブのコンテキストを優先（MEモード対応）
+  let _nestId, _nestName;
+  if (window._activeGoodsNestId) {
+    _nestId = window._activeGoodsNestId;
+    _nestName = window._activeGoodsNestName || '自分';
+  } else {
+    const _activeNest = getActiveNest();
+    if (!_activeNest) return;
+    _nestId = _activeNest.id;
+    _nestName = _activeNest.name;
+  }
   if (!data.nestGoods) data.nestGoods = {};
   if (!data.nestGoods[_nestId]) data.nestGoods[_nestId] = [];
   
@@ -10021,7 +11439,7 @@ function openNestGoodsModal(goodsId) {
   }
   
   document.getElementById('nestGoodsTitle').textContent = goodsId ? 'おうち備品を編集' : '新しいおうち備品';
-  document.getElementById('nestGoodsSub').textContent = '🪺 ' + _activeNest.name + ' の備品';
+  document.getElementById('nestGoodsSub').textContent = '🪺 ' + _nestName + ' の備品';
   document.getElementById('nestGoodsIconPreview').textContent = _editingNestGoodsIcon;
   document.getElementById('nestGoodsNameInput').value = name;
   document.getElementById('nestGoodsBrandInput').value = brand;
@@ -10054,9 +11472,14 @@ function closeNestGoodsModal() {
 }
 
 function saveNestGoodsFromModal() {
-  const _activeNest = getActiveNest();
-  if (!_activeNest) { closeNestGoodsModal(); return; }
-  const _nestId = _activeNest.id;
+  let _nestId;
+  if (window._activeGoodsNestId) {
+    _nestId = window._activeGoodsNestId;
+  } else {
+    const _activeNest = getActiveNest();
+    if (!_activeNest) { closeNestGoodsModal(); return; }
+    _nestId = _activeNest.id;
+  }
   if (!data.nestGoods) data.nestGoods = {};
   if (!data.nestGoods[_nestId]) data.nestGoods[_nestId] = [];
   
@@ -10104,9 +11527,14 @@ function saveNestGoodsFromModal() {
 
 function deleteNestGoods() {
   if (!_editingNestGoodsId) return;
-  const _activeNest = getActiveNest();
-  if (!_activeNest) return;
-  const _nestId = _activeNest.id;
+  let _nestId;
+  if (window._activeGoodsNestId) {
+    _nestId = window._activeGoodsNestId;
+  } else {
+    const _activeNest = getActiveNest();
+    if (!_activeNest) return;
+    _nestId = _activeNest.id;
+  }
   if (!data.nestGoods || !data.nestGoods[_nestId]) return;
   if (!confirm('この備品を削除する？')) return;
   
@@ -12017,6 +13445,8 @@ const DEFAULT_MODE_TABS = {
   me: [
     { id: 'stamp',      label: 'Stamp' },
     { id: 'diary',      label: 'Diary' },
+    { id: 'money',      label: 'Money' },
+    { id: 'goods',      label: 'Goods' },
     { id: 'collection', label: 'Collection' },
     { id: 'resume',     label: 'Resume' },
     { id: 'secret',     label: 'Memo' }
@@ -12075,6 +13505,20 @@ function getModeTabsForMode(mode) {
           secretTab.label = 'Memo';
           try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
         }
+      }
+      // ME: Moneyタブが無ければDiaryの直後に追加
+      if (mode === 'me' && !tabs.find(t => t.id === 'money')) {
+        const diaryIdx = tabs.findIndex(t => t.id === 'diary');
+        const insertAt = diaryIdx >= 0 ? diaryIdx + 1 : tabs.length;
+        tabs.splice(insertAt, 0, { id: 'money', label: 'Money' });
+        try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
+      }
+      // ME: Goodsタブが無ければMoneyの直後に追加
+      if (mode === 'me' && !tabs.find(t => t.id === 'goods')) {
+        const moneyIdx = tabs.findIndex(t => t.id === 'money');
+        const insertAt = moneyIdx >= 0 ? moneyIdx + 1 : tabs.length;
+        tabs.splice(insertAt, 0, { id: 'goods', label: 'Goods' });
+        try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
       }
       return tabs;
     }
