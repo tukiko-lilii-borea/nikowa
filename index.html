@@ -5901,7 +5901,7 @@ function renderMeMode() {
   // コンテンツエリア（白い角丸背景）
   html += '<div class="mode-content-wrap">';
   
-  const tab = currentModeTab['me'] || 'today';
+  const tab = currentModeTab['me'] || 'stamp';
   
   if (tab === 'today') {
     // ===== ToDay =====
@@ -10273,8 +10273,6 @@ function closeModal(id) { document.getElementById(id).classList.remove('show'); 
 const MODE_TABS_KEY = { me: 'nikowa_me_tabs', pet: 'nikowa_pet_tabs', kids: 'nikowa_kids_tabs' };
 const DEFAULT_MODE_TABS = {
   me: [
-    { id: 'today',      label: 'ToDay' },
-    { id: 'news',       label: 'News' },
     { id: 'stamp',      label: 'Stamp' },
     { id: 'routine',    label: 'Routine' },
     { id: 'diary',      label: 'Diary' },
@@ -10314,17 +10312,14 @@ function getModeTabsForMode(mode) {
     const s = localStorage.getItem(MODE_TABS_KEY[mode]);
     if (s) {
       const tabs = JSON.parse(s);
-      // ME: ToDayタブが無ければ先頭に追加（既存ユーザー向けマイグレーション）
-      if (mode === 'me' && tabs.length > 0 && !tabs.find(t => t.id === 'today')) {
-        tabs.unshift({ id: 'today', label: 'ToDay' });
-        try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
-      }
-      // ME: Newsタブが無ければToDayの直後に追加（既存ユーザー向けマイグレーション）
-      if (mode === 'me' && tabs.length > 0 && !tabs.find(t => t.id === 'news')) {
-        const todayIdx = tabs.findIndex(t => t.id === 'today');
-        const insertAt = todayIdx >= 0 ? todayIdx + 1 : 0;
-        tabs.splice(insertAt, 0, { id: 'news', label: 'News' });
-        try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
+      // ME: ToDay/Newsタブを削除（天気ポップアップに統合済み）
+      if (mode === 'me') {
+        const before = tabs.length;
+        const filtered = tabs.filter(t => t.id !== 'today' && t.id !== 'news');
+        if (filtered.length !== before) {
+          try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(filtered)); } catch(e) {}
+          return filtered;
+        }
       }
       // ME: Resumeタブが無ければCollectionの直後（またはSecretの前）に追加
       if (mode === 'me' && tabs.length > 0 && !tabs.find(t => t.id === 'resume')) {
