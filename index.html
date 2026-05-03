@@ -9523,7 +9523,7 @@ function renderTown() {
         const routeUrl = 'https://www.google.com/maps/dir/?api=1&destination='+r.lat+','+r.lng;
 
         let html2 = '<div class="place-card">';
-        html2 += '<div class="place-card-header">';
+        html2 += '<div class="place-card-header" onclick="highlightNearbyMarker(\''+idEsc+'\')" style="cursor:pointer;">';
         html2 += '<div class="place-card-icon">'+catIcon+'</div>';
         html2 += '<div class="place-card-info">';
         html2 += '<div class="place-card-name">'+escapeHtml(r.name)+'</div>';
@@ -13315,11 +13315,42 @@ function _addNearbyMarker(map, infoWindow, pinIcon, result) {
     icon: pinIcon,
     zIndex: 5
   });
+  marker._placeId = result.placeId;
+  marker._defaultIcon = pinIcon;
   marker.addListener('click', () => {
     infoWindow.setContent('<div style="font-size:13px;font-weight:700;color:#333;padding:2px 4px;">'+escapeHtml(result.name)+'</div>');
     infoWindow.open(map, marker);
   });
   return marker;
+}
+
+// カードタップで★を黄色にハイライト＋地図をその位置に移動
+function highlightNearbyMarker(placeId) {
+  if (!window._nearbyMarkers || !window._nearbyMap) return;
+  const highlightIcon = {
+    path: 'M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z',
+    fillColor: '#FFD700',
+    fillOpacity: 1,
+    strokeColor: '#FF8C00',
+    strokeWeight: 2,
+    scale: 1.6,
+    anchor: new google.maps.Point(12, 12)
+  };
+  for (const m of window._nearbyMarkers) {
+    if (m._placeId === placeId) {
+      m.setIcon(highlightIcon);
+      m.setZIndex(20);
+      window._nearbyMap.panTo(m.getPosition());
+      window._nearbyMap.setZoom(18);
+      if (window._nearbyInfoWindow) {
+        window._nearbyInfoWindow.setContent('<div style="font-size:13px;font-weight:700;color:#333;padding:2px 4px;">'+escapeHtml(m.getTitle())+'</div>');
+        window._nearbyInfoWindow.open(window._nearbyMap, m);
+      }
+    } else {
+      m.setIcon(m._defaultIcon);
+      m.setZIndex(5);
+    }
+  }
 }
 
 function nearbyDistance(lat1, lng1, lat2, lng2) {
@@ -13464,8 +13495,21 @@ function initNearbyMap() {
   for (const r of results) _addNearbyMarker(map, infoWindow, pinIcon, r);
   console.log('nearby map markers rendered:', results.length);
 
-  // ピンは全部打つが、地図はスクロールで探す（GO風）
-  // 現在地中心のまま。ユーザーが動かして見つける
+  // ピンは全部打つが、近い3件が見えるようにbounds調整
+  if (results.length > 0) {
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(center);
+    const top3 = results.slice(0, 3);
+    for (const r of top3) {
+      if (Number.isFinite(r.lat) && Number.isFinite(r.lng)) {
+        bounds.extend({ lat: r.lat, lng: r.lng });
+      }
+    }
+    map.fitBounds(bounds, { top: 30, bottom: 30, left: 30, right: 30 });
+    google.maps.event.addListenerOnce(map, 'idle', () => {
+      if (map.getZoom() > 18) map.setZoom(18);
+    });
+  }
 
   // 検索完了後にピンを追加するため参照を保存
   window._nearbyMap = map;
