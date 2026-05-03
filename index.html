@@ -11269,7 +11269,16 @@ function renderTodayTab() {
     return html;
   }
   
-  // 各指数を独立カードで表示
+  // 天気に合わせた一文
+  const msgs = [];
+  if (w.temp >= 25) msgs.push('暑くなりそう！水分補給忘れずに');
+  else if (w.temp >= 15) msgs.push('過ごしやすい気温だね');
+  else msgs.push('少し肌寒いかも。羽織りものがあると安心');
+  if (w.desc && w.desc.includes('雨')) msgs.push('☂️ 傘を忘れずに！');
+  else if (w.desc && (w.desc.includes('晴') || w.desc.includes('快晴'))) msgs.push('🌈 お散歩日和！');
+  html += '<div style="font-size:12px;color:var(--accent-deep);font-weight:700;margin-bottom:10px;line-height:1.5;">'+msgs.join('　')+'</div>';
+  
+  // 各指数を独立カード（1列）で表示
   const items = [];
   if (w.laundry) items.push({icon:'🧺', title:'洗濯指数', value:w.laundry.score, label:w.laundry.label, comment:w.laundry.comment});
   if (w.uv) items.push({icon:'☀️', title:'UV指数', value:w.uv.index, label:w.uv.label, comment:w.uv.comment});
@@ -11277,7 +11286,7 @@ function renderTodayTab() {
   if (w.dust) items.push({icon:'🌫️', title:'黄砂', value:null, label:w.dust.label, comment:w.dust.comment});
   if (w.airQuality && w.airQuality.level !== 'unknown') items.push({icon:'💨', title:'大気質', value:null, label:w.airQuality.label, comment:w.airQuality.comment});
   
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+  html += '<div style="display:flex;flex-direction:column;gap:8px;">';
   for (const it of items) {
     html += '<div style="background:var(--card-bg);border:1.5px solid var(--card-border);border-radius:14px;padding:12px;backdrop-filter:blur(8px);">';
     html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">';
@@ -11622,6 +11631,9 @@ function renderTodayCard(icon, title, value, label, comment) {
 }
 
 function showWeatherPopup() {
+  // 既存のpopupを削除（タブ切替時の重複防止）
+  const existing = document.getElementById('weatherPopup');
+  if (existing) existing.remove();
   if (!window._todayHubTab) window._todayHubTab = 'weather';
   const tab = window._todayHubTab;
   const w = window._weatherCache;
@@ -11678,8 +11690,22 @@ function showWeatherPopup() {
   } else if (tab === 'today') {
     html += renderTodayTab();
   } else if (tab === 'news') {
+    html += '<div style="padding:0 14px;">';
+    html += '<div class="section-head" style="margin-bottom:4px;"><h2 class="section-title">本日のニュース</h2></div>';
+    try {
+      const c = JSON.parse(localStorage.getItem(NEWS_CACHE_KEY+'_general')||'null');
+      if (c && c.timestamp) { const d=new Date(c.timestamp); html += '<div style="font-size:9px;color:var(--ink-light);margin:0 0 8px 14px;">'+(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+' 更新</div>'; }
+    } catch(e){}
+    html += '</div>';
     html += renderNewsSection('general', null);
   } else if (tab === 'animal') {
+    html += '<div style="padding:0 14px;">';
+    html += '<div class="section-head" style="margin-bottom:4px;"><h2 class="section-title">アニマルニュース</h2></div>';
+    try {
+      const c = JSON.parse(localStorage.getItem(NEWS_CACHE_KEY+'_pet')||'null');
+      if (c && c.timestamp) { const d=new Date(c.timestamp); html += '<div style="font-size:9px;color:var(--ink-light);margin:0 0 8px 14px;">'+(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+' 更新</div>'; }
+    } catch(e){}
+    html += '</div>';
     html += renderNewsSection('pet', null);
   }
 
