@@ -9486,7 +9486,7 @@ function renderTown() {
     if (window._nearbyGeoStatus === 'ok') {
       html += '<div style="position:relative;">';
       html += '<div id="nearbyMap" style="background:#eceff3;border-radius:14px;height:50vh;margin-bottom:8px;overflow:hidden;"></div>';
-      html += '<div id="nearbyOverlayCard" style="display:none;position:absolute;bottom:12px;left:10px;right:10px;background:var(--surface);border-radius:14px;padding:12px;box-shadow:0 2px 12px rgba(0,0,0,0.15);z-index:10;"></div>';
+      html += '<div id="nearbyOverlayCard" style="display:none;position:absolute;bottom:12px;left:10px;right:10px;z-index:10;"></div>';
       html += '</div>';
       setTimeout(initNearbyMap, 0);
     } else {
@@ -13348,21 +13348,29 @@ function showNearbyOverlayCard(r) {
   const routeUrl = 'https://www.google.com/maps/dir/?api=1&destination='+r.lat+','+r.lng;
   const isFav = !!(placesFavs['nearby'] && placesFavs['nearby'][r.placeId]);
   const idEsc = r.placeId.replace(/'/g, "\\'");
-  let c = '<div style="display:flex;align-items:flex-start;gap:10px;">';
-  c += '<div style="flex:1;min-width:0;">';
-  c += '<div style="font-size:14px;font-weight:700;color:var(--ink-dark);line-height:1.3;">'+escapeHtml(r.name)+'</div>';
-  c += '<div style="display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;">';
+  const catIconMap = {'喫煙所':'🚬','居酒屋':'🍶','カフェ':'☕','バー':'🍸','動物病院':'🏥','美容院':'💈','公園':'🌳','コンビニ':'🏪','薬局':'💊','ラーメン':'🍜','病院':'🏥'};
+  const catIcon = catIconMap[window._nearbyCat] || '📍';
+
+  // 下のカードと完全に同じHTML
+  let c = '<div class="place-card" style="margin:0;">';
+  c += '<div class="place-card-header" style="cursor:default;">';
+  c += '<div class="place-card-icon">'+catIcon+'</div>';
+  c += '<div class="place-card-info">';
+  c += '<div class="place-card-name" style="font-size:13px;">'+escapeHtml(r.name)+'</div>';
+  c += '<div style="display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap;">';
   c += '<span style="display:inline-flex;align-items:center;gap:2px;background:var(--accent-bg);color:var(--accent-deep);font-size:10px;font-weight:700;padding:1px 7px;border-radius:100px;"><span class="material-symbols-rounded" style="font-size:12px;">near_me</span>'+distStr+'</span>';
   if (r.isOpen !== null) c += '<span style="font-size:10px;font-weight:600;color:'+(r.isOpen?'#2e7d32':'#c62828')+';">'+(r.isOpen?'営業中':'閉店中')+'</span>';
   if (r.hours) c += '<span style="font-size:9.5px;color:var(--ink-sub);">'+escapeHtml(r.hours)+'</span>';
+  c += '</div>';
+  c += '</div>';
+  c += '<button onclick="hideNearbyOverlayCard()" style="background:none;border:none;font-size:18px;color:var(--ink-light);cursor:pointer;padding:0 4px;line-height:1;align-self:flex-start;">×</button>';
+  c += '</div>';
+  c += '<div style="display:flex;gap:4px;padding:6px 10px 8px;border-top:1px solid var(--line-soft);">';
+  c += '<button onclick="highlightNearbyMarker(\''+idEsc+'\')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:2px;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 0;font-size:10px;font-weight:600;font-family:inherit;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:13px;">map</span>地図</button>';
+  c += '<a href="'+routeUrl+'" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:2px;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 0;font-size:10px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:13px;">directions</span>ルート</a>';
+  if (r.mapsUrl) c += '<a href="'+escapeHtml(r.mapsUrl)+'" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:2px;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 0;font-size:10px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:13px;">open_in_new</span>G</a>';
+  c += '<button onclick="toggleNearbyFav(\''+idEsc+'\')" style="width:32px;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:'+(isFav?'#E84855':'var(--ink-light)')+';border-radius:8px;padding:6px 0;font-size:14px;cursor:pointer;">'+(isFav?'♥':'♡')+'</button>';
   c += '</div></div>';
-  c += '<button onclick="hideNearbyOverlayCard()" style="background:none;border:none;font-size:18px;color:var(--ink-light);cursor:pointer;padding:0 2px;line-height:1;">×</button>';
-  c += '</div>';
-  c += '<div style="display:flex;gap:4px;margin-top:8px;">';
-  c += '<a href="'+routeUrl+'" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:#4285F4;color:#fff;border:none;border-radius:8px;padding:7px 0;font-size:11px;font-weight:700;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:14px;">directions</span>ルート</a>';
-  if (r.mapsUrl) c += '<a href="'+escapeHtml(r.mapsUrl)+'" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 0;font-size:11px;font-weight:700;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:14px;">open_in_new</span>Google</a>';
-  c += '<button onclick="toggleNearbyFav(\''+idEsc+'\')" style="width:36px;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:'+(isFav?'#E84855':'var(--ink-light)')+';border-radius:8px;padding:7px 0;font-size:15px;cursor:pointer;">'+(isFav?'♥':'♡')+'</button>';
-  c += '</div>';
   el.innerHTML = c;
   el.style.display = 'block';
 }
