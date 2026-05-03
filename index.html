@@ -2491,7 +2491,7 @@
     display:flex; padding:0 8px 14px; gap:3px;
     overflow-x:auto; overflow-y:visible;
     -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
+    scrollbar-width:thin;
     margin-top:-4px;
   }
   .house-idx-tabs::-webkit-scrollbar { display:none; }
@@ -2564,7 +2564,7 @@
   .places-section { padding:8px 16px 0; }
   .places-cat-chips {
     display:flex; gap:6px; padding:0 0 10px;
-    overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:thin;
   }
   .places-cat-chips::-webkit-scrollbar { display:none; }
   .places-cat-chip {
@@ -5918,7 +5918,7 @@ function renderMeMode() {
   } else if (tab === 'stamp') {
     // ===== Stamp =====
     html += '<div style="padding:12px 16px 4px;">';
-    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;">';
+    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
     const stampCats = ['生活','美容','体調','仕事','趣味'];
     for (const cat of stampCats) {
       const active = (cat === '生活') ? 'background:var(--accent);color:white;border-color:var(--accent);' : '';
@@ -9471,7 +9471,7 @@ function renderTown() {
     // カテゴリチップ（横スクロール）
     const nearbyCats = ['喫煙所','居酒屋','カフェ','バー','動物病院','美容院','公園','コンビニ','薬局','ラーメン','病院'];
     const selCat = window._nearbyCat || '喫煙所';
-    html += '<div style="overflow-x:auto;white-space:nowrap;padding:0 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">';
+    html += '<div style="overflow-x:auto;white-space:nowrap;padding:0 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;">';
     for (const c of nearbyCats) {
       html += '<button class="town-cat-chip '+(selCat===c?'selected':'')+'" onclick="window._nearbyCat=\''+c+'\';window._nearbyCustomQuery=\'\';window._nearbyResults=[];renderTown();if(window._nearbyGeoStatus===\'ok\')setTimeout(searchNearbyPlaces,200);" style="display:inline-block;margin-right:6px;">'+escapeHtml(c)+'</button>';
     }
@@ -9524,7 +9524,7 @@ function renderTown() {
       // 件数表示
       html += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:6px;">'+results.length+'件 見つかったよ</div>';
       // 2列横スクロールカードエリア
-      html += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:8px;">';
+      html += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;">';
       html += '<div style="display:flex;flex-direction:column;flex-wrap:wrap;height:340px;gap:8px;">';
       for (const r of results) {
         const distStr = r.distance < 1000 ? Math.round(r.distance)+'m' : (r.distance/1000).toFixed(1)+'km';
@@ -9551,6 +9551,8 @@ function renderTown() {
         html += '<button onclick="highlightNearbyMarker(\''+idEsc+'\')" title="地図で見る" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 0;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:16px;">map</span></button>';
         html += '<a href="'+routeUrl+'" target="_blank" title="ルート" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 0;cursor:pointer;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:16px;">directions</span></a>';
         if (r.mapsUrl) html += '<a href="'+escapeHtml(r.mapsUrl)+'" target="_blank" title="Googleで開く" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 0;cursor:pointer;text-decoration:none;font-size:11px;font-weight:700;">G</a>';
+        const _ns = findNikowaShopByName(r.name);
+        if (_ns) html += '<button onclick="openShopDetailFromSearch(\''+_ns.id+'\')" title="にこわで見る" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:8px;padding:6px 0;cursor:pointer;font-size:13px;">🌷</button>';
         html += '<button onclick="toggleNearbyFav(\''+idEsc+'\')" title="お気に入り" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:'+(isFav?'#E84855':'var(--ink-light)')+';border-radius:8px;padding:6px 0;font-size:14px;cursor:pointer;">'+(isFav?'♥':'♡')+'</button>';
         html += '</div>';
         // メモ（常時1行表示）
@@ -11317,7 +11319,7 @@ function renderTodayTab() {
   if (w.forecast && w.forecast.length > 0) {
     html += '<div class="section-head" style="margin-bottom:8px;"><h2 class="section-title">これからの天気</h2></div>';
     html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:10px 8px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;">';
-    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px;">';
+    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:2px;">';
     for (const f of w.forecast.slice(0, 8)) {
       const fh = String(f.time.getHours()).padStart(2,'0');
       html += '<div style="flex-shrink:0;min-width:54px;text-align:center;padding:8px 4px;background:var(--card-bg);border-radius:10px;">';
@@ -13372,6 +13374,8 @@ function showNearbyOverlayCard(r) {
   c += '<button onclick="highlightNearbyMarker(\''+idEsc+'\')" title="地図で見る" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 0;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:16px;">map</span></button>';
   c += '<a href="'+routeUrl+'" target="_blank" title="ルート" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 0;cursor:pointer;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:16px;">directions</span></a>';
   if (r.mapsUrl) c += '<a href="'+escapeHtml(r.mapsUrl)+'" target="_blank" title="Googleで開く" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 0;cursor:pointer;text-decoration:none;font-size:11px;font-weight:700;">G</a>';
+  const _ns2 = findNikowaShopByName(r.name);
+  if (_ns2) c += '<button onclick="openShopDetailFromSearch(\''+_ns2.id+'\')" title="にこわで見る" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:8px;padding:6px 0;cursor:pointer;font-size:13px;">🌷</button>';
   c += '<button onclick="toggleNearbyFav(\''+idEsc+'\')" title="お気に入り" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:'+(isFav?'#E84855':'var(--ink-light)')+';border-radius:8px;padding:6px 0;font-size:14px;cursor:pointer;">'+(isFav?'♥':'♡')+'</button>';
   c += '</div>';
   // メモ（常時1行表示）
