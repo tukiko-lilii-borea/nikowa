@@ -9405,7 +9405,7 @@ function renderTown() {
     }
     html += '<div class="places-text-row">';
     html += '<input type="text" class="places-text-input" id="placesTextInput" placeholder="キーワードで検索（任意）" value="'+escapeHtml(placesText)+'">';
-    html += '<button class="places-search-btn" onclick="searchPlaces()">🔍 探す</button>';
+    html += '<button class="places-search-btn" onclick="searchPlaces()"><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;">search</span> 探す</button>';
     html += '</div>';
     if (placesError) html += '<div class="places-error">'+escapeHtml(placesError)+'</div>';
     html += '</div>';
@@ -11656,47 +11656,62 @@ function renderTodayCard(icon, title, value, label, comment) {
 }
 
 function showWeatherPopup() {
+  if (!window._todayHubTab) window._todayHubTab = 'today';
+  const tab = window._todayHubTab;
   const w = window._weatherCache;
   const region = (data && data.userRegion) || '大阪';
-  let html = '<div id="weatherPopup" onclick="if(event.target===this)closeWeatherPopup()" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.35);display:flex;align-items:flex-end;justify-content:center;padding-bottom:90px;box-sizing:border-box;">';
-  html += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;padding:20px 20px 24px;max-height:calc(80vh - 60px);overflow-y:auto;">';
-  html += '<div style="display:flex;align-items:center;margin-bottom:16px;">';
-  html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(region)+'の天気</div>';
-  html += '<button onclick="closeWeatherPopup()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  let html = '<div id="weatherPopup" onclick="if(event.target===this)closeWeatherPopup()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.35);display:flex;align-items:flex-end;justify-content:center;padding-bottom:90px;box-sizing:border-box;">';
+  html += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;padding:16px 16px 20px;max-height:calc(85vh - 60px);overflow-y:auto;">';
+  // ✕ボタン
+  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:4px;"><button onclick="closeWeatherPopup()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-sub);">✕</button></div>';
+  // ミニタブ
+  html += '<div style="display:flex;gap:4px;margin-bottom:12px;">';
+  const tabs = [{id:'today',label:'Today'},{id:'news',label:'ニュース'},{id:'animal',label:'アニマル'}];
+  for (const t of tabs) {
+    const isActive = tab === t.id;
+    html += '<button onclick="window._todayHubTab=\''+t.id+'\';showWeatherPopup()" style="flex:1;padding:8px 0;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;border:'+(isActive?'1.5px solid var(--accent)':'1px solid var(--line)')+';background:'+(isActive?'var(--accent-bg)':'var(--surface)')+';color:'+(isActive?'var(--accent-deep)':'var(--ink-sub)')+';">'+t.label+'</button>';
+  }
   html += '</div>';
-  if (!w) {
-    html += '<div style="text-align:center;padding:24px;color:var(--ink-sub);font-size:13px;">取得中...🌷</div>';
-  } else {
-    // 現在
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:16px;margin-bottom:14px;backdrop-filter:blur(8px);">';
-    html += '<div style="display:flex;align-items:center;gap:12px;">';
-    html += '<span style="font-size:48px;line-height:1;">'+w.icon+'</span>';
-    html += '<div>';
-    html += '<div style="font-size:32px;font-weight:800;color:var(--ink-dark);">'+Math.round(w.temp)+'°</div>';
-    html += '<div style="font-size:12px;color:var(--ink-sub);">体感 '+Math.round(w.feels)+'° · 湿度 '+w.humidity+'%</div>';
-    html += '<div style="font-size:12px;color:var(--ink-sub);">'+escapeHtml(w.desc)+'</div>';
-    html += '</div></div></div>';
-    // 予報
-    if (w.forecast && w.forecast.length > 0) {
-      html += '<div style="font-size:12px;font-weight:700;color:var(--ink-sub);margin-bottom:8px;">今日・明日の予報</div>';
-      html += '<div style="display:flex;flex-direction:column;gap:4px;">';
-      for (const f of w.forecast) {
-        const fh = String(f.time.getHours()).padStart(2,'0');
-        const fd = (f.time.getMonth()+1)+'/'+(f.time.getDate());
-        const fw = ['日','月','火','水','木','金','土'][f.time.getDay()];
-        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:linear-gradient(135deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0.2) 100%);border-radius:10px;">';
-        html += '<div style="width:54px;text-align:center;flex-shrink:0;line-height:1.15;">';
-        html += '<div style="font-size:9px;color:var(--ink-light);font-weight:600;">'+fd+'('+fw+')</div>';
-        html += '<div style="font-size:14px;font-weight:700;color:var(--ink-dark);margin-top:1px;">'+fh+'<span style="font-size:10px;font-weight:600;">時</span></div>';
-        html += '</div>';
-        html += '<span style="font-size:22px;">'+f.icon+'</span>';
-        html += '<span style="font-size:15px;font-weight:700;color:var(--ink-dark);min-width:34px;">'+f.temp+'°</span>';
-        html += '<span style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(f.desc)+'</span>';
+
+  // タブコンテンツ
+  if (tab === 'today') {
+    if (!w) {
+      html += '<div style="text-align:center;padding:24px;color:var(--ink-sub);font-size:13px;">取得中...🌷</div>';
+    } else {
+      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:16px;margin-bottom:14px;backdrop-filter:blur(8px);">';
+      html += '<div style="display:flex;align-items:center;gap:12px;">';
+      html += '<span style="font-size:48px;line-height:1;">'+w.icon+'</span>';
+      html += '<div>';
+      html += '<div style="font-size:32px;font-weight:800;color:var(--ink-dark);">'+Math.round(w.temp)+'°</div>';
+      html += '<div style="font-size:12px;color:var(--ink-sub);">体感 '+Math.round(w.feels)+'° · 湿度 '+w.humidity+'%</div>';
+      html += '<div style="font-size:12px;color:var(--ink-sub);">'+escapeHtml(w.desc)+'</div>';
+      html += '</div></div></div>';
+      if (w.forecast && w.forecast.length > 0) {
+        html += '<div style="font-size:12px;font-weight:700;color:var(--ink-sub);margin-bottom:8px;">今日・明日の予報</div>';
+        html += '<div style="display:flex;flex-direction:column;gap:4px;">';
+        for (const f of w.forecast) {
+          const fh = String(f.time.getHours()).padStart(2,'0');
+          const fd = (f.time.getMonth()+1)+'/'+(f.time.getDate());
+          const fw = ['日','月','火','水','木','金','土'][f.time.getDay()];
+          html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:linear-gradient(135deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0.2) 100%);border-radius:10px;">';
+          html += '<div style="width:54px;text-align:center;flex-shrink:0;line-height:1.15;">';
+          html += '<div style="font-size:9px;color:var(--ink-light);font-weight:600;">'+fd+'('+fw+')</div>';
+          html += '<div style="font-size:14px;font-weight:700;color:var(--ink-dark);margin-top:1px;">'+fh+'<span style="font-size:10px;font-weight:600;">時</span></div>';
+          html += '</div>';
+          html += '<span style="font-size:22px;">'+f.icon+'</span>';
+          html += '<span style="font-size:15px;font-weight:700;color:var(--ink-dark);min-width:34px;">'+f.temp+'°</span>';
+          html += '<span style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(f.desc)+'</span>';
+          html += '</div>';
+        }
         html += '</div>';
       }
-      html += '</div>';
     }
+  } else if (tab === 'news') {
+    html += renderNewsSection('general', null);
+  } else if (tab === 'animal') {
+    html += renderNewsSection('pet', null);
   }
+
   html += '</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
