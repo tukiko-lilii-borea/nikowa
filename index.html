@@ -13955,31 +13955,23 @@ function buildPlaceCardHtml(p, catIcon) {
   html += '<div class="place-card-icon">'+catIcon+'</div>';
   html += '<div class="place-card-info">';
   html += '<div class="place-card-name">'+escapeHtml(name)+'</div>';
+  html += '<div style="display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap;">';
+  if (hasOpenInfo) html += '<span style="font-size:10px;font-weight:600;color:'+(isOpen?'#2e7d32':'#c62828')+';">'+(isOpen?'営業中':'閉店中')+'</span>';
+  if (hours) html += '<span style="font-size:9.5px;color:var(--ink-sub);">'+escapeHtml(hours)+'</span>';
+  html += '</div>';
   html += '<div class="place-card-addr">'+escapeHtml(addr)+'</div>';
   html += '</div></div>';
-  html += '<div class="place-card-status-row">';
-  if (hasOpenInfo) html += '<span class="place-card-open '+(isOpen?'open':'closed')+'">'+(isOpen?'🟢 営業中':'🔴 閉店中')+'</span>';
-  if (hours) html += '<span class="place-card-hours">'+escapeHtml(hours)+'</span>';
-  html += '<div class="place-card-status-actions">';
-  html += '<button class="place-card-fav-sm '+(isFav?'is-fav':'')+'" onclick="togglePlaceFav(\''+idEsc+'\')">'+(isFav?'♥':'♡')+'</button>';
-  html += '<button class="place-card-memo-btn" onclick="toggleMemoInput(\''+safeId+'\')">📝</button>';
-  html += '</div></div>';
-  html += '<div class="place-card-map-row">';
-  if (mapsUrl) {
-    html += '<a class="place-card-map-btn" href="'+escapeHtml(mapsUrl)+'" target="_blank" rel="noopener noreferrer">🗺 Googleで見る</a>';
-  } else {
-    html += '<span class="place-card-map-btn" style="opacity:0.4;cursor:default;">🗺 Googleで見る</span>';
-  }
-  // にこわタウン登録店だけ「にこわで見る」表示
+  // アイコンボタン行
+  const routeUrl = pos ? 'https://www.google.com/maps/dir/?api=1&destination='+pos.lat+','+pos.lng : '';
+  html += '<div style="display:flex;gap:4px;padding:6px 10px 8px;border-top:1px solid var(--line-soft);">';
+  if (routeUrl) html += '<a href="'+routeUrl+'" target="_blank" title="ルート" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 0;cursor:pointer;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:16px;">directions</span></a>';
+  if (mapsUrl) html += '<a href="'+escapeHtml(mapsUrl)+'" target="_blank" title="Googleで開く" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 0;cursor:pointer;text-decoration:none;font-size:11px;font-weight:700;">G</a>';
   const _nikowaShop = findNikowaShopByName(name);
-  if (_nikowaShop) {
-    html += '<button class="place-card-nikowa-btn" onclick="openShopDetailFromSearch(\''+_nikowaShop.id+'\')">🏠 にこわで見る</button>';
-  }
+  if (_nikowaShop) html += '<button onclick="openShopDetailFromSearch(\''+_nikowaShop.id+'\')" title="にこわで見る" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:8px;padding:6px 0;cursor:pointer;font-size:13px;">🌷</button>';
+  html += '<button onclick="togglePlaceFav(\''+idEsc+'\')" title="お気に入り" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:'+(isFav?'#E84855':'var(--ink-light)')+';border-radius:8px;padding:6px 0;font-size:14px;cursor:pointer;">'+(isFav?'♥':'♡')+'</button>';
   html += '</div>';
-  html += '<div class="place-card-memo-row" id="memo-row-'+safeId+'" style="display:'+(memo?'flex':'none')+';">';
-  html += '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" id="memo-input-'+safeId+'">';
-  html += '<button class="place-card-memo-btn" style="font-size:16px;padding:4px 8px;min-width:36px;" onclick="savePlaceMemoBtn(\''+idEsc+'\', \''+safeId+'\')">💾</button>';
-  html += '</div>';
+  // メモ（常時1行表示）
+  html += '<div style="padding:2px 10px 6px;"><input type="text" placeholder="📝 メモ" value="'+memo+'" style="width:100%;border:none;border-top:1px solid var(--line-soft);background:transparent;font-size:10px;color:var(--ink-sub);font-family:inherit;padding:4px 0;outline:none;text-overflow:ellipsis;" onchange="savePlaceMemo(\''+idEsc+'\',this.value)"></div>';
   html += '</div>';
   return html;
 }
@@ -14537,17 +14529,14 @@ function setPlacesLocMode(mode) {
 }
 
 async function _geocodeAddress(address) {
-  const url = 'https://maps.googleapis.com/maps/api/geocode/json?address='
-    + encodeURIComponent(address) + '&key=' + PLACES_API_KEY + '&language=ja';
-  console.log('geocode request:', url);
-  const resp = await fetch(url);
-  const json = await resp.json();
-  console.log('geocode response:', json);
-  if (json.status !== 'OK' || !json.results || json.results.length === 0) {
-    throw new Error('Geocoding failed: ' + json.status);
+  if (typeof google === 'undefined' || !google.maps) throw new Error('Google Maps not loaded');
+  const geocoder = new google.maps.Geocoder();
+  const result = await geocoder.geocode({ address: address, language: 'ja' });
+  if (!result.results || result.results.length === 0) {
+    throw new Error('Geocoding failed: no results');
   }
-  const loc = json.results[0].geometry.location;
-  return { lat: loc.lat, lng: loc.lng };
+  const loc = result.results[0].geometry.location;
+  return { lat: loc.lat(), lng: loc.lng() };
 }
 
 async function _placesNearby(type, lat, lng) {
