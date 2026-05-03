@@ -9523,23 +9523,28 @@ function renderTown() {
         const routeUrl = 'https://www.google.com/maps/dir/?api=1&destination='+r.lat+','+r.lng;
 
         let html2 = '<div class="place-card">';
+        // ヘッダー（タップで★ハイライト）
         html2 += '<div class="place-card-header" onclick="highlightNearbyMarker(\''+idEsc+'\')" style="cursor:pointer;">';
         html2 += '<div class="place-card-icon">'+catIcon+'</div>';
         html2 += '<div class="place-card-info">';
         html2 += '<div class="place-card-name">'+escapeHtml(r.name)+'</div>';
-        html2 += '<div class="place-card-addr">'+escapeHtml(r.address)+'　<span style="color:var(--accent-deep);font-weight:700;">'+distStr+'</span></div>';
-        html2 += '</div></div>';
-        html2 += '<div class="place-card-status-row">';
-        if (r.isOpen !== null) html2 += '<span class="place-card-open '+(r.isOpen?'open':'closed')+'">'+(r.isOpen?'🟢 営業中':'🔴 閉店中')+'</span>';
-        if (r.hours) html2 += '<span class="place-card-hours">'+escapeHtml(r.hours)+'</span>';
-        html2 += '<div class="place-card-status-actions">';
-        html2 += '<button class="place-card-fav-sm '+(isFav?'is-fav':'')+'" onclick="toggleNearbyFav(\''+idEsc+'\')">'+(isFav?'♥':'♡')+'</button>';
-        html2 += '<button class="place-card-memo-btn" onclick="toggleMemoInput(\''+safeId+'\')">📝</button>';
-        html2 += '</div></div>';
-        html2 += '<div class="place-card-map-row">';
-        if (r.mapsUrl) html2 += '<a class="place-card-map-btn" href="'+escapeHtml(r.mapsUrl)+'" target="_blank" rel="noopener noreferrer">🗺 地図</a>';
-        html2 += '<a class="place-card-map-btn" href="'+routeUrl+'" target="_blank" rel="noopener noreferrer" style="background:var(--mint-bg);border-color:var(--mint);color:var(--mint-deep);">🚶 ルート</a>';
+        html2 += '<div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">';
+        html2 += '<span style="display:inline-flex;align-items:center;gap:2px;background:var(--accent-bg);color:var(--accent-deep);font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;"><span class="material-symbols-rounded" style="font-size:13px;">near_me</span>'+distStr+'</span>';
+        if (r.isOpen !== null) html2 += '<span style="font-size:11px;font-weight:600;color:'+(r.isOpen?'#2e7d32':'#c62828')+';">'+(r.isOpen?'営業中':'閉店中')+'</span>';
+        if (r.hours) html2 += '<span style="font-size:10.5px;color:var(--ink-sub);">'+escapeHtml(r.hours)+'</span>';
         html2 += '</div>';
+        html2 += '<div class="place-card-addr" style="margin-top:3px;">'+escapeHtml(r.address)+'</div>';
+        html2 += '</div></div>';
+        // ボタン行（4つ横並び）
+        html2 += '<div style="display:flex;gap:6px;padding:8px 12px 10px;border-top:1px solid var(--line-soft);">';
+        html2 += '<button onclick="highlightNearbyMarker(\''+idEsc+'\')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:7px 0;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:15px;">map</span>地図</button>';
+        html2 += '<a href="'+routeUrl+'" target="_blank" rel="noopener noreferrer" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:7px 0;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:15px;">directions</span>ルート</a>';
+        if (r.mapsUrl) html2 += '<a href="'+escapeHtml(r.mapsUrl)+'" target="_blank" rel="noopener noreferrer" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:7px 0;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:15px;">open_in_new</span>Google</a>';
+        html2 += '<button onclick="toggleNearbyFav(\''+idEsc+'\')" style="width:40px;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:'+(isFav?'#E84855':'var(--ink-light)')+';border-radius:10px;padding:7px 0;font-size:16px;cursor:pointer;">'+(isFav?'♥':'♡')+'</button>';
+        html2 += '</div>';
+        // メモ追加リンク
+        html2 += '<div style="padding:0 12px 4px;"><button onclick="toggleMemoInput(\''+safeId+'\')" style="background:none;border:none;color:var(--ink-light);font-size:11px;cursor:pointer;font-family:inherit;padding:2px 0;">📝 メモ</button></div>';
+        // メモ行
         html2 += '<div class="place-card-memo-row" id="memo-row-'+safeId+'" style="display:'+(memo?'flex':'none')+';">';
         html2 += '<input class="place-card-memo-input" type="text" placeholder="ひとことメモ…" value="'+memo+'" id="memo-input-'+safeId+'">';
         html2 += '<button class="place-card-memo-btn" style="font-size:16px;padding:4px 8px;min-width:36px;" onclick="savePlaceMemoBtn(\''+idEsc+'\', \''+safeId+'\')">💾</button>';
@@ -13383,7 +13388,7 @@ async function searchNearbyPlaces() {
       : new google.maps.LatLng(window._nearbyLat, window._nearbyLng);
     const request = {
       textQuery: query,
-      fields: ['displayName', 'formattedAddress', 'location', 'businessStatus', 'googleMapsURI'],
+      fields: ['displayName', 'formattedAddress', 'location', 'businessStatus', 'googleMapsURI', 'currentOpeningHours'],
       locationRestriction: new google.maps.LatLngBounds(
         new google.maps.LatLng(center.lat() - 0.005, center.lng() - 0.006),
         new google.maps.LatLng(center.lat() + 0.005, center.lng() + 0.006)
