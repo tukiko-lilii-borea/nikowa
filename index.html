@@ -3231,6 +3231,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuvEPLh6ih-QWNTVZ90Wlo5f5LNjgXbGk&libraries=places"></script>
 </head>
 <body>
 
@@ -9215,6 +9216,7 @@ function renderTown() {
   html += '<button class="town-sub-tab '+(townSubTab==='town'  ?'active':'')+'" onclick="setTownSubTab(\'town\')"><span class="material-symbols-rounded">location_city</span></button>';
   html += '<button class="town-sub-tab '+(townSubTab==='search'?'active':'')+'" onclick="setTownSubTab(\'search\')"><span class="material-symbols-rounded">search</span></button>';
   html += '<button class="town-sub-tab '+(townSubTab==='transit'?'active':'')+'" onclick="setTownSubTab(\'transit\')"><span class="material-symbols-rounded">train</span></button>';
+  html += '<button class="town-sub-tab '+(townSubTab==='nearby' ?'active':'')+'" onclick="setTownSubTab(\'nearby\')"><span class="material-symbols-rounded">location_on</span></button>';
   html += '<button class="town-sub-tab '+(townSubTab==='fav'   ?'active':'')+'" onclick="setTownSubTab(\'fav\')"><span class="material-symbols-rounded">favorite</span></button>';
   html += '</div>';
 
@@ -9455,6 +9457,68 @@ function renderTown() {
   // ── 🚆 路線サブタブ
   if (townSubTab === 'transit') {
     html += renderTransitSubTab();
+  }
+
+  // ── 📍 近くサブタブ
+  if (townSubTab === 'nearby') {
+    html += '<div style="padding:16px;">';
+    html += '<div style="font-size:18px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">近くを探す</div>';
+    html += '<div style="font-size:11.5px;color:var(--ink-sub);margin-bottom:12px;">現在地周辺のスポットを表示します</div>';
+
+    const nearbyCats = ['喫煙所','居酒屋','カフェ','バー'];
+    const selCat = window._nearbyCat || '喫煙所';
+    html += '<div class="town-cat-chips" style="padding:0 0 12px;">';
+    for (const c of nearbyCats) {
+      html += '<button class="town-cat-chip '+(selCat===c?'selected':'')+'" onclick="window._nearbyCat=\''+c+'\';render();">'+escapeHtml(c)+'</button>';
+    }
+    html += '</div>';
+
+    if (window._nearbyGeoStatus === 'ok') {
+      html += '<div id="nearbyMap" style="background:#eceff3;border-radius:14px;height:220px;margin-bottom:10px;overflow:hidden;"></div>';
+      setTimeout(initNearbyMap, 0);
+    } else {
+      html += '<div style="background:#eceff3;border-radius:14px;height:160px;display:flex;align-items:center;justify-content:center;color:var(--ink-light);font-size:12px;margin-bottom:10px;text-align:center;padding:0 16px;">';
+      html += '<span class="material-symbols-rounded" style="font-size:24px;margin-right:6px;opacity:.6;">my_location</span>現在地を取得してください';
+      html += '</div>';
+    }
+
+    // 現在地取得
+    html += '<button onclick="getNearbyLocation()" style="width:100%;background:var(--accent-bg);border:1.5px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:18px;">my_location</span>現在地を取得する</button>';
+    const ns = window._nearbyGeoStatus;
+    if (ns === 'ok') {
+      html += '<div style="font-size:12px;color:var(--accent-deep);text-align:center;margin-bottom:14px;">取得できたよ📍 ('+window._nearbyLat.toFixed(5)+', '+window._nearbyLng.toFixed(5)+')</div>';
+    } else if (ns === 'ng') {
+      html += '<div style="font-size:12px;color:#c4506b;text-align:center;margin-bottom:14px;">現在地を取得できませんでした</div>';
+    } else {
+      html += '<div style="height:6px;margin-bottom:8px;"></div>';
+    }
+
+    const results = window._nearbyResults || [];
+    const searching = window._nearbySearching;
+    if (window._nearbyGeoStatus !== 'ok') {
+      html += '<div style="font-size:12px;color:var(--ink-sub);text-align:center;padding:12px;">現在地取得後に検索結果が表示されます</div>';
+    } else if (searching) {
+      html += '<div style="font-size:12px;color:var(--ink-sub);text-align:center;padding:12px;">検索中…</div>';
+    } else if (results.length === 0) {
+      html += '<div style="font-size:12px;color:var(--ink-sub);text-align:center;padding:12px;">近くに該当する場所が見つかりませんでした</div>';
+    } else {
+      for (const r of results) {
+        const distStr = r.distance < 1000 ? Math.round(r.distance)+'m' : (r.distance/1000).toFixed(1)+'km';
+        const mapsUrl = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(r.name)+'&query_place_id='+encodeURIComponent(r.placeId);
+        html += '<div style="background:#fff;border:1px solid var(--line-soft);border-radius:14px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">';
+        html += '<div style="width:40px;height:40px;border-radius:12px;background:#fff4e6;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--ink);">smoking_rooms</span></div>';
+        html += '<div style="flex:1;min-width:0;">';
+        html += '<div style="font-size:14px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(r.name)+'</div>';
+        html += '<div style="font-size:11.5px;color:var(--ink-sub);margin-top:2px;">'+distStr+(r.address ? ' ・ '+escapeHtml(r.address) : '')+'</div>';
+        html += '<button onclick="window.open(\''+mapsUrl+'\',\'_blank\')" style="margin-top:6px;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:4px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;">地図で開く</button>';
+        html += '</div>';
+        html += '</div>';
+      }
+    }
+
+    html += '<div style="background:#fff8e6;border-radius:12px;padding:10px 12px;font-size:11px;color:var(--ink-sub);line-height:1.6;margin-top:6px;">※喫煙可情報は変更される場合があります。<br>利用前に現地または店舗へ確認してください。</div>';
+    html += '</div>';
   }
 
   // ── お気に入りサブタブ
@@ -13189,6 +13253,151 @@ function setTownMainTab(tab) {
 function setTownSubTab(tab) {
   townSubTab = tab;
   renderTown();
+}
+
+function nearbyDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const toRad = (d) => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function searchNearbyPlaces() {
+  if (typeof google === 'undefined' || !google.maps || !google.maps.places) return;
+  if (window._nearbyGeoStatus !== 'ok') return;
+  const center = new google.maps.LatLng(window._nearbyLat, window._nearbyLng);
+  const service = new google.maps.places.PlacesService(document.createElement('div'));
+  const keywords = ['喫煙所', '喫煙スペース', 'smoking area'];
+  const merged = {};
+  let done = 0;
+  window._nearbySearching = true;
+  window._nearbyResults = [];
+  renderTown();
+  keywords.forEach((kw) => {
+    service.nearbySearch({
+      location: center,
+      radius: 1500,
+      keyword: kw
+    }, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+        for (const p of results) {
+          if (!p.place_id || merged[p.place_id]) continue;
+          const lat = p.geometry.location.lat();
+          const lng = p.geometry.location.lng();
+          merged[p.place_id] = {
+            placeId: p.place_id,
+            name: p.name,
+            address: p.vicinity || '',
+            lat: lat,
+            lng: lng,
+            distance: nearbyDistance(window._nearbyLat, window._nearbyLng, lat, lng)
+          };
+        }
+      }
+      done++;
+      if (done === keywords.length) {
+        const list = Object.values(merged).sort((a,b) => a.distance - b.distance);
+        window._nearbyResults = list;
+        window._nearbySearching = false;
+        renderTown();
+        // 地図が既に表示済みならピンを追加
+        if (window._nearbyMap && window._nearbyPinIcon && window._nearbyInfoWindow) {
+          for (const r of list) {
+            const m = new google.maps.Marker({
+              position: { lat: r.lat, lng: r.lng },
+              map: window._nearbyMap,
+              title: r.name,
+              icon: window._nearbyPinIcon,
+              zIndex: 5
+            });
+            m.addListener('click', () => {
+              window._nearbyInfoWindow.setContent('<div style="font-size:13px;font-weight:700;color:#333;padding:2px 4px;">'+r.name+'</div>');
+              window._nearbyInfoWindow.open(window._nearbyMap, m);
+            });
+          }
+        }
+      }
+    });
+  });
+}
+
+function initNearbyMap() {
+  const el = document.getElementById('nearbyMap');
+  if (!el) return;
+  if (typeof google === 'undefined' || !google.maps) {
+    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink-light);font-size:12px;">地図を読み込めませんでした</div>';
+    return;
+  }
+  const center = { lat: window._nearbyLat, lng: window._nearbyLng };
+  const map = new google.maps.Map(el, {
+    center: center,
+    zoom: 16,
+    disableDefaultUI: true,
+    zoomControl: true,
+    gestureHandling: 'greedy'
+  });
+
+  // 現在地マーカー
+  new google.maps.Marker({
+    position: center,
+    map: map,
+    title: '現在地',
+    zIndex: 10
+  });
+
+  // 検索結果ピン（淡いグレー系）
+  const pinIcon = {
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: 9,
+    fillColor: '#b0b8c8',
+    fillOpacity: 1,
+    strokeColor: '#ffffff',
+    strokeWeight: 2
+  };
+  const infoWindow = new google.maps.InfoWindow();
+  const results = window._nearbyResults || [];
+  for (const r of results) {
+    const marker = new google.maps.Marker({
+      position: { lat: r.lat, lng: r.lng },
+      map: map,
+      title: r.name,
+      icon: pinIcon,
+      zIndex: 5
+    });
+    marker.addListener('click', () => {
+      infoWindow.setContent('<div style="font-size:13px;font-weight:700;color:#333;padding:2px 4px;">'+r.name+'</div>');
+      infoWindow.open(map, marker);
+    });
+  }
+
+  // 検索完了後にピンを追加するため参照を保存
+  window._nearbyMap = map;
+  window._nearbyPinIcon = pinIcon;
+  window._nearbyInfoWindow = infoWindow;
+}
+
+function getNearbyLocation() {
+  if (!navigator.geolocation) {
+    window._nearbyGeoStatus = 'ng';
+    renderTown();
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      window._nearbyLat = pos.coords.latitude;
+      window._nearbyLng = pos.coords.longitude;
+      window._nearbyGeoStatus = 'ok';
+      renderTown();
+      searchNearbyPlaces();
+    },
+    () => {
+      window._nearbyGeoStatus = 'ng';
+      renderTown();
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+  );
 }
 
 // ===== 🚆 路線サブタブ =====
