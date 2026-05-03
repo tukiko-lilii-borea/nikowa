@@ -13373,21 +13373,37 @@ function initNearbyMap() {
   const center = { lat: window._nearbyLat, lng: window._nearbyLng };
   const map = new google.maps.Map(el, {
     center: center,
-    zoom: 16,
+    zoom: 15,
     disableDefaultUI: true,
     zoomControl: true,
-    gestureHandling: 'greedy'
+    gestureHandling: 'greedy',
+    clickableIcons: false,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    styles: [
+      { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+      { featureType: 'transit', stylers: [{ visibility: 'simplified' }] }
+    ]
   });
 
-  // 現在地マーカー
+  // 現在地マーカー（GO風の青い丸）
   new google.maps.Marker({
     position: center,
     map: map,
     title: '現在地',
-    zIndex: 10
+    zIndex: 10,
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 10,
+      fillColor: '#4285F4',
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeWeight: 3
+    }
   });
 
-  // 検索結果ピン（淡いグレー系）
+  // 検索結果ピン（にこわらしい淡い色）
   const pinIcon = {
     path: google.maps.SymbolPath.CIRCLE,
     scale: 9,
@@ -13401,17 +13417,17 @@ function initNearbyMap() {
   for (const r of results) _addNearbyMarker(map, infoWindow, pinIcon, r);
   console.log('nearby map markers rendered:', results.length);
 
-  // 全ピンが見えるようにboundsを調整
+  // 近い上位5件だけでboundsを調整（大阪全体に広がらないように）
   if (results.length > 0) {
     const bounds = new google.maps.LatLngBounds();
-    bounds.extend(center); // 現在地も含める
-    for (const r of results) {
+    bounds.extend(center);
+    const nearTop = results.slice(0, 5);
+    for (const r of nearTop) {
       if (Number.isFinite(r.lat) && Number.isFinite(r.lng)) {
         bounds.extend({ lat: r.lat, lng: r.lng });
       }
     }
-    map.fitBounds(bounds);
-    // ズームしすぎを防ぐ
+    map.fitBounds(bounds, { top: 20, bottom: 20, left: 20, right: 20 });
     google.maps.event.addListenerOnce(map, 'idle', () => {
       if (map.getZoom() > 16) map.setZoom(16);
     });
