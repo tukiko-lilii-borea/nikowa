@@ -13401,6 +13401,22 @@ function initNearbyMap() {
   for (const r of results) _addNearbyMarker(map, infoWindow, pinIcon, r);
   console.log('nearby map markers rendered:', results.length);
 
+  // 全ピンが見えるようにboundsを調整
+  if (results.length > 0) {
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(center); // 現在地も含める
+    for (const r of results) {
+      if (Number.isFinite(r.lat) && Number.isFinite(r.lng)) {
+        bounds.extend({ lat: r.lat, lng: r.lng });
+      }
+    }
+    map.fitBounds(bounds);
+    // ズームしすぎを防ぐ
+    google.maps.event.addListenerOnce(map, 'idle', () => {
+      if (map.getZoom() > 16) map.setZoom(16);
+    });
+  }
+
   // 検索完了後にピンを追加するため参照を保存
   window._nearbyMap = map;
   window._nearbyPinIcon = pinIcon;
