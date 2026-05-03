@@ -5890,14 +5890,137 @@ function openComingSoon(modeName) {
 
 // ===== プランナー機能（Stampのサブサブタブ） =====
 function switchStampSubTab(sub) {
+  const scrollY = window.scrollY;
   data.stampSubTab = sub;
   saveData();
   render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
 }
 
 function switchStampCat(cat) {
+  const scrollY = window.scrollY;
   data.stampSelCat = cat;
   saveData();
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function toggleStampEditMode() {
+  const scrollY = window.scrollY;
+  window._stampEditMode = !window._stampEditMode;
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function toggleStampHidden(cat, idx) {
+  if (!data.stampLib || !data.stampLib[cat]) return;
+  const scrollY = window.scrollY;
+  data.stampLib[cat][idx].hidden = !data.stampLib[cat][idx].hidden;
+  saveData();
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function moveStamp(cat, idx, dir) {
+  if (!data.stampLib || !data.stampLib[cat]) return;
+  const arr = data.stampLib[cat];
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  const scrollY = window.scrollY;
+  [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+  saveData();
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function editStamp(cat, idx) {
+  if (!data.stampLib || !data.stampLib[cat] || !data.stampLib[cat][idx]) return;
+  openStampEditModal(cat, idx);
+}
+
+function addCustomStamp(cat) {
+  openStampEditModal(cat, null);
+}
+
+function openStampEditModal(cat, editIdx) {
+  const isEdit = editIdx !== null && editIdx !== undefined;
+  const cur = isEdit ? data.stampLib[cat][editIdx] : { icon:'star', name:'' };
+  
+  const ex = document.getElementById('stampEditModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="stampEditModal" onclick="if(event.target===this)closeStampEditModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:380px;background:var(--surface);border-radius:18px;padding:18px;max-height:85vh;overflow-y:auto;">';
+  h += '<div style="display:flex;align-items:center;margin-bottom:12px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+(isEdit?'スタンプ編集':'カスタムスタンプ追加')+' ('+cat+')</div>';
+  h += '<button onclick="closeStampEditModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  
+  // 名前
+  h += '<div style="margin-bottom:12px;">';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">名前 *</label>';
+  h += '<input id="seName" type="text" placeholder="例：プロテイン" value="'+escapeHtml(cur.name)+'" style="width:100%;padding:9px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface);box-sizing:border-box;">';
+  h += '</div>';
+  
+  // アイコン選択
+  h += '<div style="margin-bottom:14px;">';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">アイコン</label>';
+  h += '<div style="display:flex;gap:4px;flex-wrap:wrap;max-height:140px;overflow-y:auto;">';
+  const ICONS = ['star','water_drop','restaurant','bathtub','bed','coffee','local_cafe','face','palette','content_cut','back_hand','spa','checkroom','monitor_weight','lunch_dining','directions_run','fitness_center','directions_walk','square_foot','medication','favorite','sick','local_hospital','self_improvement','thermostat','cleaning_services','local_laundry_service','kitchen','shopping_cart','delete','wash','work','call','mail','groups','description','laptop','sports_esports','menu_book','music_note','brush','live_tv','mic','local_florist','volunteer_activism','auto_awesome','flag','task','edit','notifications','eco','local_drink','icecream','store','pets','smartphone','school','park','flight','directions_car','beach_access','psychology','savings','credit_card','wb_sunny','nightlight','cake','egg','medical_services'];
+  for (const ic of ICONS) {
+    const isSel = cur.icon === ic;
+    h += '<button onclick="window._seIcon=\''+ic+'\';this.parentElement.querySelectorAll(\'button\').forEach(b=>{b.style.background=\'var(--surface)\';b.style.borderColor=\'var(--line)\';});this.style.background=\'var(--accent-bg)\';this.style.borderColor=\'var(--accent)\';" style="width:36px;height:36px;border:1.5px solid '+(isSel?'var(--accent)':'var(--line)')+';background:'+(isSel?'var(--accent-bg)':'var(--surface)')+';border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--accent-deep);">'+renderStampIcon(ic,'font-size:18px;line-height:1;')+'</button>';
+  }
+  h += '</div></div>';
+  
+  // ボタン
+  h += '<div style="display:flex;gap:8px;">';
+  if (isEdit) h += '<button onclick="deleteStamp(\''+cat+'\','+editIdx+')" style="flex:0 0 auto;padding:10px 12px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  h += '<button onclick="saveStamp(\''+cat+'\','+(isEdit?editIdx:'null')+')" style="flex:1;padding:10px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  window._seIcon = cur.icon;
+  setTimeout(() => { const ti = document.getElementById('seName'); if (ti && !isEdit) ti.focus(); }, 50);
+}
+
+function closeStampEditModal() {
+  const el = document.getElementById('stampEditModal');
+  if (el) el.remove();
+}
+
+function saveStamp(cat, editIdx) {
+  const nameEl = document.getElementById('seName');
+  const name = (nameEl && nameEl.value || '').trim();
+  if (!name) { showToast('名前を入力してね🌷'); return; }
+  if (!data.stampLib) data.stampLib = {};
+  if (!data.stampLib[cat]) data.stampLib[cat] = [];
+  
+  const icon = window._seIcon || 'star';
+  if (editIdx !== null && editIdx !== undefined) {
+    data.stampLib[cat][editIdx].icon = icon;
+    data.stampLib[cat][editIdx].name = name;
+  } else {
+    data.stampLib[cat].push({
+      id: 'cs_' + Date.now(),
+      icon: icon,
+      name: name,
+      hidden: false
+    });
+  }
+  saveData();
+  closeStampEditModal();
+  showToast(editIdx !== null && editIdx !== undefined ? '更新したよ🌷' : '追加したよ🌷');
+  render();
+}
+
+function deleteStamp(cat, idx) {
+  if (!confirm('このスタンプを削除する？')) return;
+  if (!data.stampLib || !data.stampLib[cat]) return;
+  data.stampLib[cat].splice(idx, 1);
+  saveData();
+  closeStampEditModal();
+  showToast('削除したよ');
   render();
 }
 
@@ -5963,7 +6086,7 @@ function renderPlannerView() {
       }
       
       // アイコン
-      html += '<span style="font-size:18px;flex-shrink:0;">'+(item.icon||'📋')+'</span>';
+      html += '<span style="flex-shrink:0;">'+renderStampIcon(item.icon||'check_box_outline_blank','font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
       
       // タスク名
       html += '<span style="flex:1;font-size:13px;font-weight:600;color:var(--ink-dark);'+textDeco+'">'+escapeHtml(item.task)+'</span>';
@@ -6007,7 +6130,7 @@ function openPlannerModal(editId) {
   const item = isEdit ? data.planner.items.find(i => i.id === editId) : null;
   if (isEdit && !item) return;
   
-  const cur = item || { category:'morning', icon:'📋', time:'', task:'', notify:false, notifyMinutesBefore:[10] };
+  const cur = item || { category:'morning', icon:'task', time:'', task:'', notify:false, notifyMinutesBefore:[10] };
   
   // 既存モーダル削除
   const ex = document.getElementById('plannerModal');
@@ -6040,10 +6163,10 @@ function openPlannerModal(editId) {
   h += '<div style="margin-bottom:12px;">';
   h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">アイコン</label>';
   h += '<div style="display:flex;gap:4px;flex-wrap:wrap;">';
-  const ICONS = ['📋','🏃','💊','🛁','🍚','💧','😴','📚','💼','🧴','🌸','☕','🍱','🦷','🧘','📞','✏️','🎯'];
+  const ICONS = ['task','directions_run','medication','bathtub','restaurant','water_drop','bed','menu_book','work','face','local_florist','coffee','lunch_dining','medical_services','self_improvement','call','edit','flag'];
   for (const ic of ICONS) {
     const isSel = cur.icon === ic;
-    h += '<button onclick="window._pmIcon=\''+ic+'\';this.parentElement.querySelectorAll(\'button\').forEach(b=>{b.style.background=\'var(--surface)\';b.style.borderColor=\'var(--line)\';});this.style.background=\'var(--accent-bg)\';this.style.borderColor=\'var(--accent)\';" data-icon="'+ic+'" style="width:38px;height:38px;border:1.5px solid '+(isSel?'var(--accent)':'var(--line)')+';background:'+(isSel?'var(--accent-bg)':'var(--surface)')+';border-radius:10px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">'+ic+'</button>';
+    h += '<button onclick="window._pmIcon=\''+ic+'\';this.parentElement.querySelectorAll(\'button\').forEach(b=>{b.style.background=\'var(--surface)\';b.style.borderColor=\'var(--line)\';});this.style.background=\'var(--accent-bg)\';this.style.borderColor=\'var(--accent)\';" data-icon="'+ic+'" style="width:38px;height:38px;border:1.5px solid '+(isSel?'var(--accent)':'var(--line)')+';background:'+(isSel?'var(--accent-bg)':'var(--surface)')+';border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--accent-deep);">'+renderStampIcon(ic,'font-size:20px;line-height:1;')+'</button>';
   }
   h += '</div></div>';
   
@@ -6103,7 +6226,7 @@ function savePlannerItem(editId) {
   
   const itemData = {
     category: window._pmCat || 'morning',
-    icon: window._pmIcon || '📋',
+    icon: window._pmIcon || 'task',
     time: (timeEl && timeEl.value) || '',
     task: task,
     notify: !!(notifyEl && notifyEl.checked),
@@ -6143,7 +6266,7 @@ function completePlannerItem(id) {
   item.completed = true;
   item.completedAt = new Date().toDateString();
   // スタンプ履歴に記録
-  addStampRecord(item.icon || '📋', item.task, 'planner', item.id);
+  addStampRecord(item.icon || 'task', item.task, 'planner', item.id);
   saveData();
   showToast('完了！スタンプにも記録したよ🌷');
   render();
@@ -6167,27 +6290,260 @@ function uncompletePlannerItem(id) {
 }
 
 // ===== スタンプ機能 =====
-function addStampRecord(icon, name, source, plannerId) {
+function addStampRecord(icon, name, source, plannerId, opts) {
   if (!data.stampHistory) data.stampHistory = [];
-  data.stampHistory.unshift({
+  opts = opts || {};
+  const rec = {
     id: 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
     icon: icon,
     name: name,
     timestamp: Date.now(),
     source: source || 'stamp',
     plannerId: plannerId || null
-  });
+  };
+  if (opts.type) rec.type = opts.type;
+  if (opts.value !== undefined && opts.value !== null && opts.value !== '') rec.value = opts.value;
+  if (opts.unit) rec.unit = opts.unit;
+  if (opts.photo) rec.photo = opts.photo;
+  data.stampHistory.unshift(rec);
   // 直近100件まで保持
   if (data.stampHistory.length > 100) data.stampHistory = data.stampHistory.slice(0, 100);
   saveData();
+  return rec.id;
+}
+
+// スタンプ定義から型情報を引く（DEFAULT_STAMPSに追加プロパティを持たせるため）
+function _findStampDef(icon, name) {
+  if (!data.stampLib) return null;
+  for (const cat in data.stampLib) {
+    const arr = data.stampLib[cat];
+    if (!arr) continue;
+    for (const s of arr) {
+      if (s.icon === icon && s.name === name) return s;
+    }
+  }
+  return null;
 }
 
 function tapStamp(icon, name) {
+  const def = _findStampDef(icon, name);
+  const type = def && def.type ? def.type : 'simple';
+  
+  if (type === 'simple') {
+    // 従来通りワンタップ記録
+    const scrollY = window.scrollY;
+    addStampRecord(icon, name, 'stamp');
+    showToast(name + ' きろく！🌷');
+    render();
+    setTimeout(() => window.scrollTo(0, scrollY), 0);
+  } else {
+    // number / text → 入力モーダルを開く（先に空履歴を作って、保存orスキップ後に値を埋める）
+    openValueInputModal({
+      icon: icon,
+      name: name,
+      type: type,
+      unit: def && def.unit ? def.unit : '',
+      step: def && def.step ? def.step : 1,
+      min: def && def.min !== undefined ? def.min : null,
+      max: def && def.max !== undefined ? def.max : null,
+      placeholder: def && def.placeholder ? def.placeholder : '',
+      photo: !!(def && def.photo),
+      recordId: null  // 新規入力
+    });
+  }
+}
+
+// 数値/テキスト入力モーダル（新規入力 or 履歴の再編集 兼用）
+function openValueInputModal(opts) {
+  const ex = document.getElementById('valueInputModal');
+  if (ex) ex.remove();
+  
+  const isEdit = !!opts.recordId;
+  const curValue = opts.currentValue !== undefined ? opts.currentValue : '';
+  const isNum = opts.type === 'number';
+  
+  let h = '<div id="valueInputModal" onclick="if(event.target===this)closeValueInputModal()" style="position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:340px;background:var(--surface);border-radius:18px;padding:20px;">';
+  
+  // ヘッダー（アイコン+名前）
+  h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--accent-bg);color:var(--accent-deep);">'+renderStampIcon(opts.icon,'font-size:22px;line-height:1;')+'</span>';
+  h += '<div style="flex:1;">';
+  h += '<div style="font-size:15px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(opts.name)+'</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);">'+(isEdit?'値を編集':'値を入力（あとでもOK）')+'</div>';
+  h += '</div>';
+  h += '<button onclick="closeValueInputModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  
+  // 入力欄
+  if (isNum) {
+    h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;background:var(--surface-warm);border-radius:12px;padding:12px;">';
+    h += '<input id="viInput" type="number" inputmode="decimal" value="'+escapeHtml(String(curValue))+'" placeholder="0" step="'+escapeHtml(String(opts.step||1))+'"';
+    if (opts.min !== null) h += ' min="'+opts.min+'"';
+    if (opts.max !== null) h += ' max="'+opts.max+'"';
+    h += ' style="flex:1;font-size:28px;font-weight:800;color:var(--accent-deep);background:transparent;border:none;outline:none;font-family:inherit;text-align:right;min-width:0;">';
+    if (opts.unit) h += '<span style="font-size:16px;font-weight:700;color:var(--ink-sub);">'+escapeHtml(opts.unit)+'</span>';
+    h += '</div>';
+  } else {
+    // text
+    h += '<div style="margin-bottom:14px;">';
+    h += '<textarea id="viInput" placeholder="'+escapeHtml(opts.placeholder||'メモを入力')+'" style="width:100%;min-height:80px;padding:12px;border:1.5px solid var(--card-border);border-radius:12px;font-size:14px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);">'+escapeHtml(String(curValue))+'</textarea>';
+    h += '</div>';
+  }
+  
+  // 写真添付（photo:true のスタンプのみ）
+  if (opts.photo) {
+    const curPhoto = opts.currentPhoto || '';
+    h += '<div style="margin-bottom:14px;">';
+    h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:6px;">📷 写真（任意）</div>';
+    h += '<div id="viPhotoArea" style="display:flex;align-items:center;gap:10px;">';
+    if (curPhoto) {
+      h += '<button type="button" onclick="openPhotoPreview(window._viPhotoData)" style="flex-shrink:0;width:64px;height:64px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+curPhoto+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+      h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+      h += '<button type="button" onclick="document.getElementById(\'viPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">📷 変更</button>';
+      h += '<button type="button" onclick="window._viPhotoData=null;document.getElementById(\'viPhotoArea\').innerHTML=_viPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+      h += '</div>';
+      window._viPhotoData = curPhoto;
+    } else {
+      h += '<button type="button" onclick="document.getElementById(\'viPhotoFile\').click()" style="flex:1;padding:12px;background:var(--surface-warm);color:var(--ink-sub);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📷 写真を追加（カメラ or ライブラリ）</button>';
+      window._viPhotoData = null;
+    }
+    h += '</div>';
+    h += '<input type="file" id="viPhotoFile" accept="image/*" style="display:none;" onchange="_handleViPhotoSelect(event)">';
+    h += '</div>';
+  }
+  
+  // ボタン（スキップ・保存）
+  h += '<div style="display:flex;gap:8px;">';
+  if (!isEdit) {
+    h += '<button onclick="skipValueInput('+JSON.stringify(opts).replace(/"/g,'&quot;')+')" style="flex:1;padding:12px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">スキップ<br><span style="font-size:9px;font-weight:500;">（あとで書く）</span></button>';
+  } else {
+    h += '<button onclick="closeValueInputModal()" style="flex:1;padding:12px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  }
+  h += '<button onclick="saveValueInput('+JSON.stringify(opts).replace(/"/g,'&quot;')+')" style="flex:2;padding:12px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('viInput'); if (i) i.focus(); }, 80);
+}
+
+// 写真エリアの空状態HTML（削除ボタン押下時用）
+function _viPhotoEmptyHtml() {
+  return '<button type="button" onclick="document.getElementById(\'viPhotoFile\').click()" style="flex:1;padding:12px;background:var(--surface-warm);color:var(--ink-sub);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📷 写真を追加（カメラ or ライブラリ）</button>';
+}
+
+// 写真選択ハンドラ
+async function _handleViPhotoSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast('画像ファイルを選んでね');
+    return;
+  }
+  showToast('写真を処理中...');
+  try {
+    const dataUrl = await resizeImageToBase64(file, 480, 0.75);
+    window._viPhotoData = dataUrl;
+    // プレビューを差し替え
+    const area = document.getElementById('viPhotoArea');
+    if (area) {
+      let h = '';
+      h += '<button type="button" onclick="openPhotoPreview(window._viPhotoData)" style="flex-shrink:0;width:64px;height:64px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+      h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+      h += '<button type="button" onclick="document.getElementById(\'viPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">📷 変更</button>';
+      h += '<button type="button" onclick="window._viPhotoData=null;document.getElementById(\'viPhotoArea\').innerHTML=_viPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+      h += '</div>';
+      area.innerHTML = h;
+    }
+    showToast('写真OK🌷');
+  } catch(err) {
+    console.error(err);
+    showToast('写真の読み込みに失敗');
+  }
+  // ファイル選択をリセット（同じファイルを再選択できるように）
+  event.target.value = '';
+}
+
+function closeValueInputModal() {
+  const el = document.getElementById('valueInputModal');
+  if (el) el.remove();
+}
+
+// スキップ：値なしで履歴に追加（新規時のみ）。写真だけ撮ったケースも考慮
+function skipValueInput(opts) {
   const scrollY = window.scrollY;
-  addStampRecord(icon, name, 'stamp');
-  showToast(icon + ' ' + name + ' きろく！🌷');
+  const photo = window._viPhotoData || null;
+  addStampRecord(opts.icon, opts.name, 'stamp', null, { type: opts.type, unit: opts.unit, photo: photo });
+  window._viPhotoData = null;
+  closeValueInputModal();
+  showToast(opts.name + ' 記録（あとで入力できるよ）🌷');
   render();
   setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+// 保存：値ありで履歴追加 or 既存履歴の値を更新
+function saveValueInput(opts) {
+  const inp = document.getElementById('viInput');
+  const value = (inp && inp.value || '').trim();
+  const photo = window._viPhotoData || null;
+  // 値も写真もない → スキップ扱い
+  if (!value && !photo) {
+    if (!opts.recordId) {
+      skipValueInput(opts);
+    } else {
+      closeValueInputModal();
+    }
+    return;
+  }
+  const scrollY = window.scrollY;
+  if (opts.recordId) {
+    // 既存履歴を更新
+    if (data.stampHistory) {
+      const rec = data.stampHistory.find(r => r.id === opts.recordId);
+      if (rec) {
+        if (value) rec.value = value; else delete rec.value;
+        if (opts.unit) rec.unit = opts.unit;
+        if (opts.type) rec.type = opts.type;
+        if (photo) rec.photo = photo; else delete rec.photo;
+        saveData();
+      }
+    }
+    closeValueInputModal();
+    showToast('更新したよ🌷');
+  } else {
+    // 新規追加
+    addStampRecord(opts.icon, opts.name, 'stamp', null, { type: opts.type, value: value, unit: opts.unit, photo: photo });
+    closeValueInputModal();
+    showToast(opts.name + (value?' '+value+(opts.unit||''):'') + ' きろく！🌷');
+  }
+  window._viPhotoData = null;
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+// 履歴の値部分タップ → 編集モーダル開く
+function editStampRecord(id) {
+  if (!data.stampHistory) return;
+  const rec = data.stampHistory.find(r => r.id === id);
+  if (!rec) return;
+  const def = _findStampDef(rec.icon, rec.name);
+  const type = rec.type || (def && def.type) || 'simple';
+  if (type === 'simple') return;  // simpleは編集対象外
+  openValueInputModal({
+    icon: rec.icon,
+    name: rec.name,
+    type: type,
+    unit: rec.unit || (def && def.unit) || '',
+    step: def && def.step ? def.step : 1,
+    min: def && def.min !== undefined ? def.min : null,
+    max: def && def.max !== undefined ? def.max : null,
+    placeholder: def && def.placeholder ? def.placeholder : '',
+    photo: !!(def && def.photo),
+    recordId: id,
+    currentValue: rec.value || '',
+    currentPhoto: rec.photo || ''
+  });
 }
 
 function deleteStampRecord(id) {
@@ -6212,6 +6568,857 @@ function _formatStampTime(ts) {
   return (d.getMonth()+1) + '/' + d.getDate() + ' ' + hh + ':' + mm;
 }
 
+// アイコン描画ヘルパー：英字_数字のみならMaterial Symbols、それ以外は絵文字として表示
+// 既存ユーザーのカスタムスタンプ（絵文字）と新MS版が共存できる
+// ===== Memo（普通メモ）機能 =====
+// データ構造: data.memos = { folders: [{id, name, folders:[], items:[]}], items: [{id, title, body, photo, createdAt, updatedAt}] }
+// ナビゲーション: window._memoPath = [idx, idx, ...]（フォルダ階層）
+// 検索: window._memoSearch = ''
+
+function _ensureMemoStructure() {
+  // 古い配列形式 → 新しい木構造へマイグレーション
+  if (Array.isArray(data.memos)) {
+    data.memos = { folders: [], items: data.memos };
+    saveData();
+  }
+  if (!data.memos) data.memos = { folders: [], items: [] };
+  if (!data.memos.folders) data.memos.folders = [];
+  if (!data.memos.items) data.memos.items = [];
+}
+
+// 全フォルダを再帰収集（インデント表示用）
+function _collectAllMemoFolders(node, depth, prefix, result) {
+  if (!result) result = [];
+  if (depth === undefined) { depth = 0; prefix = ''; }
+  if (node.folders) {
+    for (const f of node.folders) {
+      result.push({ id: f.id, name: f.name, depth: depth, displayName: prefix + f.name, node: f });
+      _collectAllMemoFolders(f, depth + 1, prefix + f.name + ' > ', result);
+    }
+  }
+  return result;
+}
+
+// メモが今どのフォルダにいるかを取得（ID→{folder, parent}）
+function _findMemoLocation(memoId, node, parent) {
+  if (!node) node = data.memos;
+  if (node.items) {
+    if (node.items.find(m => m.id === memoId)) {
+      return { container: node, parent: parent };
+    }
+  }
+  if (node.folders) {
+    for (const f of node.folders) {
+      const r = _findMemoLocation(memoId, f, node);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+
+// フォルダIDからフォルダノードを取得（nullならルート）
+function _getMemoFolderById(folderId) {
+  if (!folderId) return data.memos;
+  const all = _collectAllMemoFolders(data.memos);
+  const f = all.find(x => x.id === folderId);
+  return f ? f.node : data.memos;
+}
+
+function _getMemoCurrentFolder() {
+  _ensureMemoStructure();
+  let node = data.memos;
+  const path = window._memoPath || [];
+  for (const idx of path) {
+    if (node.folders && node.folders[idx]) node = node.folders[idx];
+    else return node;
+  }
+  return node;
+}
+
+function switchMemoSubTab(sub) {
+  const scrollY = window.scrollY;
+  data.memoSubTab = sub;
+  saveData();
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function memoEnterFolder(idx) {
+  if (!window._memoPath) window._memoPath = [];
+  window._memoPath.push(idx);
+  window._memoSearch = '';
+  render();
+}
+
+function memoBack() {
+  if (!window._memoPath) window._memoPath = [];
+  if (window._memoPath.length > 0) {
+    window._memoPath.pop();
+    render();
+  }
+}
+
+function memoSearchInput(value) {
+  window._memoSearch = value || '';
+  // 検索更新時に再描画（フォーカス保持のため軽量再描画）
+  const listEl = document.getElementById('memoListContent');
+  if (listEl) listEl.innerHTML = _renderMemoListContent();
+}
+
+function memoAddFolder() {
+  // モバイル対策：prompt使わずカスタムモーダル
+  const ex = document.getElementById('memoFolderAddModal');
+  if (ex) ex.remove();
+  let h = '<div id="memoFolderAddModal" onclick="if(event.target===this)closeMemoFolderAddModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:340px;background:var(--surface);border-radius:18px;padding:20px;">';
+  h += '<div style="display:flex;align-items:center;margin-bottom:12px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">📁 新しいフォルダ</div>';
+  h += '<button onclick="closeMemoFolderAddModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  h += '<input id="memoFolderNameInput" type="text" placeholder="フォルダ名" maxlength="40" onkeydown="if(event.key===\'Enter\')memoFolderAddSave()" style="width:100%;padding:11px 14px;border:1.5px solid var(--card-border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);margin-bottom:12px;">';
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<button onclick="closeMemoFolderAddModal()" style="flex:1;padding:11px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="memoFolderAddSave()" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">作成</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('memoFolderNameInput'); if (i) i.focus(); }, 80);
+}
+
+function closeMemoFolderAddModal() {
+  const el = document.getElementById('memoFolderAddModal');
+  if (el) el.remove();
+}
+
+function memoFolderAddSave() {
+  const inp = document.getElementById('memoFolderNameInput');
+  const name = (inp && inp.value || '').trim();
+  if (!name) {
+    showToast('フォルダ名を入れてね');
+    return;
+  }
+  _ensureMemoStructure();
+  const current = _getMemoCurrentFolder();
+  if (!current.folders) current.folders = [];
+  current.folders.push({
+    id: 'mf_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    name: name,
+    folders: [],
+    items: []
+  });
+  saveData();
+  closeMemoFolderAddModal();
+  showToast('フォルダ「'+name+'」を作ったよ🌷');
+  render();
+}
+
+function memoDeleteFolder(idx) {
+  const current = _getMemoCurrentFolder();
+  if (!current.folders || !current.folders[idx]) return;
+  const f = current.folders[idx];
+  const itemCount = (f.items || []).length;
+  const folderCount = (f.folders || []).length;
+  let msg = '「'+f.name+'」フォルダを削除する？';
+  if (itemCount > 0 || folderCount > 0) {
+    msg += '\n中にあるメモ'+itemCount+'件、フォルダ'+folderCount+'個も全部消えるで！';
+  }
+  if (!confirm(msg)) return;
+  current.folders.splice(idx, 1);
+  saveData();
+  showToast('削除したよ');
+  render();
+}
+
+function renderMemoList() {
+  _ensureMemoStructure();
+  if (!window._memoPath) window._memoPath = [];
+  if (window._memoSearch === undefined) window._memoSearch = '';
+  
+  let h = '<div style="padding:4px 16px 16px;">';
+  
+  // パンくず＋戻るボタン
+  const path = window._memoPath;
+  if (path.length > 0) {
+    h += '<div style="display:flex;align-items:center;gap:6px;padding:6px 0 8px;">';
+    h += '<button onclick="memoBack()" style="background:none;border:1px solid var(--line);border-radius:8px;font-size:13px;cursor:pointer;color:var(--ink-dark);padding:4px 10px;font-family:inherit;">‹ 戻る</button>';
+    // パンくず（現在のフォルダ名表示）
+    const current = _getMemoCurrentFolder();
+    h += '<span style="font-size:13px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 '+escapeHtml(current.name || 'フォルダ')+'</span>';
+    h += '</div>';
+  }
+  
+  // 検索バー
+  h += '<div style="margin-bottom:10px;">';
+  h += '<input id="memoSearchInput" type="text" value="'+escapeHtml(window._memoSearch||'')+'" placeholder="🔍 メモを検索" oninput="memoSearchInput(this.value)" style="width:100%;padding:9px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // 一覧コンテンツ（検索更新で部分再描画）
+  h += '<div id="memoListContent">'+_renderMemoListContent()+'</div>';
+  
+  // ＋ボタン（フォルダ追加・メモ追加）
+  h += '<div style="display:flex;gap:8px;margin-top:12px;">';
+  h += '<button onclick="memoAddFolder()" style="flex:1;padding:12px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent-deep);border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">📁 フォルダ追加</button>';
+  h += '<button onclick="openMemoEditModal(null)" style="flex:1;padding:12px;border:none;background:var(--accent);color:white;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);">📝 メモ追加</button>';
+  h += '</div>';
+  
+  h += '</div>';
+  return h;
+}
+
+// 一覧本体（検索結果含む）。検索更新時にこの部分だけ再描画する
+function _renderMemoListContent() {
+  const current = _getMemoCurrentFolder();
+  const folders = current.folders || [];
+  const items = (current.items || []).slice().sort((a,b) => (b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0));
+  const query = (window._memoSearch || '').toLowerCase();
+  
+  let h = '';
+  
+  // フォルダ一覧
+  const filteredFolders = folders.map((f, i) => ({...f, _idx: i})).filter(f => !query || (f.name||'').toLowerCase().includes(query));
+  for (const f of filteredFolders) {
+    const itemCount = (f.items || []).length + (f.folders || []).length;
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:0;border-bottom:1px solid var(--line-soft);">';
+    h += '<button onclick="memoEnterFolder('+f._idx+')" style="flex:1;display:flex;align-items:center;gap:12px;padding:14px 8px;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">';
+    h += '<span style="font-size:24px;">📁</span>';
+    h += '<span style="flex:1;font-size:14px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(f.name || 'フォルダ')+'</span>';
+    h += '<span style="font-size:11px;color:var(--ink-sub);flex-shrink:0;">（'+itemCount+'）</span>';
+    h += '</button>';
+    h += '<button onclick="memoDeleteFolder('+f._idx+')" title="削除" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:6px;font-size:14px;line-height:1;">🗑</button>';
+    h += '</div>';
+  }
+  
+  // メモ一覧
+  const filteredItems = items.filter(m => {
+    if (!query) return true;
+    return (m.title||'').toLowerCase().includes(query) || (m.body||'').toLowerCase().includes(query);
+  });
+  for (const m of filteredItems) {
+    const updated = m.updatedAt || m.createdAt || 0;
+    const dt = new Date(updated);
+    const dateStr = (dt.getMonth()+1) + '/' + dt.getDate() + ' ' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+    const bodyPreview = (m.body || '').slice(0, 60);
+    
+    h += '<button onclick="openMemoEditModal(\''+m.id+'\')" style="width:100%;text-align:left;padding:12px 8px;border:none;border-bottom:1px solid var(--line-soft);background:none;cursor:pointer;font-family:inherit;display:flex;gap:10px;align-items:flex-start;">';
+    if (m.photo) {
+      h += '<img src="'+m.photo+'" style="flex-shrink:0;width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--line);" />';
+    } else {
+      h += '<span style="flex-shrink:0;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:var(--surface-warm);border-radius:8px;font-size:20px;">📝</span>';
+    }
+    h += '<div style="flex:1;min-width:0;">';
+    if (m.title) {
+      h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(m.title)+'</div>';
+    }
+    if (bodyPreview) {
+      h += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+escapeHtml(bodyPreview)+'</div>';
+    }
+    h += '<div style="font-size:9px;color:var(--ink-light);margin-top:4px;font-variant-numeric:tabular-nums;">'+dateStr+'</div>';
+    h += '</div>';
+    h += '</button>';
+  }
+  
+  // 空状態
+  if (filteredFolders.length === 0 && filteredItems.length === 0) {
+    if (query) {
+      h += '<div style="background:var(--surface-warm);border:1px dashed var(--line);border-radius:12px;padding:24px 16px;text-align:center;color:var(--accent-deep);font-size:12px;line-height:1.7;font-weight:600;">「'+escapeHtml(query)+'」に該当なし<br><span style="font-size:11px;color:#666;font-weight:500;">別の言葉で試してみて</span></div>';
+    } else {
+      h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65) 0%,rgba(255,255,255,0.45) 100%);border:1.5px solid var(--accent);border-radius:16px;padding:30px 16px;backdrop-filter:blur(8px);text-align:center;color:var(--accent-deep);font-size:14px;line-height:1.7;font-weight:700;">メモはまだないよ🌷<br><span style="font-size:11px;color:#666;font-weight:500;">下の📝メモ追加から始めよう</span></div>';
+    }
+  } else {
+    h += '<div style="font-size:10px;color:var(--ink-light);text-align:center;margin-top:8px;">フォルダ '+filteredFolders.length+' / メモ '+filteredItems.length+'</div>';
+  }
+  
+  return h;
+}
+
+function openMemoEditModal(memoId) {
+  _ensureMemoStructure();
+  const current = _getMemoCurrentFolder();
+  const isEdit = memoId !== null && memoId !== undefined && memoId !== 'null';
+  // 編集対象のメモを全フォルダから検索（編集はどこの階層でも開ける必要があるため）
+  const _findMemo = (node, id) => {
+    if (node.items) {
+      const found = node.items.find(m => m.id === id);
+      if (found) return { memo: found, parent: node };
+    }
+    if (node.folders) {
+      for (const sub of node.folders) {
+        const r = _findMemo(sub, id);
+        if (r) return r;
+      }
+    }
+    return null;
+  };
+  const editTarget = isEdit ? _findMemo(data.memos, memoId) : null;
+  const cur = isEdit && editTarget ? editTarget.memo : { title:'', body:'', photo:'' };
+  if (isEdit && !editTarget) return;
+  
+  const ex = document.getElementById('memoEditModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="memoEditModal" onclick="if(event.target===this)closeMemoEditModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">';
+  
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+(isEdit?'メモ編集':'新しいメモ')+'</div>';
+  h += '<button onclick="closeMemoEditModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  
+  // タイトル
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">タイトル（任意）</label>';
+  h += '<input id="memoTitle" type="text" value="'+escapeHtml(cur.title||'')+'" placeholder="例：買い物リスト" style="width:100%;padding:9px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // 本文
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">本文</label>';
+  h += '<textarea id="memoBody" placeholder="自由に書いてね" style="width:100%;min-height:140px;padding:12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(cur.body||'')+'</textarea>';
+  h += '</div>';
+  
+  // 保存先フォルダ
+  // 初期値：編集中なら現在のフォルダID、新規なら現在開いているフォルダのID
+  let initialFolderId = null;
+  if (isEdit && editTarget && editTarget.parent) {
+    // editTarget.parent は data.memos か、親フォルダノード
+    if (editTarget.parent === data.memos) {
+      initialFolderId = null;
+    } else {
+      initialFolderId = editTarget.parent.id || null;
+    }
+  } else if (!isEdit) {
+    // 新規：現在開いているフォルダ
+    const cf = _getMemoCurrentFolder();
+    if (cf !== data.memos) initialFolderId = cf.id || null;
+  }
+  window._memoEditFolderId = initialFolderId;
+  
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">📁 保存先</label>';
+  h += '<button type="button" onclick="openMemoMoveModal()" id="memoFolderBtn" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);background:var(--surface-warm);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;color:var(--ink-dark);cursor:pointer;display:flex;align-items:center;gap:8px;text-align:left;">';
+  h += '<span id="memoFolderBtnLabel" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_renderMemoFolderBtnLabel(initialFolderId)+'</span>';
+  h += '<span style="font-size:11px;color:var(--accent-deep);font-weight:800;flex-shrink:0;">変更 ›</span>';
+  h += '</button>';
+  h += '</div>';
+  
+  // 写真
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">📷 写真（任意）</label>';
+  h += '<div id="memoPhotoArea" style="display:flex;align-items:center;gap:10px;">';
+  if (cur.photo) {
+    h += '<button type="button" onclick="openPhotoPreview(window._memoPhotoData)" style="flex-shrink:0;width:80px;height:80px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+cur.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+    h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+    h += '<button type="button" onclick="document.getElementById(\'memoPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">📷 変更</button>';
+    h += '<button type="button" onclick="window._memoPhotoData=null;document.getElementById(\'memoPhotoArea\').innerHTML=_memoPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+    h += '</div>';
+    window._memoPhotoData = cur.photo;
+  } else {
+    h += _memoPhotoEmptyHtml();
+    window._memoPhotoData = null;
+  }
+  h += '</div>';
+  h += '<input type="file" id="memoPhotoFile" accept="image/*" style="display:none;" onchange="_handleMemoPhotoSelect(event)">';
+  h += '</div>';
+  
+  // ボタン
+  h += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  if (isEdit) {
+    h += '<button onclick="deleteMemo(\''+memoId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="closeMemoEditModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveMyMemo('+(isEdit?'\''+memoId+'\'':'null')+')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('memoTitle'); if (i && !isEdit) i.focus(); }, 80);
+}
+
+function _memoPhotoEmptyHtml() {
+  return '<button type="button" onclick="document.getElementById(\'memoPhotoFile\').click()" style="flex:1;padding:14px;background:var(--surface-warm);color:var(--ink-sub);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📷 写真を追加（カメラ or ライブラリ）</button>';
+}
+
+async function _handleMemoPhotoSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast('画像ファイルを選んでね');
+    return;
+  }
+  showToast('写真を処理中...');
+  try {
+    const dataUrl = await resizeImageToBase64(file, 480, 0.75);
+    window._memoPhotoData = dataUrl;
+    const area = document.getElementById('memoPhotoArea');
+    if (area) {
+      let h = '';
+      h += '<button type="button" onclick="openPhotoPreview(window._memoPhotoData)" style="flex-shrink:0;width:80px;height:80px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+      h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+      h += '<button type="button" onclick="document.getElementById(\'memoPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">📷 変更</button>';
+      h += '<button type="button" onclick="window._memoPhotoData=null;document.getElementById(\'memoPhotoArea\').innerHTML=_memoPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+      h += '</div>';
+      area.innerHTML = h;
+    }
+    showToast('写真OK🌷');
+  } catch(err) {
+    console.error(err);
+    showToast('写真の読み込みに失敗');
+  }
+  event.target.value = '';
+}
+
+function closeMemoEditModal() {
+  const el = document.getElementById('memoEditModal');
+  if (el) el.remove();
+  window._memoPhotoData = null;
+}
+
+// 保存先ボタンのラベル文字列生成
+function _renderMemoFolderBtnLabel(folderId) {
+  if (!folderId) return '🏠 トップ（ルート）';
+  const all = _collectAllMemoFolders(data.memos);
+  const f = all.find(x => x.id === folderId);
+  if (!f) return '🏠 トップ（ルート）';
+  return '📁 ' + f.displayName;
+}
+
+// フォルダ選択モーダル（メモの保存先を変更）
+function openMemoMoveModal() {
+  _ensureMemoStructure();
+  const ex = document.getElementById('memoMoveModal');
+  if (ex) ex.remove();
+  const currentSel = window._memoEditFolderId || null;
+  const allFolders = _collectAllMemoFolders(data.memos);
+  
+  let h = '<div id="memoMoveModal" onclick="if(event.target===this)closeMemoMoveModal()" style="position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:340px;background:var(--surface);border-radius:18px;padding:20px;max-height:80vh;display:flex;flex-direction:column;">';
+  h += '<div style="display:flex;align-items:center;margin-bottom:12px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">📁 保存先を選ぶ</div>';
+  h += '<button onclick="closeMemoMoveModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  
+  h += '<div style="overflow-y:auto;flex:1;border:1px solid var(--card-border);border-radius:10px;background:var(--surface-warm);">';
+  
+  // ルート選択肢
+  const rootSel = !currentSel;
+  h += '<button onclick="selectMemoFolder(null)" style="width:100%;padding:12px;border:none;background:'+(rootSel?'var(--accent-bg)':'none')+';color:'+(rootSel?'var(--accent-deep)':'var(--ink-dark)')+';cursor:pointer;font-family:inherit;font-size:13px;font-weight:'+(rootSel?'800':'600')+';text-align:left;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line-soft);">';
+  h += '<span style="font-size:18px;">🏠</span><span style="flex:1;">トップ（ルート）</span>';
+  if (rootSel) h += '<span style="color:var(--accent-deep);font-weight:800;">✓</span>';
+  h += '</button>';
+  
+  // 全フォルダ
+  if (allFolders.length === 0) {
+    h += '<div style="padding:16px;text-align:center;color:var(--ink-sub);font-size:11px;">フォルダはまだないよ<br><span style="font-size:10px;">先にフォルダを作ってね</span></div>';
+  } else {
+    for (const f of allFolders) {
+      const isSel = (currentSel === f.id);
+      const indent = f.depth * 12;
+      h += '<button onclick="selectMemoFolder(\''+f.id+'\')" style="width:100%;padding:10px 12px 10px '+(12+indent)+'px;border:none;background:'+(isSel?'var(--accent-bg)':'none')+';color:'+(isSel?'var(--accent-deep)':'var(--ink-dark)')+';cursor:pointer;font-family:inherit;font-size:13px;font-weight:'+(isSel?'800':'600')+';text-align:left;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line-soft);">';
+      h += '<span style="font-size:16px;">📁</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(f.name)+'</span>';
+      if (isSel) h += '<span style="color:var(--accent-deep);font-weight:800;">✓</span>';
+      h += '</button>';
+    }
+  }
+  
+  h += '</div>';
+  h += '<div style="display:flex;gap:8px;margin-top:12px;">';
+  h += '<button onclick="closeMemoMoveModal()" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">決定</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+
+function closeMemoMoveModal() {
+  const el = document.getElementById('memoMoveModal');
+  if (el) el.remove();
+}
+
+function selectMemoFolder(folderId) {
+  window._memoEditFolderId = folderId;
+  // 編集モーダルのボタンラベルを更新
+  const labelEl = document.getElementById('memoFolderBtnLabel');
+  if (labelEl) labelEl.textContent = _renderMemoFolderBtnLabel(folderId);
+  closeMemoMoveModal();
+  showToast('保存先を選んだよ🌷');
+}
+
+function saveMyMemo(memoId) {
+  _ensureMemoStructure();
+  const titleEl = document.getElementById('memoTitle');
+  const bodyEl = document.getElementById('memoBody');
+  const title = (titleEl && titleEl.value || '').trim();
+  const body = (bodyEl && bodyEl.value || '').trim();
+  const photo = window._memoPhotoData || '';
+  const targetFolderId = window._memoEditFolderId || null;
+  
+  if (!title && !body && !photo) {
+    showToast('タイトル/本文/写真のどれか1つは入れてね');
+    return;
+  }
+  
+  const now = Date.now();
+  const isEdit = memoId !== null && memoId !== undefined && memoId !== 'null';
+  
+  if (isEdit) {
+    // メモ本体の更新
+    const loc = _findMemoLocation(memoId);
+    if (loc) {
+      const memo = loc.container.items.find(m => m.id === memoId);
+      if (memo) {
+        memo.title = title;
+        memo.body = body;
+        memo.photo = photo;
+        memo.updatedAt = now;
+        // フォルダ移動チェック
+        const currentParentId = (loc.container === data.memos) ? null : (loc.container.id || null);
+        if (currentParentId !== targetFolderId) {
+          // 元のフォルダから削除
+          const idx = loc.container.items.indexOf(memo);
+          if (idx >= 0) loc.container.items.splice(idx, 1);
+          // 新しいフォルダに追加
+          const targetFolder = _getMemoFolderById(targetFolderId);
+          if (!targetFolder.items) targetFolder.items = [];
+          targetFolder.items.push(memo);
+        }
+      }
+    }
+  } else {
+    // 新規作成：選んだフォルダに追加
+    const targetFolder = _getMemoFolderById(targetFolderId);
+    if (!targetFolder.items) targetFolder.items = [];
+    targetFolder.items.push({
+      id: 'memo_' + now + '_' + Math.random().toString(36).slice(2, 7),
+      title: title,
+      body: body,
+      photo: photo,
+      createdAt: now,
+      updatedAt: now
+    });
+  }
+  
+  saveData();
+  closeMemoEditModal();
+  showToast('保存したよ🌷');
+  render();
+}
+
+function deleteMemo(memoId) {
+  if (!confirm('このメモを削除する？')) return;
+  _ensureMemoStructure();
+  const _deleteMemo = (node) => {
+    if (node.items) {
+      const idx = node.items.findIndex(x => x.id === memoId);
+      if (idx >= 0) {
+        node.items.splice(idx, 1);
+        return true;
+      }
+    }
+    if (node.folders) {
+      for (const sub of node.folders) {
+        if (_deleteMemo(sub)) return true;
+      }
+    }
+    return false;
+  };
+  _deleteMemo(data.memos);
+  saveData();
+  closeMemoEditModal();
+  showToast('削除したよ');
+  render();
+}
+
+function renderStampIcon(icon, sizeStyle) {
+  if (!icon) return '';
+  if (/^[a-z][a-z0-9_]*$/.test(icon)) {
+    return '<span class="material-symbols-rounded" style="'+sizeStyle+'">'+icon+'</span>';
+  }
+  return '<span style="'+sizeStyle+'">'+icon+'</span>';
+}
+
+// ===== ダイエット推移グラフ =====
+// 画像リサイズ＆圧縮（File or Blob → Base64文字列）
+function resizeImageToBase64(file, maxSize, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('画像の読み込みに失敗'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('画像の解析に失敗'));
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        const ratio = Math.min(maxSize / w, maxSize / h, 1);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        } catch(err) { reject(err); }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// 写真全画面プレビュー
+function openPhotoPreview(dataUrl) {
+  const ex = document.getElementById('photoPreviewModal');
+  if (ex) ex.remove();
+  let h = '<div id="photoPreviewModal" onclick="closePhotoPreview()" style="position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;padding:20px;cursor:pointer;">';
+  h += '<img src="'+dataUrl+'" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.5);" />';
+  h += '<button onclick="event.stopPropagation();closePhotoPreview()" style="position:absolute;top:20px;right:20px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>';
+  h += '</div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+function closePhotoPreview() {
+  const el = document.getElementById('photoPreviewModal');
+  if (el) el.remove();
+}
+
+function switchDietGraphMetric(name) {
+  const scrollY = window.scrollY;
+  window._dietGraphMetric = name;
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function renderDietGraph() {
+  // ダイエットカテゴリの数値型スタンプを抽出
+  const dietStamps = (data.stampLib && data.stampLib['ダイエット']) || [];
+  const numStamps = dietStamps.filter(s => s.type === 'number' && !s.hidden);
+  if (numStamps.length === 0) return '';
+  
+  // 選択中の指標
+  const selName = window._dietGraphMetric || (numStamps[0] && numStamps[0].name);
+  const selStamp = numStamps.find(s => s.name === selName) || numStamps[0];
+  
+  // 過去30日のデータを抽出（同じ名前の履歴で値ありのもの）
+  const now = new Date();
+  const thirtyDaysAgo = now.getTime() - 30 * 24 * 60 * 60 * 1000;
+  const history = (data.stampHistory || []);
+  const records = history.filter(r => 
+    r.name === selStamp.name && 
+    r.value !== undefined && r.value !== null && r.value !== '' &&
+    !isNaN(parseFloat(r.value)) &&
+    r.timestamp >= thirtyDaysAgo
+  ).sort((a, b) => a.timestamp - b.timestamp);
+  
+  let h = '<div style="padding:8px 16px 12px;">';
+  h += '<div class="section-head"><h2 class="section-title">推移グラフ（30日）</h2></div>';
+  
+  // 指標切替ピル
+  h += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;margin-bottom:8px;">';
+  for (const s of numStamps) {
+    const isAct = s.name === selStamp.name;
+    h += '<button onclick="switchDietGraphMetric(\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\')" style="flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border:1.5px solid '+(isAct?'var(--accent)':'var(--line)')+';background:'+(isAct?'var(--accent-bg)':'var(--surface)')+';color:'+(isAct?'var(--accent-deep)':'var(--ink-sub)')+';border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">';
+    h += renderStampIcon(s.icon,'font-size:14px;line-height:1;');
+    h += '<span>'+escapeHtml(s.name)+'</span>';
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  // データなし
+  if (records.length === 0) {
+    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px 16px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">'+escapeHtml(selStamp.name)+'のきろくがまだないよ<br>スタンプ押して記録してみよう🌷</div>';
+    h += '</div>';
+    return h;
+  }
+  
+  // 統計値
+  const values = records.map(r => parseFloat(r.value));
+  const latest = values[values.length - 1];
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const avg = values.reduce((a,b) => a+b, 0) / values.length;
+  const fmtNum = (n) => {
+    const fixed = (selStamp.step && selStamp.step < 1) ? n.toFixed(1) : Math.round(n).toString();
+    return fixed;
+  };
+  const unitStr = selStamp.unit || '';
+  
+  h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">';
+  const statCards = [
+    {label:'最新', val:fmtNum(latest), color:'var(--accent-deep)', bg:'var(--accent-bg)'},
+    {label:'平均', val:fmtNum(avg), color:'var(--ink-dark)', bg:'var(--surface-warm)'},
+    {label:'最小', val:fmtNum(min), color:'var(--mint-deep)', bg:'var(--mint-bg)'},
+    {label:'最大', val:fmtNum(max), color:'var(--ink-dark)', bg:'var(--surface-warm)'}
+  ];
+  for (const c of statCards) {
+    h += '<div style="background:'+c.bg+';border-radius:10px;padding:6px 4px;text-align:center;">';
+    h += '<div style="font-size:9px;color:var(--ink-sub);font-weight:600;">'+c.label+'</div>';
+    h += '<div style="font-size:14px;font-weight:800;color:'+c.color+';font-variant-numeric:tabular-nums;line-height:1.2;">'+c.val+'<span style="font-size:9px;font-weight:600;margin-left:1px;">'+escapeHtml(unitStr)+'</span></div>';
+    h += '</div>';
+  }
+  h += '</div>';
+  
+  // SVGグラフ
+  const W = 320, H = 140, padL = 36, padR = 12, padT = 12, padB = 24;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  
+  // X座標：30日の中での位置
+  const tStart = thirtyDaysAgo;
+  const tEnd = now.getTime();
+  const tRange = tEnd - tStart;
+  const xOf = (ts) => padL + ((ts - tStart) / tRange) * innerW;
+  
+  // Y座標：min〜maxの中での位置（少しマージン）
+  let yMin = min, yMax = max;
+  if (yMin === yMax) { yMin = yMin - 1; yMax = yMax + 1; }
+  const yMargin = (yMax - yMin) * 0.15;
+  yMin -= yMargin; yMax += yMargin;
+  const yRange = yMax - yMin;
+  const yOf = (v) => padT + (1 - (v - yMin) / yRange) * innerH;
+  
+  let svg = '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;background:var(--surface-warm);border-radius:12px;display:block;">';
+  
+  // Y軸目盛（3本）
+  for (let i = 0; i <= 3; i++) {
+    const v = yMin + (yRange * i / 3);
+    const y = yOf(v);
+    svg += '<line x1="'+padL+'" y1="'+y.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+y.toFixed(1)+'" stroke="var(--line-soft)" stroke-width="1" stroke-dasharray="2,3" />';
+    svg += '<text x="'+(padL-4)+'" y="'+(y+3).toFixed(1)+'" text-anchor="end" font-size="9" fill="var(--ink-sub)" font-family="inherit">'+fmtNum(v)+'</text>';
+  }
+  
+  // X軸ラベル（今日・15日前・30日前）
+  const xLabels = [
+    {ts: tEnd, label: '今日'},
+    {ts: tStart + tRange/2, label: '15日前'},
+    {ts: tStart, label: '30日前'}
+  ];
+  for (const l of xLabels) {
+    svg += '<text x="'+xOf(l.ts).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="var(--ink-sub)" font-family="inherit">'+l.label+'</text>';
+  }
+  
+  // 折れ線（複数ポイント時）
+  if (records.length >= 2) {
+    let path = '';
+    for (let i = 0; i < records.length; i++) {
+      const x = xOf(records[i].timestamp).toFixed(1);
+      const y = yOf(parseFloat(records[i].value)).toFixed(1);
+      path += (i === 0 ? 'M' : 'L') + x + ' ' + y + ' ';
+    }
+    // エリア塗りつぶし
+    let area = path;
+    const lastX = xOf(records[records.length-1].timestamp).toFixed(1);
+    const firstX = xOf(records[0].timestamp).toFixed(1);
+    area += 'L' + lastX + ' ' + (H-padB) + ' L' + firstX + ' ' + (H-padB) + ' Z';
+    svg += '<path d="'+area+'" fill="var(--accent-bg)" opacity="0.6" />';
+    svg += '<path d="'+path+'" fill="none" stroke="var(--accent-deep)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />';
+  }
+  
+  // データ点
+  for (const r of records) {
+    const x = xOf(r.timestamp).toFixed(1);
+    const y = yOf(parseFloat(r.value)).toFixed(1);
+    svg += '<circle cx="'+x+'" cy="'+y+'" r="3" fill="var(--accent-deep)" stroke="var(--surface)" stroke-width="1.5" />';
+  }
+  
+  svg += '</svg>';
+  h += svg;
+  
+  h += '<div style="font-size:10px;color:var(--ink-light);text-align:center;margin-top:6px;">記録 '+records.length+' 件</div>';
+  h += '</div>';
+  return h;
+}
+
+// ===== ダイエット 写真ふりかえりセクション =====
+function renderDietPhotoTimeline() {
+  // 写真ありのダイエット系履歴を抽出（直近30日）
+  const dietStamps = (data.stampLib && data.stampLib['ダイエット']) || [];
+  const dietNames = new Set(dietStamps.map(s => s.name));
+  const now = Date.now();
+  const thirtyDaysAgo = now - 30*24*60*60*1000;
+  const history = (data.stampHistory || []);
+  const records = history.filter(r => 
+    r.photo && 
+    dietNames.has(r.name) &&
+    r.timestamp >= thirtyDaysAgo
+  ).sort((a,b) => b.timestamp - a.timestamp);  // 新しい順
+  
+  if (records.length === 0) return '';
+  
+  // 体形系（体重/体脂肪/ウエスト）と食事系に分類
+  const shapeNames = new Set(['体重','体脂肪','ウエスト']);
+  const foodNames = new Set(['食事記録']);
+  
+  // 日別グルーピング
+  const byDate = {};
+  for (const r of records) {
+    const d = new Date(r.timestamp);
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    if (!byDate[key]) byDate[key] = { date: d, shape: [], food: [], other: [] };
+    if (shapeNames.has(r.name)) byDate[key].shape.push(r);
+    else if (foodNames.has(r.name)) byDate[key].food.push(r);
+    else byDate[key].other.push(r);
+  }
+  const dateKeys = Object.keys(byDate).sort().reverse();
+  
+  let h = '<div style="padding:8px 16px 12px;">';
+  h += '<div class="section-head"><h2 class="section-title">📸 ふりかえり（写真）</h2></div>';
+  h += '<div style="font-size:10px;color:var(--ink-light);margin-bottom:8px;">体形と食事を並べて見れるよ</div>';
+  
+  // 横スクロールで日別カード
+  h += '<div style="display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;margin:0 -16px 0;padding-left:16px;padding-right:16px;">';
+  for (const key of dateKeys) {
+    const day = byDate[key];
+    const m = day.date.getMonth()+1, d = day.date.getDate();
+    const wd = ['日','月','火','水','木','金','土'][day.date.getDay()];
+    
+    h += '<div style="flex-shrink:0;width:160px;background:var(--surface);border:1.5px solid var(--card-border);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;">';
+    // 日付ヘッダー
+    h += '<div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid var(--line-soft);padding-bottom:6px;">';
+    h += '<span style="font-size:18px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">'+m+'/'+d+'</span>';
+    h += '<span style="font-size:10px;color:var(--ink-sub);">('+wd+')</span>';
+    h += '</div>';
+    
+    // 体形セクション
+    if (day.shape.length > 0) {
+      h += '<div>';
+      h += '<div style="font-size:9px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">📏 体形</div>';
+      h += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+      for (const r of day.shape) {
+        h += '<button onclick="openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(r.photo)+'" title="'+escapeHtml(r.name)+(r.value?': '+r.value+(r.unit||''):'')+'" style="position:relative;width:64px;height:64px;border-radius:8px;border:1px solid var(--line);background:var(--surface-warm);padding:0;overflow:hidden;cursor:pointer;">';
+        h += '<img src="'+r.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" />';
+        if (r.value) {
+          h += '<span style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(0,0,0,0.7),transparent);color:white;font-size:9px;font-weight:700;padding:6px 4px 2px;line-height:1;text-align:center;">'+escapeHtml(String(r.value))+(r.unit?escapeHtml(r.unit):'')+'</span>';
+        }
+        h += '</button>';
+      }
+      h += '</div></div>';
+    }
+    
+    // 食事セクション
+    if (day.food.length > 0) {
+      h += '<div>';
+      h += '<div style="font-size:9px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">🍴 食事</div>';
+      h += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+      for (const r of day.food) {
+        const tt = r.value ? escapeHtml(String(r.value)).slice(0,40) : '';
+        h += '<button onclick="openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(r.photo)+'" title="'+tt+'" style="width:64px;height:64px;border-radius:8px;border:1px solid var(--line);background:var(--surface-warm);padding:0;overflow:hidden;cursor:pointer;"><img src="'+r.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+      }
+      h += '</div>';
+      // 食事メモ（テキスト）
+      const memos = day.food.filter(r => r.value).map(r => r.value);
+      if (memos.length > 0) {
+        h += '<div style="font-size:10px;color:var(--ink-dark);margin-top:4px;line-height:1.4;">'+escapeHtml(memos.join(' / ')).slice(0,60)+'</div>';
+      }
+      h += '</div>';
+    }
+    
+    h += '</div>';
+  }
+  h += '</div>';
+  h += '<div style="font-size:10px;color:var(--ink-light);text-align:center;margin-top:4px;">'+records.length+' 枚の写真きろく</div>';
+  h += '</div>';
+  return h;
+}
+
 function renderMeMode() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('pet');
@@ -6225,7 +7432,12 @@ function renderMeMode() {
   // コンテンツエリア（白い角丸背景）
   html += '<div class="mode-content-wrap">';
   
-  const tab = currentModeTab['me'] || 'stamp';
+  const validMeTabs = ['stamp','diary','collection','resume','secret'];
+  let tab = currentModeTab['me'] || 'stamp';
+  if (!validMeTabs.includes(tab)) {
+    tab = 'stamp';
+    currentModeTab['me'] = 'stamp';
+  }
   
   if (tab === 'today') {
     // ===== ToDay =====
@@ -6256,55 +7468,141 @@ function renderMeMode() {
       // ───── スタンプ画面 ─────
       if (!data.stampSelCat) data.stampSelCat = '生活';
       const selCat = data.stampSelCat;
-      const STAMP_CATS = {
+      
+      // デフォルトスタンプライブラリ
+      const DEFAULT_STAMPS = {
         '生活': [
-          {icon:'💧',name:'水'},{icon:'🍚',name:'ごはん'},{icon:'🛁',name:'おふろ'},
-          {icon:'😴',name:'睡眠'},{icon:'☕',name:'コーヒー'},{icon:'🍵',name:'お茶'}
+          {icon:'water_drop',name:'水'},{icon:'restaurant',name:'ごはん'},{icon:'bathtub',name:'おふろ'},
+          {icon:'bed',name:'睡眠'},{icon:'coffee',name:'コーヒー'},{icon:'local_cafe',name:'お茶'}
         ],
         '美容': [
-          {icon:'🧴',name:'スキンケア'},{icon:'💄',name:'メイク'},{icon:'💇',name:'美容院'},
-          {icon:'💅',name:'ネイル'},{icon:'🧖',name:'マッサージ'},{icon:'🪞',name:'おしゃれ'}
+          {icon:'face',name:'スキンケア'},{icon:'palette',name:'メイク'},{icon:'content_cut',name:'美容院'},
+          {icon:'back_hand',name:'ネイル'},{icon:'spa',name:'マッサージ'},{icon:'checkroom',name:'おしゃれ'}
+        ],
+        'ダイエット': [
+          {icon:'monitor_weight',name:'体重',type:'number',unit:'kg',step:0.1,min:10,max:200,photo:true},
+          {icon:'percent',name:'体脂肪',type:'number',unit:'%',step:0.1,min:5,max:60,photo:true},
+          {icon:'square_foot',name:'ウエスト',type:'number',unit:'cm',step:0.1,min:40,max:200,photo:true},
+          {icon:'lunch_dining',name:'食事記録',type:'text',placeholder:'何たべた？',photo:true},
+          {icon:'fitness_center',name:'筋トレ',type:'number',unit:'分',step:1,min:0,max:300},
+          {icon:'directions_run',name:'ジョギング',type:'number',unit:'km',step:0.1,min:0,max:50},
+          {icon:'directions_walk',name:'ウォーキング',type:'number',unit:'歩',step:100,min:0,max:50000}
         ],
         '体調': [
-          {icon:'💊',name:'くすり'},{icon:'🌹',name:'生理'},{icon:'🤒',name:'体調不良'},
-          {icon:'🩺',name:'通院'},{icon:'🏃',name:'運動'},{icon:'🧘',name:'ヨガ'}
+          {icon:'medication',name:'くすり'},{icon:'favorite',name:'生理'},{icon:'sick',name:'体調不良'},
+          {icon:'local_hospital',name:'通院'},{icon:'self_improvement',name:'ヨガ'},{icon:'thermostat',name:'体温'}
         ],
         '家事': [
-          {icon:'🧹',name:'掃除'},{icon:'🧺',name:'洗濯'},{icon:'🍳',name:'料理'},
-          {icon:'🛒',name:'買い物'},{icon:'🗑️',name:'ゴミ出し'},{icon:'🍽️',name:'食器洗い'}
+          {icon:'cleaning_services',name:'掃除'},{icon:'local_laundry_service',name:'洗濯'},{icon:'kitchen',name:'料理'},
+          {icon:'shopping_cart',name:'買い物'},{icon:'delete',name:'ゴミ出し'},{icon:'wash',name:'食器洗い'}
         ],
         '仕事': [
-          {icon:'💼',name:'仕事'},{icon:'📞',name:'電話'},{icon:'✉️',name:'メール'},
-          {icon:'📊',name:'会議'},{icon:'📝',name:'書類'},{icon:'💻',name:'PC作業'}
+          {icon:'work',name:'仕事'},{icon:'call',name:'電話'},{icon:'mail',name:'メール'},
+          {icon:'groups',name:'会議'},{icon:'description',name:'書類'},{icon:'laptop',name:'PC作業'}
         ],
         '趣味': [
-          {icon:'🎮',name:'ゲーム'},{icon:'📖',name:'読書'},{icon:'🎵',name:'音楽'},
-          {icon:'🎨',name:'お絵描き'},{icon:'📺',name:'動画'},{icon:'🎤',name:'カラオケ'}
+          {icon:'sports_esports',name:'ゲーム'},{icon:'menu_book',name:'読書'},{icon:'music_note',name:'音楽'},
+          {icon:'brush',name:'お絵描き'},{icon:'live_tv',name:'動画'},{icon:'mic',name:'カラオケ'}
         ]
       };
       
+      // 初回 or 新カテゴリの初期化
+      if (!data.stampLib) data.stampLib = {};
+      // v4マイグレーション：壊れたアイコン名修正＋ダイエット系をtype/unit/photo対応に強制更新（1回だけ実行）
+      const needsMigration = !data._stampIconMigrated_v4;
+      for (const cat in DEFAULT_STAMPS) {
+        if (!data.stampLib[cat]) {
+          data.stampLib[cat] = DEFAULT_STAMPS[cat].map(s => ({...s, id: 's_'+cat+'_'+s.name, hidden: false}));
+        } else if (needsMigration) {
+          // 既存ユーザー：DEFAULTスタンプ（id="s_..."）を最新定義に強制更新
+          // カスタムスタンプ（id="cs_..."）は触らない
+          for (const def of DEFAULT_STAMPS[cat]) {
+            const defId = 's_'+cat+'_'+def.name;
+            const existing = data.stampLib[cat].find(s => s.id === defId);
+            if (existing) {
+              // 全プロパティ上書き（name/iconは保持しつつ、type/unit等の新フィールドも入れる）
+              Object.assign(existing, {...def, id: defId, hidden: existing.hidden});
+            } else {
+              // 旧バージョンに無かった新スタンプ（例：体脂肪/ウエスト）を追加
+              data.stampLib[cat].push({...def, id: defId, hidden: false});
+            }
+          }
+          // ダイエットカテゴリは旧「サイズ」スタンプが残ってる可能性 → 新スタンプ群に統合済みなので削除
+          if (cat === 'ダイエット') {
+            data.stampLib[cat] = data.stampLib[cat].filter(s => {
+              if (s.id === 's_ダイエット_サイズ' && !s.id.startsWith('cs_')) return false;
+              return true;
+            });
+          }
+        }
+      }
+      if (needsMigration) {
+        data._stampIconMigrated_v4 = true;
+        try { saveData(); } catch(e) {}
+      }
+      
+      const editMode = !!window._stampEditMode;
+      
       // カテゴリチップ
-      html += '<div style="padding:12px 16px 4px;">';
-      html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
-      const stampCats = ['生活','美容','体調','家事','仕事','趣味'];
+      html += '<div style="padding:12px 16px 4px;display:flex;align-items:center;gap:8px;">';
+      html += '<div style="flex:1;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
+      const stampCats = ['生活','美容','ダイエット','体調','家事','仕事','趣味'];
       for (const cat of stampCats) {
         const isAct = (cat === selCat);
         const activeStyle = isAct ? 'background:var(--accent);color:white;border-color:var(--accent);' : 'color:var(--ink-sub);background:var(--surface);';
         html += '<button onclick="switchStampCat(\''+cat+'\')" style="flex-shrink:0;padding:4px 14px;border:1px solid var(--line);border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;'+activeStyle+'">'+cat+'</button>';
       }
-      html += '</div></div>';
+      html += '</div>';
+      // 編集モード切り替え
+      html += '<button onclick="toggleStampEditMode()" title="編集" style="flex-shrink:0;width:32px;height:32px;border:1px solid '+(editMode?'var(--accent)':'var(--line)')+';background:'+(editMode?'var(--accent-bg)':'var(--surface)')+';color:'+(editMode?'var(--accent-deep)':'var(--ink-sub)')+';border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:16px;">'+(editMode?'check':'edit')+'</span></button>';
+      html += '</div>';
       
-      // スタンプボタン（選択カテゴリのもの＋＋追加）
+      // スタンプボタン
+      const allStamps = data.stampLib[selCat] || [];
+      const visibleStamps = editMode ? allStamps : allStamps.filter(s => !s.hidden);
+      
       html += '<div style="padding:0 12px 12px;display:grid;grid-template-columns:repeat(8,1fr);gap:4px;">';
-      const stamps = (STAMP_CATS[selCat] || []).concat([{icon:'＋',name:'追加',add:true}]);
-      for (const s of stamps) {
-        if (s.add) {
-          html += '<button onclick="showToast(\'カスタム追加は準備中🌷\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1.2px dashed var(--line);border-radius:10px;background:none;cursor:pointer;font-family:inherit;min-width:0;"><span style="font-size:16px;color:var(--accent);font-weight:700;line-height:1;">＋</span><span style="font-size:8.5px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
+      for (let i = 0; i < visibleStamps.length; i++) {
+        const s = visibleStamps[i];
+        const realIdx = allStamps.indexOf(s);
+        const isHidden = s.hidden;
+        const opacity = isHidden ? '0.35' : '1';
+        
+        if (editMode) {
+          // 編集モード：上に小さなコントロール表示
+          html += '<div style="position:relative;opacity:'+opacity+';">';
+          html += '<button onclick="editStamp(\''+selCat+'\','+realIdx+')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1.5px dashed var(--accent);border-radius:10px;background:var(--surface);cursor:pointer;font-family:inherit;width:100%;min-width:0;">'+renderStampIcon(s.icon,'font-size:22px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:8.5px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span></button>';
+          // 並び替え＆非表示ボタン
+          html += '<div style="position:absolute;top:-6px;right:-4px;display:flex;gap:2px;">';
+          html += '<button onclick="event.stopPropagation();toggleStampHidden(\''+selCat+'\','+realIdx+')" title="'+(isHidden?'表示':'非表示')+'" style="width:18px;height:18px;border-radius:50%;background:'+(isHidden?'var(--accent)':'#c4506b')+';color:white;border:1.5px solid white;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:11px;">'+(isHidden?'visibility':'visibility_off')+'</span></button>';
+          html += '</div>';
+          // 並び替え矢印
+          html += '<div style="display:flex;justify-content:center;gap:2px;margin-top:2px;">';
+          if (realIdx > 0) html += '<button onclick="moveStamp(\''+selCat+'\','+realIdx+',-1)" style="width:18px;height:14px;border:1px solid var(--line);background:var(--surface);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:10px;">arrow_back</span></button>';
+          else html += '<span style="width:18px;"></span>';
+          if (realIdx < allStamps.length - 1) html += '<button onclick="moveStamp(\''+selCat+'\','+realIdx+',1)" style="width:18px;height:14px;border:1px solid var(--line);background:var(--surface);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:10px;">arrow_forward</span></button>';
+          html += '</div>';
+          html += '</div>';
         } else {
-          html += '<button onclick="tapStamp(\''+s.icon+'\',\''+s.name+'\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;"><span style="font-size:18px;line-height:1;">'+s.icon+'</span><span style="font-size:8.5px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span></button>';
+          // 通常モード
+          html += '<button onclick="tapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;">'+renderStampIcon(s.icon,'font-size:22px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:8.5px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span></button>';
         }
       }
+      // ＋追加ボタン（編集モードでも通常モードでも）
+      html += '<button onclick="addCustomStamp(\''+selCat+'\')" title="スタンプを追加" style="display:flex;align-items:center;justify-content:center;padding:6px;border:1.5px dashed var(--accent);border-radius:10px;background:none;cursor:pointer;font-family:inherit;min-width:0;min-height:46px;"><span style="font-size:24px;color:var(--accent);font-weight:700;line-height:1;">＋</span></button>';
       html += '</div>';
+      
+      // 編集モード説明
+      if (editMode) {
+        html += '<div style="padding:0 16px 8px;font-size:10px;color:var(--ink-light);text-align:center;line-height:1.5;">タップで編集 / ←→で並び替え / 👁で非表示</div>';
+      }
+      
+      // ===== 推移グラフ（ダイエットカテゴリのみ） =====
+      if (selCat === 'ダイエット' && !editMode) {
+        html += renderDietGraph();
+        html += renderDietPhotoTimeline();
+      }
+      
       // ===== 最近のきろく（実データ表示） =====
       html += '<div style="padding:4px 16px 8px;">';
       html += '<div class="section-head"><h2 class="section-title">最近のきろく</h2></div>';
@@ -6321,12 +7619,36 @@ function renderMeMode() {
         for (const r of todayHistory) {
           const timeStr = _formatStampTime(r.timestamp);
           const sourceTag = r.source === 'planner' ? '<span style="font-size:9px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 5px;border-radius:100px;font-weight:700;">📋</span>' : '';
+          // 型判定：record優先、無ければスタンプ定義から
+          const _def = _findStampDef(r.icon, r.name);
+          const _type = r.type || (_def && _def.type) || 'simple';
+          const _hasValue = r.value !== undefined && r.value !== null && r.value !== '';
+          const _editable = (_type === 'number' || _type === 'text');
+          
           html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--card-border);border-radius:12px;">';
-          html += '<span style="font-size:18px;flex-shrink:0;">'+r.icon+'</span>';
-          html += '<span style="flex:1;font-size:12px;font-weight:600;color:var(--ink-dark);">'+escapeHtml(r.name)+'</span>';
+          html += '<span style="flex-shrink:0;">'+renderStampIcon(r.icon,'font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
+          html += '<span style="flex-shrink:0;font-size:12px;font-weight:600;color:var(--ink-dark);">'+escapeHtml(r.name)+'</span>';
+          
+          // 値表示エリア（数値/テキスト型のみ・タップで編集）
+          if (_editable) {
+            if (_hasValue) {
+              const _displayVal = _type === 'number' ? (escapeHtml(String(r.value)) + (r.unit?'<span style="font-size:10px;color:var(--ink-sub);margin-left:2px;">'+escapeHtml(r.unit)+'</span>':'')) : escapeHtml(String(r.value));
+              html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:8px;padding:3px 8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+_displayVal+'</button>';
+            } else {
+              html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">タップして入力</button>';
+            }
+          } else {
+            html += '<span style="flex:1;"></span>';
+          }
+          
+          // 写真サムネ（あれば）
+          if (r.photo) {
+            html += '<button onclick="openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(r.photo)+'" style="flex-shrink:0;width:32px;height:32px;border-radius:6px;border:1px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+r.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+          }
+          
           if (sourceTag) html += sourceTag;
-          html += '<span style="font-size:10px;color:var(--ink-sub);font-variant-numeric:tabular-nums;">'+timeStr+'</span>';
-          html += '<button onclick="deleteStampRecord(\''+r.id+'\')" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:0 2px;font-size:13px;line-height:1;">×</button>';
+          html += '<span style="font-size:10px;color:var(--ink-sub);font-variant-numeric:tabular-nums;flex-shrink:0;">'+timeStr+'</span>';
+          html += '<button onclick="deleteStampRecord(\''+r.id+'\')" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:0 2px;font-size:13px;line-height:1;flex-shrink:0;">×</button>';
           html += '</div>';
         }
         html += '</div>';
@@ -6390,7 +7712,29 @@ function renderMeMode() {
     html += '</div></div>';
     
   } else if (tab === 'secret') {
-    html += '<div style="padding:16px;"><button onclick="goSecretMemo()" style="width:100%;padding:20px;border:1.5px solid var(--card-border);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:middle;">lock</span> ひみつメモを開く</button></div>';
+    // ===== Memo タブ（サブサブタブ：memo / secret） =====
+    if (!data.memoSubTab) data.memoSubTab = 'memo';
+    const mTab = data.memoSubTab;
+    
+    // サブサブタブ
+    html += '<div style="padding:10px 14px 8px;display:flex;gap:6px;">';
+    const _mActive = mTab === 'memo';
+    const _sActive = mTab === 'secret';
+    html += '<button onclick="switchMemoSubTab(\'memo\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_mActive?'var(--accent)':'var(--line)')+';background:'+(_mActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_mActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">edit_note</span>Memo</button>';
+    html += '<button onclick="switchMemoSubTab(\'secret\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_sActive?'var(--accent)':'var(--line)')+';background:'+(_sActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_sActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">lock</span>Secret</button>';
+    html += '</div>';
+    
+    if (mTab === 'memo') {
+      html += renderMemoList();
+    } else {
+      // Secret サブサブタブ：既存のひみつメモボタン
+      html += '<div style="padding:8px 16px 16px;">';
+      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:14px;padding:14px;backdrop-filter:blur(8px);margin-bottom:12px;">';
+      html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;text-align:center;">🔒 鍵つきの安全な保管庫<br>パスワード保護・フォルダ管理対応</div>';
+      html += '</div>';
+      html += '<button onclick="goSecretMemo()" style="width:100%;padding:20px;border:1.5px solid var(--accent);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--accent-deep);"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:middle;">lock</span> ひみつメモを開く</button>';
+      html += '</div>';
+    }
     
   } else {
     // カスタムタブ
@@ -10675,7 +12019,7 @@ const DEFAULT_MODE_TABS = {
     { id: 'diary',      label: 'Diary' },
     { id: 'collection', label: 'Collection' },
     { id: 'resume',     label: 'Resume' },
-    { id: 'secret',     label: 'Secret' }
+    { id: 'secret',     label: 'Memo' }
   ],
   pet: [
     { id: 'home',     label: 'Home' },
@@ -10700,7 +12044,7 @@ const DEFAULT_MODE_TABS = {
     { id: 'collection', label: 'Collection' }
   ]
 };
-let currentModeTab = { me: 'today', pet: 'home', kids: 'home', nest: 'memo' };
+let currentModeTab = { me: 'stamp', pet: 'home', kids: 'home', nest: 'memo' };
 let modeTabEditMode = false;
 
 function getModeTabsForMode(mode) {
@@ -10723,6 +12067,14 @@ function getModeTabsForMode(mode) {
         const insertAt = collectionIdx >= 0 ? collectionIdx + 1 : tabs.length;
         tabs.splice(insertAt, 0, { id: 'resume', label: 'Resume' });
         try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
+      }
+      // ME: Secret → Memo へラベル変更（既存ユーザーのid='secret'タブのラベル更新）
+      if (mode === 'me') {
+        const secretTab = tabs.find(t => t.id === 'secret');
+        if (secretTab && secretTab.label === 'Secret') {
+          secretTab.label = 'Memo';
+          try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
+        }
       }
       return tabs;
     }
@@ -10936,15 +12288,15 @@ function renderSecretMemo() {
   }
 
   if (folders.length === 0 && items.length === 0 && !query) {
-    html += '<div style="text-align:center;padding:40px 16px;color:var(--ink-sub);font-size:13px;line-height:1.7;">まだ何もないよ🌷<br>＋ボタンから追加してね</div>';
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65) 0%,rgba(255,255,255,0.45) 100%);border:1.5px solid var(--accent);border-radius:16px;padding:30px 16px;backdrop-filter:blur(8px);text-align:center;color:var(--accent-deep);font-size:14px;line-height:1.7;font-weight:700;">まだ何もないよ🌷<br><span style="font-size:11px;color:#666;font-weight:500;">下の📁フォルダ追加か🔑メモ追加から始めてね</span></div>';
   }
 
   html += '</div>';
 
   // ＋ボタン
   html += '<div style="padding:16px;display:flex;gap:8px;">';
-  html += '<button class="btn btn-secondary" style="flex:1;" onclick="secretMemoAddFolder()">📁 フォルダ追加</button>';
-  html += '<button class="btn btn-primary" style="flex:1;" onclick="secretMemoAddItem()">🔑 メモ追加</button>';
+  html += '<button onclick="secretMemoAddFolder()" style="flex:1;padding:12px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent-deep);border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">📁 フォルダ追加</button>';
+  html += '<button onclick="secretMemoAddItem()" style="flex:1;padding:12px;border:none;background:var(--accent);color:white;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);">🔑 メモ追加</button>';
   html += '</div>';
 
   // バックアップ
@@ -10953,8 +12305,8 @@ function renderSecretMemo() {
   if (lastBk) {
     html += '<div style="font-size:10px;color:var(--ink-light);margin-bottom:4px;">最終バックアップ：'+escapeHtml(lastBk)+'</div>';
   }
-  html += '<button onclick="secretMemoExport()" style="background:none;border:1px solid var(--line);border-radius:100px;padding:6px 16px;font-size:11px;color:var(--ink-sub);cursor:pointer;font-family:inherit;">📤 バックアップ（JSON書き出し）</button>';
-  html += ' <button onclick="document.getElementById(\'secretImportFile\').click()" style="background:none;border:1px solid var(--line);border-radius:100px;padding:6px 16px;font-size:11px;color:var(--ink-sub);cursor:pointer;font-family:inherit;">📥 読み込み</button>';
+  html += '<button onclick="secretMemoExport()" style="background:var(--surface);border:1px solid var(--accent);border-radius:100px;padding:6px 16px;font-size:11px;color:var(--accent-deep);cursor:pointer;font-family:inherit;font-weight:700;">📤 バックアップ（JSON書き出し）</button>';
+  html += ' <button onclick="document.getElementById(\'secretImportFile\').click()" style="background:var(--surface);border:1px solid var(--accent);border-radius:100px;padding:6px 16px;font-size:11px;color:var(--accent-deep);cursor:pointer;font-family:inherit;font-weight:700;">📥 読み込み</button>';
   html += '<input type="file" id="secretImportFile" accept=".json" style="display:none;" onchange="secretMemoImport(event)">';
   html += '</div>';
 
@@ -11122,14 +12474,45 @@ function secretMemoBack() {
   render();
 }
 function secretMemoAddFolder() {
-  const name = prompt('フォルダの名前は？');
-  if (!name) return;
+  // モバイル対策：prompt使わずカスタムモーダル
+  const ex = document.getElementById('secretFolderAddModal');
+  if (ex) ex.remove();
+  let h = '<div id="secretFolderAddModal" onclick="if(event.target===this)closeSecretFolderAddModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:340px;background:var(--surface);border-radius:18px;padding:20px;">';
+  h += '<div style="display:flex;align-items:center;margin-bottom:12px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">📁 新しいフォルダ</div>';
+  h += '<button onclick="closeSecretFolderAddModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  h += '<input id="secretFolderNameInput" type="text" placeholder="フォルダ名" maxlength="40" onkeydown="if(event.key===\'Enter\')secretFolderAddSave()" style="width:100%;padding:11px 14px;border:1.5px solid var(--card-border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);margin-bottom:12px;">';
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<button onclick="closeSecretFolderAddModal()" style="flex:1;padding:11px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="secretFolderAddSave()" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">作成</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('secretFolderNameInput'); if (i) i.focus(); }, 80);
+}
+
+function closeSecretFolderAddModal() {
+  const el = document.getElementById('secretFolderAddModal');
+  if (el) el.remove();
+}
+
+function secretFolderAddSave() {
+  const inp = document.getElementById('secretFolderNameInput');
+  const name = (inp && inp.value || '').trim();
+  if (!name) {
+    showToast('フォルダ名を入れてね');
+    return;
+  }
   const d = getSecretMemoData();
   let node = d;
   for (const idx of secretMemoPath) { node = node.folders[idx]; }
   if (!node.folders) node.folders = [];
   node.folders.push({ name: name, folders: [], items: [] });
   saveSecretMemoData(d);
+  closeSecretFolderAddModal();
+  showToast('フォルダ「'+name+'」を作ったよ🌷');
   render();
 }
 function secretMemoAddItem() {
