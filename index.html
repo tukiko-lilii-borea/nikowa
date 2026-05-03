@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -13255,6 +13255,41 @@ function setTownSubTab(tab) {
   renderTown();
 }
 
+function _extractPlaceLatLng(place) {
+  if (!place) return null;
+  const loc = place.location || (place.geometry && place.geometry.location);
+  if (!loc) return null;
+
+  let lat = null;
+  let lng = null;
+  if (typeof loc.lat === 'function') lat = loc.lat();
+  else if (typeof loc.lat === 'number') lat = loc.lat;
+  else if (typeof loc.latitude === 'number') lat = loc.latitude;
+
+  if (typeof loc.lng === 'function') lng = loc.lng();
+  else if (typeof loc.lng === 'number') lng = loc.lng;
+  else if (typeof loc.longitude === 'number') lng = loc.longitude;
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return { lat, lng };
+}
+
+function _addNearbyMarker(map, infoWindow, pinIcon, result) {
+  if (!map || !result || !Number.isFinite(result.lat) || !Number.isFinite(result.lng)) return null;
+  const marker = new google.maps.Marker({
+    position: { lat: result.lat, lng: result.lng },
+    map: map,
+    title: result.name,
+    icon: pinIcon,
+    zIndex: 5
+  });
+  marker.addListener('click', () => {
+    infoWindow.setContent('<div style="font-size:13px;font-weight:700;color:#333;padding:2px 4px;">'+escapeHtml(result.name)+'</div>');
+    infoWindow.open(map, marker);
+  });
+  return marker;
+}
+
 function nearbyDistance(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const toRad = (d) => d * Math.PI / 180;
@@ -13264,63 +13299,68 @@ function nearbyDistance(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-function searchNearbyPlaces() {
-  if (typeof google === 'undefined' || !google.maps || !google.maps.places) return;
+async function searchNearbyPlaces() {
+  if (typeof google === 'undefined' || !google.maps || !google.maps.importLibrary) return;
   if (window._nearbyGeoStatus !== 'ok') return;
-  const center = new google.maps.LatLng(window._nearbyLat, window._nearbyLng);
-  const service = new google.maps.places.PlacesService(document.createElement('div'));
-  const keywords = ['喫煙所', '喫煙スペース', 'smoking area'];
-  const merged = {};
-  let done = 0;
+
+  if (window._nearbyMarkers && window._nearbyMarkers.length) {
+    for (const marker of window._nearbyMarkers) marker.setMap(null);
+  }
+  window._nearbyMarkers = [];
+
+  const query = window._nearbyCat || placesText || '喫煙スペース';
   window._nearbySearching = true;
   window._nearbyResults = [];
   renderTown();
-  keywords.forEach((kw) => {
-    service.nearbySearch({
-      location: center,
-      radius: 1500,
-      keyword: kw
-    }, (results, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-        for (const p of results) {
-          if (!p.place_id || merged[p.place_id]) continue;
-          const lat = p.geometry.location.lat();
-          const lng = p.geometry.location.lng();
-          merged[p.place_id] = {
-            placeId: p.place_id,
-            name: p.name,
-            address: p.vicinity || '',
-            lat: lat,
-            lng: lng,
-            distance: nearbyDistance(window._nearbyLat, window._nearbyLng, lat, lng)
-          };
-        }
+
+  try {
+    const { Place } = await google.maps.importLibrary('places');
+    const center = window._nearbyMap && window._nearbyMap.getCenter
+      ? window._nearbyMap.getCenter()
+      : new google.maps.LatLng(window._nearbyLat, window._nearbyLng);
+    const request = {
+      textQuery: query,
+      fields: ['displayName', 'formattedAddress', 'location', 'businessStatus', 'googleMapsURI'],
+      locationBias: center,
+      maxResultCount: 20
+    };
+    const response = await Place.searchByText(request);
+    const places = response.places || [];
+    console.log('new places search results:', places);
+
+    const list = [];
+    for (const p of places) {
+      const pos = _extractPlaceLatLng(p);
+      if (!pos) continue;
+      list.push({
+        placeId: p.id || '',
+        name: (p.displayName && (p.displayName.text || p.displayName)) || '名称不明',
+        address: p.formattedAddress || '',
+        lat: pos.lat,
+        lng: pos.lng,
+        mapsUrl: p.googleMapsURI || '',
+        businessStatus: p.businessStatus || '',
+        distance: nearbyDistance(window._nearbyLat, window._nearbyLng, pos.lat, pos.lng)
+      });
+    }
+
+    window._nearbyResults = list.sort((a, b) => a.distance - b.distance);
+    window._nearbySearching = false;
+    renderTown();
+
+    if (window._nearbyMap && window._nearbyPinIcon && window._nearbyInfoWindow) {
+      for (const r of window._nearbyResults) {
+        const marker = _addNearbyMarker(window._nearbyMap, window._nearbyInfoWindow, window._nearbyPinIcon, r);
+        if (marker) window._nearbyMarkers.push(marker);
       }
-      done++;
-      if (done === keywords.length) {
-        const list = Object.values(merged).sort((a,b) => a.distance - b.distance);
-        window._nearbyResults = list;
-        window._nearbySearching = false;
-        renderTown();
-        // 地図が既に表示済みならピンを追加
-        if (window._nearbyMap && window._nearbyPinIcon && window._nearbyInfoWindow) {
-          for (const r of list) {
-            const m = new google.maps.Marker({
-              position: { lat: r.lat, lng: r.lng },
-              map: window._nearbyMap,
-              title: r.name,
-              icon: window._nearbyPinIcon,
-              zIndex: 5
-            });
-            m.addListener('click', () => {
-              window._nearbyInfoWindow.setContent('<div style="font-size:13px;font-weight:700;color:#333;padding:2px 4px;">'+r.name+'</div>');
-              window._nearbyInfoWindow.open(window._nearbyMap, m);
-            });
-          }
-        }
-      }
-    });
-  });
+      console.log('nearby markers added:', window._nearbyMarkers.length);
+    }
+  } catch (e) {
+    console.error('new places search failed:', e);
+    window._nearbySearching = false;
+    window._nearbyResults = [];
+    renderTown();
+  }
 }
 
 function initNearbyMap() {
@@ -13358,19 +13398,8 @@ function initNearbyMap() {
   };
   const infoWindow = new google.maps.InfoWindow();
   const results = window._nearbyResults || [];
-  for (const r of results) {
-    const marker = new google.maps.Marker({
-      position: { lat: r.lat, lng: r.lng },
-      map: map,
-      title: r.name,
-      icon: pinIcon,
-      zIndex: 5
-    });
-    marker.addListener('click', () => {
-      infoWindow.setContent('<div style="font-size:13px;font-weight:700;color:#333;padding:2px 4px;">'+r.name+'</div>');
-      infoWindow.open(map, marker);
-    });
-  }
+  for (const r of results) _addNearbyMarker(map, infoWindow, pinIcon, r);
+  console.log('nearby map markers rendered:', results.length);
 
   // 検索完了後にピンを追加するため参照を保存
   window._nearbyMap = map;
@@ -13719,7 +13748,8 @@ function buildPlaceCardHtml(p, catIcon) {
   const mapsUrl = p.googleMapsUri || '';
   const isFav = !!(placesFavs[townMainTab] && placesFavs[townMainTab][id]);
   const memo = escapeHtml(placesMemos[id] || '');
-  if (id) placesResultsMap[id] = { id, name, addr, mapsUrl, catIcon };
+  const pos = _extractPlaceLatLng(p);
+  if (id) placesResultsMap[id] = { id, name, addr, mapsUrl, catIcon, lat: pos && pos.lat, lng: pos && pos.lng };
 
   let html = '<div class="place-card">';
   html += '<div class="place-card-header">';
@@ -14327,7 +14357,7 @@ async function _placesNearby(type, lat, lng) {
     headers: {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': PLACES_API_KEY,
-      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.currentOpeningHours,places.googleMapsUri'
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.currentOpeningHours,places.googleMapsUri,places.location'
     },
     body: JSON.stringify({
       includedTypes: [type],
@@ -14348,7 +14378,7 @@ async function _placesTextSearch(query, lat, lng) {
     headers: {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': PLACES_API_KEY,
-      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.currentOpeningHours,places.googleMapsUri'
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.currentOpeningHours,places.googleMapsUri,places.location'
     },
     body: JSON.stringify({
       textQuery: query,
