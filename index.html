@@ -6367,6 +6367,14 @@ function addStampRecord(icon, name, source, plannerId, opts) {
     source: source || 'stamp',
     plannerId: plannerId || null
   };
+  // カテゴリを保存（自動推定 or opts指定）
+  let category = opts.category;
+  if (!category) {
+    // スタンプ定義から逆引き
+    const found = _findStampCategory(icon, name);
+    if (found) category = found;
+  }
+  if (category) rec.category = category;
   if (opts.type) rec.type = opts.type;
   if (opts.value !== undefined && opts.value !== null && opts.value !== '') rec.value = opts.value;
   if (opts.unit) rec.unit = opts.unit;
@@ -6376,6 +6384,19 @@ function addStampRecord(icon, name, source, plannerId, opts) {
   if (data.stampHistory.length > 100) data.stampHistory = data.stampHistory.slice(0, 100);
   saveData();
   return rec.id;
+}
+
+// アイコン+名前からカテゴリ名を逆引き
+function _findStampCategory(icon, name) {
+  if (!data.stampLib) return null;
+  for (const cat in data.stampLib) {
+    const arr = data.stampLib[cat];
+    if (!arr) continue;
+    for (const s of arr) {
+      if (s.icon === icon && s.name === name) return cat;
+    }
+  }
+  return null;
 }
 
 // スタンプ定義から型情報を引く（DEFAULT_STAMPSに追加プロパティを持たせるため）
@@ -6396,14 +6417,12 @@ function tapStamp(icon, name) {
   const type = def && def.type ? def.type : 'simple';
   
   if (type === 'simple') {
-    // 従来通りワンタップ記録
     const scrollY = window.scrollY;
     addStampRecord(icon, name, 'stamp');
-    showToast(name + ' きろく！🌷');
+    showToast(name);
     render();
     setTimeout(() => window.scrollTo(0, scrollY), 0);
   } else {
-    // number / text → 入力モーダルを開く（先に空履歴を作って、保存orスキップ後に値を埋める）
     openValueInputModal({
       icon: icon,
       name: name,
@@ -6414,10 +6433,11 @@ function tapStamp(icon, name) {
       max: def && def.max !== undefined ? def.max : null,
       placeholder: def && def.placeholder ? def.placeholder : '',
       photo: !!(def && def.photo),
-      recordId: null  // 新規入力
+      recordId: null
     });
   }
 }
+window.tapStamp = tapStamp;
 
 // 数値/テキスト入力モーダル（新規入力 or 履歴の再編集 兼用）
 function openValueInputModal(opts) {
@@ -6594,11 +6614,14 @@ function openStampMemoModal(recordId) {
   const rec = (data.stampHistory || []).find(r => r.id === recordId);
   if (!rec) { showToast('記録が見つからないよ'); return; }
   
+  // 写真データを一時保存
+  window._stampMemoPhotoData = rec.memoPhoto || null;
+  
   const ex = document.getElementById('stampMemoModal');
   if (ex) ex.remove();
   
   let h = '<div id="stampMemoModal" onclick="if(event.target===this)closeStampMemoModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
-  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:80vh;display:flex;flex-direction:column;gap:12px;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">';
   
   // ヘッダー
   h += '<div style="display:flex;align-items:center;gap:8px;">';
@@ -6614,16 +6637,33 @@ function openStampMemoModal(recordId) {
     h += '<div style="font-size:10px;color:var(--ink-sub);">'+timeStr+'</div>';
   }
   
+  // 写真エリア
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">📷 写真（任意）</label>';
+  h += '<div id="stampMemoPhotoArea" style="display:flex;align-items:center;gap:10px;">';
+  if (rec.memoPhoto) {
+    h += '<button type="button" onclick="openPhotoPreview(window._stampMemoPhotoData)" style="flex-shrink:0;width:80px;height:80px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+rec.memoPhoto+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+    h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+    h += '<button type="button" onclick="document.getElementById(\'stampMemoPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">📷 変更</button>';
+    h += '<button type="button" onclick="window._stampMemoPhotoData=null;document.getElementById(\'stampMemoPhotoArea\').innerHTML=_stampMemoPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+    h += '</div>';
+  } else {
+    h += _stampMemoPhotoEmptyHtml();
+  }
+  h += '</div>';
+  h += '<input type="file" id="stampMemoPhotoFile" accept="image/*" style="display:none;" onchange="_handleStampMemoPhotoSelect(event)">';
+  h += '</div>';
+  
   // メモ入力
   h += '<div>';
-  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メモ（あとから振り返り用）</label>';
-  h += '<textarea id="stampMemoInput" placeholder="例：気持ちよかった / 久しぶり / 体調いい感じ" style="width:100%;min-height:100px;padding:12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(rec.memo||'')+'</textarea>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メモ</label>';
+  h += '<textarea id="stampMemoInput" placeholder="例：気持ちよかった / 久しぶり / 体調いい感じ" style="width:100%;min-height:80px;padding:12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(rec.memo||'')+'</textarea>';
   h += '</div>';
   
   // ボタン
   h += '<div style="display:flex;gap:8px;margin-top:4px;">';
-  if (rec.memo) {
-    h += '<button onclick="deleteStampMemo(\''+recordId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">メモ削除</button>';
+  if (rec.memo || rec.memoPhoto) {
+    h += '<button onclick="deleteStampMemo(\''+recordId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">全削除</button>';
   }
   h += '<button onclick="closeStampMemoModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
   h += '<button onclick="saveStampMemo(\''+recordId+'\')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
@@ -6635,33 +6675,66 @@ function openStampMemoModal(recordId) {
 }
 window.openStampMemoModal = openStampMemoModal;
 
+function _stampMemoPhotoEmptyHtml() {
+  return '<button type="button" onclick="document.getElementById(\'stampMemoPhotoFile\').click()" style="flex:1;padding:14px;background:var(--surface-warm);color:var(--ink-sub);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">add_a_photo</span>写真を追加</button>';
+}
+window._stampMemoPhotoEmptyHtml = _stampMemoPhotoEmptyHtml;
+
+async function _handleStampMemoPhotoSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('画像ファイルを選んでね'); return; }
+  showToast('写真を処理中...');
+  try {
+    const dataUrl = await resizeImageToBase64(file, 480, 0.75);
+    window._stampMemoPhotoData = dataUrl;
+    const area = document.getElementById('stampMemoPhotoArea');
+    if (area) {
+      let h = '';
+      h += '<button type="button" onclick="openPhotoPreview(window._stampMemoPhotoData)" style="flex-shrink:0;width:80px;height:80px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+      h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+      h += '<button type="button" onclick="document.getElementById(\'stampMemoPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">📷 変更</button>';
+      h += '<button type="button" onclick="window._stampMemoPhotoData=null;document.getElementById(\'stampMemoPhotoArea\').innerHTML=_stampMemoPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+      h += '</div>';
+      area.innerHTML = h;
+    }
+    showToast('写真OK🌷');
+  } catch(err) { console.error(err); showToast('写真の読み込みに失敗'); }
+  event.target.value = '';
+}
+window._handleStampMemoPhotoSelect = _handleStampMemoPhotoSelect;
+
 function closeStampMemoModal() {
   const el = document.getElementById('stampMemoModal');
   if (el) el.remove();
+  window._stampMemoPhotoData = null;
 }
 window.closeStampMemoModal = closeStampMemoModal;
 
 function saveStampMemo(recordId) {
   const inp = document.getElementById('stampMemoInput');
   const memo = inp ? inp.value.trim() : '';
+  const photo = window._stampMemoPhotoData || '';
   const rec = (data.stampHistory || []).find(r => r.id === recordId);
   if (!rec) return;
   rec.memo = memo;
+  rec.memoPhoto = photo;
   saveData();
   closeStampMemoModal();
-  showToast(memo ? 'メモを保存したよ🌷' : 'メモをクリアしたよ');
+  showToast(memo || photo ? '保存したよ🌷' : 'クリアしたよ');
   render();
 }
 window.saveStampMemo = saveStampMemo;
 
 function deleteStampMemo(recordId) {
-  if (!confirm('このメモを削除する？')) return;
+  if (!confirm('メモと写真を削除する？')) return;
   const rec = (data.stampHistory || []).find(r => r.id === recordId);
   if (!rec) return;
   delete rec.memo;
+  delete rec.memoPhoto;
   saveData();
   closeStampMemoModal();
-  showToast('メモを削除したよ');
+  showToast('削除したよ');
   render();
 }
 window.deleteStampMemo = deleteStampMemo;
@@ -9067,6 +9140,95 @@ function _jumpToDiary() {
   render();
 }
 
+// ===== スタンプギャラリー（写真付き履歴を一覧表示） =====
+function switchGalleryFilter(cat) {
+  window._galleryFilter = cat;
+  render();
+}
+window.switchGalleryFilter = switchGalleryFilter;
+
+function renderStampGallery() {
+  // 写真付き履歴を抽出
+  const all = (data.stampHistory || []).filter(r => r.memoPhoto || r.photo);
+  
+  // カテゴリ補完：categoryフィールドが無いものをスタンプ定義から逆引き
+  for (const r of all) {
+    if (!r.category) {
+      const cat = _findStampCategory(r.icon, r.name);
+      if (cat) r.category = cat;
+    }
+  }
+  
+  let h = '<div style="padding:10px 14px 16px;">';
+  
+  if (all.length === 0) {
+    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65) 0%,rgba(255,255,255,0.45) 100%);border:1.5px dashed var(--accent);border-radius:16px;padding:30px 16px;text-align:center;">';
+    h += '<div style="margin-bottom:12px;"><span class="material-symbols-rounded" style="font-size:48px;color:var(--accent-deep);">photo_library</span></div>';
+    h += '<div style="font-size:14px;font-weight:800;color:var(--accent-deep);margin-bottom:8px;">まだ写真がないよ</div>';
+    h += '<div style="font-size:11px;color:#666;line-height:1.7;font-weight:500;">スタンプ履歴の<span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;">photo_camera</span>マークから写真を追加できるよ</div>';
+    h += '</div>';
+    h += '</div>';
+    return h;
+  }
+  
+  // カテゴリ別件数集計
+  const byCat = {};
+  for (const r of all) {
+    const c = r.category || 'その他';
+    byCat[c] = (byCat[c]||0) + 1;
+  }
+  
+  // フィルター（カテゴリ別）
+  const filter = window._galleryFilter || 'all';
+  const cats = Object.keys(byCat);
+  
+  h += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;margin-bottom:10px;">';
+  const allActive = filter === 'all';
+  h += '<button onclick="switchGalleryFilter(\'all\')" style="flex-shrink:0;padding:5px 12px;border-radius:100px;border:1.5px solid '+(allActive?'var(--accent)':'var(--line)')+';background:'+(allActive?'var(--accent)':'var(--surface)')+';color:'+(allActive?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">すべて '+all.length+'</button>';
+  for (const c of cats) {
+    const isAct = filter === c;
+    const color = _stampCatColor(c);
+    h += '<button onclick="switchGalleryFilter(\''+escapeHtml(c)+'\')" style="flex-shrink:0;padding:5px 12px;border-radius:100px;border:1.5px solid '+color+';background:'+(isAct?color:'var(--surface)')+';color:'+(isAct?'white':color)+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(c)+' '+byCat[c]+'</button>';
+  }
+  h += '</div>';
+  
+  // フィルター適用
+  const filtered = filter === 'all' ? all : all.filter(r => (r.category||'その他') === filter);
+  
+  // 時系列降順
+  filtered.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  
+  // グリッド表示
+  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
+  for (const r of filtered) {
+    const photo = r.memoPhoto || r.photo;
+    const t = new Date(r.timestamp||Date.now());
+    const dateStr = (t.getMonth()+1)+'/'+t.getDate();
+    const color = _stampCatColor(r.category||'その他');
+    
+    h += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="position:relative;aspect-ratio:1;border-radius:10px;border:1.5px solid var(--card-border);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;font-family:inherit;">';
+    h += '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />';
+    // オーバーレイ：日付＋カテゴリ
+    h += '<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);padding:6px 4px 4px;color:white;text-align:left;">';
+    h += '<div style="display:flex;align-items:center;gap:3px;font-size:9px;font-weight:800;">';
+    h += '<span style="width:6px;height:6px;border-radius:50%;background:'+color+';display:inline-block;"></span>';
+    h += '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.name||'')+'</span>';
+    h += '</div>';
+    h += '<div style="font-size:9px;opacity:0.85;">'+dateStr+'</div>';
+    h += '</div>';
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  if (filtered.length === 0) {
+    h += '<div style="background:var(--surface-warm);border:1px dashed var(--line);border-radius:10px;padding:20px;text-align:center;color:var(--ink-sub);font-size:12px;font-weight:600;margin-top:10px;">このカテゴリの写真はまだないよ</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+window.renderStampGallery = renderStampGallery;
+
 // ===== 生理周期予測のON/OFF =====
 function toggleMenstrualPref() {
   if (!data.userPrefs) data.userPrefs = {};
@@ -9580,7 +9742,8 @@ const STAMP_CAT_COLORS = {
   '体調':   '#5888B0',
   '家事':   '#E89A4A',
   '仕事':   '#8868A8',
-  '趣味':   '#48A8B8'
+  '趣味':   '#48A8B8',
+  'ポジティブ': '#FFB36C'
 };
 
 function _stampCatColor(cat) {
@@ -9862,7 +10025,14 @@ function openStampDayModal(dateKey) {
       for (const r of catRecs) {
         const t = new Date(r.timestamp);
         const timeStr = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
-        h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;">';
+        const photo = r.memoPhoto || r.photo;
+        const hasMemo = !!r.memo;
+        const hasExtra = hasMemo || photo;
+        
+        // タップで編集モーダル開く（onclickで囲む）
+        h += '<button onclick="closeStampDayModal();setTimeout(()=>openStampMemoModal(\''+r.id+'\'),50);" style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">';
+        // 1段目：アイコン＋名前＋値＋時刻
+        h += '<div style="display:flex;align-items:center;gap:8px;width:100%;">';
         h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:'+_stampCatColor(cat)+';color:white;flex-shrink:0;">'+renderStampIcon(r.icon||'check','font-size:16px;line-height:1;')+'</span>';
         h += '<span style="flex:1;font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(r.name||'記録')+'</span>';
         if (r.value !== undefined && r.value !== null && r.value !== '') {
@@ -9870,6 +10040,21 @@ function openStampDayModal(dateKey) {
         }
         h += '<span style="font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;flex-shrink:0;">'+timeStr+'</span>';
         h += '</div>';
+        
+        // 2段目：メモ＋写真サムネ
+        if (hasExtra) {
+          h += '<div style="display:flex;align-items:center;gap:6px;padding-left:36px;">';
+          if (photo) {
+            h += '<img src="'+photo+'" loading="lazy" style="flex-shrink:0;width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--line);" />';
+          }
+          if (hasMemo) {
+            h += '<span style="flex:1;font-size:11px;color:#8B6914;background:#FFF8E0;padding:4px 8px;border-radius:6px;line-height:1.4;border:1px solid #E8C870;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.memo)+'</span>';
+          } else if (photo) {
+            h += '<span style="flex:1;font-size:10px;color:var(--ink-light);font-style:italic;">📷 写真メモ</span>';
+          }
+          h += '</div>';
+        }
+        h += '</button>';
       }
       h += '</div></div>';
     }
@@ -10883,16 +11068,20 @@ function renderMeMode() {
     const ssTab = data.stampSubTab;
     
     // サブサブタブ
-    html += '<div style="padding:10px 14px 0;display:flex;gap:6px;">';
+    html += '<div style="padding:10px 14px 0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
     const _sActive = ssTab === 'stamp';
     const _pActive = ssTab === 'planner';
     const _cActive = ssTab === 'calendar';
-    html += '<button onclick="switchStampSubTab(\'stamp\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_sActive?'var(--accent)':'var(--line)')+';background:'+(_sActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_sActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🌷 スタンプ</button>';
-    html += '<button onclick="switchStampSubTab(\'planner\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_pActive?'var(--accent)':'var(--line)')+';background:'+(_pActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_pActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📋 プランナー</button>';
-    html += '<button onclick="switchStampSubTab(\'calendar\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_cActive?'var(--accent)':'var(--line)')+';background:'+(_cActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_cActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📅 カレンダー</button>';
+    const _gActive = ssTab === 'gallery';
+    html += '<button onclick="switchStampSubTab(\'stamp\')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_sActive?'var(--accent)':'var(--line)')+';background:'+(_sActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_sActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">check_circle</span>スタンプ</button>';
+    html += '<button onclick="switchStampSubTab(\'planner\')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_pActive?'var(--accent)':'var(--line)')+';background:'+(_pActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_pActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">edit_calendar</span>プランナー</button>';
+    html += '<button onclick="switchStampSubTab(\'calendar\')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_cActive?'var(--accent)':'var(--line)')+';background:'+(_cActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_cActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span>カレンダー</button>';
+    html += '<button onclick="switchStampSubTab(\'gallery\')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_gActive?'var(--accent)':'var(--line)')+';background:'+(_gActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_gActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">photo_library</span>ギャラリー</button>';
     html += '</div>';
     
-    if (ssTab === 'calendar') {
+    if (ssTab === 'gallery') {
+      html += renderStampGallery();
+    } else if (ssTab === 'calendar') {
       html += renderStampCalendar();
     } else if (ssTab === 'stamp') {
       // ───── スタンプ画面 ─────
@@ -10907,8 +11096,8 @@ function renderMeMode() {
           {icon:'local_cafe',name:'お茶'},{icon:'shower',name:'シャワー'}
         ],
         '美容': [
-          {icon:'face',name:'スキンケア'},{icon:'palette',name:'メイク'},{icon:'content_cut',name:'美容院'},
-          {icon:'back_hand',name:'ネイル'},{icon:'spa',name:'マッサージ'},{icon:'checkroom',name:'おしゃれ'}
+          {icon:'face',name:'スキンケア'},{icon:'palette',name:'メイク'},{icon:'content_cut',name:'ヘア'},
+          {icon:'colors',name:'ネイル'},{icon:'spa',name:'マッサージ'},{icon:'checkroom',name:'おしゃれ'}
         ],
         'ダイエット': [
           {icon:'monitor_weight',name:'体重',type:'number',unit:'kg',step:0.1,min:10,max:200,photo:true},
@@ -10940,13 +11129,21 @@ function renderMeMode() {
         '趣味': [
           {icon:'sports_esports',name:'ゲーム'},{icon:'menu_book',name:'読書'},{icon:'music_note',name:'音楽'},
           {icon:'brush',name:'お絵描き'},{icon:'live_tv',name:'動画'},{icon:'mic',name:'カラオケ'}
+        ],
+        'ポジティブ': [
+          {icon:'star',name:'えらい'},{icon:'auto_awesome',name:'神ってる'},{icon:'favorite',name:'可愛い'},
+          {icon:'psychology',name:'我慢できた'},{icon:'trophy',name:'成功'},{icon:'local_fire_department',name:'かっこいい'},
+          {icon:'celebration',name:'やったー'},{icon:'bolt',name:'がんばった'},{icon:'mood',name:'機嫌◎'},
+          {icon:'thumb_up',name:'ナイス'},{icon:'favorite_border',name:'好き'},{icon:'volunteer_activism',name:'大好き'},
+          {icon:'diamond',name:'推し'},{icon:'workspace_premium',name:'男前'},{icon:'sentiment_very_satisfied',name:'イケメン'},
+          {icon:'face_3',name:'美人'}
         ]
       };
       
       // 初回 or 新カテゴリの初期化
       if (!data.stampLib) data.stampLib = {};
-      // v6マイグレーション：生活の「ごはん」削除（食事記録と重複）＋シャワー追加
-      const needsMigration = !data._stampIconMigrated_v6;
+      // v7マイグレーション：ポジティブカテゴリ追加
+      const needsMigration = !data._stampIconMigrated_v7;
       for (const cat in DEFAULT_STAMPS) {
         if (!data.stampLib[cat]) {
           data.stampLib[cat] = DEFAULT_STAMPS[cat].map(s => ({...s, id: 's_'+cat+'_'+s.name, hidden: false}));
@@ -10988,7 +11185,7 @@ function renderMeMode() {
         }
       }
       if (needsMigration) {
-        data._stampIconMigrated_v6 = true;
+        data._stampIconMigrated_v7 = true;
         try { saveData(); } catch(e) {}
       }
       
@@ -10996,12 +11193,12 @@ function renderMeMode() {
       
       // カテゴリチップ
       html += '<div style="padding:12px 16px 4px;display:flex;align-items:center;gap:8px;">';
-      html += '<div style="flex:1;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
-      const stampCats = ['生活','美容','ダイエット','体調','家事','仕事','趣味'];
+      html += '<div data-stamp-cats style="flex:1;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
+      const stampCats = ['生活','美容','ダイエット','体調','家事','仕事','趣味','ポジティブ'];
       for (const cat of stampCats) {
         const isAct = (cat === selCat);
         const activeStyle = isAct ? 'background:var(--accent);color:white;border-color:var(--accent);' : 'color:var(--ink-sub);background:var(--surface);';
-        html += '<button onclick="switchStampCat(\''+cat+'\')" style="flex-shrink:0;padding:4px 14px;border:1px solid var(--line);border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;'+activeStyle+'">'+cat+'</button>';
+        html += '<button data-cat="'+cat+'" onclick="switchStampCat(\''+cat+'\')" style="flex-shrink:0;padding:4px 14px;border:1px solid var(--line);border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;'+activeStyle+'">'+cat+'</button>';
       }
       html += '</div>';
       // 編集モード切り替え
@@ -11012,7 +11209,7 @@ function renderMeMode() {
       const allStamps = data.stampLib[selCat] || [];
       const visibleStamps = editMode ? allStamps : allStamps.filter(s => !s.hidden);
       
-      html += '<div style="padding:0 12px 12px;display:grid;grid-template-columns:repeat(8,1fr);gap:4px;">';
+      html += '<div data-stamp-grid style="padding:0 12px 12px;display:grid;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:64px;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-snap-type:x mandatory;">';
       for (let i = 0; i < visibleStamps.length; i++) {
         const s = visibleStamps[i];
         const realIdx = allStamps.indexOf(s);
@@ -11022,7 +11219,7 @@ function renderMeMode() {
         if (editMode) {
           // 編集モード：上に小さなコントロール表示
           html += '<div style="position:relative;opacity:'+opacity+';">';
-          html += '<button onclick="editStamp(\''+selCat+'\','+realIdx+')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1.5px dashed var(--accent);border-radius:10px;background:var(--surface);cursor:pointer;font-family:inherit;width:100%;min-width:0;">'+renderStampIcon(s.icon,'font-size:22px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:8.5px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span></button>';
+          html += '<button onclick="editStamp(\''+selCat+'\','+realIdx+')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:1.5px dashed var(--accent);border-radius:12px;background:var(--surface);cursor:pointer;font-family:inherit;width:100%;min-width:0;aspect-ratio:1/1.05;">'+renderStampIcon(s.icon,'font-size:28px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:10px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span></button>';
           // 並び替え＆非表示ボタン
           html += '<div style="position:absolute;top:-6px;right:-4px;display:flex;gap:2px;">';
           html += '<button onclick="event.stopPropagation();toggleStampHidden(\''+selCat+'\','+realIdx+')" title="'+(isHidden?'表示':'非表示')+'" style="width:18px;height:18px;border-radius:50%;background:'+(isHidden?'var(--accent)':'#c4506b')+';color:white;border:1.5px solid white;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:11px;">'+(isHidden?'visibility':'visibility_off')+'</span></button>';
@@ -11036,11 +11233,11 @@ function renderMeMode() {
           html += '</div>';
         } else {
           // 通常モード
-          html += '<button onclick="tapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;">'+renderStampIcon(s.icon,'font-size:22px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:8.5px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span></button>';
+          html += '<button onclick="tapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.35) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;aspect-ratio:1/1.05;scroll-snap-align:start;">'+renderStampIcon(s.icon,'font-size:28px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:10px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span></button>';
         }
       }
       // ＋追加ボタン（編集モードでも通常モードでも）
-      html += '<button onclick="addCustomStamp(\''+selCat+'\')" title="スタンプを追加" style="display:flex;align-items:center;justify-content:center;padding:6px;border:1.5px dashed var(--accent);border-radius:10px;background:none;cursor:pointer;font-family:inherit;min-width:0;min-height:46px;"><span style="font-size:24px;color:var(--accent);font-weight:700;line-height:1;">＋</span></button>';
+      html += '<button onclick="addCustomStamp(\''+selCat+'\')" title="スタンプを追加" style="display:flex;align-items:center;justify-content:center;padding:8px;border:1.5px dashed var(--accent);border-radius:12px;background:none;cursor:pointer;font-family:inherit;min-width:0;aspect-ratio:1/1.05;scroll-snap-align:start;"><span style="font-size:28px;color:var(--accent);font-weight:700;line-height:1;">＋</span></button>';
       html += '</div>';
       
       // 編集モード説明
@@ -11089,11 +11286,29 @@ function renderMeMode() {
               html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">タップして入力</button>';
             }
           } else {
-            // simple型：メモ表示エリア（メモあれば表示、なければ"メモ追加"）
-            if (r.memo) {
-              html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:#FFF8E0;border:1px solid #E8C870;color:#8B6914;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+escapeHtml(r.memo)+'</button>';
+            // simple型：メモ表示エリア（メモ+写真の状態によって表示変更）
+            const _hasMemoText = !!r.memo;
+            const _hasMemoPhoto = !!r.memoPhoto;
+            
+            if (_hasMemoText || _hasMemoPhoto) {
+              // メモか写真ある → 内容表示＋右側にアイコン
+              html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:#FFF8E0;border:1px solid #E8C870;color:#8B6914;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;min-width:0;">';
+              if (_hasMemoText) {
+                html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.memo)+'</span>';
+              } else {
+                html += '<span style="flex:1;color:#B89855;font-style:italic;">写真メモ</span>';
+              }
+              if (_hasMemoPhoto) {
+                html += '<span class="material-symbols-rounded" style="font-size:14px;color:#8B6914;flex-shrink:0;">image</span>';
+              }
+              html += '</button>';
             } else {
-              html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">edit_note</span>メモ追加</button>';
+              // 空 → 「メモ追加」ボタン（📷マーク付き）
+              html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;">';
+              html += '<span class="material-symbols-rounded" style="font-size:13px;">edit_note</span>メモ';
+              html += '<span style="flex:1;"></span>';
+              html += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--ink-light);">photo_camera</span>';
+              html += '</button>';
             }
           }
           
