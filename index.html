@@ -10926,30 +10926,42 @@ function closeStampDayModal() {
 
 // ===== 月の体重ミニグラフ（カレンダー上部表示） =====
 function _renderMonthWeightChart(year, month) {
-  // その月の体重データ集計
+  // その月の体重・体脂肪データ集計
   const history = data.stampHistory || [];
   const dayWeights = {}; // {1: 70.5, 2: 70.4, ...}
+  const dayFats = {};    // {1: 31.0, 2: 30.8, ...}
   for (const r of history) {
-    if (r.name !== '体重' || r.value === undefined || r.value === null || r.value === '') continue;
+    if (r.value === undefined || r.value === null || r.value === '') continue;
     const t = new Date(r.timestamp);
     if (t.getFullYear() !== year || t.getMonth() !== month) continue;
     const day = t.getDate();
-    // 同日複数なら最新を採用
-    if (!dayWeights[day] || r.timestamp > dayWeights[day].ts) {
-      dayWeights[day] = { value: parseFloat(r.value), ts: r.timestamp };
+    if (r.name === '体重') {
+      if (!dayWeights[day] || r.timestamp > dayWeights[day].ts) {
+        dayWeights[day] = { value: parseFloat(r.value), ts: r.timestamp };
+      }
+    } else if (r.name === '体脂肪') {
+      if (!dayFats[day] || r.timestamp > dayFats[day].ts) {
+        dayFats[day] = { value: parseFloat(r.value), ts: r.timestamp };
+      }
     }
   }
   
   const dataDays = Object.keys(dayWeights).sort((a,b) => +a - +b);
-  if (dataDays.length === 0) return ''; // データなければ非表示
+  const fatDays = Object.keys(dayFats).sort((a,b) => +a - +b);
+  if (dataDays.length === 0 && fatDays.length === 0) return ''; // データなければ非表示
   
-  // 値配列
-  const values = dataDays.map(d => dayWeights[d].value);
-  let minVal = Math.min.apply(null, values);
-  let maxVal = Math.max.apply(null, values);
-  const padding = (maxVal - minVal) * 0.2 || 1;
-  minVal -= padding;
-  maxVal += padding;
+  // 体重の値範囲
+  let minVal, maxVal;
+  if (dataDays.length > 0) {
+    const values = dataDays.map(d => dayWeights[d].value);
+    minVal = Math.min.apply(null, values);
+    maxVal = Math.max.apply(null, values);
+    const padding = (maxVal - minVal) * 0.2 || 1;
+    minVal -= padding;
+    maxVal += padding;
+  } else {
+    minVal = 50; maxVal = 80;
+  }
   
   // 目標ライン（55kg = メイン）
   const goalMain = 55;
@@ -10957,17 +10969,35 @@ function _renderMonthWeightChart(year, month) {
   if (goalMain < minVal) minVal = goalMain - 1;
   if (goalMid > maxVal) maxVal = goalMid + 1;
   
+  // 体脂肪の値範囲
+  let minFat = 0, maxFat = 50;
+  if (fatDays.length > 0) {
+    const fatVals = fatDays.map(d => dayFats[d].value);
+    minFat = Math.min.apply(null, fatVals);
+    maxFat = Math.max.apply(null, fatVals);
+    const fatPad = (maxFat - minFat) * 0.3 || 2;
+    minFat -= fatPad;
+    maxFat += fatPad;
+    // 範囲が狭すぎる場合の調整
+    if (maxFat - minFat < 5) {
+      const center = (maxFat + minFat) / 2;
+      minFat = center - 3;
+      maxFat = center + 3;
+    }
+  }
+  
   const lastDay = new Date(year, month + 1, 0).getDate();
-  const w = 320, hChart = 100;
-  const padL = 28, padR = 10, padT = 16, padB = 18;
+  const w = 320, hChart = 110;
+  const padL = 32, padR = (fatDays.length > 0 ? 32 : 12), padT = 14, padB = 22;
   const innerW = w - padL - padR;
   const innerH = hChart - padT - padB;
   
   // X位置：日付ベース（1〜lastDay）
-  const xFor = (d) => padL + ((d - 1) / (lastDay - 1)) * innerW;
+  const xFor = (d) => padL + ((d - 1) / Math.max(lastDay - 1, 1)) * innerW;
   const yFor = (v) => padT + ((maxVal - v) / (maxVal - minVal)) * innerH;
+  const yForFat = (v) => padT + ((maxFat - v) / (maxFat - minFat)) * innerH;
   
-  // 折れ線パス
+  // 体重折れ線パス
   let path = '';
   for (let i = 0; i < dataDays.length; i++) {
     const day = +dataDays[i];
@@ -10976,65 +11006,111 @@ function _renderMonthWeightChart(year, month) {
     path += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
   }
   
-  // 塗りつぶしパス
-  let fillPath = path;
+  // 塗りつぶしパス（体重のみ）
+  let fillPath = '';
   if (dataDays.length >= 1) {
     const lastX = xFor(+dataDays[dataDays.length-1]);
     const firstX = xFor(+dataDays[0]);
     fillPath = path + ' L' + lastX.toFixed(1) + ',' + (padT + innerH) + ' L' + firstX.toFixed(1) + ',' + (padT + innerH) + ' Z';
   }
   
-  // 最新値・初日値
-  const latest = dayWeights[dataDays[dataDays.length-1]].value;
-  const first = dayWeights[dataDays[0]].value;
-  const diff = latest - first;
-  const diffStr = diff > 0 ? '+'+diff.toFixed(1) : diff.toFixed(1);
-  const diffColor = diff > 0 ? '#c4506b' : (diff < 0 ? '#3A8050' : '#888');
+  // 体脂肪折れ線パス
+  let fatPath = '';
+  for (let i = 0; i < fatDays.length; i++) {
+    const day = +fatDays[i];
+    const x = xFor(day);
+    const y = yForFat(dayFats[day].value);
+    fatPath += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+  }
   
-  let h = '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
-  // ヘッダー
-  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
-  h += '<div style="display:flex;align-items:center;gap:5px;">';
-  h += '<span class="material-symbols-rounded" style="font-size:14px;color:#A04060;">monitor_weight</span>';
-  h += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);">体重の推移</span>';
-  h += '<span style="font-size:9px;color:var(--ink-sub);font-weight:600;">'+(month+1)+'月</span>';
+  // 最新値・初日値（体重）
+  let latest = null, first = null, diff = 0, diffStr = '', diffColor = '#888';
+  if (dataDays.length > 0) {
+    latest = dayWeights[dataDays[dataDays.length-1]].value;
+    first = dayWeights[dataDays[0]].value;
+    diff = latest - first;
+    diffStr = diff > 0 ? '+'+diff.toFixed(1) : diff.toFixed(1);
+    diffColor = diff > 0 ? '#C68080' : (diff < 0 ? '#7A9F88' : '#888');
+  }
+  
+  // 最新体脂肪
+  let latestFat = null;
+  if (fatDays.length > 0) {
+    latestFat = dayFats[fatDays[fatDays.length-1]].value;
+  }
+  
+  let h = '<div style="background:white;border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">';
+  // ヘッダー（体重 ＋ 体脂肪）
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;flex-wrap:wrap;gap:4px;">';
+  h += '<div style="display:flex;align-items:center;gap:4px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:13px;color:#C8709A;">monitor_weight</span>';
+  h += '<span style="font-size:10px;font-weight:700;color:#7A6B5E;letter-spacing:0.03em;">体重 & 体脂肪</span>';
+  h += '<span style="font-size:8px;color:#B8AFA8;font-weight:600;letter-spacing:0.05em;">'+(month+1)+'月</span>';
   h += '</div>';
-  h += '<div style="display:flex;align-items:baseline;gap:4px;font-variant-numeric:tabular-nums;">';
-  h += '<span style="font-size:13px;font-weight:800;color:#A04060;">'+latest.toFixed(1)+'</span>';
-  h += '<span style="font-size:9px;color:var(--ink-sub);">kg</span>';
-  if (dataDays.length >= 2) {
-    h += '<span style="font-size:9px;color:'+diffColor+';font-weight:700;margin-left:4px;">'+diffStr+'</span>';
+  h += '<div style="display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums;">';
+  if (latest !== null) {
+    h += '<div style="display:flex;align-items:baseline;gap:2px;"><span style="width:6px;height:6px;border-radius:50%;background:#C8709A;display:inline-block;margin-right:3px;"></span>';
+    h += '<span style="font-size:12px;font-weight:700;color:#7A6B5E;">'+latest.toFixed(1)+'</span>';
+    h += '<span style="font-size:8px;color:#B8AFA8;font-weight:600;">kg</span>';
+    if (dataDays.length >= 2) {
+      h += '<span style="font-size:8px;color:'+diffColor+';font-weight:700;margin-left:3px;">'+diffStr+'</span>';
+    }
+    h += '</div>';
+  }
+  if (latestFat !== null) {
+    h += '<div style="display:flex;align-items:baseline;gap:2px;"><span style="width:6px;height:6px;border-radius:50%;background:#80A8C0;display:inline-block;margin-right:3px;"></span>';
+    h += '<span style="font-size:12px;font-weight:700;color:#7A6B5E;">'+latestFat.toFixed(1)+'</span>';
+    h += '<span style="font-size:8px;color:#B8AFA8;font-weight:600;">%</span>';
+    h += '</div>';
   }
   h += '</div>';
   h += '</div>';
   
   // SVG
   h += '<svg viewBox="0 0 '+w+' '+hChart+'" preserveAspectRatio="none" style="width:100%;height:'+hChart+'px;display:block;">';
-  // Y軸目標ライン
+  
+  // === Y軸（左：体重kg）===
+  // 最大最小ラベル（角に置く、つぶれ防止）
+  h += '<text x="3" y="'+(padT+3).toFixed(1)+'" font-size="7" fill="#B8AFA8" font-weight="600">'+maxVal.toFixed(0)+'</text>';
+  h += '<text x="3" y="'+(padT+innerH).toFixed(1)+'" font-size="7" fill="#B8AFA8" font-weight="600">'+minVal.toFixed(0)+'</text>';
+  
+  // 目標ライン（55, 60）
   const yMain = yFor(goalMain);
   const yMid = yFor(goalMid);
-  h += '<line x1="'+padL+'" y1="'+yMain.toFixed(1)+'" x2="'+(w-padR)+'" y2="'+yMain.toFixed(1)+'" stroke="#F0A0C0" stroke-width="1" stroke-dasharray="3,2" opacity="0.7" />';
-  h += '<line x1="'+padL+'" y1="'+yMid.toFixed(1)+'" x2="'+(w-padR)+'" y2="'+yMid.toFixed(1)+'" stroke="#F0CC80" stroke-width="1" stroke-dasharray="3,2" opacity="0.7" />';
-  // 目標ラベル
-  h += '<text x="'+(padL-3)+'" y="'+(yMain+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="#A04060" font-weight="700">55</text>';
-  h += '<text x="'+(padL-3)+'" y="'+(yMid+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="#A07020" font-weight="700">60</text>';
-  // Y軸最大最小
-  h += '<text x="'+(padL-3)+'" y="'+(padT+4).toFixed(1)+'" text-anchor="end" font-size="7" fill="#aaa" font-weight="600">'+maxVal.toFixed(0)+'</text>';
-  h += '<text x="'+(padL-3)+'" y="'+(padT+innerH+2).toFixed(1)+'" text-anchor="end" font-size="7" fill="#aaa" font-weight="600">'+minVal.toFixed(0)+'</text>';
-  // 塗りつぶし
-  h += '<path d="'+fillPath+'" fill="#FFE5EE" opacity="0.5" />';
-  // 折れ線
-  h += '<path d="'+path+'" fill="none" stroke="#C8709A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />';
-  // 各点
+  h += '<line x1="'+padL+'" y1="'+yMain.toFixed(1)+'" x2="'+(w-padR)+'" y2="'+yMain.toFixed(1)+'" stroke="#E8B0BC" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.6" />';
+  h += '<line x1="'+padL+'" y1="'+yMid.toFixed(1)+'" x2="'+(w-padR)+'" y2="'+yMid.toFixed(1)+'" stroke="#E8C890" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.6" />';
+  // 目標ラベル（線の右端、線の上に小さく）
+  h += '<text x="'+(w-padR-2)+'" y="'+(yMain-2).toFixed(1)+'" text-anchor="end" font-size="6.5" fill="#C68080" font-weight="700" opacity="0.7">目標55</text>';
+  h += '<text x="'+(w-padR-2)+'" y="'+(yMid-2).toFixed(1)+'" text-anchor="end" font-size="6.5" fill="#C8A060" font-weight="700" opacity="0.7">中間60</text>';
+  
+  // === 体重塗りつぶし＆折れ線 ===
+  if (fillPath) h += '<path d="'+fillPath+'" fill="#FCE0E8" opacity="0.5" />';
+  if (path) h += '<path d="'+path+'" fill="none" stroke="#C8709A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />';
+  // 体重の各点
   for (const day of dataDays) {
     const x = xFor(+day);
     const y = yFor(dayWeights[day].value);
-    h += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.5" fill="white" stroke="#C8709A" stroke-width="1.5" />';
+    h += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.2" fill="white" stroke="#C8709A" stroke-width="1.3" />';
   }
-  // X軸（日付）
+  
+  // === 体脂肪折れ線（重ねる、青系・破線）===
+  if (fatPath) {
+    h += '<path d="'+fatPath+'" fill="none" stroke="#80A8C0" stroke-width="1.4" stroke-dasharray="3,2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85" />';
+    // 体脂肪の各点
+    for (const day of fatDays) {
+      const x = xFor(+day);
+      const y = yForFat(dayFats[day].value);
+      h += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="1.8" fill="white" stroke="#80A8C0" stroke-width="1.2" />';
+    }
+    // 右Y軸ラベル（体脂肪%）
+    h += '<text x="'+(w-3)+'" y="'+(padT+3).toFixed(1)+'" text-anchor="end" font-size="7" fill="#80A8C0" font-weight="600">'+maxFat.toFixed(0)+'%</text>';
+    h += '<text x="'+(w-3)+'" y="'+(padT+innerH).toFixed(1)+'" text-anchor="end" font-size="7" fill="#80A8C0" font-weight="600">'+minFat.toFixed(0)+'%</text>';
+  }
+  
+  // X軸（日付ラベル）
   for (let d = 5; d <= lastDay; d += 5) {
     const x = xFor(d);
-    h += '<text x="'+x.toFixed(1)+'" y="'+(hChart-4)+'" text-anchor="middle" font-size="7" fill="#aaa" font-weight="600">'+d+'</text>';
+    h += '<text x="'+x.toFixed(1)+'" y="'+(hChart-6)+'" text-anchor="middle" font-size="7" fill="#B8AFA8" font-weight="600">'+d+'</text>';
   }
   h += '</svg>';
   
@@ -12196,14 +12272,14 @@ function renderMeMode() {
       // ===== カードA: スタンプを押すエリア（白カード・細枠） =====
       html += '<div style="margin:8px 12px 10px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 0 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
       
-      html += '<div data-stamp-grid style="padding:0 12px;display:grid;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:64px;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-snap-type:x mandatory;">';
+      html += '<div data-stamp-grid style="padding:0 12px;display:grid;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:48px;gap:5px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-snap-type:x mandatory;">';
       for (let i = 0; i < visibleStamps.length; i++) {
         const s = visibleStamps[i];
         // 通常モード（背景色を控えめに、白カードの中で見やすく）
-        html += '<button onclick="tapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border:1px solid var(--line);border-radius:12px;background:var(--surface-warm);cursor:pointer;font-family:inherit;min-width:0;aspect-ratio:1/1.05;scroll-snap-align:start;">'+renderStampIcon(s.icon,'font-size:28px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:10px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span></button>';
+        html += '<button onclick="tapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 3px;border:1px solid var(--line);border-radius:10px;background:var(--surface-warm);cursor:pointer;font-family:inherit;min-width:0;aspect-ratio:1/1.1;scroll-snap-align:start;">'+renderStampIcon(s.icon,'font-size:22px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:8px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span></button>';
       }
       // ＋追加ボタン
-      html += '<button onclick="addCustomStamp(\''+selCat+'\')" title="スタンプを追加" style="display:flex;align-items:center;justify-content:center;padding:8px;border:1.5px dashed var(--accent);border-radius:12px;background:none;cursor:pointer;font-family:inherit;min-width:0;aspect-ratio:1/1.05;scroll-snap-align:start;"><span style="font-size:28px;color:var(--accent);font-weight:700;line-height:1;">＋</span></button>';
+      html += '<button onclick="addCustomStamp(\''+selCat+'\')" title="スタンプを追加" style="display:flex;align-items:center;justify-content:center;padding:6px;border:1.5px dashed var(--accent);border-radius:10px;background:none;cursor:pointer;font-family:inherit;min-width:0;aspect-ratio:1/1.1;scroll-snap-align:start;"><span style="font-size:22px;color:var(--accent);font-weight:700;line-height:1;">＋</span></button>';
       html += '</div>';
       html += '</div>'; // カードA 閉じ
       
