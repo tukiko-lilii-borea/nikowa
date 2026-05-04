@@ -10528,39 +10528,39 @@ function renderStampCalendar() {
   // 生理周期予測カード（最上部）
   h += renderMenstrualPredictionCard();
   
-  // 月切替ヘッダー
-  h += '<div style="background:linear-gradient(135deg,var(--accent-bg) 0%,var(--surface-warm) 100%);border:1.5px solid var(--accent);border-radius:14px;padding:10px;margin-bottom:10px;display:flex;align-items:center;gap:8px;">';
-  h += '<button onclick="switchStampCalMonth(-1)" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--ink-dark);font-size:11px;font-weight:700;font-family:inherit;">‹ 前月</button>';
-  h += '<div style="flex:1;text-align:center;font-size:14px;font-weight:800;color:var(--ink-dark);">'+y+'年'+(m+1)+'月</div>';
-  h += '<button onclick="switchStampCalMonth(1)" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--ink-dark);font-size:11px;font-weight:700;font-family:inherit;">翌月 ›</button>';
+  // 月切替ヘッダー（控えめ・くすみカラー）
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:10px;padding:6px 8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">';
+  h += '<button onclick="switchStampCalMonth(-1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--ink-sub);font-size:10px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:2px;"><span class="material-symbols-rounded" style="font-size:13px;">chevron_left</span></button>';
+  h += '<div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--ink-dark);letter-spacing:0.05em;font-variant-numeric:tabular-nums;">'+y+'.'+String(m+1).padStart(2,'0')+'</div>';
+  h += '<button onclick="switchStampCalMonth(1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--ink-sub);font-size:10px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:2px;"><span class="material-symbols-rounded" style="font-size:13px;">chevron_right</span></button>';
   h += '</div>';
   
-  // 「今月へ」ボタン（今月以外の時のみ）
+  // 「今月へ」ボタン（今月以外の時のみ、控えめに）
   if (!isCurrentMonth) {
-    h += '<button onclick="jumpToCurrentStampMonth()" style="width:100%;padding:8px;background:var(--surface-warm);color:var(--accent-deep);border:1px dashed var(--accent);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:10px;">📅 今月へ戻る</button>';
+    h += '<button onclick="jumpToCurrentStampMonth()" style="width:100%;padding:5px;background:none;color:var(--ink-light);border:1px dashed var(--line);border-radius:6px;font-family:inherit;font-size:9px;font-weight:600;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">today</span>今月へ</button>';
   }
   
-  // 曜日ヘッダー
-  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;">';
-  const weekLabels = ['日','月','火','水','木','金','土'];
+  // 曜日ヘッダー（控えめなくすみカラー）
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;">';
+  const weekLabels = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
   for (let i = 0; i < 7; i++) {
     const isHol = (i === 0); // 日曜
     const isSat = (i === 6); // 土曜
-    let color = 'var(--ink-sub)';
-    if (isHol) color = '#c4506b';
-    else if (isSat) color = '#5888B0';
-    h += '<div style="text-align:center;font-size:10px;font-weight:800;color:'+color+';padding:4px 0;">'+weekLabels[i]+'</div>';
+    let color = '#B8AFA8';
+    if (isHol) color = '#D89090';
+    else if (isSat) color = '#90B0C8';
+    h += '<div style="text-align:center;font-size:7.5px;font-weight:700;color:'+color+';padding:2px 0;letter-spacing:0.08em;">'+weekLabels[i]+'</div>';
   }
   h += '</div>';
   
   // 日付セル
-  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">';
   
   // 前月の空白埋め（前月日付グレー）
   const prevMonthLastDay = new Date(y, m, 0).getDate();
   for (let i = 0; i < startWeekday; i++) {
     const d = prevMonthLastDay - startWeekday + 1 + i;
-    h += '<div style="aspect-ratio:1/1.2;border-radius:8px;background:var(--surface-warm);opacity:0.35;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-light);font-weight:600;">'+d+'</div>';
+    h += '<div style="aspect-ratio:1/1;border-radius:6px;background:transparent;display:flex;align-items:flex-start;justify-content:center;padding-top:4px;font-size:9px;color:#D5CCC4;font-weight:500;font-variant-numeric:tabular-nums;">'+d+'</div>';
   }
   
   // 当月日付
@@ -10580,63 +10580,64 @@ function renderStampCalendar() {
     const catList = Object.keys(catCount).slice(0, 3); // 最大3カテゴリのドット
     const totalCount = records.length;
     
-    let bg = 'var(--surface)';
-    let border = '1px solid var(--line)';
-    let dColor = 'var(--ink-dark)';
+    // くすみカラーパレット
+    let bg = 'white';
+    let border = '1px solid #F0E8E0';
+    let dColor = '#7A6B5E'; // ダークブラウン（黒の代わり）
     if (isToday) {
-      bg = 'var(--accent)';
-      border = '1.5px solid var(--accent-deep)';
+      bg = '#E8B0BC'; // くすみピンク
+      border = '1px solid #D89098';
       dColor = 'white';
     } else if (records.length > 0) {
-      bg = 'var(--accent-bg)';
-      border = '1px solid var(--accent)';
+      bg = '#FFF6F8'; // 超薄いピンク
+      border = '1px solid #F5D8DC';
     }
-    if (wd === 0) dColor = isToday ? 'white' : '#c4506b';
-    else if (wd === 6) dColor = isToday ? 'white' : '#5888B0';
+    if (wd === 0) dColor = isToday ? 'white' : '#C68080';
+    else if (wd === 6) dColor = isToday ? 'white' : '#80A0B8';
     
     // 生理予測情報を取得
     const menstInfo = _getMenstrualDateInfo(dateKey);
     if (menstInfo && !isToday) {
       if (menstInfo.type === 'predicted') {
-        bg = '#FFE5EE';
-        border = '1.5px solid #F0A0C0';
+        bg = '#FCE8EE';
+        border = '1px solid #E8B8C4';
       } else if (menstInfo.type === 'ovulation') {
-        bg = '#E8F4FF';
-        border = '1.5px dashed #7FB8E8';
+        bg = '#EAF2F8';
+        border = '1px dashed #A8C4D8';
       } else if (menstInfo.type === 'ovulation_window') {
-        bg = '#F0F8FF';
-        border = '1px dashed #B0D4F0';
+        bg = '#F4F8FC';
+        border = '1px dashed #C8DCE8';
       }
     }
     
-    h += '<button onclick="openStampDayModal(\''+dateKey+'\')" style="aspect-ratio:1/1.2;border-radius:8px;background:'+bg+';border:'+border+';display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:4px 2px;cursor:pointer;font-family:inherit;position:relative;">';
+    h += '<button onclick="openStampDayModal(\''+dateKey+'\')" style="aspect-ratio:1/1;border-radius:6px;background:'+bg+';border:'+border+';display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:3px 1px;cursor:pointer;font-family:inherit;position:relative;">';
     
-    // 天気アイコン（右上）
+    // 天気アイコン（右上、控えめサイズ）
     const wIcon = getDateWeatherIcon(dateKey);
     if (wIcon) {
-      h += '<span style="position:absolute;top:2px;right:3px;line-height:1;">'+weatherIconHtml(wIcon,'font-size:11px;')+'</span>';
+      h += '<span style="position:absolute;top:1px;right:2px;line-height:1;opacity:0.7;">'+weatherIconHtml(wIcon,'font-size:9px;')+'</span>';
     }
     
     // 生理予測マーク（左上）
     if (menstInfo) {
       let markIcon = '', markColor = '';
-      if (menstInfo.type === 'predicted') { markIcon = 'water_full'; markColor = '#C8709A'; }
-      else if (menstInfo.type === 'ovulation') { markIcon = 'circle'; markColor = '#5888B0'; }
+      if (menstInfo.type === 'predicted') { markIcon = 'water_full'; markColor = '#C09098'; }
+      else if (menstInfo.type === 'ovulation') { markIcon = 'circle'; markColor = '#90A8B8'; }
       if (markIcon) {
-        h += '<span class="material-symbols-rounded" style="position:absolute;top:2px;left:3px;font-size:10px;color:'+markColor+';">'+markIcon+'</span>';
+        h += '<span class="material-symbols-rounded" style="position:absolute;top:1px;left:2px;font-size:9px;color:'+markColor+';">'+markIcon+'</span>';
       }
     }
     
-    h += '<span style="font-size:13px;font-weight:'+(isToday?'800':'700')+';color:'+dColor+';line-height:1;margin-top:'+(wIcon?'2px':'0')+';">'+d+'</span>';
+    h += '<span style="font-size:11px;font-weight:'+(isToday?'700':'600')+';color:'+dColor+';line-height:1;margin-top:'+(wIcon?'1px':'0')+';font-variant-numeric:tabular-nums;letter-spacing:0.02em;">'+d+'</span>';
     
     // ドット表示
     if (catList.length > 0) {
-      h += '<div style="display:flex;gap:2px;margin-top:3px;align-items:center;">';
+      h += '<div style="display:flex;gap:1.5px;margin-top:2px;align-items:center;">';
       for (const cat of catList) {
-        h += '<span style="width:5px;height:5px;border-radius:50%;background:'+_stampCatColor(cat)+';display:inline-block;"></span>';
+        h += '<span style="width:4px;height:4px;border-radius:50%;background:'+_stampCatColor(cat)+';display:inline-block;opacity:0.85;"></span>';
       }
       if (totalCount > 3) {
-        h += '<span style="font-size:8px;color:'+(isToday?'white':'var(--ink-sub)')+';font-weight:700;margin-left:1px;">+'+(totalCount-3)+'</span>';
+        h += '<span style="font-size:7px;color:'+(isToday?'rgba(255,255,255,0.85)':'#B8AFA8')+';font-weight:600;margin-left:1px;">+'+(totalCount-3)+'</span>';
       }
       h += '</div>';
     }
@@ -10649,31 +10650,31 @@ function renderStampCalendar() {
   if (remainder > 0) {
     const fillCount = 7 - remainder;
     for (let i = 1; i <= fillCount; i++) {
-      h += '<div style="aspect-ratio:1/1.2;border-radius:8px;background:var(--surface-warm);opacity:0.35;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-light);font-weight:600;">'+i+'</div>';
+      h += '<div style="aspect-ratio:1/1;border-radius:6px;background:transparent;display:flex;align-items:flex-start;justify-content:center;padding-top:4px;font-size:9px;color:#D5CCC4;font-weight:500;font-variant-numeric:tabular-nums;">'+i+'</div>';
     }
   }
   h += '</div>';
   
-  // カテゴリ凡例
-  h += '<div style="margin-top:14px;padding:10px;background:var(--surface);border:1px solid var(--card-border);border-radius:10px;">';
-  h += '<div style="font-size:10px;font-weight:700;color:var(--ink-sub);margin-bottom:6px;">カテゴリ色</div>';
-  h += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+  // カテゴリ凡例（控えめに）
+  h += '<div style="margin-top:10px;padding:7px 10px;background:white;border:1px solid var(--line);border-radius:8px;">';
+  h += '<div style="font-size:8px;font-weight:700;color:#B8AFA8;margin-bottom:5px;letter-spacing:0.08em;">CATEGORY</div>';
+  h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
   for (const cat of Object.keys(STAMP_CAT_COLORS)) {
-    h += '<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ink-dark);font-weight:600;"><span style="width:8px;height:8px;border-radius:50%;background:'+STAMP_CAT_COLORS[cat]+';"></span>'+cat+'</div>';
+    h += '<div style="display:flex;align-items:center;gap:3px;font-size:9px;color:#7A6B5E;font-weight:600;"><span style="width:6px;height:6px;border-radius:50%;background:'+STAMP_CAT_COLORS[cat]+';opacity:0.85;"></span>'+cat+'</div>';
   }
   h += '</div>';
   // 予測マーク説明（予測がある時のみ）
   if (calcMenstrualPrediction()) {
-    h += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--ink-sub);font-weight:600;">';
-    h += '<div style="font-size:10px;font-weight:700;color:var(--ink-sub);margin-bottom:4px;">予測マーク</div>';
-    h += '<div style="display:flex;flex-wrap:wrap;gap:10px;font-size:10px;color:var(--ink-dark);">';
-    h += '<div style="display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;color:#C8709A;">water_full</span>生理予定</div>';
-    h += '<div style="display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;color:#5888B0;">circle</span>排卵予定</div>';
+    h += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);">';
+    h += '<div style="font-size:8px;font-weight:700;color:#B8AFA8;margin-bottom:4px;letter-spacing:0.08em;">PREDICTION</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:8px;font-size:9px;color:#7A6B5E;font-weight:600;">';
+    h += '<div style="display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;color:#C09098;">water_full</span>生理予定</div>';
+    h += '<div style="display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;color:#90A8B8;">circle</span>排卵予定</div>';
     h += '</div></div>';
   }
   h += '</div>';
   
-  // 今月のサマリ
+  // 今月のサマリ（控えめカラー）
   const monthRecs = [];
   for (const k of Object.keys(histMap)) {
     if (k.startsWith(y+'-'+String(m+1).padStart(2,'0'))) {
@@ -10686,12 +10687,14 @@ function renderStampCalendar() {
       const c = r.category || 'その他';
       monthCatCount[c] = (monthCatCount[c]||0) + 1;
     }
-    h += '<div style="margin-top:10px;padding:12px;background:linear-gradient(135deg,var(--accent-bg) 0%,var(--surface-warm) 100%);border:1.5px solid var(--accent);border-radius:12px;">';
-    h += '<div style="font-size:11px;font-weight:800;color:var(--accent-deep);margin-bottom:6px;">📊 '+(m+1)+'月のサマリ</div>';
-    h += '<div style="font-size:18px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">合計 '+monthRecs.length+'件 記録</div>';
-    h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    h += '<div style="margin-top:8px;padding:9px 11px;background:white;border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
+    h += '<div style="font-size:8px;font-weight:700;color:#B8AFA8;letter-spacing:0.08em;">'+y+'.'+String(m+1).padStart(2,'0')+' SUMMARY</div>';
+    h += '<div style="font-size:13px;font-weight:700;color:#7A6B5E;font-variant-numeric:tabular-nums;">'+monthRecs.length+'<span style="font-size:9px;color:#B8AFA8;margin-left:2px;font-weight:600;">件</span></div>';
+    h += '</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
     for (const cat of Object.keys(monthCatCount).sort((a,b)=>monthCatCount[b]-monthCatCount[a])) {
-      h += '<span style="font-size:10px;font-weight:700;color:white;background:'+_stampCatColor(cat)+';padding:2px 8px;border-radius:100px;">'+cat+' '+monthCatCount[cat]+'</span>';
+      h += '<span style="font-size:9px;font-weight:700;color:#7A6B5E;background:var(--surface-warm);border:1px solid var(--line);padding:2px 7px;border-radius:100px;display:inline-flex;align-items:center;gap:3px;"><span style="width:5px;height:5px;border-radius:50%;background:'+_stampCatColor(cat)+';display:inline-block;opacity:0.85;"></span>'+cat+' '+monthCatCount[cat]+'</span>';
     }
     h += '</div></div>';
   }
