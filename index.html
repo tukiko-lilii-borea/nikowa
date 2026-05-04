@@ -11118,6 +11118,241 @@ function _renderMonthWeightChart(year, month) {
   return h;
 }
 
+// ===== ダイエットカテゴリ専用：体重・体脂肪サマリカード =====
+function _renderDietSummaryCard() {
+  const history = data.stampHistory || [];
+  
+  // 直近30日分
+  const now = new Date();
+  const cutoff = now.getTime() - 30 * 24 * 60 * 60 * 1000;
+  
+  // 日付ごとの体重・体脂肪を集計（各日最新）
+  const dayWeights = {};
+  const dayFats = {};
+  for (const r of history) {
+    if (r.value === undefined || r.value === null || r.value === '') continue;
+    if (r.timestamp < cutoff) continue;
+    const t = new Date(r.timestamp);
+    const key = t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+    if (r.name === '体重') {
+      if (!dayWeights[key] || r.timestamp > dayWeights[key].ts) {
+        dayWeights[key] = { value: parseFloat(r.value), ts: r.timestamp };
+      }
+    } else if (r.name === '体脂肪') {
+      if (!dayFats[key] || r.timestamp > dayFats[key].ts) {
+        dayFats[key] = { value: parseFloat(r.value), ts: r.timestamp };
+      }
+    }
+  }
+  
+  const wKeys = Object.keys(dayWeights).sort();
+  const fKeys = Object.keys(dayFats).sort();
+  
+  // 最新値・前回値
+  let latestW = null, prevW = null, latestF = null;
+  if (wKeys.length > 0) {
+    latestW = dayWeights[wKeys[wKeys.length-1]].value;
+    if (wKeys.length > 1) {
+      prevW = dayWeights[wKeys[wKeys.length-2]].value;
+    }
+  }
+  if (fKeys.length > 0) {
+    latestF = dayFats[fKeys[fKeys.length-1]].value;
+  }
+  
+  // データ何もない時は誘導カード
+  if (latestW === null && latestF === null) {
+    let h = '<div style="margin:8px 12px 10px;background:#FFF6F8;border:1px solid #F0BDC6;border-radius:14px;padding:14px 16px;text-align:center;">';
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:6px;"><span class="material-symbols-rounded" style="font-size:18px;color:#C8709A;">monitor_weight</span><span style="font-size:11px;font-weight:700;color:#7A6B5E;">体重を記録してみよう</span></div>';
+    h += '<div style="font-size:9px;color:#B8AFA8;line-height:1.6;">下の「体重」スタンプを押すと<br>サマリとグラフが見れるよ🌷</div>';
+    h += '</div>';
+    return h;
+  }
+  
+  // 差分
+  const diff = (latestW !== null && prevW !== null) ? (latestW - prevW) : null;
+  const diffStr = diff === null ? '' : (diff > 0 ? '+'+diff.toFixed(1) : diff.toFixed(1));
+  const diffColor = diff === null ? '#888' : (diff > 0 ? '#C68080' : (diff < 0 ? '#7A9F88' : '#888'));
+  
+  // 目標までの距離
+  const goalMid = 60, goalMain = 55;
+  const toMid = latestW !== null ? Math.max(0, latestW - goalMid) : null;
+  const toMain = latestW !== null ? Math.max(0, latestW - goalMain) : null;
+  
+  // ===== カード本体 =====
+  let h = '<div style="margin:8px 12px 10px;background:linear-gradient(135deg,#FFF6F8 0%,#FFFAFC 100%);border:1px solid #F0BDC6;border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(200,112,154,0.08);">';
+  
+  // ヘッダー：いまの体重・体脂肪
+  h += '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px;flex-wrap:wrap;font-variant-numeric:tabular-nums;">';
+  h += '<span class="material-symbols-rounded" style="font-size:16px;color:#C8709A;">monitor_weight</span>';
+  h += '<span style="font-size:10px;color:#A88B7E;font-weight:600;">いまの</span>';
+  if (latestW !== null) {
+    h += '<span style="font-size:18px;font-weight:800;color:#C8709A;letter-spacing:-0.02em;">'+latestW.toFixed(1)+'</span>';
+    h += '<span style="font-size:9px;color:#A88B7E;font-weight:600;">kg</span>';
+    if (diffStr) {
+      h += '<span style="font-size:9px;font-weight:700;color:'+diffColor+';margin-left:2px;">'+diffStr+'</span>';
+    }
+  } else {
+    h += '<span style="font-size:13px;color:#A88B7E;font-weight:600;">-</span>';
+  }
+  h += '<span style="flex:1;"></span>';
+  if (latestF !== null) {
+    h += '<span style="font-size:10px;color:#A88B7E;font-weight:600;">体脂肪</span>';
+    h += '<span style="font-size:13px;font-weight:800;color:#80A8C0;">'+latestF.toFixed(1)+'</span>';
+    h += '<span style="font-size:9px;color:#A88B7E;font-weight:600;">%</span>';
+  }
+  h += '</div>';
+  
+  // 目標までの距離（体重ある時のみ）
+  if (latestW !== null) {
+    h += '<div style="font-size:10px;color:#7A6B5E;margin-bottom:8px;line-height:1.6;">';
+    h += '中間目標(60kg)まで <span style="color:#C8A060;font-weight:800;font-variant-numeric:tabular-nums;">'+toMid.toFixed(1)+'kg</span>';
+    h += ' <span style="color:#D5CCC4;margin:0 4px;">/</span> ';
+    h += '目標(55kg)まで <span style="color:#C8709A;font-weight:800;font-variant-numeric:tabular-nums;">'+toMain.toFixed(1)+'kg</span>';
+    h += '</div>';
+  }
+  
+  // ===== グラフ =====
+  if (wKeys.length > 0 || fKeys.length > 0) {
+    h += _renderDietChartSVG(dayWeights, dayFats, wKeys, fKeys);
+  }
+  
+  // 凡例
+  h += '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;font-size:9px;color:#7A6B5E;font-weight:600;flex-wrap:wrap;">';
+  h += '<div style="display:flex;align-items:center;gap:3px;"><span style="width:14px;height:2px;background:#C8709A;display:inline-block;border-radius:1px;"></span>体重</div>';
+  h += '<div style="display:flex;align-items:center;gap:3px;"><span style="width:14px;height:2px;background:#E8B868;display:inline-block;border-radius:1px;"></span>体脂肪</div>';
+  h += '<div style="display:flex;align-items:center;gap:3px;"><span style="width:14px;height:2px;background:#D5C8B8;display:inline-block;border-radius:1px;border-top:1px dashed #B8AFA8;border-bottom:none;"></span>目標</div>';
+  h += '<span style="flex:1;"></span>';
+  h += '<span style="font-size:8px;color:#B8AFA8;font-weight:600;">直近30日</span>';
+  h += '</div>';
+  
+  h += '</div>';
+  return h;
+}
+window._renderDietSummaryCard = _renderDietSummaryCard;
+
+// ダイエットサマリ用グラフSVG
+function _renderDietChartSVG(dayWeights, dayFats, wKeys, fKeys) {
+  // 体重の値範囲
+  let minVal = 50, maxVal = 80;
+  if (wKeys.length > 0) {
+    const values = wKeys.map(k => dayWeights[k].value);
+    minVal = Math.min.apply(null, values);
+    maxVal = Math.max.apply(null, values);
+    const padding = (maxVal - minVal) * 0.2 || 1;
+    minVal -= padding;
+    maxVal += padding;
+  }
+  // 目標ライン
+  const goalMain = 55, goalMid = 60;
+  if (goalMain < minVal) minVal = goalMain - 1;
+  if (goalMid > maxVal) maxVal = goalMid + 1;
+  
+  // 体脂肪の値範囲
+  let minFat = 0, maxFat = 50;
+  if (fKeys.length > 0) {
+    const fatVals = fKeys.map(k => dayFats[k].value);
+    minFat = Math.min.apply(null, fatVals);
+    maxFat = Math.max.apply(null, fatVals);
+    const fatPad = (maxFat - minFat) * 0.3 || 2;
+    minFat -= fatPad;
+    maxFat += fatPad;
+    if (maxFat - minFat < 5) {
+      const center = (maxFat + minFat) / 2;
+      minFat = center - 3;
+      maxFat = center + 3;
+    }
+  }
+  
+  // 全日付（体重or体脂肪のあるすべての日）
+  const allKeys = Array.from(new Set([...wKeys, ...fKeys])).sort();
+  if (allKeys.length === 0) return '';
+  
+  const w = 320, hChart = 130;
+  const padL = 26, padR = (fKeys.length > 0 ? 28 : 12), padT = 12, padB = 14;
+  const innerW = w - padL - padR;
+  const innerH = hChart - padT - padB;
+  
+  // X位置：日付インデックスベース
+  const xFor = (idx) => padL + (allKeys.length === 1 ? innerW/2 : (idx / (allKeys.length - 1)) * innerW);
+  const yFor = (v) => padT + ((maxVal - v) / (maxVal - minVal)) * innerH;
+  const yForFat = (v) => padT + ((maxFat - v) / (maxFat - minFat)) * innerH;
+  
+  // 体重折れ線パス
+  let path = '', firstX = null, lastX = null;
+  let pathPoints = [];
+  for (let i = 0; i < allKeys.length; i++) {
+    const k = allKeys[i];
+    if (!dayWeights[k]) continue;
+    const x = xFor(i);
+    const y = yFor(dayWeights[k].value);
+    pathPoints.push({x, y, k});
+  }
+  for (let i = 0; i < pathPoints.length; i++) {
+    path += (i === 0 ? 'M' : 'L') + pathPoints[i].x.toFixed(1) + ',' + pathPoints[i].y.toFixed(1) + ' ';
+    if (i === 0) firstX = pathPoints[i].x;
+    lastX = pathPoints[i].x;
+  }
+  // 塗りつぶし
+  let fillPath = '';
+  if (pathPoints.length >= 1) {
+    fillPath = path + ' L' + lastX.toFixed(1) + ',' + (padT + innerH) + ' L' + firstX.toFixed(1) + ',' + (padT + innerH) + ' Z';
+  }
+  
+  // 体脂肪折れ線パス
+  let fatPath = '';
+  let fatPoints = [];
+  for (let i = 0; i < allKeys.length; i++) {
+    const k = allKeys[i];
+    if (!dayFats[k]) continue;
+    const x = xFor(i);
+    const y = yForFat(dayFats[k].value);
+    fatPoints.push({x, y, k});
+  }
+  for (let i = 0; i < fatPoints.length; i++) {
+    fatPath += (i === 0 ? 'M' : 'L') + fatPoints[i].x.toFixed(1) + ',' + fatPoints[i].y.toFixed(1) + ' ';
+  }
+  
+  let h = '<div style="background:white;border:1px solid #F5D8DC;border-radius:10px;padding:8px 4px 6px;margin-top:4px;">';
+  h += '<svg viewBox="0 0 '+w+' '+hChart+'" preserveAspectRatio="none" style="width:100%;height:'+hChart+'px;display:block;">';
+  
+  // 左Y軸ラベル（最大最小、角に配置）
+  h += '<text x="3" y="'+(padT+5).toFixed(1)+'" font-size="7" fill="#B8AFA8" font-weight="600">'+maxVal.toFixed(0)+'</text>';
+  h += '<text x="3" y="'+(padT+innerH-1).toFixed(1)+'" font-size="7" fill="#B8AFA8" font-weight="600">'+minVal.toFixed(0)+'</text>';
+  
+  // 目標ライン（中間60、目標55）
+  const yMain = yFor(goalMain);
+  const yMid = yFor(goalMid);
+  h += '<line x1="'+padL+'" y1="'+yMid.toFixed(1)+'" x2="'+(w-padR)+'" y2="'+yMid.toFixed(1)+'" stroke="#E8C890" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.7" />';
+  h += '<line x1="'+padL+'" y1="'+yMain.toFixed(1)+'" x2="'+(w-padR)+'" y2="'+yMain.toFixed(1)+'" stroke="#E8B0BC" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.7" />';
+  // 目標ラベル（線の左端、白背景つき）
+  h += '<text x="'+(padL-1)+'" y="'+(yMid+3).toFixed(1)+'" text-anchor="end" font-size="7.5" fill="#C8A060" font-weight="700">60</text>';
+  h += '<text x="'+(padL-1)+'" y="'+(yMain+3).toFixed(1)+'" text-anchor="end" font-size="7.5" fill="#C8709A" font-weight="700">55</text>';
+  
+  // 体重塗りつぶし＆線
+  if (fillPath) h += '<path d="'+fillPath+'" fill="#FCE0E8" opacity="0.5" />';
+  if (path) h += '<path d="'+path+'" fill="none" stroke="#C8709A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />';
+  for (const p of pathPoints) {
+    h += '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="2.2" fill="white" stroke="#C8709A" stroke-width="1.4" />';
+  }
+  
+  // 体脂肪線（オレンジ系・破線）
+  if (fatPath) {
+    h += '<path d="'+fatPath+'" fill="none" stroke="#E8B868" stroke-width="1.6" stroke-dasharray="4,2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />';
+    for (const p of fatPoints) {
+      h += '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="1.8" fill="white" stroke="#E8B868" stroke-width="1.3" />';
+    }
+    // 右Y軸（体脂肪%）
+    h += '<text x="'+(w-3)+'" y="'+(padT+5).toFixed(1)+'" text-anchor="end" font-size="7" fill="#E8B868" font-weight="600">'+maxFat.toFixed(0)+'%</text>';
+    h += '<text x="'+(w-3)+'" y="'+(padT+innerH-1).toFixed(1)+'" text-anchor="end" font-size="7" fill="#E8B868" font-weight="600">'+minFat.toFixed(0)+'%</text>';
+  }
+  
+  h += '</svg>';
+  h += '</div>';
+  return h;
+}
+window._renderDietChartSVG = _renderDietChartSVG;
+
 // ===== My（自分のこと）タブ =====
 const MY_SUB_TABS = [
   { id: 'resume',   label: '履歴書',   icon: 'description' },
@@ -12268,6 +12503,11 @@ function renderMeMode() {
       // スタンプボタン
       const allStamps = data.stampLib[selCat] || [];
       const visibleStamps = allStamps.filter(s => !s.hidden);
+      
+      // ===== ダイエットカテゴリ専用：体重・体脂肪サマリカード =====
+      if (selCat === 'ダイエット') {
+        html += _renderDietSummaryCard();
+      }
       
       // ===== カードA: スタンプを押すエリア（白カード・細枠） =====
       html += '<div style="margin:8px 12px 10px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 0 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
