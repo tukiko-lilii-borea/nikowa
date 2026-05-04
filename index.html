@@ -3243,6 +3243,7 @@
   <button class="nav-btn active" data-view="houses"><span class="nav-icon"><span class="material-symbols-rounded">home</span></span><span class="nav-en">Home</span></button>
   <button class="nav-btn" data-view="schedule"><span class="nav-icon"><span class="material-symbols-rounded">calendar_month</span></span><span class="nav-en">Schedule</span></button>
   <button class="nav-btn" data-view="town"><span class="nav-icon"><span class="material-symbols-rounded">location_city</span></span><span class="nav-en">Town</span></button>
+  <button class="nav-btn" onclick="openGlobalSearch()" type="button"><span class="nav-icon"><span class="material-symbols-rounded">search</span></span><span class="nav-en">Search</span></button>
   <button class="nav-btn" data-view="settings"><span class="nav-icon"><span class="material-symbols-rounded">settings</span></span><span class="nav-en">Settings</span></button>
 </nav>
 </div>
@@ -5105,20 +5106,52 @@ function yesterdayKey() {
   return dateToKey(d);
 }
 function getDateWeatherIcon(dateKey) {
-  // その日に書かれた日記の天気アイコンを返す（最後に書かれたもの優先）
-  if (!data.posts || !data.posts.length) return null;
-  let found = null;
-  let foundTs = 0;
-  for (const p of data.posts) {
-    if (!p.weather) continue;
-    const d = new Date(p.createdAt);
-    const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    if (k === dateKey && p.createdAt > foundTs) {
-      found = p.weather;
-      foundTs = p.createdAt;
+  // 1) その日に書かれた日記の天気アイコンを返す（最後に書かれたもの優先）
+  if (data.posts && data.posts.length) {
+    let found = null;
+    let foundTs = 0;
+    for (const p of data.posts) {
+      if (!p.weather) continue;
+      const d = new Date(p.createdAt);
+      const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      if (k === dateKey && p.createdAt > foundTs) {
+        found = p.weather;
+        foundTs = p.createdAt;
+      }
     }
+    if (found) return found;
   }
-  return found;
+  
+  // 2) 今日 or 未来日 → _weatherCacheから取得
+  const w = window._weatherCache;
+  if (!w) return null;
+  
+  const today = new Date();
+  const todayKey = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  
+  // 今日 → 現在の天気
+  if (dateKey === todayKey) return w.icon || null;
+  
+  // 未来日 → forecast（5日先まで、3時間ごと16コマ）から正午のアイコン取得
+  if (w.forecast && w.forecast.length) {
+    // 各日の昼12時付近（11-14時）のアイコンを優先採用、なければ最初のコマ
+    let bestIcon = null;
+    let bestHourDiff = 99;
+    for (const f of w.forecast) {
+      const fd = new Date(f.time);
+      const fKey = fd.getFullYear()+'-'+String(fd.getMonth()+1).padStart(2,'0')+'-'+String(fd.getDate()).padStart(2,'0');
+      if (fKey === dateKey) {
+        const hourDiff = Math.abs(fd.getHours() - 12);
+        if (hourDiff < bestHourDiff) {
+          bestHourDiff = hourDiff;
+          bestIcon = f.icon;
+        }
+      }
+    }
+    if (bestIcon) return bestIcon;
+  }
+  
+  return null;
 }
 function setCareRecentTab(tab) {
   careRecentTab = tab;
@@ -8434,6 +8467,1293 @@ function deleteAppliance(nestId, applianceId) {
   render();
 }
 
+// ===== グローバル検索 =====
+const SEARCH_MODES = [
+  { id: 'all',    label: 'すべて',  icon: 'apps' },
+  { id: 'me',     label: 'ME',      icon: 'person' },
+  { id: 'pet',    label: 'PET',     icon: 'pets' },
+  { id: 'kids',   label: 'KIDS',    icon: 'child_care' },
+  { id: 'office', label: 'OFFICE',  icon: 'business_center' }
+];
+
+function openGlobalSearch() {
+  const ex = document.getElementById('globalSearchModal');
+  if (ex) ex.remove();
+  
+  // フィルタは開くたびにリセット
+  window._searchMode = 'all';
+  window._searchCollapsed = {}; // セクションごとの折りたたみ状態
+  window._globalSearchOpen = true; // Backボタン連動用
+  
+  // bodyに検索モード中のクラス付与（Backボタン表示制御）
+  document.body.classList.add('global-search-active');
+  
+  let h = '<div id="globalSearchModal" style="position:fixed;left:0;right:0;top:0;bottom:calc(60px + env(safe-area-inset-bottom));z-index:1400;background:var(--surface);display:flex;flex-direction:column;font-family:inherit;max-width:480px;margin:0 auto;border-bottom:1px solid var(--line);">';
+  
+  // ヘッダー：検索バー
+  h += '<div style="padding:12px 14px 8px;border-bottom:1px solid var(--line);background:var(--surface);box-sizing:border-box;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;">';
+  h += '<button onclick="closeGlobalSearch()" style="background:none;border:none;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--ink-dark);flex-shrink:0;padding:0;"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '<div style="flex:1;display:flex;align-items:center;gap:6px;background:var(--surface-warm);border:1.5px solid var(--accent);border-radius:100px;padding:6px 12px;min-width:0;">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);flex-shrink:0;">search</span>';
+  h += '<input id="globalSearchInput" type="search" placeholder="探したい言葉を入力..." oninput="performGlobalSearch()" autocomplete="off" style="flex:1;background:transparent;border:none;outline:none;font-size:14px;font-family:inherit;color:var(--ink-dark);min-width:0;width:100%;padding:0;" />';
+  h += '<button onclick="document.getElementById(\'globalSearchInput\').value=\'\';performGlobalSearch();" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;"><span class="material-symbols-rounded" style="font-size:16px;">cancel</span></button>';
+  h += '</div>';
+  h += '</div>';
+  
+  // モードフィルタータブ（横スクロール）
+  h += '<div id="searchModeTabs" style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-top:10px;padding:0 2px;">';
+  for (const m of SEARCH_MODES) {
+    const isAct = m.id === 'all';
+    h += '<button data-mode="'+m.id+'" onclick="switchSearchMode(\''+m.id+'\')" style="flex-shrink:0;padding:6px 14px;border-radius:100px;border:1.5px solid '+(isAct?'var(--accent)':'var(--line)')+';background:'+(isAct?'var(--accent)':'var(--surface)')+';color:'+(isAct?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:14px;">'+m.icon+'</span>';
+    h += m.label+'</button>';
+  }
+  h += '</div>';
+  h += '<style>#searchModeTabs::-webkit-scrollbar{display:none;}</style>';
+  h += '</div>';
+  
+  // 結果エリア
+  h += '<div id="globalSearchResults" style="flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch;">';
+  h += _globalSearchEmptyState();
+  h += '</div>';
+  
+  h += '</div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  
+  // 自動フォーカス
+  setTimeout(() => {
+    const inp = document.getElementById('globalSearchInput');
+    if (inp) inp.focus();
+  }, 100);
+  
+  // Backボタンを表示（トップ画面でも検索中は表示）
+  const backBtn = document.getElementById('navBackBtn');
+  if (backBtn) backBtn.style.display = 'flex';
+}
+
+function switchSearchMode(modeId) {
+  window._searchMode = modeId;
+  const tabs = document.querySelectorAll('#searchModeTabs button');
+  tabs.forEach(b => {
+    const isAct = b.dataset.mode === modeId;
+    b.style.borderColor = isAct ? 'var(--accent)' : 'var(--line)';
+    b.style.background = isAct ? 'var(--accent)' : 'var(--surface)';
+    b.style.color = isAct ? 'white' : 'var(--ink-sub)';
+  });
+  performGlobalSearch();
+}
+
+// セクション折りたたみトグル
+function toggleSearchSection(sectionId) {
+  if (!window._searchCollapsed) window._searchCollapsed = {};
+  window._searchCollapsed[sectionId] = !window._searchCollapsed[sectionId];
+  performGlobalSearch();
+}
+
+function closeGlobalSearch() {
+  const el = document.getElementById('globalSearchModal');
+  if (el) el.remove();
+  window._globalSearchOpen = false;
+  document.body.classList.remove('global-search-active');
+  // Backボタンを現在のviewに合わせて再評価
+  const backBtn = document.getElementById('navBackBtn');
+  if (backBtn && currentView === 'top') backBtn.style.display = 'none';
+}
+
+function _globalSearchEmptyState() {
+  let h = '<div style="padding:30px 20px;text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.7;font-weight:600;">';
+  h += '<div style="margin-bottom:10px;opacity:0.5;"><span class="material-symbols-rounded" style="font-size:48px;color:var(--accent-deep);">manage_search</span></div>';
+  h += 'スタンプ・出費・固定費・<br>保険・ローン・Memo・日記から<br>横断検索できるよ';
+  h += '<div style="margin-top:16px;font-size:11px;color:var(--ink-light);">';
+  h += '例：「生理」「体重」「弁当」「Netflix」';
+  h += '</div></div>';
+  return h;
+}
+
+function _globalSearchNoResult(query) {
+  let h = '<div style="padding:30px 20px;text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.7;font-weight:600;">';
+  h += '<div style="margin-bottom:8px;opacity:0.5;"><span class="material-symbols-rounded" style="font-size:42px;color:var(--ink-sub);">search_off</span></div>';
+  h += '「'+escapeHtml(query)+'」に該当する記録が<br>見つからなかったよ';
+  h += '</div>';
+  return h;
+}
+
+function _formatSearchDate(timestamp) {
+  if (!timestamp) return '';
+  const d = new Date(timestamp);
+  const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+  return (d.getMonth()+1)+'/'+d.getDate()+'('+wd+')';
+}
+
+function _formatSearchDateFull(timestamp) {
+  if (!timestamp) return '';
+  const d = new Date(timestamp);
+  return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+}
+
+// 検索本体
+function performGlobalSearch() {
+  const inp = document.getElementById('globalSearchInput');
+  const resultsEl = document.getElementById('globalSearchResults');
+  if (!inp || !resultsEl) return;
+  
+  const q = inp.value.trim();
+  if (!q) {
+    resultsEl.innerHTML = _globalSearchEmptyState();
+    return;
+  }
+  const qLower = q.toLowerCase();
+  const match = (str) => str && String(str).toLowerCase().includes(qLower);
+  
+  const results = {
+    stamp: [],
+    expense: [],
+    subscription: [],
+    insurance: [],
+    loan: [],
+    memo: [],
+    diary: []
+  };
+  
+  // モードフィルタ：日記の petId からモード判定
+  const mode = window._searchMode || 'all';
+  const isMode = (m) => mode === 'all' || mode === m;
+  
+  // ペット情報マップ（id→pet）
+  const petMap = {};
+  if (data.pets) {
+    for (const p of data.pets) petMap[p.id] = p;
+  }
+  
+  // 1) スタンプ履歴（ME相当）
+  if (isMode('me') && data.stampHistory && Array.isArray(data.stampHistory)) {
+    for (const r of data.stampHistory) {
+      if (match(r.name) || match(r.category) || match(r.value) || match(r.unit)) {
+        results.stamp.push(r);
+      }
+    }
+  }
+  
+  // 2) 出費メモ（ME相当）
+  if (isMode('me') && data.money && data.money.expenses) {
+    for (const e of data.money.expenses) {
+      const catInfo = _getExpenseCategoryInfo(e.category);
+      if (match(e.memo) || match(catInfo.label) || match(e.amount)) {
+        results.expense.push({...e, _catInfo: catInfo});
+      }
+    }
+  }
+  
+  // 3) 固定費（ME相当）
+  if (isMode('me') && data.money && data.money.subscriptions) {
+    for (const s of data.money.subscriptions) {
+      const catInfo = _getSubCategoryInfo(s.category);
+      if (match(s.name) || match(s.memo) || match(catInfo.label)) {
+        results.subscription.push({...s, _catInfo: catInfo});
+      }
+    }
+  }
+  
+  // 4) 保険（ME相当）
+  if (isMode('me') && data.money && data.money.insurance) {
+    for (const i of data.money.insurance) {
+      if (match(i.company) || match(i.productName) || match(i.type) || match(i.memo) || match(i.beneficiary)) {
+        results.insurance.push(i);
+      }
+    }
+  }
+  
+  // 5) ローン（ME相当）
+  if (isMode('me') && data.money && data.money.loans) {
+    for (const l of data.money.loans) {
+      if (match(l.lender) || match(l.type) || match(l.memo)) {
+        results.loan.push(l);
+      }
+    }
+  }
+  
+  // 6) Memo（ME相当）
+  if (isMode('me')) {
+    _ensureMemoStructure();
+    const _searchMemoRec = (node, path) => {
+      if (node.items) {
+        for (const m of node.items) {
+          if (match(m.title) || match(m.body)) {
+            results.memo.push({...m, _path: path});
+          }
+        }
+      }
+      if (node.folders) {
+        for (const f of node.folders) {
+          _searchMemoRec(f, path ? path+' > '+f.name : f.name);
+        }
+      }
+    };
+    _searchMemoRec(data.memos, '');
+  }
+  
+  // 7) 日記（モード別フィルタ）
+  if (data.posts && Array.isArray(data.posts)) {
+    for (const p of data.posts) {
+      // モード判定：me_diary → ME, それ以外 → PET
+      const pet = petMap[p.petId];
+      let postMode = 'pet'; // デフォ
+      if (p.petId === 'me_diary') postMode = 'me';
+      else if (pet && pet.kind === 'me') postMode = 'me';
+      
+      if (!isMode(postMode)) continue;
+      
+      // ペット名でも検索可能
+      const petName = pet ? pet.name : '';
+      if (match(p.text) || match(p.mood) || match(petName)) {
+        results.diary.push({...p, _petName: petName, _postMode: postMode});
+      }
+    }
+  }
+  
+  // 結果数
+  const totalCount = Object.values(results).reduce((s,arr) => s + arr.length, 0);
+  if (totalCount === 0) {
+    resultsEl.innerHTML = _globalSearchNoResult(q);
+    return;
+  }
+  
+  const showCat = () => true; // フィルタ廃止、常に表示
+  
+  // 結果レンダリング
+  let h = '';
+  if (mode === 'all') {
+    h += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;margin-bottom:10px;">'+totalCount+'件の結果</div>';
+  } else {
+    const modeLabel = (SEARCH_MODES.find(m => m.id === mode) || {}).label || '';
+    h += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;margin-bottom:10px;">'+modeLabel+'：'+totalCount+'件の結果</div>';
+  }
+  
+  // スタンプ（時間降順）
+  if (showCat('stamp') && results.stamp.length > 0) {
+    h += _renderSearchSection('stamp', 'スタンプ', results.stamp.length, 'check_circle');
+    h += _searchSectionWrapStart('stamp');
+    const sorted = results.stamp.sort((a,b) => (b.timestamp||0) - (a.timestamp||0)).slice(0, 50);
+    h += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
+    for (const r of sorted) {
+      const cat = r.category || 'その他';
+      const color = _stampCatColor(cat);
+      h += '<button onclick="closeGlobalSearch();_jumpToStamp();" style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--card-border);background:var(--surface);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+      h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:'+color+';color:white;flex-shrink:0;">'+renderStampIcon(r.icon||'check','font-size:18px;line-height:1;')+'</span>';
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;">';
+      h += '<span style="font-size:9px;font-weight:800;color:white;background:'+color+';padding:1px 6px;border-radius:100px;">'+escapeHtml(cat)+'</span>';
+      h += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.name||'記録')+'</span>';
+      h += '</div>';
+      h += '<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;">'+_formatSearchDateFull(r.timestamp);
+      if (r.value !== undefined && r.value !== null && r.value !== '') {
+        h += ' / <span style="color:var(--accent-deep);font-weight:700;">'+escapeHtml(String(r.value))+(r.unit?escapeHtml(r.unit):'')+'</span>';
+      }
+      h += '</div>';
+      h += '</div></button>';
+    }
+    h += '</div>';
+    h += _searchSectionWrapEnd();
+  }
+  
+  // 出費（時間降順）
+  if (showCat('expense') && results.expense.length > 0) {
+    h += _renderSearchSection('expense', '出費', results.expense.length, 'receipt_long');
+    h += _searchSectionWrapStart('expense');
+    const sorted = results.expense.sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0, 50);
+    h += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
+    for (const e of sorted) {
+      const c = e._catInfo;
+      h += '<button onclick="closeGlobalSearch();_jumpToMoneyTab(\'expenses\');" style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--card-border);background:var(--surface);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+      h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:'+c.color+';color:white;flex-shrink:0;">'+renderStampIcon(c.icon,'font-size:16px;line-height:1;')+'</span>';
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(e.memo||c.label)+'</div>';
+      h += '<div style="font-size:10px;color:var(--ink-sub);">'+escapeHtml(e.date||'')+' / '+escapeHtml(c.label)+'</div>';
+      h += '</div>';
+      h += '<span style="flex-shrink:0;font-size:13px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">¥'+(parseFloat(e.amount)||0).toLocaleString()+'</span>';
+      h += '</button>';
+    }
+    h += '</div>';
+    h += _searchSectionWrapEnd();
+  }
+  
+  // 固定費
+  if (showCat('subscription') && results.subscription.length > 0) {
+    h += _renderSearchSection('subscription', '固定費', results.subscription.length, 'autorenew');
+    h += _searchSectionWrapStart('subscription');
+    h += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
+    for (const s of results.subscription) {
+      const c = s._catInfo;
+      h += '<button onclick="closeGlobalSearch();_jumpToMoneyTab(\'subscriptions\');" style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--card-border);background:var(--surface);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+      h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:'+c.color+';color:white;flex-shrink:0;">'+renderStampIcon(c.icon,'font-size:16px;line-height:1;')+'</span>';
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.name||'無題')+(s.active===false?' <span style="font-size:9px;color:var(--ink-sub);">（停止中）</span>':'')+'</div>';
+      h += '<div style="font-size:10px;color:var(--ink-sub);">'+escapeHtml(c.label)+(s.memo?' / '+escapeHtml(s.memo.slice(0,30)):'')+'</div>';
+      h += '</div>';
+      h += '<span style="flex-shrink:0;font-size:13px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">¥'+(parseFloat(s.monthlyFee)||0).toLocaleString()+'/月</span>';
+      h += '</button>';
+    }
+    h += '</div>';
+    h += _searchSectionWrapEnd();
+  }
+  
+  // 保険
+  if (showCat('insurance') && results.insurance.length > 0) {
+    h += _renderSearchSection('insurance', '保険', results.insurance.length, 'shield');
+    h += _searchSectionWrapStart('insurance');
+    h += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
+    for (const i of results.insurance) {
+      h += '<button onclick="closeGlobalSearch();_jumpToMoneyTab(\'insurance\');" style="display:flex;flex-direction:column;gap:2px;padding:10px;border:1px solid var(--card-border);background:var(--surface);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;">';
+      h += '<span style="font-size:9px;font-weight:800;color:var(--accent-deep);background:var(--accent-bg);padding:1px 6px;border-radius:100px;flex-shrink:0;">'+escapeHtml(i.type||'その他')+'</span>';
+      h += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(i.productName||i.company||'無題')+'</span>';
+      if (i.monthlyFee) h += '<span style="flex-shrink:0;font-size:12px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">¥'+parseFloat(i.monthlyFee).toLocaleString()+'/月</span>';
+      h += '</div>';
+      if (i.company && i.productName) h += '<div style="font-size:10px;color:var(--ink-sub);">'+escapeHtml(i.company)+'</div>';
+      h += '</button>';
+    }
+    h += '</div>';
+    h += _searchSectionWrapEnd();
+  }
+  
+  // ローン
+  if (showCat('loan') && results.loan.length > 0) {
+    h += _renderSearchSection('loan', 'ローン', results.loan.length, 'home');
+    h += _searchSectionWrapStart('loan');
+    h += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
+    for (const l of results.loan) {
+      h += '<button onclick="closeGlobalSearch();_jumpToMoneyTab(\'loans\');" style="display:flex;flex-direction:column;gap:2px;padding:10px;border:1px solid var(--card-border);background:var(--surface);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;">';
+      h += '<span style="font-size:9px;font-weight:800;color:var(--accent-deep);background:var(--accent-bg);padding:1px 6px;border-radius:100px;flex-shrink:0;">'+escapeHtml(l.type||'その他')+'</span>';
+      h += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(l.lender||'無題')+'</span>';
+      if (l.monthlyPayment) h += '<span style="flex-shrink:0;font-size:12px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">¥'+parseFloat(l.monthlyPayment).toLocaleString()+'/月</span>';
+      h += '</div>';
+      h += '</button>';
+    }
+    h += '</div>';
+    h += _searchSectionWrapEnd();
+  }
+  
+  // Memo
+  if (showCat('memo') && results.memo.length > 0) {
+    h += _renderSearchSection('memo', 'Memo', results.memo.length, 'edit_note');
+    h += _searchSectionWrapStart('memo');
+    const sorted = results.memo.sort((a,b) => (b.updatedAt||0)-(a.updatedAt||0)).slice(0, 50);
+    h += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
+    for (const m of sorted) {
+      h += '<button onclick="closeGlobalSearch();_jumpToMemo();" style="display:flex;flex-direction:column;gap:3px;padding:10px;border:1px solid var(--card-border);background:var(--surface);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+      h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(m.title||'(無題)')+'</div>';
+      if (m.body) h += '<div style="font-size:11px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(m.body.slice(0,60))+'</div>';
+      if (m._path) h += '<div style="font-size:10px;color:var(--ink-light);">📁 '+escapeHtml(m._path||'(ルート)')+'</div>';
+      h += '</button>';
+    }
+    h += '</div>';
+    h += _searchSectionWrapEnd();
+  }
+  
+  // 日記
+  if (showCat('diary') && results.diary.length > 0) {
+    h += _renderSearchSection('diary', '日記', results.diary.length, 'menu_book');
+    h += _searchSectionWrapStart('diary');
+    const sorted = results.diary.sort((a,b) => (b.createdAt||0)-(a.createdAt||0)).slice(0, 50);
+    h += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
+    for (const p of sorted) {
+      h += '<button onclick="closeGlobalSearch();_jumpToDiary();" style="display:flex;flex-direction:column;gap:3px;padding:10px;border:1px solid var(--card-border);background:var(--surface);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;">';
+      // モードバッジ
+      const isMe = p._postMode === 'me';
+      h += '<span style="display:inline-flex;align-items:center;gap:2px;font-size:9px;font-weight:800;color:white;background:'+(isMe?'var(--accent-deep)':'#5FA985')+';padding:2px 6px;border-radius:100px;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:11px;">'+(isMe?'person':'pets')+'</span>'+(isMe?'ME':'PET')+'</span>';
+      if (!isMe && p._petName) {
+        h += '<span style="font-size:10px;color:var(--ink-sub);font-weight:700;">'+escapeHtml(p._petName)+'</span>';
+      }
+      if (p.weather) h += '<span style="font-size:14px;">'+p.weather+'</span>';
+      h += '<span style="flex:1;"></span>';
+      h += '<span style="font-size:11px;color:var(--ink-sub);font-weight:700;">'+_formatSearchDateFull(p.createdAt)+'</span>';
+      h += '</div>';
+      h += '<div style="font-size:12px;color:var(--ink-dark);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.5;">'+escapeHtml((p.text||'').slice(0,120))+'</div>';
+      h += '</button>';
+    }
+    h += '</div>';
+    h += _searchSectionWrapEnd();
+  }
+  
+  resultsEl.innerHTML = h;
+}
+
+function _renderSearchSection(sectionId, title, count, icon) {
+  const collapsed = window._searchCollapsed && window._searchCollapsed[sectionId];
+  let h = '<div onclick="toggleSearchSection(\''+sectionId+'\')" style="width:100%;display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:8px 10px;background:var(--accent-bg);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;border:1px solid var(--accent);box-sizing:border-box;user-select:none;">';
+  if (icon) h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">'+icon+'</span>';
+  h += '<span style="font-size:13px;font-weight:800;color:var(--accent-deep);flex:1;">'+title+'</span>';
+  h += '<span style="font-size:10px;font-weight:700;color:var(--ink-sub);">'+count+'件</span>';
+  h += '<span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);'+(collapsed?'transform:rotate(-90deg);':'')+'">expand_more</span>';
+  h += '</div>';
+  return h;
+}
+
+// セクション本体ラッパー（折りたたみ時は非表示）
+function _searchSectionWrapStart(sectionId) {
+  const collapsed = window._searchCollapsed && window._searchCollapsed[sectionId];
+  if (collapsed) return '<div style="display:none;">';
+  return '<div>';
+}
+function _searchSectionWrapEnd() {
+  return '</div>';
+}
+
+// 各画面へのジャンプヘルパー
+function _jumpToStamp() {
+  switchMode('me');
+  data.currentModeTab = data.currentModeTab || {};
+  data.currentModeTab.me = 'stamp';
+  data.stampSubTab = 'stamp';
+  saveData();
+  render();
+}
+function _jumpToMoneyTab(sub) {
+  switchMode('me');
+  data.currentModeTab = data.currentModeTab || {};
+  data.currentModeTab.me = 'money';
+  data.moneySubTab = sub || 'expenses';
+  saveData();
+  render();
+}
+function _jumpToMemo() {
+  switchMode('me');
+  data.currentModeTab = data.currentModeTab || {};
+  data.currentModeTab.me = 'secret';
+  data.memoSubTab = 'memo';
+  saveData();
+  render();
+}
+function _jumpToDiary() {
+  switchMode('me');
+  data.currentModeTab = data.currentModeTab || {};
+  data.currentModeTab.me = 'diary';
+  saveData();
+  render();
+}
+
+// ===== 生理周期予測のON/OFF =====
+function toggleMenstrualPref() {
+  if (!data.userPrefs) data.userPrefs = {};
+  data.userPrefs.menstrualEnabled = !data.userPrefs.menstrualEnabled;
+  saveData();
+  showToast(data.userPrefs.menstrualEnabled ? '生理周期予測をONにしたよ🌷' : '生理周期予測をOFFにしたよ');
+  render();
+}
+window.toggleMenstrualPref = toggleMenstrualPref;
+
+// ===== サンプルデータ投入 =====
+function injectSampleData() {
+  if (!confirm('既存データを上書きしてサンプルデータを入れる？')) return;
+  
+  try {
+    _doInjectSampleData();
+  } catch(err) {
+    console.error('サンプル投入エラー:', err);
+    alert('エラーが起きたよ：' + (err && err.message ? err.message : err));
+  }
+}
+window.injectSampleData = injectSampleData;
+
+function _doInjectSampleData() {
+  const today = new Date();
+  const todayMs = today.getTime();
+  const dayMs = 24*60*60*1000;
+  
+  // ===== 1. ユーザー基本情報 =====
+  data.user = data.user || {};
+  data.user.name = data.user.name || 'あんず';
+  data.user.avatar = data.user.avatar || '🌷';
+  data.userRegion = data.userRegion || '大阪';
+  
+  // ===== 2. スタンプ履歴（過去90日分） =====
+  if (!data.stampLib) data.stampLib = {};
+  data.stampHistory = [];
+  
+  // 生理開始（過去3回、約28日周期）
+  for (let i = 0; i < 3; i++) {
+    const t = todayMs - (28 * (3 - i) - 5) * dayMs; // 5日前が直近
+    data.stampHistory.push({
+      id: 'sh_' + Date.now() + '_' + i,
+      category: '体調',
+      name: '生理開始',
+      icon: 'water_full',
+      period: 'start',
+      timestamp: t
+    });
+    // 生理終了（5日後）
+    data.stampHistory.push({
+      id: 'sh_' + Date.now() + '_e' + i,
+      category: '体調',
+      name: '生理終了',
+      icon: 'water_drop',
+      period: 'end',
+      timestamp: t + 5 * dayMs
+    });
+  }
+  
+  // 体重記録（過去60日、ゆっくり減少）
+  let w = 73.5;
+  for (let i = 60; i >= 0; i -= 2) {
+    w = w - (Math.random() * 0.3 - 0.05); // 微増減
+    data.stampHistory.push({
+      id: 'sh_w_' + i,
+      category: 'ダイエット',
+      name: '体重',
+      icon: 'monitor_weight',
+      type: 'number',
+      value: w.toFixed(1),
+      unit: 'kg',
+      timestamp: todayMs - i * dayMs
+    });
+  }
+  
+  // 体脂肪（過去30日、3日おき）
+  let bf = 32.0;
+  for (let i = 30; i >= 0; i -= 3) {
+    bf = bf - (Math.random() * 0.2);
+    data.stampHistory.push({
+      id: 'sh_bf_' + i,
+      category: 'ダイエット',
+      name: '体脂肪',
+      icon: 'percent',
+      type: 'number',
+      value: bf.toFixed(1),
+      unit: '%',
+      timestamp: todayMs - i * dayMs
+    });
+  }
+  
+  // 食事記録（過去14日、毎日）
+  const meals = ['朝：トースト＋ヨーグルト', '昼：サラダチキン弁当', '夜：鶏胸肉と野菜の蒸し焼き', '昼：そばと卵', '夜：豆腐ハンバーグ'];
+  for (let i = 14; i >= 0; i--) {
+    data.stampHistory.push({
+      id: 'sh_m_' + i,
+      category: 'ダイエット',
+      name: '食事記録',
+      icon: 'lunch_dining',
+      type: 'text',
+      value: meals[i % meals.length],
+      timestamp: todayMs - i * dayMs - 12 * 60 * 60 * 1000
+    });
+  }
+  
+  // ジョギング（過去30日、3日おき）
+  for (let i = 30; i >= 0; i -= 3) {
+    data.stampHistory.push({
+      id: 'sh_j_' + i,
+      category: 'ダイエット',
+      name: 'ジョギング',
+      icon: 'directions_run',
+      type: 'number',
+      value: (3 + Math.random() * 2).toFixed(1),
+      unit: 'km',
+      timestamp: todayMs - i * dayMs - 7 * 60 * 60 * 1000
+    });
+  }
+  
+  // 生活系スタンプ（過去30日、ランダム）
+  const lifeStamps = [
+    {n:'水', i:'water_drop'},{n:'ごはん', i:'restaurant'},{n:'おふろ', i:'bathtub'},
+    {n:'睡眠', i:'bed'},{n:'コーヒー', i:'coffee'}
+  ];
+  for (let d = 30; d >= 0; d--) {
+    const dayStart = todayMs - d * dayMs;
+    const count = Math.floor(Math.random() * 4) + 2; // 2-5個/日
+    for (let k = 0; k < count; k++) {
+      const s = lifeStamps[Math.floor(Math.random() * lifeStamps.length)];
+      data.stampHistory.push({
+        id: 'sh_l_' + d + '_' + k,
+        category: '生活',
+        name: s.n,
+        icon: s.i,
+        timestamp: dayStart + k * 3 * 60 * 60 * 1000
+      });
+    }
+  }
+  
+  // 美容スタンプ（散発的）
+  const beautyStamps = [
+    {n:'スキンケア', i:'face'},{n:'メイク', i:'palette'},{n:'マッサージ', i:'spa'}
+  ];
+  for (let d = 30; d >= 0; d -= 2) {
+    const s = beautyStamps[Math.floor(Math.random() * beautyStamps.length)];
+    data.stampHistory.push({
+      id: 'sh_b_' + d,
+      category: '美容',
+      name: s.n,
+      icon: s.i,
+      timestamp: todayMs - d * dayMs - 8 * 60 * 60 * 1000
+    });
+  }
+  
+  // 家事スタンプ
+  const homeStamps = [
+    {n:'掃除', i:'cleaning_services'},{n:'洗濯', i:'local_laundry_service'},{n:'料理', i:'kitchen'}
+  ];
+  for (let d = 21; d >= 0; d--) {
+    if (Math.random() > 0.4) {
+      const s = homeStamps[Math.floor(Math.random() * homeStamps.length)];
+      data.stampHistory.push({
+        id: 'sh_h_' + d,
+        category: '家事',
+        name: s.n,
+        icon: s.i,
+        timestamp: todayMs - d * dayMs - 18 * 60 * 60 * 1000
+      });
+    }
+  }
+  
+  // ===== 3. Money: 出費メモ（今月＋先月） =====
+  if (!data.money) data.money = {};
+  data.money.expenses = [];
+  
+  const expenseSamples = [
+    {cat:'food', amount:850, memo:'スーパーで野菜と肉', dayOffset:1},
+    {cat:'food', amount:1200, memo:'お米10kg', dayOffset:3},
+    {cat:'eatout', amount:1500, memo:'ランチ（パスタ屋）', dayOffset:2},
+    {cat:'eatout', amount:980, memo:'カフェでブランチ', dayOffset:5},
+    {cat:'daily', amount:680, memo:'シャンプー詰替', dayOffset:4},
+    {cat:'daily', amount:320, memo:'歯ブラシ', dayOffset:7},
+    {cat:'transport', amount:760, memo:'地下鉄', dayOffset:1},
+    {cat:'transport', amount:1280, memo:'タクシー（雨）', dayOffset:6},
+    {cat:'beauty', amount:8500, memo:'美容院（カラー）', dayOffset:10},
+    {cat:'beauty', amount:2400, memo:'化粧水', dayOffset:14},
+    {cat:'medical', amount:1340, memo:'薬局（風邪薬）', dayOffset:8},
+    {cat:'clothes', amount:4980, memo:'夏服セール', dayOffset:12},
+    {cat:'kids', amount:3200, memo:'長男の靴', dayOffset:9},
+    {cat:'kids', amount:780, memo:'長女のおやつ', dayOffset:11},
+    {cat:'pet', amount:1850, memo:'犬のフード', dayOffset:15},
+    {cat:'hobby', amount:1500, memo:'本2冊', dayOffset:13},
+    {cat:'social', amount:3500, memo:'友達の誕生日プレゼント', dayOffset:16},
+    {cat:'food', amount:920, memo:'コンビニ', dayOffset:18},
+    {cat:'eatout', amount:2400, memo:'家族で焼肉', dayOffset:20},
+    {cat:'food', amount:1500, memo:'まとめ買い', dayOffset:22}
+  ];
+  
+  for (let i = 0; i < expenseSamples.length; i++) {
+    const s = expenseSamples[i];
+    const d = new Date(todayMs - s.dayOffset * dayMs);
+    const dateStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    data.money.expenses.push({
+      id: 'exp_sample_' + i,
+      date: dateStr,
+      amount: String(s.amount),
+      category: s.cat,
+      memo: s.memo,
+      createdAt: d.getTime(),
+      updatedAt: d.getTime()
+    });
+  }
+  
+  // ===== 4. Money: 固定費 =====
+  data.money.subscriptions = [
+    {id:'sub_s1', name:'家賃', category:'rent', monthlyFee:'95000', billingDate:'27', memo:'マンション', active:true, createdAt:todayMs, updatedAt:todayMs},
+    {id:'sub_s2', name:'スマホ（家族3人）', category:'comm', monthlyFee:'12800', billingDate:'15', memo:'楽天モバイル', active:true, createdAt:todayMs, updatedAt:todayMs},
+    {id:'sub_s3', name:'電気・ガス・水道', category:'utility', monthlyFee:'18500', billingDate:'5', memo:'平均', active:true, createdAt:todayMs, updatedAt:todayMs},
+    {id:'sub_s4', name:'長男ピアノ', category:'lesson', monthlyFee:'8500', billingDate:'10', memo:'毎週土曜', active:true, createdAt:todayMs, updatedAt:todayMs},
+    {id:'sub_s5', name:'長女スイミング', category:'lesson', monthlyFee:'7200', billingDate:'10', memo:'週2回', active:true, createdAt:todayMs, updatedAt:todayMs},
+    {id:'sub_s6', name:'Netflix', category:'sub', monthlyFee:'1490', billingDate:'20', memo:'スタンダード', active:true, createdAt:todayMs, updatedAt:todayMs},
+    {id:'sub_s7', name:'Spotify', category:'sub', monthlyFee:'980', billingDate:'18', memo:'家族プラン', active:true, createdAt:todayMs, updatedAt:todayMs},
+    {id:'sub_s8', name:'駐車場', category:'parking', monthlyFee:'15000', billingDate:'25', memo:'月極', active:true, createdAt:todayMs, updatedAt:todayMs},
+    {id:'sub_s9', name:'Amazon Prime', category:'sub', monthlyFee:'600', billingDate:'1', memo:'年払い→月割', active:false, createdAt:todayMs, updatedAt:todayMs}
+  ];
+  
+  // ===== 5. Money: 保険 =====
+  data.money.insurance = [
+    {id:'ins_s1', type:'医療', company:'明治安田生命', productName:'メディカルスタイル', monthlyFee:'5800', paymentDate:'27', contractDate:'2018-04-01', expiryDate:'2058-04-01', certNumber:'M-12345-678', beneficiary:'本人', memo:'入院日額10000円', createdAt:todayMs, updatedAt:todayMs},
+    {id:'ins_s2', type:'がん', company:'アフラック', productName:'生きるためのがん保険', monthlyFee:'3200', paymentDate:'15', contractDate:'2020-08-15', expiryDate:'', certNumber:'A-98765', beneficiary:'本人', memo:'', createdAt:todayMs, updatedAt:todayMs},
+    {id:'ins_s3', type:'自動車', company:'ソニー損保', productName:'おまかせプラン', monthlyFee:'4800', paymentDate:'1', contractDate:'2024-06-01', expiryDate:'2026-06-01', certNumber:'C-555', beneficiary:'', memo:'人身対人無制限', createdAt:todayMs, updatedAt:todayMs}
+  ];
+  
+  // ===== 6. Money: ローン =====
+  data.money.loans = [
+    {id:'loan_s1', type:'住宅', lender:'三菱UFJ銀行', loanAmount:'35000000', currentBalance:'28500000', monthlyPayment:'105000', interestRate:'0.85', startDate:'2020-04-01', endDate:'2055-04-01', memo:'変動金利', createdAt:todayMs, updatedAt:todayMs}
+  ];
+  
+  // ===== 7. Memo =====
+  data.memos = {
+    folders: [
+      {
+        id: 'fld_work',
+        name: '仕事',
+        folders: [],
+        items: [
+          {id:'memo_w1', title:'会議メモ：4/28', body:'・新規案件3件\n・締切は5月末\n・予算100万', createdAt:todayMs - 5*dayMs, updatedAt:todayMs - 5*dayMs},
+          {id:'memo_w2', title:'クライアントA社の連絡先', body:'山田様 03-1234-5678\nメール: yamada@example.com', createdAt:todayMs - 10*dayMs, updatedAt:todayMs - 10*dayMs}
+        ]
+      },
+      {
+        id: 'fld_recipes',
+        name: 'レシピ',
+        folders: [],
+        items: [
+          {id:'memo_r1', title:'豆腐ハンバーグ', body:'絹豆腐1丁、鶏ひき肉200g、玉ねぎ1/2個、卵1個\n①材料を全部混ぜる\n②フライパンで両面焼き\n③ポン酢でさっぱり', createdAt:todayMs - 7*dayMs, updatedAt:todayMs - 7*dayMs},
+          {id:'memo_r2', title:'簡単サラダチキン', body:'胸肉に塩・砂糖・酒すり込んで一晩\n沸騰したお湯に入れて火止めて1時間放置', createdAt:todayMs - 14*dayMs, updatedAt:todayMs - 14*dayMs}
+        ]
+      }
+    ],
+    items: [
+      {id:'memo_root1', title:'今週やること', body:'・銀行で振込\n・長男の運動会お弁当準備\n・美容院予約', createdAt:todayMs - 1*dayMs, updatedAt:todayMs - 1*dayMs},
+      {id:'memo_root2', title:'欲しいものリスト', body:'・コードレス掃除機\n・ヨガマット\n・観葉植物', createdAt:todayMs - 3*dayMs, updatedAt:todayMs - 3*dayMs}
+    ]
+  };
+  
+  // ===== 8. ペット（既存があれば残しつつサンプル追加） =====
+  if (!data.pets) data.pets = [];
+  if (!data.pets.find(p => p.id === 'me_diary')) {
+    data.pets.push({ id: 'me_diary', name: data.user.name || 'あんず', kind: 'me', houseId: 'me_house' });
+  }
+  if (!data.houses) data.houses = [];
+  if (!data.houses.find(h => h.id === 'me_house')) {
+    data.houses.push({ id: 'me_house', name: 'うち' });
+  }
+  
+  // サンプルペット
+  if (!data.pets.find(p => p.id === 'sample_cat')) {
+    data.pets.push({
+      id: 'sample_cat',
+      name: 'もも',
+      type: 'cat',
+      kind: 'cat',
+      breed: '雑種',
+      birthday: '2020-05-10',
+      gender: '♀ メス',
+      houseId: 'me_house',
+      createdAt: todayMs
+    });
+  }
+  if (!data.pets.find(p => p.id === 'sample_dog')) {
+    data.pets.push({
+      id: 'sample_dog',
+      name: 'こむぎ',
+      type: 'dog',
+      kind: 'dog',
+      breed: 'アメリカンコッカースパニエル',
+      birthday: '2024-06-21',
+      gender: '♂ オス',
+      houseId: 'me_house',
+      createdAt: todayMs
+    });
+  }
+  
+  // ===== 9. 日記（ME＋PET） =====
+  if (!data.posts) data.posts = [];
+  // 既存サンプル日記が無ければ追加
+  if (!data.posts.find(p => p.id === 'post_sample_1')) {
+    data.posts.push(
+      {id:'post_sample_1', petId:'me_diary', text:'今日は朝から雨。コーヒー飲みながらゆっくり過ごした。', mood:'😌', weather:'☁️', createdAt:todayMs - 2*dayMs},
+      {id:'post_sample_2', petId:'me_diary', text:'美容院でカラーチェンジ！気分転換になった〜。', mood:'😊', weather:'☀️', createdAt:todayMs - 10*dayMs},
+      {id:'post_sample_3', petId:'sample_cat', text:'ももが新しいおもちゃに夢中。ずっと遊んでた。', mood:'😺', weather:'☀️', createdAt:todayMs - 4*dayMs},
+      {id:'post_sample_4', petId:'sample_dog', text:'こむぎ、雨でも散歩楽しそう。レインコート似合う♪', mood:'🐶', weather:'☁️', createdAt:todayMs - 1*dayMs},
+      {id:'post_sample_5', petId:'sample_dog', text:'こむぎが初めてシャンプー！びっくりしてたけど頑張った。', mood:'🐶', weather:'☀️', createdAt:todayMs - 7*dayMs}
+    );
+  }
+  
+  // ===== 10. 設定（生理予測ON） =====
+  if (!data.userPrefs) data.userPrefs = {};
+  data.userPrefs.menstrualEnabled = true;
+  
+  saveData();
+  showToast('サンプルデータを入れたよ🌷');
+  setTimeout(() => render(), 200);
+}
+
+function clearAllData() {
+  if (!confirm('全データを削除する？\nこの操作は元に戻せないよ')) return;
+  if (!confirm('本当に削除する？\n(2回目の確認)')) return;
+  try {
+    localStorage.clear();
+  } catch(e) {}
+  showToast('全データを削除したよ。リロードします');
+  setTimeout(() => location.reload(), 1500);
+}
+window.clearAllData = clearAllData;
+
+// ===== 生理周期予測 =====
+// 過去の「生理開始」スタンプから周期日数を計算し、次回予定日を予測
+function calcMenstrualPrediction() {
+  if (!data.stampHistory || !Array.isArray(data.stampHistory)) return null;
+  
+  // 「生理開始」のスタンプを抽出（period: 'start'）
+  const starts = data.stampHistory
+    .filter(r => r.name === '生理開始' || (r.period === 'start'))
+    .sort((a,b) => (a.timestamp||0) - (b.timestamp||0));
+  
+  if (starts.length === 0) return null;
+  
+  // 同日の重複を除去（同じ日は1回扱い）
+  const uniqueDates = [];
+  const seenDates = new Set();
+  for (const s of starts) {
+    const d = new Date(s.timestamp);
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    if (!seenDates.has(key)) {
+      seenDates.add(key);
+      uniqueDates.push({key, timestamp: s.timestamp});
+    }
+  }
+  
+  if (uniqueDates.length === 0) return null;
+  
+  const lastStart = uniqueDates[uniqueDates.length - 1];
+  
+  // 周期計算：直近6回の平均（データ少ない時は28日デフォルト）
+  let avgCycle = 28; // デフォルト
+  if (uniqueDates.length >= 2) {
+    const recent = uniqueDates.slice(-7); // 直近7回（6周期分）
+    const cycles = [];
+    for (let i = 1; i < recent.length; i++) {
+      const days = Math.round((recent[i].timestamp - recent[i-1].timestamp) / (24*60*60*1000));
+      if (days >= 18 && days <= 45) cycles.push(days); // 異常値除外
+    }
+    if (cycles.length > 0) {
+      avgCycle = Math.round(cycles.reduce((a,b)=>a+b,0) / cycles.length);
+    }
+  }
+  
+  // 次回予定日 = 最後の開始日 + 平均周期
+  const nextDate = new Date(lastStart.timestamp);
+  nextDate.setDate(nextDate.getDate() + avgCycle);
+  
+  // 今日からの日数差
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const nextDateZero = new Date(nextDate);
+  nextDateZero.setHours(0,0,0,0);
+  const daysUntil = Math.round((nextDateZero - today) / (24*60*60*1000));
+  
+  // 排卵予定日（生理開始の14日前 = 次回 - 14日）
+  const ovulationDate = new Date(nextDate);
+  ovulationDate.setDate(ovulationDate.getDate() - 14);
+  
+  return {
+    lastStart: new Date(lastStart.timestamp),
+    avgCycle: avgCycle,
+    nextDate: nextDate,
+    daysUntil: daysUntil,
+    cycleCount: uniqueDates.length,
+    isReliable: uniqueDates.length >= 3, // 3回以上なら信頼度高
+    ovulationDate: ovulationDate
+  };
+}
+
+// 日付キーが生理予定日に該当するか判定
+function _getMenstrualDateInfo(dateKey) {
+  // 設定でOFFなら無効
+  if (data.userPrefs && data.userPrefs.menstrualEnabled === false) return null;
+  
+  const pred = calcMenstrualPrediction();
+  if (!pred) return null;
+  
+  const d = new Date(dateKey);
+  d.setHours(0,0,0,0);
+  
+  // 次回予定日
+  const next = new Date(pred.nextDate);
+  next.setHours(0,0,0,0);
+  if (d.getTime() === next.getTime()) return { type: 'predicted', label: '生理予定' };
+  
+  // 排卵予定日
+  const ov = new Date(pred.ovulationDate);
+  ov.setHours(0,0,0,0);
+  if (d.getTime() === ov.getTime()) return { type: 'ovulation', label: '排卵予定' };
+  
+  // 排卵期（前後3日）
+  const ovStart = new Date(ov);
+  ovStart.setDate(ovStart.getDate() - 2);
+  const ovEnd = new Date(ov);
+  ovEnd.setDate(ovEnd.getDate() + 2);
+  if (d >= ovStart && d <= ovEnd) return { type: 'ovulation_window', label: '排卵期' };
+  
+  return null;
+}
+
+// 生理周期予測カードのHTML
+function renderMenstrualPredictionCard() {
+  // 設定でOFFなら何も表示しない
+  if (data.userPrefs && data.userPrefs.menstrualEnabled === false) return '';
+  
+  const pred = calcMenstrualPrediction();
+  if (!pred) {
+    let h = '<div style="background:linear-gradient(135deg,#FFE5EE 0%,#FFF0F5 100%);border:1.5px solid #F0A0C0;border-radius:14px;padding:14px;margin-bottom:12px;">';
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:18px;color:#C8709A;">water_full</span>';
+    h += '<span style="font-size:12px;font-weight:800;color:#C8709A;">生理周期予測</span>';
+    h += '</div>';
+    h += '<div style="font-size:11px;color:#666;line-height:1.6;">体調カテゴリの「生理開始」スタンプを<br>記録すると、次回の予測ができるよ🌷</div>';
+    h += '</div>';
+    return h;
+  }
+  
+  let h = '<div style="background:linear-gradient(135deg,#FFE5EE 0%,#FFF0F5 100%);border:1.5px solid #F0A0C0;border-radius:14px;padding:14px;margin-bottom:12px;">';
+  h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:#C8709A;">water_full</span>';
+  h += '<span style="font-size:12px;font-weight:800;color:#C8709A;flex:1;">生理周期予測</span>';
+  if (!pred.isReliable) {
+    h += '<span style="font-size:9px;color:#888;background:white;padding:1px 6px;border-radius:100px;">参考</span>';
+  }
+  h += '</div>';
+  
+  // メイン情報
+  const dateLabel = (pred.nextDate.getMonth()+1)+'/'+pred.nextDate.getDate();
+  const wd = ['日','月','火','水','木','金','土'][pred.nextDate.getDay()];
+  
+  let untilLabel = '';
+  let untilColor = '#C8709A';
+  if (pred.daysUntil < 0) {
+    untilLabel = (-pred.daysUntil)+'日前だったみたい';
+    untilColor = '#888';
+  } else if (pred.daysUntil === 0) {
+    untilLabel = '今日が予定日';
+    untilColor = '#E07058';
+  } else if (pred.daysUntil <= 3) {
+    untilLabel = 'あと'+pred.daysUntil+'日';
+    untilColor = '#E07058';
+  } else {
+    untilLabel = 'あと'+pred.daysUntil+'日';
+  }
+  
+  h += '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;flex-wrap:wrap;">';
+  h += '<span style="font-size:11px;color:#666;font-weight:700;">次の生理</span>';
+  h += '<span style="font-size:18px;font-weight:800;color:#C8709A;font-variant-numeric:tabular-nums;">'+dateLabel+'('+wd+')</span>';
+  h += '<span style="font-size:13px;font-weight:800;color:'+untilColor+';">'+untilLabel+'</span>';
+  h += '</div>';
+  
+  h += '<div style="font-size:10px;color:#666;line-height:1.6;">';
+  h += '平均周期 '+pred.avgCycle+'日 / '+pred.cycleCount+'回の記録から予測してるよ';
+  if (!pred.isReliable) {
+    h += '<br><span style="color:#888;">あと'+(3-pred.cycleCount)+'回記録すると、もっと正確に予測できるよ🌷</span>';
+  }
+  h += '</div>';
+  
+  // 注意書き（あんず町長口調）
+  h += '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #F0A0C0;font-size:9px;color:#888;line-height:1.5;font-weight:600;">';
+  h += '<span class="material-symbols-rounded" style="font-size:11px;vertical-align:middle;color:#C8709A;">info</span> ';
+  h += '記録のためのメモとして使ってね。心配な時はお医者さんに相談してね';
+  h += '</div>';
+  
+  h += '</div>';
+  return h;
+}
+
+// ===== スタンプカレンダー =====
+const STAMP_CAT_COLORS = {
+  '生活':   '#5FA985',
+  '美容':   '#C8709A',
+  'ダイエット': '#D8C040',
+  '体調':   '#5888B0',
+  '家事':   '#E89A4A',
+  '仕事':   '#8868A8',
+  '趣味':   '#48A8B8'
+};
+
+function _stampCatColor(cat) {
+  return STAMP_CAT_COLORS[cat] || '#888888';
+}
+
+// スタンプ記録の日付別マップ作成
+function _buildStampHistoryByDate() {
+  const map = {};
+  if (!data.stampHistory || !Array.isArray(data.stampHistory)) return map;
+  for (const rec of data.stampHistory) {
+    if (!rec.timestamp) continue;
+    const d = new Date(rec.timestamp);
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    if (!map[key]) map[key] = [];
+    map[key].push(rec);
+  }
+  return map;
+}
+
+function switchStampCalMonth(delta) {
+  const scrollY = window.scrollY;
+  if (!window._stampCalMonth) {
+    const d = new Date();
+    window._stampCalMonth = { y: d.getFullYear(), m: d.getMonth() };
+  }
+  let y = window._stampCalMonth.y, m = window._stampCalMonth.m + delta;
+  while (m < 0) { m += 12; y -= 1; }
+  while (m > 11) { m -= 12; y += 1; }
+  window._stampCalMonth = { y, m };
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function jumpToCurrentStampMonth() {
+  const scrollY = window.scrollY;
+  const d = new Date();
+  window._stampCalMonth = { y: d.getFullYear(), m: d.getMonth() };
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+
+function renderStampCalendar() {
+  if (!window._stampCalMonth) {
+    const d = new Date();
+    window._stampCalMonth = { y: d.getFullYear(), m: d.getMonth() };
+  }
+  const { y, m } = window._stampCalMonth;
+  const firstDay = new Date(y, m, 1);
+  const lastDay = new Date(y, m+1, 0);
+  const startWeekday = firstDay.getDay(); // 0=日
+  const daysInMonth = lastDay.getDate();
+  const today = new Date();
+  const todayKey = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  const isCurrentMonth = (y === today.getFullYear() && m === today.getMonth());
+  
+  const histMap = _buildStampHistoryByDate();
+  
+  let h = '<div style="padding:10px 14px 16px;">';
+  
+  // 生理周期予測カード（最上部）
+  h += renderMenstrualPredictionCard();
+  
+  // 月切替ヘッダー
+  h += '<div style="background:linear-gradient(135deg,var(--accent-bg) 0%,var(--surface-warm) 100%);border:1.5px solid var(--accent);border-radius:14px;padding:10px;margin-bottom:10px;display:flex;align-items:center;gap:8px;">';
+  h += '<button onclick="switchStampCalMonth(-1)" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--ink-dark);font-size:11px;font-weight:700;font-family:inherit;">‹ 前月</button>';
+  h += '<div style="flex:1;text-align:center;font-size:14px;font-weight:800;color:var(--ink-dark);">'+y+'年'+(m+1)+'月</div>';
+  h += '<button onclick="switchStampCalMonth(1)" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--ink-dark);font-size:11px;font-weight:700;font-family:inherit;">翌月 ›</button>';
+  h += '</div>';
+  
+  // 「今月へ」ボタン（今月以外の時のみ）
+  if (!isCurrentMonth) {
+    h += '<button onclick="jumpToCurrentStampMonth()" style="width:100%;padding:8px;background:var(--surface-warm);color:var(--accent-deep);border:1px dashed var(--accent);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:10px;">📅 今月へ戻る</button>';
+  }
+  
+  // 曜日ヘッダー
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;">';
+  const weekLabels = ['日','月','火','水','木','金','土'];
+  for (let i = 0; i < 7; i++) {
+    const isHol = (i === 0); // 日曜
+    const isSat = (i === 6); // 土曜
+    let color = 'var(--ink-sub)';
+    if (isHol) color = '#c4506b';
+    else if (isSat) color = '#5888B0';
+    h += '<div style="text-align:center;font-size:10px;font-weight:800;color:'+color+';padding:4px 0;">'+weekLabels[i]+'</div>';
+  }
+  h += '</div>';
+  
+  // 日付セル
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+  
+  // 前月の空白埋め（前月日付グレー）
+  const prevMonthLastDay = new Date(y, m, 0).getDate();
+  for (let i = 0; i < startWeekday; i++) {
+    const d = prevMonthLastDay - startWeekday + 1 + i;
+    h += '<div style="aspect-ratio:1/1.2;border-radius:8px;background:var(--surface-warm);opacity:0.35;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-light);font-weight:600;">'+d+'</div>';
+  }
+  
+  // 当月日付
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(y, m, d);
+    const wd = dateObj.getDay();
+    const dateKey = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const isToday = (dateKey === todayKey);
+    const records = histMap[dateKey] || [];
+    
+    // 色付きドットの集計
+    const catCount = {};
+    for (const rec of records) {
+      const cat = rec.category || 'その他';
+      catCount[cat] = (catCount[cat]||0) + 1;
+    }
+    const catList = Object.keys(catCount).slice(0, 3); // 最大3カテゴリのドット
+    const totalCount = records.length;
+    
+    let bg = 'var(--surface)';
+    let border = '1px solid var(--line)';
+    let dColor = 'var(--ink-dark)';
+    if (isToday) {
+      bg = 'var(--accent)';
+      border = '1.5px solid var(--accent-deep)';
+      dColor = 'white';
+    } else if (records.length > 0) {
+      bg = 'var(--accent-bg)';
+      border = '1px solid var(--accent)';
+    }
+    if (wd === 0) dColor = isToday ? 'white' : '#c4506b';
+    else if (wd === 6) dColor = isToday ? 'white' : '#5888B0';
+    
+    // 生理予測情報を取得
+    const menstInfo = _getMenstrualDateInfo(dateKey);
+    if (menstInfo && !isToday) {
+      if (menstInfo.type === 'predicted') {
+        bg = '#FFE5EE';
+        border = '1.5px solid #F0A0C0';
+      } else if (menstInfo.type === 'ovulation') {
+        bg = '#E8F4FF';
+        border = '1.5px dashed #7FB8E8';
+      } else if (menstInfo.type === 'ovulation_window') {
+        bg = '#F0F8FF';
+        border = '1px dashed #B0D4F0';
+      }
+    }
+    
+    h += '<button onclick="openStampDayModal(\''+dateKey+'\')" style="aspect-ratio:1/1.2;border-radius:8px;background:'+bg+';border:'+border+';display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:4px 2px;cursor:pointer;font-family:inherit;position:relative;">';
+    
+    // 天気アイコン（右上）
+    const wIcon = getDateWeatherIcon(dateKey);
+    if (wIcon) {
+      h += '<span style="position:absolute;top:2px;right:3px;font-size:9px;line-height:1;opacity:0.85;">'+wIcon+'</span>';
+    }
+    
+    // 生理予測マーク（左上）
+    if (menstInfo) {
+      let markIcon = '', markColor = '';
+      if (menstInfo.type === 'predicted') { markIcon = 'water_full'; markColor = '#C8709A'; }
+      else if (menstInfo.type === 'ovulation') { markIcon = 'circle'; markColor = '#5888B0'; }
+      if (markIcon) {
+        h += '<span class="material-symbols-rounded" style="position:absolute;top:2px;left:3px;font-size:10px;color:'+markColor+';">'+markIcon+'</span>';
+      }
+    }
+    
+    h += '<span style="font-size:13px;font-weight:'+(isToday?'800':'700')+';color:'+dColor+';line-height:1;margin-top:'+(wIcon?'2px':'0')+';">'+d+'</span>';
+    
+    // ドット表示
+    if (catList.length > 0) {
+      h += '<div style="display:flex;gap:2px;margin-top:3px;align-items:center;">';
+      for (const cat of catList) {
+        h += '<span style="width:5px;height:5px;border-radius:50%;background:'+_stampCatColor(cat)+';display:inline-block;"></span>';
+      }
+      if (totalCount > 3) {
+        h += '<span style="font-size:8px;color:'+(isToday?'white':'var(--ink-sub)')+';font-weight:700;margin-left:1px;">+'+(totalCount-3)+'</span>';
+      }
+      h += '</div>';
+    }
+    h += '</button>';
+  }
+  
+  // 翌月の空白埋め
+  const totalCells = startWeekday + daysInMonth;
+  const remainder = totalCells % 7;
+  if (remainder > 0) {
+    const fillCount = 7 - remainder;
+    for (let i = 1; i <= fillCount; i++) {
+      h += '<div style="aspect-ratio:1/1.2;border-radius:8px;background:var(--surface-warm);opacity:0.35;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-light);font-weight:600;">'+i+'</div>';
+    }
+  }
+  h += '</div>';
+  
+  // カテゴリ凡例
+  h += '<div style="margin-top:14px;padding:10px;background:var(--surface);border:1px solid var(--card-border);border-radius:10px;">';
+  h += '<div style="font-size:10px;font-weight:700;color:var(--ink-sub);margin-bottom:6px;">カテゴリ色</div>';
+  h += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+  for (const cat of Object.keys(STAMP_CAT_COLORS)) {
+    h += '<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ink-dark);font-weight:600;"><span style="width:8px;height:8px;border-radius:50%;background:'+STAMP_CAT_COLORS[cat]+';"></span>'+cat+'</div>';
+  }
+  h += '</div>';
+  // 予測マーク説明（予測がある時のみ）
+  if (calcMenstrualPrediction()) {
+    h += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--ink-sub);font-weight:600;">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--ink-sub);margin-bottom:4px;">予測マーク</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:10px;font-size:10px;color:var(--ink-dark);">';
+    h += '<div style="display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;color:#C8709A;">water_full</span>生理予定</div>';
+    h += '<div style="display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;color:#5888B0;">circle</span>排卵予定</div>';
+    h += '</div></div>';
+  }
+  h += '</div>';
+  
+  // 今月のサマリ
+  const monthRecs = [];
+  for (const k of Object.keys(histMap)) {
+    if (k.startsWith(y+'-'+String(m+1).padStart(2,'0'))) {
+      monthRecs.push(...histMap[k]);
+    }
+  }
+  if (monthRecs.length > 0) {
+    const monthCatCount = {};
+    for (const r of monthRecs) {
+      const c = r.category || 'その他';
+      monthCatCount[c] = (monthCatCount[c]||0) + 1;
+    }
+    h += '<div style="margin-top:10px;padding:12px;background:linear-gradient(135deg,var(--accent-bg) 0%,var(--surface-warm) 100%);border:1.5px solid var(--accent);border-radius:12px;">';
+    h += '<div style="font-size:11px;font-weight:800;color:var(--accent-deep);margin-bottom:6px;">📊 '+(m+1)+'月のサマリ</div>';
+    h += '<div style="font-size:18px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">合計 '+monthRecs.length+'件 記録</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    for (const cat of Object.keys(monthCatCount).sort((a,b)=>monthCatCount[b]-monthCatCount[a])) {
+      h += '<span style="font-size:10px;font-weight:700;color:white;background:'+_stampCatColor(cat)+';padding:2px 8px;border-radius:100px;">'+cat+' '+monthCatCount[cat]+'</span>';
+    }
+    h += '</div></div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+
+// 日付タップで開くモーダル：その日の記録一覧
+function openStampDayModal(dateKey) {
+  const ex = document.getElementById('stampDayModal');
+  if (ex) ex.remove();
+  
+  const histMap = _buildStampHistoryByDate();
+  const records = histMap[dateKey] || [];
+  
+  const d = new Date(dateKey);
+  const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+  const dateLabel = (d.getMonth()+1)+'月'+d.getDate()+'日('+wd+')';
+  
+  let h = '<div id="stampDayModal" onclick="if(event.target===this)closeStampDayModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">📅 '+dateLabel+'</div>';
+  h += '<button onclick="closeStampDayModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  
+  if (records.length === 0) {
+    h += '<div style="background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;padding:24px;text-align:center;color:var(--ink-sub);font-size:12px;font-weight:700;">この日は記録なし🌷<br><span style="font-size:10px;color:var(--ink-light);font-weight:500;">スタンプタブから記録できるよ</span></div>';
+  } else {
+    // カテゴリ別集計
+    const byCat = {};
+    for (const r of records) {
+      const c = r.category || 'その他';
+      if (!byCat[c]) byCat[c] = [];
+      byCat[c].push(r);
+    }
+    
+    h += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">合計 '+records.length+'件</div>';
+    
+    for (const cat of Object.keys(byCat)) {
+      const catRecs = byCat[cat].sort((a,b) => (b.timestamp||0)-(a.timestamp||0));
+      h += '<div style="background:var(--surface-warm);border:1px solid var(--card-border);border-radius:12px;padding:10px;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">';
+      h += '<span style="width:8px;height:8px;border-radius:50%;background:'+_stampCatColor(cat)+';display:inline-block;"></span>';
+      h += '<span style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+cat+'</span>';
+      h += '<span style="font-size:10px;color:var(--ink-sub);">（'+catRecs.length+'件）</span>';
+      h += '</div>';
+      
+      h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+      for (const r of catRecs) {
+        const t = new Date(r.timestamp);
+        const timeStr = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+        h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;">';
+        h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:'+_stampCatColor(cat)+';color:white;flex-shrink:0;">'+renderStampIcon(r.icon||'check','font-size:16px;line-height:1;')+'</span>';
+        h += '<span style="flex:1;font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(r.name||'記録')+'</span>';
+        if (r.value !== undefined && r.value !== null && r.value !== '') {
+          h += '<span style="font-size:11px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">'+escapeHtml(String(r.value))+(r.unit?escapeHtml(r.unit):'')+'</span>';
+        }
+        h += '<span style="font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;flex-shrink:0;">'+timeStr+'</span>';
+        h += '</div>';
+      }
+      h += '</div></div>';
+    }
+  }
+  
+  h += '<button onclick="closeStampDayModal()" style="margin-top:8px;padding:10px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">閉じる</button>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+
+function closeStampDayModal() {
+  const el = document.getElementById('stampDayModal');
+  if (el) el.remove();
+}
+
 // ===== ME用 Goods タブ（日用品＋家電、nestId='__me__'で管理） =====
 function renderMeGoodsTab() {
   const _meId = '__me__';
@@ -8844,11 +10164,15 @@ function renderMeMode() {
     html += '<div style="padding:10px 14px 0;display:flex;gap:6px;">';
     const _sActive = ssTab === 'stamp';
     const _pActive = ssTab === 'planner';
+    const _cActive = ssTab === 'calendar';
     html += '<button onclick="switchStampSubTab(\'stamp\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_sActive?'var(--accent)':'var(--line)')+';background:'+(_sActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_sActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🌷 スタンプ</button>';
     html += '<button onclick="switchStampSubTab(\'planner\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_pActive?'var(--accent)':'var(--line)')+';background:'+(_pActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_pActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📋 プランナー</button>';
+    html += '<button onclick="switchStampSubTab(\'calendar\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_cActive?'var(--accent)':'var(--line)')+';background:'+(_cActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_cActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📅 カレンダー</button>';
     html += '</div>';
     
-    if (ssTab === 'stamp') {
+    if (ssTab === 'calendar') {
+      html += renderStampCalendar();
+    } else if (ssTab === 'stamp') {
       // ───── スタンプ画面 ─────
       if (!data.stampSelCat) data.stampSelCat = '生活';
       const selCat = data.stampSelCat;
@@ -8873,8 +10197,14 @@ function renderMeMode() {
           {icon:'directions_walk',name:'ウォーキング',type:'number',unit:'歩',step:100,min:0,max:50000}
         ],
         '体調': [
-          {icon:'medication',name:'くすり'},{icon:'favorite',name:'生理'},{icon:'sick',name:'体調不良'},
-          {icon:'local_hospital',name:'通院'},{icon:'self_improvement',name:'ヨガ'},{icon:'thermostat',name:'体温'}
+          {icon:'medication',name:'くすり'},
+          {icon:'water_full',name:'生理開始',period:'start'},
+          {icon:'water_drop',name:'生理終了',period:'end'},
+          {icon:'mood_bad',name:'PMS',period:'pms'},
+          {icon:'sick',name:'体調不良'},
+          {icon:'local_hospital',name:'通院'},
+          {icon:'self_improvement',name:'ヨガ'},
+          {icon:'thermostat',name:'体温',type:'number',unit:'℃',step:0.1,min:34,max:42}
         ],
         '家事': [
           {icon:'cleaning_services',name:'掃除'},{icon:'local_laundry_service',name:'洗濯'},{icon:'kitchen',name:'料理'},
@@ -8892,8 +10222,8 @@ function renderMeMode() {
       
       // 初回 or 新カテゴリの初期化
       if (!data.stampLib) data.stampLib = {};
-      // v4マイグレーション：壊れたアイコン名修正＋ダイエット系をtype/unit/photo対応に強制更新（1回だけ実行）
-      const needsMigration = !data._stampIconMigrated_v4;
+      // v5マイグレーション：体調カテゴリの生理関連スタンプ追加
+      const needsMigration = !data._stampIconMigrated_v5;
       for (const cat in DEFAULT_STAMPS) {
         if (!data.stampLib[cat]) {
           data.stampLib[cat] = DEFAULT_STAMPS[cat].map(s => ({...s, id: 's_'+cat+'_'+s.name, hidden: false}));
@@ -8918,10 +10248,17 @@ function renderMeMode() {
               return true;
             });
           }
+          // 体調カテゴリ：旧「生理」スタンプを削除（新「生理開始/終了/PMS」に置き換え）
+          if (cat === '体調') {
+            data.stampLib[cat] = data.stampLib[cat].filter(s => {
+              if (s.id === 's_体調_生理' && !s.id.startsWith('cs_')) return false;
+              return true;
+            });
+          }
         }
       }
       if (needsMigration) {
-        data._stampIconMigrated_v4 = true;
+        data._stampIconMigrated_v5 = true;
         try { saveData(); } catch(e) {}
       }
       
@@ -10089,6 +11426,9 @@ function backToHouse() {
 }
 
 function navBack() {
+  // グローバル検索が開いてたら、まずそれを閉じる
+  const _searchEl = document.getElementById('globalSearchModal');
+  if (_searchEl) { closeGlobalSearch(); return; }
   // 天気ポップアップが開いてたら、まずそれを閉じる
   const _weatherEl = document.getElementById('weatherPopup');
   if (_weatherEl) { closeWeatherPopup(); return; }
@@ -13395,6 +14735,37 @@ function renderSettings() {
   html += '<button class="btn btn-secondary" style="flex:1; min-width: 110px;" onclick="exportData()">📤 エクスポート</button>';
   html += '<button class="btn btn-secondary" style="flex:1; min-width: 110px;" onclick="importData()">📥 インポート</button>';
   html += '</div></div></div>';
+  
+  // 機能の表示設定
+  html += '<div class="section"><div class="section-head"><h2 class="section-title">機能の表示</h2></div>';
+  html += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;">';
+  if (!data.userPrefs) data.userPrefs = {};
+  if (data.userPrefs.menstrualEnabled === undefined) data.userPrefs.menstrualEnabled = true;
+  const menstOn = data.userPrefs.menstrualEnabled;
+  html += '<div style="display:flex;align-items:center;gap:10px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:22px;color:#C8709A;">water_full</span>';
+  html += '<div style="flex:1;">';
+  html += '<div style="font-size:13px;font-weight:700;color:var(--ink-dark);">生理周期予測</div>';
+  html += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.5;">体調カテゴリの予測カードと<br>カレンダーの予定マークを表示</div>';
+  html += '</div>';
+  html += '<button onclick="toggleMenstrualPref()" style="background:'+(menstOn?'#C8709A':'#ccc')+';border:none;width:46px;height:26px;border-radius:100px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;">';
+  html += '<span style="position:absolute;top:2px;left:'+(menstOn?'22px':'2px')+';width:22px;height:22px;border-radius:50%;background:white;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>';
+  html += '</button>';
+  html += '</div>';
+  html += '</div></div>';
+  
+  // 開発者向け：サンプルデータ
+  html += '<div class="section"><div class="section-head"><h2 class="section-title">開発者向け</h2></div>';
+  html += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;">';
+  html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;margin-bottom:10px;">アプリの動作確認用。既存データを上書きするから注意してね</div>';
+  html += '<button onclick="injectSampleData()" style="width:100%;padding:11px;background:var(--accent-bg);color:var(--accent-deep);border:1.5px solid var(--accent);border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:18px;">science</span>サンプルデータを投入';
+  html += '</button>';
+  html += '<button onclick="clearAllData()" style="width:100%;padding:11px;background:var(--surface-warm);color:#c4506b;border:1.5px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:18px;">delete_forever</span>全データを削除';
+  html += '</button>';
+  html += '</div></div>';
+  
   html += '<div class="section" style="padding-bottom: 24px;"><div class="section-head"><h2 class="section-title">アプリのこと</h2></div>';
   html += '<div style="background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; font-size: 12px; color: var(--ink-sub); line-height: 1.8;">';
   html += '<strong style="color:var(--ink-dark);">にこわ -nikowa-</strong><br>version 1.0.0<br><br>';
@@ -13412,9 +14783,10 @@ function saveUserRegion(region) {
 function setActiveNav(view) {
   const btns = document.querySelectorAll('.nav-btn[data-view]');
   for (const b of btns) b.classList.toggle('active', b.dataset.view === view);
-  // 戻るボタン：top以外で表示
+  // 戻るボタン：top以外、または検索画面表示中で表示
   const backBtn = document.getElementById('navBackBtn');
-  if (backBtn) backBtn.style.display = (view === 'top') ? 'none' : 'flex';
+  const searchOpen = !!document.getElementById('globalSearchModal');
+  if (backBtn) backBtn.style.display = (view === 'top' && !searchOpen) ? 'none' : 'flex';
 }
 document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
   btn.onclick = () => {
@@ -13443,7 +14815,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('show'); 
 const MODE_TABS_KEY = { me: 'nikowa_me_tabs', pet: 'nikowa_pet_tabs', kids: 'nikowa_kids_tabs' };
 const DEFAULT_MODE_TABS = {
   me: [
-    { id: 'stamp',      label: 'Stamp' },
+    { id: 'stamp',      label: 'Record' },
     { id: 'diary',      label: 'Diary' },
     { id: 'money',      label: 'Money' },
     { id: 'goods',      label: 'Goods' },
@@ -13503,6 +14875,14 @@ function getModeTabsForMode(mode) {
         const secretTab = tabs.find(t => t.id === 'secret');
         if (secretTab && secretTab.label === 'Secret') {
           secretTab.label = 'Memo';
+          try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
+        }
+      }
+      // ME: Stamp → Record へラベル変更
+      if (mode === 'me') {
+        const stampTab = tabs.find(t => t.id === 'stamp');
+        if (stampTab && stampTab.label === 'Stamp') {
+          stampTab.label = 'Record';
           try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
         }
       }
@@ -16512,6 +17892,35 @@ function renderSidePanel() {
     html += '📷 写真：<strong>'+Object.keys(photos).length+'枚</strong><br>';
     html += '💾 容量：<strong>'+mb+' MB</strong>';
     html += '</div></div>';
+    
+    // 機能のオン/オフ
+    html += '<div class="side-panel-title" style="margin-top:18px;">機能の表示</div>';
+    html += '<div class="side-panel-card">';
+    if (!data.userPrefs) data.userPrefs = {};
+    if (data.userPrefs.menstrualEnabled === undefined) data.userPrefs.menstrualEnabled = true;
+    const menstOn = data.userPrefs.menstrualEnabled;
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;">';
+    html += '<span class="material-symbols-rounded" style="font-size:20px;color:#C8709A;">water_full</span>';
+    html += '<div style="flex:1;">';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--ink-dark);">生理周期予測</div>';
+    html += '<div style="font-size:10px;color:var(--ink-sub);">体調カテゴリの予測カードと予定マーク</div>';
+    html += '</div>';
+    html += '<button onclick="toggleMenstrualPref()" style="background:'+(menstOn?'#C8709A':'#ccc')+';border:none;width:42px;height:24px;border-radius:100px;position:relative;cursor:pointer;transition:background 0.2s;">';
+    html += '<span style="position:absolute;top:2px;left:'+(menstOn?'20px':'2px')+';width:20px;height:20px;border-radius:50%;background:white;transition:left 0.2s;"></span>';
+    html += '</button>';
+    html += '</div></div>';
+    
+    // 開発者向け：サンプルデータ
+    html += '<div class="side-panel-title" style="margin-top:18px;">開発者向け</div>';
+    html += '<div class="side-panel-card">';
+    html += '<button onclick="injectSampleData()" style="width:100%;padding:10px;background:var(--accent-bg);color:var(--accent-deep);border:1px solid var(--accent);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:16px;">science</span>サンプルデータを投入';
+    html += '</button>';
+    html += '<button onclick="clearAllData()" style="width:100%;padding:10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:16px;">delete_forever</span>全データを削除';
+    html += '</button>';
+    html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:6px;text-align:center;">サンプル投入は既存データを上書きするよ</div>';
+    html += '</div>';
   }
   
   el.innerHTML = html;
