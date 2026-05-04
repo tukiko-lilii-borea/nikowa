@@ -2448,14 +2448,18 @@
   .mode-idx-tabs {
     display:flex; padding:0 8px 8px; gap:4px;
     position:relative; z-index:1;
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
   }
+  .mode-idx-tabs::-webkit-scrollbar { display:none; }
   .mode-idx-tabs::after {
     content:''; position:absolute; top:0; left:0; right:0;
     height:2px; background:var(--line-soft); z-index:0;
   }
   .mode-idx-tab {
-    flex:1; position:relative; z-index:1;
-    padding:6px 4px 6px;
+    flex:1 0 auto; min-width:64px;
+    position:relative; z-index:1;
+    padding:6px 8px 6px;
     border:1px solid rgba(255,255,255,0.35); border-top:none;
     border-radius:0 0 12px 12px;
     background:linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
@@ -4203,13 +4207,45 @@ const PET_EMOJIS = {
   boy: '👦', girl: '👧'
 };
 
+// PET種類のMaterial Symbolsマップ（絵文字代替・統一感優先）
+const PET_MS_ICONS = {
+  dog:       { icon: 'pets',           color: '#B87850' },  // 茶色（はっきり）
+  cat:       { icon: 'pets',           color: '#7A6E66' },  // グレージュ（差別化）
+  small:     { icon: 'cruelty_free',   color: '#D88AB0' },  // ピンク
+  aquatic:   { icon: 'set_meal',       color: '#3899B0' },  // 水色（深め）
+  bird:      { icon: 'flutter_dash',   color: '#5C9CD4' },  // 空色
+  reptile:   { icon: 'bug_report',     color: '#6FB088' },  // 緑
+  amphibian: { icon: 'cruelty_free',   color: '#5FA985' },  // 深緑
+  insect:    { icon: 'pest_control',   color: '#9078B8' },  // 紫
+  plant:     { icon: 'eco',            color: '#7BBE5C' },  // 葉緑
+  livestock: { icon: 'agriculture',    color: '#C49050' },  // 山吹色
+  other:     { icon: 'auto_awesome',   color: '#E0A858' },  // ゴールド
+  boy:       { icon: 'boy',            color: '#5C9CD4' },  // 空色
+  girl:      { icon: 'girl',           color: '#D88AB0' }   // ピンク
+};
+
+// PET種類のアイコンHTML生成（絵文字代わりにMSを返す）
+function petIconHtml(kind, sizeStyle) {
+  const map = PET_MS_ICONS[kind] || PET_MS_ICONS.other;
+  return '<span class="material-symbols-rounded" style="color:'+map.color+';'+(sizeStyle||'')+'">'+map.icon+'</span>';
+}
+window.petIconHtml = petIconHtml;
+
 function spriteSVG(kind, palette, sizeAttr) {
   // sizeAttr に "class=..." が含まれていたらそのクラスを使う
   // それ以外は petEmoji クラスを付与
-  const emoji = PET_EMOJIS[kind] || PET_EMOJIS.other;
   let extraClass = '';
-  if (sizeAttr && sizeAttr.indexOf('sprite-mini') !== -1) extraClass = ' pet-emoji-mini';
-  return '<span class="pet-emoji'+extraClass+'" aria-label="'+kind+'">'+emoji+'</span>';
+  let fontSize = '';
+  if (sizeAttr && sizeAttr.indexOf('sprite-mini') !== -1) {
+    extraClass = ' pet-emoji-mini';
+    fontSize = 'font-size:24px;';
+  } else if (sizeAttr && sizeAttr.indexOf('sprite-large') !== -1) {
+    fontSize = 'font-size:64px;';
+  } else {
+    fontSize = 'font-size:48px;';
+  }
+  const map = PET_MS_ICONS[kind] || PET_MS_ICONS.other;
+  return '<span class="pet-emoji'+extraClass+'" aria-label="'+kind+'"><span class="material-symbols-rounded" style="color:'+map.color+';'+fontSize+';line-height:1;">'+map.icon+'</span></span>';
 }
 
 let STORAGE_KEY = 'nikowa_data_v3';
@@ -4744,13 +4780,23 @@ let data = {
 let photos = {};
 let currentView = 'top';
 let currentMode = 'pet'; // 'pet' | 'me' | 'kids' | 'nest'
+
+// ===== プレミアム機能フラグ =====
+// 後でこの関数を変えるだけで、全プレミアム機能をON/OFFできる
+// 例：return data.isPremium === true; に変えれば「プレミアム購入者のみ」になる
+function isPremiumEnabled() {
+  // 現状：全員プレミアム機能利用可能
+  // 将来：data.userPrefs.isPremium をチェック
+  return true;
+}
+window.isPremiumEnabled = isPremiumEnabled;
 let careRecentTab = 'today'; // 'today' | 'yesterday'
 let houseSubTab = 'mine';
 const MODE_KEYS = {
-  pet:  { data: 'nikowa_data_v3',      photos: 'nikowa_photos_v3' },
-  me:   { data: 'nikowa_me_data_v3',   photos: 'nikowa_me_photos_v3' },
-  kids: { data: 'nikowa_kids_data_v3', photos: 'nikowa_kids_photos_v3' },
-  nest: { data: 'nikowa_nest_data_v1', photos: 'nikowa_nest_photos_v1' },
+  pet:    { data: 'nikowa_data_v3',         photos: 'nikowa_photos_v3' },
+  me:     { data: 'nikowa_me_data_v3',      photos: 'nikowa_me_photos_v3' },
+  kids:   { data: 'nikowa_kids_data_v3',    photos: 'nikowa_kids_photos_v3' },
+  nest:   { data: 'nikowa_nest_data_v1',    photos: 'nikowa_nest_photos_v1' }
 };
 // 一括お世話アクション（モード別保存）
 const BULK_ACTIONS_KEY = { pet: 'nikowa_bulk_pet', kids: 'nikowa_bulk_kids' };
@@ -5156,6 +5202,22 @@ function getDateWeatherIcon(dateKey) {
       if (k === dateKey && p.createdAt > foundTs) {
         found = p.weather;
         foundTs = p.createdAt;
+      }
+    }
+    if (found) return found;
+  }
+  
+  // 1.5) data.tweets（ME のつぶやき）からも探す
+  if (data.tweets && data.tweets.length) {
+    let found = null;
+    let foundTs = 0;
+    for (const tw of data.tweets) {
+      if (!tw.weather) continue;
+      const d = new Date(tw.timestamp || 0);
+      const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      if (k === dateKey && (tw.timestamp||0) > foundTs) {
+        found = tw.weather;
+        foundTs = tw.timestamp;
       }
     }
     if (found) return found;
@@ -6719,12 +6781,16 @@ function saveValueInput(opts) {
 
 // 履歴の値部分タップ → 編集モーダル開く
 // スタンプ履歴に「あとからメモ」を付けるモーダル
-function openStampMemoModal(recordId) {
-  const rec = (data.stampHistory || []).find(r => r.id === recordId);
+function openStampMemoModal(recordId, source) {
+  // source: 'office' なら officeStampHistory、それ以外は stampHistory
+  const sourceArr = (source === 'office') ? (data.officeStampHistory || []) : (data.stampHistory || []);
+  const rec = sourceArr.find(r => r.id === recordId);
   if (!rec) { showToast('記録が見つからないよ'); return; }
   
   // 写真データを一時保存
   window._stampMemoPhotoData = rec.memoPhoto || null;
+  // どの配列に書き戻すか覚えておく
+  window._stampMemoSource = source || 'me';
   
   const ex = document.getElementById('stampMemoModal');
   if (ex) ex.remove();
@@ -6817,6 +6883,7 @@ function closeStampMemoModal() {
   const el = document.getElementById('stampMemoModal');
   if (el) el.remove();
   window._stampMemoPhotoData = null;
+  window._stampMemoSource = null;
 }
 window.closeStampMemoModal = closeStampMemoModal;
 
@@ -6824,27 +6891,43 @@ function saveStampMemo(recordId) {
   const inp = document.getElementById('stampMemoInput');
   const memo = inp ? inp.value.trim() : '';
   const photo = window._stampMemoPhotoData || '';
-  const rec = (data.stampHistory || []).find(r => r.id === recordId);
+  const source = window._stampMemoSource || 'me';
+  const sourceArr = (source === 'office') ? (data.officeStampHistory || []) : (data.stampHistory || []);
+  const rec = sourceArr.find(r => r.id === recordId);
   if (!rec) return;
   rec.memo = memo;
   rec.memoPhoto = photo;
   saveData();
   closeStampMemoModal();
   showToast(memo || photo ? '保存したよ🌷' : 'クリアしたよ');
-  render();
+  // Office なら部分更新、それ以外は全体render
+  if (source === 'office') {
+    const area = document.querySelector('[data-office-history-area]');
+    if (area) area.innerHTML = _renderOfficeHistoryHtml();
+  } else {
+    render();
+  }
 }
 window.saveStampMemo = saveStampMemo;
 
 function deleteStampMemo(recordId) {
   if (!confirm('メモと写真を削除する？')) return;
-  const rec = (data.stampHistory || []).find(r => r.id === recordId);
+  const source = window._stampMemoSource || 'me';
+  const sourceArr = (source === 'office') ? (data.officeStampHistory || []) : (data.stampHistory || []);
+  const rec = sourceArr.find(r => r.id === recordId);
   if (!rec) return;
   delete rec.memo;
   delete rec.memoPhoto;
   saveData();
   closeStampMemoModal();
   showToast('削除したよ');
-  render();
+  // Office なら部分更新、それ以外は全体render
+  if (source === 'office') {
+    const area = document.querySelector('[data-office-history-area]');
+    if (area) area.innerHTML = _renderOfficeHistoryHtml();
+  } else {
+    render();
+  }
 }
 window.deleteStampMemo = deleteStampMemo;
 
@@ -10376,11 +10459,10 @@ const MY_SUB_TABS = [
 ];
 
 function switchMySubTab(sub) {
-  const scrollY = window.scrollY;
   data.mySubTab = sub;
   saveData();
+  _suppressScrollTop = true;
   render();
-  setTimeout(() => window.scrollTo(0, scrollY), 0);
 }
 window.switchMySubTab = switchMySubTab;
 
@@ -11340,7 +11422,7 @@ function renderMeMode() {
   // コンテンツエリア（白い角丸背景）
   html += '<div class="mode-content-wrap">';
   
-  const validMeTabs = ['stamp','diary','money','goods','collection','resume','secret'];
+  const validMeTabs = ['stamp','diary','money','goods','collection','resume','office','secret'];
   let tab = currentModeTab['me'] || 'stamp';
   if (!validMeTabs.includes(tab)) {
     tab = 'stamp';
@@ -11354,6 +11436,10 @@ function renderMeMode() {
   } else if (tab === 'news') {
     // ===== News =====
     html += renderNewsTab();
+    
+  } else if (tab === 'office') {
+    // ===== Office（仕事の小さな記録帳） =====
+    html += renderOfficeInMeTab();
     
   } else if (tab === 'resume') {
     // ===== My（自分のこと）：履歴書 / カルテ / ワクチン / くすり / 視力 / 緊急連絡先 =====
@@ -11439,8 +11525,8 @@ function renderMeMode() {
       
       // 初回 or 新カテゴリの初期化
       if (!data.stampLib) data.stampLib = {};
-      // v7マイグレーション：ポジティブカテゴリ追加
-      const needsMigration = !data._stampIconMigrated_v7;
+      // v8マイグレーション：仕事カテゴリを削除（Officeモードへ移動）
+      const needsMigration = !data._stampIconMigrated_v8;
       for (const cat in DEFAULT_STAMPS) {
         if (!data.stampLib[cat]) {
           data.stampLib[cat] = DEFAULT_STAMPS[cat].map(s => ({...s, id: 's_'+cat+'_'+s.name, hidden: false}));
@@ -11481,8 +11567,12 @@ function renderMeMode() {
           }
         }
       }
+      // 仕事カテゴリは Office モードへ移動（ME から削除）
+      if (data.stampLib['仕事']) {
+        delete data.stampLib['仕事'];
+      }
       if (needsMigration) {
-        data._stampIconMigrated_v7 = true;
+        data._stampIconMigrated_v8 = true;
         try { saveData(); } catch(e) {}
       }
       
@@ -11491,7 +11581,7 @@ function renderMeMode() {
       // カテゴリチップ
       html += '<div style="padding:12px 16px 4px;display:flex;align-items:center;gap:8px;">';
       html += '<div data-stamp-cats style="flex:1;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
-      const stampCats = ['生活','美容','ダイエット','体調','家事','仕事','趣味','ポジティブ'];
+      const stampCats = ['生活','美容','ダイエット','体調','家事','趣味','ポジティブ'];
       for (const cat of stampCats) {
         const isAct = (cat === selCat);
         const activeStyle = isAct ? 'background:var(--accent);color:white;border-color:var(--accent);' : 'color:var(--ink-sub);background:var(--surface);';
@@ -11640,7 +11730,7 @@ function renderMeMode() {
     }
     
   } else if (tab === 'diary') {
-    html += '<div style="padding:16px;"><button onclick="goMeDiary()" style="width:100%;padding:20px;border:1.5px solid var(--card-border);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--ink-dark);">📔 日記を開く</button></div>';
+    html += renderTweetsDiary();
     
   } else if (tab === 'routine') {
     // ===== MEルーティン：日常 / 生活 / メモ サブタブ =====
@@ -11732,6 +11822,1770 @@ function renderMeMode() {
   html += '<div style="height:80px;"></div>';
   app.innerHTML = html;
 }
+
+// ===== LINE風つぶやき日記（MEのDiaryタブ） =====
+function renderTweetsDiary() {
+  if (!data.tweets) data.tweets = [];
+  // フィルタタグ
+  const filterTag = data.tweetFilterTag || null;
+  // 背景画像（プレミアム機能：今は全員利用可）
+  const bgImage = (isPremiumEnabled() && data.tweetBgImage) ? data.tweetBgImage : null;
+  
+  // 天気キャッシュなければ自動で取得（バックグラウンド）
+  if (!window._weatherCache && typeof fetchWeather === 'function') {
+    try {
+      fetchWeather().then(() => {
+        // 取得完了後、Diaryタブにいるなら再描画
+        const tab = currentModeTab && currentModeTab['me'];
+        if (currentMode === 'me' && tab === 'diary' && currentView === 'me') {
+          _suppressScrollTop = true;
+          render();
+        }
+      }).catch(()=>{});
+    } catch(e) {}
+  }
+  
+  // タグごとの使用数を集計
+  const tagCounts = {};
+  for (const tw of data.tweets) {
+    const tags = tw.tags || [];
+    for (const tg of tags) {
+      tagCounts[tg] = (tagCounts[tg] || 0) + 1;
+    }
+  }
+  const allTags = Object.keys(tagCounts).sort((a,b) => tagCounts[b] - tagCounts[a]);
+  
+  // フィルタ適用
+  let tweets = [...data.tweets];
+  if (filterTag) {
+    tweets = tweets.filter(t => (t.tags||[]).includes(filterTag));
+  }
+  tweets.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  
+  // 今日の日付ヘッダー用
+  const today = new Date();
+  const todayKey = today.toDateString();
+  
+  let h = '';
+  
+  // 背景画像のラッパー（あれば）
+  if (bgImage) {
+    h += '<div id="tweetBgWrapper" style="position:fixed;inset:0;z-index:-1;background-image:url('+bgImage+');background-size:cover;background-position:center;background-attachment:fixed;"></div>';
+    h += '<div id="tweetBgOverlay" style="position:fixed;inset:0;z-index:-1;background:rgba(255,255,255,0.55);backdrop-filter:blur(2px);"></div>';
+  }
+  
+  // 上部バー：タグ管理＋カレンダー＋背景＋フィルタ（スタイリッシュ）
+  h += '<div style="padding:8px 12px;display:flex;gap:8px;align-items:center;background:'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface-warm)')+';backdrop-filter:'+(bgImage?'blur(10px)':'none')+';border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;">';
+  h += '<button onclick="openTweetTagsModal()" title="タグ管理" style="flex:0 0 auto;width:32px;height:32px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">';
+  h += '#';
+  h += '</button>';
+  h += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex:0 0 auto;width:32px;height:32px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;">calendar_month</span></button>';
+  h += '<button onclick="openTweetBgModal()" title="背景画像" style="flex:0 0 auto;width:32px;height:32px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;">wallpaper</span></button>';
+  
+  if (filterTag) {
+    h += '<button onclick="setTweetFilter(null)" style="flex:1;padding:5px 12px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;overflow:hidden;">';
+    h += '<span style="display:flex;align-items:center;gap:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span class="material-symbols-rounded" style="font-size:13px;flex-shrink:0;">filter_alt</span>#'+escapeHtml(filterTag)+' ('+tweets.length+')</span>';
+    h += '<span class="material-symbols-rounded" style="font-size:13px;flex-shrink:0;">close</span>';
+    h += '</button>';
+  } else {
+    h += '<button onclick="openTweetFilterModal()" style="flex:1;padding:4px 0;background:none;color:var(--ink-light);border:none;font-family:inherit;font-size:10px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;letter-spacing:0.05em;">';
+    h += '<span class="material-symbols-rounded" style="font-size:14px;opacity:0.6;">search</span>';
+    h += '<span style="opacity:0.7;">タグでしぼる</span>';
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  // タイムライン本体
+  h += '<div data-tweets-area style="padding:8px 12px 80px;min-height:60vh;">';
+  
+  if (tweets.length === 0) {
+    h += '<div style="text-align:center;padding:60px 20px;color:var(--ink-sub);">';
+    h += '<div style="font-size:48px;margin-bottom:12px;opacity:0.5;"><span class="material-symbols-rounded" style="font-size:48px;color:var(--accent-deep);">chat_bubble</span></div>';
+    if (filterTag) {
+      h += '<div style="font-size:14px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">「#'+escapeHtml(filterTag)+'」のつぶやきはまだないよ</div>';
+      h += '<div style="font-size:11px;line-height:1.7;">他のタグも見てみてね</div>';
+    } else {
+      h += '<div style="font-size:14px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">まだつぶやきがないよ</div>';
+      h += '<div style="font-size:11px;line-height:1.7;">下の入力欄から<br>気持ちをひとこと書いてみてね🌷</div>';
+    }
+    h += '</div>';
+  } else {
+    // 日付ごとにグループ化
+    let lastDateKey = '';
+    for (const tw of tweets) {
+      const t = new Date(tw.timestamp || 0);
+      const dateKey = t.toDateString();
+      
+      // 日付セパレータ（スティッキー）
+      if (dateKey !== lastDateKey) {
+        const dateNum = (t.getMonth()+1)+'/'+t.getDate();
+        const wdEn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][t.getDay()];
+        let labelEn;
+        if (dateKey === todayKey) {
+          labelEn = 'Today';
+        } else {
+          const yest = new Date(today);
+          yest.setDate(yest.getDate() - 1);
+          if (dateKey === yest.toDateString()) {
+            labelEn = 'Yesterday';
+          } else {
+            labelEn = wdEn;
+          }
+        }
+        // その日の天気アイコン取得
+        const dateKeyForWeather = t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+        const weatherIcon = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dateKeyForWeather) : null;
+        
+        // スティッキーな小さな日付ヘッダー
+        h += '<div style="position:sticky;top:48px;z-index:40;background:linear-gradient(180deg,'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface-warm)')+' 0%,'+(bgImage?'rgba(255,255,255,0.7)':'var(--surface-warm)')+' 80%,transparent 100%);backdrop-filter:'+(bgImage?'blur(8px)':'none')+';padding:8px 4px 10px;margin:6px 0 4px;text-align:center;">';
+        h += '<span style="display:inline-flex;align-items:center;gap:6px;font-size:9.5px;font-weight:600;color:var(--ink-sub);background:white;padding:4px 14px;border-radius:100px;border:1px solid var(--line);letter-spacing:0.05em;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+        h += '<span style="font-variant-numeric:tabular-nums;color:var(--ink-dark);font-weight:700;">'+dateNum+'</span>';
+        h += '<span style="opacity:0.4;">·</span>';
+        h += '<span style="color:var(--accent-deep);font-weight:600;letter-spacing:0.08em;">'+labelEn+'</span>';
+        if (weatherIcon) {
+          h += '<span style="opacity:0.4;">·</span>';
+          h += '<span style="display:inline-flex;align-items:center;">'+weatherIconHtml(weatherIcon,'font-size:13px;')+'</span>';
+        }
+        h += '</span>';
+        h += '</div>';
+        lastDateKey = dateKey;
+      }
+      
+      h += _renderTweetBubble(tw);
+    }
+  }
+  
+  h += '</div>';
+  
+  // 入力欄（固定下部、底部ナビの上）
+  h += '<div style="position:fixed;left:0;right:0;bottom:64px;background:var(--surface);border-top:1px solid var(--line);padding:8px 12px;z-index:100;display:flex;align-items:flex-end;gap:6px;box-sizing:border-box;">';
+  h += '<button onclick="openTweetPhotoPicker()" title="写真追加" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:18px;">photo_camera</span></button>';
+  h += '<button onclick="insertTagToTweet()" title="タグ追加" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;font-size:16px;font-weight:800;">#</button>';
+  h += '<input type="file" id="tweetPhotoInput" accept="image/*" multiple style="display:none;" onchange="handleTweetPhotoSelect(event)">';
+  h += '<textarea id="tweetInput" placeholder="ひとこと書く... #タグも使えるよ" rows="1" oninput="autoResizeTweetInput(this)" style="flex:1;min-height:36px;max-height:120px;padding:8px 12px;border:1px solid var(--card-border);border-radius:18px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:none;color:var(--ink-dark);line-height:1.5;outline:none;"></textarea>';
+  h += '<button onclick="postTweet()" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:18px;">send</span></button>';
+  h += '</div>';
+  
+  // 写真プレビュー領域（投稿前の選択写真表示用）
+  h += '<div id="tweetPhotoPreview" style="position:fixed;left:0;right:0;bottom:120px;background:var(--surface);border-top:1px solid var(--line);padding:8px 12px;z-index:101;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;"></div>';
+  
+  return h;
+}
+window.renderTweetsDiary = renderTweetsDiary;
+
+// つぶやきカレンダー（月別の投稿数表示、日付タップでジャンプ）
+function openTweetCalendarModal() {
+  if (!data.tweetCalMonth) {
+    const now = new Date();
+    data.tweetCalMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  }
+  _renderTweetCalendarModal();
+}
+window.openTweetCalendarModal = openTweetCalendarModal;
+
+function _renderTweetCalendarModal() {
+  const [yearStr, monthStr] = data.tweetCalMonth.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10) - 1;
+  
+  // 該当月の投稿を集計（日付別）
+  const tweets = data.tweets || [];
+  const dayCounts = {};
+  for (const tw of tweets) {
+    const t = new Date(tw.timestamp || 0);
+    if (t.getFullYear() === year && t.getMonth() === month) {
+      const key = t.getDate();
+      if (!dayCounts[key]) dayCounts[key] = 0;
+      dayCounts[key]++;
+    }
+  }
+  
+  const ex = document.getElementById('tweetCalendarModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="tweetCalendarModal" onclick="if(event.target===this)closeTweetCalendarModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">日記カレンダー</div>';
+  h += '<button onclick="closeTweetCalendarModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;">';
+  h += '<button onclick="switchTweetCalMonth(-1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-dark);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_left</span></button>';
+  h += '<div style="font-size:15px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">'+year+'年 '+(month+1)+'月</div>';
+  h += '<button onclick="switchTweetCalMonth(1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-dark);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_right</span></button>';
+  h += '</div>';
+  
+  const weekdays = ['日','月','火','水','木','金','土'];
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">';
+  for (let i = 0; i < 7; i++) {
+    const color = i === 0 ? '#D87878' : (i === 6 ? '#5888B0' : '#888');
+    h += '<div style="text-align:center;font-size:10px;font-weight:800;color:'+color+';padding:4px 0;">'+weekdays[i]+'</div>';
+  }
+  h += '</div>';
+  
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startWeekday = firstDay.getDay();
+  
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+  const todayDate = today.getDate();
+  
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">';
+  
+  for (let i = 0; i < startWeekday; i++) {
+    h += '<div></div>';
+  }
+  
+  for (let d = 1; d <= daysInMonth; d++) {
+    const wd = (startWeekday + d - 1) % 7;
+    const wdColor = wd === 0 ? '#D87878' : (wd === 6 ? '#5888B0' : 'var(--ink-dark)');
+    const isToday = isCurrentMonth && d === todayDate;
+    const cnt = dayCounts[d] || 0;
+    const hasRec = cnt > 0;
+    
+    h += '<div onclick="'+(hasRec ? "jumpToTweetDay('"+year+"-"+(month+1)+"-"+d+"')" : '')+'" style="aspect-ratio:1;border:1px solid '+(isToday?'var(--accent)':'var(--card-border)')+';border-radius:8px;padding:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:'+(hasRec?'pointer':'default')+';background:'+(isToday?'var(--accent-bg)':'var(--surface)')+';">';
+    h += '<div style="font-size:11px;font-weight:'+(isToday?'800':'600')+';color:'+(isToday?'var(--accent-deep)':wdColor)+';font-variant-numeric:tabular-nums;line-height:1;">'+d+'</div>';
+    
+    if (hasRec) {
+      h += '<div style="margin-top:2px;font-size:8px;color:var(--accent-deep);font-weight:800;background:var(--accent-bg);padding:1px 5px;border-radius:100px;border:1px solid var(--accent);line-height:1.3;">'+cnt+'</div>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  
+  h += '<div style="display:flex;align-items:center;gap:10px;font-size:9px;color:#888;font-weight:600;">';
+  h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:14px;height:14px;border-radius:4px;border:1px solid var(--accent);background:var(--accent-bg);display:inline-block;"></span>今日</span>';
+  h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="background:var(--accent-bg);color:var(--accent-deep);padding:1px 5px;border-radius:100px;border:1px solid var(--accent);font-size:8px;font-weight:800;">3</span>件数</span>';
+  h += '<span style="margin-left:auto;color:#aaa;">タップでジャンプ</span>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+
+function closeTweetCalendarModal() {
+  const el = document.getElementById('tweetCalendarModal');
+  if (el) el.remove();
+}
+window.closeTweetCalendarModal = closeTweetCalendarModal;
+
+function switchTweetCalMonth(delta) {
+  if (!data.tweetCalMonth) {
+    const now = new Date();
+    data.tweetCalMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  }
+  const [y, m] = data.tweetCalMonth.split('-').map(Number);
+  let newY = y, newM = m + delta;
+  if (newM < 1) { newM = 12; newY--; }
+  else if (newM > 12) { newM = 1; newY++; }
+  data.tweetCalMonth = newY+'-'+String(newM).padStart(2,'0');
+  saveData();
+  _renderTweetCalendarModal();
+}
+window.switchTweetCalMonth = switchTweetCalMonth;
+
+function jumpToTweetDay(dateStr) {
+  closeTweetCalendarModal();
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const target = new Date(y, m-1, d);
+  const targetStr = target.toDateString();
+  
+  if (data.tweetFilterTag) {
+    delete data.tweetFilterTag;
+    saveData();
+  }
+  
+  _suppressScrollTop = true;
+  render();
+  
+  setTimeout(() => {
+    const tweets = data.tweets || [];
+    const matched = tweets.filter(tw => new Date(tw.timestamp).toDateString() === targetStr);
+    if (matched.length === 0) {
+      showToast('この日のつぶやきはないよ');
+      return;
+    }
+    const area = document.querySelector('[data-tweets-area]');
+    if (!area) return;
+    const buttons = area.querySelectorAll('button[onclick*="openTweetEditModal"]');
+    for (let i = 0; i < buttons.length; i++) {
+      const onclickStr = buttons[i].getAttribute('onclick') || '';
+      const match = onclickStr.match(/openTweetEditModal\('([^']+)'\)/);
+      if (!match) continue;
+      const tw = tweets.find(t => t.id === match[1]);
+      if (tw && new Date(tw.timestamp).toDateString() === targetStr) {
+        buttons[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const orig = buttons[i].style.boxShadow;
+        buttons[i].style.boxShadow = '0 0 0 3px var(--accent)';
+        buttons[i].style.transition = 'box-shadow 0.3s';
+        setTimeout(() => { buttons[i].style.boxShadow = orig; }, 1500);
+        break;
+      }
+    }
+  }, 100);
+}
+window.jumpToTweetDay = jumpToTweetDay;
+
+// ===== 背景画像設定（プレミアム機能） =====
+function openTweetBgModal() {
+  if (!isPremiumEnabled()) {
+    showToast('この機能はプレミアム限定です🌷');
+    return;
+  }
+  
+  const ex = document.getElementById('tweetBgModal');
+  if (ex) ex.remove();
+  
+  const currentBg = data.tweetBgImage || null;
+  
+  let h = '<div id="tweetBgModal" onclick="if(event.target===this)closeTweetBgModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--accent);color:white;"><span class="material-symbols-rounded" style="font-size:16px;">wallpaper</span></span>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">背景画像</div>';
+  h += '<span style="font-size:9px;color:var(--accent-deep);background:var(--accent-bg);padding:2px 8px;border-radius:100px;font-weight:800;border:1px solid var(--accent);">PREMIUM</span>';
+  h += '<button onclick="closeTweetBgModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;">日記の背景に好きな写真を設定できるよ🌷<br>透過オーバーレイで読みやすさもキープ！</div>';
+  
+  // 現在の背景プレビュー
+  if (currentBg) {
+    h += '<div style="position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);aspect-ratio:16/9;">';
+    h += '<img src="'+currentBg+'" style="width:100%;height:100%;object-fit:cover;display:block;" />';
+    h += '<div style="position:absolute;inset:0;background:rgba(255,255,255,0.55);"></div>';
+    h += '<div style="position:absolute;top:8px;right:8px;font-size:9px;color:white;background:rgba(0,0,0,0.5);padding:3px 8px;border-radius:100px;font-weight:700;">現在の背景</div>';
+    h += '</div>';
+  } else {
+    h += '<div style="border-radius:12px;border:1.5px dashed var(--line);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);font-size:11px;font-weight:600;">背景未設定</div>';
+  }
+  
+  // ボタン
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<button onclick="pickTweetBgImage()" style="flex:1;padding:12px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:16px;">add_photo_alternate</span>'+(currentBg?'画像を変更':'画像を選ぶ')+'</button>';
+  if (currentBg) {
+    h += '<button onclick="clearTweetBgImage()" style="flex:0 0 auto;padding:12px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">delete</span>削除</button>';
+  }
+  h += '</div>';
+  
+  h += '<input type="file" id="tweetBgInput" accept="image/*" style="display:none;" onchange="handleTweetBgSelect(event)">';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openTweetBgModal = openTweetBgModal;
+
+function closeTweetBgModal() {
+  const el = document.getElementById('tweetBgModal');
+  if (el) el.remove();
+}
+window.closeTweetBgModal = closeTweetBgModal;
+
+function pickTweetBgImage() {
+  const inp = document.getElementById('tweetBgInput');
+  if (inp) inp.click();
+}
+window.pickTweetBgImage = pickTweetBgImage;
+
+async function handleTweetBgSelect(event) {
+  const file = (event.target.files || [])[0];
+  if (!file) return;
+  try {
+    // 大きめサイズで保持（背景用）
+    const dataUrl = await resizeImageToBase64(file, 1600, 0.8);
+    data.tweetBgImage = dataUrl;
+    saveData();
+    closeTweetBgModal();
+    _suppressScrollTop = true;
+    render();
+    showToast('背景を設定したよ🌷');
+  } catch(e) {
+    console.error('背景画像エラー:', e);
+    showToast('画像を読み込めませんでした');
+  }
+  event.target.value = '';
+}
+window.handleTweetBgSelect = handleTweetBgSelect;
+
+function clearTweetBgImage() {
+  if (!confirm('背景画像を削除する？')) return;
+  delete data.tweetBgImage;
+  saveData();
+  closeTweetBgModal();
+  _suppressScrollTop = true;
+  render();
+  showToast('背景を削除したよ');
+}
+window.clearTweetBgImage = clearTweetBgImage;
+
+// 入力欄に #タグ を挿入（既存タグから選ぶ or 新規入力）
+function insertTagToTweet() {
+  if (!data.tweets) data.tweets = [];
+  const tagCounts = {};
+  for (const tw of data.tweets) {
+    for (const tg of (tw.tags||[])) {
+      tagCounts[tg] = (tagCounts[tg] || 0) + 1;
+    }
+  }
+  // 参考リストも合体
+  if (data.tweetTagsRegistry) {
+    for (const tg of data.tweetTagsRegistry) {
+      if (!(tg in tagCounts)) tagCounts[tg] = 0;
+    }
+  }
+  const allTags = Object.keys(tagCounts).sort((a,b) => (tagCounts[b]||0) - (tagCounts[a]||0));
+  
+  const ex = document.getElementById('tweetTagInsertModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="tweetTagInsertModal" onclick="if(event.target===this)closeTweetTagInsertModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">タグを追加</div>';
+  h += '<button onclick="closeTweetTagInsertModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  // 新規入力
+  h += '<div style="display:flex;gap:6px;align-items:center;padding:8px;background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;">';
+  h += '<span style="font-size:16px;font-weight:800;color:var(--accent-deep);">#</span>';
+  h += '<input id="tweetTagInsertInput" type="text" placeholder="新しいタグ" onkeydown="if(event.key===\'Enter\'){event.preventDefault();confirmInsertTagToTweet();}" style="flex:1;padding:6px 8px;border:none;background:transparent;font-family:inherit;font-size:13px;color:var(--ink-dark);outline:none;">';
+  h += '<button onclick="confirmInsertTagToTweet()" style="padding:6px 14px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">追加</button>';
+  h += '</div>';
+  
+  if (allTags.length > 0) {
+    h += '<div style="font-size:10px;color:var(--ink-sub);font-weight:700;margin-top:4px;">よく使うタグから選ぶ</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    for (const tg of allTags) {
+      const escTg = escapeHtml(tg).replace(/\'/g,"\\\\\'");
+      h += '<button onclick="pickInsertTagToTweet(\''+escTg+'\')" style="padding:6px 12px;background:var(--accent-bg);color:var(--accent-deep);border:1px solid var(--accent);border-radius:100px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">';
+      h += '#'+escapeHtml(tg);
+      if (tagCounts[tg] > 0) {
+        h += '<span style="font-size:9px;opacity:0.7;font-weight:600;">'+tagCounts[tg]+'</span>';
+      }
+      h += '</button>';
+    }
+    h += '</div>';
+  } else {
+    h += '<div style="text-align:center;padding:20px;color:var(--ink-sub);font-size:11px;line-height:1.7;">';
+    h += 'まだタグがないよ<br>上の入力欄から作ってみてね🌷';
+    h += '</div>';
+  }
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('tweetTagInsertInput'); if (i) i.focus(); }, 80);
+}
+window.insertTagToTweet = insertTagToTweet;
+
+function closeTweetTagInsertModal() {
+  const el = document.getElementById('tweetTagInsertModal');
+  if (el) el.remove();
+}
+window.closeTweetTagInsertModal = closeTweetTagInsertModal;
+
+// 既存タグを選んで入力欄に挿入
+function pickInsertTagToTweet(tag) {
+  const inp = document.getElementById('tweetInput');
+  if (!inp) return;
+  // カーソル位置に挿入
+  const pos = inp.selectionStart;
+  const before = inp.value.substring(0, pos);
+  const after = inp.value.substring(pos);
+  // 前にスペースがなければ自動で空白入れる
+  const sep = (before.length > 0 && !/\s$/.test(before)) ? ' ' : '';
+  const insertText = sep + '#' + tag + ' ';
+  inp.value = before + insertText + after;
+  // カーソルを挿入後の位置に
+  const newPos = before.length + insertText.length;
+  inp.focus();
+  inp.setSelectionRange(newPos, newPos);
+  autoResizeTweetInput(inp);
+  closeTweetTagInsertModal();
+}
+window.pickInsertTagToTweet = pickInsertTagToTweet;
+
+// 新規タグを入力して挿入
+function confirmInsertTagToTweet() {
+  const tagInput = document.getElementById('tweetTagInsertInput');
+  if (!tagInput) return;
+  const name = tagInput.value.trim();
+  const cleanName = name.replace(/[#\s　]/g, '').trim();
+  if (!cleanName) { showToast('タグ名を入れてね'); return; }
+  // 参考リストにも追加
+  if (!data.tweetTagsRegistry) data.tweetTagsRegistry = [];
+  if (!data.tweetTagsRegistry.includes(cleanName)) {
+    data.tweetTagsRegistry.push(cleanName);
+    saveData();
+  }
+  pickInsertTagToTweet(cleanName);
+}
+window.confirmInsertTagToTweet = confirmInsertTagToTweet;
+
+// 入力欄に #タグ を挿入（既存タグから選ぶ or 新規入力）：終わり
+
+// タグでフィルタ設定
+function setTweetFilter(tag) {
+  if (tag) {
+    data.tweetFilterTag = tag;
+  } else {
+    delete data.tweetFilterTag;
+  }
+  saveData();
+  closeTweetFilterModal();
+  closeTweetTagsModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.setTweetFilter = setTweetFilter;
+
+// タグ選択モーダル（フィルタ用）
+function openTweetFilterModal() {
+  if (!data.tweets) data.tweets = [];
+  const tagCounts = {};
+  for (const tw of data.tweets) {
+    for (const tg of (tw.tags||[])) {
+      tagCounts[tg] = (tagCounts[tg] || 0) + 1;
+    }
+  }
+  const allTags = Object.keys(tagCounts).sort((a,b) => tagCounts[b] - tagCounts[a]);
+  
+  const ex = document.getElementById('tweetFilterModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="tweetFilterModal" onclick="if(event.target===this)closeTweetFilterModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:70vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">タグでしぼる</div>';
+  h += '<button onclick="closeTweetFilterModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  if (allTags.length === 0) {
+    h += '<div style="text-align:center;padding:40px 20px;color:var(--ink-sub);font-size:12px;">';
+    h += 'まだタグがないよ<br>つぶやきの中で <span style="color:var(--accent-deep);font-weight:700;">#朝食</span> みたいに書くと自動でタグになるよ🌷';
+    h += '</div>';
+  } else {
+    h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    for (const tg of allTags) {
+      h += '<button onclick="setTweetFilter(\''+escapeHtml(tg).replace(/\'/g,"\\\\\'")+'\')" style="padding:8px 14px;background:var(--accent-bg);color:var(--accent-deep);border:1px solid var(--accent);border-radius:100px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">';
+      h += '#'+escapeHtml(tg);
+      h += '<span style="background:var(--accent);color:white;border-radius:100px;padding:0 6px;font-size:9px;font-weight:800;">'+tagCounts[tg]+'</span>';
+      h += '</button>';
+    }
+    h += '</div>';
+  }
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openTweetFilterModal = openTweetFilterModal;
+
+function closeTweetFilterModal() {
+  const el = document.getElementById('tweetFilterModal');
+  if (el) el.remove();
+}
+window.closeTweetFilterModal = closeTweetFilterModal;
+
+// タグ管理モーダル
+function openTweetTagsModal() {
+  if (!data.tweets) data.tweets = [];
+  const tagCounts = {};
+  for (const tw of data.tweets) {
+    for (const tg of (tw.tags||[])) {
+      tagCounts[tg] = (tagCounts[tg] || 0) + 1;
+    }
+  }
+  const allTags = Object.keys(tagCounts).sort();
+  
+  const ex = document.getElementById('tweetTagsModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="tweetTagsModal" onclick="if(event.target===this)closeTweetTagsModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<button onclick="closeTweetTagsModal()" style="background:var(--surface-warm);border:1px solid var(--line);cursor:pointer;color:var(--ink-sub);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">close</span></button>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);text-align:center;">タグ管理</div>';
+  h += '<button onclick="addNewTweetTag()" style="background:var(--accent-bg);border:1px solid var(--accent);cursor:pointer;color:var(--accent-deep);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">add</span></button>';
+  h += '</div>';
+  
+  if (allTags.length === 0) {
+    h += '<div style="text-align:center;padding:40px 20px;color:var(--ink-sub);font-size:12px;line-height:1.7;">';
+    h += 'まだタグがないよ<br><br>つぶやきの中で <span style="color:var(--accent-deep);font-weight:700;background:var(--accent-bg);padding:2px 6px;border-radius:4px;">#朝食</span> みたいに書くと<br>自動でタグになるよ🌷';
+    h += '</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const tg of allTags) {
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;">';
+      h += '<button onclick="setTweetFilter(\''+escapeHtml(tg).replace(/\'/g,"\\\\\'")+'\')" style="flex:1;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:var(--accent-deep);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">';
+      h += '#'+escapeHtml(tg);
+      h += '<span style="margin-left:6px;font-size:10px;color:var(--ink-sub);font-weight:600;">'+tagCounts[tg]+'件</span>';
+      h += '</button>';
+      h += '<button onclick="renameTweetTag(\''+escapeHtml(tg).replace(/\'/g,"\\\\\'")+'\')" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#5888B0;color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;">edit</span></button>';
+      h += '<button onclick="deleteTweetTag(\''+escapeHtml(tg).replace(/\'/g,"\\\\\'")+'\')" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#c4506b;color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;">delete</span></button>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openTweetTagsModal = openTweetTagsModal;
+
+function closeTweetTagsModal() {
+  const el = document.getElementById('tweetTagsModal');
+  if (el) el.remove();
+}
+window.closeTweetTagsModal = closeTweetTagsModal;
+
+// 新規タグ追加（空のタグを登録 → 後で投稿で使えるよう、参考リストに保存）
+function addNewTweetTag() {
+  const name = prompt('新しいタグの名前を入れてね（# は不要）:');
+  if (!name) return;
+  const cleanName = name.replace(/[#\s　]/g, '').trim();
+  if (!cleanName) { showToast('タグ名を入れてね'); return; }
+  // タグ管理用の参考リストに追加（投稿で使われた時に自動で増える形だけど、UIから直接追加できるように）
+  if (!data.tweetTagsRegistry) data.tweetTagsRegistry = [];
+  if (data.tweetTagsRegistry.includes(cleanName)) {
+    showToast('そのタグはもうあるよ');
+    return;
+  }
+  data.tweetTagsRegistry.push(cleanName);
+  saveData();
+  closeTweetTagsModal();
+  setTimeout(() => openTweetTagsModal(), 50);
+  showToast('タグを追加したよ🌷');
+}
+window.addNewTweetTag = addNewTweetTag;
+
+// タグ名変更（全投稿の本文も書き換え）
+function renameTweetTag(oldName) {
+  const newName = prompt('新しい名前を入れてね（# は不要）:', oldName);
+  if (!newName) return;
+  const cleanNew = newName.replace(/[#\s　]/g, '').trim();
+  if (!cleanNew) { showToast('タグ名を入れてね'); return; }
+  if (cleanNew === oldName) return;
+  
+  // 全投稿の本文とtagsを書き換え
+  let count = 0;
+  for (const tw of (data.tweets||[])) {
+    if (!tw.tags || !tw.tags.includes(oldName)) continue;
+    // tags配列
+    tw.tags = tw.tags.map(t => t === oldName ? cleanNew : t);
+    // 重複削除
+    tw.tags = [...new Set(tw.tags)];
+    // 本文の#oldName を #cleanNew に置換
+    if (tw.body) {
+      const re = new RegExp('#' + oldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?=\\s|$|#|　)', 'g');
+      tw.body = tw.body.replace(re, '#' + cleanNew);
+    }
+    count++;
+  }
+  saveData();
+  closeTweetTagsModal();
+  setTimeout(() => openTweetTagsModal(), 50);
+  showToast('「#'+oldName+'」を「#'+cleanNew+'」に変更（'+count+'件）🌷');
+}
+window.renameTweetTag = renameTweetTag;
+
+// タグ削除（全投稿から #タグ を消す）
+function deleteTweetTag(name) {
+  if (!confirm('「#'+name+'」を削除する？\n（このタグが付いてる投稿の #'+name+' も消えます。投稿自体は残るよ）')) return;
+  
+  let count = 0;
+  for (const tw of (data.tweets||[])) {
+    if (!tw.tags || !tw.tags.includes(name)) continue;
+    tw.tags = tw.tags.filter(t => t !== name);
+    if (tw.body) {
+      const re = new RegExp('\\s*#' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?=\\s|$|#|　)', 'g');
+      tw.body = tw.body.replace(re, '').replace(/\s+/g, ' ').trim();
+    }
+    count++;
+  }
+  // 参考リストからも削除
+  if (data.tweetTagsRegistry) {
+    data.tweetTagsRegistry = data.tweetTagsRegistry.filter(t => t !== name);
+  }
+  // フィルタ中ならリセット
+  if (data.tweetFilterTag === name) {
+    delete data.tweetFilterTag;
+  }
+  saveData();
+  closeTweetTagsModal();
+  setTimeout(() => openTweetTagsModal(), 50);
+  showToast('「#'+name+'」を削除（'+count+'件）');
+}
+window.deleteTweetTag = deleteTweetTag;
+
+// 個別のつぶやき吹き出し
+function _renderTweetBubble(tw) {
+  const t = new Date(tw.timestamp || 0);
+  const timeStr = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+  // 天気（あれば）
+  const weather = tw.weather || null;
+  
+  let h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
+  // 時刻ラベル（白い丸ピル）
+  h += '<div style="flex-shrink:0;display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;background:white;border:1px solid var(--line);padding:3px 8px;border-radius:100px;letter-spacing:0.02em;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.04);">';
+  h += '<span>'+timeStr+'</span>';
+  if (weather) {
+    h += weatherIconHtml(weather, 'font-size:10px;');
+  }
+  h += '</div>';
+  
+  // 吹き出し本体（幅を80%に狭める）
+  h += '<div style="flex:1;min-width:0;max-width:82%;">';
+  h += '<button onclick="openTweetEditModal(\''+tw.id+'\')" style="text-align:left;background:white;border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-family:inherit;cursor:pointer;width:100%;display:flex;flex-direction:column;gap:5px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">';
+  
+  // テキスト本文（タグハイライト、フォント小さめ）
+  if (tw.body) {
+    h += '<div style="font-size:11.5px;color:var(--ink-dark);line-height:1.7;white-space:pre-wrap;word-wrap:break-word;text-align:left;letter-spacing:0.02em;">'+_renderTweetTextWithTags(tw.body)+'</div>';
+  }
+  
+  // 写真グリッド（最大10枚、最大3列）
+  if (tw.photos && tw.photos.length > 0) {
+    const cols = Math.min(tw.photos.length, tw.photos.length === 1 ? 1 : (tw.photos.length === 2 ? 2 : 3));
+    h += '<div style="display:grid;grid-template-columns:repeat('+cols+',1fr);gap:3px;margin-top:'+(tw.body?'2px':'0')+';">';
+    for (let i = 0; i < tw.photos.length; i++) {
+      const p = tw.photos[i];
+      h += '<img src="'+p+'" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;border:1px solid var(--line);" />';
+    }
+    h += '</div>';
+  }
+  
+  h += '</button>';
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+
+// テキスト中の#タグをハイライト
+function _renderTweetTextWithTags(text) {
+  const escaped = escapeHtml(text);
+  // #タグ → 色付き表示
+  return escaped.replace(/#([^\s#　]+)/g, '<span style="color:var(--accent-deep);font-weight:700;background:var(--accent-bg);padding:0 4px;border-radius:4px;">#$1</span>');
+}
+
+// テキストエリア自動リサイズ
+function autoResizeTweetInput(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+window.autoResizeTweetInput = autoResizeTweetInput;
+
+// 写真ピッカー開く
+function openTweetPhotoPicker() {
+  const inp = document.getElementById('tweetPhotoInput');
+  if (inp) inp.click();
+}
+window.openTweetPhotoPicker = openTweetPhotoPicker;
+
+// 写真選択ハンドラ
+async function handleTweetPhotoSelect(event) {
+  if (!window._tweetPendingPhotos) window._tweetPendingPhotos = [];
+  const files = Array.from(event.target.files || []);
+  const limit = 10 - window._tweetPendingPhotos.length;
+  if (limit <= 0) {
+    showToast('一度に10枚までです');
+    return;
+  }
+  const targetFiles = files.slice(0, limit);
+  if (files.length > limit) showToast('一度に '+limit+'枚までです');
+  
+  for (const f of targetFiles) {
+    try {
+      const dataUrl = await resizeImageToBase64(f, 1024, 0.7);
+      window._tweetPendingPhotos.push(dataUrl);
+    } catch(e) {
+      console.error('写真エラー:', e);
+    }
+  }
+  _renderTweetPhotoPreview();
+  // input clear
+  event.target.value = '';
+}
+window.handleTweetPhotoSelect = handleTweetPhotoSelect;
+
+// 写真プレビュー描画
+function _renderTweetPhotoPreview() {
+  const area = document.getElementById('tweetPhotoPreview');
+  if (!area) return;
+  const photos = window._tweetPendingPhotos || [];
+  if (photos.length === 0) {
+    area.style.display = 'none';
+    area.innerHTML = '';
+    return;
+  }
+  area.style.display = 'flex';
+  let h = '';
+  for (let i = 0; i < photos.length; i++) {
+    h += '<div style="position:relative;flex-shrink:0;">';
+    h += '<img src="'+photos[i]+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--line);" />';
+    h += '<button onclick="removeTweetPhoto('+i+')" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#c4506b;color:white;border:none;cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>';
+    h += '</div>';
+  }
+  h += '<span style="font-size:9px;color:var(--ink-light);margin-left:auto;flex-shrink:0;">'+photos.length+'/10</span>';
+  area.innerHTML = h;
+}
+
+function removeTweetPhoto(idx) {
+  if (!window._tweetPendingPhotos) return;
+  window._tweetPendingPhotos.splice(idx, 1);
+  _renderTweetPhotoPreview();
+}
+window.removeTweetPhoto = removeTweetPhoto;
+
+// 投稿
+function postTweet() {
+  const inp = document.getElementById('tweetInput');
+  const body = inp ? inp.value.trim() : '';
+  const photos = window._tweetPendingPhotos || [];
+  if (!body && photos.length === 0) {
+    showToast('何か書いてね');
+    return;
+  }
+  if (!data.tweets) data.tweets = [];
+  
+  // タグ抽出
+  const tags = [];
+  const tagMatches = body.match(/#([^\s#　]+)/g);
+  if (tagMatches) {
+    for (const m of tagMatches) {
+      const tag = m.substring(1);
+      if (tag && !tags.includes(tag)) tags.push(tag);
+    }
+  }
+  
+  // 投稿時の天気を取得（その日の天気アイコン）
+  const now = new Date();
+  const todayKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const currentWeather = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(todayKey) : null;
+  
+  const newTweet = {
+    id: 'tw_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    body: body,
+    photos: photos.slice(),
+    tags: tags,
+    timestamp: Date.now()
+  };
+  if (currentWeather) newTweet.weather = currentWeather;
+  
+  data.tweets.push(newTweet);
+  saveData();
+  
+  // クリア
+  if (inp) {
+    inp.value = '';
+    inp.style.height = 'auto';
+  }
+  window._tweetPendingPhotos = [];
+  _renderTweetPhotoPreview();
+  
+  _suppressScrollTop = true;
+  render();
+}
+window.postTweet = postTweet;
+
+// 編集モーダル
+function openTweetEditModal(tweetId) {
+  const tw = (data.tweets || []).find(t => t.id === tweetId);
+  if (!tw) return;
+  
+  const ex = document.getElementById('tweetEditModal');
+  if (ex) ex.remove();
+  
+  // 編集中の写真を一時保存
+  window._tweetEditPhotos = (tw.photos || []).slice();
+  
+  let h = '<div id="tweetEditModal" onclick="if(event.target===this)closeTweetEditModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">つぶやきを編集</div>';
+  h += '<button onclick="closeTweetEditModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<textarea id="tweetEditBody" style="width:100%;min-height:120px;padding:12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(tw.body||'')+'</textarea>';
+  
+  // 写真エリア
+  h += '<div id="tweetEditPhotos" style="display:flex;flex-wrap:wrap;gap:6px;"></div>';
+  
+  h += '<div style="display:flex;gap:6px;">';
+  h += '<button onclick="addTweetEditPhoto()" style="flex-shrink:0;padding:8px 12px;background:var(--surface-warm);color:var(--accent-deep);border:1px solid var(--accent);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">add_a_photo</span>写真追加</button>';
+  h += '<input type="file" id="tweetEditPhotoInput" accept="image/*" multiple style="display:none;" onchange="handleTweetEditPhotoSelect(event)">';
+  h += '<span id="tweetEditPhotoCount" style="margin-left:auto;font-size:10px;color:var(--ink-sub);align-self:center;"></span>';
+  h += '</div>';
+  
+  h += '<div style="display:flex;gap:8px;margin-top:6px;">';
+  h += '<button onclick="deleteTweet(\''+tweetId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  h += '<button onclick="closeTweetEditModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveTweetEdit(\''+tweetId+'\')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  _renderTweetEditPhotos();
+}
+window.openTweetEditModal = openTweetEditModal;
+
+function _renderTweetEditPhotos() {
+  const area = document.getElementById('tweetEditPhotos');
+  if (!area) return;
+  const photos = window._tweetEditPhotos || [];
+  let h = '';
+  for (let i = 0; i < photos.length; i++) {
+    h += '<div style="position:relative;flex-shrink:0;">';
+    h += '<img src="'+photos[i]+'" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--line);" />';
+    h += '<button onclick="removeTweetEditPhoto('+i+')" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#c4506b;color:white;border:none;cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>';
+    h += '</div>';
+  }
+  area.innerHTML = h;
+  const cnt = document.getElementById('tweetEditPhotoCount');
+  if (cnt) cnt.textContent = photos.length + '/10枚';
+}
+
+function removeTweetEditPhoto(idx) {
+  if (!window._tweetEditPhotos) return;
+  window._tweetEditPhotos.splice(idx, 1);
+  _renderTweetEditPhotos();
+}
+window.removeTweetEditPhoto = removeTweetEditPhoto;
+
+function addTweetEditPhoto() {
+  const inp = document.getElementById('tweetEditPhotoInput');
+  if (inp) inp.click();
+}
+window.addTweetEditPhoto = addTweetEditPhoto;
+
+async function handleTweetEditPhotoSelect(event) {
+  if (!window._tweetEditPhotos) window._tweetEditPhotos = [];
+  const files = Array.from(event.target.files || []);
+  const limit = 10 - window._tweetEditPhotos.length;
+  if (limit <= 0) {
+    showToast('10枚までです');
+    return;
+  }
+  const targetFiles = files.slice(0, limit);
+  if (files.length > limit) showToast(limit+'枚までです');
+  
+  for (const f of targetFiles) {
+    try {
+      const dataUrl = await resizeImageToBase64(f, 1024, 0.7);
+      window._tweetEditPhotos.push(dataUrl);
+    } catch(e) {
+      console.error('写真エラー:', e);
+    }
+  }
+  _renderTweetEditPhotos();
+  event.target.value = '';
+}
+window.handleTweetEditPhotoSelect = handleTweetEditPhotoSelect;
+
+function closeTweetEditModal() {
+  const el = document.getElementById('tweetEditModal');
+  if (el) el.remove();
+  window._tweetEditPhotos = null;
+}
+window.closeTweetEditModal = closeTweetEditModal;
+
+function saveTweetEdit(tweetId) {
+  if (!data.tweets) return;
+  const tw = data.tweets.find(t => t.id === tweetId);
+  if (!tw) return;
+  const inp = document.getElementById('tweetEditBody');
+  const body = inp ? inp.value.trim() : '';
+  const photos = window._tweetEditPhotos || [];
+  if (!body && photos.length === 0) {
+    showToast('何か書いてね');
+    return;
+  }
+  // タグ再抽出
+  const tags = [];
+  const tagMatches = body.match(/#([^\s#　]+)/g);
+  if (tagMatches) {
+    for (const m of tagMatches) {
+      const tag = m.substring(1);
+      if (tag && !tags.includes(tag)) tags.push(tag);
+    }
+  }
+  tw.body = body;
+  tw.photos = photos.slice();
+  tw.tags = tags;
+  tw.updatedAt = Date.now();
+  saveData();
+  closeTweetEditModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.saveTweetEdit = saveTweetEdit;
+
+function deleteTweet(tweetId) {
+  if (!confirm('このつぶやきを削除する？')) return;
+  data.tweets = (data.tweets || []).filter(t => t.id !== tweetId);
+  saveData();
+  closeTweetEditModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.deleteTweet = deleteTweet;
+
+// ===== Office（MEのサブタブ：仕事の小さな記録帳） =====
+function renderOfficeInMeTab() {
+  // サブサブタブのデフォルト値
+  if (!data.officeSubTab) data.officeSubTab = 'stamp';
+  const ssTab = data.officeSubTab;
+  
+  let h = '';
+  
+  // サブサブタブ
+  h += '<div style="padding:10px 14px 0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;">';
+  const subTabs = [
+    { id: 'stamp',    label: '仕事スタンプ', icon: 'check_circle' },
+    { id: 'memo',     label: 'メモ',         icon: 'sticky_note_2' },
+    { id: 'contacts', label: '取引先',       icon: 'business_center' },
+    { id: 'calendar', label: 'カレンダー',   icon: 'calendar_month' }
+  ];
+  for (const t of subTabs) {
+    const isAct = ssTab === t.id;
+    h += '<button onclick="switchOfficeSubTab(\''+t.id+'\')" style="flex-shrink:0;padding:8px 14px;border-radius:10px;border:1.5px solid '+(isAct?'var(--accent)':'var(--line)')+';background:'+(isAct?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(isAct?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:14px;">'+t.icon+'</span>';
+    h += t.label+'</button>';
+  }
+  h += '</div>';
+  
+  if (ssTab === 'stamp') {
+    h += renderOfficeStampTab();
+  } else if (ssTab === 'memo') {
+    h += renderOfficeMemoTab();
+  } else if (ssTab === 'contacts') {
+    h += renderOfficeContactsTab();
+  } else if (ssTab === 'calendar') {
+    h += renderOfficeCalendarTab();
+  }
+  
+  return h;
+}
+window.renderOfficeInMeTab = renderOfficeInMeTab;
+
+function switchOfficeSubTab(sub) {
+  data.officeSubTab = sub;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.switchOfficeSubTab = switchOfficeSubTab;
+
+// ===== Office モード（独立モード版・もう未使用、互換性のため残置） =====
+function renderOfficeMode() {
+  // ME モードに飛ばす
+  currentMode = 'me';
+  currentView = 'me';
+  currentModeTab['me'] = 'office';
+  saveData();
+  render();
+}
+window.renderOfficeMode = renderOfficeMode;
+
+// Office: 仕事スタンプ
+function renderOfficeStampTab() {
+  // データ初期化
+  if (!data.officeStampLib) {
+    data.officeStampLib = [
+      {icon:'edit_note',     name:'ひとこと', type:'text', placeholder:'今の気持ちを一言'},
+      {icon:'sentiment_dissatisfied', name:'愚痴', type:'text', placeholder:'吐き出しちゃおう'},
+      {icon:'phone_in_talk', name:'電話対応'},
+      {icon:'description',   name:'資料作成'},
+      {icon:'meeting_room',  name:'会議'},
+      {icon:'mail',          name:'メール'},
+      {icon:'inventory',     name:'納品'},
+      {icon:'local_shipping',name:'発送'},
+      {icon:'handshake',     name:'打合せ'},
+      {icon:'engineering',   name:'設計'},
+      {icon:'precision_manufacturing', name:'加工'},
+      {icon:'fact_check',    name:'検査'},
+      {icon:'task_alt',      name:'タスク完了'},
+      {icon:'coffee',        name:'休憩'}
+    ];
+    saveData();
+  }
+  // 既存ユーザー対応：「ひとこと」「愚痴」が無ければ先頭に追加
+  if (!data.officeStampLib.find(s => s.name === 'ひとこと')) {
+    data.officeStampLib.unshift({icon:'edit_note', name:'ひとこと', type:'text', placeholder:'今の気持ちを一言'});
+    saveData();
+  }
+  if (!data.officeStampLib.find(s => s.name === '愚痴')) {
+    const idx = data.officeStampLib.findIndex(s => s.name === 'ひとこと');
+    data.officeStampLib.splice(idx + 1, 0, {icon:'sentiment_dissatisfied', name:'愚痴', type:'text', placeholder:'吐き出しちゃおう'});
+    saveData();
+  }
+  if (!data.officeStampHistory) data.officeStampHistory = [];
+  
+  let h = '<div style="padding:12px 16px 8px;">';
+  h += '<div style="font-size:11px;color:#666;line-height:1.6;margin-bottom:10px;font-weight:600;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);vertical-align:middle;">touch_app</span> ';
+  h += 'パパッと押すだけ。お仕事の流れをきろくできるよ';
+  h += '</div>';
+  h += '</div>';
+  
+  // スタンプグリッド（2列横スクロール）
+  h += '<div data-office-stamp-grid style="padding:0 12px 12px;display:grid;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:64px;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-snap-type:x mandatory;">';
+  for (const s of data.officeStampLib) {
+    h += '<button onclick="tapOfficeStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.35) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;aspect-ratio:1/1.05;scroll-snap-align:start;">';
+    h += '<span class="material-symbols-rounded" style="font-size:28px;line-height:1;color:var(--accent-deep);">'+s.icon+'</span>';
+    h += '<span style="font-size:10px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span>';
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  // 区切り
+  h += '<div style="display:flex;align-items:center;gap:6px;margin:14px 16px 8px;">';
+  h += '<span style="width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0;"></span>';
+  h += '<span style="font-size:11px;font-weight:800;color:var(--accent-deep);">最近のきろく</span>';
+  h += '<span style="flex:1;height:1px;background:var(--line);"></span>';
+  h += '</div>';
+  
+  // 履歴
+  h += '<div data-office-history-area style="padding:0 16px 16px;">';
+  h += _renderOfficeHistoryHtml();
+  h += '</div>';
+  
+  return h;
+}
+window.renderOfficeStampTab = renderOfficeStampTab;
+
+function _renderOfficeHistoryHtml() {
+  const todayStr = new Date().toDateString();
+  const history = data.officeStampHistory || [];
+  const todayHist = history.filter(r => new Date(r.timestamp).toDateString() === todayStr);
+  
+  if (todayHist.length === 0) {
+    return '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px 16px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
+  }
+  
+  let h = '<div style="font-size:10px;color:var(--ink-light);margin-bottom:6px;">今日の記録: '+todayHist.length+'件</div>';
+  h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+  for (const r of todayHist) {
+    const t = new Date(r.timestamp);
+    const timeStr = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+    const _hasMemoText = !!r.memo;
+    const _hasMemoPhoto = !!r.memoPhoto;
+    const _isText = r.type === 'text' && r.value;
+    
+    // text型（ひとこと・愚痴）は吹き出し風に大きく表示
+    if (_isText) {
+      // 名前ごとに色分け
+      let bgColor = '#FFF8E0', borderColor = '#E8C870', textColor = '#8B6914';
+      if (r.name === '愚痴') { bgColor = '#FFE8E8'; borderColor = '#F0BDC6'; textColor = '#A04B5B'; }
+      
+      h += '<div style="display:flex;flex-direction:column;gap:4px;padding:10px 12px;background:'+bgColor+';border:1.5px solid '+borderColor+';border-radius:12px;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:16px;color:'+textColor+';">'+escapeHtml(r.icon||'edit_note')+'</span>';
+      h += '<span style="font-size:11px;font-weight:800;color:'+textColor+';">'+escapeHtml(r.name)+'</span>';
+      h += '<span style="flex:1;"></span>';
+      h += '<span style="font-size:9px;color:'+textColor+';opacity:0.7;font-variant-numeric:tabular-nums;">'+timeStr+'</span>';
+      h += '<button onclick="deleteOfficeStamp(\''+r.id+'\')" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:'+textColor+';opacity:0.6;font-size:14px;padding:0;width:20px;height:20px;display:flex;align-items:center;justify-content:center;">×</button>';
+      h += '</div>';
+      h += '<div style="font-size:13px;color:'+textColor+';line-height:1.6;white-space:pre-wrap;word-wrap:break-word;font-weight:600;">'+escapeHtml(r.value)+'</div>';
+      h += '</div>';
+      continue;
+    }
+    
+    // 通常スタンプ
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface);border:1px solid var(--card-border);border-radius:12px;">';
+    h += '<span style="flex-shrink:0;width:20px;display:inline-flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-dark);">'+escapeHtml(r.icon||'task')+'</span></span>';
+    h += '<span style="flex-shrink:0;width:80px;font-size:12px;font-weight:600;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.name)+'</span>';
+    
+    // メモボタン
+    if (_hasMemoText || _hasMemoPhoto) {
+      h += '<button onclick="openStampMemoModal(\''+r.id+'\',\'office\')" style="flex:1;text-align:left;background:#FFF8E0;border:1px solid #E8C870;color:#8B6914;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;min-width:0;">';
+      if (_hasMemoText) {
+        h += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.memo)+'</span>';
+      } else {
+        h += '<span style="flex:1;color:#B89855;font-style:italic;">写真メモ</span>';
+      }
+      if (_hasMemoPhoto) {
+        h += '<span class="material-symbols-rounded" style="font-size:14px;color:#8B6914;flex-shrink:0;">image</span>';
+      }
+      h += '</button>';
+    } else {
+      h += '<button onclick="openStampMemoModal(\''+r.id+'\',\'office\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:13px;">edit_note</span>メモ';
+      h += '<span style="flex:1;"></span>';
+      h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--ink-light);">photo_camera</span>';
+      h += '</button>';
+    }
+    
+    h += '<span style="flex-shrink:0;font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;">'+timeStr+'</span>';
+    h += '<button onclick="deleteOfficeStamp(\''+r.id+'\')" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--ink-light);font-size:14px;padding:0;width:20px;height:20px;display:flex;align-items:center;justify-content:center;">×</button>';
+    h += '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+
+function tapOfficeStamp(icon, name, evt) {
+  if (!data.officeStampHistory) data.officeStampHistory = [];
+  // スタンプ定義を確認
+  const def = (data.officeStampLib || []).find(s => s.icon === icon && s.name === name);
+  
+  // text型の場合は専用入力モーダル
+  if (def && def.type === 'text') {
+    openOfficeTextStampModal(icon, name, def.placeholder || '');
+    return;
+  }
+  
+  // 通常スタンプ
+  const rec = {
+    id: 'ost_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    icon: icon,
+    name: name,
+    timestamp: Date.now()
+  };
+  data.officeStampHistory.unshift(rec);
+  if (data.officeStampHistory.length > 100) data.officeStampHistory = data.officeStampHistory.slice(0,100);
+  saveData();
+  // 履歴部分だけ更新
+  const area = document.querySelector('[data-office-history-area]');
+  if (area) area.innerHTML = _renderOfficeHistoryHtml();
+  // ボタンアニメーション
+  try {
+    const e = evt || (typeof event !== 'undefined' ? event : null);
+    const btn = e && e.currentTarget;
+    if (btn) {
+      btn.style.transform = 'scale(0.92)';
+      btn.style.transition = 'transform 0.1s';
+      setTimeout(() => { try { btn.style.transform = ''; } catch(_){} }, 120);
+    }
+  } catch(e) {}
+}
+window.tapOfficeStamp = tapOfficeStamp;
+
+// Office text型スタンプの入力モーダル
+function openOfficeTextStampModal(icon, name, placeholder) {
+  const ex = document.getElementById('officeTextStampModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="officeTextStampModal" onclick="if(event.target===this)closeOfficeTextStampModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;display:flex;flex-direction:column;gap:12px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:var(--accent-bg);"><span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">'+icon+'</span></span>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(name)+'</div>';
+  h += '<button onclick="closeOfficeTextStampModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<textarea id="officeTextInput" placeholder="'+escapeHtml(placeholder)+'" style="width:100%;min-height:100px;padding:12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;"></textarea>';
+  
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<button onclick="closeOfficeTextStampModal()" style="flex:0 0 auto;padding:11px 16px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveOfficeTextStamp(\''+icon+'\',\''+escapeHtml(name).replace(/\'/g,"\\\\\'")+'\')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('officeTextInput'); if (i) i.focus(); }, 80);
+}
+window.openOfficeTextStampModal = openOfficeTextStampModal;
+
+function closeOfficeTextStampModal() {
+  const el = document.getElementById('officeTextStampModal');
+  if (el) el.remove();
+}
+window.closeOfficeTextStampModal = closeOfficeTextStampModal;
+
+function saveOfficeTextStamp(icon, name) {
+  const inp = document.getElementById('officeTextInput');
+  const value = inp ? inp.value.trim() : '';
+  if (!value) { showToast('何か書いてね'); return; }
+  if (!data.officeStampHistory) data.officeStampHistory = [];
+  const rec = {
+    id: 'ost_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    icon: icon,
+    name: name,
+    type: 'text',
+    value: value,
+    timestamp: Date.now()
+  };
+  data.officeStampHistory.unshift(rec);
+  if (data.officeStampHistory.length > 100) data.officeStampHistory = data.officeStampHistory.slice(0,100);
+  saveData();
+  closeOfficeTextStampModal();
+  // 履歴部分だけ更新
+  const area = document.querySelector('[data-office-history-area]');
+  if (area) area.innerHTML = _renderOfficeHistoryHtml();
+}
+window.saveOfficeTextStamp = saveOfficeTextStamp;
+
+function deleteOfficeStamp(id) {
+  if (!confirm('この記録を削除する？')) return;
+  data.officeStampHistory = (data.officeStampHistory||[]).filter(r => r.id !== id);
+  saveData();
+  const area = document.querySelector('[data-office-history-area]');
+  if (area) area.innerHTML = _renderOfficeHistoryHtml();
+}
+window.deleteOfficeStamp = deleteOfficeStamp;
+
+// Office: 仕事メモ
+function renderOfficeMemoTab() {
+  if (!data.officeMemos) data.officeMemos = [];
+  const memos = [...data.officeMemos].sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+  
+  let h = '<div style="padding:12px 16px 8px;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+  h += '<div style="font-size:11px;color:#666;line-height:1.6;flex:1;font-weight:600;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);vertical-align:middle;">sticky_note_2</span> ';
+  h += '電話のメモ・伝言・思いつきを残せるよ';
+  h += '</div>';
+  h += '<button onclick="openOfficeMemoModal()" style="padding:6px 12px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;">add</span>追加';
+  h += '</button>';
+  h += '</div>';
+  
+  if (memos.length === 0) {
+    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 100%);border:1.5px dashed var(--card-border);border-radius:16px;padding:24px 16px;text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">';
+    h += '<div style="margin-bottom:8px;"><span class="material-symbols-rounded" style="font-size:36px;color:var(--accent-deep);opacity:0.5;">edit_note</span></div>';
+    h += 'まだメモがないよ<br>右上の「＋追加」から書いてみてね🌷';
+    h += '</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+    for (const m of memos) {
+      const t = new Date(m.updatedAt || Date.now());
+      const dateStr = (t.getMonth()+1)+'/'+t.getDate()+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+      h += '<button onclick="openOfficeMemoModal(\''+m.id+'\')" style="display:flex;flex-direction:column;gap:4px;padding:12px;background:linear-gradient(135deg,#FFFCE8 0%,#FFFAF0 100%);border:1.5px solid #E8D870;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;">';
+      if (m.title) h += '<div style="font-size:13px;font-weight:800;color:#8B6914;">'+escapeHtml(m.title)+'</div>';
+      h += '<div style="font-size:11px;color:#666;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">'+escapeHtml(m.body||'(本文なし)')+'</div>';
+      h += '<div style="font-size:9px;color:#aaa;margin-top:2px;">'+dateStr+'</div>';
+      h += '</button>';
+    }
+    h += '</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+window.renderOfficeMemoTab = renderOfficeMemoTab;
+
+function openOfficeMemoModal(memoId) {
+  if (!data.officeMemos) data.officeMemos = [];
+  const isEdit = memoId && memoId !== 'null';
+  const cur = isEdit ? data.officeMemos.find(m => m.id === memoId) : { title:'', body:'' };
+  if (isEdit && !cur) return;
+  
+  const ex = document.getElementById('officeMemoModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="officeMemoModal" onclick="if(event.target===this)closeOfficeMemoModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:#FFFCE8;color:#8B6914;border:1px solid #E8D870;"><span class="material-symbols-rounded" style="font-size:16px;">sticky_note_2</span></span>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">仕事メモ</div>';
+  h += '<button onclick="closeOfficeMemoModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">タイトル（任意）</label>';
+  h += '<input id="ofcMemoTitle" type="text" value="'+escapeHtml(cur.title||'')+'" placeholder="例：山田様 折り返し電話" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">本文</label>';
+  h += '<textarea id="ofcMemoBody" placeholder="メモ内容を書いてね" style="width:100%;min-height:140px;padding:12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(cur.body||'')+'</textarea>';
+  h += '</div>';
+  
+  h += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  if (isEdit) {
+    h += '<button onclick="deleteOfficeMemo(\''+memoId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="closeOfficeMemoModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveOfficeMemo('+(isEdit?'\''+memoId+'\'':'null')+')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('ofcMemoTitle'); if (i && !isEdit) i.focus(); }, 80);
+}
+window.openOfficeMemoModal = openOfficeMemoModal;
+
+function closeOfficeMemoModal() {
+  const el = document.getElementById('officeMemoModal');
+  if (el) el.remove();
+}
+window.closeOfficeMemoModal = closeOfficeMemoModal;
+
+function saveOfficeMemo(memoId) {
+  if (!data.officeMemos) data.officeMemos = [];
+  const title = (document.getElementById('ofcMemoTitle')||{}).value || '';
+  const body = (document.getElementById('ofcMemoBody')||{}).value || '';
+  if (!title.trim() && !body.trim()) { showToast('何か書いてね'); return; }
+  const isEdit = memoId && memoId !== 'null';
+  if (isEdit) {
+    const m = data.officeMemos.find(x => x.id === memoId);
+    if (m) { m.title = title; m.body = body; m.updatedAt = Date.now(); }
+  } else {
+    data.officeMemos.push({
+      id: 'ofcm_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      title: title,
+      body: body,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+  }
+  saveData();
+  closeOfficeMemoModal();
+  render();
+}
+window.saveOfficeMemo = saveOfficeMemo;
+
+function deleteOfficeMemo(memoId) {
+  if (!confirm('このメモを削除する？')) return;
+  data.officeMemos = (data.officeMemos||[]).filter(m => m.id !== memoId);
+  saveData();
+  closeOfficeMemoModal();
+  render();
+}
+window.deleteOfficeMemo = deleteOfficeMemo;
+
+// Office: カレンダー（仕事の記録だけ表示）
+function renderOfficeCalendarTab() {
+  if (!data.officeCalMonth) {
+    const now = new Date();
+    data.officeCalMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  }
+  const [yearStr, monthStr] = data.officeCalMonth.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10) - 1;
+  
+  // 該当月の記録を集計（日付別）
+  const history = data.officeStampHistory || [];
+  const dayRecs = {}; // dateKey → records[]
+  for (const r of history) {
+    const t = new Date(r.timestamp || 0);
+    if (t.getFullYear() === year && t.getMonth() === month) {
+      const key = t.getDate();
+      if (!dayRecs[key]) dayRecs[key] = [];
+      dayRecs[key].push(r);
+    }
+  }
+  
+  let h = '<div style="padding:8px 14px 16px;">';
+  
+  // 月ナビ
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+  h += '<button onclick="switchOfficeCalMonth(-1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-dark);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_left</span></button>';
+  h += '<div style="font-size:15px;font-weight:800;color:var(--accent-deep);font-variant-numeric:tabular-nums;">'+year+'年 '+(month+1)+'月</div>';
+  h += '<button onclick="switchOfficeCalMonth(1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-dark);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_right</span></button>';
+  h += '</div>';
+  
+  // 曜日ヘッダ
+  const weekdays = ['日','月','火','水','木','金','土'];
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px;">';
+  for (let i = 0; i < 7; i++) {
+    const color = i === 0 ? '#D87878' : (i === 6 ? '#5888B0' : '#888');
+    h += '<div style="text-align:center;font-size:10px;font-weight:800;color:'+color+';padding:4px 0;">'+weekdays[i]+'</div>';
+  }
+  h += '</div>';
+  
+  // カレンダー本体
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startWeekday = firstDay.getDay();
+  
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+  const todayDate = today.getDate();
+  
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">';
+  
+  // 前月の空白
+  for (let i = 0; i < startWeekday; i++) {
+    h += '<div></div>';
+  }
+  
+  for (let d = 1; d <= daysInMonth; d++) {
+    const wd = (startWeekday + d - 1) % 7;
+    const wdColor = wd === 0 ? '#D87878' : (wd === 6 ? '#5888B0' : 'var(--ink-dark)');
+    const isToday = isCurrentMonth && d === todayDate;
+    const recs = dayRecs[d] || [];
+    const hasRec = recs.length > 0;
+    
+    h += '<div onclick="'+(hasRec ? "openOfficeDayModal('"+year+"-"+(month+1)+"-"+d+"')" : '')+'" style="aspect-ratio:1;border:1px solid '+(isToday?'var(--accent)':'var(--card-border)')+';border-radius:8px;padding:3px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:'+(hasRec?'pointer':'default')+';background:'+(isToday?'var(--accent-bg)':'var(--surface)')+';position:relative;">';
+    h += '<div style="font-size:11px;font-weight:'+(isToday?'800':'600')+';color:'+(isToday?'var(--accent-deep)':wdColor)+';font-variant-numeric:tabular-nums;line-height:1;">'+d+'</div>';
+    
+    // 記録あり：色ドット表示（最大4つ）
+    if (hasRec) {
+      const showRecs = recs.slice(0, 4);
+      h += '<div style="display:flex;flex-wrap:wrap;gap:1px;justify-content:center;margin-top:2px;">';
+      for (const r of showRecs) {
+        // ひとこと=ゴールド、愚痴=ピンク、その他=アクセント色
+        let dotColor = 'var(--accent)';
+        if (r.name === 'ひとこと') dotColor = '#E8C870';
+        else if (r.name === '愚痴') dotColor = '#F0BDC6';
+        h += '<span style="width:5px;height:5px;border-radius:50%;background:'+dotColor+';"></span>';
+      }
+      h += '</div>';
+      if (recs.length > 4) {
+        h += '<div style="font-size:7px;color:var(--ink-light);font-weight:700;margin-top:1px;">+'+(recs.length-4)+'</div>';
+      }
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  
+  // 凡例
+  h += '<div style="display:flex;align-items:center;gap:10px;margin-top:12px;font-size:9px;color:#888;font-weight:700;flex-wrap:wrap;">';
+  h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:6px;height:6px;border-radius:50%;background:#E8C870;display:inline-block;"></span>ひとこと</span>';
+  h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:6px;height:6px;border-radius:50%;background:#F0BDC6;display:inline-block;"></span>愚痴</span>';
+  h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;"></span>その他</span>';
+  h += '</div>';
+  
+  h += '</div>';
+  return h;
+}
+window.renderOfficeCalendarTab = renderOfficeCalendarTab;
+
+function switchOfficeCalMonth(delta) {
+  if (!data.officeCalMonth) {
+    const now = new Date();
+    data.officeCalMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  }
+  const [y, m] = data.officeCalMonth.split('-').map(Number);
+  let newY = y, newM = m + delta;
+  if (newM < 1) { newM = 12; newY--; }
+  else if (newM > 12) { newM = 1; newY++; }
+  data.officeCalMonth = newY+'-'+String(newM).padStart(2,'0');
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.switchOfficeCalMonth = switchOfficeCalMonth;
+
+// Office: 日付タップで詳細モーダル
+function openOfficeDayModal(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const target = new Date(y, m-1, d);
+  const targetStr = target.toDateString();
+  const recs = (data.officeStampHistory || []).filter(r => new Date(r.timestamp).toDateString() === targetStr).sort((a,b) => (a.timestamp||0) - (b.timestamp||0));
+  
+  if (recs.length === 0) return;
+  
+  const ex = document.getElementById('officeDayModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="officeDayModal" onclick="if(event.target===this)closeOfficeDayModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+y+'年'+m+'月'+d+'日 の記録</div>';
+  h += '<button onclick="closeOfficeDayModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+  for (const r of recs) {
+    const t = new Date(r.timestamp);
+    const timeStr = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+    const _isText = r.type === 'text' && r.value;
+    
+    if (_isText) {
+      let bgColor = '#FFF8E0', borderColor = '#E8C870', textColor = '#8B6914';
+      if (r.name === '愚痴') { bgColor = '#FFE8E8'; borderColor = '#F0BDC6'; textColor = '#A04B5B'; }
+      h += '<div style="display:flex;flex-direction:column;gap:4px;padding:10px 12px;background:'+bgColor+';border:1.5px solid '+borderColor+';border-radius:12px;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:16px;color:'+textColor+';">'+escapeHtml(r.icon||'edit_note')+'</span>';
+      h += '<span style="font-size:11px;font-weight:800;color:'+textColor+';">'+escapeHtml(r.name)+'</span>';
+      h += '<span style="flex:1;"></span>';
+      h += '<span style="font-size:9px;color:'+textColor+';opacity:0.7;font-variant-numeric:tabular-nums;">'+timeStr+'</span>';
+      h += '</div>';
+      h += '<div style="font-size:13px;color:'+textColor+';line-height:1.6;white-space:pre-wrap;word-wrap:break-word;font-weight:600;">'+escapeHtml(r.value)+'</div>';
+      h += '</div>';
+    } else {
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface-warm);border:1px solid var(--card-border);border-radius:10px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-dark);flex-shrink:0;">'+escapeHtml(r.icon||'task')+'</span>';
+      h += '<span style="flex:1;font-size:12px;font-weight:600;color:var(--ink-dark);">'+escapeHtml(r.name)+'</span>';
+      if (r.memo) {
+        h += '<span style="font-size:10px;color:#8B6914;background:#FFF8E0;padding:2px 6px;border-radius:6px;border:1px solid #E8C870;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.memo)+'</span>';
+      }
+      h += '<span style="font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;flex-shrink:0;">'+timeStr+'</span>';
+      h += '</div>';
+    }
+  }
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openOfficeDayModal = openOfficeDayModal;
+
+function closeOfficeDayModal() {
+  const el = document.getElementById('officeDayModal');
+  if (el) el.remove();
+}
+window.closeOfficeDayModal = closeOfficeDayModal;
+
+// Office: 連絡先（取引先）
+function renderOfficeContactsTab() {
+  if (!data.officeContacts) data.officeContacts = [];
+  const contacts = [...data.officeContacts].sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ja'));
+  
+  let h = '<div style="padding:12px 16px 8px;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+  h += '<div style="font-size:11px;color:#666;line-height:1.6;flex:1;font-weight:600;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);vertical-align:middle;">business_center</span> ';
+  h += '取引先・仕入れ先・お客様の連絡先を残せるよ';
+  h += '</div>';
+  h += '<button onclick="openOfficeContactModal()" style="padding:6px 12px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;">add</span>追加';
+  h += '</button>';
+  h += '</div>';
+  
+  if (contacts.length === 0) {
+    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 100%);border:1.5px dashed var(--card-border);border-radius:16px;padding:24px 16px;text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">';
+    h += '<div style="margin-bottom:8px;"><span class="material-symbols-rounded" style="font-size:36px;color:var(--accent-deep);opacity:0.5;">contacts</span></div>';
+    h += 'まだ連絡先がないよ<br>右上の「＋追加」から登録してね🌷';
+    h += '</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const c of contacts) {
+      h += '<button onclick="openOfficeContactModal(\''+c.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border:1px solid var(--card-border);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+      // アイコン（会社マーク）
+      const initial = (c.name||'?').charAt(0).toUpperCase();
+      h += '<span style="flex-shrink:0;width:36px;height:36px;border-radius:8px;background:var(--accent-bg);color:var(--accent-deep);display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;border:1px solid var(--accent);">'+escapeHtml(initial)+'</span>';
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;">';
+      h += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(c.name||'無題')+'</span>';
+      if (c.category) h += '<span style="font-size:9px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 6px;border-radius:100px;font-weight:700;">'+escapeHtml(c.category)+'</span>';
+      h += '</div>';
+      const subInfo = [];
+      if (c.contact) subInfo.push(c.contact);
+      if (c.phone) subInfo.push(c.phone);
+      if (subInfo.length > 0) h += '<div style="font-size:10px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(subInfo.join(' / '))+'</div>';
+      h += '</div>';
+      h += '</button>';
+    }
+    h += '</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+window.renderOfficeContactsTab = renderOfficeContactsTab;
+
+function openOfficeContactModal(contactId) {
+  if (!data.officeContacts) data.officeContacts = [];
+  const isEdit = contactId && contactId !== 'null';
+  const cur = isEdit ? data.officeContacts.find(c => c.id === contactId) : { name:'', category:'取引先', contact:'', phone:'', email:'', address:'', memo:'' };
+  if (isEdit && !cur) return;
+  
+  const ex = document.getElementById('officeContactModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="officeContactModal" onclick="if(event.target===this)closeOfficeContactModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--accent);color:white;"><span class="material-symbols-rounded" style="font-size:16px;">business_center</span></span>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">取引先・連絡先</div>';
+  h += '<button onclick="closeOfficeContactModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:2;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">会社名・名前</label>';
+  h += '<input id="ofcCtName" type="text" value="'+escapeHtml(cur.name||'')+'" placeholder="例：株式会社○○" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">分類</label>';
+  h += '<select id="ofcCtCategory" style="width:100%;padding:10px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  for (const cat of ['取引先','仕入れ先','お客様','業者','社内','その他']) {
+    h += '<option value="'+cat+'"'+(cur.category===cat?' selected':'')+'>'+cat+'</option>';
+  }
+  h += '</select></div>';
+  h += '</div>';
+  
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">担当者名</label>';
+  h += '<input id="ofcCtContact" type="text" value="'+escapeHtml(cur.contact||'')+'" placeholder="例：山田様（営業）" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">電話</label>';
+  h += '<input id="ofcCtPhone" type="tel" value="'+escapeHtml(cur.phone||'')+'" placeholder="03-..." style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メール</label>';
+  h += '<input id="ofcCtEmail" type="email" value="'+escapeHtml(cur.email||'')+'" placeholder="example@..." style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">住所（任意）</label>';
+  h += '<input id="ofcCtAddress" type="text" value="'+escapeHtml(cur.address||'')+'" placeholder="所在地など" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メモ</label>';
+  h += '<textarea id="ofcCtMemo" placeholder="例：機械加工担当 / 月末締めなど" style="width:100%;min-height:60px;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(cur.memo||'')+'</textarea>';
+  h += '</div>';
+  
+  h += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  if (isEdit) {
+    h += '<button onclick="deleteOfficeContact(\''+contactId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="closeOfficeContactModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveOfficeContact('+(isEdit?'\''+contactId+'\'':'null')+')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('ofcCtName'); if (i && !isEdit) i.focus(); }, 80);
+}
+window.openOfficeContactModal = openOfficeContactModal;
+
+function closeOfficeContactModal() {
+  const el = document.getElementById('officeContactModal');
+  if (el) el.remove();
+}
+window.closeOfficeContactModal = closeOfficeContactModal;
+
+function saveOfficeContact(contactId) {
+  if (!data.officeContacts) data.officeContacts = [];
+  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const obj = {
+    name: get('ofcCtName'),
+    category: get('ofcCtCategory') || '取引先',
+    contact: get('ofcCtContact'),
+    phone: get('ofcCtPhone'),
+    email: get('ofcCtEmail'),
+    address: get('ofcCtAddress'),
+    memo: get('ofcCtMemo')
+  };
+  if (!obj.name) { showToast('会社名・名前を入れてね'); return; }
+  const isEdit = contactId && contactId !== 'null';
+  if (isEdit) {
+    const c = data.officeContacts.find(x => x.id === contactId);
+    if (c) Object.assign(c, obj, { updatedAt: Date.now() });
+  } else {
+    obj.id = 'ofcct_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+    obj.createdAt = Date.now();
+    obj.updatedAt = Date.now();
+    data.officeContacts.push(obj);
+  }
+  saveData();
+  closeOfficeContactModal();
+  render();
+}
+window.saveOfficeContact = saveOfficeContact;
+
+function deleteOfficeContact(contactId) {
+  if (!confirm('削除する？')) return;
+  data.officeContacts = (data.officeContacts||[]).filter(c => c.id !== contactId);
+  saveData();
+  closeOfficeContactModal();
+  render();
+}
+window.deleteOfficeContact = deleteOfficeContact;
 
 function renderNestMode() {
   document.getElementById('bottomNav').style.display = 'flex';
@@ -12261,7 +14115,7 @@ function renderMainHouseCard(house) {
   if (petCount > 0) {
     html += '<div class="main-house-pets">';
     for (const pet of pets.slice(0, 10)) {
-      html += '<div class="main-house-pet">'+(PET_EMOJIS[pet.type] || '✨')+'</div>';
+      html += '<div class="main-house-pet">'+petIconHtml(pet.type, 'font-size:32px;')+'</div>';
     }
     if (pets.length > 10) html += '<div class="main-house-pet-more">+'+(pets.length-10)+'</div>';
     html += '</div>';
@@ -12337,7 +14191,7 @@ function renderPetRoomCard(pet) {
   if (streak >= 3 && pet.place === 'home') html += '<div class="pet-room-streak">'+streakLabelEn(streak)+'</div>';
   html += '<div class="pet-room-nameplate"><span class="pet-room-name">';
   if (pet.place !== 'home') html += PLACE_ICONS[pet.place]+' ';
-  html += escapeHtml(pet.name)+' '+(PET_EMOJIS[pet.type] || '✨')+'</span><span class="pet-room-species">'+(pet.breed ? escapeHtml(pet.breed) : PET_TYPE_NAMES[pet.type])+'</span></div>';
+  html += escapeHtml(pet.name)+' '+petIconHtml(pet.type, 'font-size:18px;vertical-align:middle;')+'</span><span class="pet-room-species">'+(pet.breed ? escapeHtml(pet.breed) : PET_TYPE_NAMES[pet.type])+'</span></div>';
   if (isHome && summary && summary.count > 0) {
     html += '<div class="pet-room-summary">今日 '+summary.count+'件 ・ 最終 '+lastTimeStr+'</div>';
   }
@@ -12834,7 +14688,7 @@ function renderPet() {
   const todayWd = ['日','月','火','水','木','金','土'][todayD.getDay()];
   let html = '<div class="topbar">'+topbarPetalHtml();
   html += '<div class="topbar-spacer"></div>';
-  html += '<div class="topbar-title">'+(PET_EMOJIS[pet.type] || '✨')+' '+escapeHtml(pet.name)+'の部屋</div>';
+  html += '<div class="topbar-title">'+petIconHtml(pet.type, 'font-size:18px;vertical-align:middle;')+' '+escapeHtml(pet.name)+'の部屋</div>';
   html += '<div class="topbar-spacer"></div></div>';
   html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
   html += '<div class="pet-detail-window">';
@@ -12848,7 +14702,7 @@ function renderPet() {
     birthDisplay = '🎂 '+(bd.getFullYear())+'/'+(bd.getMonth()+1)+'/'+(bd.getDate());
   }
   const metaParts = [birthDisplay, breedStr].filter(Boolean);
-  html += '<div class="pet-detail-info"><div><h2 class="pet-detail-name">'+escapeHtml(pet.name)+' '+(PET_EMOJIS[pet.type] || '✨')+'</h2>';
+  html += '<div class="pet-detail-info"><div><h2 class="pet-detail-name">'+escapeHtml(pet.name)+' '+petIconHtml(pet.type, 'font-size:20px;vertical-align:middle;')+'</h2>';
   html += '<div class="pet-detail-meta">'+metaParts.join(' ・ ')+'</div></div>';
   html += '<div class="pet-detail-place-tag">'+PLACE_ICONS[pet.place]+' '+PLACE_NAMES[pet.place]+'</div></div></div>';
   if (memorials.length > 0) {
@@ -16105,6 +17959,7 @@ const DEFAULT_MODE_TABS = {
     { id: 'goods',      label: 'Goods' },
     { id: 'collection', label: 'Collection' },
     { id: 'resume',     label: 'My' },
+    { id: 'office',     label: 'Office' },
     { id: 'secret',     label: 'Memo' }
   ],
   pet: [
@@ -17831,10 +19686,10 @@ function showToast(msg) {
 // モード切替時の中央表示トースト
 function showModeSwitchToast(mode) {
   const labels = {
-    me:   { icon: '🌱', label: 'ME' },
-    nest: { icon: '🪺', label: 'Nest' },
-    pet:  { icon: '🐾', label: 'PET' },
-    kids: { icon: '🧸', label: 'KIDS' }
+    me:     { icon: '🌱', label: 'ME' },
+    nest:   { icon: '🪺', label: 'Nest' },
+    pet:    { icon: '🐾', label: 'PET' },
+    kids:   { icon: '🧸', label: 'KIDS' }
   };
   const info = labels[mode];
   if (!info) return;
@@ -17881,7 +19736,7 @@ function openBulkCareModal(actionId) {
   for (const pet of pets) {
     html += '<label class="bulk-pet-row" style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--surface-warm); border-radius:10px; cursor:pointer;">';
     html += '<input type="checkbox" class="bulk-pet-check" data-pet-id="'+pet.id+'" checked onchange="toggleBulkPet(\''+pet.id+'\', this.checked)">';
-    html += '<span style="font-size:18px;">' + (PET_EMOJIS[pet.type] || '✨') + '</span>';
+    html += petIconHtml(pet.type, 'font-size:18px;vertical-align:middle;');
     html += '<span style="font-weight:700; flex:1;">' + escapeHtml(pet.name) + '</span>';
     html += '</label>';
   }
