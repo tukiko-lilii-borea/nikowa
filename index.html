@@ -1711,7 +1711,10 @@
   .nav-btn .nav-icon .material-symbols-rounded {
     font-size: 26px;
     font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-    transition: font-variation-settings 0.2s ease, color 0.2s ease;
+    transition: font-variation-settings 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  }
+  .nav-btn:active .nav-icon .material-symbols-rounded {
+    transform: scale(0.85);
   }
   .nav-btn.active .nav-icon { color: var(--mint-deep); }
   .nav-btn.active .nav-icon .material-symbols-rounded {
@@ -3243,7 +3246,7 @@
   <button class="nav-btn active" data-view="houses"><span class="nav-icon"><span class="material-symbols-rounded">home</span></span><span class="nav-en">Home</span></button>
   <button class="nav-btn" data-view="schedule"><span class="nav-icon"><span class="material-symbols-rounded">calendar_month</span></span><span class="nav-en">Schedule</span></button>
   <button class="nav-btn" data-view="town"><span class="nav-icon"><span class="material-symbols-rounded">location_city</span></span><span class="nav-en">Town</span></button>
-  <button class="nav-btn" onclick="openGlobalSearch()" type="button"><span class="nav-icon"><span class="material-symbols-rounded">search</span></span><span class="nav-en">Search</span></button>
+  <button class="nav-btn" id="navSearchBtn" onclick="toggleGlobalSearch()" type="button"><span class="nav-icon"><span class="material-symbols-rounded">search</span></span><span class="nav-en">Search</span></button>
   <button class="nav-btn" data-view="settings"><span class="nav-icon"><span class="material-symbols-rounded">settings</span></span><span class="nav-en">Settings</span></button>
 </nav>
 </div>
@@ -4868,6 +4871,9 @@ function saveData() {
 }
 
 function switchMode(targetMode) {
+  // 既に同じモードなら何もしない（重い処理スキップ）
+  if (currentMode === targetMode) return;
+  
   const savedThemeId = data.themeId;
   const savedUser = JSON.parse(JSON.stringify(data.user || { name: '', avatar: '🌷' }));
   const savedUserRegion = data.userRegion;
@@ -5105,6 +5111,33 @@ function yesterdayKey() {
   d.setDate(d.getDate() - 1);
   return dateToKey(d);
 }
+// 天気絵文字 → Material Symbolsアイコン名 変換マップ
+const WEATHER_EMOJI_TO_MS = {
+  '☀️': {icon:'wb_sunny',     color:'#E8B040'},
+  '☀':  {icon:'wb_sunny',     color:'#E8B040'},
+  '🌙': {icon:'bedtime',      color:'#888'},
+  '⛅': {icon:'partly_cloudy_day', color:'#A0B8D0'},
+  '☁️': {icon:'cloud',         color:'#A0A8B0'},
+  '☁':  {icon:'cloud',         color:'#A0A8B0'},
+  '🌤️': {icon:'wb_sunny',     color:'#E8B040'},
+  '🌦️': {icon:'rainy',         color:'#7FB8E8'},
+  '🌧️': {icon:'rainy',         color:'#5888B0'},
+  '⛈️': {icon:'thunderstorm',  color:'#5E5CB0'},
+  '❄️': {icon:'ac_unit',       color:'#B0D4F0'},
+  '🌫️': {icon:'foggy',         color:'#B0B8C0'}
+};
+
+// 天気絵文字 → MS HTML（小さいシルエット用）
+function weatherIconHtml(emojiOrIcon, sizeStyle) {
+  if (!emojiOrIcon) return '';
+  const map = WEATHER_EMOJI_TO_MS[emojiOrIcon];
+  if (!map) {
+    // マッピング無いものは絵文字のまま
+    return '<span style="'+(sizeStyle||'')+'">'+emojiOrIcon+'</span>';
+  }
+  return '<span class="material-symbols-rounded" style="color:'+map.color+';'+(sizeStyle||'')+'">'+map.icon+'</span>';
+}
+
 function getDateWeatherIcon(dateKey) {
   // 1) その日に書かれた日記の天気アイコンを返す（最後に書かれたもの優先）
   if (data.posts && data.posts.length) {
@@ -5611,7 +5644,7 @@ function renderCalendar(monthYear, selectedDate, scope, idPrefix) {
     if (isFuture) cls += ' future';
     html += '<button class="cal-cell'+cls+'" onclick="selectCalDate(\''+idPrefix+'\', \''+key+'\')">';
     const _wIcon = getDateWeatherIcon(key);
-    html += '<span class="cal-day-num">'+d+(_wIcon ? '<span class="cal-day-weather">'+_wIcon+'</span>' : '')+'</span>';
+    html += '<span class="cal-day-num">'+d+(_wIcon ? '<span class="cal-day-weather">'+weatherIconHtml(_wIcon,'font-size:11px;')+'</span>' : '')+'</span>';
     html += '<div class="cal-dots">';
     if (sum.sched) html += '<span class="cal-dot sched"></span>';
     if (sum.care) html += '<span class="cal-dot care"></span>';
@@ -6556,6 +6589,83 @@ function saveValueInput(opts) {
 }
 
 // 履歴の値部分タップ → 編集モーダル開く
+// スタンプ履歴に「あとからメモ」を付けるモーダル
+function openStampMemoModal(recordId) {
+  const rec = (data.stampHistory || []).find(r => r.id === recordId);
+  if (!rec) { showToast('記録が見つからないよ'); return; }
+  
+  const ex = document.getElementById('stampMemoModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="stampMemoModal" onclick="if(event.target===this)closeStampMemoModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:80vh;display:flex;flex-direction:column;gap:12px;">';
+  
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--accent-bg);">'+renderStampIcon(rec.icon||'check','font-size:16px;line-height:1;color:var(--accent-deep);')+'</span>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(rec.name||'記録')+'のメモ</div>';
+  h += '<button onclick="closeStampMemoModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);padding:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  // 時刻表示
+  if (rec.timestamp) {
+    const t = new Date(rec.timestamp);
+    const timeStr = t.getFullYear()+'/'+(t.getMonth()+1)+'/'+t.getDate()+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+    h += '<div style="font-size:10px;color:var(--ink-sub);">'+timeStr+'</div>';
+  }
+  
+  // メモ入力
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メモ（あとから振り返り用）</label>';
+  h += '<textarea id="stampMemoInput" placeholder="例：気持ちよかった / 久しぶり / 体調いい感じ" style="width:100%;min-height:100px;padding:12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(rec.memo||'')+'</textarea>';
+  h += '</div>';
+  
+  // ボタン
+  h += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  if (rec.memo) {
+    h += '<button onclick="deleteStampMemo(\''+recordId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">メモ削除</button>';
+  }
+  h += '<button onclick="closeStampMemoModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveStampMemo(\''+recordId+'\')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('stampMemoInput'); if (i) i.focus(); }, 80);
+}
+window.openStampMemoModal = openStampMemoModal;
+
+function closeStampMemoModal() {
+  const el = document.getElementById('stampMemoModal');
+  if (el) el.remove();
+}
+window.closeStampMemoModal = closeStampMemoModal;
+
+function saveStampMemo(recordId) {
+  const inp = document.getElementById('stampMemoInput');
+  const memo = inp ? inp.value.trim() : '';
+  const rec = (data.stampHistory || []).find(r => r.id === recordId);
+  if (!rec) return;
+  rec.memo = memo;
+  saveData();
+  closeStampMemoModal();
+  showToast(memo ? 'メモを保存したよ🌷' : 'メモをクリアしたよ');
+  render();
+}
+window.saveStampMemo = saveStampMemo;
+
+function deleteStampMemo(recordId) {
+  if (!confirm('このメモを削除する？')) return;
+  const rec = (data.stampHistory || []).find(r => r.id === recordId);
+  if (!rec) return;
+  delete rec.memo;
+  saveData();
+  closeStampMemoModal();
+  showToast('メモを削除したよ');
+  render();
+}
+window.deleteStampMemo = deleteStampMemo;
+
 function editStampRecord(id) {
   if (!data.stampHistory) return;
   const rec = data.stampHistory.find(r => r.id === id);
@@ -8467,6 +8577,16 @@ function deleteAppliance(nestId, applianceId) {
   render();
 }
 
+// 検索ボタンのトグル：既に開いてたら閉じる、閉じてたら開く
+function toggleGlobalSearch() {
+  if (document.getElementById('globalSearchModal')) {
+    closeGlobalSearch();
+  } else {
+    openGlobalSearch();
+  }
+}
+window.toggleGlobalSearch = toggleGlobalSearch;
+
 // ===== グローバル検索 =====
 const SEARCH_MODES = [
   { id: 'all',    label: 'すべて',  icon: 'apps' },
@@ -8530,6 +8650,13 @@ function openGlobalSearch() {
   // Backボタンを表示（トップ画面でも検索中は表示）
   const backBtn = document.getElementById('navBackBtn');
   if (backBtn) backBtn.style.display = 'flex';
+  
+  // 検索ボタンをアクティブ表示
+  const searchBtn = document.getElementById('navSearchBtn');
+  if (searchBtn) searchBtn.classList.add('active');
+  // 他のdata-viewボタンの active を外す
+  const otherBtns = document.querySelectorAll('.nav-btn[data-view]');
+  otherBtns.forEach(b => b.classList.remove('active'));
 }
 
 function switchSearchMode(modeId) {
@@ -8559,7 +8686,12 @@ function closeGlobalSearch() {
   // Backボタンを現在のviewに合わせて再評価
   const backBtn = document.getElementById('navBackBtn');
   if (backBtn && currentView === 'top') backBtn.style.display = 'none';
+  // 検索ボタンの active を外して、現在の view のボタンに active 戻す
+  const searchBtn = document.getElementById('navSearchBtn');
+  if (searchBtn) searchBtn.classList.remove('active');
+  setActiveNav(currentView === 'top' ? 'houses' : currentView);
 }
+window.closeGlobalSearch = closeGlobalSearch;
 
 function _globalSearchEmptyState() {
   let h = '<div style="padding:30px 20px;text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.7;font-weight:600;">';
@@ -9598,7 +9730,7 @@ function renderStampCalendar() {
     // 天気アイコン（右上）
     const wIcon = getDateWeatherIcon(dateKey);
     if (wIcon) {
-      h += '<span style="position:absolute;top:2px;right:3px;font-size:9px;line-height:1;opacity:0.85;">'+wIcon+'</span>';
+      h += '<span style="position:absolute;top:2px;right:3px;line-height:1;">'+weatherIconHtml(wIcon,'font-size:11px;')+'</span>';
     }
     
     // 生理予測マーク（左上）
@@ -9752,6 +9884,596 @@ function openStampDayModal(dateKey) {
 function closeStampDayModal() {
   const el = document.getElementById('stampDayModal');
   if (el) el.remove();
+}
+
+// ===== My（自分のこと）タブ =====
+const MY_SUB_TABS = [
+  { id: 'resume',   label: '履歴書',   icon: 'description' },
+  { id: 'medical',  label: 'カルテ',   icon: 'medical_services' },
+  { id: 'contacts', label: '連絡先',   icon: 'contacts' }
+];
+
+function switchMySubTab(sub) {
+  const scrollY = window.scrollY;
+  data.mySubTab = sub;
+  saveData();
+  render();
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+}
+window.switchMySubTab = switchMySubTab;
+
+function renderMyTab() {
+  if (!data.mySubTab) data.mySubTab = 'resume';
+  const sub = data.mySubTab;
+  
+  let h = '';
+  
+  // サブサブタブ（横スクロール）
+  h += '<div style="padding:10px 14px 0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;">';
+  for (const t of MY_SUB_TABS) {
+    const isAct = sub === t.id;
+    h += '<button onclick="switchMySubTab(\''+t.id+'\')" style="flex-shrink:0;padding:8px 14px;border-radius:10px;border:1.5px solid '+(isAct?'var(--accent)':'var(--line)')+';background:'+(isAct?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(isAct?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:14px;">'+t.icon+'</span>';
+    h += t.label+'</button>';
+  }
+  h += '</div>';
+  
+  // 内容
+  if (sub === 'resume') {
+    // 既存の履歴書をそのまま使う
+    h += renderResumeTab();
+  } else if (sub === 'medical') {
+    h += renderMedicalCard();
+  } else if (sub === 'contacts') {
+    h += renderContactsCard();
+  }
+  
+  return h;
+}
+
+// ===== カルテ（折りたたみアコーディオン） =====
+const MEDICAL_SECTIONS = [
+  { id:'history',   label:'病歴・アレルギー',  icon:'monitor_heart',   color:'#E07058' },
+  { id:'visit',     label:'通院・治療',        icon:'local_hospital',  color:'#5888B0' },
+  { id:'vaccine',   label:'ワクチン',          icon:'vaccines',        color:'#5FA985' },
+  { id:'medicine',  label:'服薬・サプリ',      icon:'medication',      color:'#C8709A' },
+  { id:'checkup',   label:'健康診断',          icon:'monitor_weight',  color:'#E89A4A' },
+  { id:'vision',    label:'視力・聴力',        icon:'visibility',      color:'#48A8B8' },
+  { id:'autodata',  label:'体重・体温の推移',  icon:'show_chart',      color:'#8868A8' }
+];
+
+function toggleMedicalSection(sectionId) {
+  if (!data.medicalCollapsed) data.medicalCollapsed = {};
+  data.medicalCollapsed[sectionId] = !data.medicalCollapsed[sectionId];
+  saveData();
+  render();
+}
+window.toggleMedicalSection = toggleMedicalSection;
+
+function _ensureMedicalData() {
+  if (!data.medical) data.medical = {};
+  for (const sec of MEDICAL_SECTIONS) {
+    if (!data.medical[sec.id]) data.medical[sec.id] = [];
+  }
+}
+
+function renderMedicalCard() {
+  _ensureMedicalData();
+  if (!data.medicalCollapsed) data.medicalCollapsed = {};
+  
+  let h = '<div style="padding:10px 16px 16px;">';
+  
+  // 説明
+  h += '<div style="background:linear-gradient(135deg,#FFF5F8 0%,#FFFAF8 100%);border:1.5px solid #F0BDC6;border-radius:12px;padding:12px;margin-bottom:14px;font-size:11px;color:#666;line-height:1.6;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;color:#C8709A;vertical-align:middle;">info</span> ';
+  h += '見出しをタップして開いてね。病院での説明がスムーズになるよ';
+  h += '</div>';
+  
+  for (const sec of MEDICAL_SECTIONS) {
+    const collapsed = data.medicalCollapsed[sec.id];
+    const items = data.medical[sec.id] || [];
+    
+    // ヘッダー
+    h += '<div style="margin-bottom:8px;">';
+    h += '<div onclick="toggleMedicalSection(\''+sec.id+'\')" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:'+sec.color+'15;border:1.5px solid '+sec.color+';border-radius:10px;cursor:pointer;user-select:none;">';
+    h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:'+sec.color+';color:white;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;">'+sec.icon+'</span></span>';
+    h += '<span style="flex:1;font-size:13px;font-weight:800;color:'+sec.color+';">'+sec.label+'</span>';
+    if (items.length > 0) {
+      h += '<span style="font-size:10px;font-weight:700;color:'+sec.color+';background:white;padding:2px 8px;border-radius:100px;">'+items.length+'件</span>';
+    }
+    h += '<span class="material-symbols-rounded" style="font-size:20px;color:'+sec.color+';'+(collapsed?'transform:rotate(-90deg);':'')+'">expand_more</span>';
+    h += '</div>';
+    
+    // 中身
+    if (!collapsed) {
+      h += '<div style="margin-top:6px;padding:0 4px;">';
+      
+      // 自動連携セクション（autodata）は特別扱い
+      if (sec.id === 'autodata') {
+        h += _renderMedicalAutoData();
+      } else {
+        // 通常項目リスト
+        if (items.length === 0) {
+          h += '<div style="background:var(--surface-warm);border:1px dashed var(--line);border-radius:8px;padding:14px;text-align:center;color:var(--ink-sub);font-size:11px;">まだ記録がないよ</div>';
+        } else {
+          h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+          for (const item of items) {
+            h += '<button onclick="openMedicalItemModal(\''+sec.id+'\',\''+item.id+'\')" style="display:flex;flex-direction:column;gap:2px;padding:10px;background:var(--surface);border:1px solid var(--card-border);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+            h += '<div style="display:flex;align-items:center;gap:6px;">';
+            h += '<span style="flex:1;font-size:12px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(item.title||'無題')+'</span>';
+            if (item.date) h += '<span style="font-size:10px;color:var(--ink-sub);font-variant-numeric:tabular-nums;">'+escapeHtml(item.date)+'</span>';
+            h += '</div>';
+            if (item.detail) h += '<div style="font-size:10px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(item.detail)+'</div>';
+            h += '</button>';
+          }
+          h += '</div>';
+        }
+        
+        // 追加ボタン
+        h += '<button onclick="openMedicalItemModal(\''+sec.id+'\',null)" style="width:100%;margin-top:6px;padding:8px;background:var(--surface);color:'+sec.color+';border:1px dashed '+sec.color+';border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">';
+        h += '<span class="material-symbols-rounded" style="font-size:14px;">add</span>追加';
+        h += '</button>';
+      }
+      
+      h += '</div>';
+    }
+    
+    h += '</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+
+// 自動データ表示（体重・体温などスタンプ履歴から）
+function _renderMedicalAutoData() {
+  let h = '<div style="background:var(--surface-warm);border-radius:10px;padding:12px;font-size:11px;color:#666;">';
+  h += '<div style="font-weight:700;margin-bottom:8px;color:var(--accent-deep);">スタンプ履歴から自動表示</div>';
+  
+  // 体重
+  const weights = (data.stampHistory||[]).filter(r => r.name === '体重' && r.value).sort((a,b) => (b.timestamp||0)-(a.timestamp||0));
+  if (weights.length > 0) {
+    const latest = weights[0];
+    const d = new Date(latest.timestamp);
+    h += '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;">';
+    h += '<span class="material-symbols-rounded" style="font-size:16px;color:#E89A4A;">monitor_weight</span>';
+    h += '<span style="font-size:11px;font-weight:700;color:var(--ink-dark);">体重</span>';
+    h += '<span style="flex:1;text-align:right;font-size:13px;font-weight:800;color:var(--accent-deep);">'+escapeHtml(String(latest.value))+'kg</span>';
+    h += '<span style="font-size:9px;color:var(--ink-sub);">('+(d.getMonth()+1)+'/'+d.getDate()+')</span>';
+    h += '</div>';
+  }
+  
+  // 体脂肪
+  const bf = (data.stampHistory||[]).filter(r => r.name === '体脂肪' && r.value).sort((a,b) => (b.timestamp||0)-(a.timestamp||0));
+  if (bf.length > 0) {
+    const latest = bf[0];
+    const d = new Date(latest.timestamp);
+    h += '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;">';
+    h += '<span class="material-symbols-rounded" style="font-size:16px;color:#C8709A;">percent</span>';
+    h += '<span style="font-size:11px;font-weight:700;color:var(--ink-dark);">体脂肪</span>';
+    h += '<span style="flex:1;text-align:right;font-size:13px;font-weight:800;color:var(--accent-deep);">'+escapeHtml(String(latest.value))+'%</span>';
+    h += '<span style="font-size:9px;color:var(--ink-sub);">('+(d.getMonth()+1)+'/'+d.getDate()+')</span>';
+    h += '</div>';
+  }
+  
+  // 体温
+  const temps = (data.stampHistory||[]).filter(r => r.name === '体温' && r.value).sort((a,b) => (b.timestamp||0)-(a.timestamp||0));
+  if (temps.length > 0) {
+    const latest = temps[0];
+    const d = new Date(latest.timestamp);
+    h += '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;">';
+    h += '<span class="material-symbols-rounded" style="font-size:16px;color:#5888B0;">thermostat</span>';
+    h += '<span style="font-size:11px;font-weight:700;color:var(--ink-dark);">体温</span>';
+    h += '<span style="flex:1;text-align:right;font-size:13px;font-weight:800;color:var(--accent-deep);">'+escapeHtml(String(latest.value))+'℃</span>';
+    h += '<span style="font-size:9px;color:var(--ink-sub);">('+(d.getMonth()+1)+'/'+d.getDate()+')</span>';
+    h += '</div>';
+  }
+  
+  if (weights.length === 0 && bf.length === 0 && temps.length === 0) {
+    h += '<div style="text-align:center;color:var(--ink-light);font-size:11px;padding:8px 0;">スタンプで体重・体温を記録すると<br>ここに最新値が出るよ</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+
+// 医療項目の追加・編集モーダル
+function openMedicalItemModal(sectionId, itemId) {
+  _ensureMedicalData();
+  const sec = MEDICAL_SECTIONS.find(s => s.id === sectionId);
+  if (!sec) return;
+  const isEdit = itemId && itemId !== 'null';
+  const cur = isEdit ? data.medical[sectionId].find(i => i.id === itemId) : { title:'', date:'', detail:'' };
+  if (isEdit && !cur) return;
+  
+  const ex = document.getElementById('medicalItemModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="medicalItemModal" onclick="if(event.target===this)closeMedicalItemModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:'+sec.color+';color:white;"><span class="material-symbols-rounded" style="font-size:16px;">'+sec.icon+'</span></span>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+sec.label+(isEdit?'を編集':'を追加')+'</div>';
+  h += '<button onclick="closeMedicalItemModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  // タイトル
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">タイトル</label>';
+  h += '<input id="medTitle" type="text" value="'+escapeHtml(cur.title||'')+'" placeholder="'+_medicalPlaceholder(sectionId, 'title')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // 日付
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">日付（任意）</label>';
+  h += '<input id="medDate" type="date" value="'+escapeHtml(cur.date||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // 詳細
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">詳細・メモ</label>';
+  h += '<textarea id="medDetail" placeholder="'+_medicalPlaceholder(sectionId, 'detail')+'" style="width:100%;min-height:100px;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(cur.detail||'')+'</textarea>';
+  h += '</div>';
+  
+  // ボタン
+  h += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  if (isEdit) {
+    h += '<button onclick="deleteMedicalItem(\''+sectionId+'\',\''+itemId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="closeMedicalItemModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveMedicalItem(\''+sectionId+'\','+(isEdit?'\''+itemId+'\'':'null')+')" style="flex:1;padding:11px;background:'+sec.color+';color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('medTitle'); if (i && !isEdit) i.focus(); }, 80);
+}
+window.openMedicalItemModal = openMedicalItemModal;
+
+function _medicalPlaceholder(sectionId, field) {
+  const placeholders = {
+    history: { title:'例：花粉症 / 卵アレルギー', detail:'症状・程度・診断日など' },
+    visit:   { title:'例：歯科 / 内科定期検診',   detail:'病院名・先生・治療内容など' },
+    vaccine: { title:'例：コロナ4回目 / インフル', detail:'接種日・種類・副反応など' },
+    medicine:{ title:'例：ロキソニン / ビタミンD', detail:'用法・量・処方医など' },
+    checkup: { title:'例：2026年4月健康診断',     detail:'結果のサマリ・気になる項目など' },
+    vision:  { title:'例：視力 / メガネ度数',     detail:'右1.0 左0.8 / 度数など' }
+  };
+  return (placeholders[sectionId] && placeholders[sectionId][field]) || '';
+}
+
+function closeMedicalItemModal() {
+  const el = document.getElementById('medicalItemModal');
+  if (el) el.remove();
+}
+window.closeMedicalItemModal = closeMedicalItemModal;
+
+function saveMedicalItem(sectionId, itemId) {
+  _ensureMedicalData();
+  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const obj = {
+    title: get('medTitle'),
+    date: get('medDate'),
+    detail: get('medDetail')
+  };
+  if (!obj.title) { showToast('タイトルを入れてね'); return; }
+  const isEdit = itemId && itemId !== 'null';
+  if (isEdit) {
+    const item = data.medical[sectionId].find(i => i.id === itemId);
+    if (item) Object.assign(item, obj, { updatedAt: Date.now() });
+  } else {
+    obj.id = 'med_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    obj.createdAt = Date.now();
+    obj.updatedAt = Date.now();
+    data.medical[sectionId].push(obj);
+  }
+  saveData();
+  closeMedicalItemModal();
+  showToast('保存したよ🌷');
+  render();
+}
+window.saveMedicalItem = saveMedicalItem;
+
+function deleteMedicalItem(sectionId, itemId) {
+  if (!confirm('削除する？')) return;
+  _ensureMedicalData();
+  data.medical[sectionId] = data.medical[sectionId].filter(i => i.id !== itemId);
+  saveData();
+  closeMedicalItemModal();
+  showToast('削除したよ');
+  render();
+}
+window.deleteMedicalItem = deleteMedicalItem;
+
+// ===== 連絡先（緊急＋友達） =====
+const CONTACT_SECTIONS = [
+  { id:'emergency', label:'緊急連絡先',   icon:'emergency',  color:'#E07058' },
+  { id:'family',    label:'家族・親戚',   icon:'family_restroom', color:'#5FA985' },
+  { id:'friend',    label:'友達',         icon:'group',      color:'#C8709A' },
+  { id:'other',     label:'その他',       icon:'person',     color:'#888888' }
+];
+
+function toggleContactSection(sectionId) {
+  if (!data.contactsCollapsed) data.contactsCollapsed = {};
+  data.contactsCollapsed[sectionId] = !data.contactsCollapsed[sectionId];
+  saveData();
+  render();
+}
+window.toggleContactSection = toggleContactSection;
+
+function _ensureContactsData() {
+  if (!data.contacts) data.contacts = {};
+  for (const sec of CONTACT_SECTIONS) {
+    if (!data.contacts[sec.id]) data.contacts[sec.id] = [];
+  }
+}
+
+function renderContactsCard() {
+  _ensureContactsData();
+  if (!data.contactsCollapsed) data.contactsCollapsed = {};
+  
+  let h = '<div style="padding:10px 16px 16px;">';
+  
+  // 説明
+  h += '<div style="background:linear-gradient(135deg,#FFF5F8 0%,#FFFAF8 100%);border:1.5px solid #F0BDC6;border-radius:12px;padding:12px;margin-bottom:14px;font-size:11px;color:#666;line-height:1.6;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;color:#C8709A;vertical-align:middle;">info</span> ';
+  h += '緊急時の連絡先や、大切な人のプロフィールを記録できるよ';
+  h += '</div>';
+  
+  for (const sec of CONTACT_SECTIONS) {
+    const collapsed = data.contactsCollapsed[sec.id];
+    const items = data.contacts[sec.id] || [];
+    
+    h += '<div style="margin-bottom:8px;">';
+    h += '<div onclick="toggleContactSection(\''+sec.id+'\')" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:'+sec.color+'15;border:1.5px solid '+sec.color+';border-radius:10px;cursor:pointer;user-select:none;">';
+    h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:'+sec.color+';color:white;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;">'+sec.icon+'</span></span>';
+    h += '<span style="flex:1;font-size:13px;font-weight:800;color:'+sec.color+';">'+sec.label+'</span>';
+    if (items.length > 0) {
+      h += '<span style="font-size:10px;font-weight:700;color:'+sec.color+';background:white;padding:2px 8px;border-radius:100px;">'+items.length+'人</span>';
+    }
+    h += '<span class="material-symbols-rounded" style="font-size:20px;color:'+sec.color+';'+(collapsed?'transform:rotate(-90deg);':'')+'">expand_more</span>';
+    h += '</div>';
+    
+    if (!collapsed) {
+      h += '<div style="margin-top:6px;padding:0 4px;">';
+      
+      if (items.length === 0) {
+        h += '<div style="background:var(--surface-warm);border:1px dashed var(--line);border-radius:8px;padding:14px;text-align:center;color:var(--ink-sub);font-size:11px;">まだ登録がないよ</div>';
+      } else {
+        h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+        for (const c of items) {
+          h += '<button onclick="openContactModal(\''+sec.id+'\',\''+c.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border:1px solid var(--card-border);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+          // アバター（イニシャル丸）
+          if (c.photo) {
+            h += '<img src="'+c.photo+'" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid '+sec.color+';" />';
+          } else {
+            const initial = (c.name||'?').charAt(0).toUpperCase();
+            h += '<span style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:'+sec.color+';color:white;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;">'+escapeHtml(initial)+'</span>';
+          }
+          h += '<div style="flex:1;min-width:0;">';
+          h += '<div style="display:flex;align-items:center;gap:6px;">';
+          h += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(c.name||'無題')+'</span>';
+          if (c.relation) h += '<span style="font-size:9px;color:'+sec.color+';background:'+sec.color+'15;padding:1px 6px;border-radius:100px;font-weight:700;">'+escapeHtml(c.relation)+'</span>';
+          h += '</div>';
+          if (c.phone) h += '<div style="font-size:10px;color:var(--ink-sub);">'+escapeHtml(c.phone)+'</div>';
+          h += '</div>';
+          h += '</button>';
+        }
+        h += '</div>';
+      }
+      
+      h += '<button onclick="openContactModal(\''+sec.id+'\',null)" style="width:100%;margin-top:6px;padding:8px;background:var(--surface);color:'+sec.color+';border:1px dashed '+sec.color+';border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:14px;">add</span>追加';
+      h += '</button>';
+      h += '</div>';
+    }
+    
+    h += '</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+
+function openContactModal(sectionId, contactId) {
+  _ensureContactsData();
+  const sec = CONTACT_SECTIONS.find(s => s.id === sectionId);
+  if (!sec) return;
+  const isEdit = contactId && contactId !== 'null';
+  const cur = isEdit ? data.contacts[sectionId].find(c => c.id === contactId) : { name:'', relation:'', phone:'', email:'', line:'', address:'', birthday:'', likes:'', dislikes:'', meetMemo:'', photo:'' };
+  if (isEdit && !cur) return;
+  
+  window._contactPhotoData = cur.photo || null;
+  
+  const ex = document.getElementById('contactModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="contactModal" onclick="if(event.target===this)closeContactModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:'+sec.color+';color:white;"><span class="material-symbols-rounded" style="font-size:16px;">'+sec.icon+'</span></span>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+sec.label+(isEdit?'を編集':'を追加')+'</div>';
+  h += '<button onclick="closeContactModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  // 写真
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">写真（任意）</label>';
+  h += '<div id="contactPhotoArea" style="display:flex;align-items:center;gap:10px;">';
+  if (cur.photo) {
+    h += '<button type="button" onclick="openPhotoPreview(window._contactPhotoData)" style="flex-shrink:0;width:64px;height:64px;border-radius:50%;border:2px solid '+sec.color+';background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+cur.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+    h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+    h += '<button type="button" onclick="document.getElementById(\'contactPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">変更</button>';
+    h += '<button type="button" onclick="window._contactPhotoData=null;document.getElementById(\'contactPhotoArea\').innerHTML=_contactPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+    h += '</div>';
+  } else {
+    h += _contactPhotoEmptyHtml();
+  }
+  h += '</div>';
+  h += '<input type="file" id="contactPhotoFile" accept="image/*" style="display:none;" onchange="_handleContactPhotoSelect(event)">';
+  h += '</div>';
+  
+  // 名前・関係（並列）
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:2;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">名前</label>';
+  h += '<input id="ctName" type="text" value="'+escapeHtml(cur.name||'')+'" placeholder="例：山田花子" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">関係</label>';
+  h += '<input id="ctRelation" type="text" value="'+escapeHtml(cur.relation||'')+'" placeholder="親友" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // 連絡先
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">電話</label>';
+  h += '<input id="ctPhone" type="tel" value="'+escapeHtml(cur.phone||'')+'" placeholder="090-..." style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">LINE/その他</label>';
+  h += '<input id="ctLine" type="text" value="'+escapeHtml(cur.line||'')+'" placeholder="@line_id" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // メール
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メール</label>';
+  h += '<input id="ctEmail" type="email" value="'+escapeHtml(cur.email||'')+'" placeholder="example@example.com" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  h += '</div>';
+  
+  // 住所・誕生日
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<div style="flex:2;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">住所（ざっくりOK）</label>';
+  h += '<input id="ctAddress" type="text" value="'+escapeHtml(cur.address||'')+'" placeholder="大阪市内" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div style="flex:1;"><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">誕生日</label>';
+  h += '<input id="ctBirthday" type="date" value="'+escapeHtml(cur.birthday||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // 友達系の場合：好きなもの・苦手なもの
+  if (sectionId === 'friend' || sectionId === 'family' || sectionId === 'other') {
+    h += '<div>';
+    h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">好きなもの</label>';
+    h += '<input id="ctLikes" type="text" value="'+escapeHtml(cur.likes||'')+'" placeholder="例：ラーメン / 旅行 / BTS" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+    h += '</div>';
+    
+    h += '<div>';
+    h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">苦手なもの・アレルギー</label>';
+    h += '<input id="ctDislikes" type="text" value="'+escapeHtml(cur.dislikes||'')+'" placeholder="例：エビアレルギー / 辛いもの苦手" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+    h += '</div>';
+    
+    h += '<div>';
+    h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">思い出・メモ</label>';
+    h += '<textarea id="ctMeetMemo" placeholder="出会ったきっかけ / 思い出 / 最後に会った日など" style="width:100%;min-height:80px;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(cur.meetMemo||'')+'</textarea>';
+    h += '</div>';
+  } else {
+    // 緊急連絡先：シンプルにメモのみ
+    h += '<div>';
+    h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">メモ</label>';
+    h += '<textarea id="ctMeetMemo" placeholder="例：かかりつけ医 / 受付時間など" style="width:100%;min-height:60px;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(cur.meetMemo||'')+'</textarea>';
+    h += '</div>';
+  }
+  
+  // ボタン
+  h += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  if (isEdit) {
+    h += '<button onclick="deleteContact(\''+sectionId+'\',\''+contactId+'\')" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="closeContactModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveContact(\''+sectionId+'\','+(isEdit?'\''+contactId+'\'':'null')+')" style="flex:1;padding:11px;background:'+sec.color+';color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const i = document.getElementById('ctName'); if (i && !isEdit) i.focus(); }, 80);
+}
+window.openContactModal = openContactModal;
+
+function _contactPhotoEmptyHtml() {
+  return '<button type="button" onclick="document.getElementById(\'contactPhotoFile\').click()" style="flex:1;padding:14px;background:var(--surface-warm);color:var(--ink-sub);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">add_a_photo</span>写真を追加</button>';
+}
+window._contactPhotoEmptyHtml = _contactPhotoEmptyHtml;
+
+async function _handleContactPhotoSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('画像ファイルを選んでね'); return; }
+  showToast('写真を処理中...');
+  try {
+    const dataUrl = await resizeImageToBase64(file, 480, 0.75);
+    window._contactPhotoData = dataUrl;
+    const area = document.getElementById('contactPhotoArea');
+    if (area) {
+      let h = '';
+      h += '<button type="button" onclick="openPhotoPreview(window._contactPhotoData)" style="flex-shrink:0;width:64px;height:64px;border-radius:50%;border:2px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+      h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+      h += '<button type="button" onclick="document.getElementById(\'contactPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">変更</button>';
+      h += '<button type="button" onclick="window._contactPhotoData=null;document.getElementById(\'contactPhotoArea\').innerHTML=_contactPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+      h += '</div>';
+      area.innerHTML = h;
+    }
+    showToast('写真OK🌷');
+  } catch(err) { console.error(err); showToast('写真の読み込みに失敗'); }
+  event.target.value = '';
+}
+window._handleContactPhotoSelect = _handleContactPhotoSelect;
+
+function closeContactModal() {
+  const el = document.getElementById('contactModal');
+  if (el) el.remove();
+  window._contactPhotoData = null;
+}
+window.closeContactModal = closeContactModal;
+
+function saveContact(sectionId, contactId) {
+  _ensureContactsData();
+  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const obj = {
+    name: get('ctName'),
+    relation: get('ctRelation'),
+    phone: get('ctPhone'),
+    line: get('ctLine'),
+    email: get('ctEmail'),
+    address: get('ctAddress'),
+    birthday: get('ctBirthday'),
+    likes: get('ctLikes'),
+    dislikes: get('ctDislikes'),
+    meetMemo: get('ctMeetMemo'),
+    photo: window._contactPhotoData || ''
+  };
+  if (!obj.name) { showToast('名前を入れてね'); return; }
+  const isEdit = contactId && contactId !== 'null';
+  if (isEdit) {
+    const c = data.contacts[sectionId].find(x => x.id === contactId);
+    if (c) Object.assign(c, obj, { updatedAt: Date.now() });
+  } else {
+    obj.id = 'ct_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    obj.createdAt = Date.now();
+    obj.updatedAt = Date.now();
+    data.contacts[sectionId].push(obj);
+  }
+  saveData();
+  closeContactModal();
+  showToast('保存したよ🌷');
+  render();
+}
+window.saveContact = saveContact;
+
+function deleteContact(sectionId, contactId) {
+  if (!confirm('削除する？')) return;
+  _ensureContactsData();
+  data.contacts[sectionId] = data.contacts[sectionId].filter(c => c.id !== contactId);
+  saveData();
+  closeContactModal();
+  showToast('削除したよ');
+  render();
+}
+window.deleteContact = deleteContact;
+
+function _renderMyComingSoon(title, icon, desc) {
+  let h = '<div style="padding:30px 16px;">';
+  h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65) 0%,rgba(255,255,255,0.45) 100%);border:1.5px dashed var(--accent);border-radius:16px;padding:30px 16px;text-align:center;">';
+  h += '<div style="margin-bottom:12px;"><span class="material-symbols-rounded" style="font-size:48px;color:var(--accent-deep);">'+icon+'</span></div>';
+  h += '<div style="font-size:15px;font-weight:800;color:var(--accent-deep);margin-bottom:8px;">'+title+'</div>';
+  h += '<div style="font-size:11px;color:#666;line-height:1.7;font-weight:500;white-space:pre-line;">'+escapeHtml(desc)+'</div>';
+  h += '</div>';
+  h += '</div>';
+  return h;
 }
 
 // ===== ME用 Goods タブ（日用品＋家電、nestId='__me__'で管理） =====
@@ -10152,8 +10874,8 @@ function renderMeMode() {
     html += renderNewsTab();
     
   } else if (tab === 'resume') {
-    // ===== Resume（履歴書） =====
-    html += renderResumeTab();
+    // ===== My（自分のこと）：履歴書 / カルテ / ワクチン / くすり / 視力 / 緊急連絡先 =====
+    html += renderMyTab();
     
   } else if (tab === 'stamp') {
     // ===== Stamp（サブサブタブ：スタンプ / プランナー） =====
@@ -10180,8 +10902,9 @@ function renderMeMode() {
       // デフォルトスタンプライブラリ
       const DEFAULT_STAMPS = {
         '生活': [
-          {icon:'water_drop',name:'水'},{icon:'restaurant',name:'ごはん'},{icon:'bathtub',name:'おふろ'},
-          {icon:'bed',name:'睡眠'},{icon:'coffee',name:'コーヒー'},{icon:'local_cafe',name:'お茶'}
+          {icon:'water_drop',name:'水'},{icon:'bathtub',name:'おふろ'},
+          {icon:'bed',name:'睡眠'},{icon:'coffee',name:'コーヒー'},
+          {icon:'local_cafe',name:'お茶'},{icon:'shower',name:'シャワー'}
         ],
         '美容': [
           {icon:'face',name:'スキンケア'},{icon:'palette',name:'メイク'},{icon:'content_cut',name:'美容院'},
@@ -10222,8 +10945,8 @@ function renderMeMode() {
       
       // 初回 or 新カテゴリの初期化
       if (!data.stampLib) data.stampLib = {};
-      // v5マイグレーション：体調カテゴリの生理関連スタンプ追加
-      const needsMigration = !data._stampIconMigrated_v5;
+      // v6マイグレーション：生活の「ごはん」削除（食事記録と重複）＋シャワー追加
+      const needsMigration = !data._stampIconMigrated_v6;
       for (const cat in DEFAULT_STAMPS) {
         if (!data.stampLib[cat]) {
           data.stampLib[cat] = DEFAULT_STAMPS[cat].map(s => ({...s, id: 's_'+cat+'_'+s.name, hidden: false}));
@@ -10255,10 +10978,17 @@ function renderMeMode() {
               return true;
             });
           }
+          // 生活カテゴリ：旧「ごはん」スタンプを削除（食事記録と重複）
+          if (cat === '生活') {
+            data.stampLib[cat] = data.stampLib[cat].filter(s => {
+              if (s.id === 's_生活_ごはん' && !s.id.startsWith('cs_')) return false;
+              return true;
+            });
+          }
         }
       }
       if (needsMigration) {
-        data._stampIconMigrated_v5 = true;
+        data._stampIconMigrated_v6 = true;
         try { saveData(); } catch(e) {}
       }
       
@@ -10347,8 +11077,8 @@ function renderMeMode() {
           const _editable = (_type === 'number' || _type === 'text');
           
           html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--card-border);border-radius:12px;">';
-          html += '<span style="flex-shrink:0;">'+renderStampIcon(r.icon,'font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
-          html += '<span style="flex-shrink:0;font-size:12px;font-weight:600;color:var(--ink-dark);">'+escapeHtml(r.name)+'</span>';
+          html += '<span style="flex-shrink:0;width:20px;display:inline-flex;align-items:center;justify-content:center;">'+renderStampIcon(r.icon,'font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
+          html += '<span style="flex-shrink:0;width:80px;font-size:12px;font-weight:600;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.name)+'</span>';
           
           // 値表示エリア（数値/テキスト型のみ・タップで編集）
           if (_editable) {
@@ -10359,7 +11089,12 @@ function renderMeMode() {
               html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">タップして入力</button>';
             }
           } else {
-            html += '<span style="flex:1;"></span>';
+            // simple型：メモ表示エリア（メモあれば表示、なければ"メモ追加"）
+            if (r.memo) {
+              html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:#FFF8E0;border:1px solid #E8C870;color:#8B6914;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+escapeHtml(r.memo)+'</button>';
+            } else {
+              html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">edit_note</span>メモ追加</button>';
+            }
           }
           
           // 写真サムネ（あれば）
@@ -14791,23 +15526,53 @@ function setActiveNav(view) {
 document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
   btn.onclick = () => {
     const view = btn.dataset.view;
-    if (view === 'houses') {
-      if (currentMode !== 'pet') switchMode('pet');
-      currentView = 'top';
-      data.selectedHouseId = null;
-      saveData();
+    
+    // 検索画面が開いていたら閉じる
+    if (document.getElementById('globalSearchModal')) {
+      closeGlobalSearch();
     }
-    else if (view === 'schedule') {
-      currentView = 'schedule';
-      if (!schedCalMonth) {
-        const t = new Date();
-        schedCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+    
+    // 即座に視覚フィードバック（アクティブ表示変更）
+    setActiveNav(view);
+    
+    // 重い処理は次フレームで実行（タップの即時感を出すため）
+    requestAnimationFrame(() => {
+      let needsRender = false;
+      
+      if (view === 'houses') {
+        // 既にホーム画面（pet モード × top view）なら何もしない
+        if (currentMode === 'pet' && currentView === 'top' && !data.selectedHouseId) {
+          return;
+        }
+        if (currentMode !== 'pet') switchMode('pet');
+        currentView = 'top';
+        data.selectedHouseId = null;
+        saveData();
+        needsRender = true;
       }
-      if (!schedCalSelected) schedCalSelected = todayKey();
-    }
-    else if (view === 'town') currentView = 'town';
-    else if (view === 'settings') currentView = 'settings';
-    render();
+      else if (view === 'schedule') {
+        if (currentView === 'schedule') return; // 既にスケジュール画面
+        currentView = 'schedule';
+        if (!schedCalMonth) {
+          const t = new Date();
+          schedCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+        }
+        if (!schedCalSelected) schedCalSelected = todayKey();
+        needsRender = true;
+      }
+      else if (view === 'town') {
+        if (currentView === 'town') return;
+        currentView = 'town';
+        needsRender = true;
+      }
+      else if (view === 'settings') {
+        if (currentView === 'settings') return;
+        currentView = 'settings';
+        needsRender = true;
+      }
+      
+      if (needsRender) render();
+    });
   };
 });
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
@@ -14820,7 +15585,7 @@ const DEFAULT_MODE_TABS = {
     { id: 'money',      label: 'Money' },
     { id: 'goods',      label: 'Goods' },
     { id: 'collection', label: 'Collection' },
-    { id: 'resume',     label: 'Resume' },
+    { id: 'resume',     label: 'My' },
     { id: 'secret',     label: 'Memo' }
   ],
   pet: [
@@ -14883,6 +15648,14 @@ function getModeTabsForMode(mode) {
         const stampTab = tabs.find(t => t.id === 'stamp');
         if (stampTab && stampTab.label === 'Stamp') {
           stampTab.label = 'Record';
+          try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
+        }
+      }
+      // ME: Resume → My へラベル変更
+      if (mode === 'me') {
+        const resumeTab = tabs.find(t => t.id === 'resume');
+        if (resumeTab && resumeTab.label === 'Resume') {
+          resumeTab.label = 'My';
           try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
         }
       }
@@ -17733,6 +18506,9 @@ function doImport() {
   } catch(err) { showToast('読みこめませんでした'); }
 }
 function renderSidePanel() {
+  // スマホ幅（768px以下）ではサイドパネル表示されないからスキップ
+  if (window.innerWidth < 768) return;
+  
   const el = document.getElementById('sidePanel');
   if (!el) return;
   // PC幅でしか表示されないが、HTMLは常に生成しておく
@@ -20105,6 +20881,7 @@ function deleteWeightRecord(petId, recordId) {
 
 let _suppressScrollTop = false;
 function render() {
+  const _t0 = performance.now();
   // 初回起動時はオンボーディングモーダル表示
   maybeShowOnboarding();
   if (currentView === 'top') renderTop();
@@ -20124,6 +20901,10 @@ function render() {
   renderSidePanel();
   if (!_suppressScrollTop) window.scrollTo(0, 0);
   _suppressScrollTop = false;
+  const _t1 = performance.now();
+  if (_t1 - _t0 > 200) {
+    console.log('[render] '+currentView+' took '+(_t1-_t0).toFixed(0)+'ms');
+  }
 }
 loadData();
 // 旧テーマIDの互換対応
