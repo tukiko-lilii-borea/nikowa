@@ -6032,28 +6032,25 @@ function switchStampSubTab(sub) {
 }
 
 function switchStampCat(cat) {
-  // 各スクロール位置を保存
-  const scrollY = window.scrollY;
-  let chipsScrollX = 0, gridScrollX = 0;
+  // チップ位置保存
+  let chipsScrollX = 0;
   try {
     const chips = document.querySelector('[data-stamp-cats]');
     if (chips) chipsScrollX = chips.scrollLeft;
-    const grid = document.querySelector('[data-stamp-grid]');
-    if (grid) gridScrollX = grid.scrollLeft;
   } catch(e) {}
   
   data.stampSelCat = cat;
   saveData();
+  
+  // 全体レンダーは重いので、スクロール位置維持＋render
+  _suppressScrollTop = true;
   render();
   
-  // render後にスクロール位置を復元
+  // チップ位置復元
   setTimeout(() => {
     try {
-      window.scrollTo(0, scrollY);
       const chips = document.querySelector('[data-stamp-cats]');
       if (chips) chips.scrollLeft = chipsScrollX;
-      // スタンプグリッドは新カテゴリで内容変わるから先頭でOK
-      // でもチップの位置は保つ
     } catch(e) {}
   }, 0);
 }
@@ -6065,6 +6062,337 @@ function toggleStampEditMode() {
   render();
   setTimeout(() => window.scrollTo(0, scrollY), 0);
 }
+
+// ===== スタンプ管理モーダル =====
+const STAMP_DEFAULT_CATS = ['生活','美容','ダイエット','体調','家事','趣味','ポジティブ'];
+
+// カテゴリ一覧を取得（デフォルト＋追加カテゴリ、表示順管理）
+function _getStampCatList() {
+  if (!data.stampCatOrder) {
+    // 初期化：デフォルトカテゴリを順番通りに
+    data.stampCatOrder = STAMP_DEFAULT_CATS.slice();
+  }
+  if (!data.stampCatHidden) data.stampCatHidden = {};
+  if (!data.stampCustomCats) data.stampCustomCats = []; // [{name: '○○', addedAt: ...}]
+  
+  // 並び順 + 追加カテゴリ
+  const ordered = [];
+  for (const c of data.stampCatOrder) {
+    if (STAMP_DEFAULT_CATS.includes(c) || (data.stampCustomCats||[]).find(cc => cc.name === c)) {
+      ordered.push(c);
+    }
+  }
+  // 並び順にないカテゴリを追加
+  for (const c of STAMP_DEFAULT_CATS) {
+    if (!ordered.includes(c)) ordered.push(c);
+  }
+  for (const cc of (data.stampCustomCats||[])) {
+    if (!ordered.includes(cc.name)) ordered.push(cc.name);
+  }
+  return ordered;
+}
+
+// 表示用（非表示カテゴリ除外）
+function _getVisibleStampCats() {
+  return _getStampCatList().filter(c => !data.stampCatHidden[c]);
+}
+
+function openStampManagerModal() {
+  const ex = document.getElementById('stampManagerModal');
+  if (ex) ex.remove();
+  
+  // 初期選択カテゴリ
+  if (!window._stampMgrSelCat) {
+    window._stampMgrSelCat = data.stampSelCat || '生活';
+  }
+  
+  _renderStampManagerModal();
+}
+window.openStampManagerModal = openStampManagerModal;
+
+function _renderStampManagerModal() {
+  const ex = document.getElementById('stampManagerModal');
+  if (ex) ex.remove();
+  
+  const cats = _getStampCatList();
+  const selCat = window._stampMgrSelCat || '生活';
+  const isDefaultCat = STAMP_DEFAULT_CATS.includes(selCat);
+  
+  let h = '<div id="stampManagerModal" onclick="if(event.target===this)closeStampManagerModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:14px 14px 18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;padding-bottom:6px;border-bottom:1px solid var(--line);">';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--accent);color:white;"><span class="material-symbols-rounded" style="font-size:16px;">edit</span></span>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">スタンプ管理</div>';
+  h += '<button onclick="closeStampManagerModal()" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:50%;width:30px;height:30px;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;">close</span></button>';
+  h += '</div>';
+  
+  // カテゴリ一覧（カード）
+  h += '<div style="background:var(--surface-warm);border:1px solid var(--line);border-radius:12px;padding:10px;">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+  h += '<div style="font-size:11px;font-weight:800;color:var(--ink-dark);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">folder</span>カテゴリ</div>';
+  h += '<button onclick="addStampCategory()" style="padding:4px 10px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>追加</button>';
+  h += '</div>';
+  
+  h += '<div style="display:flex;flex-direction:column;gap:5px;">';
+  for (let i = 0; i < cats.length; i++) {
+    const c = cats[i];
+    const isSel = c === selCat;
+    const isDefault = STAMP_DEFAULT_CATS.includes(c);
+    const isHidden = !!(data.stampCatHidden && data.stampCatHidden[c]);
+    const stampCount = (data.stampLib && data.stampLib[c]) ? data.stampLib[c].length : 0;
+    
+    h += '<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:'+(isSel?'var(--accent-bg)':'white')+';border:1.5px solid '+(isSel?'var(--accent)':'var(--line)')+';border-radius:10px;opacity:'+(isHidden?'0.5':'1')+';">';
+    // 選択ボタン（カテゴリ名）
+    h += '<button onclick="window._stampMgrSelCat=\''+escapeHtml(c).replace(/\'/g,"\\\\\'")+'\';_renderStampManagerModal();" style="flex:1;background:none;border:none;text-align:left;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;min-width:0;">';
+    h += '<span style="width:8px;height:8px;border-radius:50%;background:'+_stampCatColor(c)+';flex-shrink:0;"></span>';
+    h += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(c)+'</span>';
+    h += '<span style="font-size:9px;color:var(--ink-sub);font-weight:600;">'+stampCount+'</span>';
+    if (isDefault) h += '<span style="font-size:8px;color:var(--ink-light);background:var(--surface-warm);padding:1px 5px;border-radius:100px;font-weight:700;">既定</span>';
+    h += '</button>';
+    
+    // ボタン群
+    // 並び替え（上下）
+    if (i > 0) h += '<button onclick="moveStampCategory(\''+escapeHtml(c).replace(/\'/g,"\\\\\'")+'\',-1)" title="上へ" style="flex-shrink:0;width:24px;height:24px;border:1px solid var(--line);background:white;border-radius:5px;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:13px;">arrow_upward</span></button>';
+    else h += '<span style="width:24px;flex-shrink:0;"></span>';
+    if (i < cats.length - 1) h += '<button onclick="moveStampCategory(\''+escapeHtml(c).replace(/\'/g,"\\\\\'")+'\',1)" title="下へ" style="flex-shrink:0;width:24px;height:24px;border:1px solid var(--line);background:white;border-radius:5px;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:13px;">arrow_downward</span></button>';
+    else h += '<span style="width:24px;flex-shrink:0;"></span>';
+    
+    // 表示/非表示
+    h += '<button onclick="toggleStampCategoryHidden(\''+escapeHtml(c).replace(/\'/g,"\\\\\'")+'\')" title="'+(isHidden?'表示':'非表示')+'" style="flex-shrink:0;width:24px;height:24px;border:1px solid var(--line);background:'+(isHidden?'var(--accent)':'white')+';border-radius:5px;cursor:pointer;color:'+(isHidden?'white':'var(--ink-sub)')+';display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:13px;">'+(isHidden?'visibility':'visibility_off')+'</span></button>';
+    
+    // カスタムカテゴリのみ：編集・削除
+    if (!isDefault) {
+      h += '<button onclick="renameStampCategory(\''+escapeHtml(c).replace(/\'/g,"\\\\\'")+'\')" title="名前変更" style="flex-shrink:0;width:24px;height:24px;border:1px solid #5888B0;background:#5888B0;border-radius:5px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:13px;">edit</span></button>';
+      h += '<button onclick="deleteStampCategory(\''+escapeHtml(c).replace(/\'/g,"\\\\\'")+'\')" title="削除" style="flex-shrink:0;width:24px;height:24px;border:1px solid #c4506b;background:#c4506b;border-radius:5px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:13px;">delete</span></button>';
+    }
+    
+    h += '</div>';
+  }
+  h += '</div>';
+  h += '</div>'; // カテゴリカード閉じ
+  
+  // 選択カテゴリのスタンプ一覧
+  h += '<div style="background:var(--surface-warm);border:1px solid var(--line);border-radius:12px;padding:10px;">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+  h += '<div style="font-size:11px;font-weight:800;color:var(--ink-dark);display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:'+_stampCatColor(selCat)+';"></span>「'+escapeHtml(selCat)+'」のスタンプ</div>';
+  h += '<button onclick="addCustomStamp(\''+escapeHtml(selCat).replace(/\'/g,"\\\\\'")+'\');closeStampManagerModal();" style="padding:4px 10px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>追加</button>';
+  h += '</div>';
+  
+  const stamps = (data.stampLib && data.stampLib[selCat]) || [];
+  if (stamps.length === 0) {
+    h += '<div style="text-align:center;padding:20px 8px;color:var(--ink-sub);font-size:11px;line-height:1.7;">スタンプがないよ<br>「+追加」で作ろう🌷</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:5px;">';
+    for (let i = 0; i < stamps.length; i++) {
+      const s = stamps[i];
+      const isHidden = !!s.hidden;
+      const isCustom = !!s.custom; // カスタムフラグ（追加スタンプかどうか）
+      
+      h += '<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:white;border:1px solid var(--line);border-radius:8px;opacity:'+(isHidden?'0.5':'1')+';">';
+      // アイコン＋名前
+      h += '<span style="flex-shrink:0;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-warm);border-radius:6px;">'+renderStampIcon(s.icon,'font-size:18px;line-height:1;color:var(--accent-deep);')+'</span>';
+      h += '<span style="flex:1;font-size:12px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+escapeHtml(s.name||'')+'</span>';
+      if (!isCustom) h += '<span style="font-size:8px;color:var(--ink-light);background:var(--surface-warm);padding:1px 5px;border-radius:100px;font-weight:700;flex-shrink:0;">既定</span>';
+      
+      // 並び替え
+      if (i > 0) h += '<button onclick="moveStamp(\''+escapeHtml(selCat).replace(/\'/g,"\\\\\'")+'\','+i+',-1);_renderStampManagerModal();" title="上へ" style="flex-shrink:0;width:22px;height:22px;border:1px solid var(--line);background:var(--surface-warm);border-radius:5px;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:12px;">arrow_upward</span></button>';
+      else h += '<span style="width:22px;flex-shrink:0;"></span>';
+      if (i < stamps.length - 1) h += '<button onclick="moveStamp(\''+escapeHtml(selCat).replace(/\'/g,"\\\\\'")+'\','+i+',1);_renderStampManagerModal();" title="下へ" style="flex-shrink:0;width:22px;height:22px;border:1px solid var(--line);background:var(--surface-warm);border-radius:5px;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:12px;">arrow_downward</span></button>';
+      else h += '<span style="width:22px;flex-shrink:0;"></span>';
+      
+      // 表示/非表示
+      h += '<button onclick="toggleStampHidden(\''+escapeHtml(selCat).replace(/\'/g,"\\\\\'")+'\','+i+');_renderStampManagerModal();" title="'+(isHidden?'表示':'非表示')+'" style="flex-shrink:0;width:22px;height:22px;border:1px solid var(--line);background:'+(isHidden?'var(--accent)':'var(--surface-warm)')+';border-radius:5px;cursor:pointer;color:'+(isHidden?'white':'var(--ink-sub)')+';display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:12px;">'+(isHidden?'visibility':'visibility_off')+'</span></button>';
+      
+      // カスタムスタンプのみ：編集・削除
+      if (isCustom) {
+        h += '<button onclick="editStamp(\''+escapeHtml(selCat).replace(/\'/g,"\\\\\'")+'\','+i+');closeStampManagerModal();" title="編集" style="flex-shrink:0;width:22px;height:22px;border:1px solid #5888B0;background:#5888B0;border-radius:5px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:12px;">edit</span></button>';
+        h += '<button onclick="deleteCustomStamp(\''+escapeHtml(selCat).replace(/\'/g,"\\\\\'")+'\','+i+')" title="削除" style="flex-shrink:0;width:22px;height:22px;border:1px solid #c4506b;background:#c4506b;border-radius:5px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:12px;">delete</span></button>';
+      }
+      
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  h += '</div>'; // スタンプカード閉じ
+  
+  // ヘルプ
+  h += '<div style="font-size:9px;color:var(--ink-light);text-align:center;line-height:1.6;padding:4px 0;">既定カテゴリ・スタンプは非表示と並び替えのみOK<br>追加したカテゴリ・スタンプは編集・削除もできる🌷</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window._renderStampManagerModal = _renderStampManagerModal;
+
+function closeStampManagerModal() {
+  const el = document.getElementById('stampManagerModal');
+  if (el) el.remove();
+  // 元の画面を再描画（カテゴリチップ更新のため）
+  _suppressScrollTop = true;
+  render();
+}
+window.closeStampManagerModal = closeStampManagerModal;
+
+// カテゴリ追加
+function addStampCategory() {
+  const name = prompt('新しいカテゴリ名を入れてね:');
+  if (!name) return;
+  const cleanName = name.trim();
+  if (!cleanName) { showToast('カテゴリ名を入れてね'); return; }
+  
+  if (!data.stampCustomCats) data.stampCustomCats = [];
+  if (!data.stampCatOrder) data.stampCatOrder = STAMP_DEFAULT_CATS.slice();
+  
+  // 既存と重複チェック
+  const allNames = _getStampCatList();
+  if (allNames.includes(cleanName)) {
+    showToast('そのカテゴリはもうあるよ');
+    return;
+  }
+  
+  data.stampCustomCats.push({ name: cleanName, addedAt: Date.now() });
+  data.stampCatOrder.push(cleanName);
+  if (!data.stampLib) data.stampLib = {};
+  if (!data.stampLib[cleanName]) data.stampLib[cleanName] = [];
+  
+  saveData();
+  window._stampMgrSelCat = cleanName;
+  _renderStampManagerModal();
+  showToast('「'+cleanName+'」を追加したよ🌷');
+}
+window.addStampCategory = addStampCategory;
+
+// カテゴリ並び替え
+function moveStampCategory(catName, dir) {
+  if (!data.stampCatOrder) data.stampCatOrder = STAMP_DEFAULT_CATS.slice();
+  const idx = data.stampCatOrder.indexOf(catName);
+  if (idx === -1) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= data.stampCatOrder.length) return;
+  // スワップ
+  [data.stampCatOrder[idx], data.stampCatOrder[newIdx]] = [data.stampCatOrder[newIdx], data.stampCatOrder[idx]];
+  saveData();
+  _renderStampManagerModal();
+}
+window.moveStampCategory = moveStampCategory;
+
+// カテゴリ表示/非表示
+function toggleStampCategoryHidden(catName) {
+  if (!data.stampCatHidden) data.stampCatHidden = {};
+  data.stampCatHidden[catName] = !data.stampCatHidden[catName];
+  // 非表示にしたカテゴリが現在選択中なら、別の表示中カテゴリに切り替え
+  if (data.stampCatHidden[catName] && data.stampSelCat === catName) {
+    const visible = _getVisibleStampCats();
+    if (visible.length > 0) data.stampSelCat = visible[0];
+  }
+  saveData();
+  _renderStampManagerModal();
+}
+window.toggleStampCategoryHidden = toggleStampCategoryHidden;
+
+// カテゴリ名変更（カスタムのみ）
+function renameStampCategory(oldName) {
+  if (STAMP_DEFAULT_CATS.includes(oldName)) {
+    showToast('既定カテゴリの名前は変えられないよ');
+    return;
+  }
+  const newName = prompt('新しい名前を入れてね:', oldName);
+  if (!newName) return;
+  const cleanNew = newName.trim();
+  if (!cleanNew || cleanNew === oldName) return;
+  
+  const allNames = _getStampCatList();
+  if (allNames.includes(cleanNew)) {
+    showToast('その名前はもう使われてるよ');
+    return;
+  }
+  
+  // データ移行
+  if (data.stampCustomCats) {
+    const cc = data.stampCustomCats.find(c => c.name === oldName);
+    if (cc) cc.name = cleanNew;
+  }
+  if (data.stampCatOrder) {
+    const oi = data.stampCatOrder.indexOf(oldName);
+    if (oi !== -1) data.stampCatOrder[oi] = cleanNew;
+  }
+  if (data.stampLib && data.stampLib[oldName]) {
+    data.stampLib[cleanNew] = data.stampLib[oldName];
+    delete data.stampLib[oldName];
+  }
+  if (data.stampCatHidden && data.stampCatHidden[oldName]) {
+    data.stampCatHidden[cleanNew] = true;
+    delete data.stampCatHidden[oldName];
+  }
+  if (data.stampSelCat === oldName) data.stampSelCat = cleanNew;
+  if (window._stampMgrSelCat === oldName) window._stampMgrSelCat = cleanNew;
+  // 履歴のカテゴリも更新
+  if (data.stampHistory) {
+    for (const r of data.stampHistory) {
+      if (r.category === oldName) r.category = cleanNew;
+    }
+  }
+  
+  saveData();
+  _renderStampManagerModal();
+  showToast('「'+oldName+'」→「'+cleanNew+'」に変更🌷');
+}
+window.renameStampCategory = renameStampCategory;
+
+// カテゴリ削除（カスタムのみ）
+function deleteStampCategory(catName) {
+  if (STAMP_DEFAULT_CATS.includes(catName)) {
+    showToast('既定カテゴリは削除できないよ');
+    return;
+  }
+  const stamps = (data.stampLib && data.stampLib[catName]) || [];
+  const msg = stamps.length > 0
+    ? '「'+catName+'」を削除する？\n中のスタンプ('+stamps.length+'個)も全部消えるよ\n（過去の履歴は残る）'
+    : '「'+catName+'」を削除する？';
+  if (!confirm(msg)) return;
+  
+  if (data.stampCustomCats) {
+    data.stampCustomCats = data.stampCustomCats.filter(c => c.name !== catName);
+  }
+  if (data.stampCatOrder) {
+    data.stampCatOrder = data.stampCatOrder.filter(c => c !== catName);
+  }
+  if (data.stampLib) delete data.stampLib[catName];
+  if (data.stampCatHidden) delete data.stampCatHidden[catName];
+  
+  // 選択中なら別カテゴリへ
+  if (data.stampSelCat === catName) {
+    const visible = _getVisibleStampCats();
+    data.stampSelCat = visible[0] || '生活';
+  }
+  if (window._stampMgrSelCat === catName) {
+    const visible = _getVisibleStampCats();
+    window._stampMgrSelCat = visible[0] || '生活';
+  }
+  
+  saveData();
+  _renderStampManagerModal();
+  showToast('「'+catName+'」を削除したよ');
+}
+window.deleteStampCategory = deleteStampCategory;
+
+// カスタムスタンプの削除
+function deleteCustomStamp(cat, idx) {
+  if (!data.stampLib || !data.stampLib[cat]) return;
+  const s = data.stampLib[cat][idx];
+  if (!s) return;
+  if (!s.custom) {
+    showToast('既定スタンプは削除できないよ');
+    return;
+  }
+  if (!confirm('「'+s.name+'」を削除する？\n（過去の履歴は残るよ）')) return;
+  data.stampLib[cat].splice(idx, 1);
+  saveData();
+  _renderStampManagerModal();
+  showToast('「'+s.name+'」を削除');
+}
+window.deleteCustomStamp = deleteCustomStamp;
 
 function toggleStampHidden(cat, idx) {
   if (!data.stampLib || !data.stampLib[cat]) return;
@@ -6159,7 +6487,8 @@ function saveStamp(cat, editIdx) {
       id: 'cs_' + Date.now(),
       icon: icon,
       name: name,
-      hidden: false
+      hidden: false,
+      custom: true
     });
   }
   saveData();
@@ -6547,66 +6876,75 @@ function _refreshStampHistoryArea() {
   
   let html = '';
   if (todayHistory.length === 0) {
-    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px 16px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
+    html += '<div style="text-align:center;color:var(--ink-sub);font-size:10px;line-height:1.7;padding:24px 8px;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
   } else {
-    html += '<div data-today-count style="font-size:10px;color:var(--ink-light);margin-bottom:6px;">今日の記録: '+todayHistory.length+'件</div>';
-    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    html += '<div style="display:flex;flex-direction:column;gap:3px;">';
     for (const r of todayHistory) {
       const timeStr = _formatStampTime(r.timestamp);
+      const sourceTag = r.source === 'planner' ? '<span style="font-size:8px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 3px;border-radius:100px;font-weight:700;">📋</span>' : '';
       const _def = _findStampDef(r.icon, r.name);
       const _type = r.type || (_def && _def.type) || 'simple';
       const _hasValue = r.value !== undefined && r.value !== null && r.value !== '';
       const _editable = (_type === 'number' || _type === 'text');
       
-      html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--card-border);border-radius:12px;">';
-      html += '<span style="flex-shrink:0;width:20px;display:inline-flex;align-items:center;justify-content:center;">'+renderStampIcon(r.icon,'font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
-      html += '<span style="flex-shrink:0;width:80px;font-size:12px;font-weight:600;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.name)+'</span>';
+      html += '<div style="display:flex;align-items:center;gap:5px;padding:3px 6px;background:var(--surface-warm);border:1px solid var(--line);border-radius:6px;">';
+      html += '<span style="flex-shrink:0;width:14px;display:inline-flex;align-items:center;justify-content:center;">'+renderStampIcon(r.icon,'font-size:14px;line-height:1;color:var(--ink-dark);')+'</span>';
+      html += '<span style="flex-shrink:0;width:62px;font-size:10px;font-weight:600;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.name)+'</span>';
       
       if (_editable) {
         if (_hasValue) {
-          const _displayVal = _type === 'number' ? (escapeHtml(String(r.value)) + (r.unit?'<span style="font-size:10px;color:var(--ink-sub);margin-left:2px;">'+escapeHtml(r.unit)+'</span>':'')) : escapeHtml(String(r.value));
-          html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:8px;padding:3px 8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+_displayVal+'</button>';
+          const _displayVal = _type === 'number' ? (escapeHtml(String(r.value)) + (r.unit?'<span style="font-size:8px;color:var(--ink-sub);margin-left:1px;">'+escapeHtml(r.unit)+'</span>':'')) : escapeHtml(String(r.value));
+          html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:5px;padding:1px 5px;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;line-height:1.4;">'+_displayVal+'</button>';
         } else {
-          html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">タップして入力</button>';
+          html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:5px;padding:1px 5px;font-size:9px;font-weight:600;cursor:pointer;font-family:inherit;line-height:1.4;">タップして入力</button>';
         }
       } else {
         const _hasMemoText = !!r.memo;
         const _hasMemoPhoto = !!r.memoPhoto;
         if (_hasMemoText || _hasMemoPhoto) {
-          html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:#FFF8E0;border:1px solid #E8C870;color:#8B6914;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;min-width:0;">';
+          html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:#FFF8E0;border:1px solid #E8C870;color:#8B6914;border-radius:5px;padding:1px 5px;font-size:9px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;min-width:0;line-height:1.5;">';
           if (_hasMemoText) {
             html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.memo)+'</span>';
           } else {
             html += '<span style="flex:1;color:#B89855;font-style:italic;">写真メモ</span>';
           }
           if (_hasMemoPhoto) {
-            html += '<span class="material-symbols-rounded" style="font-size:14px;color:#8B6914;flex-shrink:0;">image</span>';
+            html += '<span class="material-symbols-rounded" style="font-size:11px;color:#8B6914;flex-shrink:0;">image</span>';
           }
           html += '</button>';
         } else {
-          html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;">';
-          html += '<span class="material-symbols-rounded" style="font-size:13px;">edit_note</span>メモ';
+          html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:5px;padding:1px 5px;font-size:9px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:3px;line-height:1.5;">';
+          html += '<span class="material-symbols-rounded" style="font-size:10px;">edit_note</span>メモ';
           html += '<span style="flex:1;"></span>';
-          html += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--ink-light);">photo_camera</span>';
+          html += '<span class="material-symbols-rounded" style="font-size:10px;color:var(--ink-light);">photo_camera</span>';
           html += '</button>';
         }
       }
       
       if (r.photo) {
-        html += '<button onclick="openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(r.photo)+'" style="flex-shrink:0;width:32px;height:32px;border-radius:6px;border:1px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+r.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+        html += '<button onclick="openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(r.photo)+'" style="flex-shrink:0;width:22px;height:22px;border-radius:4px;border:1px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+r.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
       }
       
-      html += '<span style="flex-shrink:0;font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;">'+timeStr+'</span>';
+      if (sourceTag) html += sourceTag;
+      html += '<span style="font-size:8px;color:var(--ink-sub);font-variant-numeric:tabular-nums;flex-shrink:0;">'+timeStr+'</span>';
+      html += '<button onclick="deleteStampRecord(\''+r.id+'\')" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:0 1px;font-size:10px;line-height:1;flex-shrink:0;">×</button>';
       html += '</div>';
     }
     html += '</div>';
     const pastCount = history.length - todayHistory.length;
     if (pastCount > 0) {
-      html += '<div style="font-size:10px;color:var(--ink-light);margin-top:8px;text-align:center;">過去の記録: '+pastCount+'件</div>';
+      html += '<div style="font-size:8px;color:var(--ink-light);margin-top:6px;text-align:center;">過去 '+pastCount+'件 → カレンダーで見れるよ📅</div>';
     }
   }
   
   area.innerHTML = html;
+  
+  // 件数バッジも更新（カードヘッダー内）
+  try {
+    const cards = document.querySelectorAll('div');
+    // todayHistory.length に応じて件数表示するバッジを探して更新する処理は省略
+    // → render()頼みではなく、件数バッジを別の data-* で指定すべき
+  } catch(e) {}
 }
 window._refreshStampHistoryArea = _refreshStampHistoryArea;
 
@@ -10184,6 +10522,9 @@ function renderStampCalendar() {
   
   let h = '<div style="padding:10px 14px 16px;">';
   
+  // 体重ミニグラフ（月推移、データある時だけ表示）
+  h += _renderMonthWeightChart(y, m);
+  
   // 生理周期予測カード（最上部）
   h += renderMenstrualPredictionCard();
   
@@ -10371,17 +10712,28 @@ function openStampDayModal(dateKey) {
   const wd = ['日','月','火','水','木','金','土'][d.getDay()];
   const dateLabel = (d.getMonth()+1)+'月'+d.getDate()+'日('+wd+')';
   
+  // 天気アイコン
+  const wIcon = getDateWeatherIcon(dateKey);
+  
   let h = '<div id="stampDayModal" onclick="if(event.target===this)closeStampDayModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
-  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
   
   h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
-  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">📅 '+dateLabel+'</div>';
-  h += '<button onclick="closeStampDayModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);display:flex;align-items:center;gap:6px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">today</span>';
+  h += '<span>'+dateLabel+'</span>';
+  if (wIcon) h += '<span>'+weatherIconHtml(wIcon, 'font-size:16px;')+'</span>';
+  h += '</div>';
+  h += '<button onclick="closeStampDayModal()" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:50%;width:28px;height:28px;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;">close</span></button>';
   h += '</div>';
   
   if (records.length === 0) {
     h += '<div style="background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;padding:24px;text-align:center;color:var(--ink-sub);font-size:12px;font-weight:700;">この日は記録なし🌷<br><span style="font-size:10px;color:var(--ink-light);font-weight:500;">スタンプタブから記録できるよ</span></div>';
   } else {
+    // ===== サマリーカード（体重・生理・食事・運動） =====
+    const summary = _buildDaySummary(records, dateKey);
+    h += _renderDaySummaryCards(summary);
+    
     // カテゴリ別集計
     const byCat = {};
     for (const r of records) {
@@ -10390,7 +10742,10 @@ function openStampDayModal(dateKey) {
       byCat[c].push(r);
     }
     
-    h += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">合計 '+records.length+'件</div>';
+    h += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;margin:8px 0 4px;display:flex;align-items:center;gap:6px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:14px;">list</span>';
+    h += '全記録 '+records.length+'件';
+    h += '</div>';
     
     for (const cat of Object.keys(byCat)) {
       const catRecs = byCat[cat].sort((a,b) => (b.timestamp||0)-(a.timestamp||0));
@@ -10446,9 +10801,242 @@ function openStampDayModal(dateKey) {
   document.body.insertAdjacentHTML('beforeend', h);
 }
 
+// その日のサマリーデータを構築
+function _buildDaySummary(records, dateKey) {
+  const summary = {
+    weight: null,
+    fat: null,
+    waist: null,
+    period: null,
+    meals: [],
+    exercises: []
+  };
+  
+  // 各記録から該当データを抽出
+  for (const r of records) {
+    const name = r.name || '';
+    const val = r.value;
+    if (name === '体重' && val !== undefined && val !== null && val !== '') {
+      // 最新（時刻新しい）を優先
+      if (!summary.weight || r.timestamp > summary.weight.ts) {
+        summary.weight = { value: val, unit: r.unit || 'kg', ts: r.timestamp };
+      }
+    } else if (name === '体脂肪' && val !== undefined && val !== null && val !== '') {
+      if (!summary.fat || r.timestamp > summary.fat.ts) {
+        summary.fat = { value: val, unit: r.unit || '%', ts: r.timestamp };
+      }
+    } else if (name === 'ウエスト' && val !== undefined && val !== null && val !== '') {
+      if (!summary.waist || r.timestamp > summary.waist.ts) {
+        summary.waist = { value: val, unit: r.unit || 'cm', ts: r.timestamp };
+      }
+    } else if (name === '生理開始') {
+      summary.period = { type: 'start', ts: r.timestamp };
+    } else if (name === '生理終了' && !summary.period) {
+      summary.period = { type: 'end', ts: r.timestamp };
+    } else if (name === 'PMS' && !summary.period) {
+      summary.period = { type: 'pms', ts: r.timestamp };
+    } else if (name === '食事記録' && val) {
+      summary.meals.push({ value: val, ts: r.timestamp });
+    } else if ((name === 'ジョギング' || name === '筋トレ' || name === 'ウォーキング' || name === 'ヨガ') && val !== undefined && val !== null && val !== '') {
+      summary.exercises.push({ name: name, value: val, unit: r.unit || '', ts: r.timestamp });
+    }
+  }
+  
+  return summary;
+}
+
+// サマリーカード描画（4枚：体重・生理・食事・運動）
+function _renderDaySummaryCards(s) {
+  const hasAny = s.weight || s.fat || s.period || s.meals.length > 0 || s.exercises.length > 0;
+  if (!hasAny) return '';
+  
+  let h = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:6px;">';
+  
+  // 体重カード
+  if (s.weight || s.fat) {
+    h += '<div style="background:linear-gradient(135deg,#FFE5EE,#FFF0F5);border:1px solid #F0BDC6;border-radius:12px;padding:10px;">';
+    h += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;font-size:9px;font-weight:700;color:#A04060;letter-spacing:0.05em;">';
+    h += '<span class="material-symbols-rounded" style="font-size:13px;">monitor_weight</span>BODY';
+    h += '</div>';
+    if (s.weight) {
+      h += '<div style="font-size:18px;font-weight:800;color:#A04060;line-height:1;font-variant-numeric:tabular-nums;">'+escapeHtml(String(s.weight.value))+'<span style="font-size:10px;font-weight:600;margin-left:2px;">'+escapeHtml(s.weight.unit)+'</span></div>';
+    } else {
+      h += '<div style="font-size:13px;color:#A04060;opacity:0.5;line-height:1.4;">-</div>';
+    }
+    if (s.fat) {
+      h += '<div style="font-size:10px;color:#A04060;margin-top:4px;font-weight:600;">体脂肪 '+escapeHtml(String(s.fat.value))+'<span style="font-size:9px;opacity:0.7;">'+escapeHtml(s.fat.unit)+'</span></div>';
+    }
+    if (s.waist) {
+      h += '<div style="font-size:10px;color:#A04060;font-weight:600;">ウエスト '+escapeHtml(String(s.waist.value))+'<span style="font-size:9px;opacity:0.7;">'+escapeHtml(s.waist.unit)+'</span></div>';
+    }
+    h += '</div>';
+  }
+  
+  // 生理カード
+  if (s.period) {
+    let label = '', icon = '', color = '';
+    if (s.period.type === 'start') { label = '生理 開始'; icon = 'water_full'; color = '#C8709A'; }
+    else if (s.period.type === 'end') { label = '生理 終了'; icon = 'water_drop'; color = '#C8709A'; }
+    else if (s.period.type === 'pms') { label = 'PMS'; icon = 'mood_bad'; color = '#B89860'; }
+    h += '<div style="background:linear-gradient(135deg,#FCE4F0,#FFF0F5);border:1px solid #F0A0C0;border-radius:12px;padding:10px;">';
+    h += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;font-size:9px;font-weight:700;color:'+color+';letter-spacing:0.05em;">';
+    h += '<span class="material-symbols-rounded" style="font-size:13px;">'+icon+'</span>HEALTH';
+    h += '</div>';
+    h += '<div style="font-size:14px;font-weight:800;color:'+color+';line-height:1.2;">'+label+'</div>';
+    h += '</div>';
+  }
+  
+  // 食事カード
+  if (s.meals.length > 0) {
+    h += '<div style="background:linear-gradient(135deg,#FFF4E0,#FFFAEC);border:1px solid #F0CC80;border-radius:12px;padding:10px;">';
+    h += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;font-size:9px;font-weight:700;color:#A07020;letter-spacing:0.05em;">';
+    h += '<span class="material-symbols-rounded" style="font-size:13px;">restaurant</span>MEAL '+s.meals.length+'回';
+    h += '</div>';
+    // 最新の食事を表示
+    const latest = s.meals.sort((a,b) => b.ts - a.ts)[0];
+    h += '<div style="font-size:11px;color:#A07020;font-weight:700;line-height:1.4;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+escapeHtml(String(latest.value))+'</div>';
+    h += '</div>';
+  }
+  
+  // 運動カード
+  if (s.exercises.length > 0) {
+    h += '<div style="background:linear-gradient(135deg,#E0F0E8,#F0FAF4);border:1px solid #A8D0B8;border-radius:12px;padding:10px;">';
+    h += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;font-size:9px;font-weight:700;color:#3A7050;letter-spacing:0.05em;">';
+    h += '<span class="material-symbols-rounded" style="font-size:13px;">directions_run</span>EXERCISE';
+    h += '</div>';
+    // 全運動を表示
+    for (let i = 0; i < Math.min(s.exercises.length, 3); i++) {
+      const ex = s.exercises[i];
+      h += '<div style="font-size:10px;color:#3A7050;font-weight:600;line-height:1.5;">'+escapeHtml(ex.name)+' <span style="font-weight:800;">'+escapeHtml(String(ex.value))+'</span><span style="font-size:9px;opacity:0.7;">'+escapeHtml(ex.unit)+'</span></div>';
+    }
+    h += '</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+
 function closeStampDayModal() {
   const el = document.getElementById('stampDayModal');
   if (el) el.remove();
+}
+
+// ===== 月の体重ミニグラフ（カレンダー上部表示） =====
+function _renderMonthWeightChart(year, month) {
+  // その月の体重データ集計
+  const history = data.stampHistory || [];
+  const dayWeights = {}; // {1: 70.5, 2: 70.4, ...}
+  for (const r of history) {
+    if (r.name !== '体重' || r.value === undefined || r.value === null || r.value === '') continue;
+    const t = new Date(r.timestamp);
+    if (t.getFullYear() !== year || t.getMonth() !== month) continue;
+    const day = t.getDate();
+    // 同日複数なら最新を採用
+    if (!dayWeights[day] || r.timestamp > dayWeights[day].ts) {
+      dayWeights[day] = { value: parseFloat(r.value), ts: r.timestamp };
+    }
+  }
+  
+  const dataDays = Object.keys(dayWeights).sort((a,b) => +a - +b);
+  if (dataDays.length === 0) return ''; // データなければ非表示
+  
+  // 値配列
+  const values = dataDays.map(d => dayWeights[d].value);
+  let minVal = Math.min.apply(null, values);
+  let maxVal = Math.max.apply(null, values);
+  const padding = (maxVal - minVal) * 0.2 || 1;
+  minVal -= padding;
+  maxVal += padding;
+  
+  // 目標ライン（55kg = メイン）
+  const goalMain = 55;
+  const goalMid = 60;
+  if (goalMain < minVal) minVal = goalMain - 1;
+  if (goalMid > maxVal) maxVal = goalMid + 1;
+  
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const w = 320, hChart = 100;
+  const padL = 28, padR = 10, padT = 16, padB = 18;
+  const innerW = w - padL - padR;
+  const innerH = hChart - padT - padB;
+  
+  // X位置：日付ベース（1〜lastDay）
+  const xFor = (d) => padL + ((d - 1) / (lastDay - 1)) * innerW;
+  const yFor = (v) => padT + ((maxVal - v) / (maxVal - minVal)) * innerH;
+  
+  // 折れ線パス
+  let path = '';
+  for (let i = 0; i < dataDays.length; i++) {
+    const day = +dataDays[i];
+    const x = xFor(day);
+    const y = yFor(dayWeights[day].value);
+    path += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+  }
+  
+  // 塗りつぶしパス
+  let fillPath = path;
+  if (dataDays.length >= 1) {
+    const lastX = xFor(+dataDays[dataDays.length-1]);
+    const firstX = xFor(+dataDays[0]);
+    fillPath = path + ' L' + lastX.toFixed(1) + ',' + (padT + innerH) + ' L' + firstX.toFixed(1) + ',' + (padT + innerH) + ' Z';
+  }
+  
+  // 最新値・初日値
+  const latest = dayWeights[dataDays[dataDays.length-1]].value;
+  const first = dayWeights[dataDays[0]].value;
+  const diff = latest - first;
+  const diffStr = diff > 0 ? '+'+diff.toFixed(1) : diff.toFixed(1);
+  const diffColor = diff > 0 ? '#c4506b' : (diff < 0 ? '#3A8050' : '#888');
+  
+  let h = '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
+  h += '<div style="display:flex;align-items:center;gap:5px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;color:#A04060;">monitor_weight</span>';
+  h += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);">体重の推移</span>';
+  h += '<span style="font-size:9px;color:var(--ink-sub);font-weight:600;">'+(month+1)+'月</span>';
+  h += '</div>';
+  h += '<div style="display:flex;align-items:baseline;gap:4px;font-variant-numeric:tabular-nums;">';
+  h += '<span style="font-size:13px;font-weight:800;color:#A04060;">'+latest.toFixed(1)+'</span>';
+  h += '<span style="font-size:9px;color:var(--ink-sub);">kg</span>';
+  if (dataDays.length >= 2) {
+    h += '<span style="font-size:9px;color:'+diffColor+';font-weight:700;margin-left:4px;">'+diffStr+'</span>';
+  }
+  h += '</div>';
+  h += '</div>';
+  
+  // SVG
+  h += '<svg viewBox="0 0 '+w+' '+hChart+'" preserveAspectRatio="none" style="width:100%;height:'+hChart+'px;display:block;">';
+  // Y軸目標ライン
+  const yMain = yFor(goalMain);
+  const yMid = yFor(goalMid);
+  h += '<line x1="'+padL+'" y1="'+yMain.toFixed(1)+'" x2="'+(w-padR)+'" y2="'+yMain.toFixed(1)+'" stroke="#F0A0C0" stroke-width="1" stroke-dasharray="3,2" opacity="0.7" />';
+  h += '<line x1="'+padL+'" y1="'+yMid.toFixed(1)+'" x2="'+(w-padR)+'" y2="'+yMid.toFixed(1)+'" stroke="#F0CC80" stroke-width="1" stroke-dasharray="3,2" opacity="0.7" />';
+  // 目標ラベル
+  h += '<text x="'+(padL-3)+'" y="'+(yMain+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="#A04060" font-weight="700">55</text>';
+  h += '<text x="'+(padL-3)+'" y="'+(yMid+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="#A07020" font-weight="700">60</text>';
+  // Y軸最大最小
+  h += '<text x="'+(padL-3)+'" y="'+(padT+4).toFixed(1)+'" text-anchor="end" font-size="7" fill="#aaa" font-weight="600">'+maxVal.toFixed(0)+'</text>';
+  h += '<text x="'+(padL-3)+'" y="'+(padT+innerH+2).toFixed(1)+'" text-anchor="end" font-size="7" fill="#aaa" font-weight="600">'+minVal.toFixed(0)+'</text>';
+  // 塗りつぶし
+  h += '<path d="'+fillPath+'" fill="#FFE5EE" opacity="0.5" />';
+  // 折れ線
+  h += '<path d="'+path+'" fill="none" stroke="#C8709A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />';
+  // 各点
+  for (const day of dataDays) {
+    const x = xFor(+day);
+    const y = yFor(dayWeights[day].value);
+    h += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.5" fill="white" stroke="#C8709A" stroke-width="1.5" />';
+  }
+  // X軸（日付）
+  for (let d = 5; d <= lastDay; d += 5) {
+    const x = xFor(d);
+    h += '<text x="'+x.toFixed(1)+'" y="'+(hChart-4)+'" text-anchor="middle" font-size="7" fill="#aaa" font-weight="600">'+d+'</text>';
+  }
+  h += '</svg>';
+  
+  h += '</div>';
+  return h;
 }
 
 // ===== My（自分のこと）タブ =====
@@ -11578,105 +12166,84 @@ function renderMeMode() {
       
       const editMode = !!window._stampEditMode;
       
-      // カテゴリチップ
+      // カテゴリチップ（非表示カテゴリは出さない）
       html += '<div style="padding:12px 16px 4px;display:flex;align-items:center;gap:8px;">';
       html += '<div data-stamp-cats style="flex:1;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
-      const stampCats = ['生活','美容','ダイエット','体調','家事','趣味','ポジティブ'];
+      const stampCats = (typeof _getVisibleStampCats === 'function') ? _getVisibleStampCats() : ['生活','美容','ダイエット','体調','家事','趣味','ポジティブ'];
+      // 選択中カテゴリが非表示になってたら最初のに戻す
+      if (!stampCats.includes(selCat) && stampCats.length > 0) {
+        data.stampSelCat = stampCats[0];
+        saveData();
+      }
+      const _curSelCat = data.stampSelCat;
       for (const cat of stampCats) {
-        const isAct = (cat === selCat);
+        const isAct = (cat === _curSelCat);
         const activeStyle = isAct ? 'background:var(--accent);color:white;border-color:var(--accent);' : 'color:var(--ink-sub);background:var(--surface);';
-        html += '<button data-cat="'+cat+'" onclick="switchStampCat(\''+cat+'\')" style="flex-shrink:0;padding:4px 14px;border:1px solid var(--line);border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;'+activeStyle+'">'+cat+'</button>';
+        html += '<button data-cat="'+cat+'" onclick="switchStampCat(\''+escapeHtml(cat).replace(/\'/g,"\\\\\'")+'\')" style="flex-shrink:0;padding:4px 14px;border:1px solid var(--line);border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;'+activeStyle+'">'+escapeHtml(cat)+'</button>';
       }
       html += '</div>';
-      // 編集モード切り替え
-      html += '<button onclick="toggleStampEditMode()" title="編集" style="flex-shrink:0;width:32px;height:32px;border:1px solid '+(editMode?'var(--accent)':'var(--line)')+';background:'+(editMode?'var(--accent-bg)':'var(--surface)')+';color:'+(editMode?'var(--accent-deep)':'var(--ink-sub)')+';border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:16px;">'+(editMode?'check':'edit')+'</span></button>';
+      // 編集ボタン（モーダル開く）
+      html += '<button onclick="openStampManagerModal()" title="スタンプ管理" style="flex-shrink:0;width:32px;height:32px;border:1px solid var(--line);background:var(--surface);color:var(--ink-sub);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:16px;">edit</span></button>';
       html += '</div>';
       
       // スタンプボタン
       const allStamps = data.stampLib[selCat] || [];
-      const visibleStamps = editMode ? allStamps : allStamps.filter(s => !s.hidden);
+      const visibleStamps = allStamps.filter(s => !s.hidden);
       
-      // ダイエットカテゴリ選択時：体重ミニグラフ表示
-      if (selCat === 'ダイエット' && !editMode) {
-        html += renderWeightMiniChart();
-      }
+      // ===== カードA: スタンプを押すエリア（白カード・細枠） =====
+      html += '<div style="margin:8px 12px 10px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 0 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
       
-      html += '<div data-stamp-grid style="padding:0 12px 12px;display:grid;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:64px;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-snap-type:x mandatory;">';
+      html += '<div data-stamp-grid style="padding:0 12px;display:grid;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:64px;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-snap-type:x mandatory;">';
       for (let i = 0; i < visibleStamps.length; i++) {
         const s = visibleStamps[i];
-        const realIdx = allStamps.indexOf(s);
-        const isHidden = s.hidden;
-        const opacity = isHidden ? '0.35' : '1';
-        
-        if (editMode) {
-          // 編集モード：上に小さなコントロール表示
-          html += '<div style="position:relative;opacity:'+opacity+';">';
-          html += '<button onclick="editStamp(\''+selCat+'\','+realIdx+')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:1.5px dashed var(--accent);border-radius:12px;background:var(--surface);cursor:pointer;font-family:inherit;width:100%;min-width:0;aspect-ratio:1/1.05;">'+renderStampIcon(s.icon,'font-size:28px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:10px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span></button>';
-          // 並び替え＆非表示ボタン
-          html += '<div style="position:absolute;top:-6px;right:-4px;display:flex;gap:2px;">';
-          html += '<button onclick="event.stopPropagation();toggleStampHidden(\''+selCat+'\','+realIdx+')" title="'+(isHidden?'表示':'非表示')+'" style="width:18px;height:18px;border-radius:50%;background:'+(isHidden?'var(--accent)':'#c4506b')+';color:white;border:1.5px solid white;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:11px;">'+(isHidden?'visibility':'visibility_off')+'</span></button>';
-          html += '</div>';
-          // 並び替え矢印
-          html += '<div style="display:flex;justify-content:center;gap:2px;margin-top:2px;">';
-          if (realIdx > 0) html += '<button onclick="moveStamp(\''+selCat+'\','+realIdx+',-1)" style="width:18px;height:14px;border:1px solid var(--line);background:var(--surface);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:10px;">arrow_back</span></button>';
-          else html += '<span style="width:18px;"></span>';
-          if (realIdx < allStamps.length - 1) html += '<button onclick="moveStamp(\''+selCat+'\','+realIdx+',1)" style="width:18px;height:14px;border:1px solid var(--line);background:var(--surface);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:10px;">arrow_forward</span></button>';
-          html += '</div>';
-          html += '</div>';
-        } else {
-          // 通常モード
-          html += '<button onclick="tapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.35) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;aspect-ratio:1/1.05;scroll-snap-align:start;">'+renderStampIcon(s.icon,'font-size:28px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:10px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span></button>';
-        }
+        // 通常モード（背景色を控えめに、白カードの中で見やすく）
+        html += '<button onclick="tapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border:1px solid var(--line);border-radius:12px;background:var(--surface-warm);cursor:pointer;font-family:inherit;min-width:0;aspect-ratio:1/1.05;scroll-snap-align:start;">'+renderStampIcon(s.icon,'font-size:28px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:10px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span></button>';
       }
-      // ＋追加ボタン（編集モードでも通常モードでも）
+      // ＋追加ボタン
       html += '<button onclick="addCustomStamp(\''+selCat+'\')" title="スタンプを追加" style="display:flex;align-items:center;justify-content:center;padding:8px;border:1.5px dashed var(--accent);border-radius:12px;background:none;cursor:pointer;font-family:inherit;min-width:0;aspect-ratio:1/1.05;scroll-snap-align:start;"><span style="font-size:28px;color:var(--accent);font-weight:700;line-height:1;">＋</span></button>';
       html += '</div>';
+      html += '</div>'; // カードA 閉じ
       
-      // 編集モード説明
-      if (editMode) {
-        html += '<div style="padding:0 16px 8px;font-size:10px;color:var(--ink-light);text-align:center;line-height:1.5;">タップで編集 / ←→で並び替え / 👁で非表示</div>';
-      }
-      
-      // ===== 推移グラフ（ダイエットカテゴリのみ） =====
-      if (selCat === 'ダイエット' && !editMode) {
-        html += renderDietGraph();
-        html += renderDietPhotoTimeline();
-      }
-      
-      // ===== 最近のきろく（実データ表示） =====
-      html += '<div style="padding:4px 16px 8px;">';
-      html += '<div class="section-head"><h2 class="section-title">最近のきろく</h2></div>';
+      // ===== カードB: 今日の記録（白カード・細枠、高さ固定＋中スクロール） =====
+      html += '<div style="margin:0 12px 12px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+      // ヘッダー
       const history = (data.stampHistory || []);
-      // 今日のきろくだけ表示
       const todayStr = new Date().toDateString();
       const todayHistory = history.filter(r => new Date(r.timestamp).toDateString() === todayStr);
-      html += '<div data-stamp-history-area>';
+      
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+      html += '<div style="display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">history</span><span style="font-size:11px;font-weight:800;color:var(--ink-dark);">今日のきろく</span></div>';
+      if (todayHistory.length > 0) {
+        html += '<span style="font-size:9px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 7px;border-radius:100px;font-weight:700;">'+todayHistory.length+'件</span>';
+      }
+      html += '</div>';
+      
+      // スクロールコンテナ（高さ固定）
+      html += '<div data-stamp-history-area style="max-height:280px;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-right:2px;">';
       if (todayHistory.length === 0) {
-        html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px 16px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
+        html += '<div style="text-align:center;color:var(--ink-sub);font-size:10px;line-height:1.7;padding:24px 8px;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
       } else {
-        // 件数表示
-        html += '<div data-today-count style="font-size:10px;color:var(--ink-light);margin-bottom:6px;">今日の記録: '+todayHistory.length+'件</div>';
-        html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+        html += '<div style="display:flex;flex-direction:column;gap:3px;">';
         for (const r of todayHistory) {
           const timeStr = _formatStampTime(r.timestamp);
-          const sourceTag = r.source === 'planner' ? '<span style="font-size:9px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 5px;border-radius:100px;font-weight:700;">📋</span>' : '';
+          const sourceTag = r.source === 'planner' ? '<span style="font-size:8px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 3px;border-radius:100px;font-weight:700;">📋</span>' : '';
           // 型判定：record優先、無ければスタンプ定義から
           const _def = _findStampDef(r.icon, r.name);
           const _type = r.type || (_def && _def.type) || 'simple';
           const _hasValue = r.value !== undefined && r.value !== null && r.value !== '';
           const _editable = (_type === 'number' || _type === 'text');
           
-          html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--card-border);border-radius:12px;">';
-          html += '<span style="flex-shrink:0;width:20px;display:inline-flex;align-items:center;justify-content:center;">'+renderStampIcon(r.icon,'font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
-          html += '<span style="flex-shrink:0;width:80px;font-size:12px;font-weight:600;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.name)+'</span>';
+          html += '<div style="display:flex;align-items:center;gap:5px;padding:3px 6px;background:var(--surface-warm);border:1px solid var(--line);border-radius:6px;">';
+          html += '<span style="flex-shrink:0;width:14px;display:inline-flex;align-items:center;justify-content:center;">'+renderStampIcon(r.icon,'font-size:14px;line-height:1;color:var(--ink-dark);')+'</span>';
+          html += '<span style="flex-shrink:0;width:62px;font-size:10px;font-weight:600;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.name)+'</span>';
           
           // 値表示エリア（数値/テキスト型のみ・タップで編集）
           if (_editable) {
             if (_hasValue) {
-              const _displayVal = _type === 'number' ? (escapeHtml(String(r.value)) + (r.unit?'<span style="font-size:10px;color:var(--ink-sub);margin-left:2px;">'+escapeHtml(r.unit)+'</span>':'')) : escapeHtml(String(r.value));
-              html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:8px;padding:3px 8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+_displayVal+'</button>';
+              const _displayVal = _type === 'number' ? (escapeHtml(String(r.value)) + (r.unit?'<span style="font-size:8px;color:var(--ink-sub);margin-left:1px;">'+escapeHtml(r.unit)+'</span>':'')) : escapeHtml(String(r.value));
+              html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:5px;padding:1px 5px;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;line-height:1.4;">'+_displayVal+'</button>';
             } else {
-              html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">タップして入力</button>';
+              html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:5px;padding:1px 5px;font-size:9px;font-weight:600;cursor:pointer;font-family:inherit;line-height:1.4;">タップして入力</button>';
             }
           } else {
             // simple型：メモ表示エリア（メモ+写真の状態によって表示変更）
@@ -11684,46 +12251,44 @@ function renderMeMode() {
             const _hasMemoPhoto = !!r.memoPhoto;
             
             if (_hasMemoText || _hasMemoPhoto) {
-              // メモか写真ある → 内容表示＋右側にアイコン
-              html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:#FFF8E0;border:1px solid #E8C870;color:#8B6914;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;min-width:0;">';
+              html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:#FFF8E0;border:1px solid #E8C870;color:#8B6914;border-radius:5px;padding:1px 5px;font-size:9px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;min-width:0;line-height:1.5;">';
               if (_hasMemoText) {
                 html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.memo)+'</span>';
               } else {
                 html += '<span style="flex:1;color:#B89855;font-style:italic;">写真メモ</span>';
               }
               if (_hasMemoPhoto) {
-                html += '<span class="material-symbols-rounded" style="font-size:14px;color:#8B6914;flex-shrink:0;">image</span>';
+                html += '<span class="material-symbols-rounded" style="font-size:11px;color:#8B6914;flex-shrink:0;">image</span>';
               }
               html += '</button>';
             } else {
-              // 空 → 「メモ追加」ボタン（📷マーク付き）
-              html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;">';
-              html += '<span class="material-symbols-rounded" style="font-size:13px;">edit_note</span>メモ';
+              html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:5px;padding:1px 5px;font-size:9px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:3px;line-height:1.5;">';
+              html += '<span class="material-symbols-rounded" style="font-size:10px;">edit_note</span>メモ';
               html += '<span style="flex:1;"></span>';
-              html += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--ink-light);">photo_camera</span>';
+              html += '<span class="material-symbols-rounded" style="font-size:10px;color:var(--ink-light);">photo_camera</span>';
               html += '</button>';
             }
           }
           
           // 写真サムネ（あれば）
           if (r.photo) {
-            html += '<button onclick="openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(r.photo)+'" style="flex-shrink:0;width:32px;height:32px;border-radius:6px;border:1px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+r.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+            html += '<button onclick="openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(r.photo)+'" style="flex-shrink:0;width:22px;height:22px;border-radius:4px;border:1px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+r.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
           }
           
           if (sourceTag) html += sourceTag;
-          html += '<span style="font-size:10px;color:var(--ink-sub);font-variant-numeric:tabular-nums;flex-shrink:0;">'+timeStr+'</span>';
-          html += '<button onclick="deleteStampRecord(\''+r.id+'\')" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:0 2px;font-size:13px;line-height:1;flex-shrink:0;">×</button>';
+          html += '<span style="font-size:8px;color:var(--ink-sub);font-variant-numeric:tabular-nums;flex-shrink:0;">'+timeStr+'</span>';
+          html += '<button onclick="deleteStampRecord(\''+r.id+'\')" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:0 1px;font-size:10px;line-height:1;flex-shrink:0;">×</button>';
           html += '</div>';
         }
         html += '</div>';
         // 過去の記録があれば件数だけ表示
         const pastCount = history.length - todayHistory.length;
         if (pastCount > 0) {
-          html += '<div style="font-size:10px;color:var(--ink-light);margin-top:8px;text-align:center;">過去の記録: '+pastCount+'件</div>';
+          html += '<div style="font-size:8px;color:var(--ink-light);margin-top:6px;text-align:center;">過去 '+pastCount+'件 → カレンダーで見れるよ📅</div>';
         }
       }
       html += '</div>'; // data-stamp-history-area 閉じ
-      html += '</div>';
+      html += '</div>'; // カードB 閉じ
     } else if (ssTab === 'planner') {
       // ───── プランナー画面（新規）─────
       html += renderPlannerView();
@@ -11874,25 +12439,26 @@ function renderTweetsDiary() {
     h += '<div id="tweetBgOverlay" style="position:fixed;inset:0;z-index:-1;background:rgba(255,255,255,0.55);backdrop-filter:blur(2px);"></div>';
   }
   
-  // 上部バー：タグ管理＋カレンダー＋背景＋フィルタ（スタイリッシュ）
-  h += '<div style="padding:8px 12px;display:flex;gap:8px;align-items:center;background:'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface-warm)')+';backdrop-filter:'+(bgImage?'blur(10px)':'none')+';border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;">';
-  h += '<button onclick="openTweetTagsModal()" title="タグ管理" style="flex:0 0 auto;width:32px;height:32px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">';
+  // 上部バー：タグ管理＋カレンダー＋フィルタ＋背景（スタイリッシュ、コンパクト）
+  h += '<div style="padding:6px 10px;display:flex;gap:6px;align-items:center;background:'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface-warm)')+';backdrop-filter:'+(bgImage?'blur(10px)':'none')+';border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;">';
+  h += '<button onclick="openTweetTagsModal()" title="タグ管理" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">';
   h += '#';
   h += '</button>';
-  h += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex:0 0 auto;width:32px;height:32px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;">calendar_month</span></button>';
-  h += '<button onclick="openTweetBgModal()" title="背景画像" style="flex:0 0 auto;width:32px;height:32px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;">wallpaper</span></button>';
+  h += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span></button>';
   
   if (filterTag) {
-    h += '<button onclick="setTweetFilter(null)" style="flex:1;padding:5px 12px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;overflow:hidden;">';
-    h += '<span style="display:flex;align-items:center;gap:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span class="material-symbols-rounded" style="font-size:13px;flex-shrink:0;">filter_alt</span>#'+escapeHtml(filterTag)+' ('+tweets.length+')</span>';
-    h += '<span class="material-symbols-rounded" style="font-size:13px;flex-shrink:0;">close</span>';
+    h += '<button onclick="setTweetFilter(null)" style="flex:1;padding:4px 10px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;overflow:hidden;">';
+    h += '<span style="display:flex;align-items:center;gap:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span class="material-symbols-rounded" style="font-size:12px;flex-shrink:0;">filter_alt</span>#'+escapeHtml(filterTag)+' ('+tweets.length+')</span>';
+    h += '<span class="material-symbols-rounded" style="font-size:12px;flex-shrink:0;">close</span>';
     h += '</button>';
   } else {
     h += '<button onclick="openTweetFilterModal()" style="flex:1;padding:4px 0;background:none;color:var(--ink-light);border:none;font-family:inherit;font-size:10px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;letter-spacing:0.05em;">';
-    h += '<span class="material-symbols-rounded" style="font-size:14px;opacity:0.6;">search</span>';
+    h += '<span class="material-symbols-rounded" style="font-size:13px;opacity:0.6;">search</span>';
     h += '<span style="opacity:0.7;">タグでしぼる</span>';
     h += '</button>';
   }
+  // 背景画像ボタン（検索の後ろ＝右端）
+  h += '<button onclick="openTweetBgModal()" title="背景画像" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">wallpaper</span></button>';
   h += '</div>';
   
   // タイムライン本体
@@ -11983,13 +12549,13 @@ function renderTweetsDiary() {
   h += '</button>';
   h += '</div>';
   
-  // 入力欄（中央寄せ＆max-width 480px揃え）
-  h += '<div style="position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;bottom:64px;background:var(--surface);border-top:1px solid var(--line);padding:8px 12px;z-index:100;display:flex;align-items:flex-end;gap:6px;box-sizing:border-box;">';
-  h += '<button onclick="openTweetPhotoPicker()" title="写真追加" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:18px;">photo_camera</span></button>';
-  h += '<button onclick="insertTagToTweet()" title="タグ追加" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;font-size:16px;font-weight:800;">#</button>';
+  // 入力欄（中央寄せ＆max-width 480px揃え、コンパクト）
+  h += '<div style="position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;bottom:64px;background:var(--surface);border-top:1px solid var(--line);padding:6px 10px;z-index:100;display:flex;align-items:flex-end;gap:5px;box-sizing:border-box;">';
+  h += '<button onclick="openTweetPhotoPicker()" title="写真追加" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:15px;">photo_camera</span></button>';
+  h += '<button onclick="insertTagToTweet()" title="タグ追加" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;font-size:14px;font-weight:800;">#</button>';
   h += '<input type="file" id="tweetPhotoInput" accept="image/*" multiple style="display:none;" onchange="handleTweetPhotoSelect(event)">';
-  h += '<textarea id="tweetInput" placeholder="ひとこと書く... #タグも使えるよ" rows="1" oninput="autoResizeTweetInput(this)" style="flex:1;min-height:36px;max-height:120px;padding:8px 12px;border:1px solid var(--card-border);border-radius:18px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:none;color:var(--ink-dark);line-height:1.5;outline:none;"></textarea>';
-  h += '<button onclick="postTweet()" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:18px;">send</span></button>';
+  h += '<textarea id="tweetInput" placeholder="ひとこと書く... #タグも使えるよ" rows="1" oninput="autoResizeTweetInput(this)" style="flex:1;min-height:30px;max-height:120px;padding:6px 12px;border:1px solid var(--card-border);border-radius:18px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:none;color:var(--ink-dark);line-height:1.5;outline:none;"></textarea>';
+  h += '<button onclick="postTweet()" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:15px;">send</span></button>';
   h += '</div>';
   
   // 写真プレビュー領域（投稿前の選択写真表示用）
@@ -12551,6 +13117,12 @@ function openTweetTagsModal() {
       tagCounts[tg] = (tagCounts[tg] || 0) + 1;
     }
   }
+  // 手動登録された参考タグも合体（カウント0）
+  if (data.tweetTagsRegistry) {
+    for (const tg of data.tweetTagsRegistry) {
+      if (!(tg in tagCounts)) tagCounts[tg] = 0;
+    }
+  }
   const allTags = Object.keys(tagCounts).sort();
   
   const ex = document.getElementById('tweetTagsModal');
@@ -12696,7 +13268,9 @@ function _renderTweetBubble(tw) {
   h += '</div>';
   
   // 吹き出し本体（幅を80%に狭める）
-  h += '<div style="flex:1;min-width:0;max-width:82%;">';
+  h += '<div style="flex:1;min-width:0;max-width:82%;position:relative;">';
+  // 削除×ボタン（吹き出しの右上に小さく、ホバーで濃く）
+  h += '<button onclick="event.stopPropagation();deleteTweet(\''+tw.id+'\')" title="削除" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:white;color:#999;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,0.08);font-family:inherit;padding:0;line-height:1;"><span class="material-symbols-rounded" style="font-size:12px;">close</span></button>';
   h += '<button onclick="openTweetEditModal(\''+tw.id+'\')" style="text-align:left;background:white;border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-family:inherit;cursor:pointer;width:100%;display:flex;flex-direction:column;gap:5px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">';
   
   // テキスト本文（タグハイライト、フォント小さめ）
