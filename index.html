@@ -11896,7 +11896,7 @@ function renderTweetsDiary() {
   h += '</div>';
   
   // タイムライン本体
-  h += '<div data-tweets-area style="padding:8px 12px 80px;min-height:60vh;">';
+  h += '<div data-tweets-area style="padding:8px 12px 140px;min-height:60vh;">';
   
   if (tweets.length === 0) {
     h += '<div style="text-align:center;padding:60px 20px;color:var(--ink-sub);">';
@@ -11958,7 +11958,33 @@ function renderTweetsDiary() {
   h += '</div>';
   
   // 入力欄（固定下部、底部ナビの上）
-  h += '<div style="position:fixed;left:0;right:0;bottom:64px;background:var(--surface);border-top:1px solid var(--line);padding:8px 12px;z-index:100;display:flex;align-items:flex-end;gap:6px;box-sizing:border-box;">';
+  // 現在地（投稿用、デフォルトはプロフィール地域）
+  const homeRegion = (data && data.userRegion) || '大阪';
+  const currentRegion = data.tweetCurrentRegion || homeRegion;
+  const isAway = currentRegion !== homeRegion;
+  const currentWeatherIcon = (typeof getDateWeatherIcon === 'function') ? (window._weatherCache && window._weatherCache.icon) : null;
+  // 英語表記（WEATHER_CITY_MAPから取得）
+  const currentRegionEn = (typeof WEATHER_CITY_MAP !== 'undefined' && WEATHER_CITY_MAP[currentRegion]) || currentRegion;
+  
+  // 現在地・天気バー（小さく、入力欄の真上に配置、中央寄せでmax-width揃え）
+  h += '<div style="position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;bottom:112px;padding:0 16px;z-index:99;display:flex;justify-content:flex-start;pointer-events:none;box-sizing:border-box;">';
+  h += '<button onclick="openTweetLocationModal()" style="pointer-events:auto;display:inline-flex;align-items:center;gap:3px;padding:3px 9px 3px 7px;background:'+(isAway?'linear-gradient(135deg,#FFE8B0,#FFD580)':'rgba(255,255,255,0.95)')+';border:1px solid '+(isAway?'#E89A4A':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:9px;font-weight:600;color:'+(isAway?'#8B6914':'var(--ink-sub)')+';cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.1);letter-spacing:0.03em;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">';
+  if (currentWeatherIcon) {
+    h += weatherIconHtml(currentWeatherIcon, 'font-size:11px;');
+  } else {
+    h += '<span class="material-symbols-rounded" style="font-size:10px;">place</span>';
+  }
+  h += '<span>'+escapeHtml(currentRegionEn)+'</span>';
+  if (isAway) {
+    h += '<span style="font-size:8px;opacity:0.6;">·</span>';
+    h += '<span style="font-size:8px;color:#C4762A;font-weight:700;letter-spacing:0.05em;">trip</span>';
+  }
+  h += '<span class="material-symbols-rounded" style="font-size:9px;opacity:0.5;margin-left:1px;">expand_less</span>';
+  h += '</button>';
+  h += '</div>';
+  
+  // 入力欄（中央寄せ＆max-width 480px揃え）
+  h += '<div style="position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;bottom:64px;background:var(--surface);border-top:1px solid var(--line);padding:8px 12px;z-index:100;display:flex;align-items:flex-end;gap:6px;box-sizing:border-box;">';
   h += '<button onclick="openTweetPhotoPicker()" title="写真追加" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:18px;">photo_camera</span></button>';
   h += '<button onclick="insertTagToTweet()" title="タグ追加" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;font-size:16px;font-weight:800;">#</button>';
   h += '<input type="file" id="tweetPhotoInput" accept="image/*" multiple style="display:none;" onchange="handleTweetPhotoSelect(event)">';
@@ -11967,7 +11993,7 @@ function renderTweetsDiary() {
   h += '</div>';
   
   // 写真プレビュー領域（投稿前の選択写真表示用）
-  h += '<div id="tweetPhotoPreview" style="position:fixed;left:0;right:0;bottom:120px;background:var(--surface);border-top:1px solid var(--line);padding:8px 12px;z-index:101;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;"></div>';
+  h += '<div id="tweetPhotoPreview" style="position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;bottom:120px;background:var(--surface);border-top:1px solid var(--line);padding:8px 12px;z-index:101;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;"></div>';
   
   return h;
 }
@@ -12222,6 +12248,130 @@ function clearTweetBgImage() {
   showToast('背景を削除したよ');
 }
 window.clearTweetBgImage = clearTweetBgImage;
+
+// ===== 投稿時の現在地切替（旅行モード） =====
+function openTweetLocationModal() {
+  const homeRegion = (data && data.userRegion) || '大阪';
+  const currentRegion = data.tweetCurrentRegion || homeRegion;
+  
+  const ex = document.getElementById('tweetLocationModal');
+  if (ex) ex.remove();
+  
+  // 主要都市（よく使うものを上に）
+  const popularRegions = ['大阪','東京','京都','神奈川','愛知','福岡','北海道','沖縄'];
+  const allRegions = Object.keys(WEATHER_CITY_MAP);
+  const otherRegions = allRegions.filter(r => !popularRegions.includes(r)).sort();
+  
+  let h = '<div id="tweetLocationModal" onclick="if(event.target===this)closeTweetLocationModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--accent);color:white;"><span class="material-symbols-rounded" style="font-size:16px;">location_on</span></span>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">いまの場所</div>';
+  h += '<button onclick="closeTweetLocationModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;">旅行先などで一時的に変更できるよ🌷<br>ここで選んだ場所の天気が記録されます</div>';
+  
+  // ホームに戻すボタン（旅先になってる場合だけ）
+  if (currentRegion !== homeRegion) {
+    const homeEn = (WEATHER_CITY_MAP && WEATHER_CITY_MAP[homeRegion]) || homeRegion;
+    h += '<button onclick="setTweetLocation(\'\')" style="padding:10px 14px;background:var(--accent-bg);color:var(--accent-deep);border:1.5px solid var(--accent);border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:16px;">home</span>';
+    h += 'Home ('+escapeHtml(homeEn)+') に戻す';
+    h += '</button>';
+  }
+  
+  // よく使う地域
+  h += '<div style="font-size:10px;color:var(--ink-sub);font-weight:700;margin-top:4px;">よく使う場所</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
+  for (const r of popularRegions) {
+    const isCur = r === currentRegion;
+    const isHome = r === homeRegion;
+    const en = (WEATHER_CITY_MAP && WEATHER_CITY_MAP[r]) || r;
+    h += '<button onclick="setTweetLocation(\''+escapeHtml(r)+'\')" style="padding:10px 6px;background:'+(isCur?'var(--accent)':'var(--surface-warm)')+';color:'+(isCur?'white':'var(--ink-dark)')+';border:1px solid '+(isCur?'var(--accent)':'var(--line)')+';border-radius:8px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;">';
+    h += '<span style="font-size:13px;font-weight:800;letter-spacing:0.02em;">'+escapeHtml(en)+'</span>';
+    h += '<span style="font-size:9px;opacity:0.7;font-weight:600;">'+escapeHtml(r)+'</span>';
+    if (isHome) h += '<span style="font-size:8px;opacity:0.6;'+(isCur?'':'color:var(--accent-deep);')+'margin-top:1px;">HOME</span>';
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  // すべての地域（折りたたみ）
+  h += '<details style="margin-top:6px;">';
+  h += '<summary style="font-size:10px;color:var(--ink-sub);font-weight:700;cursor:pointer;padding:6px 0;list-style:none;">他の都道府県（タップで開く）</summary>';
+  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px;max-height:280px;overflow-y:auto;">';
+  for (const r of otherRegions) {
+    const isCur = r === currentRegion;
+    const en = (WEATHER_CITY_MAP && WEATHER_CITY_MAP[r]) || r;
+    h += '<button onclick="setTweetLocation(\''+escapeHtml(r)+'\')" style="padding:6px 4px;background:'+(isCur?'var(--accent)':'var(--surface-warm)')+';color:'+(isCur?'white':'var(--ink-dark)')+';border:1px solid '+(isCur?'var(--accent)':'var(--line)')+';border-radius:6px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;">';
+    h += '<span style="font-size:11px;font-weight:700;">'+escapeHtml(en)+'</span>';
+    h += '<span style="font-size:8px;opacity:0.6;">'+escapeHtml(r)+'</span>';
+    h += '</button>';
+  }
+  h += '</div>';
+  h += '</details>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openTweetLocationModal = openTweetLocationModal;
+
+function closeTweetLocationModal() {
+  const el = document.getElementById('tweetLocationModal');
+  if (el) el.remove();
+}
+window.closeTweetLocationModal = closeTweetLocationModal;
+
+async function setTweetLocation(region) {
+  const homeRegion = (data && data.userRegion) || '大阪';
+  if (!region || region === homeRegion) {
+    // ホームに戻す
+    delete data.tweetCurrentRegion;
+  } else {
+    data.tweetCurrentRegion = region;
+  }
+  saveData();
+  closeTweetLocationModal();
+  
+  // 一時的に天気再取得（_weatherCacheを上書き）
+  const dispRegion = region || homeRegion;
+  const dispRegionEn = (WEATHER_CITY_MAP && WEATHER_CITY_MAP[dispRegion]) || dispRegion;
+  showToast('天気を取得中...');
+  try {
+    await fetchWeatherForRegion(dispRegion);
+    showToast(dispRegionEn+'の天気を取得🌷');
+  } catch(e) {
+    console.error('天気取得エラー:', e);
+  }
+  
+  _suppressScrollTop = true;
+  render();
+}
+window.setTweetLocation = setTweetLocation;
+
+// 指定地域の天気を取得して_weatherCacheを更新
+async function fetchWeatherForRegion(region) {
+  const city = WEATHER_CITY_MAP[region] || 'Osaka';
+  try {
+    const curRes = await fetch('https://api.openweathermap.org/data/2.5/weather?q='+city+',JP&appid='+WEATHER_API_KEY+'&units=metric&lang=ja');
+    const curData = await curRes.json();
+    if (curData && curData.weather && curData.weather[0]) {
+      const weatherIcon = curData.weather[0].icon;
+      const icon = WEATHER_ICON_MAP[weatherIcon] || '🌤️';
+      // _weatherCacheを最小限更新（既存のキャッシュとマージ）
+      window._weatherCache = window._weatherCache || {};
+      window._weatherCache.icon = icon;
+      window._weatherCache.temp = curData.main.temp;
+      window._weatherCache.humidity = curData.main.humidity;
+      window._weatherCache.desc = curData.weather[0].description;
+      window._weatherCache.region = region;
+    }
+  } catch(e) {
+    throw e;
+  }
+}
+window.fetchWeatherForRegion = fetchWeatherForRegion;
 
 // 入力欄に #タグ を挿入（既存タグから選ぶ or 新規入力）
 function insertTagToTweet() {
@@ -12538,6 +12688,11 @@ function _renderTweetBubble(tw) {
   if (weather) {
     h += weatherIconHtml(weather, 'font-size:10px;');
   }
+  // 旅先タグ（英語表記）
+  if (tw.region) {
+    const regionEn = (typeof WEATHER_CITY_MAP !== 'undefined' && WEATHER_CITY_MAP[tw.region]) || tw.region;
+    h += '<span style="background:#FFE8B0;color:#8B6914;padding:1px 5px;border-radius:100px;font-size:8px;font-weight:700;margin-left:1px;letter-spacing:0.03em;">'+escapeHtml(regionEn)+'</span>';
+  }
   h += '</div>';
   
   // 吹き出し本体（幅を80%に狭める）
@@ -12667,6 +12822,9 @@ function postTweet() {
   const now = new Date();
   const todayKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   const currentWeather = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(todayKey) : null;
+  // 投稿時の地域（旅先 or ホーム）
+  const homeRegion = (data && data.userRegion) || '大阪';
+  const postRegion = data.tweetCurrentRegion || homeRegion;
   
   const newTweet = {
     id: 'tw_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
@@ -12676,6 +12834,7 @@ function postTweet() {
     timestamp: Date.now()
   };
   if (currentWeather) newTweet.weather = currentWeather;
+  if (postRegion !== homeRegion) newTweet.region = postRegion; // 旅先のみ保存
   
   data.tweets.push(newTweet);
   saveData();
