@@ -6419,9 +6419,12 @@ function tapStamp(icon, name) {
   if (type === 'simple') {
     const scrollY = window.scrollY;
     addStampRecord(icon, name, 'stamp');
-    showToast(name);
     render();
-    setTimeout(() => window.scrollTo(0, scrollY), 0);
+    // render後にトースト表示（renderで消されないように）
+    setTimeout(() => {
+      showToast(name);
+      window.scrollTo(0, scrollY);
+    }, 0);
   } else {
     openValueInputModal({
       icon: icon,
