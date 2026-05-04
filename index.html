@@ -5970,12 +5970,32 @@ function switchStampSubTab(sub) {
 }
 
 function switchStampCat(cat) {
+  // 各スクロール位置を保存
   const scrollY = window.scrollY;
+  let chipsScrollX = 0, gridScrollX = 0;
+  try {
+    const chips = document.querySelector('[data-stamp-cats]');
+    if (chips) chipsScrollX = chips.scrollLeft;
+    const grid = document.querySelector('[data-stamp-grid]');
+    if (grid) gridScrollX = grid.scrollLeft;
+  } catch(e) {}
+  
   data.stampSelCat = cat;
   saveData();
   render();
-  setTimeout(() => window.scrollTo(0, scrollY), 0);
+  
+  // render後にスクロール位置を復元
+  setTimeout(() => {
+    try {
+      window.scrollTo(0, scrollY);
+      const chips = document.querySelector('[data-stamp-cats]');
+      if (chips) chips.scrollLeft = chipsScrollX;
+      // スタンプグリッドは新カテゴリで内容変わるから先頭でOK
+      // でもチップの位置は保つ
+    } catch(e) {}
+  }, 0);
 }
+window.switchStampCat = switchStampCat;
 
 function toggleStampEditMode() {
   const scrollY = window.scrollY;
@@ -6418,15 +6438,25 @@ function _findStampDef(icon, name) {
   return null;
 }
 
-function tapStamp(icon, name) {
+function tapStamp(icon, name, evt) {
   const def = _findStampDef(icon, name);
   const type = def && def.type ? def.type : 'simple';
   
   if (type === 'simple') {
-    const scrollY = window.scrollY;
+    // 履歴に追加（render() なし、画面歪み防止）
     addStampRecord(icon, name, 'stamp');
-    render();
-    setTimeout(() => window.scrollTo(0, scrollY), 0);
+    // 履歴エリアだけ部分更新
+    _refreshStampHistoryArea();
+    // タップしたボタンに一瞬だけビジュアルフィードバック
+    try {
+      const e = evt || (typeof event !== 'undefined' ? event : null);
+      const btn = e && e.currentTarget;
+      if (btn) {
+        btn.style.transform = 'scale(0.92)';
+        btn.style.transition = 'transform 0.1s';
+        setTimeout(() => { try { btn.style.transform = ''; } catch(_){} }, 120);
+      }
+    } catch(e) {}
   } else {
     openValueInputModal({
       icon: icon,
@@ -6443,6 +6473,80 @@ function tapStamp(icon, name) {
   }
 }
 window.tapStamp = tapStamp;
+
+// 履歴エリアの中身だけを再生成して書き換え（render() なしで歪みゼロ）
+function _refreshStampHistoryArea() {
+  const area = document.querySelector('[data-stamp-history-area]');
+  if (!area) return;
+  
+  const history = data.stampHistory || [];
+  const todayStr = new Date().toDateString();
+  const todayHistory = history.filter(r => new Date(r.timestamp).toDateString() === todayStr);
+  
+  let html = '';
+  if (todayHistory.length === 0) {
+    html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px 16px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
+  } else {
+    html += '<div data-today-count style="font-size:10px;color:var(--ink-light);margin-bottom:6px;">今日の記録: '+todayHistory.length+'件</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const r of todayHistory) {
+      const timeStr = _formatStampTime(r.timestamp);
+      const _def = _findStampDef(r.icon, r.name);
+      const _type = r.type || (_def && _def.type) || 'simple';
+      const _hasValue = r.value !== undefined && r.value !== null && r.value !== '';
+      const _editable = (_type === 'number' || _type === 'text');
+      
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--card-border);border-radius:12px;">';
+      html += '<span style="flex-shrink:0;width:20px;display:inline-flex;align-items:center;justify-content:center;">'+renderStampIcon(r.icon,'font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
+      html += '<span style="flex-shrink:0;width:80px;font-size:12px;font-weight:600;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.name)+'</span>';
+      
+      if (_editable) {
+        if (_hasValue) {
+          const _displayVal = _type === 'number' ? (escapeHtml(String(r.value)) + (r.unit?'<span style="font-size:10px;color:var(--ink-sub);margin-left:2px;">'+escapeHtml(r.unit)+'</span>':'')) : escapeHtml(String(r.value));
+          html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:8px;padding:3px 8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+_displayVal+'</button>';
+        } else {
+          html += '<button onclick="editStampRecord(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">タップして入力</button>';
+        }
+      } else {
+        const _hasMemoText = !!r.memo;
+        const _hasMemoPhoto = !!r.memoPhoto;
+        if (_hasMemoText || _hasMemoPhoto) {
+          html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:#FFF8E0;border:1px solid #E8C870;color:#8B6914;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;min-width:0;">';
+          if (_hasMemoText) {
+            html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.memo)+'</span>';
+          } else {
+            html += '<span style="flex:1;color:#B89855;font-style:italic;">写真メモ</span>';
+          }
+          if (_hasMemoPhoto) {
+            html += '<span class="material-symbols-rounded" style="font-size:14px;color:#8B6914;flex-shrink:0;">image</span>';
+          }
+          html += '</button>';
+        } else {
+          html += '<button onclick="openStampMemoModal(\''+r.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;">';
+          html += '<span class="material-symbols-rounded" style="font-size:13px;">edit_note</span>メモ';
+          html += '<span style="flex:1;"></span>';
+          html += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--ink-light);">photo_camera</span>';
+          html += '</button>';
+        }
+      }
+      
+      if (r.photo) {
+        html += '<button onclick="openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(r.photo)+'" style="flex-shrink:0;width:32px;height:32px;border-radius:6px;border:1px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+r.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+      }
+      
+      html += '<span style="flex-shrink:0;font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;">'+timeStr+'</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+    const pastCount = history.length - todayHistory.length;
+    if (pastCount > 0) {
+      html += '<div style="font-size:10px;color:var(--ink-light);margin-top:8px;text-align:center;">過去の記録: '+pastCount+'件</div>';
+    }
+  }
+  
+  area.innerHTML = html;
+}
+window._refreshStampHistoryArea = _refreshStampHistoryArea;
 
 // 数値/テキスト入力モーダル（新規入力 or 履歴の再編集 兼用）
 function openValueInputModal(opts) {
@@ -9755,6 +9859,194 @@ function _stampCatColor(cat) {
   return STAMP_CAT_COLORS[cat] || '#888888';
 }
 
+// ===== 体重・体脂肪 ミニグラフ（ダイエットタブ用） =====
+function renderWeightMiniChart() {
+  try {
+    const history = data.stampHistory || [];
+    
+    // 体重と体脂肪の記録抽出
+    const weights = history.filter(r => r.name === '体重' && r.value).map(r => ({
+      timestamp: r.timestamp || 0,
+      value: parseFloat(r.value)
+    })).filter(r => !isNaN(r.value) && r.value > 0).sort((a,b) => a.timestamp - b.timestamp);
+    
+    const bodyFats = history.filter(r => r.name === '体脂肪' && r.value).map(r => ({
+      timestamp: r.timestamp || 0,
+      value: parseFloat(r.value)
+    })).filter(r => !isNaN(r.value) && r.value > 0).sort((a,b) => a.timestamp - b.timestamp);
+    
+    if (weights.length === 0 && bodyFats.length === 0) {
+      let h = '<div style="margin:0 12px 14px;background:linear-gradient(135deg,#FFF5F8 0%,#FFFAF8 100%);border:1.5px dashed #F0BDC6;border-radius:14px;padding:18px 14px;text-align:center;">';
+      h += '<div style="margin-bottom:6px;"><span class="material-symbols-rounded" style="font-size:32px;color:#C8709A;">show_chart</span></div>';
+      h += '<div style="font-size:11px;color:#888;line-height:1.6;font-weight:600;">体重・体脂肪を記録するとここに<br>グラフが出るよ🌷</div>';
+      h += '</div>';
+      return h;
+    }
+    
+    // 直近30日に絞る
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const w30 = weights.filter(r => r.timestamp >= cutoff);
+    const b30 = bodyFats.filter(r => r.timestamp >= cutoff);
+    
+    // データ少ない場合は全期間
+    const displayW = w30.length >= 2 ? w30 : weights;
+    const displayB = b30.length >= 2 ? b30 : bodyFats;
+    
+    // 最新値・前回比較
+    const latestW = weights.length > 0 ? weights[weights.length - 1] : null;
+    const prevW = weights.length >= 2 ? weights[weights.length - 2] : null;
+    const latestB = bodyFats.length > 0 ? bodyFats[bodyFats.length - 1] : null;
+    
+    const goalMain = 55; // メイン目標
+    const goalMid = 60;  // 中間目標
+    
+    // SVGサイズ
+    const W = 320, H = 100;
+    const PAD_L = 32, PAD_R = 32, PAD_T = 12, PAD_B = 18;
+    const innerW = W - PAD_L - PAD_R;
+    const innerH = H - PAD_T - PAD_B;
+    
+    // Y軸スケール（体重）：表示範囲は最小値-2 〜 最大値+2、目標も含める
+    const allWVals = displayW.map(r => r.value).concat([goalMain, goalMid]);
+    if (allWVals.length === 0) allWVals.push(50, 80);
+    const wMin = Math.floor(Math.min.apply(null, allWVals) - 1);
+    const wMax = Math.ceil(Math.max.apply(null, allWVals) + 1);
+    const wRange = (wMax - wMin) || 1;
+    
+    // Y軸スケール（体脂肪、右軸）
+    const allBVals = displayB.map(r => r.value);
+    const bMin = allBVals.length > 0 ? Math.floor(Math.min.apply(null, allBVals) - 1) : 20;
+    const bMax = allBVals.length > 0 ? Math.ceil(Math.max.apply(null, allBVals) + 1) : 35;
+    const bRange = (bMax - bMin) || 1;
+    
+    // X軸スケール
+    const allTimes = displayW.map(r => r.timestamp).concat(displayB.map(r => r.timestamp));
+    if (allTimes.length === 0) allTimes.push(Date.now());
+    const tMin = Math.min.apply(null, allTimes);
+    const tMax = Math.max.apply(null, allTimes);
+    const tRange = (tMax - tMin) || 1;
+    
+    const xScale = (t) => PAD_L + ((t - tMin) / tRange) * innerW;
+    const yScaleW = (v) => PAD_T + ((wMax - v) / wRange) * innerH;
+    const yScaleB = (v) => PAD_T + ((bMax - v) / bRange) * innerH;
+    
+    let h = '<div style="margin:0 12px 14px;background:linear-gradient(135deg,#FFF5F8 0%,#FFFAF8 100%);border:1.5px solid #F0BDC6;border-radius:14px;padding:14px;">';
+    
+    // ヘッダー：現在値＋前回比
+    h += '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;flex-wrap:wrap;">';
+    h += '<span class="material-symbols-rounded" style="font-size:16px;color:#C8709A;">monitor_weight</span>';
+    if (latestW) {
+      h += '<span style="font-size:11px;color:#888;font-weight:700;">いまの</span>';
+      h += '<span style="font-size:20px;font-weight:800;color:#C8709A;font-variant-numeric:tabular-nums;">'+latestW.value.toFixed(1)+'</span>';
+      h += '<span style="font-size:11px;font-weight:700;color:#888;">kg</span>';
+      if (prevW) {
+        const diff = latestW.value - prevW.value;
+        const arrow = diff < 0 ? '↓' : (diff > 0 ? '↑' : '−');
+        const color = diff < 0 ? '#5FA985' : (diff > 0 ? '#E07058' : '#888');
+        h += '<span style="font-size:12px;font-weight:700;color:'+color+';font-variant-numeric:tabular-nums;">'+arrow+Math.abs(diff).toFixed(1)+'</span>';
+      }
+    }
+    if (latestB) {
+      h += '<span style="margin-left:auto;font-size:10px;color:#888;font-weight:700;">体脂肪 <span style="color:#C8709A;font-weight:800;font-variant-numeric:tabular-nums;">'+latestB.value.toFixed(1)+'%</span></span>';
+    }
+    h += '</div>';
+    
+    // 目標までの距離
+    if (latestW) {
+      if (latestW.value > goalMain) {
+        const toMain = (latestW.value - goalMain).toFixed(1);
+        const toMid = latestW.value > goalMid ? (latestW.value - goalMid).toFixed(1) : null;
+        h += '<div style="font-size:10px;color:#888;margin-bottom:8px;font-weight:600;">';
+        if (toMid) h += '中間目標(60kg)まで <span style="color:#E89A4A;font-weight:800;">'+toMid+'kg</span> ／ ';
+        h += '目標(55kg)まで <span style="color:#C8709A;font-weight:800;">'+toMain+'kg</span>';
+        h += '</div>';
+      } else {
+        h += '<div style="font-size:11px;color:#5FA985;margin-bottom:8px;font-weight:800;">🎉 メイン目標達成！</div>';
+      }
+    }
+    
+    // SVGグラフ
+    h += '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;background:white;border-radius:8px;" preserveAspectRatio="none">';
+    
+    // 目標ライン：60kg（中間・オレンジ点線）
+    if (goalMid >= wMin && goalMid <= wMax) {
+      const yMid = yScaleW(goalMid);
+      h += '<line x1="'+PAD_L+'" y1="'+yMid+'" x2="'+(W-PAD_R)+'" y2="'+yMid+'" stroke="#E89A4A" stroke-width="1" stroke-dasharray="3,2" opacity="0.7" />';
+      h += '<text x="'+(PAD_L-2)+'" y="'+(yMid+3)+'" font-size="7" fill="#E89A4A" text-anchor="end" font-weight="700">60</text>';
+    }
+    // 目標ライン：55kg（メイン・ピンク点線）
+    if (goalMain >= wMin && goalMain <= wMax) {
+      const yMain = yScaleW(goalMain);
+      h += '<line x1="'+PAD_L+'" y1="'+yMain+'" x2="'+(W-PAD_R)+'" y2="'+yMain+'" stroke="#C8709A" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.8" />';
+      h += '<text x="'+(PAD_L-2)+'" y="'+(yMain+3)+'" font-size="7" fill="#C8709A" text-anchor="end" font-weight="800">55</text>';
+    }
+    
+    // Y軸ラベル（左：体重）：最大・最小
+    h += '<text x="'+(PAD_L-2)+'" y="'+(PAD_T+3)+'" font-size="7" fill="#999" text-anchor="end">'+wMax+'</text>';
+    h += '<text x="'+(PAD_L-2)+'" y="'+(H-PAD_B+8)+'" font-size="7" fill="#999" text-anchor="end">'+wMin+'</text>';
+    
+    // Y軸ラベル（右：体脂肪）
+    if (allBVals.length > 0) {
+      h += '<text x="'+(W-PAD_R+2)+'" y="'+(PAD_T+3)+'" font-size="7" fill="#C8709A" text-anchor="start">'+bMax+'%</text>';
+      h += '<text x="'+(W-PAD_R+2)+'" y="'+(H-PAD_B+8)+'" font-size="7" fill="#C8709A" text-anchor="start">'+bMin+'%</text>';
+    }
+    
+    // 体重の折れ線
+    if (displayW.length >= 2) {
+      let path = '';
+      for (let i = 0; i < displayW.length; i++) {
+        const x = xScale(displayW[i].timestamp);
+        const y = yScaleW(displayW[i].value);
+        path += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+      }
+      // 影エリア
+      let area = path + 'L'+xScale(displayW[displayW.length-1].timestamp).toFixed(1)+','+(H-PAD_B)+' L'+xScale(displayW[0].timestamp).toFixed(1)+','+(H-PAD_B)+' Z';
+      h += '<path d="'+area+'" fill="#C8709A" opacity="0.15" />';
+      h += '<path d="'+path+'" fill="none" stroke="#C8709A" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />';
+      // 各点
+      for (const r of displayW) {
+        h += '<circle cx="'+xScale(r.timestamp).toFixed(1)+'" cy="'+yScaleW(r.value).toFixed(1)+'" r="2" fill="#C8709A" />';
+      }
+    } else if (displayW.length === 1) {
+      const r = displayW[0];
+      h += '<circle cx="'+xScale(r.timestamp).toFixed(1)+'" cy="'+yScaleW(r.value).toFixed(1)+'" r="3" fill="#C8709A" />';
+    }
+    
+    // 体脂肪の折れ線（細め、薄め）
+    if (displayB.length >= 2) {
+      let path = '';
+      for (let i = 0; i < displayB.length; i++) {
+        const x = xScale(displayB[i].timestamp);
+        const y = yScaleB(displayB[i].value);
+        path += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+      }
+      h += '<path d="'+path+'" fill="none" stroke="#E89A4A" stroke-width="1.5" stroke-dasharray="2,2" stroke-linejoin="round" stroke-linecap="round" opacity="0.8" />';
+      for (const r of displayB) {
+        h += '<circle cx="'+xScale(r.timestamp).toFixed(1)+'" cy="'+yScaleB(r.value).toFixed(1)+'" r="1.5" fill="#E89A4A" />';
+      }
+    }
+    
+    h += '</svg>';
+    
+    // 凡例
+    h += '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;font-size:9px;color:#888;font-weight:700;">';
+    h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:12px;height:2px;background:#C8709A;display:inline-block;"></span>体重</span>';
+    if (allBVals.length > 0) {
+      h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:12px;height:1.5px;background:#E89A4A;display:inline-block;"></span>体脂肪</span>';
+    }
+    h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:12px;border-top:1.5px dashed #C8709A;display:inline-block;"></span>目標</span>';
+    h += '<span style="margin-left:auto;font-size:9px;color:#aaa;">直近'+(displayW.length>=2?'30日':displayW.length+'件')+'</span>';
+    h += '</div>';
+    
+    h += '</div>';
+    return h;
+  } catch(err) {
+    console.error('体重グラフ描画エラー:', err);
+    return '<div style="margin:0 12px 14px;padding:12px;background:#FFF5F8;border:1px dashed #F0BDC6;border-radius:10px;font-size:11px;color:#888;text-align:center;">グラフを表示できなかったよ</div>';
+  }
+}
+window.renderWeightMiniChart = renderWeightMiniChart;
+
 // スタンプ記録の日付別マップ作成
 function _buildStampHistoryByDate() {
   const map = {};
@@ -11214,6 +11506,11 @@ function renderMeMode() {
       const allStamps = data.stampLib[selCat] || [];
       const visibleStamps = editMode ? allStamps : allStamps.filter(s => !s.hidden);
       
+      // ダイエットカテゴリ選択時：体重ミニグラフ表示
+      if (selCat === 'ダイエット' && !editMode) {
+        html += renderWeightMiniChart();
+      }
+      
       html += '<div data-stamp-grid style="padding:0 12px 12px;display:grid;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:64px;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-snap-type:x mandatory;">';
       for (let i = 0; i < visibleStamps.length; i++) {
         const s = visibleStamps[i];
@@ -11238,7 +11535,7 @@ function renderMeMode() {
           html += '</div>';
         } else {
           // 通常モード
-          html += '<button onclick="tapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.35) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;aspect-ratio:1/1.05;scroll-snap-align:start;">'+renderStampIcon(s.icon,'font-size:28px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:10px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span></button>';
+          html += '<button onclick="tapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.35) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;aspect-ratio:1/1.05;scroll-snap-align:start;">'+renderStampIcon(s.icon,'font-size:28px;line-height:1;color:var(--accent-deep);')+'<span style="font-size:10px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span></button>';
         }
       }
       // ＋追加ボタン（編集モードでも通常モードでも）
@@ -11263,11 +11560,12 @@ function renderMeMode() {
       // 今日のきろくだけ表示
       const todayStr = new Date().toDateString();
       const todayHistory = history.filter(r => new Date(r.timestamp).toDateString() === todayStr);
+      html += '<div data-stamp-history-area>';
       if (todayHistory.length === 0) {
         html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px 16px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
       } else {
         // 件数表示
-        html += '<div style="font-size:10px;color:var(--ink-light);margin-bottom:6px;">今日の記録: '+todayHistory.length+'件</div>';
+        html += '<div data-today-count style="font-size:10px;color:var(--ink-light);margin-bottom:6px;">今日の記録: '+todayHistory.length+'件</div>';
         html += '<div style="display:flex;flex-direction:column;gap:6px;">';
         for (const r of todayHistory) {
           const timeStr = _formatStampTime(r.timestamp);
@@ -11334,6 +11632,7 @@ function renderMeMode() {
           html += '<div style="font-size:10px;color:var(--ink-light);margin-top:8px;text-align:center;">過去の記録: '+pastCount+'件</div>';
         }
       }
+      html += '</div>'; // data-stamp-history-area 閉じ
       html += '</div>';
     } else if (ssTab === 'planner') {
       // ───── プランナー画面（新規）─────
