@@ -11353,6 +11353,173 @@ function _renderDietChartSVG(dayWeights, dayFats, wKeys, fKeys) {
 }
 window._renderDietChartSVG = _renderDietChartSVG;
 
+// ===== ダイエット推移グラフカード（タブ切替式、最新/平均/最小/最大表示） =====
+const DIET_TREND_ITEMS = [
+  { name: '体重',     icon: 'monitor_weight', unit: 'kg', color: '#C8709A' },
+  { name: '体脂肪',   icon: 'percent',        unit: '%',  color: '#E8B868' },
+  { name: 'ウエスト', icon: 'square_foot',    unit: 'cm', color: '#A8C0E0' },
+  { name: '筋トレ',   icon: 'fitness_center', unit: '分', color: '#A8C898' },
+  { name: 'ジョギング', icon: 'directions_run', unit: 'km', color: '#90B898' },
+  { name: 'ウォーキング', icon: 'directions_walk', unit: '分', color: '#B8C0A8' }
+];
+
+function _renderDietTrendCard() {
+  // 選択中の項目（デフォルト：体重）
+  const selItem = window._dietTrendItem || '体重';
+  const itemDef = DIET_TREND_ITEMS.find(i => i.name === selItem) || DIET_TREND_ITEMS[0];
+  
+  // 直近30日のデータ取得
+  const history = data.stampHistory || [];
+  const now = new Date();
+  const cutoff = now.getTime() - 30 * 24 * 60 * 60 * 1000;
+  const dayValues = {};
+  for (const r of history) {
+    if (r.name !== selItem || r.value === undefined || r.value === null || r.value === '') continue;
+    if (r.timestamp < cutoff) continue;
+    const t = new Date(r.timestamp);
+    const key = t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+    if (!dayValues[key] || r.timestamp > dayValues[key].ts) {
+      dayValues[key] = { value: parseFloat(r.value), ts: r.timestamp };
+    }
+  }
+  const sortedKeys = Object.keys(dayValues).sort();
+  const values = sortedKeys.map(k => dayValues[k].value);
+  
+  let h = '<div style="margin:0 12px 12px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">trending_up</span>';
+  h += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);">推移グラフ</span>';
+  h += '<span style="font-size:9px;color:var(--ink-sub);font-weight:600;">30日</span>';
+  h += '</div>';
+  
+  // 項目タブ（横スクロール）
+  h += '<div style="display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;margin-bottom:8px;">';
+  for (const item of DIET_TREND_ITEMS) {
+    const isAct = item.name === selItem;
+    const actStyle = isAct ? 'background:'+item.color+';color:white;border-color:'+item.color+';' : 'color:var(--ink-sub);background:white;';
+    h += '<button onclick="window._dietTrendItem=\''+item.name+'\';_suppressScrollTop=true;render();" style="flex-shrink:0;padding:4px 10px;border:1px solid var(--line);border-radius:100px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:3px;'+actStyle+'"><span class="material-symbols-rounded" style="font-size:12px;">'+item.icon+'</span>'+item.name+'</button>';
+  }
+  h += '</div>';
+  
+  // データなし
+  if (values.length === 0) {
+    h += '<div style="text-align:center;padding:20px 8px;color:var(--ink-sub);font-size:10px;line-height:1.7;">「'+escapeHtml(selItem)+'」の記録がないよ<br>スタンプ押すとここに推移が出るよ🌷</div>';
+    h += '</div>';
+    return h;
+  }
+  
+  // 統計値計算
+  const latest = values[values.length-1];
+  const avg = values.reduce((a,b) => a+b, 0) / values.length;
+  const minV = Math.min.apply(null, values);
+  const maxV = Math.max.apply(null, values);
+  
+  // 統計カード4枚
+  h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px;">';
+  const stats = [
+    { label: '最新', value: latest, highlight: true },
+    { label: '平均', value: avg, highlight: false },
+    { label: '最小', value: minV, highlight: false },
+    { label: '最大', value: maxV, highlight: false }
+  ];
+  for (const s of stats) {
+    const bg = s.highlight ? itemDef.color+'20' : 'var(--surface-warm)';
+    const border = s.highlight ? '1px solid '+itemDef.color+'80' : '1px solid var(--line)';
+    const valColor = s.highlight ? itemDef.color : '#7A6B5E';
+    h += '<div style="background:'+bg+';border:'+border+';border-radius:8px;padding:5px 4px;text-align:center;">';
+    h += '<div style="font-size:8px;color:#A88B7E;font-weight:700;margin-bottom:1px;">'+s.label+'</div>';
+    h += '<div style="font-size:11px;font-weight:800;color:'+valColor+';font-variant-numeric:tabular-nums;line-height:1.2;">'+s.value.toFixed(1)+'<span style="font-size:8px;color:#A88B7E;font-weight:600;margin-left:1px;">'+itemDef.unit+'</span></div>';
+    h += '</div>';
+  }
+  h += '</div>';
+  
+  // 単項目グラフ
+  h += _renderSingleItemChart(dayValues, sortedKeys, itemDef);
+  
+  h += '</div>';
+  return h;
+}
+window._renderDietTrendCard = _renderDietTrendCard;
+
+// 単項目グラフ（推移グラフ用、シンプル版）
+function _renderSingleItemChart(dayValues, sortedKeys, itemDef) {
+  if (sortedKeys.length === 0) return '';
+  
+  const values = sortedKeys.map(k => dayValues[k].value);
+  let minVal = Math.min.apply(null, values);
+  let maxVal = Math.max.apply(null, values);
+  const padding = (maxVal - minVal) * 0.25 || 1;
+  minVal -= padding;
+  maxVal += padding;
+  // 範囲狭すぎ調整
+  if (maxVal - minVal < 1) {
+    const center = (maxVal + minVal) / 2;
+    minVal = center - 0.5;
+    maxVal = center + 0.5;
+  }
+  
+  const w = 320, hChart = 90;
+  const padL = 28, padR = 8, padT = 10, padB = 14;
+  const innerW = w - padL - padR;
+  const innerH = hChart - padT - padB;
+  
+  const xFor = (idx) => padL + (sortedKeys.length === 1 ? innerW/2 : (idx / (sortedKeys.length - 1)) * innerW);
+  const yFor = (v) => padT + ((maxVal - v) / (maxVal - minVal)) * innerH;
+  
+  // パス
+  let path = '', firstX = null, lastX = null;
+  let pathPoints = [];
+  for (let i = 0; i < sortedKeys.length; i++) {
+    const k = sortedKeys[i];
+    const x = xFor(i);
+    const y = yFor(dayValues[k].value);
+    pathPoints.push({x, y, value: dayValues[k].value});
+    path += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+    if (i === 0) firstX = x;
+    lastX = x;
+  }
+  
+  // 塗りつぶし
+  let fillPath = '';
+  if (pathPoints.length >= 1) {
+    fillPath = path + ' L' + lastX.toFixed(1) + ',' + (padT + innerH) + ' L' + firstX.toFixed(1) + ',' + (padT + innerH) + ' Z';
+  }
+  
+  // 色作成（itemDefの色から薄色生成）
+  const baseColor = itemDef.color;
+  // 薄色（rgba化）
+  const _hex2rgb = (hex) => {
+    hex = hex.replace('#','');
+    const r = parseInt(hex.substring(0,2),16);
+    const g = parseInt(hex.substring(2,4),16);
+    const b = parseInt(hex.substring(4,6),16);
+    return r+','+g+','+b;
+  };
+  const fillColor = 'rgba('+_hex2rgb(baseColor)+',0.15)';
+  
+  let h = '<div style="background:#FCFAF8;border:1px solid var(--line);border-radius:8px;padding:6px 4px 4px;">';
+  h += '<svg viewBox="0 0 '+w+' '+hChart+'" preserveAspectRatio="none" style="width:100%;height:'+hChart+'px;display:block;">';
+  
+  // Y軸ラベル
+  h += '<text x="3" y="'+(padT+5).toFixed(1)+'" font-size="7" fill="#B8AFA8" font-weight="600">'+maxVal.toFixed(1)+'</text>';
+  h += '<text x="3" y="'+(padT+innerH-1).toFixed(1)+'" font-size="7" fill="#B8AFA8" font-weight="600">'+minVal.toFixed(1)+'</text>';
+  
+  // 塗り＋線
+  if (fillPath) h += '<path d="'+fillPath+'" fill="'+fillColor+'" />';
+  if (path) h += '<path d="'+path+'" fill="none" stroke="'+baseColor+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />';
+  // 各点
+  for (const p of pathPoints) {
+    h += '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="2.2" fill="white" stroke="'+baseColor+'" stroke-width="1.4" />';
+  }
+  
+  h += '</svg>';
+  h += '</div>';
+  return h;
+}
+window._renderSingleItemChart = _renderSingleItemChart;
+
 // ===== My（自分のこと）タブ =====
 const MY_SUB_TABS = [
   { id: 'resume',   label: '履歴書',   icon: 'description' },
@@ -12608,6 +12775,11 @@ function renderMeMode() {
       }
       html += '</div>'; // data-stamp-history-area 閉じ
       html += '</div>'; // カードB 閉じ
+      
+      // ===== ダイエット推移グラフ（30日）：ダイエットカテゴリのみ =====
+      if (selCat === 'ダイエット') {
+        html += _renderDietTrendCard();
+      }
     } else if (ssTab === 'planner') {
       // ───── プランナー画面（新規）─────
       html += renderPlannerView();
