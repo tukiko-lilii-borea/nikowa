@@ -10522,8 +10522,8 @@ function renderStampCalendar() {
   
   let h = '<div style="padding:10px 14px 16px;">';
   
-  // 体重ミニグラフ（月推移、データある時だけ表示）
-  h += _renderMonthWeightChart(y, m);
+  // 体重・体脂肪タブ切替カード（いまの体重 / 推移グラフ）
+  h += _renderDietHubCard();
   
   // 生理周期予測カード（最上部）
   h += renderMenstrualPredictionCard();
@@ -11162,7 +11162,7 @@ function _renderDietSummaryCard() {
   
   // データ何もない時は誘導カード
   if (latestW === null && latestF === null) {
-    let h = '<div style="margin:8px 12px 10px;background:#FFF6F8;border:1px solid #F0BDC6;border-radius:14px;padding:14px 16px;text-align:center;">';
+    let h = '<div style="background:#FFF6F8;border:1px solid #F0BDC6;border-radius:14px;padding:14px 16px;text-align:center;">';
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:6px;"><span class="material-symbols-rounded" style="font-size:18px;color:#C8709A;">monitor_weight</span><span style="font-size:11px;font-weight:700;color:#7A6B5E;">体重を記録してみよう</span></div>';
     h += '<div style="font-size:9px;color:#B8AFA8;line-height:1.6;">下の「体重」スタンプを押すと<br>サマリとグラフが見れるよ🌷</div>';
     h += '</div>';
@@ -11180,7 +11180,7 @@ function _renderDietSummaryCard() {
   const toMain = latestW !== null ? Math.max(0, latestW - goalMain) : null;
   
   // ===== カード本体 =====
-  let h = '<div style="margin:8px 12px 10px;background:linear-gradient(135deg,#FFF6F8 0%,#FFFAFC 100%);border:1px solid #F0BDC6;border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(200,112,154,0.08);">';
+  let h = '<div style="background:linear-gradient(135deg,#FFF6F8 0%,#FFFAFC 100%);border:1px solid #F0BDC6;border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(200,112,154,0.08);">';
   
   // ヘッダー：いまの体重・体脂肪
   h += '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px;flex-wrap:wrap;font-variant-numeric:tabular-nums;">';
@@ -11385,7 +11385,7 @@ function _renderDietTrendCard() {
   const sortedKeys = Object.keys(dayValues).sort();
   const values = sortedKeys.map(k => dayValues[k].value);
   
-  let h = '<div style="margin:0 12px 12px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  let h = '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   
   // ヘッダー
   h += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">';
@@ -11519,6 +11519,44 @@ function _renderSingleItemChart(dayValues, sortedKeys, itemDef) {
   return h;
 }
 window._renderSingleItemChart = _renderSingleItemChart;
+
+// ===== 統合カード（カレンダー上部）：「いまの体重」「推移グラフ」タブ切替 =====
+function _renderDietHubCard() {
+  const tab = window._dietHubTab || 'now'; // 'now' or 'trend'
+  
+  let h = '<div style="margin-bottom:10px;">';
+  
+  // ===== タブヘッダー =====
+  h += '<div style="display:flex;gap:5px;margin-bottom:6px;background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;padding:3px;">';
+  
+  const tabs = [
+    { id: 'now',   label: 'いまの体重', icon: 'monitor_weight' },
+    { id: 'trend', label: '推移グラフ', icon: 'trending_up' }
+  ];
+  
+  for (const t of tabs) {
+    const isAct = tab === t.id;
+    const actStyle = isAct
+      ? 'background:white;color:#C8709A;box-shadow:0 1px 2px rgba(0,0,0,0.06);'
+      : 'background:transparent;color:#A88B7E;';
+    h += '<button onclick="window._dietHubTab=\''+t.id+'\';_suppressScrollTop=true;render();" style="flex:1;padding:7px 4px;border:none;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;'+actStyle+'">';
+    h += '<span class="material-symbols-rounded" style="font-size:14px;">'+t.icon+'</span>';
+    h += t.label;
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  // ===== タブ中身 =====
+  if (tab === 'now') {
+    h += _renderDietSummaryCard();
+  } else {
+    h += _renderDietTrendCard();
+  }
+  
+  h += '</div>';
+  return h;
+}
+window._renderDietHubCard = _renderDietHubCard;
 
 // ===== My（自分のこと）タブ =====
 const MY_SUB_TABS = [
@@ -12671,11 +12709,6 @@ function renderMeMode() {
       const allStamps = data.stampLib[selCat] || [];
       const visibleStamps = allStamps.filter(s => !s.hidden);
       
-      // ===== ダイエットカテゴリ専用：体重・体脂肪サマリカード =====
-      if (selCat === 'ダイエット') {
-        html += _renderDietSummaryCard();
-      }
-      
       // ===== カードA: スタンプを押すエリア（白カード・細枠） =====
       html += '<div style="margin:8px 12px 10px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 0 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
       
@@ -12775,11 +12808,6 @@ function renderMeMode() {
       }
       html += '</div>'; // data-stamp-history-area 閉じ
       html += '</div>'; // カードB 閉じ
-      
-      // ===== ダイエット推移グラフ（30日）：ダイエットカテゴリのみ =====
-      if (selCat === 'ダイエット') {
-        html += _renderDietTrendCard();
-      }
     } else if (ssTab === 'planner') {
       // ───── プランナー画面（新規）─────
       html += renderPlannerView();
