@@ -13078,9 +13078,9 @@ function renderTweetsDiary() {
   h += '</span>';
   h += '</div>';
   
-  // ★ タイムライン（このエリアだけスクロール、高さ固定）
-  // 高さは描画後にJSで計算
-  h += '<div data-tweets-area id="tweetsTimeline" style="overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 12px;display:flex;flex-direction:column;height:200px;">';
+  // ★ タイムラインカード（独立カード、中スクロール）
+  h += '<div style="padding:10px 12px 0;">';
+  h += '<div data-tweets-area id="tweetsTimeline" style="background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px;display:flex;flex-direction:column;height:200px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   
   if (tweets.length === 0) {
     h += '<div style="text-align:center;padding:40px 20px;color:var(--ink-sub);">';
@@ -13102,7 +13102,8 @@ function renderTweetsDiary() {
     }
   }
   
-  h += '</div>'; // タイムライン閉じ
+  h += '</div>'; // タイムラインカード閉じ
+  h += '</div>'; // padding wrapper閉じ
   
   // 現在地ピル
   const homeRegion = (data && data.userRegion) || '大阪';
@@ -13114,8 +13115,9 @@ function renderTweetsDiary() {
   h += '</div>'; // tweetWrap閉じ（タイムラインで終わり）
   
   // ===== ここから下は画面下に固定（fixed） =====
-  // 入力欄ブロック（写真プレビュー・現在地・入力を一塊で固定）
-  h += '<div id="tweetBottomBlock" style="position:fixed;left:0;right:0;margin:0 auto;width:100%;max-width:480px;bottom:0;background:var(--surface);z-index:100;box-sizing:border-box;border-top:1px solid var(--line);">';
+  // 入力欄カード（独立カード風、写真プレビュー・現在地・入力を一塊）
+  h += '<div id="tweetBottomBlock" style="position:fixed;left:0;right:0;margin:0 auto;width:100%;max-width:480px;bottom:0;padding:0 8px 4px;z-index:100;box-sizing:border-box;pointer-events:none;">';
+  h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 -2px 8px rgba(0,0,0,0.06);overflow:hidden;pointer-events:auto;">';
   
   // 現在地ピル
   h += '<div style="padding:4px 12px 0;display:flex;justify-content:flex-start;">';
@@ -13146,6 +13148,7 @@ function renderTweetsDiary() {
   h += '<button onclick="postTweet()" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:15px;">send</span></button>';
   h += '</div>';
   
+  h += '</div>'; // 入力カード閉じ
   h += '</div>'; // tweetBottomBlock閉じ
   
   // 描画後：①入力欄ブロックをbottom-navの上に貼り付け ②タイムライン高さ計算
@@ -15022,8 +15025,9 @@ function renderOfficeMemoTab() {
   h += '</span>';
   h += '</div>';
   
-  // ★ タイムライン（高さ固定で内部スクロール）
-  h += '<div id="officeMemoTimeline" style="overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 12px;display:flex;flex-direction:column;height:200px;">';
+  // ★ タイムラインカード（独立カード、中スクロール）
+  h += '<div style="padding:10px 12px 0;">';
+  h += '<div id="officeMemoTimeline" style="background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px;display:flex;flex-direction:column;height:200px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   
   if (memos.length === 0) {
     h += '<div style="text-align:center;padding:30px 20px;color:var(--ink-sub);">';
@@ -15041,17 +15045,20 @@ function renderOfficeMemoTab() {
       h += _renderOfficeMemoBubble(m);
     }
   }
-  h += '</div>';
+  h += '</div>'; // タイムラインカード閉じ
+  h += '</div>'; // padding wrapper閉じ
   
   h += '</div>'; // ofcMemoWrap閉じ
   
-  // ===== 入力欄を画面下固定 =====
-  h += '<div id="ofcMemoBottomBlock" style="position:fixed;left:0;right:0;margin:0 auto;width:100%;max-width:480px;bottom:0;background:var(--surface);z-index:100;box-sizing:border-box;border-top:1px solid var(--line);">';
+  // ===== 入力欄を画面下固定（独立カード風） =====
+  h += '<div id="ofcMemoBottomBlock" style="position:fixed;left:0;right:0;margin:0 auto;width:100%;max-width:480px;bottom:0;padding:0 8px 4px;z-index:100;box-sizing:border-box;pointer-events:none;">';
+  h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 -2px 8px rgba(0,0,0,0.06);overflow:hidden;pointer-events:auto;">';
   h += '<div style="padding:6px 10px;display:flex;align-items:flex-end;gap:5px;">';
   h += '<textarea id="officeMemoInput" placeholder="仕事のメモ・思いつき..." rows="1" oninput="autoResizeOfficeMemoInput(this)" style="flex:1;min-height:30px;max-height:120px;padding:6px 12px;border:1px solid var(--card-border);border-radius:18px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:none;color:var(--ink-dark);line-height:1.5;outline:none;"></textarea>';
   h += '<button onclick="postOfficeMemo()" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:15px;">send</span></button>';
   h += '</div>';
-  h += '</div>';
+  h += '</div>'; // 入力カード閉じ
+  h += '</div>'; // ofcMemoBottomBlock閉じ
   
   // 描画後：①入力欄ブロックをbottom-navの上に貼り付け ②タイムライン高さ計算
   h += '<scr'+'ipt>(function(){function adjust(){try{';
