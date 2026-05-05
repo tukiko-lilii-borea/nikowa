@@ -5129,7 +5129,7 @@ function loadData() {
 function saveData() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
   catch(e) { showToast('保存できませんでした😢'); }
-  if (currentMode === 'pet') saveToFirestore();
+  saveToFirestore();
 }
 
 function switchMode(targetMode) {
@@ -5149,10 +5149,11 @@ function switchMode(targetMode) {
   // ★ 全モード共通のユーザー情報を復元
   // （モード別localStorageの古いuser情報でloadDataが上書きしてしまうのを防ぐ）
   let userRestored = false;
-  if (savedUser && (savedUser.name || savedUser.birthday)) {
+  if (savedUser && (savedUser.name || savedUser.birthday || savedUser.avatar)) {
     // 元のuser情報を優先（loadDataで読んだ値より新しい可能性が高い）
     if (!data.user || !data.user.name || !data.user.birthday ||
-        savedUser.name !== data.user.name || savedUser.birthday !== data.user.birthday) {
+        savedUser.name !== data.user.name || savedUser.birthday !== data.user.birthday ||
+        savedUser.avatar !== data.user.avatar) {
       data.user = savedUser;
       userRestored = true;
     }
@@ -5162,6 +5163,8 @@ function switchMode(targetMode) {
     userRestored = true;
   }
   if (userRestored) saveData();
+  // モード切替後にFirestoreから最新データを取得
+  if (currentUser && db) loadFromFirestore();
 }
 
 function goToMeMode() {
@@ -5250,28 +5253,68 @@ function initFirebase() {
     db = firebase.firestore();
     firebase.auth().onAuthStateChanged(user => {
       currentUser = user;
-      if (user) loadFromFirestore();
+      if (user) {
+        _ensureNikowaId().then(() => {
+          loadFromFirestore();
+        });
+      }
       if (document.getElementById('app')) render();
     });
   } catch(e) { console.log('Firebase初期化エラー:', e); }
 }
 
+function _getModeDocRef() {
+  const mode = currentMode || 'pet';
+  return db.collection('users').doc(currentUser.uid).collection('modes').doc(mode);
+}
+
 function loadFromFirestore() {
   if (!currentUser || !db) return;
-  const docRef = db.collection('users').doc(currentUser.uid).collection('nikowa').doc('main');
-  docRef.get().then(doc => {
+  _getModeDocRef().get().then(doc => {
     if (doc.exists) {
-      data = Object.assign(data, doc.data());
+      const saved = doc.data();
+      for (const k in saved) data[k] = saved[k];
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
       render();
-    } else { saveToFirestore(); }
+    } else {
+      // Firestoreにまだない → localStorageのデータを移行
+      saveToFirestore();
+    }
   }).catch(e => console.log('Firestore読み込みエラー:', e));
 }
 
 function saveToFirestore() {
   if (!currentUser || !db) return;
-  db.collection('users').doc(currentUser.uid).collection('nikowa').doc('main').set(data)
+  _getModeDocRef().set(data)
     .catch(e => console.log('Firestore保存エラー:', e));
+}
+
+// ===== にこわID =====
+function _generateNikowaId() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let id = 'nkw_';
+  for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
+
+async function _ensureNikowaId() {
+  if (!currentUser || !db) return;
+  try {
+    const userRef = db.collection('users').doc(currentUser.uid);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists || !userDoc.data().nikowaId) {
+      const nikowaId = _generateNikowaId();
+      await userRef.set({
+        nikowaId,
+        email: currentUser.email || '',
+        displayName: currentUser.displayName || '',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      data.nikowaId = nikowaId;
+    } else {
+      data.nikowaId = userDoc.data().nikowaId;
+    }
+  } catch(e) { console.log('にこわID取得エラー:', e); }
 }
 
 function signInWithGoogle() {
@@ -12527,6 +12570,54 @@ function deleteFolderConfirm(folderId) {
 }
 window.deleteFolderConfirm = deleteFolderConfirm;
 
+function switchContactTab(tabId) {
+  data.activeContactTab = tabId;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.switchContactTab = switchContactTab;
+
+function _renderContactList(secId, secLabel, secIcon, secColor) {
+  _ensureProfileData();
+  const items = data.contacts[secId] || [];
+  let h = '<div style="margin-top:4px;">';
+  if (items.length === 0) {
+    h += '<div style="background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:24px 14px;text-align:center;color:var(--ink-light);font-size:10px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:24px;color:var(--ink-light);opacity:0.5;display:block;margin-bottom:6px;">'+secIcon+'</span>';
+    h += 'まだ登録がないよ';
+    h += '</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:5px;">';
+    for (const c of items) {
+      h += '<button onclick="openContactModal(\''+secId+'\',\''+c.id+'\')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:0.5px solid var(--card-border);border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;">';
+      if (c.photo) {
+        h += '<img src="'+c.photo+'" style="flex-shrink:0;width:34px;height:34px;border-radius:50%;object-fit:cover;" />';
+      } else {
+        const initial = (c.name||'?').charAt(0).toUpperCase();
+        h += '<span style="flex-shrink:0;width:34px;height:34px;border-radius:50%;background:var(--surface-warm);color:var(--ink-sub);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">'+escapeHtml(initial)+'</span>';
+      }
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="display:flex;align-items:center;gap:5px;">';
+      h += '<span style="flex:1;font-size:12px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(c.name||'無題')+'</span>';
+      if (c.relation) h += '<span style="font-size:8px;color:var(--ink-sub);background:var(--surface-warm);padding:1px 6px;border-radius:100px;font-weight:600;">'+escapeHtml(c.relation)+'</span>';
+      h += '</div>';
+      if (c.phone) h += '<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(c.phone)+'</div>';
+      h += '</div>';
+      h += '<span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-light);flex-shrink:0;">chevron_right</span>';
+      h += '</button>';
+    }
+    h += '</div>';
+  }
+  // 追加ボタン
+  h += '<button onclick="openContactModal(\''+secId+'\',null)" style="width:100%;margin-top:6px;padding:9px;background:transparent;color:var(--ink-sub);border:0.5px dashed var(--card-border);border-radius:12px;font-family:inherit;font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:12px;">add</span>連絡先を追加';
+  h += '</button>';
+  h += '</div>';
+  return h;
+}
+window._renderContactList = _renderContactList;
+
 function _renderContactSection(secId, secLabel, secIcon, secColor, isFixed) {
   _ensureProfileData();
   const collapsed = data.contactsCollapsed[secId];
@@ -12578,71 +12669,99 @@ function renderContactsCard() {
   const p = data.myProfile;
   const hasProfile = p.name || p.birthday || p.bloodType || p.address || p.phone || p.memo;
 
-  let h = '<div style="padding:10px 16px 90px;">';
+  let h = '<div style="padding:12px 14px 90px;">';
 
-  // ── プロフィールカード ──
-  h += '<div style="position:relative;border-radius:20px;overflow:hidden;margin-bottom:18px;box-shadow:0 4px 18px rgba(0,0,0,0.10);">';
-  // 背景グラデーション帯
-  h += '<div style="background:linear-gradient(135deg,var(--accent) 0%,var(--accent-deep) 100%);padding:20px 16px 48px;">';
-  // 編集ボタン（右上）
-  h += '<div style="display:flex;justify-content:flex-end;margin-bottom:12px;">';
-  h += '<button onclick="openMyProfileModal()" style="padding:5px 11px;background:rgba(255,255,255,0.25);color:white;border:1.5px solid rgba(255,255,255,0.5);border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px);">';
-  h += '<span class="material-symbols-rounded" style="font-size:13px;">edit</span>編集';
-  h += '</button>';
-  h += '</div>';
-  // アバター＋名前
-  h += '<div style="display:flex;align-items:center;gap:14px;">';
-  h += '<div style="flex-shrink:0;width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.25);border:3px solid rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.15);">';
-  if (p.name) {
-    h += '<span style="font-size:26px;font-weight:900;color:white;text-shadow:0 1px 4px rgba(0,0,0,0.2);">'+escapeHtml(p.name.charAt(0))+'</span>';
+  // ── 名刺型プロフィールカード ──
+  h += '<div style="position:relative;background:var(--surface);border:0.5px solid var(--card-border);border-radius:14px;overflow:hidden;margin-bottom:18px;">';
+  // 上部のアクセントライン（細く・控えめに）
+  h += '<div style="height:2px;background:var(--accent);opacity:0.5;"></div>';
+  // 中身（横並び）
+  h += '<div style="display:flex;gap:14px;padding:18px 16px 14px;align-items:stretch;">';
+  // 左：アバター（角丸・控えめな枠）
+  h += '<div style="flex-shrink:0;width:64px;height:64px;border-radius:12px;background:var(--surface-warm);display:flex;align-items:center;justify-content:center;overflow:hidden;">';
+  const _userAvatar = (data.user && data.user.avatar) || 'person';
+  if (typeof _userAvatar === 'string' && _userAvatar.startsWith('photo:')) {
+    const b64 = _userAvatar.slice(6);
+    const src = b64.startsWith('data:') ? b64 : 'data:image/jpeg;base64,' + b64;
+    h += '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;" />';
   } else {
-    h += '<span class="material-symbols-rounded" style="font-size:30px;color:rgba(255,255,255,0.8);">person</span>';
+    // renderAvatarHtmlで絵文字/material iconを正しく判定
+    h += renderAvatarHtml(_userAvatar, 32);
   }
   h += '</div>';
-  h += '<div style="flex:1;min-width:0;">';
-  h += '<div style="font-size:20px;font-weight:900;color:white;text-shadow:0 1px 4px rgba(0,0,0,0.15);line-height:1.2;">'+escapeHtml(p.name||'ニックネームを設定してね')+'</div>';
-  if (p.memo) h += '<div style="font-size:11px;color:rgba(255,255,255,0.8);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.memo)+'</div>';
+  // 右：情報
+  h += '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;">';
+  // 名前ブロック
+  h += '<div>';
+  // PROFILEラベル（小さく・薄く）
+  h += '<div style="font-size:8px;font-weight:600;color:var(--ink-light);letter-spacing:1.8px;margin-bottom:3px;">PROFILE</div>';
+  h += '<div style="font-size:14px;font-weight:700;color:var(--ink-dark);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.name || 'No Name')+'</div>';
+  if (p.memo) h += '<div style="font-size:10px;color:var(--ink-sub);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.memo)+'</div>';
+  h += '</div>';
+  // 編集ボタン（控えめ）
+  h += '<div style="display:flex;justify-content:flex-end;margin-top:6px;">';
+  h += '<button onclick="openMyProfileModal()" style="padding:3px 9px;background:transparent;border:0.5px solid var(--card-border);border-radius:100px;font-family:inherit;font-size:9px;font-weight:600;color:var(--ink-sub);cursor:pointer;display:inline-flex;align-items:center;gap:3px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:10px;">edit</span>編集</button>';
   h += '</div>';
   h += '</div>';
   h += '</div>';
-  // 白い詳細エリア（グラデーション帯に重なるようにネガティブマージン）
-  h += '<div style="background:var(--surface);margin:0;padding:14px 16px 16px;border-top:none;">';
+
+  // 詳細情報行
   if (hasProfile) {
-    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
-    const chip = (icon, label, val) => val
-      ? '<div style="display:flex;align-items:center;gap:6px;background:var(--surface-warm);border:1px solid var(--card-border);border-radius:10px;padding:7px 10px;">'
-        + '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">'+icon+'</span>'
-        + '<div><div style="font-size:9px;color:var(--ink-sub);font-weight:600;">'+label+'</div>'
-        + '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(val)+'</div></div>'
+    h += '<div style="border-top:0.5px solid var(--line);padding:11px 16px 14px;display:grid;grid-template-columns:1fr 1fr;gap:7px 14px;">';
+    const row = (icon, label, val) => val
+      ? '<div style="display:flex;align-items:center;gap:6px;min-width:0;">'
+        + '<span class="material-symbols-rounded" style="font-size:12px;color:var(--ink-light);flex-shrink:0;">'+icon+'</span>'
+        + '<span style="font-size:8px;color:var(--ink-light);flex-shrink:0;letter-spacing:0.5px;">'+label+'</span>'
+        + '<span style="font-size:10px;color:var(--ink-dark);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+escapeHtml(val)+'</span>'
         + '</div>'
       : '';
-    if (p.birthday) h += chip('cake','誕生日',p.birthday.replace(/-/g,'/'));
-    if (p.bloodType) h += chip('water_drop','血液型',p.bloodType+'型');
-    if (p.phone) h += chip('call','電話番号',p.phone);
-    if (p.address) h += chip('location_on','住所',p.address);
-    h += '</div>';
-  } else {
-    h += '<div style="text-align:center;padding:6px 0 2px;">';
-    h += '<span style="font-size:11px;color:var(--ink-sub);">編集ボタンから情報を登録できるよ</span>';
+    if (p.birthday) h += row('cake','BIRTH',p.birthday.replace(/-/g,'/'));
+    if (p.bloodType) h += row('water_drop','BLOOD',p.bloodType+'型');
+    if (p.phone) h += row('call','TEL',p.phone);
+    if (p.address) h += row('location_on','ADDR',p.address);
     h += '</div>';
   }
   h += '</div>';
-  h += '</div>';
 
-  // ── 緊急連絡先（固定） ──
-  h += _renderContactSection('emergency', '緊急連絡先', 'emergency', '#E07058', true);
-
-  // ── 自由フォルダ ──
+  // ── 連絡先タブUI ──
+  // アクティブタブの管理
+  if (!data.activeContactTab) data.activeContactTab = 'emergency';
+  // フォルダ一覧（緊急＋自由フォルダ）
+  const allTabs = [{ id:'emergency', label:'緊急連絡先', icon:'emergency' }];
   for (const f of (data.contactFolders||[])) {
-    const color = '#' + Math.abs(f.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0)*2654435761%0xFFFFFF).toString(16).padStart(6,'0').substring(0,6);
-    const safeColor = '#7B8EC8';
-    h += _renderContactSection(f.id, f.label, 'folder_shared', safeColor, false);
+    allTabs.push({ id:f.id, label:f.label, icon:'folder_shared' });
   }
+  // 存在しないタブが選ばれてたら緊急にリセット
+  if (!allTabs.find(t => t.id === data.activeContactTab)) data.activeContactTab = 'emergency';
+  const activeTab = data.activeContactTab;
 
-  // ── フォルダ追加ボタン ──
-  h += '<button onclick="openAddFolderModal()" style="width:100%;padding:12px;background:var(--surface);color:var(--accent-deep);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px;">';
-  h += '<span class="material-symbols-rounded" style="font-size:16px;">create_new_folder</span>フォルダを追加';
-  h += '</button>';
+  // タブバー（横スクロール・控えめ）
+  h += '<div style="display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 0 12px;margin:0 -2px 0;scrollbar-width:none;">';
+  for (const t of allTabs) {
+    const isAct = t.id === activeTab;
+    const isEmer = t.id === 'emergency';
+    const bgColor = isAct ? (isEmer ? '#D88578' : 'var(--ink-dark)') : 'var(--surface)';
+    const txtColor = isAct ? 'white' : 'var(--ink-sub)';
+    const borderColor = isAct ? bgColor : 'var(--card-border)';
+    h += '<button onclick="switchContactTab(\''+t.id+'\')" style="flex-shrink:0;padding:6px 11px;background:'+bgColor+';color:'+txtColor+';border:0.5px solid '+borderColor+';border-radius:100px;font-family:inherit;font-size:10px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">';
+    h += '<span class="material-symbols-rounded" style="font-size:11px;">'+t.icon+'</span>';
+    h += escapeHtml(t.label);
+    if (!isEmer) {
+      h += '<span onclick="event.stopPropagation();deleteFolderConfirm(\''+t.id+'\')" style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:'+(isAct?'rgba(255,255,255,0.25)':'var(--surface-warm)')+';margin-left:1px;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:9px;color:'+(isAct?'white':'var(--ink-light)')+';">close</span></span>';
+    }
+    h += '</button>';
+  }
+  // ＋追加ボタン
+  h += '<button onclick="openAddFolderModal()" style="flex-shrink:0;padding:6px 11px;background:transparent;color:var(--ink-sub);border:0.5px dashed var(--card-border);border-radius:100px;font-family:inherit;font-size:10px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;">';
+  h += '<span class="material-symbols-rounded" style="font-size:11px;">add</span>追加</button>';
+  h += '</div>';
+
+  // 選択中タブの中身
+  const tabInfo = allTabs.find(t => t.id === activeTab);
+  if (tabInfo) {
+    h += _renderContactList(tabInfo.id, tabInfo.label, tabInfo.icon, tabInfo.id === 'emergency' ? '#D88578' : 'var(--ink-dark)');
+  }
 
   h += '</div>';
   return h;
@@ -20566,6 +20685,13 @@ function renderSettings() {
     if (currentUser.photoURL) html += '<img src="'+currentUser.photoURL+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">';
     html += '<div><div style="font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(currentUser.displayName||'ユーザー')+'</div>';
     html += '<div style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(currentUser.email||'')+'</div></div></div>';
+    if (data.nikowaId) {
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface-warm);border:1.5px solid var(--card-border);border-radius:10px;padding:10px 12px;margin-bottom:10px;">';
+      html += '<div><div style="font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1.5px;margin-bottom:2px;">にこわID</div>';
+      html += '<div style="font-size:14px;font-weight:800;color:var(--accent-deep);letter-spacing:0.5px;">'+escapeHtml(data.nikowaId)+'</div></div>';
+      html += '<button onclick="navigator.clipboard.writeText(\''+escapeHtml(data.nikowaId)+'\').then(()=>showToast(\'IDをコピーしたよ📋\'))" style="padding:6px 12px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">コピー</button>';
+      html += '</div>';
+    }
     html += '<div style="font-size:11.5px;color:var(--mint-deep);margin-bottom:10px;">☁️ クラウドに同期中</div>';
     html += '<button class="btn btn-secondary" style="width:100%;" onclick="signOut()">ログアウト</button>';
   } else {
