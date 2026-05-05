@@ -13111,7 +13111,14 @@ function renderTweetsDiary() {
   const currentWeatherIcon = (typeof getDateWeatherIcon === 'function') ? (window._weatherCache && window._weatherCache.icon) : null;
   const currentRegionEn = (typeof WEATHER_CITY_MAP !== 'undefined' && WEATHER_CITY_MAP[currentRegion]) || currentRegion;
   
-  h += '<div style="flex-shrink:0;padding:4px 12px 0;display:flex;justify-content:flex-start;background:var(--surface);">';
+  h += '</div>'; // tweetWrap閉じ（タイムラインで終わり）
+  
+  // ===== ここから下は画面下に固定（fixed） =====
+  // 入力欄ブロック（写真プレビュー・現在地・入力を一塊で固定）
+  h += '<div id="tweetBottomBlock" style="position:fixed;left:0;right:0;margin:0 auto;width:100%;max-width:480px;bottom:0;background:var(--surface);z-index:100;box-sizing:border-box;border-top:1px solid var(--line);">';
+  
+  // 現在地ピル
+  h += '<div style="padding:4px 12px 0;display:flex;justify-content:flex-start;">';
   h += '<button onclick="openTweetLocationModal()" style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px 3px 7px;background:'+(isAway?'linear-gradient(135deg,#FFE8B0,#FFD580)':'var(--surface-warm)')+';border:1px solid '+(isAway?'#E89A4A':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:9px;font-weight:600;color:'+(isAway?'#8B6914':'var(--ink-sub)')+';cursor:pointer;letter-spacing:0.03em;">';
   if (currentWeatherIcon) {
     h += weatherIconHtml(currentWeatherIcon, 'font-size:11px;');
@@ -13128,10 +13135,10 @@ function renderTweetsDiary() {
   h += '</div>';
   
   // 写真プレビュー
-  h += '<div id="tweetPhotoPreview" style="flex-shrink:0;background:var(--surface);padding:4px 12px 0;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>';
+  h += '<div id="tweetPhotoPreview" style="padding:4px 12px 0;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>';
   
   // 入力欄
-  h += '<div style="flex-shrink:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 10px;display:flex;align-items:flex-end;gap:5px;">';
+  h += '<div style="padding:6px 10px;display:flex;align-items:flex-end;gap:5px;">';
   h += '<button onclick="openTweetPhotoPicker()" title="写真追加" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:15px;">photo_camera</span></button>';
   h += '<button onclick="insertTagToTweet()" title="タグ追加" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;font-size:14px;font-weight:800;">#</button>';
   h += '<input type="file" id="tweetPhotoInput" accept="image/*" multiple style="display:none;" onchange="handleTweetPhotoSelect(event)">';
@@ -13139,21 +13146,27 @@ function renderTweetsDiary() {
   h += '<button onclick="postTweet()" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:15px;">send</span></button>';
   h += '</div>';
   
-  h += '</div>'; // tweetWrap閉じ
+  h += '</div>'; // tweetBottomBlock閉じ
   
-  // 描画後：タイムラインの高さを計算（画面高さ - 上下要素の合計）
+  // 描画後：①入力欄ブロックをbottom-navの上に貼り付け ②タイムライン高さ計算
   h += '<scr'+'ipt>(function(){function adjust(){try{';
+  // 入力欄ブロックを下部ナビ直上に配置
+  h += 'var nav=document.querySelector(".bottom-nav");';
+  h += 'var navH=nav?(window.innerHeight-nav.getBoundingClientRect().top):64;';
+  h += 'var bottomBlock=document.getElementById("tweetBottomBlock");';
+  h += 'if(bottomBlock)bottomBlock.style.bottom=navH+"px";';
+  // タイムライン高さ計算
   h += 'var tl=document.getElementById("tweetsTimeline");if(!tl)return;';
   h += 'var wrap=document.getElementById("tweetWrap");if(!wrap)return;';
-  h += 'var nav=document.querySelector(".bottom-nav");';
-  // 親（wrap）のtop位置 + タイムライン以外の要素の合計
   h += 'var wrapRect=wrap.getBoundingClientRect();';
   h += 'var navTop=nav?nav.getBoundingClientRect().top:window.innerHeight-64;';
-  // タイムライン以外の高さ合計（兄弟要素全部）
+  // wrapの兄弟要素の高さ合計（タイムライン以外）
   h += 'var siblings=Array.from(wrap.children).filter(function(el){return el.id!=="tweetsTimeline"});';
   h += 'var siblingH=siblings.reduce(function(s,el){return s+el.getBoundingClientRect().height},0);';
-  // タイムライン高さ = bottom-navのtop - wrapのtop - 兄弟合計
-  h += 'var tlH=Math.max(150,navTop-wrapRect.top-siblingH);';
+  // 入力欄ブロックの高さも引く
+  h += 'var blockH=bottomBlock?bottomBlock.getBoundingClientRect().height:90;';
+  // タイムライン高さ = bottom-navのtop - wrapのtop - 兄弟合計 - 入力欄ブロック
+  h += 'var tlH=Math.max(150,navTop-wrapRect.top-siblingH-blockH);';
   h += 'tl.style.height=tlH+"px";';
   h += 'tl.scrollTop=tl.scrollHeight;';
   h += '}catch(e){}}';
@@ -15030,24 +15043,30 @@ function renderOfficeMemoTab() {
   }
   h += '</div>';
   
-  // 入力欄
-  h += '<div style="flex-shrink:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 10px;display:flex;align-items:flex-end;gap:5px;">';
+  h += '</div>'; // ofcMemoWrap閉じ
+  
+  // ===== 入力欄を画面下固定 =====
+  h += '<div id="ofcMemoBottomBlock" style="position:fixed;left:0;right:0;margin:0 auto;width:100%;max-width:480px;bottom:0;background:var(--surface);z-index:100;box-sizing:border-box;border-top:1px solid var(--line);">';
+  h += '<div style="padding:6px 10px;display:flex;align-items:flex-end;gap:5px;">';
   h += '<textarea id="officeMemoInput" placeholder="仕事のメモ・思いつき..." rows="1" oninput="autoResizeOfficeMemoInput(this)" style="flex:1;min-height:30px;max-height:120px;padding:6px 12px;border:1px solid var(--card-border);border-radius:18px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:none;color:var(--ink-dark);line-height:1.5;outline:none;"></textarea>';
   h += '<button onclick="postOfficeMemo()" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:15px;">send</span></button>';
   h += '</div>';
+  h += '</div>';
   
-  h += '</div>'; // ofcMemoWrap閉じ
-  
-  // 描画後：タイムラインの高さを計算
+  // 描画後：①入力欄ブロックをbottom-navの上に貼り付け ②タイムライン高さ計算
   h += '<scr'+'ipt>(function(){function adjust(){try{';
+  h += 'var nav=document.querySelector(".bottom-nav");';
+  h += 'var navH=nav?(window.innerHeight-nav.getBoundingClientRect().top):64;';
+  h += 'var bottomBlock=document.getElementById("ofcMemoBottomBlock");';
+  h += 'if(bottomBlock)bottomBlock.style.bottom=navH+"px";';
   h += 'var tl=document.getElementById("officeMemoTimeline");if(!tl)return;';
   h += 'var wrap=document.getElementById("ofcMemoWrap");if(!wrap)return;';
-  h += 'var nav=document.querySelector(".bottom-nav");';
   h += 'var wrapRect=wrap.getBoundingClientRect();';
   h += 'var navTop=nav?nav.getBoundingClientRect().top:window.innerHeight-64;';
   h += 'var siblings=Array.from(wrap.children).filter(function(el){return el.id!=="officeMemoTimeline"});';
   h += 'var siblingH=siblings.reduce(function(s,el){return s+el.getBoundingClientRect().height},0);';
-  h += 'var tlH=Math.max(150,navTop-wrapRect.top-siblingH);';
+  h += 'var blockH=bottomBlock?bottomBlock.getBoundingClientRect().height:50;';
+  h += 'var tlH=Math.max(150,navTop-wrapRect.top-siblingH-blockH);';
   h += 'tl.style.height=tlH+"px";';
   h += 'tl.scrollTop=tl.scrollHeight;';
   h += '}catch(e){}}';
