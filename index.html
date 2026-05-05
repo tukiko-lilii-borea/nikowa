@@ -3328,6 +3328,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBJBgC5uSO2J0MV7Hlwdt7zY8SxLUvZbP8&libraries=places&loading=async&callback=Function.prototype"></script>
 </head>
 <body>
@@ -5238,6 +5239,7 @@ function setHouseSubTab(tab) {
 // ===== Firebase =====
 let currentUser = null;
 let db = null;
+let storage = null;
 
 function initFirebase() {
   const firebaseConfig = {
@@ -5251,6 +5253,7 @@ function initFirebase() {
   try {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
+    storage = firebase.storage();
     firebase.auth().onAuthStateChanged(user => {
       currentUser = user;
       if (user) {
@@ -5273,6 +5276,12 @@ function loadFromFirestore() {
   _getModeDocRef().get().then(doc => {
     if (doc.exists) {
       const saved = doc.data();
+      // 写真URLを復元（別デバイスからの同期用）
+      if (saved._photos) {
+        Object.assign(photos, saved._photos);
+        delete saved._photos;
+        try { localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos)); } catch(e) {}
+      }
       for (const k in saved) data[k] = saved[k];
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
       render();
@@ -5285,7 +5294,13 @@ function loadFromFirestore() {
 
 function saveToFirestore() {
   if (!currentUser || !db) return;
-  _getModeDocRef().set(data)
+  // base64は除外してURLのみFirestoreに保存（1MB制限対策）
+  const photoUrls = {};
+  for (const [id, v] of Object.entries(photos)) {
+    if (typeof v === 'string' && !v.startsWith('data:')) photoUrls[id] = v;
+  }
+  const payload = Object.keys(photoUrls).length > 0 ? { ...data, _photos: photoUrls } : data;
+  _getModeDocRef().set(payload)
     .catch(e => console.log('Firestore保存エラー:', e));
 }
 
@@ -5334,9 +5349,34 @@ function signOut() {
 // ===== Firebase end =====
 
 function savePhotos() {
-  try { localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos)); }
-  catch(e) {}
+  try { localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos)); } catch(e) {}
+  // base64写真をバックグラウンドでStorageにアップロードしてURLに置き換え
+  if (currentUser && storage) {
+    for (const photoId in photos) {
+      const v = photos[photoId];
+      if (typeof v === 'string' && v.startsWith('data:')) {
+        _uploadPhotoToStorage(photoId, v);
+      }
+    }
+  }
 }
+
+async function _uploadPhotoToStorage(photoId, dataUrl) {
+  if (!currentUser || !storage) return;
+  try {
+    const mode = currentMode || 'pet';
+    const ref = storage.ref(`users/${currentUser.uid}/${mode}/photos/${photoId}`);
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const snap = await ref.put(blob, { contentType: blob.type });
+    const url = await snap.ref.getDownloadURL();
+    // base64をURLに置き換えてローカルにも保存
+    photos[photoId] = url;
+    try { localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos)); } catch(e) {}
+    console.log('[Storage] uploaded:', photoId);
+  } catch(e) { console.log('[Storage] upload error:', e); }
+}
+window._uploadPhotoToStorage = _uploadPhotoToStorage;
 
 function todayKey() {
   const d = new Date();
@@ -12218,20 +12258,28 @@ function renderMedicalCard() {
     const collapsed = data.medicalCollapsed[sec.id];
     const items = data.medical[sec.id] || [];
     
-    // ヘッダー
-    h += '<div style="margin-bottom:8px;">';
-    h += '<div onclick="toggleMedicalSection(\''+sec.id+'\')" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:'+sec.color+'15;border:1.5px solid '+sec.color+';border-radius:10px;cursor:pointer;user-select:none;">';
+    // ヘッダー（見出し＋追加ボタン横並び）
+    h += '<div style="margin-bottom:8px;display:flex;align-items:center;gap:6px;">';
+    // 左：見出し（タップでトグル）
+    h += '<div onclick="toggleMedicalSection(\''+sec.id+'\')" style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;background:'+sec.color+'15;border:1.5px solid '+sec.color+';border-radius:10px;cursor:pointer;user-select:none;min-width:0;">';
     h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:'+sec.color+';color:white;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;">'+sec.icon+'</span></span>';
-    h += '<span style="flex:1;font-size:13px;font-weight:800;color:'+sec.color+';">'+sec.label+'</span>';
+    h += '<span style="flex:1;font-size:13px;font-weight:800;color:'+sec.color+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+sec.label+'</span>';
     if (items.length > 0) {
-      h += '<span style="font-size:10px;font-weight:700;color:'+sec.color+';background:white;padding:2px 8px;border-radius:100px;">'+items.length+'件</span>';
+      h += '<span style="font-size:10px;font-weight:700;color:'+sec.color+';background:white;padding:2px 8px;border-radius:100px;flex-shrink:0;">'+items.length+'件</span>';
     }
-    h += '<span class="material-symbols-rounded" style="font-size:20px;color:'+sec.color+';'+(collapsed?'transform:rotate(-90deg);':'')+'">expand_more</span>';
+    h += '<span class="material-symbols-rounded" style="font-size:20px;color:'+sec.color+';flex-shrink:0;'+(collapsed?'transform:rotate(-90deg);':'')+'">expand_more</span>';
+    h += '</div>';
+    // 右：追加ボタン（autodataは除外）
+    if (sec.id !== 'autodata') {
+      h += '<button onclick="openMedicalItemModal(\''+sec.id+'\',null)" style="flex-shrink:0;padding:0 12px;height:42px;background:'+sec.color+';color:white;border:none;border-radius:10px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:3px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:16px;">add</span>追加';
+      h += '</button>';
+    }
     h += '</div>';
     
     // 中身
     if (!collapsed) {
-      h += '<div style="margin-top:6px;padding:0 4px;">';
+      h += '<div style="margin-top:6px;">';
       
       // 自動連携セクション（autodata）は特別扱い
       if (sec.id === 'autodata') {
@@ -12239,11 +12287,11 @@ function renderMedicalCard() {
       } else {
         // 通常項目リスト
         if (items.length === 0) {
-          h += '<div style="background:var(--surface-warm);border:1px dashed var(--line);border-radius:8px;padding:14px;text-align:center;color:var(--ink-sub);font-size:11px;">まだ記録がないよ</div>';
+          h += '<div style="background:rgba(255,255,255,0.92);border:1px dashed var(--line);border-radius:8px;padding:14px;text-align:center;color:var(--ink-sub);font-size:11px;">まだ記録がないよ</div>';
         } else {
           h += '<div style="display:flex;flex-direction:column;gap:6px;">';
           for (const item of items) {
-            h += '<button onclick="openMedicalItemModal(\''+sec.id+'\',\''+item.id+'\')" style="display:flex;flex-direction:column;gap:2px;padding:10px;background:var(--surface);border:1px solid var(--card-border);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+            h += '<button onclick="openMedicalItemModal(\''+sec.id+'\',\''+item.id+'\')" style="display:flex;flex-direction:column;gap:2px;padding:10px;background:rgba(255,255,255,0.92);border:1px solid var(--card-border);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
             h += '<div style="display:flex;align-items:center;gap:6px;">';
             h += '<span style="flex:1;font-size:12px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(item.title||'無題')+'</span>';
             if (item.date) h += '<span style="font-size:10px;color:var(--ink-sub);font-variant-numeric:tabular-nums;">'+escapeHtml(item.date)+'</span>';
@@ -12254,10 +12302,7 @@ function renderMedicalCard() {
           h += '</div>';
         }
         
-        // 追加ボタン
-        h += '<button onclick="openMedicalItemModal(\''+sec.id+'\',null)" style="width:100%;margin-top:6px;padding:8px;background:var(--surface);color:'+sec.color+';border:1px dashed '+sec.color+';border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">';
-        h += '<span class="material-symbols-rounded" style="font-size:14px;">add</span>追加';
-        h += '</button>';
+        // 追加ボタンはヘッダー行に統合済み
       }
       
       h += '</div>';
@@ -21062,19 +21107,140 @@ function modeTabAdd(mode) {
   render();
 }
 const SECRET_MEMO_KEY = 'nikowa_secret_memo';
+
+// ===== Secret AES-256-GCM 暗号化 =====
+let _secretUnlocked = false;
+let _secretKey = null;
+let _secretMemoCache = null;
+
+function _getSecretRawStored() {
+  try { const d = localStorage.getItem(SECRET_MEMO_KEY); return d ? JSON.parse(d) : null; }
+  catch(e) { return null; }
+}
+function _isSecretEncrypted() { const r = _getSecretRawStored(); return r && r.v === 2; }
+
+async function _deriveKey(pin, saltBytes) {
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt:saltBytes, iterations:100000, hash:'SHA-256' },
+    km, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+}
+async function _encryptData(key, obj) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const cipher = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
+  const out = new Uint8Array(12 + cipher.byteLength);
+  out.set(iv); out.set(new Uint8Array(cipher), 12);
+  return btoa(String.fromCharCode(...out));
+}
+async function _decryptData(key, b64) {
+  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const plain = await crypto.subtle.decrypt({ name:'AES-GCM', iv:bytes.slice(0,12) }, key, bytes.slice(12));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+async function secretSetPin(pin) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const saltB64 = btoa(String.fromCharCode(...salt));
+  const key = await _deriveKey(pin, salt);
+  const existing = _secretMemoCache || (() => {
+    const r = _getSecretRawStored();
+    return (r && !r.v) ? r : { folders:[], items:[] };
+  })();
+  const enc = await _encryptData(key, existing);
+  localStorage.setItem(SECRET_MEMO_KEY, JSON.stringify({ v:2, salt:saltB64, enc }));
+  _secretKey = key; _secretMemoCache = existing; _secretUnlocked = true;
+  render(); showToast('PINを設定したよ🔐');
+}
+window.secretSetPin = secretSetPin;
+
+async function secretUnlock(pin) {
+  const raw = _getSecretRawStored();
+  if (!raw || raw.v !== 2) { render(); return; }
+  try {
+    const salt = Uint8Array.from(atob(raw.salt), c => c.charCodeAt(0));
+    const key = await _deriveKey(pin, salt);
+    const dec = await _decryptData(key, raw.enc);
+    _secretKey = key; _secretMemoCache = dec; _secretUnlocked = true;
+    render(); showToast('解除したよ🔓');
+  } catch(e) {
+    showToast('PINが違うよ🔒');
+    const inp = document.getElementById('secretPinInput');
+    if (inp) { inp.style.borderColor='#E05050'; inp.value=''; inp.focus(); }
+  }
+}
+window.secretUnlock = secretUnlock;
+
+function secretLock() {
+  _secretUnlocked = false; _secretKey = null; _secretMemoCache = null;
+  render(); showToast('ロックしたよ🔒');
+}
+window.secretLock = secretLock;
+
+function _secretPinSetupConfirm() {
+  const p1 = (document.getElementById('secretPinInput')||{}).value||'';
+  const p2 = (document.getElementById('secretPinInput2')||{}).value||'';
+  if (p1.length < 4) { showToast('4桁以上で設定してね'); return; }
+  if (p1 !== p2) { showToast('PINが一致しないよ'); return; }
+  secretSetPin(p1);
+}
+window._secretPinSetupConfirm = _secretPinSetupConfirm;
+
+function renderSecretLockScreen() {
+  const isEnc = _isSecretEncrypted();
+  let h = '<div style="padding:40px 20px;text-align:center;">';
+  h += '<div style="font-size:52px;margin-bottom:16px;">'+(isEnc?'🔐':'🔑')+'</div>';
+  if (isEnc) {
+    h += '<div style="font-size:16px;font-weight:800;color:var(--ink-dark);margin-bottom:6px;">PINで解除してね</div>';
+    h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:20px;">AES-256-GCMで暗号化中。Googleも中身を見られないよ</div>';
+    h += '<input id="secretPinInput" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="PINを入力" maxlength="8" style="width:100%;padding:14px;border:1.5px solid var(--card-border);border-radius:12px;font-size:20px;text-align:center;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;letter-spacing:6px;" onkeydown="if(event.key===\'Enter\')secretUnlock(this.value)">';
+    h += '<button onclick="secretUnlock(document.getElementById(\'secretPinInput\').value)" style="width:100%;margin-top:10px;padding:14px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">解除する 🔓</button>';
+  } else {
+    h += '<div style="font-size:16px;font-weight:800;color:var(--ink-dark);margin-bottom:6px;">PINを設定してね</div>';
+    h += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;margin-bottom:4px;">AES-256-GCMで暗号化するよ。<br>Googleも中身を見られないレベルの暗号化だよ</div>';
+    h += '<div style="font-size:11px;color:#E05050;margin-bottom:20px;font-weight:700;">⚠️ PINを忘れるとデータは復元できないよ</div>';
+    h += '<input id="secretPinInput" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="新しいPIN（4～8桁）" maxlength="8" style="width:100%;padding:14px;border:1.5px solid var(--card-border);border-radius:12px;font-size:20px;text-align:center;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;letter-spacing:6px;margin-bottom:8px;">';
+    h += '<input id="secretPinInput2" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="もう一度入力" maxlength="8" style="width:100%;padding:14px;border:1.5px solid var(--card-border);border-radius:12px;font-size:20px;text-align:center;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;letter-spacing:6px;">';
+    h += '<button onclick="_secretPinSetupConfirm()" style="width:100%;margin-top:10px;padding:14px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">PINを設定する 🔐</button>';
+  }
+  h += '</div>';
+  return h;
+}
+// ===== Secret AES end =====
 let secretMemoPath = []; // フォルダナビゲーション
 let secretMemoEditItem = null; // 編集中のアイテム
 let secretMemoSearch = '';
 let secretMemoIsEditing = false;
 
 function getSecretMemoData() {
+  // ロック解除済みならキャッシュを返す
+  if (_secretUnlocked && _secretMemoCache) return _secretMemoCache;
+  // 未暗号化の旧データはそのまま返す（初回PIN設定前）
   try {
     const d = localStorage.getItem(SECRET_MEMO_KEY);
-    return d ? JSON.parse(d) : { folders: [], items: [] };
+    if (!d) return { folders: [], items: [] };
+    const parsed = JSON.parse(d);
+    if (!parsed.v) return parsed; // 旧フォーマット（平文）
+    return { folders: [], items: [] }; // 暗号化済みだがロック中
   } catch(e) { return { folders: [], items: [] }; }
 }
 function saveSecretMemoData(d) {
-  try { localStorage.setItem(SECRET_MEMO_KEY, JSON.stringify(d)); } catch(e) {}
+  _secretMemoCache = d;
+  if (_secretUnlocked && _secretKey) {
+    // 暗号化して保存（非同期・fire and forget）
+    (async () => {
+      try {
+        const raw = _getSecretRawStored();
+        const saltB64 = raw && raw.salt ? raw.salt : btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
+        const salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
+        const enc = await _encryptData(_secretKey, d);
+        localStorage.setItem(SECRET_MEMO_KEY, JSON.stringify({ v:2, salt:saltB64, enc }));
+      } catch(e) { console.log('暗号化保存エラー:', e); }
+    })();
+  } else {
+    // PIN未設定の場合は平文で保存
+    try { localStorage.setItem(SECRET_MEMO_KEY, JSON.stringify(d)); } catch(e) {}
+  }
 }
 function getSecretMemoCurrentFolder() {
   let node = getSecretMemoData();
@@ -21097,6 +21263,15 @@ function renderSecretMemo() {
   const app = document.getElementById('app');
   let html = renderModeIndexTabs();
 
+  // ロック中はロック画面を表示
+  if (!_secretUnlocked) {
+    html += '<div class="mode-content-wrap">';
+    html += renderSecretLockScreen();
+    html += '</div><div style="height:80px;"></div>';
+    app.innerHTML = html;
+    return;
+  }
+
   // 編集画面
   if (secretMemoEditItem !== null) {
     html += renderSecretMemoEdit();
@@ -21117,6 +21292,7 @@ function renderSecretMemo() {
     html += '<button onclick="secretMemoBack()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-dark);padding:4px;">‹</button>';
   }
   html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);">📋 ひみつメモ</div>';
+  html += '<button onclick="secretLock()" style="background:none;border:none;cursor:pointer;padding:4px;font-size:18px;color:var(--ink-sub);" title="ロックする">🔒</button>';
   html += '</div>';
 
   // パンくず
