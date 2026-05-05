@@ -3463,6 +3463,10 @@
     <button class="btn btn-secondary" onclick="closeModal('userModal')">やめる</button>
     <button class="btn btn-primary" onclick="saveUser()">ほぞん</button>
   </div>
+  <div id="userModalLogoutSection" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:none;">
+    <div style="font-size:11px;color:var(--ink-sub);margin-bottom:8px;text-align:center;">クラウド同期中だよ☁️</div>
+    <button onclick="if(confirm('ログアウトする？データはクラウドに残るよ'))signOut()" style="width:100%;padding:10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🚪 Googleからログアウト</button>
+  </div>
 </div></div>
 
 <div class="modal" id="themeModal"><div class="modal-content">
@@ -10695,6 +10699,155 @@ function _doInjectSampleData() {
   if (!data.userPrefs) data.userPrefs = {};
   data.userPrefs.menstrualEnabled = true;
   
+  // ===== 11. 自分プロフィール（連絡先カード用） =====
+  if (!data.myProfile) data.myProfile = {};
+  data.myProfile.name = data.myProfile.name || 'あんず';
+  data.myProfile.birthday = data.myProfile.birthday || '1990-04-15';
+  data.myProfile.bloodType = data.myProfile.bloodType || 'A+';
+  data.myProfile.phone = data.myProfile.phone || '090-1234-5678';
+  data.myProfile.address = data.myProfile.address || '大阪市北区梅田1-1-1';
+  data.myProfile.memo = data.myProfile.memo || 'コーヒーとパンが好き🌷';
+  
+  // ===== 12. 履歴書 =====
+  if (!data.resume) data.resume = {};
+  data.resume.fullName = data.resume.fullName || '山田 杏';
+  data.resume.fullNameKana = data.resume.fullNameKana || 'やまだ あんず';
+  data.resume.gender = data.resume.gender || '女性';
+  data.resume.address = data.resume.address || '大阪市北区梅田1-1-1';
+  data.resume.phone = data.resume.phone || '090-1234-5678';
+  data.resume.email = data.resume.email || 'anzu@example.com';
+  if (!data.resume.education || data.resume.education.length === 0) {
+    data.resume.education = [
+      { id:'edu_1', date:'2006-04', school:'大阪府立梅田高等学校 入学', detail:'' },
+      { id:'edu_2', date:'2009-03', school:'大阪府立梅田高等学校 卒業', detail:'' },
+      { id:'edu_3', date:'2009-04', school:'関西大学 文学部 入学', detail:'' },
+      { id:'edu_4', date:'2013-03', school:'関西大学 文学部 卒業', detail:'専攻：日本文学' }
+    ];
+  }
+  if (!data.resume.career || data.resume.career.length === 0) {
+    data.resume.career = [
+      { id:'car_1', date:'2013-04', company:'株式会社サンプル商事', position:'営業職', detail:'法人営業を担当' },
+      { id:'car_2', date:'2018-04', company:'株式会社デモテック', position:'マーケティング', detail:'SNS運用とコンテンツ企画' },
+      { id:'car_3', date:'2023-04', company:'フリーランス', position:'ライター', detail:'独立、執筆業に専念' }
+    ];
+  }
+  if (!data.resume.licenses || data.resume.licenses.length === 0) {
+    data.resume.licenses = [
+      { id:'lic_1', date:'2010-08', name:'普通自動車第一種運転免許' },
+      { id:'lic_2', date:'2012-11', name:'TOEIC 800点' },
+      { id:'lic_3', date:'2015-06', name:'秘書検定 2級' }
+    ];
+  }
+  data.resume.pr = data.resume.pr || '丁寧な仕事と細やかな気配りが得意です。新しいことを学ぶのが好きで、常にアップデートを心がけています。';
+  data.resume.hobby = data.resume.hobby || '読書、コーヒー、旅行、写真撮影、料理';
+  
+  // ===== 13. カルテ（医療記録） =====
+  if (!data.medical) data.medical = {};
+  if (!data.medical.history || data.medical.history.length === 0) {
+    data.medical.history = [
+      { id:'med_h1', title:'花粉症', date:'2015-03', detail:'スギ花粉。3月〜4月にかけて症状が出る' },
+      { id:'med_h2', title:'卵アレルギー（軽度）', date:'2010-06', detail:'生卵で蕁麻疹が出る。加熱はOK' }
+    ];
+  }
+  if (!data.medical.visit || data.medical.visit.length === 0) {
+    data.medical.visit = [
+      { id:'med_v1', title:'梅田中央クリニック', date:'2025-04-12', detail:'内科。健診結果の相談' },
+      { id:'med_v2', title:'みなと歯科', date:'2025-03-20', detail:'定期検診とクリーニング' }
+    ];
+  }
+  if (!data.medical.vaccine || data.medical.vaccine.length === 0) {
+    data.medical.vaccine = [
+      { id:'med_va1', title:'インフルエンザ', date:'2024-11-05', detail:'梅田中央クリニックにて' },
+      { id:'med_va2', title:'コロナワクチン（5回目）', date:'2023-10-15', detail:'ファイザー' }
+    ];
+  }
+  if (!data.medical.medicine || data.medical.medicine.length === 0) {
+    data.medical.medicine = [
+      { id:'med_m1', title:'アレグラ', date:'2025-03-01', detail:'花粉症シーズン中、朝晩1錠ずつ' },
+      { id:'med_m2', title:'ビタミンD サプリ', date:'2024-01-01', detail:'1日1錠、毎朝' }
+    ];
+  }
+  if (!data.medical.checkup || data.medical.checkup.length === 0) {
+    data.medical.checkup = [
+      { id:'med_c1', title:'人間ドック', date:'2025-02-10', detail:'特に異常なし。LDLコレステロールやや高め' },
+      { id:'med_c2', title:'歯科健診', date:'2025-03-20', detail:'虫歯なし、歯石除去のみ' }
+    ];
+  }
+  if (!data.medical.vision || data.medical.vision.length === 0) {
+    data.medical.vision = [
+      { id:'med_vi1', title:'視力検査', date:'2024-08-15', detail:'右0.8 / 左0.7 メガネ継続使用' }
+    ];
+  }
+  
+  // ===== 14. 連絡先 =====
+  if (!data.contacts) data.contacts = {};
+  if (!data.contacts.emergency || data.contacts.emergency.length === 0) {
+    data.contacts.emergency = [
+      { id:'ct_e1', name:'山田 太郎', relation:'父', phone:'090-1111-2222', email:'', line:'', address:'大阪市', birthday:'1960-05-10', likes:'お酒、釣り', dislikes:'', meetMemo:'毎月第2日曜にランチ', photo:'' },
+      { id:'ct_e2', name:'山田 花子', relation:'母', phone:'090-3333-4444', email:'', line:'', address:'大阪市', birthday:'1962-08-22', likes:'園芸、お花', dislikes:'', meetMemo:'', photo:'' },
+      { id:'ct_e3', name:'佐藤 みか', relation:'親友', phone:'080-5555-6666', email:'mika@example.com', line:'mika_s', address:'神戸市', birthday:'1990-12-03', likes:'カフェ巡り', dislikes:'', meetMemo:'月1で梅田カフェ', photo:'' }
+    ];
+  }
+  
+  // ===== 15. メモ =====
+  if (!data.memos) data.memos = { folders: [], items: [] };
+  if (!data.memos.items) data.memos.items = [];
+  if (data.memos.items.length === 0) {
+    data.memos.items = [
+      { id:'memo_1', title:'読みたい本リスト', body:'・1Q84 / 村上春樹\n・夜と霧 / フランクル\n・嫌われる勇気 / 岸見一郎', photo:'', createdAt: todayMs - 5*dayMs, updatedAt: todayMs - 5*dayMs },
+      { id:'memo_2', title:'お気に入りカフェ', body:'・梅田 BLUE BOTTLE\n・中崎町 太陽ノ塔\n・北浜 LiLo Coffee', photo:'', createdAt: todayMs - 8*dayMs, updatedAt: todayMs - 3*dayMs },
+      { id:'memo_3', title:'ほしいものリスト', body:'・無印の収納ボックス\n・コーヒードリッパー\n・ヨガマット', photo:'', createdAt: todayMs - 12*dayMs, updatedAt: todayMs - 12*dayMs }
+    ];
+  }
+  
+  // ===== 16. 家計（保険・ローン・固定費・サブスク） =====
+  if (!data.money) data.money = {};
+  if (!data.money.insurance) data.money.insurance = [];
+  if (data.money.insurance.length === 0) {
+    data.money.insurance = [
+      { id:'ins_1', type:'生命保険', company:'サンプル生命', productName:'みらいのカタチ', monthlyPremium:8500, contractDate:'2018-04-01' },
+      { id:'ins_2', type:'医療保険', company:'デモ保険', productName:'安心メディカル', monthlyPremium:3200, contractDate:'2020-06-15' }
+    ];
+  }
+  if (!data.money.loans) data.money.loans = [];
+  if (data.money.loans.length === 0) {
+    data.money.loans = [
+      { id:'loan_1', type:'住宅ローン', company:'みなと銀行', amount:25000000, monthlyPayment:78000, startDate:'2022-04-01', years:35 }
+    ];
+  }
+  if (!data.money.expenses) data.money.expenses = [];
+  if (data.money.expenses.length === 0) {
+    data.money.expenses = [
+      { id:'exp_1', name:'電気代', amount:8500, category:'光熱費', day:25 },
+      { id:'exp_2', name:'ガス代', amount:4200, category:'光熱費', day:25 },
+      { id:'exp_3', name:'水道代', amount:3500, category:'光熱費', day:15 },
+      { id:'exp_4', name:'インターネット', amount:5500, category:'通信費', day:1 },
+      { id:'exp_5', name:'携帯代', amount:3800, category:'通信費', day:10 }
+    ];
+  }
+  if (!data.money.subscriptions) data.money.subscriptions = [];
+  if (data.money.subscriptions.length === 0) {
+    data.money.subscriptions = [
+      { id:'sub_1', name:'Netflix', amount:1490, category:'動画', day:5 },
+      { id:'sub_2', name:'Spotify', amount:980, category:'音楽', day:12 },
+      { id:'sub_3', name:'Amazon Prime', amount:600, category:'動画', day:20 }
+    ];
+  }
+  
+  // ===== 17. 持ち物（自分のうちのGoods） =====
+  if (!data.nestGoods) data.nestGoods = {};
+  if (!data.nestGoods.me_house) data.nestGoods.me_house = [];
+  if (data.nestGoods.me_house.length === 0) {
+    data.nestGoods.me_house = [
+      { id:'g_1', name:'シャンプー', category:'バスルーム', brand:'BOTANIST モイスト', updatedAt: todayMs - 10*dayMs },
+      { id:'g_2', name:'ボディソープ', category:'バスルーム', brand:'ミノン 全身シャンプー', updatedAt: todayMs - 15*dayMs },
+      { id:'g_3', name:'食器用洗剤', category:'キッチン', brand:'JOY 緑', updatedAt: todayMs - 5*dayMs },
+      { id:'g_4', name:'洗濯洗剤', category:'洗濯', brand:'アリエール', updatedAt: todayMs - 7*dayMs },
+      { id:'g_5', name:'トイレットペーパー', category:'トイレ', brand:'ネピア', updatedAt: todayMs - 3*dayMs },
+      { id:'g_6', name:'掃除機の紙パック', category:'掃除', brand:'パナソニック純正', updatedAt: todayMs - 30*dayMs }
+    ];
+  }
+  
   saveData();
   showToast('サンプルデータを入れたよ🌷');
   setTimeout(() => render(), 200);
@@ -12258,11 +12411,13 @@ function renderMedicalCard() {
     const collapsed = data.medicalCollapsed[sec.id];
     const items = data.medical[sec.id] || [];
     
-    // ヘッダー（見出し＋追加ボタン横並び）
-    h += '<div style="margin-bottom:8px;display:flex;align-items:center;gap:6px;">';
+    // セクション全体ラッパー
+    h += '<div style="margin-bottom:8px;">';
+    // ヘッダー行（見出し＋追加ボタン横並び）
+    h += '<div style="display:flex;align-items:center;gap:6px;">';
     // 左：見出し（タップでトグル）
-    h += '<div onclick="toggleMedicalSection(\''+sec.id+'\')" style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;background:'+sec.color+'15;border:1.5px solid '+sec.color+';border-radius:10px;cursor:pointer;user-select:none;min-width:0;">';
-    h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:'+sec.color+';color:white;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;">'+sec.icon+'</span></span>';
+    h += '<div onclick="toggleMedicalSection(\''+sec.id+'\')" style="flex:0 0 65%;display:flex;align-items:center;gap:8px;padding:5px 12px;background:'+sec.color+'15;border:1.5px solid '+sec.color+';border-radius:10px;cursor:pointer;user-select:none;min-width:0;">';
+    h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:'+sec.color+';color:white;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:14px;">'+sec.icon+'</span></span>';
     h += '<span style="flex:1;font-size:13px;font-weight:800;color:'+sec.color+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+sec.label+'</span>';
     if (items.length > 0) {
       h += '<span style="font-size:10px;font-weight:700;color:'+sec.color+';background:white;padding:2px 8px;border-radius:100px;flex-shrink:0;">'+items.length+'件</span>';
@@ -12271,7 +12426,7 @@ function renderMedicalCard() {
     h += '</div>';
     // 右：追加ボタン（autodataは除外）
     if (sec.id !== 'autodata') {
-      h += '<button onclick="openMedicalItemModal(\''+sec.id+'\',null)" style="flex-shrink:0;padding:0 12px;height:42px;background:'+sec.color+';color:white;border:none;border-radius:10px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:3px;">';
+      h += '<button onclick="openMedicalItemModal(\''+sec.id+'\',null)" style="flex-shrink:0;padding:0 12px;height:34px;background:'+sec.color+';color:white;border:none;border-radius:10px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:3px;">';
       h += '<span class="material-symbols-rounded" style="font-size:16px;">add</span>追加';
       h += '</button>';
     }
@@ -22189,7 +22344,7 @@ function renderResumeTab() {
   let html = '<div style="padding:12px 16px 8px;">';
   
   // ヘッダー
-  html += '<div class="section-head"><h2 class="section-title">📋 わたしの履歴書</h2>';
+  html += '<div class="section-head"><h2 class="section-title" style="font-size:11px;letter-spacing:0.4px;">📋 わたしの履歴書</h2>';
   html += '<button class="section-link" onclick="openResumeEdit()"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button></div>';
   
   // 基本情報
@@ -22234,7 +22389,7 @@ function renderResumeTab() {
   html += '</div>';
   
   // 学歴
-  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">学歴</h2></div>';
+  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title" style="font-size:11px;letter-spacing:0.4px;">学歴</h2></div>';
   if (!r.education || r.education.length === 0) {
     html += _resumeEmpty('📚', 'まだ学歴が登録されてないよ');
   } else {
@@ -22256,7 +22411,7 @@ function renderResumeTab() {
   }
   
   // 職歴
-  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">職歴</h2></div>';
+  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title" style="font-size:11px;letter-spacing:0.4px;">職歴</h2></div>';
   if (!r.career || r.career.length === 0) {
     html += _resumeEmpty('💼', 'まだ職歴が登録されてないよ');
   } else {
@@ -22278,7 +22433,7 @@ function renderResumeTab() {
   }
   
   // 資格・免許
-  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">資格・免許</h2></div>';
+  html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title" style="font-size:11px;letter-spacing:0.4px;">資格・免許</h2></div>';
   if (!r.licenses || r.licenses.length === 0) {
     html += _resumeEmpty('🎓', 'まだ資格・免許が登録されてないよ');
   } else {
@@ -22299,7 +22454,7 @@ function renderResumeTab() {
   
   // 自己PR
   if (r.selfPr) {
-    html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">自己PR</h2></div>';
+    html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title" style="font-size:11px;letter-spacing:0.4px;">自己PR</h2></div>';
     html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;font-size:12px;color:var(--ink-dark);line-height:1.7;white-space:pre-wrap;word-break:break-word;">';
     html += escapeHtml(r.selfPr);
     html += '</div>';
@@ -22307,7 +22462,7 @@ function renderResumeTab() {
   
   // 趣味・特技
   if (r.hobbies) {
-    html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title">趣味・特技</h2></div>';
+    html += '<div class="section-head" style="margin-top:8px;"><h2 class="section-title" style="font-size:11px;letter-spacing:0.4px;">趣味・特技</h2></div>';
     html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:14px;font-size:12px;color:var(--ink-dark);line-height:1.7;white-space:pre-wrap;word-break:break-word;">';
     html += escapeHtml(r.hobbies);
     html += '</div>';
@@ -23016,6 +23171,9 @@ function openUserModal() {
     _avatarTabMode = 'emoji';
   }
   setAvatarTab(_avatarTabMode);
+  // ログイン中ならログアウトセクションを表示
+  const logoutSec = document.getElementById('userModalLogoutSection');
+  if (logoutSec) logoutSec.style.display = currentUser ? 'block' : 'none';
   document.getElementById('userModal').classList.add('show');
 }
 
