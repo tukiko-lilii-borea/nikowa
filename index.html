@@ -5245,6 +5245,254 @@ let currentUser = null;
 let db = null;
 let storage = null;
 
+// ===== ヘルプガイド =====
+const HELP_GUIDES = {
+  app: {
+    title: 'にこわってこんなアプリだよ',
+    icon: 'auto_awesome',
+    useAnzuImage: true,
+    about: 'にこわは「ちゃんと生きた日を、なかったことにしない」がテーマの記録アプリだよ。家族・ペット・自分のすべてを、ひとつのアプリにまとめられるよ。',
+    howto: [
+      '4つのモードを切り替えて使うよ\nME（自分）／PET（ペット）／KIDS（子ども）／NEST（大切な場所・グループ）',
+      '下のナビから各モードに移動できるよ',
+      '左上のアイコン→自分のプロフィールを変えられるよ',
+      '右上の歯車から設定（テーマ・地域・アカウント）を開けるよ'
+    ],
+    tips: [
+      '設定→アカウントでGoogleログインすると、データがクラウドに保存されるよ。スマホ壊れても消えないし、PCとも同期できるよ',
+      'テーマは21種類あるよ。気分で変えてみてね',
+      '困ったらどの画面も❓ボタンを押すと、説明が出るよ'
+    ]
+  },
+  me: {
+    title: 'ME（自分のこと）',
+    icon: 'person',
+    about: '自分のことを記録するモードだよ。9つのタブに分かれてて、毎日の習慣・日記・お金・持ち物・コレクション・履歴書・仕事・メモ・ひみつ、ぜんぶ記録できるよ。',
+    howto: [
+      '上のタブから記録したいジャンルを選んでね',
+      '✏マークでタブの並びを変えたり、表示／非表示を切り替えられるよ',
+      'よく使うタブを上に並べると使いやすいよ'
+    ],
+    tips: [
+      '各タブの❓を押すと、そのタブだけの使い方が見られるよ',
+      '使わないタブは非表示にしてスッキリできるよ'
+    ]
+  },
+  me_stamp: {
+    title: 'スタンプ',
+    icon: 'check_circle',
+    about: '毎日の習慣・気分・ToDoをスタンプでサクッと記録できるよ。生活／美容／ダイエット／体調／家事／仕事／趣味の7カテゴリに分かれてるよ。',
+    howto: [
+      'スタンプタブで好きなアイコンをタップ→押した瞬間に記録されるよ',
+      'プランナータブで時間帯ごとに予定を入れられるよ。完了するとスタンプ履歴に自動で記録されるよ',
+      'カレンダータブで月単位の記録が見られるよ',
+      'ギャラリータブで一覧表示もできるよ'
+    ],
+    tips: [
+      '✏マークから自分専用のカスタムスタンプを作れるよ',
+      'カテゴリやスタンプの並び替え・非表示もできるよ',
+      'カレンダーで過去のがんばりが見えるから、自分褒めにいいよ'
+    ]
+  },
+  me_diary: {
+    title: '日記',
+    icon: 'menu_book',
+    about: 'LINEみたいな入力欄で、その日の出来事をサクッと記録できるよ。気分・天気・写真も残せるよ。',
+    howto: [
+      '下の入力欄に文字を打って送信',
+      'カメラマークで写真も追加できるよ',
+      '気分（😊😢😡など）と天気を選べるよ',
+      '投稿後にタップで編集・削除できるよ'
+    ],
+    tips: [
+      '写真はクラウドに保存されるから、スマホ容量を気にしなくていいよ',
+      '短くてOK。「コーヒー飲んだ」だけでもじゅうぶんだよ',
+      '後から見返すと、自分の人生の記録になるよ'
+    ]
+  },
+  me_money: {
+    title: 'お金',
+    icon: 'savings',
+    about: '保険・ローン・固定費・サブスクの月額を見える化できるよ。「うちって毎月いくら使ってる？」がスッキリ分かるよ。',
+    howto: [
+      'サブタブから種類を選んでね（保険／ローン／固定費／サブスク）',
+      '＋ボタンから新しい項目を追加',
+      '月額・契約日・会社名などを入れられるよ'
+    ],
+    tips: [
+      '「使ってないサブスクある？」って思ったら、まずここを見直すといいよ',
+      'ローンは返済日も入れられるから、引き落とし日のチェックに使えるよ',
+      '光熱費の月平均が見えると節約のヒントになるよ'
+    ]
+  },
+  me_goods: {
+    title: '持ち物',
+    icon: 'shopping_bag',
+    about: '「あれ何使ってたっけ？」を防ぐリスト。シャンプー、洗剤、電球、家電など、おうちの備品を記録できるよ。',
+    howto: [
+      '「日用品」「家電」のサブタブを切り替えてね',
+      '＋ボタンで追加。カテゴリ（バスルーム・キッチンなど）で整理されるよ',
+      'ブランド名・購入日もメモできるよ'
+    ],
+    tips: [
+      '詰め替え時期や買い替え時期を覚えとくのに便利だよ',
+      '家電は購入日と保証期間を記録しとくと、壊れたときに役立つよ',
+      '引っ越しのとき持ち物リストとしても使えるよ'
+    ]
+  },
+  me_collection: {
+    title: 'コレクション',
+    icon: 'photo_library',
+    about: 'アルバム・読んだ本・旅行・集めてるものなど、好きなテーマでフォルダを作って残せるよ。',
+    howto: [
+      '＋でフォルダを作って名前をつけてね',
+      'フォルダの中に写真やメモを入れていくよ',
+      'フォルダの表紙も写真にできるよ',
+      'フォルダの中にさらにフォルダも作れるよ'
+    ],
+    tips: [
+      '旅行ごとにフォルダを分けるのおすすめだよ',
+      '読んだ本は表紙写真と感想メモで残すといいよ',
+      '推しの写真コレクションにも使えるよ'
+    ]
+  },
+  me_resume: {
+    title: 'My（自分のきろく）',
+    icon: 'badge',
+    about: '履歴書・カルテ（医療記録）・連絡先をひとつにまとめてあるよ。病院や緊急時にすぐ見せられるよ。',
+    howto: [
+      '「履歴書」サブタブ：学歴・職歴・資格・自己PRを記録',
+      '「カルテ」サブタブ：病歴・通院・ワクチン・薬を記録',
+      '「連絡先」サブタブ：家族・友達の連絡先を記録',
+      '各見出しの右の「追加」ボタンから新規追加できるよ'
+    ],
+    tips: [
+      '病院で「お薬手帳出して」って言われたとき、薬の記録を見せられるよ',
+      '緊急連絡先を入れとくと、もしものとき家族にアクセスしやすいよ',
+      '転職や引っ越しのとき、履歴書情報がすぐ取り出せて便利だよ'
+    ]
+  },
+  me_office: {
+    title: 'Office（仕事のきろく）',
+    icon: 'work',
+    about: '仕事の小さな記録帳。マニュアル・チェックリスト・取引先メモ・スタンプを記録できるよ。',
+    howto: [
+      '「マニュアル」：チェックリストや手順書を作れるよ',
+      '「メモ」：仕事中の気づきや覚え書き',
+      '「スタンプ」：業務の進捗を記録',
+      '「取引先」：お客さんや業者さんの情報'
+    ],
+    tips: [
+      '配信者・フリーランスにも使えるよ（取引先＝視聴者として活用）',
+      'チェックリストはルーチン作業に超便利だよ',
+      '取引先ごとに累計金額・回数も見えるよ'
+    ]
+  },
+  me_memo: {
+    title: 'メモ',
+    icon: 'edit_note',
+    about: '自由メモ。ふと思ったこと、リスト、覚え書きを残せるよ。フォルダで整理できるよ。',
+    howto: [
+      '＋メモで新しいメモを作る',
+      '＋フォルダでフォルダを作って整理',
+      'フォルダの中にフォルダも作れるよ',
+      '写真も添付できるよ'
+    ],
+    tips: [
+      '「読みたい本リスト」「行きたいカフェ」みたいなテーマでフォルダ分けがおすすめだよ',
+      '検索機能でサッと見つけられるよ',
+      'ワンタップでコピーもできるよ'
+    ]
+  },
+  me_secret: {
+    title: 'ひみつメモ',
+    icon: 'lock',
+    about: 'パスワード・ID・大事な情報を、Googleでも見られないレベルで暗号化して保存できるよ。AES-256-GCMっていう強い暗号化を使ってるよ。',
+    howto: [
+      '初めて開いたとき、PINを4〜8桁で設定してね',
+      'PINを入力してロック解除→中身が見える',
+      '＋メモでパスワード等を追加',
+      '🔒ボタンでいつでも手動ロックできる'
+    ],
+    tips: [
+      'PINは絶対忘れないでね（忘れると永久に見られなくなるよ）',
+      'フォルダで「クレカ」「銀行」「ログイン情報」など分けると便利だよ',
+      'バックアップ機能でJSONに書き出しもできるよ'
+    ]
+  }
+};
+
+function _formatGuideText(text) {
+  // \nで改行 + 「。」の直後で改行（末尾の。は除く）
+  return escapeHtml(text).replace(/\n/g, '<br>').replace(/。(?=.)/g, '。<br>');
+}
+window._formatGuideText = _formatGuideText;
+
+function openHelpGuide(scope) {
+  const g = HELP_GUIDES[scope] || HELP_GUIDES.app;
+  const ex = document.getElementById('helpGuideModal');
+  if (ex) ex.remove();
+  let h = '<div id="helpGuideModal" onclick="if(event.target===this)closeHelpGuide()" style="position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,0.55);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="width:100%;max-width:500px;background:var(--surface);border-radius:18px 18px 0 0;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">';
+  // ヘッダー（あんずキャラ＋タイトル＋✕）
+  h += '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line-soft);background:linear-gradient(135deg,var(--accent-bg) 0%,var(--surface) 100%);">';
+  if (g.useAnzuImage) {
+    const _anzuImg = document.querySelector('#howToModal img[alt="あんず"]');
+    const _anzuSrc = _anzuImg ? _anzuImg.src : '';
+    h += '<div style="width:48px;height:48px;border-radius:12px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;"><img src="'+_anzuSrc+'" style="width:100%;height:100%;object-fit:contain;" alt="あんず"></div>';
+  } else {
+    h += '<div style="width:44px;height:44px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:26px;color:white;">'+g.icon+'</span></div>';
+  }
+  h += '<div style="flex:1;min-width:0;">';
+  h += '<div style="display:flex;align-items:center;gap:4px;font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1.5px;margin-bottom:2px;"><span class="material-symbols-rounded" style="font-size:11px;">pets</span>あんずが説明するよ</div>';
+  h += '<div style="font-size:15px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(g.title)+'</div>';
+  h += '</div>';
+  h += '<button onclick="closeHelpGuide()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:4px;"><span class="material-symbols-rounded" style="font-size:24px;">close</span></button>';
+  h += '</div>';
+  // 中身（スクロール）
+  h += '<div style="flex:1;overflow-y:auto;padding:16px;">';
+  // about
+  h += '<div style="background:#FFF8E8;border-left:4px solid #E89A4A;border-radius:8px;padding:12px 14px;margin-bottom:14px;">';
+  h += '<div style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:800;color:#A86820;letter-spacing:1.2px;margin-bottom:6px;"><span class="material-symbols-rounded" style="font-size:14px;">lightbulb</span>これは何？</div>';
+  h += '<div style="font-size:13px;color:var(--ink-dark);line-height:1.7;">'+_formatGuideText(g.about)+'</div>';
+  h += '</div>';
+  // howto
+  h += '<div style="background:#E8F5FF;border-left:4px solid #5888B0;border-radius:8px;padding:12px 14px;margin-bottom:14px;">';
+  h += '<div style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:800;color:#4070A0;letter-spacing:1.2px;margin-bottom:8px;"><span class="material-symbols-rounded" style="font-size:14px;">menu_book</span>つかいかた</div>';
+  for (let i = 0; i < g.howto.length; i++) {
+    h += '<div style="display:flex;gap:8px;margin-bottom:'+(i===g.howto.length-1?'0':'8px')+';">';
+    h += '<div style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#5888B0;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;">'+(i+1)+'</div>';
+    h += '<div style="flex:1;font-size:12.5px;color:var(--ink-dark);line-height:1.7;">'+_formatGuideText(g.howto[i])+'</div>';
+    h += '</div>';
+  }
+  h += '</div>';
+  // tips
+  h += '<div style="background:#F2EAFA;border-left:4px solid #8868A8;border-radius:8px;padding:12px 14px;margin-bottom:14px;">';
+  h += '<div style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:800;color:#6848A0;letter-spacing:1.2px;margin-bottom:8px;"><span class="material-symbols-rounded" style="font-size:14px;">auto_awesome</span>こつ・おすすめ</div>';
+  for (let i = 0; i < g.tips.length; i++) {
+    h += '<div style="display:flex;gap:8px;margin-bottom:'+(i===g.tips.length-1?'0':'8px')+';">';
+    h += '<div style="flex-shrink:0;color:#8868A8;display:flex;align-items:center;padding-top:2px;"><span class="material-symbols-rounded" style="font-size:14px;">star</span></div>';
+    h += '<div style="flex:1;font-size:12.5px;color:var(--ink-dark);line-height:1.7;">'+_formatGuideText(g.tips[i])+'</div>';
+    h += '</div>';
+  }
+  h += '</div>';
+  h += '</div>';
+  // フッター
+  h += '<div style="padding:12px 16px;border-top:1px solid var(--line-soft);">';
+  h += '<button onclick="closeHelpGuide()" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">check</span>わかった！</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openHelpGuide = openHelpGuide;
+
+function closeHelpGuide() {
+  const el = document.getElementById('helpGuideModal');
+  if (el) el.remove();
+}
+window.closeHelpGuide = closeHelpGuide;
+// ===== ヘルプガイド end =====
+
 function initFirebase() {
   const firebaseConfig = {
     apiKey: "AIzaSyAhNAZjlyohQaYzB8HjX5qTpW5W29JrOfw",
@@ -6204,6 +6452,7 @@ function renderTop() {
   if (userName) html += '<span>'+escapeHtml(userName)+'</span>';
   else html += '<span class="hero-user-prompt">名前をつける</span>';
   html += '</button>';
+  html += '<button onclick="openHelpGuide(\'app\')" style="background:rgba(255,255,255,0.6);border:1.5px solid var(--card-border);width:34px;height:34px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;" title="使い方ガイド"><span class="material-symbols-rounded" style="font-size:20px;">help_outline</span></button>';
   html += '</div>';
   // 桜吹雪 + すりガラスカード
   var currentTheme = THEMES[data.themeId || 'mint'] || THEMES.mint;
@@ -17027,6 +17276,7 @@ function renderHouses() {
     if (userName) html += '<span>'+escapeHtml(userName)+'</span>';
     else html += '<span class="hero-user-prompt">名前をつける</span>';
     html += '</button>';
+    html += '<button onclick="openHelpGuide(\'app\')" style="background:rgba(255,255,255,0.6);border:1.5px solid var(--card-border);width:34px;height:34px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;" title="使い方ガイド"><span class="material-symbols-rounded" style="font-size:20px;">help_outline</span></button>';
     html += '</div>';
   }
   // 桜吹雪 + すりガラスカード
@@ -21184,8 +21434,15 @@ function renderModePageTabs(mode) {
   const cur = currentModeTab[mode] || tabs[0]?.id;
   // 2列グリッド
   let html = '<div class="mode-page-tabs-wrap">';
-  // 編集ボタン
-  html += '<div style="display:flex;justify-content:flex-end;padding:0 16px 2px;">';
+  // ❓ヘルプボタン＋編集ボタン
+  html += '<div style="display:flex;justify-content:flex-end;gap:6px;padding:0 16px 2px;align-items:center;">';
+  // ヘルプボタン（MEモードのみ、現在のタブのガイド表示）
+  if (mode === 'me') {
+    const _curTabId = currentModeTab[mode] || 'stamp';
+    const _validHelpTabs = ['stamp','diary','money','goods','collection','resume','office','memo','secret'];
+    const _helpScope = _validHelpTabs.includes(_curTabId) ? ('me_'+_curTabId) : 'me';
+    html += '<button onclick="openHelpGuide(\''+_helpScope+'\')" style="background:none;border:none;cursor:pointer;font-family:inherit;padding:2px 4px;color:var(--accent-deep);display:inline-flex;align-items:center;" title="このタブの使い方"><span class="material-symbols-rounded" style="font-size:16px;">help_outline</span></button>';
+  }
   html += '<button onclick="modeTabEditMode=!modeTabEditMode;_suppressScrollTop=true;render();" style="background:none;border:none;font-size:11px;color:var(--ink-sub);cursor:pointer;font-family:inherit;padding:2px 6px;">';
   html += modeTabEditMode ? '完了' : '<span class="material-symbols-rounded" style="font-size:14px;">edit</span>';
   html += '</button></div>';
