@@ -730,6 +730,18 @@
     min-height: 60vh;
     padding-bottom: 100px;
   }
+  /* Diary/Officeメモタブの時は白背景を完全削除（CSSのみ、JS不要） */
+  .mode-content-wrap:has(#tweetWrap),
+  .mode-content-wrap:has(#ofcMemoWrap) {
+    background: transparent !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+    border-radius: 0 !important;
+  }
   .section-head {
     display: flex; align-items: flex-end; justify-content: space-between;
     margin-bottom: 8px;
@@ -13028,12 +13040,12 @@ function renderTweetsDiary() {
   }
   
   // ===== 全体ラッパー（普通の流れ、fixed使わない）=====
-  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:'+(bgImage?'transparent':'var(--surface)')+';">';
+  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:8px 10px 130px;gap:8px;">';
   
-  // 上部バー
-  h += '<div style="flex-shrink:0;padding:6px 10px;display:flex;gap:6px;align-items:center;background:'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface-warm)')+';backdrop-filter:'+(bgImage?'blur(10px)':'none')+';border-bottom:1px solid var(--line);">';
-  h += '<button onclick="openTweetTagsModal()" title="タグ管理" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">#</button>';
-  h += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span></button>';
+  // 上部バー（独立カード）
+  h += '<div style="background:'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface))')+';backdrop-filter:'+(bgImage?'blur(10px)':'none')+';border:1px solid var(--line);border-radius:14px;padding:6px 10px;display:flex;gap:6px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  h += '<button onclick="openTweetTagsModal()" title="タグ管理" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface-warm);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">#</button>';
+  h += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface-warm);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span></button>';
   
   if (filterTag) {
     h += '<button onclick="setTweetFilter(null)" style="flex:1;padding:4px 10px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;overflow:hidden;">';
@@ -13046,10 +13058,10 @@ function renderTweetsDiary() {
     h += '<span style="opacity:0.7;">タグでしぼる</span>';
     h += '</button>';
   }
-  h += '<button onclick="openTweetBgModal()" title="背景画像" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">wallpaper</span></button>';
+  h += '<button onclick="openTweetBgModal()" title="背景画像" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface-warm);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">wallpaper</span></button>';
   h += '</div>';
   
-  // 日付ピル
+  // 日付ピル（独立カード）
   const dateNum = (viewDate.getMonth()+1)+'/'+viewDate.getDate();
   const wdEn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][viewDate.getDay()];
   let labelEn;
@@ -13063,11 +13075,11 @@ function renderTweetsDiary() {
   const dateKeyForWeather = viewDate.getFullYear()+'-'+String(viewDate.getMonth()+1).padStart(2,'0')+'-'+String(viewDate.getDate()).padStart(2,'0');
   const weatherIcon = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dateKeyForWeather) : null;
   
-  h += '<div style="flex-shrink:0;background:'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface-warm)')+';backdrop-filter:'+(bgImage?'blur(8px)':'none')+';padding:8px 10px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border-bottom:1px solid var(--line-soft);">';
+  h += '<div style="background:'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface)')+';backdrop-filter:'+(bgImage?'blur(8px)':'none')+';border:1px solid var(--line);border-radius:14px;padding:6px 10px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   if (!isToday) {
-    h += '<button onclick="jumpDiaryToToday()" style="background:white;border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:3px 9px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;box-shadow:0 1px 3px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:11px;">today</span>今日</button>';
+    h += '<button onclick="jumpDiaryToToday()" style="background:var(--surface-warm);border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:3px 9px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">today</span>今日</button>';
   }
-  h += '<span onclick="openTweetCalendarModal()" style="display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--ink-sub);background:white;padding:5px 14px;border-radius:100px;border:1px solid var(--line);letter-spacing:0.05em;box-shadow:0 1px 3px rgba(0,0,0,0.04);cursor:pointer;">';
+  h += '<span onclick="openTweetCalendarModal()" style="display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--ink-sub);padding:5px 14px;letter-spacing:0.05em;cursor:pointer;">';
   h += '<span style="font-variant-numeric:tabular-nums;color:var(--ink-dark);font-weight:700;">'+dateNum+'</span>';
   h += '<span style="opacity:0.4;">·</span>';
   h += '<span style="color:var(--accent-deep);font-weight:600;letter-spacing:0.08em;">'+labelEn+'</span>';
@@ -13078,9 +13090,8 @@ function renderTweetsDiary() {
   h += '</span>';
   h += '</div>';
   
-  // ★ タイムラインカード（独立カード、中スクロール）
-  h += '<div style="padding:10px 12px 0;">';
-  h += '<div data-tweets-area id="tweetsTimeline" style="background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px;display:flex;flex-direction:column;height:200px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  // ★ タイムライン（高さ自由・背景透ける・カードなし）
+  h += '<div data-tweets-area id="tweetsTimeline" style="background:transparent;display:flex;flex-direction:column;gap:0;">';
   
   if (tweets.length === 0) {
     h += '<div style="text-align:center;padding:40px 20px;color:var(--ink-sub);">';
@@ -13102,8 +13113,7 @@ function renderTweetsDiary() {
     }
   }
   
-  h += '</div>'; // タイムラインカード閉じ
-  h += '</div>'; // padding wrapper閉じ
+  h += '</div>'; // タイムライン閉じ
   
   // 現在地ピル
   const homeRegion = (data && data.userRegion) || '大阪';
@@ -13116,7 +13126,7 @@ function renderTweetsDiary() {
   
   // ===== ここから下は画面下に固定（fixed） =====
   // 入力欄カード（独立カード風、写真プレビュー・現在地・入力を一塊）
-  h += '<div id="tweetBottomBlock" style="position:fixed;left:0;right:0;margin:0 auto;width:100%;max-width:480px;bottom:0;padding:0 8px 4px;z-index:100;box-sizing:border-box;pointer-events:none;">';
+  h += '<div id="tweetBottomBlock" style="position:fixed;left:0;right:0;margin:0 auto;width:100%;max-width:480px;bottom:64px;padding:0 8px 4px;z-index:100;box-sizing:border-box;pointer-events:none;">';
   h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 -2px 8px rgba(0,0,0,0.06);overflow:hidden;pointer-events:auto;">';
   
   // 現在地ピル
@@ -13151,30 +13161,23 @@ function renderTweetsDiary() {
   h += '</div>'; // 入力カード閉じ
   h += '</div>'; // tweetBottomBlock閉じ
   
-  // 描画後：①入力欄ブロックをbottom-navの上に貼り付け ②タイムライン高さ計算
+  // 描画後：入力欄ブロックをbottom-navの上に貼り付け＋ページ最下部スクロール
   h += '<scr'+'ipt>(function(){function adjust(){try{';
-  // 入力欄ブロックを下部ナビ直上に配置
+  // mode-content-wrapとその親要素も全部透明化
+  h += 'var mc=document.querySelector(".mode-content-wrap");';
+  h += 'if(mc){mc.style.cssText="background:transparent !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;padding:0 !important;margin:0 !important;min-height:0 !important;border-radius:0 !important;";}';
+  // tweetWrapの親（mode-content-wrapの中の親要素）も透明化
+  h += 'var tw=document.getElementById("tweetWrap");';
+  h += 'if(tw){var p=tw.parentElement;while(p&&p!==document.body){var st=getComputedStyle(p);if(st.background.indexOf("rgba")>=0||st.backgroundColor.indexOf("rgba(255")>=0){p.style.background="transparent";p.style.backgroundColor="transparent";p.style.backdropFilter="none";p.style.webkitBackdropFilter="none";}p=p.parentElement;}}';
   h += 'var nav=document.querySelector(".bottom-nav");';
   h += 'var navH=nav?(window.innerHeight-nav.getBoundingClientRect().top):64;';
   h += 'var bottomBlock=document.getElementById("tweetBottomBlock");';
   h += 'if(bottomBlock)bottomBlock.style.bottom=navH+"px";';
-  // タイムライン高さ計算
-  h += 'var tl=document.getElementById("tweetsTimeline");if(!tl)return;';
-  h += 'var wrap=document.getElementById("tweetWrap");if(!wrap)return;';
-  h += 'var wrapRect=wrap.getBoundingClientRect();';
-  h += 'var navTop=nav?nav.getBoundingClientRect().top:window.innerHeight-64;';
-  // wrapの兄弟要素の高さ合計（タイムライン以外）
-  h += 'var siblings=Array.from(wrap.children).filter(function(el){return el.id!=="tweetsTimeline"});';
-  h += 'var siblingH=siblings.reduce(function(s,el){return s+el.getBoundingClientRect().height},0);';
-  // 入力欄ブロックの高さも引く
-  h += 'var blockH=bottomBlock?bottomBlock.getBoundingClientRect().height:90;';
-  // タイムライン高さ = bottom-navのtop - wrapのtop - 兄弟合計 - 入力欄ブロック
-  h += 'var tlH=Math.max(150,navTop-wrapRect.top-siblingH-blockH);';
-  h += 'tl.style.height=tlH+"px";';
-  h += 'tl.scrollTop=tl.scrollHeight;';
   h += '}catch(e){}}';
   h += 'setTimeout(adjust,80);setTimeout(adjust,300);';
   h += 'window.addEventListener("resize",adjust);';
+  // 最下部スクロール
+  h += 'setTimeout(function(){window.scrollTo(0,document.body.scrollHeight);},120);';
   h += '})();</scr'+'ipt>';
   
   return h;
@@ -13309,8 +13312,7 @@ function jumpToTweetDay(dateStr) {
   render();
   
   setTimeout(() => {
-    const tl = document.getElementById('tweetsTimeline');
-    if (tl) tl.scrollTop = tl.scrollHeight;
+    window.scrollTo(0, document.body.scrollHeight);
   }, 200);
 }
 window.jumpToTweetDay = jumpToTweetDay;
@@ -13322,8 +13324,7 @@ function jumpDiaryToToday() {
   _suppressScrollTop = true;
   render();
   setTimeout(() => {
-    const tl = document.getElementById('tweetsTimeline');
-    if (tl) tl.scrollTop = tl.scrollHeight;
+    window.scrollTo(0, document.body.scrollHeight);
   }, 200);
 }
 window.jumpDiaryToToday = jumpDiaryToToday;
@@ -14038,8 +14039,7 @@ function postTweet() {
   
   // タイムライン内部の最下部にスクロール
   setTimeout(() => {
-    const tl = document.getElementById('tweetsTimeline');
-    if (tl) tl.scrollTop = tl.scrollHeight;
+    window.scrollTo(0, document.body.scrollHeight);
   }, 200);
 }
 window.postTweet = postTweet;
@@ -14991,18 +14991,18 @@ function renderOfficeMemoTab() {
   let h = '';
   
   // 全体ラッパー
-  h += '<div id="ofcMemoWrap" style="display:flex;flex-direction:column;background:var(--surface);">';
+  h += '<div id="ofcMemoWrap" style="display:flex;flex-direction:column;background:transparent;padding:8px 10px 130px;gap:8px;">';
   
-  // 上部バー
-  h += '<div style="flex-shrink:0;padding:6px 10px;display:flex;gap:6px;align-items:center;background:var(--surface-warm);border-bottom:1px solid var(--line);">';
-  h += '<button onclick="openOfficeMemoCalendarModal()" title="カレンダー" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span></button>';
+  // 上部バー（独立カード）
+  h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px 10px;display:flex;gap:6px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  h += '<button onclick="openOfficeMemoCalendarModal()" title="カレンダー" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface-warm);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span></button>';
   h += '<div style="flex:1;display:flex;align-items:center;gap:5px;font-size:10px;color:var(--ink-light);font-weight:500;letter-spacing:0.05em;">';
   h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);opacity:0.7;">sticky_note_2</span>';
   h += '<span style="opacity:0.7;">仕事メモ・電話・思いつき</span>';
   h += '</div>';
   h += '</div>';
   
-  // 日付ピル
+  // 日付ピル（独立カード）
   const dateNum = (viewDate.getMonth()+1)+'/'+viewDate.getDate();
   const wdEn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][viewDate.getDay()];
   let labelEn;
@@ -15014,20 +15014,19 @@ function renderOfficeMemoTab() {
     else labelEn = wdEn;
   }
   
-  h += '<div style="flex-shrink:0;background:var(--surface-warm);padding:8px 10px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border-bottom:1px solid var(--line-soft);">';
+  h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px 10px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   if (!isToday) {
-    h += '<button onclick="jumpOfficeMemoToToday()" style="background:white;border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:3px 9px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;box-shadow:0 1px 3px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:11px;">today</span>今日</button>';
+    h += '<button onclick="jumpOfficeMemoToToday()" style="background:var(--surface-warm);border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:3px 9px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">today</span>今日</button>';
   }
-  h += '<span onclick="openOfficeMemoCalendarModal()" style="display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--ink-sub);background:white;padding:5px 14px;border-radius:100px;border:1px solid var(--line);letter-spacing:0.05em;box-shadow:0 1px 3px rgba(0,0,0,0.04);cursor:pointer;">';
+  h += '<span onclick="openOfficeMemoCalendarModal()" style="display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--ink-sub);padding:5px 14px;letter-spacing:0.05em;cursor:pointer;">';
   h += '<span style="font-variant-numeric:tabular-nums;color:var(--ink-dark);font-weight:700;">'+dateNum+'</span>';
   h += '<span style="opacity:0.4;">·</span>';
   h += '<span style="color:var(--accent-deep);font-weight:600;letter-spacing:0.08em;">'+labelEn+'</span>';
   h += '</span>';
   h += '</div>';
   
-  // ★ タイムラインカード（独立カード、中スクロール）
-  h += '<div style="padding:10px 12px 0;">';
-  h += '<div id="officeMemoTimeline" style="background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px;display:flex;flex-direction:column;height:200px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  // ★ タイムライン（高さ自由・背景透ける・カードなし）
+  h += '<div id="officeMemoTimeline" style="background:transparent;display:flex;flex-direction:column;gap:0;">';
   
   if (memos.length === 0) {
     h += '<div style="text-align:center;padding:30px 20px;color:var(--ink-sub);">';
@@ -15045,13 +15044,12 @@ function renderOfficeMemoTab() {
       h += _renderOfficeMemoBubble(m);
     }
   }
-  h += '</div>'; // タイムラインカード閉じ
-  h += '</div>'; // padding wrapper閉じ
+  h += '</div>'; // タイムライン閉じ
   
   h += '</div>'; // ofcMemoWrap閉じ
   
   // ===== 入力欄を画面下固定（独立カード風） =====
-  h += '<div id="ofcMemoBottomBlock" style="position:fixed;left:0;right:0;margin:0 auto;width:100%;max-width:480px;bottom:0;padding:0 8px 4px;z-index:100;box-sizing:border-box;pointer-events:none;">';
+  h += '<div id="ofcMemoBottomBlock" style="position:fixed;left:0;right:0;margin:0 auto;width:100%;max-width:480px;bottom:64px;padding:0 8px 4px;z-index:100;box-sizing:border-box;pointer-events:none;">';
   h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 -2px 8px rgba(0,0,0,0.06);overflow:hidden;pointer-events:auto;">';
   h += '<div style="padding:6px 10px;display:flex;align-items:flex-end;gap:5px;">';
   h += '<textarea id="officeMemoInput" placeholder="仕事のメモ・思いつき..." rows="1" oninput="autoResizeOfficeMemoInput(this)" style="flex:1;min-height:30px;max-height:120px;padding:6px 12px;border:1px solid var(--card-border);border-radius:18px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:none;color:var(--ink-dark);line-height:1.5;outline:none;"></textarea>';
@@ -15060,25 +15058,20 @@ function renderOfficeMemoTab() {
   h += '</div>'; // 入力カード閉じ
   h += '</div>'; // ofcMemoBottomBlock閉じ
   
-  // 描画後：①入力欄ブロックをbottom-navの上に貼り付け ②タイムライン高さ計算
+  // 描画後：入力欄ブロックをbottom-navの上に貼り付け＋ページ最下部スクロール
   h += '<scr'+'ipt>(function(){function adjust(){try{';
+  h += 'var mc=document.querySelector(".mode-content-wrap");';
+  h += 'if(mc){mc.style.cssText="background:transparent !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;padding:0 !important;margin:0 !important;min-height:0 !important;border-radius:0 !important;";}';
+  h += 'var tw=document.getElementById("ofcMemoWrap");';
+  h += 'if(tw){var p=tw.parentElement;while(p&&p!==document.body){var st=getComputedStyle(p);if(st.background.indexOf("rgba")>=0||st.backgroundColor.indexOf("rgba(255")>=0){p.style.background="transparent";p.style.backgroundColor="transparent";p.style.backdropFilter="none";p.style.webkitBackdropFilter="none";}p=p.parentElement;}}';
   h += 'var nav=document.querySelector(".bottom-nav");';
   h += 'var navH=nav?(window.innerHeight-nav.getBoundingClientRect().top):64;';
   h += 'var bottomBlock=document.getElementById("ofcMemoBottomBlock");';
   h += 'if(bottomBlock)bottomBlock.style.bottom=navH+"px";';
-  h += 'var tl=document.getElementById("officeMemoTimeline");if(!tl)return;';
-  h += 'var wrap=document.getElementById("ofcMemoWrap");if(!wrap)return;';
-  h += 'var wrapRect=wrap.getBoundingClientRect();';
-  h += 'var navTop=nav?nav.getBoundingClientRect().top:window.innerHeight-64;';
-  h += 'var siblings=Array.from(wrap.children).filter(function(el){return el.id!=="officeMemoTimeline"});';
-  h += 'var siblingH=siblings.reduce(function(s,el){return s+el.getBoundingClientRect().height},0);';
-  h += 'var blockH=bottomBlock?bottomBlock.getBoundingClientRect().height:50;';
-  h += 'var tlH=Math.max(150,navTop-wrapRect.top-siblingH-blockH);';
-  h += 'tl.style.height=tlH+"px";';
-  h += 'tl.scrollTop=tl.scrollHeight;';
   h += '}catch(e){}}';
   h += 'setTimeout(adjust,80);setTimeout(adjust,300);';
   h += 'window.addEventListener("resize",adjust);';
+  h += 'setTimeout(function(){window.scrollTo(0,document.body.scrollHeight);},120);';
   h += '})();</scr'+'ipt>';
   
   return h;
@@ -15144,8 +15137,7 @@ function postOfficeMemo() {
   render();
   
   setTimeout(() => {
-    const tl = document.getElementById('officeMemoTimeline');
-    if (tl) tl.scrollTop = tl.scrollHeight;
+    window.scrollTo(0, document.body.scrollHeight);
   }, 200);
 }
 window.postOfficeMemo = postOfficeMemo;
@@ -15168,8 +15160,7 @@ function jumpOfficeMemoToToday() {
   _suppressScrollTop = true;
   render();
   setTimeout(() => {
-    const tl = document.getElementById('officeMemoTimeline');
-    if (tl) tl.scrollTop = tl.scrollHeight;
+    window.scrollTo(0, document.body.scrollHeight);
   }, 200);
 }
 window.jumpOfficeMemoToToday = jumpOfficeMemoToToday;
@@ -15284,8 +15275,7 @@ function jumpOfficeMemoToDay(dateStr) {
   _suppressScrollTop = true;
   render();
   setTimeout(() => {
-    const tl = document.getElementById('officeMemoTimeline');
-    if (tl) tl.scrollTop = tl.scrollHeight;
+    window.scrollTo(0, document.body.scrollHeight);
   }, 200);
 }
 window.jumpOfficeMemoToDay = jumpOfficeMemoToDay;
