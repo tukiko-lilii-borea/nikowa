@@ -1873,6 +1873,22 @@
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     min-width: 0;
   }
+  /* オンボーディング用：超コンパクト版（4列グリッド） */
+  #onbThemeGrid .theme-btn {
+    padding: 5px 4px;
+    border-radius: 8px;
+    border-width: 1.5px;
+    flex-direction: column;
+    gap: 3px;
+  }
+  #onbThemeGrid .theme-swatch {
+    width: 100%; height: 12px;
+    border-radius: 4px;
+  }
+  #onbThemeGrid .theme-name {
+    font-size: 9px;
+    text-align: center;
+  }
   .avatar-grid {
     display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px;
     background: var(--surface-warm); padding: 8px; border-radius: 10px;
@@ -3266,52 +3282,98 @@
 <!-- 初回登録モーダル（オンボーディング） -->
 <div class="modal" id="onboardingModal" style="z-index:200;"><div class="modal-content">
   <div style="display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:6px;">
-    <img id="onbAnzuImg" style="width:56px;height:56px;flex-shrink:0;" alt="あんず">
-    <h2 class="modal-title" style="margin:0;text-align:left;">ようこそ、にこわへ🌸</h2>
+    <img id="onbAnzuImg" style="width:48px;height:48px;flex-shrink:0;" alt="あんず">
+    <h2 class="modal-title" style="margin:0;text-align:left;font-size:16px;">ようこそ、にこわへ🌸</h2>
   </div>
-  <p class="modal-sub">まずは あなたのことを 教えてね<br><span style="font-size:10.5px;color:var(--ink-light);">登録は最初の1回だけです</span></p>
+  <p class="modal-sub" style="margin-top:4px;">3つだけ教えてね<br><span style="font-size:10px;color:var(--ink-light);">あとから設定で変更できるよ</span></p>
   
-  <div class="form-group"><label class="form-label">テーマ<span style="color:var(--ink-light);font-size:10px;margin-left:6px;">タップで色がわるよ</span></label>
-    <div class="theme-grid" id="onbThemeGrid"></div>
+  <!-- ===== 必須3項目 ===== -->
+  <div class="form-group"><label class="form-label" style="font-size:11px;">テーマ<span style="color:var(--accent);font-size:9px;margin-left:5px;">必須</span></label>
+    <div id="onbThemeGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;"></div>
   </div>
   
-  <div class="form-group"><label class="form-label">おなまえ<span style="color:var(--ink-sub);font-weight:500;font-size:10.5px;margin-left:6px;">（ニックネームOK）</span><span style="color:var(--accent);font-size:10px;margin-left:6px;">必須</span></label>
-    <input type="text" class="form-input" id="onbNameInput" maxlength="14" placeholder="例：あんず"></div>
+  <div class="form-group"><label class="form-label" style="font-size:11px;">おなまえ<span style="color:var(--accent);font-size:9px;margin-left:5px;">必須</span></label>
+    <input type="text" class="form-input" id="onbNameInput" maxlength="14" placeholder="例：あんず" style="padding:9px 10px;font-size:13px;"></div>
   
-  <div class="form-group"><label class="form-label">生年月日<span style="color:var(--accent);font-size:10px;margin-left:6px;">必須</span></label>
-    <div style="display:flex;gap:6px;">
-      <select class="form-input" id="onbBdYearSelect" onchange="onBirthdayPartChange()" style="flex:1.4;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path d=\'M1 1l5 5 5-5\' stroke=\'%23888\' stroke-width=\'1.5\' fill=\'none\'/></svg>');background-repeat:no-repeat;background-position:right 8px center;padding-right:22px;">
+  <div class="form-group"><label class="form-label" style="font-size:11px;">生年月日<span style="color:var(--accent);font-size:9px;margin-left:5px;">必須</span></label>
+    <div style="display:flex;gap:5px;">
+      <select class="form-input" id="onbBdYearSelect" onchange="onBirthdayPartChange()" style="flex:1.4;padding:9px 8px;font-size:13px;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path d=\'M1 1l5 5 5-5\' stroke=\'%23888\' stroke-width=\'1.5\' fill=\'none\'/></svg>');background-repeat:no-repeat;background-position:right 6px center;padding-right:18px;">
         <option value="">年</option>
       </select>
-      <select class="form-input" id="onbBdMonthSelect" onchange="onBirthdayPartChange()" style="flex:1;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path d=\'M1 1l5 5 5-5\' stroke=\'%23888\' stroke-width=\'1.5\' fill=\'none\'/></svg>');background-repeat:no-repeat;background-position:right 8px center;padding-right:22px;">
+      <select class="form-input" id="onbBdMonthSelect" onchange="onBirthdayPartChange()" style="flex:1;padding:9px 8px;font-size:13px;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path d=\'M1 1l5 5 5-5\' stroke=\'%23888\' stroke-width=\'1.5\' fill=\'none\'/></svg>');background-repeat:no-repeat;background-position:right 6px center;padding-right:18px;">
         <option value="">月</option>
       </select>
-      <select class="form-input" id="onbBdDaySelect" onchange="onBirthdayPartChange()" style="flex:1;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path d=\'M1 1l5 5 5-5\' stroke=\'%23888\' stroke-width=\'1.5\' fill=\'none\'/></svg>');background-repeat:no-repeat;background-position:right 8px center;padding-right:22px;">
+      <select class="form-input" id="onbBdDaySelect" onchange="onBirthdayPartChange()" style="flex:1;padding:9px 8px;font-size:13px;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path d=\'M1 1l5 5 5-5\' stroke=\'%23888\' stroke-width=\'1.5\' fill=\'none\'/></svg>');background-repeat:no-repeat;background-position:right 6px center;padding-right:18px;">
         <option value="">日</option>
       </select>
     </div>
     <input type="hidden" id="onbBirthdayInput"></div>
   
-  <div class="form-group"><label class="form-label">住んでいる地域<span style="color:var(--ink-light);font-size:10px;margin-left:6px;">任意・天気がわかるよ☀️</span></label>
-    <select class="form-input" id="onbRegionInput" style="appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path d=\'M1 1l5 5 5-5\' stroke=\'%23888\' stroke-width=\'1.5\' fill=\'none\'/></svg>');background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;">
-      <option value="">選択しない</option>
-    </select></div>
-  
-  <div class="form-group"><label class="form-label">クラウド保存<span style="color:var(--ink-light);font-size:10px;margin-left:6px;">任意・あとからでもOK</span></label>
-    <button type="button" class="btn btn-secondary" onclick="signInWithGoogle()" style="width:100%;">🔑 Googleアカウントで連携</button>
-    <p style="font-size:10.5px;color:var(--ink-light);margin-top:6px;line-height:1.6;">機種変更してもデータが残るよ</p></div>
-  
-  <div class="form-group"><label class="form-label">アバター</label>
-    <div style="display:flex;gap:6px;margin-bottom:10px;">
-      <button type="button" id="onbAvatarTabEmoji" onclick="setOnbAvatarTab('emoji')" style="flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--accent-bg);color:var(--accent-deep);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🌷 絵文字</button>
-      <button type="button" id="onbAvatarTabPeople" onclick="setOnbAvatarTab('people')" style="flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">🧑 人物</button>
+  <!-- ===== 任意項目（折りたたみ）===== -->
+  <details style="margin:10px 0 6px;border-top:1px solid var(--line-soft);padding-top:10px;">
+    <summary style="cursor:pointer;font-size:11px;font-weight:700;color:var(--ink-sub);padding:4px 0;list-style:none;display:flex;align-items:center;gap:5px;">
+      <span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);">tune</span>
+      <span>もっと詳しく設定する</span>
+      <span style="margin-left:auto;font-size:9px;color:var(--ink-light);font-weight:500;">任意</span>
+    </summary>
+    
+    <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+      
+      <!-- 目標体重 -->
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" style="font-size:10px;">目標体重<span style="color:var(--ink-light);font-size:9px;margin-left:4px;">任意</span></label>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <input type="number" class="form-input" id="onbGoalWeightInput" placeholder="55" step="0.1" min="20" max="200" style="flex:1;padding:8px 10px;font-size:13px;">
+          <span style="font-size:11px;color:var(--ink-sub);font-weight:600;">kg</span>
+        </div>
+      </div>
+      
+      <!-- 生理記録 -->
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" style="font-size:10px;">生理を記録する？<span style="color:var(--ink-light);font-size:9px;margin-left:4px;">任意</span></label>
+        <div style="display:flex;gap:5px;">
+          <button type="button" id="onbPeriodOn" onclick="setOnbPeriod(true)" style="flex:1;padding:8px;border:1.5px solid var(--accent);background:var(--accent-bg);color:var(--accent-deep);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">はい</button>
+          <button type="button" id="onbPeriodOff" onclick="setOnbPeriod(false)" style="flex:1;padding:8px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">いいえ</button>
+        </div>
+      </div>
+      
+      <!-- 地域 -->
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" style="font-size:10px;">住んでいる地域<span style="color:var(--ink-light);font-size:9px;margin-left:4px;">天気がわかるよ☀️</span></label>
+        <select class="form-input" id="onbRegionInput" style="padding:8px 10px;font-size:13px;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path d=\'M1 1l5 5 5-5\' stroke=\'%23888\' stroke-width=\'1.5\' fill=\'none\'/></svg>');background-repeat:no-repeat;background-position:right 10px center;padding-right:26px;">
+          <option value="">選択しない</option>
+        </select>
+      </div>
+      
+      <!-- アバター -->
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" style="font-size:10px;">アバター</label>
+        <div style="display:flex;gap:5px;margin-bottom:6px;">
+          <button type="button" id="onbAvatarTabEmoji" onclick="setOnbAvatarTab('emoji')" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--line);background:var(--accent-bg);color:var(--accent-deep);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">🌷 絵文字</button>
+          <button type="button" id="onbAvatarTabPeople" onclick="setOnbAvatarTab('people')" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">🧑 人物</button>
+        </div>
+        <div class="avatar-grid" id="onbAvatarGrid"></div>
+      </div>
+      
+      <!-- クラウド保存 -->
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" style="font-size:10px;">クラウド保存<span style="color:var(--ink-light);font-size:9px;margin-left:4px;">機種変更しても残る</span></label>
+        <button type="button" class="btn btn-secondary" onclick="signInWithGoogle()" style="width:100%;padding:8px;font-size:11px;">🔑 Googleアカウントで連携</button>
+      </div>
+      
     </div>
-    <div class="avatar-grid" id="onbAvatarGrid"></div>
+  </details>
+  
+  <!-- 利用規約 -->
+  <div class="form-group" id="onbTermsContainer" style="margin-top:6px;"></div>
+  
+  <!-- 詳しい設定の案内 -->
+  <div style="margin:8px 0;padding:8px 10px;background:var(--surface-warm);border:1px dashed var(--line);border-radius:8px;text-align:center;font-size:10px;color:var(--ink-sub);line-height:1.6;">
+    <span class="material-symbols-rounded" style="font-size:13px;color:var(--ink-light);vertical-align:-2px;">settings</span>
+    詳しい設定はあとから<strong style="color:var(--accent-deep);">⚙ Settings</strong>でできるよ
   </div>
   
-  <div class="form-group" id="onbTermsContainer"></div>
-  
-  <div class="modal-actions" style="margin-top:8px;">
+  <div class="modal-actions" style="margin-top:6px;">
     <button class="btn btn-primary" style="width:100%;" onclick="saveOnboarding()">はじめる🌷</button>
   </div>
 </div></div>
@@ -12939,16 +13001,23 @@ function renderTweetsDiary() {
   }
   const allTags = Object.keys(tagCounts).sort((a,b) => tagCounts[b] - tagCounts[a]);
   
-  // フィルタ適用
-  let tweets = [...data.tweets];
+  // === 表示中の日付（デフォルト：今日）===
+  const today = new Date();
+  const todayKey = today.toDateString();
+  const viewDateKey = data.tweetViewDate || todayKey;
+  const viewDate = new Date(viewDateKey);
+  const isToday = (viewDateKey === todayKey);
+  
+  // フィルタ＆その日のみ
+  let tweets = data.tweets.filter(t => {
+    const td = new Date(t.timestamp || 0);
+    return td.toDateString() === viewDateKey;
+  });
   if (filterTag) {
     tweets = tweets.filter(t => (t.tags||[]).includes(filterTag));
   }
-  tweets.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
-  
-  // 今日の日付ヘッダー用
-  const today = new Date();
-  const todayKey = today.toDateString();
+  // 古い順（下が新しい）
+  tweets.sort((a,b) => (a.timestamp||0) - (b.timestamp||0));
   
   let h = '';
   
@@ -12958,11 +13027,12 @@ function renderTweetsDiary() {
     h += '<div id="tweetBgOverlay" style="position:fixed;inset:0;z-index:-1;background:rgba(255,255,255,0.55);backdrop-filter:blur(2px);"></div>';
   }
   
-  // 上部バー：タグ管理＋カレンダー＋フィルタ＋背景（スタイリッシュ、コンパクト）
-  h += '<div style="padding:6px 10px;display:flex;gap:6px;align-items:center;background:'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface-warm)')+';backdrop-filter:'+(bgImage?'blur(10px)':'none')+';border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;">';
-  h += '<button onclick="openTweetTagsModal()" title="タグ管理" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">';
-  h += '#';
-  h += '</button>';
+  // ===== 全体ラッパー（普通の流れ、fixed使わない）=====
+  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:'+(bgImage?'transparent':'var(--surface)')+';">';
+  
+  // 上部バー
+  h += '<div style="flex-shrink:0;padding:6px 10px;display:flex;gap:6px;align-items:center;background:'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface-warm)')+';backdrop-filter:'+(bgImage?'blur(10px)':'none')+';border-bottom:1px solid var(--line);">';
+  h += '<button onclick="openTweetTagsModal()" title="タグ管理" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">#</button>';
   h += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span></button>';
   
   if (filterTag) {
@@ -12976,84 +13046,73 @@ function renderTweetsDiary() {
     h += '<span style="opacity:0.7;">タグでしぼる</span>';
     h += '</button>';
   }
-  // 背景画像ボタン（検索の後ろ＝右端）
   h += '<button onclick="openTweetBgModal()" title="背景画像" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">wallpaper</span></button>';
   h += '</div>';
   
-  // タイムライン本体
-  h += '<div data-tweets-area style="padding:8px 12px 140px;min-height:60vh;">';
+  // 日付ピル
+  const dateNum = (viewDate.getMonth()+1)+'/'+viewDate.getDate();
+  const wdEn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][viewDate.getDay()];
+  let labelEn;
+  if (isToday) labelEn = 'Today';
+  else {
+    const yest = new Date(today);
+    yest.setDate(yest.getDate() - 1);
+    if (viewDateKey === yest.toDateString()) labelEn = 'Yesterday';
+    else labelEn = wdEn;
+  }
+  const dateKeyForWeather = viewDate.getFullYear()+'-'+String(viewDate.getMonth()+1).padStart(2,'0')+'-'+String(viewDate.getDate()).padStart(2,'0');
+  const weatherIcon = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dateKeyForWeather) : null;
+  
+  h += '<div style="flex-shrink:0;background:'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface-warm)')+';backdrop-filter:'+(bgImage?'blur(8px)':'none')+';padding:8px 10px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border-bottom:1px solid var(--line-soft);">';
+  if (!isToday) {
+    h += '<button onclick="jumpDiaryToToday()" style="background:white;border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:3px 9px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;box-shadow:0 1px 3px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:11px;">today</span>今日</button>';
+  }
+  h += '<span onclick="openTweetCalendarModal()" style="display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--ink-sub);background:white;padding:5px 14px;border-radius:100px;border:1px solid var(--line);letter-spacing:0.05em;box-shadow:0 1px 3px rgba(0,0,0,0.04);cursor:pointer;">';
+  h += '<span style="font-variant-numeric:tabular-nums;color:var(--ink-dark);font-weight:700;">'+dateNum+'</span>';
+  h += '<span style="opacity:0.4;">·</span>';
+  h += '<span style="color:var(--accent-deep);font-weight:600;letter-spacing:0.08em;">'+labelEn+'</span>';
+  if (weatherIcon) {
+    h += '<span style="opacity:0.4;">·</span>';
+    h += '<span style="display:inline-flex;align-items:center;">'+weatherIconHtml(weatherIcon,'font-size:13px;')+'</span>';
+  }
+  h += '</span>';
+  h += '</div>';
+  
+  // ★ タイムライン（このエリアだけスクロール、高さ固定）
+  // 高さは描画後にJSで計算
+  h += '<div data-tweets-area id="tweetsTimeline" style="overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 12px;display:flex;flex-direction:column;height:200px;">';
   
   if (tweets.length === 0) {
-    h += '<div style="text-align:center;padding:60px 20px;color:var(--ink-sub);">';
-    h += '<div style="font-size:48px;margin-bottom:12px;opacity:0.5;"><span class="material-symbols-rounded" style="font-size:48px;color:var(--accent-deep);">chat_bubble</span></div>';
+    h += '<div style="text-align:center;padding:40px 20px;color:var(--ink-sub);">';
+    h += '<div style="font-size:36px;margin-bottom:10px;opacity:0.5;"><span class="material-symbols-rounded" style="font-size:36px;color:var(--accent-deep);">chat_bubble</span></div>';
     if (filterTag) {
-      h += '<div style="font-size:14px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">「#'+escapeHtml(filterTag)+'」のつぶやきはまだないよ</div>';
-      h += '<div style="font-size:11px;line-height:1.7;">他のタグも見てみてね</div>';
+      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">「#'+escapeHtml(filterTag)+'」のつぶやきはまだないよ</div>';
+      h += '<div style="font-size:10px;line-height:1.7;">他のタグも見てみてね</div>';
+    } else if (isToday) {
+      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">まだつぶやきがないよ</div>';
+      h += '<div style="font-size:10px;line-height:1.7;">下の入力欄から<br>気持ちをひとこと書いてみてね🌷</div>';
     } else {
-      h += '<div style="font-size:14px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">まだつぶやきがないよ</div>';
-      h += '<div style="font-size:11px;line-height:1.7;">下の入力欄から<br>気持ちをひとこと書いてみてね🌷</div>';
+      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">この日はつぶやきなし</div>';
+      h += '<div style="font-size:10px;line-height:1.7;">📅 から他の日も見れるよ</div>';
     }
     h += '</div>';
   } else {
-    // 日付ごとにグループ化
-    let lastDateKey = '';
     for (const tw of tweets) {
-      const t = new Date(tw.timestamp || 0);
-      const dateKey = t.toDateString();
-      
-      // 日付セパレータ（スティッキー）
-      if (dateKey !== lastDateKey) {
-        const dateNum = (t.getMonth()+1)+'/'+t.getDate();
-        const wdEn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][t.getDay()];
-        let labelEn;
-        if (dateKey === todayKey) {
-          labelEn = 'Today';
-        } else {
-          const yest = new Date(today);
-          yest.setDate(yest.getDate() - 1);
-          if (dateKey === yest.toDateString()) {
-            labelEn = 'Yesterday';
-          } else {
-            labelEn = wdEn;
-          }
-        }
-        // その日の天気アイコン取得
-        const dateKeyForWeather = t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
-        const weatherIcon = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dateKeyForWeather) : null;
-        
-        // スティッキーな小さな日付ヘッダー
-        h += '<div style="position:sticky;top:48px;z-index:40;background:linear-gradient(180deg,'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface-warm)')+' 0%,'+(bgImage?'rgba(255,255,255,0.7)':'var(--surface-warm)')+' 80%,transparent 100%);backdrop-filter:'+(bgImage?'blur(8px)':'none')+';padding:8px 4px 10px;margin:6px 0 4px;text-align:center;">';
-        h += '<span style="display:inline-flex;align-items:center;gap:6px;font-size:9.5px;font-weight:600;color:var(--ink-sub);background:white;padding:4px 14px;border-radius:100px;border:1px solid var(--line);letter-spacing:0.05em;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
-        h += '<span style="font-variant-numeric:tabular-nums;color:var(--ink-dark);font-weight:700;">'+dateNum+'</span>';
-        h += '<span style="opacity:0.4;">·</span>';
-        h += '<span style="color:var(--accent-deep);font-weight:600;letter-spacing:0.08em;">'+labelEn+'</span>';
-        if (weatherIcon) {
-          h += '<span style="opacity:0.4;">·</span>';
-          h += '<span style="display:inline-flex;align-items:center;">'+weatherIconHtml(weatherIcon,'font-size:13px;')+'</span>';
-        }
-        h += '</span>';
-        h += '</div>';
-        lastDateKey = dateKey;
-      }
-      
       h += _renderTweetBubble(tw);
     }
   }
   
-  h += '</div>';
+  h += '</div>'; // タイムライン閉じ
   
-  // 入力欄（固定下部、底部ナビの上）
-  // 現在地（投稿用、デフォルトはプロフィール地域）
+  // 現在地ピル
   const homeRegion = (data && data.userRegion) || '大阪';
   const currentRegion = data.tweetCurrentRegion || homeRegion;
   const isAway = currentRegion !== homeRegion;
   const currentWeatherIcon = (typeof getDateWeatherIcon === 'function') ? (window._weatherCache && window._weatherCache.icon) : null;
-  // 英語表記（WEATHER_CITY_MAPから取得）
   const currentRegionEn = (typeof WEATHER_CITY_MAP !== 'undefined' && WEATHER_CITY_MAP[currentRegion]) || currentRegion;
   
-  // 現在地・天気バー（小さく、入力欄の真上に配置、中央寄せでmax-width揃え）
-  h += '<div style="position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;bottom:112px;padding:0 16px;z-index:99;display:flex;justify-content:flex-start;pointer-events:none;box-sizing:border-box;">';
-  h += '<button onclick="openTweetLocationModal()" style="pointer-events:auto;display:inline-flex;align-items:center;gap:3px;padding:3px 9px 3px 7px;background:'+(isAway?'linear-gradient(135deg,#FFE8B0,#FFD580)':'rgba(255,255,255,0.95)')+';border:1px solid '+(isAway?'#E89A4A':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:9px;font-weight:600;color:'+(isAway?'#8B6914':'var(--ink-sub)')+';cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.1);letter-spacing:0.03em;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">';
+  h += '<div style="flex-shrink:0;padding:4px 12px 0;display:flex;justify-content:flex-start;background:var(--surface);">';
+  h += '<button onclick="openTweetLocationModal()" style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px 3px 7px;background:'+(isAway?'linear-gradient(135deg,#FFE8B0,#FFD580)':'var(--surface-warm)')+';border:1px solid '+(isAway?'#E89A4A':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:9px;font-weight:600;color:'+(isAway?'#8B6914':'var(--ink-sub)')+';cursor:pointer;letter-spacing:0.03em;">';
   if (currentWeatherIcon) {
     h += weatherIconHtml(currentWeatherIcon, 'font-size:11px;');
   } else {
@@ -13068,8 +13127,11 @@ function renderTweetsDiary() {
   h += '</button>';
   h += '</div>';
   
-  // 入力欄（中央寄せ＆max-width 480px揃え、コンパクト）
-  h += '<div style="position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;bottom:64px;background:var(--surface);border-top:1px solid var(--line);padding:6px 10px;z-index:100;display:flex;align-items:flex-end;gap:5px;box-sizing:border-box;">';
+  // 写真プレビュー
+  h += '<div id="tweetPhotoPreview" style="flex-shrink:0;background:var(--surface);padding:4px 12px 0;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>';
+  
+  // 入力欄
+  h += '<div style="flex-shrink:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 10px;display:flex;align-items:flex-end;gap:5px;">';
   h += '<button onclick="openTweetPhotoPicker()" title="写真追加" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:15px;">photo_camera</span></button>';
   h += '<button onclick="insertTagToTweet()" title="タグ追加" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;font-size:14px;font-weight:800;">#</button>';
   h += '<input type="file" id="tweetPhotoInput" accept="image/*" multiple style="display:none;" onchange="handleTweetPhotoSelect(event)">';
@@ -13077,8 +13139,27 @@ function renderTweetsDiary() {
   h += '<button onclick="postTweet()" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:15px;">send</span></button>';
   h += '</div>';
   
-  // 写真プレビュー領域（投稿前の選択写真表示用）
-  h += '<div id="tweetPhotoPreview" style="position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;bottom:120px;background:var(--surface);border-top:1px solid var(--line);padding:8px 12px;z-index:101;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;"></div>';
+  h += '</div>'; // tweetWrap閉じ
+  
+  // 描画後：タイムラインの高さを計算（画面高さ - 上下要素の合計）
+  h += '<scr'+'ipt>(function(){function adjust(){try{';
+  h += 'var tl=document.getElementById("tweetsTimeline");if(!tl)return;';
+  h += 'var wrap=document.getElementById("tweetWrap");if(!wrap)return;';
+  h += 'var nav=document.querySelector(".bottom-nav");';
+  // 親（wrap）のtop位置 + タイムライン以外の要素の合計
+  h += 'var wrapRect=wrap.getBoundingClientRect();';
+  h += 'var navTop=nav?nav.getBoundingClientRect().top:window.innerHeight-64;';
+  // タイムライン以外の高さ合計（兄弟要素全部）
+  h += 'var siblings=Array.from(wrap.children).filter(function(el){return el.id!=="tweetsTimeline"});';
+  h += 'var siblingH=siblings.reduce(function(s,el){return s+el.getBoundingClientRect().height},0);';
+  // タイムライン高さ = bottom-navのtop - wrapのtop - 兄弟合計
+  h += 'var tlH=Math.max(150,navTop-wrapRect.top-siblingH);';
+  h += 'tl.style.height=tlH+"px";';
+  h += 'tl.scrollTop=tl.scrollHeight;';
+  h += '}catch(e){}}';
+  h += 'setTimeout(adjust,80);setTimeout(adjust,300);';
+  h += 'window.addEventListener("resize",adjust);';
+  h += '})();</scr'+'ipt>';
   
   return h;
 }
@@ -13203,43 +13284,33 @@ function jumpToTweetDay(dateStr) {
   closeTweetCalendarModal();
   const [y, m, d] = dateStr.split('-').map(Number);
   const target = new Date(y, m-1, d);
-  const targetStr = target.toDateString();
   
-  if (data.tweetFilterTag) {
-    delete data.tweetFilterTag;
-    saveData();
-  }
+  if (data.tweetFilterTag) delete data.tweetFilterTag;
+  data.tweetViewDate = target.toDateString();
+  saveData();
   
   _suppressScrollTop = true;
   render();
   
   setTimeout(() => {
-    const tweets = data.tweets || [];
-    const matched = tweets.filter(tw => new Date(tw.timestamp).toDateString() === targetStr);
-    if (matched.length === 0) {
-      showToast('この日のつぶやきはないよ');
-      return;
-    }
-    const area = document.querySelector('[data-tweets-area]');
-    if (!area) return;
-    const buttons = area.querySelectorAll('button[onclick*="openTweetEditModal"]');
-    for (let i = 0; i < buttons.length; i++) {
-      const onclickStr = buttons[i].getAttribute('onclick') || '';
-      const match = onclickStr.match(/openTweetEditModal\('([^']+)'\)/);
-      if (!match) continue;
-      const tw = tweets.find(t => t.id === match[1]);
-      if (tw && new Date(tw.timestamp).toDateString() === targetStr) {
-        buttons[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const orig = buttons[i].style.boxShadow;
-        buttons[i].style.boxShadow = '0 0 0 3px var(--accent)';
-        buttons[i].style.transition = 'box-shadow 0.3s';
-        setTimeout(() => { buttons[i].style.boxShadow = orig; }, 1500);
-        break;
-      }
-    }
-  }, 100);
+    const tl = document.getElementById('tweetsTimeline');
+    if (tl) tl.scrollTop = tl.scrollHeight;
+  }, 200);
 }
 window.jumpToTweetDay = jumpToTweetDay;
+
+// 「今日に戻る」ボタン
+function jumpDiaryToToday() {
+  delete data.tweetViewDate;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+  setTimeout(() => {
+    const tl = document.getElementById('tweetsTimeline');
+    if (tl) tl.scrollTop = tl.scrollHeight;
+  }, 200);
+}
+window.jumpDiaryToToday = jumpDiaryToToday;
 
 // ===== 背景画像設定（プレミアム機能） =====
 function openTweetBgModal() {
@@ -13940,8 +14011,20 @@ function postTweet() {
   window._tweetPendingPhotos = [];
   _renderTweetPhotoPreview();
   
+  // 過去日見てる時は今日に戻す
+  if (data.tweetViewDate) {
+    delete data.tweetViewDate;
+    saveData();
+  }
+  
   _suppressScrollTop = true;
   render();
+  
+  // タイムライン内部の最下部にスクロール
+  setTimeout(() => {
+    const tl = document.getElementById('tweetsTimeline');
+    if (tl) tl.scrollTop = tl.scrollHeight;
+  }, 200);
 }
 window.postTweet = postTweet;
 
@@ -14099,7 +14182,8 @@ function renderOfficeInMeTab() {
   // サブサブタブ
   h += '<div style="padding:10px 14px 0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;">';
   const subTabs = [
-    { id: 'stamp',    label: '仕事スタンプ', icon: 'check_circle' },
+    { id: 'stamp',    label: 'スタンプ',     icon: 'check_circle' },
+    { id: 'manual',   label: 'マニュアル',   icon: 'menu_book' },
     { id: 'memo',     label: 'メモ',         icon: 'sticky_note_2' },
     { id: 'contacts', label: '取引先',       icon: 'business_center' },
     { id: 'calendar', label: 'カレンダー',   icon: 'calendar_month' }
@@ -14114,6 +14198,8 @@ function renderOfficeInMeTab() {
   
   if (ssTab === 'stamp') {
     h += renderOfficeStampTab();
+  } else if (ssTab === 'manual') {
+    h += renderOfficeManualTab();
   } else if (ssTab === 'memo') {
     h += renderOfficeMemoTab();
   } else if (ssTab === 'contacts') {
@@ -14146,71 +14232,188 @@ function renderOfficeMode() {
 window.renderOfficeMode = renderOfficeMode;
 
 // Office: 仕事スタンプ
+// ===== 業種カテゴリ別Officeスタンプ =====
+const OFFICE_STAMP_CATS = ['ベーシック','製造','経理','接客','配信','営業'];
+
+const OFFICE_STAMP_DEFAULTS = {
+  'ベーシック': [
+    {icon:'edit_note',     name:'ひとこと', type:'text', placeholder:'今の気持ちを一言'},
+    {icon:'sentiment_dissatisfied', name:'愚痴', type:'text', placeholder:'吐き出しちゃおう'},
+    {icon:'phone_in_talk', name:'電話'},
+    {icon:'mail',          name:'メール'},
+    {icon:'meeting_room',  name:'会議'},
+    {icon:'description',   name:'資料作成'},
+    {icon:'task_alt',      name:'タスク完了'},
+    {icon:'coffee',        name:'休憩'},
+    {icon:'handshake',     name:'打合せ'}
+  ],
+  '製造': [
+    {icon:'engineering',   name:'設計'},
+    {icon:'precision_manufacturing', name:'加工'},
+    {icon:'fact_check',    name:'検査'},
+    {icon:'inventory',     name:'納品'},
+    {icon:'local_shipping',name:'発送'},
+    {icon:'warehouse',     name:'入庫'},
+    {icon:'build',         name:'段取'},
+    {icon:'construction',  name:'メンテ'}
+  ],
+  '経理': [
+    {icon:'receipt_long',  name:'請求'},
+    {icon:'payments',      name:'支払'},
+    {icon:'account_balance', name:'入金'},
+    {icon:'request_quote', name:'見積'},
+    {icon:'calculate',     name:'仕訳'},
+    {icon:'savings',       name:'資金繰り'},
+    {icon:'description',   name:'書類'}
+  ],
+  '接客': [
+    {icon:'badge',         name:'出勤'},
+    {icon:'star',          name:'指名'},
+    {icon:'restaurant',    name:'同伴'},
+    {icon:'celebration',   name:'お祝い'},
+    {icon:'card_giftcard', name:'プレゼント'},
+    {icon:'volunteer_activism', name:'お礼'},
+    {icon:'logout',        name:'退勤'}
+  ],
+  '配信': [
+    {icon:'videocam',      name:'配信'},
+    {icon:'group_add',     name:'コラボ'},
+    {icon:'monetization_on', name:'スパチャ'},
+    {icon:'favorite',      name:'いいね'},
+    {icon:'comment',       name:'コメント'},
+    {icon:'person_add',    name:'フォロワー'},
+    {icon:'edit_calendar', name:'告知'}
+  ],
+  '営業': [
+    {icon:'directions_car',name:'訪問'},
+    {icon:'forum',         name:'商談'},
+    {icon:'request_quote', name:'提案'},
+    {icon:'handshake',     name:'契約'},
+    {icon:'follow_the_signs', name:'フォロー'},
+    {icon:'phone_callback',name:'TEL営業'},
+    {icon:'mail',          name:'メール営業'}
+  ]
+};
+
+function _initOfficeStampLib() {
+  // 旧形式（配列）→ 新形式（カテゴリ別オブジェクト）に変換
+  if (Array.isArray(data.officeStampLib)) {
+    const oldArr = data.officeStampLib;
+    data.officeStampLib = {};
+    for (const cat of OFFICE_STAMP_CATS) {
+      data.officeStampLib[cat] = (OFFICE_STAMP_DEFAULTS[cat] || []).slice();
+    }
+    // 旧データはベーシックに統合（重複排除）
+    const basicNames = new Set(data.officeStampLib['ベーシック'].map(s => s.name));
+    for (const s of oldArr) {
+      if (!basicNames.has(s.name)) {
+        data.officeStampLib['ベーシック'].push(s);
+        basicNames.add(s.name);
+      }
+    }
+    saveData();
+  }
+  // 新規初期化
+  if (!data.officeStampLib || typeof data.officeStampLib !== 'object') {
+    data.officeStampLib = {};
+  }
+  // 各カテゴリ未定義なら初期化
+  for (const cat of OFFICE_STAMP_CATS) {
+    if (!data.officeStampLib[cat]) {
+      data.officeStampLib[cat] = (OFFICE_STAMP_DEFAULTS[cat] || []).slice();
+    }
+  }
+  // ベーシックに「ひとこと」「愚痴」が無ければ追加
+  if (!data.officeStampLib['ベーシック'].find(s => s.name === 'ひとこと')) {
+    data.officeStampLib['ベーシック'].unshift({icon:'edit_note', name:'ひとこと', type:'text', placeholder:'今の気持ちを一言'});
+  }
+  if (!data.officeStampLib['ベーシック'].find(s => s.name === '愚痴')) {
+    const idx = data.officeStampLib['ベーシック'].findIndex(s => s.name === 'ひとこと');
+    data.officeStampLib['ベーシック'].splice(idx + 1, 0, {icon:'sentiment_dissatisfied', name:'愚痴', type:'text', placeholder:'吐き出しちゃおう'});
+  }
+  saveData();
+}
+
 function renderOfficeStampTab() {
-  // データ初期化
-  if (!data.officeStampLib) {
-    data.officeStampLib = [
-      {icon:'edit_note',     name:'ひとこと', type:'text', placeholder:'今の気持ちを一言'},
-      {icon:'sentiment_dissatisfied', name:'愚痴', type:'text', placeholder:'吐き出しちゃおう'},
-      {icon:'phone_in_talk', name:'電話対応'},
-      {icon:'description',   name:'資料作成'},
-      {icon:'meeting_room',  name:'会議'},
-      {icon:'mail',          name:'メール'},
-      {icon:'inventory',     name:'納品'},
-      {icon:'local_shipping',name:'発送'},
-      {icon:'handshake',     name:'打合せ'},
-      {icon:'engineering',   name:'設計'},
-      {icon:'precision_manufacturing', name:'加工'},
-      {icon:'fact_check',    name:'検査'},
-      {icon:'task_alt',      name:'タスク完了'},
-      {icon:'coffee',        name:'休憩'}
-    ];
-    saveData();
-  }
-  // 既存ユーザー対応：「ひとこと」「愚痴」が無ければ先頭に追加
-  if (!data.officeStampLib.find(s => s.name === 'ひとこと')) {
-    data.officeStampLib.unshift({icon:'edit_note', name:'ひとこと', type:'text', placeholder:'今の気持ちを一言'});
-    saveData();
-  }
-  if (!data.officeStampLib.find(s => s.name === '愚痴')) {
-    const idx = data.officeStampLib.findIndex(s => s.name === 'ひとこと');
-    data.officeStampLib.splice(idx + 1, 0, {icon:'sentiment_dissatisfied', name:'愚痴', type:'text', placeholder:'吐き出しちゃおう'});
-    saveData();
-  }
+  _initOfficeStampLib();
   if (!data.officeStampHistory) data.officeStampHistory = [];
   
-  let h = '<div style="padding:12px 16px 8px;">';
-  h += '<div style="font-size:11px;color:#666;line-height:1.6;margin-bottom:10px;font-weight:600;">';
-  h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);vertical-align:middle;">touch_app</span> ';
-  h += 'パパッと押すだけ。お仕事の流れをきろくできるよ';
-  h += '</div>';
-  h += '</div>';
+  // 選択中カテゴリ
+  if (!data.officeStampCat || !OFFICE_STAMP_CATS.includes(data.officeStampCat)) {
+    data.officeStampCat = 'ベーシック';
+  }
+  const selCat = data.officeStampCat;
   
-  // スタンプグリッド（2列横スクロール）
-  h += '<div data-office-stamp-grid style="padding:0 12px 12px;display:grid;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:64px;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-snap-type:x mandatory;">';
-  for (const s of data.officeStampLib) {
-    h += '<button onclick="tapOfficeStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border:1px solid rgba(255,255,255,0.6);border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.35) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);min-width:0;aspect-ratio:1/1.05;scroll-snap-align:start;">';
-    h += '<span class="material-symbols-rounded" style="font-size:28px;line-height:1;color:var(--accent-deep);">'+s.icon+'</span>';
-    h += '<span style="font-size:10px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span>';
-    h += '</button>';
+  let h = '';
+  
+  // 業種カテゴリチップ（横スクロール）
+  h += '<div style="padding:10px 14px 0;display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:6px;">';
+  for (const cat of OFFICE_STAMP_CATS) {
+    const isAct = cat === selCat;
+    h += '<button onclick="switchOfficeStampCat(\''+cat+'\')" style="flex-shrink:0;padding:5px 11px;border:1px solid '+(isAct?'var(--accent)':'var(--line)')+';background:'+(isAct?'var(--accent)':'white')+';color:'+(isAct?'white':'#7A6B5E')+';border-radius:100px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:0.02em;">'+cat+'</button>';
   }
   h += '</div>';
   
-  // 区切り
-  h += '<div style="display:flex;align-items:center;gap:6px;margin:14px 16px 8px;">';
-  h += '<span style="width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0;"></span>';
-  h += '<span style="font-size:11px;font-weight:800;color:var(--accent-deep);">最近のきろく</span>';
-  h += '<span style="flex:1;height:1px;background:var(--line);"></span>';
+  // カードA：スタンプボタン（白カード）
+  h += '<div style="margin:8px 12px 10px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 0 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  
+  const stamps = data.officeStampLib[selCat] || [];
+  const visibleStamps = stamps.filter(s => !s.hidden);
+  
+  // スタンプグリッド（2列、コンパクト）
+  h += '<div data-office-stamp-grid style="padding:0 12px;display:grid;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:48px;gap:5px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-snap-type:x mandatory;">';
+  for (const s of visibleStamps) {
+    h += '<button onclick="tapOfficeStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 3px;border:1px solid var(--line);border-radius:10px;background:var(--surface-warm);cursor:pointer;font-family:inherit;min-width:0;aspect-ratio:1/1.1;scroll-snap-align:start;">';
+    h += '<span class="material-symbols-rounded" style="font-size:22px;line-height:1;color:var(--accent-deep);">'+s.icon+'</span>';
+    h += '<span style="font-size:8px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;">'+escapeHtml(s.name)+'</span>';
+    h += '</button>';
+  }
+  // ＋追加
+  h += '<button onclick="addOfficeCustomStamp(\''+selCat+'\')" title="スタンプを追加" style="display:flex;align-items:center;justify-content:center;padding:6px;border:1.5px dashed var(--accent);border-radius:10px;background:none;cursor:pointer;font-family:inherit;min-width:0;aspect-ratio:1/1.1;scroll-snap-align:start;"><span style="font-size:22px;color:var(--accent);font-weight:700;line-height:1;">＋</span></button>';
   h += '</div>';
   
-  // 履歴
-  h += '<div data-office-history-area style="padding:0 16px 16px;">';
+  h += '</div>'; // カードA閉じ
+  
+  // カードB：今日の記録
+  h += '<div style="margin:0 12px 12px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  const todayStr = new Date().toDateString();
+  const todayHist = (data.officeStampHistory || []).filter(r => new Date(r.timestamp).toDateString() === todayStr);
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+  h += '<div style="display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">history</span><span style="font-size:11px;font-weight:800;color:var(--ink-dark);">今日のきろく</span></div>';
+  if (todayHist.length > 0) {
+    h += '<span style="font-size:9px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 7px;border-radius:100px;font-weight:700;">'+todayHist.length+'件</span>';
+  }
+  h += '</div>';
+  h += '<div data-office-history-area style="max-height:280px;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-right:2px;">';
   h += _renderOfficeHistoryHtml();
   h += '</div>';
+  h += '</div>'; // カードB閉じ
   
   return h;
 }
 window.renderOfficeStampTab = renderOfficeStampTab;
+
+// 業種カテゴリ切替
+function switchOfficeStampCat(cat) {
+  data.officeStampCat = cat;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.switchOfficeStampCat = switchOfficeStampCat;
+
+// カスタムスタンプ追加
+function addOfficeCustomStamp(cat) {
+  const name = prompt('スタンプ名を入力（例：朝会）');
+  if (!name || !name.trim()) return;
+  _initOfficeStampLib();
+  if (!data.officeStampLib[cat]) data.officeStampLib[cat] = [];
+  data.officeStampLib[cat].push({icon:'star', name:name.trim()});
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.addOfficeCustomStamp = addOfficeCustomStamp;
 
 function _renderOfficeHistoryHtml() {
   const todayStr = new Date().toDateString();
@@ -14385,44 +14588,681 @@ function deleteOfficeStamp(id) {
 window.deleteOfficeStamp = deleteOfficeStamp;
 
 // Office: 仕事メモ
-function renderOfficeMemoTab() {
-  if (!data.officeMemos) data.officeMemos = [];
-  const memos = [...data.officeMemos].sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+// ===== Officeマニュアル機能 =====
+// data.officeManuals = { checklists: [...], howtos: [...] }
+// チェックリスト: {id, title, items:[{text, done}], updatedAt}
+// 手順書: {id, title, body, updatedAt}
+
+function _initOfficeManuals() {
+  if (!data.officeManuals) {
+    data.officeManuals = { checklists: [], howtos: [] };
+  }
+  if (!data.officeManuals.checklists) data.officeManuals.checklists = [];
+  if (!data.officeManuals.howtos) data.officeManuals.howtos = [];
+}
+
+function renderOfficeManualTab() {
+  _initOfficeManuals();
+  // サブサブタブ（チェックリスト / 手順書）
+  if (!data.officeManualType) data.officeManualType = 'checklists';
+  const mType = data.officeManualType;
   
-  let h = '<div style="padding:12px 16px 8px;">';
-  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
-  h += '<div style="font-size:11px;color:#666;line-height:1.6;flex:1;font-weight:600;">';
-  h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);vertical-align:middle;">sticky_note_2</span> ';
-  h += '電話のメモ・伝言・思いつきを残せるよ';
+  let h = '<div style="padding:10px 14px 0;">';
+  
+  // 説明
+  h += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.6;margin-bottom:8px;font-weight:500;">';
+  h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);vertical-align:-2px;">menu_book</span> ';
+  h += 'チェックリストや手順書を保存して、いつでも見れるよ';
   h += '</div>';
-  h += '<button onclick="openOfficeMemoModal()" style="padding:6px 12px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;">';
-  h += '<span class="material-symbols-rounded" style="font-size:14px;">add</span>追加';
+  
+  // タイプ切替
+  h += '<div style="display:flex;gap:5px;background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;padding:3px;margin-bottom:10px;">';
+  const types = [
+    { id: 'checklists', label: 'チェックリスト', icon: 'check_box' },
+    { id: 'howtos',     label: '手順書',         icon: 'article' }
+  ];
+  for (const t of types) {
+    const isAct = mType === t.id;
+    const actStyle = isAct
+      ? 'background:white;color:var(--accent-deep);box-shadow:0 1px 2px rgba(0,0,0,0.06);'
+      : 'background:transparent;color:#A88B7E;';
+    h += '<button onclick="switchOfficeManualType(\''+t.id+'\')" style="flex:1;padding:6px 4px;border:none;border-radius:7px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;'+actStyle+'">';
+    h += '<span class="material-symbols-rounded" style="font-size:13px;">'+t.icon+'</span>'+t.label;
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  h += '</div>';
+  
+  // 各リスト描画
+  if (mType === 'checklists') {
+    h += _renderOfficeChecklistList();
+  } else {
+    h += _renderOfficeHowtoList();
+  }
+  
+  return h;
+}
+window.renderOfficeManualTab = renderOfficeManualTab;
+
+function switchOfficeManualType(type) {
+  data.officeManualType = type;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.switchOfficeManualType = switchOfficeManualType;
+
+// ===== チェックリスト一覧 =====
+function _renderOfficeChecklistList() {
+  const lists = data.officeManuals.checklists || [];
+  let h = '<div style="padding:0 14px 16px;">';
+  
+  // 追加ボタン
+  h += '<button onclick="openOfficeChecklistEditor()" style="width:100%;padding:9px;background:var(--accent-bg);border:1.5px dashed var(--accent);color:var(--accent-deep);border-radius:10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:5px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;">add</span>新しいチェックリスト';
   h += '</button>';
-  h += '</div>';
   
-  if (memos.length === 0) {
-    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 100%);border:1.5px dashed var(--card-border);border-radius:16px;padding:24px 16px;text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;">';
-    h += '<div style="margin-bottom:8px;"><span class="material-symbols-rounded" style="font-size:36px;color:var(--accent-deep);opacity:0.5;">edit_note</span></div>';
-    h += 'まだメモがないよ<br>右上の「＋追加」から書いてみてね🌷';
+  if (lists.length === 0) {
+    h += '<div style="text-align:center;padding:30px 16px;color:var(--ink-sub);font-size:11px;line-height:1.7;background:var(--surface-warm);border:1px dashed var(--line);border-radius:10px;">';
+    h += 'まだチェックリストがないよ<br><span style="font-size:9px;color:var(--ink-light);">「朝のルーティン」「月末の手順」など</span>';
     h += '</div>';
   } else {
     h += '<div style="display:flex;flex-direction:column;gap:8px;">';
-    for (const m of memos) {
-      const t = new Date(m.updatedAt || Date.now());
-      const dateStr = (t.getMonth()+1)+'/'+t.getDate()+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
-      h += '<button onclick="openOfficeMemoModal(\''+m.id+'\')" style="display:flex;flex-direction:column;gap:4px;padding:12px;background:linear-gradient(135deg,#FFFCE8 0%,#FFFAF0 100%);border:1.5px solid #E8D870;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;">';
-      if (m.title) h += '<div style="font-size:13px;font-weight:800;color:#8B6914;">'+escapeHtml(m.title)+'</div>';
-      h += '<div style="font-size:11px;color:#666;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">'+escapeHtml(m.body||'(本文なし)')+'</div>';
-      h += '<div style="font-size:9px;color:#aaa;margin-top:2px;">'+dateStr+'</div>';
+    for (const list of lists) {
+      const total = (list.items || []).length;
+      const done = (list.items || []).filter(i => i.done).length;
+      const progress = total > 0 ? Math.round((done/total)*100) : 0;
+      
+      h += '<button onclick="openOfficeChecklistEditor(\''+list.id+'\')" style="text-align:left;padding:10px 12px;background:white;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">';
+      h += '<div style="display:flex;align-items:center;gap:6px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:15px;color:var(--accent-deep);">checklist</span>';
+      h += '<span style="flex:1;font-size:12px;font-weight:700;color:#7A6B5E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(list.title || '無題')+'</span>';
+      h += '<span style="font-size:9px;color:#A88B7E;font-weight:700;font-variant-numeric:tabular-nums;">'+done+'/'+total+'</span>';
+      h += '</div>';
+      // プログレスバー
+      h += '<div style="height:4px;background:var(--surface-warm);border-radius:2px;overflow:hidden;">';
+      h += '<div style="height:100%;width:'+progress+'%;background:var(--accent);border-radius:2px;transition:width 0.3s;"></div>';
+      h += '</div>';
       h += '</button>';
     }
     h += '</div>';
   }
-  
   h += '</div>';
   return h;
 }
+
+// ===== 手順書一覧 =====
+function _renderOfficeHowtoList() {
+  const howtos = data.officeManuals.howtos || [];
+  let h = '<div style="padding:0 14px 16px;">';
+  
+  h += '<button onclick="openOfficeHowtoEditor()" style="width:100%;padding:9px;background:var(--accent-bg);border:1.5px dashed var(--accent);color:var(--accent-deep);border-radius:10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:5px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;">add</span>新しい手順書';
+  h += '</button>';
+  
+  if (howtos.length === 0) {
+    h += '<div style="text-align:center;padding:30px 16px;color:var(--ink-sub);font-size:11px;line-height:1.7;background:var(--surface-warm);border:1px dashed var(--line);border-radius:10px;">';
+    h += 'まだ手順書がないよ<br><span style="font-size:9px;color:var(--ink-light);">「機械の起動方法」「請求書発行手順」など</span>';
+    h += '</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+    for (const ht of howtos) {
+      const preview = (ht.body || '').substring(0, 50);
+      h += '<button onclick="openOfficeHowtoEditor(\''+ht.id+'\')" style="text-align:left;padding:10px 12px;background:white;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">';
+      h += '<div style="display:flex;align-items:center;gap:6px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:15px;color:var(--accent-deep);">article</span>';
+      h += '<span style="flex:1;font-size:12px;font-weight:700;color:#7A6B5E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(ht.title || '無題')+'</span>';
+      h += '</div>';
+      if (preview) {
+        h += '<div style="font-size:10px;color:#A88B7E;line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;padding-left:21px;">'+escapeHtml(preview)+(ht.body.length > 50 ? '...' : '')+'</div>';
+      }
+      h += '</button>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+
+// ===== チェックリスト編集モーダル =====
+function openOfficeChecklistEditor(id) {
+  _initOfficeManuals();
+  let list = id ? data.officeManuals.checklists.find(l => l.id === id) : null;
+  if (!list) {
+    list = { id: 'cl_'+Date.now(), title: '', items: [], updatedAt: Date.now() };
+  }
+  window._editingChecklist = JSON.parse(JSON.stringify(list));
+  
+  const ex = document.getElementById('officeChecklistModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="officeChecklistModal" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:88vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">checklist</span>';
+  h += '<span style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+(id?'チェックリスト編集':'新しいチェックリスト')+'</span>';
+  h += '<button onclick="closeOfficeChecklistModal()" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:50%;width:28px;height:28px;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;">close</span></button>';
+  h += '</div>';
+  
+  // タイトル
+  h += '<div>';
+  h += '<label style="display:block;font-size:10px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">タイトル</label>';
+  h += '<input type="text" id="checklistTitle" value="'+escapeHtml(list.title)+'" placeholder="例：朝のルーティン" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;">';
+  h += '</div>';
+  
+  // 項目一覧
+  h += '<div>';
+  h += '<label style="display:block;font-size:10px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">チェック項目</label>';
+  h += '<div id="checklistItems" style="display:flex;flex-direction:column;gap:5px;">';
+  for (let i = 0; i < window._editingChecklist.items.length; i++) {
+    h += _renderChecklistItemRow(i, window._editingChecklist.items[i]);
+  }
+  h += '</div>';
+  h += '<button onclick="addChecklistItem()" style="width:100%;padding:7px;margin-top:6px;background:var(--accent-bg);border:1px dashed var(--accent);color:var(--accent-deep);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">+ 項目を追加</button>';
+  h += '</div>';
+  
+  // ボタン
+  h += '<div style="display:flex;gap:6px;margin-top:6px;">';
+  if (id) {
+    h += '<button onclick="deleteOfficeChecklist(\''+id+'\')" style="padding:10px 14px;background:var(--surface-warm);color:#C68080;border:1px solid #E8B8C0;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="saveOfficeChecklist()" style="flex:1;padding:10px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openOfficeChecklistEditor = openOfficeChecklistEditor;
+
+function _renderChecklistItemRow(idx, item) {
+  let h = '<div style="display:flex;align-items:center;gap:5px;padding:5px 6px;background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;">';
+  h += '<input type="checkbox" id="ckitem_'+idx+'" '+(item.done?'checked':'')+' onchange="updateChecklistItemDone('+idx+',this.checked)" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;accent-color:var(--accent);">';
+  h += '<input type="text" id="cktext_'+idx+'" value="'+escapeHtml(item.text||'')+'" oninput="updateChecklistItemText('+idx+',this.value)" placeholder="やること" style="flex:1;padding:5px 7px;border:none;background:transparent;font-family:inherit;font-size:12px;color:#7A6B5E;outline:none;">';
+  h += '<button onclick="removeChecklistItem('+idx+')" style="flex-shrink:0;background:none;border:none;color:var(--ink-light);cursor:pointer;padding:0 4px;font-size:14px;">×</button>';
+  h += '</div>';
+  return h;
+}
+
+function addChecklistItem() {
+  if (!window._editingChecklist) return;
+  window._editingChecklist.items.push({ text: '', done: false });
+  _refreshChecklistItems();
+}
+window.addChecklistItem = addChecklistItem;
+
+function removeChecklistItem(idx) {
+  if (!window._editingChecklist) return;
+  window._editingChecklist.items.splice(idx, 1);
+  _refreshChecklistItems();
+}
+window.removeChecklistItem = removeChecklistItem;
+
+function updateChecklistItemDone(idx, done) {
+  if (!window._editingChecklist) return;
+  if (window._editingChecklist.items[idx]) {
+    window._editingChecklist.items[idx].done = done;
+  }
+}
+window.updateChecklistItemDone = updateChecklistItemDone;
+
+function updateChecklistItemText(idx, text) {
+  if (!window._editingChecklist) return;
+  if (window._editingChecklist.items[idx]) {
+    window._editingChecklist.items[idx].text = text;
+  }
+}
+window.updateChecklistItemText = updateChecklistItemText;
+
+function _refreshChecklistItems() {
+  const area = document.getElementById('checklistItems');
+  if (!area || !window._editingChecklist) return;
+  let h = '';
+  for (let i = 0; i < window._editingChecklist.items.length; i++) {
+    h += _renderChecklistItemRow(i, window._editingChecklist.items[i]);
+  }
+  area.innerHTML = h;
+}
+
+function saveOfficeChecklist() {
+  _initOfficeManuals();
+  if (!window._editingChecklist) return;
+  
+  const titleInp = document.getElementById('checklistTitle');
+  const title = titleInp ? titleInp.value.trim() : '';
+  if (!title) { showToast('タイトルを入れてね🌷'); return; }
+  
+  // 空項目を除外
+  const items = window._editingChecklist.items.filter(i => (i.text||'').trim());
+  
+  const obj = {
+    id: window._editingChecklist.id,
+    title: title,
+    items: items,
+    updatedAt: Date.now()
+  };
+  
+  // 既存更新 or 新規追加
+  const idx = data.officeManuals.checklists.findIndex(l => l.id === obj.id);
+  if (idx >= 0) {
+    data.officeManuals.checklists[idx] = obj;
+  } else {
+    data.officeManuals.checklists.push(obj);
+  }
+  saveData();
+  closeOfficeChecklistModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.saveOfficeChecklist = saveOfficeChecklist;
+
+function deleteOfficeChecklist(id) {
+  if (!confirm('このチェックリストを削除する？')) return;
+  _initOfficeManuals();
+  data.officeManuals.checklists = data.officeManuals.checklists.filter(l => l.id !== id);
+  saveData();
+  closeOfficeChecklistModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.deleteOfficeChecklist = deleteOfficeChecklist;
+
+function closeOfficeChecklistModal() {
+  const el = document.getElementById('officeChecklistModal');
+  if (el) el.remove();
+  window._editingChecklist = null;
+}
+window.closeOfficeChecklistModal = closeOfficeChecklistModal;
+
+// ===== 手順書編集モーダル =====
+function openOfficeHowtoEditor(id) {
+  _initOfficeManuals();
+  let ht = id ? data.officeManuals.howtos.find(h => h.id === id) : null;
+  if (!ht) {
+    ht = { id: 'ht_'+Date.now(), title: '', body: '', updatedAt: Date.now() };
+  }
+  
+  const ex = document.getElementById('officeHowtoModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="officeHowtoModal" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:88vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">article</span>';
+  h += '<span style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+(id?'手順書編集':'新しい手順書')+'</span>';
+  h += '<button onclick="closeOfficeHowtoModal()" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:50%;width:28px;height:28px;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div>';
+  h += '<label style="display:block;font-size:10px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">タイトル</label>';
+  h += '<input type="text" id="howtoTitle" value="'+escapeHtml(ht.title)+'" placeholder="例：機械の起動方法" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;">';
+  h += '</div>';
+  
+  h += '<div>';
+  h += '<label style="display:block;font-size:10px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">本文</label>';
+  h += '<textarea id="howtoBody" placeholder="手順を書く...（改行で見やすく）" style="width:100%;min-height:240px;padding:10px 11px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;line-height:1.7;resize:vertical;box-sizing:border-box;color:#7A6B5E;">'+escapeHtml(ht.body)+'</textarea>';
+  h += '</div>';
+  
+  h += '<div style="display:flex;gap:6px;margin-top:6px;">';
+  if (id) {
+    h += '<button onclick="deleteOfficeHowto(\''+id+'\')" style="padding:10px 14px;background:var(--surface-warm);color:#C68080;border:1px solid #E8B8C0;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="saveOfficeHowto(\''+ht.id+'\')" style="flex:1;padding:10px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openOfficeHowtoEditor = openOfficeHowtoEditor;
+
+function saveOfficeHowto(id) {
+  _initOfficeManuals();
+  const titleInp = document.getElementById('howtoTitle');
+  const bodyInp = document.getElementById('howtoBody');
+  const title = titleInp ? titleInp.value.trim() : '';
+  const body = bodyInp ? bodyInp.value : '';
+  if (!title) { showToast('タイトルを入れてね🌷'); return; }
+  
+  const obj = { id: id, title: title, body: body, updatedAt: Date.now() };
+  const idx = data.officeManuals.howtos.findIndex(h => h.id === id);
+  if (idx >= 0) {
+    data.officeManuals.howtos[idx] = obj;
+  } else {
+    data.officeManuals.howtos.push(obj);
+  }
+  saveData();
+  closeOfficeHowtoModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.saveOfficeHowto = saveOfficeHowto;
+
+function deleteOfficeHowto(id) {
+  if (!confirm('この手順書を削除する？')) return;
+  _initOfficeManuals();
+  data.officeManuals.howtos = data.officeManuals.howtos.filter(h => h.id !== id);
+  saveData();
+  closeOfficeHowtoModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.deleteOfficeHowto = deleteOfficeHowto;
+
+function closeOfficeHowtoModal() {
+  const el = document.getElementById('officeHowtoModal');
+  if (el) el.remove();
+}
+window.closeOfficeHowtoModal = closeOfficeHowtoModal;
+
+function renderOfficeMemoTab() {
+  if (!data.officeMemos) data.officeMemos = [];
+  
+  const today = new Date();
+  const todayKey = today.toDateString();
+  const viewDateKey = data.officeMemoViewDate || todayKey;
+  const viewDate = new Date(viewDateKey);
+  const isToday = (viewDateKey === todayKey);
+  
+  let memos = data.officeMemos.filter(m => {
+    const ts = m.createdAt || m.updatedAt || 0;
+    return new Date(ts).toDateString() === viewDateKey;
+  });
+  memos.sort((a,b) => (a.createdAt||a.updatedAt||0) - (b.createdAt||b.updatedAt||0));
+  
+  let h = '';
+  
+  // 全体ラッパー
+  h += '<div id="ofcMemoWrap" style="display:flex;flex-direction:column;background:var(--surface);">';
+  
+  // 上部バー
+  h += '<div style="flex-shrink:0;padding:6px 10px;display:flex;gap:6px;align-items:center;background:var(--surface-warm);border-bottom:1px solid var(--line);">';
+  h += '<button onclick="openOfficeMemoCalendarModal()" title="カレンダー" style="flex:0 0 auto;width:26px;height:26px;background:var(--surface);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span></button>';
+  h += '<div style="flex:1;display:flex;align-items:center;gap:5px;font-size:10px;color:var(--ink-light);font-weight:500;letter-spacing:0.05em;">';
+  h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);opacity:0.7;">sticky_note_2</span>';
+  h += '<span style="opacity:0.7;">仕事メモ・電話・思いつき</span>';
+  h += '</div>';
+  h += '</div>';
+  
+  // 日付ピル
+  const dateNum = (viewDate.getMonth()+1)+'/'+viewDate.getDate();
+  const wdEn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][viewDate.getDay()];
+  let labelEn;
+  if (isToday) labelEn = 'Today';
+  else {
+    const yest = new Date(today);
+    yest.setDate(yest.getDate() - 1);
+    if (viewDateKey === yest.toDateString()) labelEn = 'Yesterday';
+    else labelEn = wdEn;
+  }
+  
+  h += '<div style="flex-shrink:0;background:var(--surface-warm);padding:8px 10px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border-bottom:1px solid var(--line-soft);">';
+  if (!isToday) {
+    h += '<button onclick="jumpOfficeMemoToToday()" style="background:white;border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:3px 9px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;box-shadow:0 1px 3px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:11px;">today</span>今日</button>';
+  }
+  h += '<span onclick="openOfficeMemoCalendarModal()" style="display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--ink-sub);background:white;padding:5px 14px;border-radius:100px;border:1px solid var(--line);letter-spacing:0.05em;box-shadow:0 1px 3px rgba(0,0,0,0.04);cursor:pointer;">';
+  h += '<span style="font-variant-numeric:tabular-nums;color:var(--ink-dark);font-weight:700;">'+dateNum+'</span>';
+  h += '<span style="opacity:0.4;">·</span>';
+  h += '<span style="color:var(--accent-deep);font-weight:600;letter-spacing:0.08em;">'+labelEn+'</span>';
+  h += '</span>';
+  h += '</div>';
+  
+  // ★ タイムライン（高さ固定で内部スクロール）
+  h += '<div id="officeMemoTimeline" style="overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 12px;display:flex;flex-direction:column;height:200px;">';
+  
+  if (memos.length === 0) {
+    h += '<div style="text-align:center;padding:30px 20px;color:var(--ink-sub);">';
+    h += '<div style="font-size:32px;margin-bottom:6px;opacity:0.5;"><span class="material-symbols-rounded" style="font-size:32px;color:var(--accent-deep);">sticky_note_2</span></div>';
+    if (isToday) {
+      h += '<div style="font-size:11px;font-weight:700;color:var(--ink-dark);margin-bottom:3px;">まだメモがないよ</div>';
+      h += '<div style="font-size:9px;line-height:1.7;">下の入力欄から書いてみてね🌷</div>';
+    } else {
+      h += '<div style="font-size:11px;font-weight:700;color:var(--ink-dark);margin-bottom:3px;">この日はメモなし</div>';
+      h += '<div style="font-size:9px;line-height:1.7;">📅から他の日も見れるよ</div>';
+    }
+    h += '</div>';
+  } else {
+    for (const m of memos) {
+      h += _renderOfficeMemoBubble(m);
+    }
+  }
+  h += '</div>';
+  
+  // 入力欄
+  h += '<div style="flex-shrink:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 10px;display:flex;align-items:flex-end;gap:5px;">';
+  h += '<textarea id="officeMemoInput" placeholder="仕事のメモ・思いつき..." rows="1" oninput="autoResizeOfficeMemoInput(this)" style="flex:1;min-height:30px;max-height:120px;padding:6px 12px;border:1px solid var(--card-border);border-radius:18px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:none;color:var(--ink-dark);line-height:1.5;outline:none;"></textarea>';
+  h += '<button onclick="postOfficeMemo()" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:15px;">send</span></button>';
+  h += '</div>';
+  
+  h += '</div>'; // ofcMemoWrap閉じ
+  
+  // 描画後：タイムラインの高さを計算
+  h += '<scr'+'ipt>(function(){function adjust(){try{';
+  h += 'var tl=document.getElementById("officeMemoTimeline");if(!tl)return;';
+  h += 'var wrap=document.getElementById("ofcMemoWrap");if(!wrap)return;';
+  h += 'var nav=document.querySelector(".bottom-nav");';
+  h += 'var wrapRect=wrap.getBoundingClientRect();';
+  h += 'var navTop=nav?nav.getBoundingClientRect().top:window.innerHeight-64;';
+  h += 'var siblings=Array.from(wrap.children).filter(function(el){return el.id!=="officeMemoTimeline"});';
+  h += 'var siblingH=siblings.reduce(function(s,el){return s+el.getBoundingClientRect().height},0);';
+  h += 'var tlH=Math.max(150,navTop-wrapRect.top-siblingH);';
+  h += 'tl.style.height=tlH+"px";';
+  h += 'tl.scrollTop=tl.scrollHeight;';
+  h += '}catch(e){}}';
+  h += 'setTimeout(adjust,80);setTimeout(adjust,300);';
+  h += 'window.addEventListener("resize",adjust);';
+  h += '})();</scr'+'ipt>';
+  
+  return h;
+}
 window.renderOfficeMemoTab = renderOfficeMemoTab;
+
+// メモバブル描画
+function _renderOfficeMemoBubble(m) {
+  const ts = m.createdAt || m.updatedAt || Date.now();
+  const t = new Date(ts);
+  const timeStr = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+  const body = m.body || (m.title ? '【'+m.title+'】' : '');
+  
+  let h = '<div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:8px;">';
+  // 時刻ピル
+  h += '<span style="flex-shrink:0;font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;background:white;border:1px solid var(--line);padding:2px 7px;border-radius:100px;font-weight:600;">'+timeStr+'</span>';
+  // バブル
+  h += '<div style="flex:1;position:relative;">';
+  h += '<button onclick="openOfficeMemoModal(\''+m.id+'\')" style="display:block;width:82%;text-align:left;padding:8px 12px;background:white;border:1px solid var(--line);border-radius:14px;cursor:pointer;font-family:inherit;color:var(--ink-dark);font-size:11.5px;line-height:1.6;box-shadow:0 1px 2px rgba(0,0,0,0.04);white-space:pre-wrap;word-break:break-word;">';
+  if (m.title) {
+    h += '<div style="font-size:11px;font-weight:800;color:#8B6914;margin-bottom:3px;">'+escapeHtml(m.title)+'</div>';
+  }
+  h += escapeHtml(body);
+  h += '</button>';
+  // 削除×ボタン（右上）
+  h += '<button onclick="deleteOfficeMemoQuick(\''+m.id+'\')" style="position:absolute;top:-4px;right:18%;background:white;border:1px solid var(--line);color:var(--ink-light);cursor:pointer;width:18px;height:18px;border-radius:50%;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.08);">×</button>';
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+
+// 入力欄自動リサイズ
+function autoResizeOfficeMemoInput(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+window.autoResizeOfficeMemoInput = autoResizeOfficeMemoInput;
+
+// メモ投稿
+function postOfficeMemo() {
+  const inp = document.getElementById('officeMemoInput');
+  const body = inp ? inp.value.trim() : '';
+  if (!body) { showToast('何か書いてね🌷'); return; }
+  if (!data.officeMemos) data.officeMemos = [];
+  
+  const now = Date.now();
+  const newMemo = {
+    id: 'omemo_' + now + '_' + Math.random().toString(36).slice(2,7),
+    title: '',
+    body: body,
+    createdAt: now,
+    updatedAt: now
+  };
+  data.officeMemos.push(newMemo);
+  
+  // 過去日見てたら今日に戻す
+  if (data.officeMemoViewDate) delete data.officeMemoViewDate;
+  
+  saveData();
+  if (inp) { inp.value = ''; inp.style.height = 'auto'; }
+  
+  _suppressScrollTop = true;
+  render();
+  
+  setTimeout(() => {
+    const tl = document.getElementById('officeMemoTimeline');
+    if (tl) tl.scrollTop = tl.scrollHeight;
+  }, 200);
+}
+window.postOfficeMemo = postOfficeMemo;
+
+// 削除（クイック）
+function deleteOfficeMemoQuick(id) {
+  if (!confirm('このメモを削除する？')) return;
+  if (!data.officeMemos) return;
+  data.officeMemos = data.officeMemos.filter(m => m.id !== id);
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.deleteOfficeMemoQuick = deleteOfficeMemoQuick;
+
+// 今日に戻る
+function jumpOfficeMemoToToday() {
+  delete data.officeMemoViewDate;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+  setTimeout(() => {
+    const tl = document.getElementById('officeMemoTimeline');
+    if (tl) tl.scrollTop = tl.scrollHeight;
+  }, 200);
+}
+window.jumpOfficeMemoToToday = jumpOfficeMemoToToday;
+
+// カレンダーモーダル
+function openOfficeMemoCalendarModal() {
+  if (!data.officeMemoCalMonth) {
+    const now = new Date();
+    data.officeMemoCalMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  }
+  _renderOfficeMemoCalendarModal();
+}
+window.openOfficeMemoCalendarModal = openOfficeMemoCalendarModal;
+
+function switchOfficeMemoCalMonth(delta) {
+  const [y, m] = data.officeMemoCalMonth.split('-').map(Number);
+  const d = new Date(y, m-1+delta, 1);
+  data.officeMemoCalMonth = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  _renderOfficeMemoCalendarModal();
+}
+window.switchOfficeMemoCalMonth = switchOfficeMemoCalMonth;
+
+function _renderOfficeMemoCalendarModal() {
+  const [yearStr, monthStr] = data.officeMemoCalMonth.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10) - 1;
+  
+  // その月のメモ集計
+  const memos = data.officeMemos || [];
+  const dayCounts = {};
+  for (const m of memos) {
+    const ts = m.createdAt || m.updatedAt || 0;
+    const t = new Date(ts);
+    if (t.getFullYear() === year && t.getMonth() === month) {
+      const key = t.getDate();
+      dayCounts[key] = (dayCounts[key]||0) + 1;
+    }
+  }
+  
+  const ex = document.getElementById('officeMemoCalModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="officeMemoCalModal" onclick="if(event.target===this)closeOfficeMemoCalModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">';
+  
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">メモカレンダー</div>';
+  h += '<button onclick="closeOfficeMemoCalModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;">';
+  h += '<button onclick="switchOfficeMemoCalMonth(-1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-dark);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_left</span></button>';
+  h += '<div style="font-size:13px;font-weight:700;color:#7A6B5E;font-variant-numeric:tabular-nums;letter-spacing:0.05em;">'+year+'.'+String(month+1).padStart(2,'0')+'</div>';
+  h += '<button onclick="switchOfficeMemoCalMonth(1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-dark);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_right</span></button>';
+  h += '</div>';
+  
+  // 曜日
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">';
+  const wd = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  for (let i = 0; i < 7; i++) {
+    const c = i===0?'#C68080':(i===6?'#80A0B8':'#B8AFA8');
+    h += '<div style="text-align:center;font-size:8px;font-weight:700;color:'+c+';padding:2px 0;letter-spacing:0.08em;">'+wd[i]+'</div>';
+  }
+  h += '</div>';
+  
+  // 日付セル
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">';
+  const firstDay = new Date(year, month, 1).getDay();
+  const lastDay = new Date(year, month+1, 0).getDate();
+  for (let i = 0; i < firstDay; i++) {
+    h += '<div></div>';
+  }
+  const todayKey = new Date().toDateString();
+  const viewKey = data.officeMemoViewDate || todayKey;
+  for (let d = 1; d <= lastDay; d++) {
+    const cellDate = new Date(year, month, d);
+    const cellKey = cellDate.toDateString();
+    const count = dayCounts[d] || 0;
+    const isToday = cellKey === todayKey;
+    const isView = cellKey === viewKey;
+    let bg = 'white', border = '1px solid #F0E8E0', col = '#7A6B5E';
+    if (isView) { bg = '#E8B0BC'; border = '1px solid #D89098'; col = 'white'; }
+    else if (isToday) { bg = '#FFF6F8'; border = '1px solid #F5D8DC'; }
+    else if (count > 0) { bg = '#FFFCE8'; border = '1px solid #E8D870'; }
+    
+    const dateStrYMD = year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    h += '<button onclick="jumpOfficeMemoToDay(\''+dateStrYMD+'\')" style="aspect-ratio:1/1;border-radius:6px;background:'+bg+';border:'+border+';display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;cursor:pointer;font-family:inherit;">';
+    h += '<span style="font-size:11px;font-weight:'+(isView?'700':'600')+';color:'+col+';font-variant-numeric:tabular-nums;">'+d+'</span>';
+    if (count > 0) {
+      h += '<span style="font-size:7px;color:'+(isView?'rgba(255,255,255,0.85)':'#8B6914')+';font-weight:700;margin-top:1px;">'+count+'</span>';
+    }
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+
+function closeOfficeMemoCalModal() {
+  const el = document.getElementById('officeMemoCalModal');
+  if (el) el.remove();
+}
+window.closeOfficeMemoCalModal = closeOfficeMemoCalModal;
+
+function jumpOfficeMemoToDay(dateStr) {
+  closeOfficeMemoCalModal();
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const target = new Date(y, m-1, d);
+  data.officeMemoViewDate = target.toDateString();
+  saveData();
+  _suppressScrollTop = true;
+  render();
+  setTimeout(() => {
+    const tl = document.getElementById('officeMemoTimeline');
+    if (tl) tl.scrollTop = tl.scrollHeight;
+  }, 200);
+}
+window.jumpOfficeMemoToDay = jumpOfficeMemoToDay;
 
 function openOfficeMemoModal(memoId) {
   if (!data.officeMemos) data.officeMemos = [];
@@ -19313,7 +20153,8 @@ const TAB_ICONS = {
   collection: 'collections_bookmark', resume: 'person', secret: 'lock',
   memo: 'sticky_note_2', goods: 'shopping_cart', rules: 'gavel',
   home: 'home', care: 'pets', health: 'health_and_safety',
-  town: 'location_city', growth: 'trending_up', school: 'school'
+  town: 'location_city', growth: 'trending_up', school: 'school',
+  money: 'payments', office: 'business_center'
 };
 function renderModePageTabs(mode) {
   const tabs = getModeTabsForMode(mode);
@@ -21379,6 +22220,25 @@ function saveOnboarding() {
   data.user.under15AtRegistration = isUnder15(birthday);
   data.user.termsAcceptedAt = Date.now();
   if (region) data.userRegion = region;
+  
+  // 目標体重（任意）
+  const goalWeightInput = document.getElementById('onbGoalWeightInput');
+  if (goalWeightInput && goalWeightInput.value) {
+    const gw = parseFloat(goalWeightInput.value);
+    if (gw > 0) {
+      if (!data.userPrefs) data.userPrefs = {};
+      data.userPrefs.goalWeight = gw;
+    }
+  }
+  
+  // 生理記録ON/OFF（任意、デフォルト：true）
+  if (!data.userPrefs) data.userPrefs = {};
+  if (window._onbPeriodEnabled === false) {
+    data.userPrefs.periodTracking = false;
+  } else {
+    data.userPrefs.periodTracking = true;
+  }
+  
   saveData();
   if (region) { try { fetchWeather(); } catch(e) {} }
   closeModal('onboardingModal');
@@ -21388,6 +22248,31 @@ function saveOnboarding() {
   currentMode = 'pet';
   render();
 }
+
+// 生理記録ON/OFF切替（オンボーディング用）
+function setOnbPeriod(enabled) {
+  window._onbPeriodEnabled = enabled;
+  const onBtn = document.getElementById('onbPeriodOn');
+  const offBtn = document.getElementById('onbPeriodOff');
+  if (onBtn && offBtn) {
+    if (enabled) {
+      onBtn.style.background = 'var(--accent-bg)';
+      onBtn.style.borderColor = 'var(--accent)';
+      onBtn.style.color = 'var(--accent-deep)';
+      offBtn.style.background = 'var(--surface-warm)';
+      offBtn.style.borderColor = 'var(--line)';
+      offBtn.style.color = 'var(--ink-sub)';
+    } else {
+      offBtn.style.background = 'var(--accent-bg)';
+      offBtn.style.borderColor = 'var(--accent)';
+      offBtn.style.color = 'var(--accent-deep)';
+      onBtn.style.background = 'var(--surface-warm)';
+      onBtn.style.borderColor = 'var(--line)';
+      onBtn.style.color = 'var(--ink-sub)';
+    }
+  }
+}
+window.setOnbPeriod = setOnbPeriod;
 
 function saveUser() {
   data.user.name = document.getElementById('userNameInput').value.trim();
