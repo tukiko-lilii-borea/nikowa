@@ -778,7 +778,8 @@
   .mode-content-wrap:has(#ofcMemoWrap),
   .mode-content-wrap:has(#profileWrap),
   .mode-content-wrap:has(#officeStampWrap),
-  .mode-content-wrap:has(#officeContactsWrap) {
+  .mode-content-wrap:has(#officeContactsWrap),
+  .mode-content-wrap:has(#meStampWrap) {
     background: transparent !important;
     border: none !important;
     backdrop-filter: none !important;
@@ -7647,11 +7648,19 @@ function uncompletePlannerItem(id) {
 function addStampRecord(icon, name, source, plannerId, opts) {
   if (!data.stampHistory) data.stampHistory = [];
   opts = opts || {};
+  // 選択中日付があればその日に記録
+  let ts = Date.now();
+  if (data.activeStampDate) {
+    const today = new Date();
+    const target = new Date(data.activeStampDate+'T00:00:00');
+    target.setHours(today.getHours(), today.getMinutes(), today.getSeconds(), 0);
+    ts = target.getTime();
+  }
   const rec = {
     id: 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
     icon: icon,
     name: name,
-    timestamp: Date.now(),
+    timestamp: ts,
     source: source || 'stamp',
     plannerId: plannerId || null
   };
@@ -7699,6 +7708,164 @@ function _findStampDef(icon, name) {
   }
   return null;
 }
+
+// ===== ピン留めスタンプ + 日付選択 =====
+function _isPinnedStamp(source, icon, name) {
+  const arr = source === 'office' ? (data.pinnedOfficeStamps||[]) : (data.pinnedStamps||[]);
+  return arr.some(s => s.icon === icon && s.name === name);
+}
+window._isPinnedStamp = _isPinnedStamp;
+
+function togglePinnedStamp(source, icon, name) {
+  const key = source === 'office' ? 'pinnedOfficeStamps' : 'pinnedStamps';
+  if (!data[key]) data[key] = [];
+  const idx = data[key].findIndex(s => s.icon === icon && s.name === name);
+  if (idx >= 0) {
+    data[key].splice(idx, 1);
+    showToast('ピン留め解除');
+  } else {
+    if (data[key].length >= 10) { showToast('ピン留めは最大10個までやで'); return; }
+    data[key].push({icon, name});
+    showToast('📌 ピン留めしたよ');
+  }
+  saveData();
+  // ピッカーモーダル開いてれば再描画
+  if (source === 'office') {
+    if (typeof _renderOfficeStampPickerContent === 'function' && document.getElementById('officeStampPickerModal')) _renderOfficeStampPickerContent();
+  } else {
+    if (typeof _renderStampPickerModal === 'function' && document.getElementById('stampPickerModal')) _renderStampPickerModal();
+  }
+  // ホームのピン留めエリア再描画
+  _refreshPinnedStampsArea(source);
+}
+window.togglePinnedStamp = togglePinnedStamp;
+
+function _refreshPinnedStampsArea(source) {
+  const sel = source === 'office' ? '[data-office-pinned-stamps]' : '[data-pinned-stamps]';
+  const area = document.querySelector(sel);
+  if (!area) return;
+  area.outerHTML = renderPinnedStampsRow(source);
+}
+window._refreshPinnedStampsArea = _refreshPinnedStampsArea;
+
+function renderPinnedStampsRow(source) {
+  const pinned = source === 'office' ? (data.pinnedOfficeStamps||[]) : (data.pinnedStamps||[]);
+  const tapFn = source === 'office' ? 'tapOfficeStamp' : 'tapStamp';
+  const dataAttr = source === 'office' ? 'data-office-pinned-stamps' : 'data-pinned-stamps';
+  let h = '<div '+dataAttr+' style="margin:0 12px 10px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  h += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;"><span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);">push_pin</span><span style="font-size:10px;font-weight:800;color:var(--accent-deep);letter-spacing:0.5px;">ピン留め</span><span style="font-size:9px;color:var(--ink-sub);">('+pinned.length+'/10)</span></div>';
+  if (pinned.length === 0) {
+    h += '<div style="text-align:center;color:var(--ink-light);font-size:9.5px;line-height:1.6;padding:6px 4px;">スタンプの📌ボタンでピン留めできるよ</div>';
+  } else {
+    h += '<div style="display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px;">';
+    for (const s of pinned) {
+      const safeName = escapeHtml(s.name).replace(/'/g,"\\'");
+      h += '<button onclick="'+tapFn+'(\''+s.icon+'\',\''+safeName+'\',event)" style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;width:54px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;cursor:pointer;font-family:inherit;">';
+      h += '<span style="font-size:18px;line-height:1;color:var(--accent-deep);">'+renderStampIcon(s.icon,'font-size:18px;line-height:1;color:var(--accent-deep);')+'</span>';
+      h += '<span style="font-size:8.5px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.1;">'+escapeHtml(s.name)+'</span>';
+      h += '</button>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+window.renderPinnedStampsRow = renderPinnedStampsRow;
+
+// 選択中の日付（null=今日）を表示
+function _formatStampActiveDate(source) {
+  const key = source === 'office' ? 'activeOfficeStampDate' : 'activeStampDate';
+  const ds = data[key];
+  if (!ds) {
+    const today = new Date();
+    return (today.getMonth()+1)+'/'+today.getDate();
+  }
+  const d = new Date(ds);
+  const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+  return (d.getMonth()+1)+'/'+d.getDate()+'('+wd+')';
+}
+window._formatStampActiveDate = _formatStampActiveDate;
+
+function _isActiveStampDateToday(source) {
+  const key = source === 'office' ? 'activeOfficeStampDate' : 'activeStampDate';
+  return !data[key];
+}
+
+// 日付選択モーダル
+function openStampDatePicker(source) {
+  const ex = document.getElementById('stampDatePickerModal');
+  if (ex) ex.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'stampDatePickerModal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
+  overlay.onclick = function(e){ if(e.target===this) closeStampDatePicker(); };
+  document.body.appendChild(overlay);
+  _renderStampDatePicker(source);
+}
+window.openStampDatePicker = openStampDatePicker;
+
+function closeStampDatePicker() {
+  const el = document.getElementById('stampDatePickerModal');
+  if (el) el.remove();
+}
+window.closeStampDatePicker = closeStampDatePicker;
+
+function _renderStampDatePicker(source) {
+  const overlay = document.getElementById('stampDatePickerModal');
+  if (!overlay) return;
+  const key = source === 'office' ? 'activeOfficeStampDate' : 'activeStampDate';
+  const cur = data[key];
+  const today = new Date();
+  const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  
+  let h = '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;max-height:78vh;display:flex;flex-direction:column;overflow:hidden;">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--line-soft);">';
+  h += '<div style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:800;color:var(--ink-dark);"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">event</span>記録する日</div>';
+  h += '<button onclick="closeStampDatePicker()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div style="flex:1;overflow-y:auto;padding:14px 16px 18px;">';
+  
+  // 「今日」ボタン
+  h += '<button onclick="_setActiveStampDate(\''+source+'\',null)" style="width:100%;padding:13px;margin-bottom:12px;background:'+(!cur?'var(--accent)':'var(--surface-warm)')+';color:'+(!cur?'white':'var(--ink-dark)')+';border:1.5px solid '+(!cur?'var(--accent)':'var(--line)')+';border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:16px;">today</span>今日（'+(today.getMonth()+1)+'/'+today.getDate()+'）に記録</button>';
+  
+  // 直近2週間ピル
+  h += '<div style="font-size:10px;font-weight:800;color:var(--ink-sub);letter-spacing:1px;margin-bottom:8px;">最近の日付</div>';
+  h += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;">';
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+    const isAct = cur === ds;
+    h += '<button onclick="_setActiveStampDate(\''+source+'\',\''+ds+'\')" style="padding:6px 11px;background:'+(isAct?'var(--accent)':'white')+';color:'+(isAct?'white':'var(--ink-dark)')+';border:1px solid '+(isAct?'var(--accent)':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;">'+(d.getMonth()+1)+'/'+d.getDate()+'('+wd+')</button>';
+  }
+  h += '</div>';
+  
+  // フリー入力
+  h += '<div style="font-size:10px;font-weight:800;color:var(--ink-sub);letter-spacing:1px;margin-bottom:6px;">日付を直接選ぶ</div>';
+  h += '<input type="date" id="stampDateInput" value="'+(cur||'')+'" max="'+todayStr+'" style="width:100%;padding:12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;">';
+  h += '<button onclick="_setActiveStampDate(\''+source+'\',document.getElementById(\'stampDateInput\').value||null)" style="width:100%;padding:11px;margin-top:8px;background:var(--accent-bg);color:var(--accent-deep);border:1.5px solid var(--accent);border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;">この日付で記録する</button>';
+  
+  h += '</div></div>';
+  overlay.innerHTML = h;
+}
+
+function _setActiveStampDate(source, ds) {
+  const key = source === 'office' ? 'activeOfficeStampDate' : 'activeStampDate';
+  if (!ds) {
+    delete data[key];
+  } else {
+    data[key] = ds;
+  }
+  saveData();
+  closeStampDatePicker();
+  _suppressScrollTop = true;
+  render();
+  if (ds) showToast(ds.replace(/-/g,'/')+' に記録するよ');
+  else showToast('今日に記録するよ');
+}
+window._setActiveStampDate = _setActiveStampDate;
 
 // ===== スタンプピッカーモーダル =====
 function openStampPickerModal() {
@@ -7756,7 +7923,7 @@ function _renderStampPickerModal() {
   
   // よく使う
   if (favs.length > 0) {
-    h += '<div style="font-size:10px;font-weight:800;color:var(--ink-sub);letter-spacing:1.2px;padding:10px 16px 6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:#E89A4A;">star</span>よく使う</div>';
+    h += '<div style="font-size:10px;font-weight:800;color:var(--ink-sub);letter-spacing:1.2px;padding:10px 16px 6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:#E89A4A;">history</span>履歴</div>';
     h += '<div style="padding:0 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
     for (const s of favs) {
       h += '<button onclick="_pickerTapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\\'/g,"\\\\\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 4px 9px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border:1.5px solid transparent;border-radius:12px;cursor:pointer;font-family:inherit;">';
@@ -7785,7 +7952,10 @@ function _renderStampPickerModal() {
     // スタンプグリッド
     h += '<div style="padding:0 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">';
     for (const s of visibleStamps) {
-      h += '<button onclick="_pickerTapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\\'/g,"\\\\\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 3px 8px;background:var(--surface-warm);border:1px solid var(--line);border-radius:11px;cursor:pointer;font-family:inherit;">';
+      const _isPin = _isPinnedStamp('me', s.icon, s.name);
+      const _safeName = escapeHtml(s.name).replace(/\\'/g,"\\\\'");
+      h += '<button onclick="_pickerTapStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 3px 8px;background:var(--surface-warm);border:1px solid var(--line);border-radius:11px;cursor:pointer;font-family:inherit;">';
+      h += '<span onclick="event.stopPropagation();togglePinnedStamp(\'me\',\''+s.icon+'\',\''+_safeName+'\')" style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
       h += '<span style="width:34px;height:34px;border-radius:9px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:19px;line-height:1;color:'+_catColor+';')+'</span>';
       h += '<span style="font-size:9px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
@@ -13665,7 +13835,11 @@ const SNS_PLATFORMS = [
   { id:'youtube',   label:'YouTube',   icon:'smart_display', color:'#FF0000' },
   { id:'facebook',  label:'Facebook',  icon:'thumb_up',      color:'#1877F2' },
   { id:'bluesky',   label:'Bluesky',   icon:'cloud',         color:'#0085FF' },
-  { id:'bereal',    label:'BeReal',    icon:'photo',         color:'#000000' }
+  { id:'bereal',    label:'BeReal',    icon:'photo',         color:'#000000' },
+  { id:'discord',   label:'Discord',   icon:'forum',         color:'#5865F2' },
+  { id:'note',      label:'note',      icon:'edit_note',     color:'#41C9B4' },
+  { id:'website',   label:'WEBサイト', icon:'language',      color:'#7B8EC8' },
+  { id:'other',     label:'その他',    icon:'link',          color:'#9E8F7C' }
 ];
 
 function _snsUrl(platformId, value) {
@@ -13682,6 +13856,10 @@ function _snsUrl(platformId, value) {
     case 'facebook':  return 'https://facebook.com/'+v;
     case 'bluesky':   return v.includes('.') ? 'https://bsky.app/profile/'+v : 'https://bsky.app/profile/'+v+'.bsky.social';
     case 'bereal':    return 'https://bere.al/'+v;
+    case 'discord':   return v.startsWith('http')?v:v;
+    case 'note':      return 'https://note.com/'+v;
+    case 'website':   return v.startsWith('http')?v:'https://'+v;
+    case 'other':     return v.startsWith('http')?v:'https://'+v;
     default:          return v;
   }
 }
@@ -13782,6 +13960,40 @@ function openMyProfileModal() {
   // 中身
   h += '<div style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:11px;">';
   
+  // 写真ハンドラ用にwindow変数を初期化
+  window._myProfilePhotoData = p.photo || null;
+  window._myProfileBackPhotoData = p.backPhoto || null;
+  
+  // 写真エリア
+  h += '<div style="font-size:10px;font-weight:800;color:'+pColor+';letter-spacing:1.5px;">プロフィール写真</div>';
+  h += '<div id="myProfilePhotoArea" style="display:flex;align-items:center;gap:12px;">';
+  if (p.photo) {
+    h += '<button type="button" onclick="openPhotoPreview(window._myProfilePhotoData)" style="flex-shrink:0;width:64px;height:64px;border-radius:50%;border:2px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+p.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+    h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+    h += '<button type="button" onclick="document.getElementById(\'myProfilePhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">変更</button>';
+    h += '<button type="button" onclick="window._myProfilePhotoData=null;document.getElementById(\'myProfilePhotoArea\').innerHTML=_myProfilePhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+    h += '</div>';
+  } else {
+    h += '<button type="button" onclick="document.getElementById(\'myProfilePhotoFile\').click()" style="flex-shrink:0;width:64px;height:64px;border-radius:50%;border:2px dashed var(--accent);background:var(--surface-warm);color:var(--ink-sub);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:24px;">add_a_photo</span></button>';
+    h += '<div style="flex:1;font-size:11px;color:var(--ink-sub);line-height:1.5;">プロフィール写真<br>(QRや名刺で使われるよ)</div>';
+  }
+  h += '</div>';
+  h += '<input type="file" id="myProfilePhotoFile" accept="image/*" style="display:none;" onchange="_handleMyProfilePhotoSelect(event)">';
+  
+  // 裏面写真
+  h += '<div id="myProfileBackPhotoArea" style="display:flex;align-items:center;gap:12px;">';
+  if (p.backPhoto) {
+    h += '<button type="button" onclick="openPhotoPreview(window._myProfileBackPhotoData)" style="flex-shrink:0;width:90px;height:56px;border-radius:8px;border:2px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+p.backPhoto+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+    h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+    h += '<button type="button" onclick="document.getElementById(\'myProfileBackPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">変更</button>';
+    h += '<button type="button" onclick="window._myProfileBackPhotoData=null;document.getElementById(\'myProfileBackPhotoArea\').innerHTML=_myProfileBackPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+    h += '</div>';
+  } else {
+    h += '<button type="button" onclick="document.getElementById(\'myProfileBackPhotoFile\').click()" style="flex:1;padding:14px;background:var(--surface-warm);color:var(--ink-sub);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">add_photo_alternate</span>名刺の裏面写真を追加</button>';
+  }
+  h += '</div>';
+  h += '<input type="file" id="myProfileBackPhotoFile" accept="image/*" style="display:none;" onchange="_handleMyProfileBackPhotoSelect(event)">';
+  
   const field = (id,label,type,val,ph) => '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">'+label+'</label><input id="mp_'+id+'" type="'+type+'" value="'+escapeHtml(val||'')+'" placeholder="'+ph+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
   
   // ラベル + カラー
@@ -13817,11 +14029,18 @@ function openMyProfileModal() {
   h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">一言メモ</label>';
   h += '<textarea id="mp_memo" placeholder="自己紹介や好きなことなど" style="width:100%;min-height:60px;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(p.memo||'')+'</textarea></div>';
   
-  // SNS セクション
+  // SNS セクション（アコーディオン）
   h += '<div style="height:1px;background:var(--line-soft);margin-top:6px;"></div>';
-  h += '<div style="font-size:10px;font-weight:800;color:'+pColor+';letter-spacing:1.5px;">SNS / ソーシャル</div>';
+  const _snsCount = SNS_PLATFORMS.filter(s => p[s.id]).length;
+  h += '<div style="border:1px solid var(--card-border);border-radius:10px;overflow:hidden;">';
+  h += '<button type="button" onclick="var el=document.getElementById(\'mpSnsBody\');var ico=document.getElementById(\'mpSnsIco\');var open=el.style.display===\'flex\';el.style.display=open?\'none\':\'flex\';ico.textContent=open?\'expand_more\':\'expand_less\';" style="width:100%;display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface-warm);border:none;font-family:inherit;cursor:pointer;">';
+  h += '<span class="material-symbols-rounded" style="font-size:15px;color:var(--accent-deep);">hub</span>';
+  h += '<span style="flex:1;font-size:11px;font-weight:800;color:var(--accent-deep);letter-spacing:1.2px;text-align:left;">SNS / ソーシャル</span>';
+  if (_snsCount > 0) h += '<span style="font-size:9px;background:var(--accent);color:white;padding:1px 7px;border-radius:100px;font-weight:700;">'+_snsCount+'件</span>';
+  h += '<span id="mpSnsIco" class="material-symbols-rounded" style="font-size:18px;color:var(--ink-sub);">expand_more</span>';
+  h += '</button>';
+  h += '<div id="mpSnsBody" style="display:none;flex-direction:column;gap:8px;padding:10px 14px 14px;border-top:1px solid var(--line-soft);">';
   h += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.5;">ID/ユーザー名だけでOK（@や全URLでもOK）</div>';
-  
   for (const s of SNS_PLATFORMS) {
     h += '<div style="display:flex;align-items:center;gap:8px;">';
     h += '<span style="flex-shrink:0;width:28px;height:28px;border-radius:7px;background:'+s.color+';color:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:15px;">'+s.icon+'</span></span>';
@@ -13829,15 +14048,29 @@ function openMyProfileModal() {
     h += '<input id="mp_'+s.id+'" type="text" value="'+escapeHtml(p[s.id]||'')+'" placeholder="@username" style="width:100%;padding:7px 10px;border:1px solid var(--card-border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
     h += '</div></div>';
   }
+  h += '</div></div>';
   
   h += '</div>'; // 中身 end
   
   // フッター
-  h += '<div style="display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--line-soft);">';
-  h += '<button onclick="closeMyProfileModal()" style="flex:0 0 auto;padding:11px 18px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<div style="display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--line-soft);align-items:center;">';
+  h += '<button onclick="closeMyProfileModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  // 削除ボタン（複数あるときだけ）
+  if ((data.myProfiles||[]).length > 1) {
+    h += '<button onclick="closeMyProfileModal();deleteMyProfile(\''+p.id+'\')" title="削除" style="flex:0 0 auto;padding:11px;background:white;color:#D9534F;border:1px solid #D9534F40;border-radius:10px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;">delete</span></button>';
+  }
   h += '<button onclick="saveMyProfile()" style="flex:1;padding:11px;background:'+pColor+';color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
   h += '</div></div></div>';
   document.body.insertAdjacentHTML('beforeend', h);
+  // 入力済みSNSがあれば最初から開く
+  if (_snsCount > 0) {
+    setTimeout(function(){
+      const body = document.getElementById('mpSnsBody');
+      const ico = document.getElementById('mpSnsIco');
+      if (body) body.style.display = 'flex';
+      if (ico) ico.textContent = 'expand_less';
+    }, 30);
+  }
 }
 window.openMyProfileModal = openMyProfileModal;
 
@@ -13862,9 +14095,19 @@ function saveMyProfile() {
   p.email     = get('mp_email');
   p.address   = get('mp_address');
   p.memo      = get('mp_memo');
+  p.photo     = window._myProfilePhotoData || '';
+  p.backPhoto = window._myProfileBackPhotoData || '';
   for (const s of SNS_PLATFORMS) p[s.id] = get('mp_'+s.id).trim();
   // 旧構造との同期（既存箇所が data.myProfile を参照してても壊れないように）
   data.myProfile = Object.assign({}, p);
+  saveData();
+  // base64写真があればStorageに非同期アップロード
+  if (p.photo && p.photo.startsWith('data:')) {
+    _uploadMyProfilePhoto(p.id, 'photo', p.photo);
+  }
+  if (p.backPhoto && p.backPhoto.startsWith('data:')) {
+    _uploadMyProfilePhoto(p.id, 'backPhoto', p.backPhoto);
+  }
   saveData();
   closeMyProfileModal();
   _suppressScrollTop = true;
@@ -13931,9 +14174,51 @@ window.addMyProfileFromPreset = addMyProfileFromPreset;
 function deleteMyProfile(profileId) {
   _ensureMyProfiles();
   if (data.myProfiles.length <= 1) { showToast('最後の1つは削除できないよ'); return; }
-  const p = data.myProfiles.find(x=>x.id===profileId);
+  const p = data.myProfiles.find(function(x){return x.id===profileId;});
   if (!p) return;
-  if (!confirm('「'+(p.label||'プロフィール')+'」を削除する？\n（取り消せないよ）')) return;
+  const ex = document.getElementById('deleteProfileConfirmModal');
+  if (ex) ex.remove();
+  const label = escapeHtml(p.label||'プロフィール');
+  const overlay = document.createElement('div');
+  overlay.id = 'deleteProfileConfirmModal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;';
+  const box = document.createElement('div');
+  box.style.cssText = 'width:100%;max-width:320px;background:white;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:14px;text-align:center;';
+  const icon = document.createElement('span');
+  icon.className = 'material-symbols-rounded';
+  icon.style.cssText = 'font-size:36px;color:#D9534F;';
+  icon.textContent = 'delete';
+  const title = document.createElement('div');
+  title.style.cssText = 'font-size:14px;font-weight:800;color:var(--ink-dark);';
+  title.innerHTML = '\u300c'+label+'\u300d\u3092\u524a\u9664\u3059\u308b\uff1f';
+  const sub = document.createElement('div');
+  sub.style.cssText = 'font-size:11px;color:var(--ink-sub);line-height:1.6;';
+  sub.textContent = '\u4e00\u5ea6\u524a\u9664\u3059\u308b\u3068\u53d6\u308a\u6d88\u305b\u306a\u3044\u3088';
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.style.cssText = 'flex:1;padding:11px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;';
+  cancelBtn.textContent = '\u30ad\u30e3\u30f3\u30bb\u30eb';
+  cancelBtn.onclick = function(){ overlay.remove(); };
+  const okBtn = document.createElement('button');
+  okBtn.style.cssText = 'flex:1;padding:11px;background:#D9534F;color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;';
+  okBtn.textContent = '\u524a\u9664\u3059\u308b';
+  okBtn.onclick = function(){ _confirmDeleteMyProfile(profileId); };
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(okBtn);
+  box.appendChild(icon);
+  box.appendChild(title);
+  box.appendChild(sub);
+  box.appendChild(btnRow);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+window.deleteMyProfile = deleteMyProfile;
+
+function _confirmDeleteMyProfile(profileId) {
+  const modal = document.getElementById('deleteProfileConfirmModal');
+  if (modal) modal.remove();
+  _ensureMyProfiles();
   data.myProfiles = data.myProfiles.filter(x=>x.id!==profileId);
   if (data.myProfileActiveId === profileId) data.myProfileActiveId = data.myProfiles[0].id;
   saveData();
@@ -13941,7 +14226,7 @@ function deleteMyProfile(profileId) {
   render();
   showToast('削除したよ');
 }
-window.deleteMyProfile = deleteMyProfile;
+window._confirmDeleteMyProfile = _confirmDeleteMyProfile;
 
 // ===== 自分のプロフィール QR =====
 function _buildMyProfileVCard(p) {
@@ -13957,6 +14242,10 @@ function _buildMyProfileVCard(p) {
   if (p.address) lines.push('ADR:;;'+p.address.replace(/[\r\n]/g,' ')+';;;;');
   if (p.birthday) lines.push('BDAY:'+p.birthday.replace(/-/g,''));
   if (p.memo) lines.push('NOTE:'+p.memo.replace(/[\r\n]/g,' '));
+  // 写真URL（Firebase StorageのHTTPS URLのみ埋め込む）
+  if (p.photo && p.photo.startsWith('https://')) {
+    lines.push('PHOTO;VALUE=URL:'+p.photo);
+  }
   // SNSもURLで埋め込み
   for (const s of SNS_PLATFORMS) {
     if (p[s.id]) {
@@ -14056,7 +14345,15 @@ function _renderMyProfileQR(mode, snsId) {
   let descText = '';
   if (mode === 'vcard') {
     qrText = _buildMyProfileVCard(p);
-    descText = '📱 相手のスマホで読み取ると<br>連絡先がそのまま登録できるよ';
+    const hasPhotoUrl = p.photo && p.photo.startsWith('https://');
+    const hasPhotoBase64 = p.photo && p.photo.startsWith('data:');
+    if (hasPhotoUrl) {
+      descText = '📱 相手のスマホで読み取ると<br>連絡先 + プロフィール写真も登録できるよ';
+    } else if (hasPhotoBase64) {
+      descText = '📱 連絡先を共有できるよ<br><span style="font-size:9px;color:var(--ink-light);">※写真はStorage同期後にQRに含まれるよ（少し待ってね）</span>';
+    } else {
+      descText = '📱 相手のスマホで読み取ると<br>連絡先がそのまま登録できるよ';
+    }
   } else {
     // sns
     const snsList = SNS_PLATFORMS.filter(s => p[s.id]);
@@ -14169,21 +14466,63 @@ function saveAddFolder() {
 }
 window.saveAddFolder = saveAddFolder;
 
-function deleteFolderConfirm(folderId) {
+function _deleteContactFolderConfirm(folderId) {
   _ensureProfileData();
   const f = data.contactFolders.find(x => x.id === folderId);
   if (!f) return;
   const count = (data.contacts[folderId]||[]).length;
+  // 独自確認モーダル（confirm()はiPhone SafariのiFrame内でブロックされる）
+  const ex = document.getElementById('deleteFolderConfirmModal');
+  if (ex) ex.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'deleteFolderConfirmModal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;';
+  const box = document.createElement('div');
+  box.style.cssText = 'width:100%;max-width:320px;background:white;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:14px;text-align:center;';
+  const icon = document.createElement('span');
+  icon.className = 'material-symbols-rounded';
+  icon.style.cssText = 'font-size:36px;color:#D9534F;';
+  icon.textContent = 'folder_delete';
+  const title = document.createElement('div');
+  title.style.cssText = 'font-size:14px;font-weight:800;color:var(--ink-dark);';
+  title.textContent = '\u300c'+f.label+'\u300d\u3092\u524a\u9664\u3059\u308b\uff1f';
+  const sub = document.createElement('div');
+  sub.style.cssText = 'font-size:11px;color:var(--ink-sub);line-height:1.6;';
   if (count > 0) {
-    if (!confirm('「'+f.label+'」には'+count+'件の連絡先があります。フォルダごと削除しますか？')) return;
+    sub.textContent = '\u4e2d\u306b\u9023\u7d61\u5148\u304c '+count+' \u4ef6\u3042\u308a\u307e\u3059\u3002\n\u30d5\u30a9\u30eb\u30c0\u3054\u3068\u524a\u9664\u3055\u308c\u307e\u3059\u3002';
+    sub.style.whiteSpace = 'pre-line';
+  } else {
+    sub.textContent = '\u3053\u306e\u30d5\u30a9\u30eb\u30c0\u3092\u524a\u9664\u3057\u307e\u3059';
   }
-  data.contactFolders = data.contactFolders.filter(x => x.id !== folderId);
-  delete data.contacts[folderId];
-  saveData();
-  render();
-  showToast('フォルダを削除したよ');
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.style.cssText = 'flex:1;padding:11px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;';
+  cancelBtn.textContent = '\u30ad\u30e3\u30f3\u30bb\u30eb';
+  cancelBtn.onclick = function(){ overlay.remove(); };
+  const okBtn = document.createElement('button');
+  okBtn.style.cssText = 'flex:1;padding:11px;background:#D9534F;color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;';
+  okBtn.textContent = '\u524a\u9664\u3059\u308b';
+  okBtn.onclick = function(){
+    overlay.remove();
+    data.contactFolders = data.contactFolders.filter(function(x){ return x.id !== folderId; });
+    delete data.contacts[folderId];
+    if (data.activeContactTab === folderId) data.activeContactTab = 'emergency';
+    saveData();
+    _suppressScrollTop = true;
+    render();
+    showToast('\u30d5\u30a9\u30eb\u30c0\u3092\u524a\u9664\u3057\u305f\u3088');
+  };
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(okBtn);
+  box.appendChild(icon);
+  box.appendChild(title);
+  box.appendChild(sub);
+  box.appendChild(btnRow);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
 }
-window.deleteFolderConfirm = deleteFolderConfirm;
+window._deleteContactFolderConfirm = _deleteContactFolderConfirm;
 
 function switchContactTab(tabId) {
   data.activeContactTab = tabId;
@@ -14330,7 +14669,11 @@ function renderContactsCard() {
   
   // 選択中プロフィールの名前1行（タップで詳細）
   h += '<button onclick="openMyProfileCard()" style="margin-top:10px;width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface-warm);border:0.5px solid var(--card-border);border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;">';
-  h += '<span style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:'+p.color+'25;color:'+p.color+';display:inline-flex;align-items:center;justify-content:center;border:1.5px solid '+p.color+';"><span class="material-symbols-rounded" style="font-size:16px;">person</span></span>';
+  if (p.photo) {
+    h += '<span style="flex-shrink:0;width:30px;height:30px;border-radius:50%;border:1.5px solid '+p.color+';overflow:hidden;background:white;"><img src="'+p.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></span>';
+  } else {
+    h += '<span style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:'+p.color+'25;color:'+p.color+';display:inline-flex;align-items:center;justify-content:center;border:1.5px solid '+p.color+';"><span class="material-symbols-rounded" style="font-size:16px;">person</span></span>';
+  }
   h += '<div style="flex:1;min-width:0;">';
   h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.name||p.nickname||'No Name')+'</div>';
   if (p.memo) h += '<div style="font-size:9.5px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;">'+escapeHtml(p.memo)+'</div>';
@@ -14375,7 +14718,7 @@ function renderContactsCard() {
     h += '<span class="material-symbols-rounded" style="font-size:11px;">'+t.icon+'</span>';
     h += escapeHtml(t.label);
     if (!isEmer) {
-      h += '<span onclick="event.stopPropagation();deleteFolderConfirm(\''+t.id+'\')" style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:'+(isAct?'rgba(255,255,255,0.25)':'var(--surface-warm)')+';margin-left:1px;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:9px;color:'+(isAct?'white':'var(--ink-light)')+';">close</span></span>';
+      h += '<span onclick="event.stopPropagation();_deleteContactFolderConfirm(\''+t.id+'\')" style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:'+(isAct?'rgba(255,255,255,0.25)':'var(--surface-warm)')+';margin-left:1px;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:9px;color:'+(isAct?'white':'var(--ink-light)')+';">close</span></span>';
     }
     h += '</button>';
   }
@@ -14483,7 +14826,9 @@ function openMyProfileCard() {
   }
   h += '<div style="position:absolute;inset:0;background:linear-gradient(135deg,'+pColor+'30,'+pColor+'15);"></div>';
   const _userAv = (data.user && data.user.avatar) || 'person';
-  if (typeof _userAv === 'string' && _userAv.startsWith('photo:')) {
+  if (p.photo) {
+    h += '<img src="'+p.photo+'" style="position:relative;width:62%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:3px solid white;box-shadow:0 3px 8px rgba(0,0,0,0.18);">';
+  } else if (typeof _userAv === 'string' && _userAv.startsWith('photo:')) {
     const b64 = _userAv.slice(6);
     const src = b64.startsWith('data:') ? b64 : 'data:image/jpeg;base64,' + b64;
     h += '<img src="'+src+'" style="position:relative;width:62%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:3px solid white;box-shadow:0 3px 8px rgba(0,0,0,0.18);">';
@@ -14506,40 +14851,64 @@ function openMyProfileCard() {
   if (zod) subRow += '<span style="display:inline-flex;align-items:center;gap:2px;background:'+pColorBg+';color:'+pColor+';padding:1px 6px;border-radius:100px;font-weight:700;">'+zod.symbol+escapeHtml(zod.name)+'</span>';
   if (subRow) h += '<div style="display:flex;flex-wrap:wrap;gap:4px;font-size:9px;line-height:1.3;align-items:center;">'+subRow+'</div>';
   h += '<div style="height:1px;background:var(--line-soft);margin:3px 0 1px;"></div>';
-  h += '<div style="display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--ink-dark);line-height:1.3;flex:1;">';
-  if (p.birthday) h += '<div style="display:flex;align-items:center;gap:5px;overflow:hidden;"><span class="material-symbols-rounded" style="font-size:12px;color:'+pColor+';flex-shrink:0;">cake</span><span style="font-weight:600;letter-spacing:0.3px;">'+escapeHtml(p.birthday.replace(/-/g,'.'))+'</span></div>';
+  h += '<div style="display:flex;flex-direction:column;gap:2px;font-size:10px;color:var(--ink-dark);line-height:1.3;flex:1;">';
+  // 電話・メールを2列
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;">';
   if (p.phone) {
     const ph = p.phone.replace(/[^\d+]/g,'');
-    h += '<a href="tel:'+ph+'" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;text-decoration:none;color:var(--ink-dark);overflow:hidden;"><span class="material-symbols-rounded" style="font-size:12px;color:'+pColor+';flex-shrink:0;">call</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;">'+escapeHtml(p.phone)+'</span></a>';
+    h += '<a href="tel:'+ph+'" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:3px;text-decoration:none;color:var(--ink-dark);overflow:hidden;"><span class="material-symbols-rounded" style="font-size:11px;color:'+pColor+';flex-shrink:0;">call</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:9.5px;">'+escapeHtml(p.phone)+'</span></a>';
+  } else { h += '<span></span>'; }
+  if (p.email) {
+    h += '<a href="mailto:'+escapeHtml(p.email)+'" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:3px;text-decoration:none;color:var(--ink-dark);overflow:hidden;"><span class="material-symbols-rounded" style="font-size:11px;color:'+pColor+';flex-shrink:0;">mail</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:9.5px;">'+escapeHtml(p.email)+'</span></a>';
   }
-  if (p.email) h += '<a href="mailto:'+escapeHtml(p.email)+'" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;text-decoration:none;color:var(--ink-dark);overflow:hidden;"><span class="material-symbols-rounded" style="font-size:12px;color:'+pColor+';flex-shrink:0;">mail</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;">'+escapeHtml(p.email)+'</span></a>';
-  if (p.address) h += '<div style="display:flex;align-items:flex-start;gap:5px;overflow:hidden;"><span class="material-symbols-rounded" style="font-size:12px;color:'+pColor+';flex-shrink:0;margin-top:1px;">location_on</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;">'+escapeHtml(p.address)+'</span></div>';
-  // SNS
-  let sc = 0;
-  for (const s of SNS_PLATFORMS) {
-    if (p[s.id] && sc < 5) {
-      if (sc === 0) h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;">';
+  h += '</div>';
+  // 住所（長いので1行で省略）
+  if (p.address) h += '<div style="display:flex;align-items:flex-start;gap:3px;overflow:hidden;"><span class="material-symbols-rounded" style="font-size:11px;color:'+pColor+';flex-shrink:0;margin-top:1px;">location_on</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:9px;">'+escapeHtml(p.address)+'</span></div>';
+  // メモ（1行コンパクト表示）
+  if (p.memo) h += '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8.5px;color:var(--ink-sub);font-style:italic;padding-top:1px;">'+escapeHtml(p.memo)+'</div>';
+  // SNS（主要4個表示 + 残りは+Nボタン）
+  const _snsFilled = SNS_PLATFORMS.filter(s => p[s.id]);
+  if (_snsFilled.length > 0) {
+    h += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;align-items:center;">';
+    const _main = _snsFilled.slice(0, 4);
+    const _rest = _snsFilled.slice(4);
+    for (const s of _main) {
       const url = _snsUrl(s.id, p[s.id]);
-      h += '<a href="'+url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:'+s.color+';color:white;text-decoration:none;" title="'+s.label+'"><span class="material-symbols-rounded" style="font-size:12px;">'+s.icon+'</span></a>';
-      sc++;
+      h += '<a href="'+url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:'+s.color+';color:white;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,0.2);" title="'+s.label+'"><span class="material-symbols-rounded" style="font-size:13px;">'+s.icon+'</span></a>';
     }
+    if (_rest.length > 0) {
+      h += '<span onclick="event.stopPropagation();_toggleSnsMore(this)" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.12);color:var(--ink-sub);font-size:9px;font-weight:800;cursor:pointer;" title="もっと見る">+'+_rest.length+'</span>';
+      h += '<span id="mpCardSnsExtra" style="display:none;flex-wrap:wrap;gap:3px;align-items:center;">';
+      for (const s of _rest) {
+        const url = _snsUrl(s.id, p[s.id]);
+        h += '<a href="'+url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:'+s.color+';color:white;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,0.2);" title="'+s.label+'"><span class="material-symbols-rounded" style="font-size:13px;">'+s.icon+'</span></a>';
+      }
+      h += '</span>';
+    }
+    h += '</div>';
   }
-  if (sc > 0) h += '</div>';
   h += '</div>';
   h += '<div style="font-size:7.5px;color:var(--ink-light);text-align:right;letter-spacing:1px;margin-top:2px;">TAP TO FLIP →</div>';
   h += '</div>'; // 右側 end
   h += '</div>'; // 表面 end
   
-  // 裏面（メモ表示）
-  h += '<div style="position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:'+pColorBg+';border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.3);overflow:hidden;transform:rotateY(180deg);display:flex;align-items:center;justify-content:center;padding:24px;">';
-  if (p.memo) {
-    h += '<div style="text-align:center;color:var(--ink-dark);font-size:13px;line-height:1.7;font-weight:600;letter-spacing:0.5px;">'+escapeHtml(p.memo)+'</div>';
+  // 裏面（写真があれば写真、なければメモ）
+  if (p.backPhoto) {
+    h += '<div style="position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:white;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.3);overflow:hidden;transform:rotateY(180deg);">';
+    h += '<img src="'+p.backPhoto+'" style="width:100%;height:100%;object-fit:cover;display:block;" />';
   } else {
-    h += '<div style="text-align:center;color:'+pColor+';opacity:0.6;">';
-    h += '<span class="material-symbols-rounded" style="font-size:42px;">edit_note</span>';
-    h += '<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:6px;">MEMO</div>';
-    h += '<div style="font-size:9px;color:var(--ink-sub);margin-top:4px;line-height:1.5;">EDITから一言メモを書くと<br>ここに表示されるよ</div>';
-    h += '</div>';
+    h += '<div style="position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:white;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.3);overflow:hidden;transform:rotateY(180deg);display:flex;align-items:center;justify-content:center;padding:24px;">';
+    // 左側：アクセントカラー帯
+    h += '<div style="position:absolute;left:0;top:0;bottom:0;width:6px;background:'+pColor+';"></div>';
+    if (p.memo) {
+      h += '<div style="text-align:center;color:var(--ink-dark);font-size:13px;line-height:1.7;font-weight:600;letter-spacing:0.5px;">'+escapeHtml(p.memo)+'</div>';
+    } else {
+      h += '<div style="text-align:center;color:'+pColor+';opacity:0.7;">';
+      h += '<span class="material-symbols-rounded" style="font-size:42px;">edit_note</span>';
+      h += '<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:6px;">MEMO</div>';
+      h += '<div style="font-size:9px;color:var(--ink-sub);margin-top:4px;line-height:1.5;">EDITから一言メモを書くと<br>ここに表示されるよ</div>';
+      h += '</div>';
+    }
   }
   h += '<div style="position:absolute;bottom:6px;right:10px;font-size:7px;color:'+pColor+';opacity:0.7;letter-spacing:1px;background:white;padding:2px 6px;border-radius:100px;">← TAP TO FLIP</div>';
   h += '</div>';
@@ -14567,6 +14936,15 @@ function openMyProfileCard() {
   document.body.insertAdjacentHTML('beforeend', h);
 }
 window.openMyProfileCard = openMyProfileCard;
+
+function _toggleSnsMore(btn) {
+  const extra = document.getElementById('mpCardSnsExtra');
+  if (!extra) return;
+  const open = extra.style.display !== 'none';
+  extra.style.display = open ? 'none' : 'inline-flex';
+  btn.textContent = open ? '+' + btn.title.replace('もっと見る','') : '−';
+}
+window._toggleSnsMore = _toggleSnsMore;
 
 function closeMyProfileCard() {
   const el = document.getElementById('myProfileCardModal');
@@ -14961,8 +15339,8 @@ function openContactModal(sectionId, contactId) {
   h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">';
   
   h += '<div style="display:flex;align-items:center;gap:8px;">';
-  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:'+sec.color+';color:white;"><span class="material-symbols-rounded" style="font-size:16px;">'+sec.icon+'</span></span>';
-  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+sec.label+(isEdit?'を編集':'を追加')+'</div>';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:'+sec.color+';color:white;"><span class="material-symbols-rounded" style="font-size:16px;">'+(sec.id==='emergency'?'emergency':'contacts')+'</span></span>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">連絡先を'+(isEdit?'編集':'追加')+' ('+escapeHtml(sec.label)+')</div>';
   h += '<button onclick="closeContactModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
   h += '</div>';
   
@@ -14970,7 +15348,7 @@ function openContactModal(sectionId, contactId) {
   const allFolders = [{id:'emergency', label:'🆘 緊急連絡先'}].concat((data.contactFolders||[]).map(f=>({id:f.id, label:'📁 '+f.label})));
   if (allFolders.length > 1) {
     h += '<div>';
-    h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">どこに入れる？</label>';
+    h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">📁 フォルダ（保存先）</label>';
     h += '<select id="ctTargetFolder" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
     for (const f of allFolders) {
       h += '<option value="'+f.id+'"'+(f.id===sectionId?' selected':'')+'>'+escapeHtml(f.label)+'</option>';
@@ -15149,6 +15527,90 @@ async function _handleContactBackPhotoSelect(event) {
   event.target.value = '';
 }
 window._handleContactBackPhotoSelect = _handleContactBackPhotoSelect;
+
+// ===== MyProfile写真ハンドラ =====
+function _myProfilePhotoEmptyHtml() {
+  return '<button type="button" onclick="document.getElementById(\'myProfilePhotoFile\').click()" style="flex-shrink:0;width:64px;height:64px;border-radius:50%;border:2px dashed var(--accent);background:var(--surface-warm);color:var(--ink-sub);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:24px;">add_a_photo</span></button>'+
+    '<div style="flex:1;font-size:11px;color:var(--ink-sub);line-height:1.5;">プロフィール写真<br>(QRや名刺で使われるよ)</div>';
+}
+window._myProfilePhotoEmptyHtml = _myProfilePhotoEmptyHtml;
+
+async function _handleMyProfilePhotoSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('画像ファイルを選んでね'); return; }
+  showToast('写真を処理中...');
+  try {
+    const dataUrl = await resizeImageToBase64(file, 480, 0.75);
+    window._myProfilePhotoData = dataUrl;
+    const area = document.getElementById('myProfilePhotoArea');
+    if (area) {
+      let h = '';
+      h += '<button type="button" onclick="openPhotoPreview(window._myProfilePhotoData)" style="flex-shrink:0;width:64px;height:64px;border-radius:50%;border:2px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+      h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+      h += '<button type="button" onclick="document.getElementById(\'myProfilePhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">変更</button>';
+      h += '<button type="button" onclick="window._myProfilePhotoData=null;document.getElementById(\'myProfilePhotoArea\').innerHTML=_myProfilePhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+      h += '</div>';
+      area.innerHTML = h;
+    }
+    showToast('写真OK🌷');
+  } catch(err) { console.error(err); showToast('写真の読み込みに失敗'); }
+  event.target.value = '';
+}
+window._handleMyProfilePhotoSelect = _handleMyProfilePhotoSelect;
+
+function _myProfileBackPhotoEmptyHtml() {
+  return '<button type="button" onclick="document.getElementById(\'myProfileBackPhotoFile\').click()" style="flex:1;padding:14px;background:var(--surface-warm);color:var(--ink-sub);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">add_photo_alternate</span>名刺の裏面写真を追加</button>';
+}
+window._myProfileBackPhotoEmptyHtml = _myProfileBackPhotoEmptyHtml;
+
+async function _handleMyProfileBackPhotoSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('画像ファイルを選んでね'); return; }
+  showToast('写真を処理中...');
+  try {
+    const dataUrl = await resizeImageToBase64(file, 800, 0.78);
+    window._myProfileBackPhotoData = dataUrl;
+    const area = document.getElementById('myProfileBackPhotoArea');
+    if (area) {
+      let h = '';
+      h += '<button type="button" onclick="openPhotoPreview(window._myProfileBackPhotoData)" style="flex-shrink:0;width:90px;height:56px;border-radius:8px;border:2px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+      h += '<div style="flex:1;display:flex;flex-direction:column;gap:4px;">';
+      h += '<button type="button" onclick="document.getElementById(\'myProfileBackPhotoFile\').click()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">変更</button>';
+      h += '<button type="button" onclick="window._myProfileBackPhotoData=null;document.getElementById(\'myProfileBackPhotoArea\').innerHTML=_myProfileBackPhotoEmptyHtml();" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+      h += '</div>';
+      area.innerHTML = h;
+    }
+    showToast('裏面写真OK🌷');
+  } catch(err) { console.error(err); showToast('写真の読み込みに失敗'); }
+  event.target.value = '';
+}
+window._handleMyProfileBackPhotoSelect = _handleMyProfileBackPhotoSelect;
+
+// ===== MyProfile写真 → Firebase Storage 自動変換 =====
+async function _uploadMyProfilePhoto(profileId, field, dataUrl) {
+  if (!currentUser || !storage) return; // 未ログインなら何もしない
+  try {
+    const ref = storage.ref(`users/${currentUser.uid}/myprofiles/${profileId}/${field}`);
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const snap = await ref.put(blob, { contentType: blob.type });
+    const url = await snap.ref.getDownloadURL();
+    // プロフィールデータのbase64をURLに置き換え
+    _ensureMyProfiles();
+    const p = (data.myProfiles||[]).find(x => x.id === profileId);
+    if (p) {
+      p[field] = url;
+      data.myProfile = Object.assign({}, p);
+      saveData();
+      console.log('[MyProfile] 写真をStorage URLに変換:', field, url.slice(0,60)+'...');
+    }
+  } catch(e) {
+    console.log('[MyProfile] Storage upload error:', e);
+  }
+}
+window._uploadMyProfilePhoto = _uploadMyProfilePhoto;
 
 function closeContactModal() {
   const el = document.getElementById('contactModal');
@@ -15636,7 +16098,7 @@ function renderMeMode() {
     
   } else if (tab === 'stamp') {
     // ===== Stamp（サブサブタブ：スタンプ / プランナー） =====
-    if (!data.stampSubTab) data.stampSubTab = 'stamp';
+    html += '<div id="meStampWrap">';
     const ssTab = data.stampSubTab;
     
     // サブサブタブ
@@ -15765,11 +16227,20 @@ function renderMeMode() {
         try { saveData(); } catch(e) {}
       }
       
-      // ===== 「STAMP」ボタン（モーダル展開）+管理 =====
-      html += '<div style="padding:10px 14px 8px;display:flex;gap:8px;align-items:stretch;justify-content:flex-end;">';
-      html += '<button onclick="openStampPickerModal()" style="padding:9px 18px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:12px;font-weight:800;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><span class="material-symbols-rounded" style="font-size:18px;">approval</span>STAMP</button>';
+      // ===== 「日付」「STAMP」「✏」 + ピン留めエリア =====
+      const _meDateLabel = _formatStampActiveDate('me');
+      const _meIsToday = _isActiveStampDateToday('me');
+      html += '<div style="padding:10px 14px 8px;display:flex;gap:8px;align-items:stretch;">';
+      // 日付ボタン
+      html += '<button onclick="openStampDatePicker(\'me\')" style="padding:9px 12px;background:'+(_meIsToday?'var(--surface)':'var(--accent-bg)')+';color:'+(_meIsToday?'var(--ink-dark)':'var(--accent-deep)')+';border:1px solid '+(_meIsToday?'var(--line)':'var(--accent)')+';border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;letter-spacing:0.3px;"><span class="material-symbols-rounded" style="font-size:15px;">'+(_meIsToday?'today':'event')+'</span>'+escapeHtml(_meDateLabel)+'</button>';
+      // STAMPボタン
+      html += '<button onclick="openStampPickerModal()" style="flex:1;padding:9px 14px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:12px;font-weight:800;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><span class="material-symbols-rounded" style="font-size:18px;">approval</span>STAMP</button>';
+      // 編集ボタン
       html += '<button onclick="openStampManagerModal()" title="スタンプ管理" style="flex-shrink:0;width:36px;border:1px solid var(--line);background:var(--surface);color:var(--ink-sub);border-radius:100px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:16px;">edit</span></button>';
       html += '</div>';
+      
+      // ピン留めスタンプ横スクロール
+      html += renderPinnedStampsRow('me');
       
       // ===== カードB: 今日の記録（白カード・細枠、高さ固定＋中スクロール） =====
       html += '<div style="margin:0 12px 12px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
@@ -15860,6 +16331,7 @@ function renderMeMode() {
       // ───── プランナー画面（新規）─────
       html += renderPlannerView();
     }
+    html += '</div>'; // meStampWrap end
     
   } else if (tab === 'diary') {
     html += renderTweetsDiary();
@@ -17366,11 +17838,17 @@ function renderOfficeStampTab() {
   
   let h = '<div id="officeStampWrap" style="padding:8px 12px 12px;">';
   
-  // STAMPボタン + 編集ボタン
-  h += '<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;">';
+  // 日付 + STAMP + 編集
+  const _ofcDateLabel = _formatStampActiveDate('office');
+  const _ofcIsToday = _isActiveStampDateToday('office');
+  h += '<div style="display:flex;gap:8px;margin-bottom:10px;align-items:stretch;">';
+  h += '<button onclick="openStampDatePicker(\'office\')" style="padding:11px 12px;background:'+(_ofcIsToday?'var(--surface)':'var(--accent-bg)')+';color:'+(_ofcIsToday?'var(--ink-dark)':'var(--accent-deep)')+';border:1px solid '+(_ofcIsToday?'var(--line)':'var(--accent)')+';border-radius:100px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;letter-spacing:0.3px;"><span class=\"material-symbols-rounded\" style=\"font-size:16px;\">'+(_ofcIsToday?'today':'event')+'</span>'+escapeHtml(_ofcDateLabel)+'</button>';
   h += '<button onclick="openOfficeStampPickerModal()" style="flex:1;padding:13px 16px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,0.15);"><span class=\"material-symbols-rounded\" style=\"font-size:18px;\">approval</span>STAMP</button>';
-  h += '<button onclick="openOfficeStampEditModal()" style="width:46px;height:46px;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:50%;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class=\"material-symbols-rounded\" style=\"font-size:18px;\">edit</span></button>';
+  h += '<button onclick="openOfficeStampEditModal()" style="width:46px;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:100px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class=\"material-symbols-rounded\" style=\"font-size:18px;\">edit</span></button>';
   h += '</div>';
+  
+  // ピン留め
+  h += '<div style="margin:0 -12px;">'+renderPinnedStampsRow('office')+'</div>';
   
   // 今日の記録カード
   h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
@@ -17440,7 +17918,7 @@ function _renderOfficeStampPickerContent() {
   
   // よく使う
   if (favs.length > 0) {
-    h += '<div style="font-size:10px;font-weight:800;color:var(--ink-sub);letter-spacing:1.2px;padding:10px 16px 6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:#E89A4A;">star</span>よく使う</div>';
+    h += '<div style="font-size:10px;font-weight:800;color:var(--ink-sub);letter-spacing:1.2px;padding:10px 16px 6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:#E89A4A;">history</span>履歴</div>';
     h += '<div style="padding:0 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
     for (const s of favs) {
       h += '<button onclick="_officePickerTapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\'")+'\')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 4px 9px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border:1.5px solid transparent;border-radius:12px;cursor:pointer;font-family:inherit;">';
@@ -17461,7 +17939,10 @@ function _renderOfficeStampPickerContent() {
     h += '</div>';
     h += '<div style="padding:0 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">';
     for (const s of catStamps) {
-      h += '<button onclick="_officePickerTapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\'")+'\')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 3px 8px;background:var(--surface-warm);border:1px solid var(--line);border-radius:11px;cursor:pointer;font-family:inherit;">';
+      const _isPin = _isPinnedStamp('office', s.icon, s.name);
+      const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
+      h += '<button onclick="_officePickerTapStamp(\''+s.icon+'\',\''+_safeName+'\')" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 3px 8px;background:var(--surface-warm);border:1px solid var(--line);border-radius:11px;cursor:pointer;font-family:inherit;">';
+      h += '<span onclick="event.stopPropagation();togglePinnedStamp(\'office\',\''+s.icon+'\',\''+_safeName+'\')" style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
       h += '<span style="width:34px;height:34px;border-radius:9px;background:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:19px;color:var(--accent-deep);">'+s.icon+'</span></span>';
       h += '<span style="font-size:9px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
@@ -17596,11 +18077,18 @@ function tapOfficeStamp(icon, name, evt) {
   }
   
   // 通常スタンプ
+  let _ts = Date.now();
+  if (data.activeOfficeStampDate) {
+    const today = new Date();
+    const target = new Date(data.activeOfficeStampDate+'T00:00:00');
+    target.setHours(today.getHours(), today.getMinutes(), today.getSeconds(), 0);
+    _ts = target.getTime();
+  }
   const rec = {
     id: 'ost_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
     icon: icon,
     name: name,
-    timestamp: Date.now()
+    timestamp: _ts
   };
   data.officeStampHistory.unshift(rec);
   if (data.officeStampHistory.length > 100) data.officeStampHistory = data.officeStampHistory.slice(0,100);
@@ -21300,6 +21788,13 @@ function deleteNestGoods() {
   render();
 }
 
+// グローバル登録（onclickから呼べるように）
+window.openNestGoodsModal = openNestGoodsModal;
+window.closeNestGoodsModal = closeNestGoodsModal;
+window.saveNestGoodsFromModal = saveNestGoodsFromModal;
+window.deleteNestGoods = deleteNestGoods;
+window.selectNestGoodsIcon = selectNestGoodsIcon;
+
 // ===== Nestルーティン =====
 let _editingNestRoutineId = null;
 let _editingNestRoutineNestId = null;
@@ -23048,6 +23543,15 @@ function goSchedule() {
   render();
 }
 
+// ===== 日本の祝日データ =====
+const _JP_HOLIDAYS = {
+  '2025-01-01':'元日','2025-01-13':'成人の日','2025-02-11':'建国記念の日','2025-02-23':'天皇誕生日','2025-02-24':'振替休日','2025-03-20':'春分の日','2025-04-29':'昭和の日','2025-05-03':'憲法記念日','2025-05-04':'みどりの日','2025-05-05':'こどもの日','2025-05-06':'振替休日','2025-07-21':'海の日','2025-08-11':'山の日','2025-09-15':'敬老の日','2025-09-23':'秋分の日','2025-10-13':'スポーツの日','2025-11-03':'文化の日','2025-11-23':'勤労感謝の日','2025-11-24':'振替休日',
+  '2026-01-01':'元日','2026-01-12':'成人の日','2026-02-11':'建国記念の日','2026-02-23':'天皇誕生日','2026-03-20':'春分の日','2026-04-29':'昭和の日','2026-05-03':'憲法記念日','2026-05-04':'みどりの日','2026-05-05':'こどもの日','2026-05-06':'振替休日','2026-07-20':'海の日','2026-08-11':'山の日','2026-09-21':'敬老の日','2026-09-22':'国民の休日','2026-09-23':'秋分の日','2026-10-12':'スポーツの日','2026-11-03':'文化の日','2026-11-23':'勤労感謝の日',
+  '2027-01-01':'元日','2027-01-11':'成人の日','2027-02-11':'建国記念の日','2027-02-23':'天皇誕生日','2027-03-21':'春分の日','2027-03-22':'振替休日','2027-04-29':'昭和の日','2027-05-03':'憲法記念日','2027-05-04':'みどりの日','2027-05-05':'こどもの日','2027-07-19':'海の日','2027-08-11':'山の日','2027-09-20':'敬老の日','2027-09-23':'秋分の日','2027-10-11':'スポーツの日','2027-11-03':'文化の日','2027-11-23':'勤労感謝の日'
+};
+window._JP_HOLIDAYS = _JP_HOLIDAYS;
+
+// ===== Schedule ビュー =====
 function renderSchedule() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('schedule');
@@ -23058,15 +23562,273 @@ function renderSchedule() {
     schedCalMonth = { year: t.getFullYear(), month: t.getMonth() };
   }
   if (!schedCalSelected) schedCalSelected = todayKey();
-  let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">📅 よてい</div><button class="topbar-btn" onclick="openAddScheduleModal()">＋</button></div>';
-  html += infoBarHtml();
-  html += '<div class="section">';
-  html += '<div class="section-head"><h2 class="section-title">'+(house ? escapeHtml(house.name) : '')+'</h2></div>';
-  html += renderCalendar(schedCalMonth, schedCalSelected, { houseId: houseId }, 'sched');
-  if (schedCalSelected) html += renderDayDetail(schedCalSelected, { houseId: houseId });
-  html += '</div><div style="height: 16px;"></div>';
+  if (!data._schedView) data._schedView = 'month';
+  const vm = data._schedView;
+
+  let html = '';
+  // ── ヘッダー ──
+  html += '<div style="display:flex;align-items:center;padding:14px 16px 8px;gap:8px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">calendar_month</span>';
+  html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);letter-spacing:0.5px;">Schedule</div>';
+  html += '<button onclick="openAddScheduleModal()" style="padding:7px 14px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>予定</button>';
+  html += '</div>';
+
+  // ── ビュー切替 ──
+  html += '<div style="display:flex;gap:4px;padding:0 16px 10px;">';
+  var _mA = vm==='month', _lA = vm==='list';
+  html += '<button onclick="switchSchedView(\'month\')" style="padding:6px 14px;background:'+(_mA?'var(--accent-deep)':'var(--surface)')+';color:'+(_mA?'white':'var(--ink-sub)')+';border:1px solid '+(_mA?'var(--accent-deep)':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">grid_view</span>月</button>';
+  html += '<button onclick="switchSchedView(\'list\')" style="padding:6px 14px;background:'+(_lA?'var(--accent-deep)':'var(--surface)')+';color:'+(_lA?'white':'var(--ink-sub)')+';border:1px solid '+(_lA?'var(--accent-deep)':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">view_list</span>リスト</button>';
+  html += '</div>';
+
+  if (vm === 'month') {
+    html += _renderSchedMonthView(houseId);
+  } else {
+    html += _renderSchedListView(houseId);
+  }
+
+  html += '<div style="height:100px;"></div>';
   document.getElementById('app').innerHTML = html;
 }
+
+function switchSchedView(mode) {
+  data._schedView = mode;
+  _suppressScrollTop = true;
+  render();
+}
+window.switchSchedView = switchSchedView;
+
+// ── 月ビュー ──
+function _renderSchedMonthView(houseId) {
+  var year = schedCalMonth.year, month = schedCalMonth.month;
+  var todayK = todayKey();
+  var firstDow = new Date(year, month, 1).getDay();
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var today = new Date();
+  var isCurrent = (year === today.getFullYear() && month === today.getMonth());
+
+  // その月の予定を事前取得
+  var monthScheds = (data.schedules||[]).filter(function(s){
+    if (!s.date) return false;
+    var parts = s.date.split('-');
+    return parseInt(parts[0])===year && parseInt(parts[1])===(month+1);
+  });
+
+  var h = '';
+  // カレンダーカード
+  h += '<div style="margin:0 12px;background:white;border-radius:16px;padding:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid var(--line);">';
+
+  // 月ナビ
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+  h += '<button onclick="changeCalMonth(\'sched\',-1)" style="width:32px;height:32px;border-radius:50%;background:var(--surface-warm);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_left</span></button>';
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<span style="font-size:16px;font-weight:800;color:var(--ink-dark);">'+year+'年 '+(month+1)+'月</span>';
+  if (!isCurrent) h += '<button onclick="goToToday(\'sched\')" style="padding:3px 10px;background:var(--accent-bg);color:var(--accent-deep);border:1px solid var(--accent);border-radius:100px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;">今日</button>';
+  h += '</div>';
+  h += '<button onclick="changeCalMonth(\'sched\',1)" style="width:32px;height:32px;border-radius:50%;background:var(--surface-warm);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_right</span></button>';
+  h += '</div>';
+
+  // 曜日ヘッダー
+  var wds = ['日','月','火','水','木','金','土'];
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:2px;">';
+  for (var wi = 0; wi < 7; wi++) {
+    var wc = wi===0?'#D9534F':wi===6?'#4A90D9':'var(--ink-sub)';
+    h += '<div style="font-size:10px;font-weight:700;color:'+wc+';padding:3px 0;">'+wds[wi]+'</div>';
+  }
+  h += '</div>';
+
+  // 日付グリッド
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">';
+  for (var ei = 0; ei < firstDow; ei++) h += '<div></div>';
+  for (var d = 1; d <= daysInMonth; d++) {
+    var key = year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var dow = new Date(year, month, d).getDay();
+    var isToday = key === todayK;
+    var isSel = key === schedCalSelected;
+    var holiday = _JP_HOLIDAYS[key] || null;
+    var dayScheds = monthScheds.filter(function(s){ return s.date === key; });
+
+    var cellBg = isToday ? 'var(--accent)' : isSel ? 'var(--accent-bg)' : 'transparent';
+    var cellColor = isToday ? 'white' : dow===0||holiday ? '#D9534F' : dow===6 ? '#4A90D9' : 'var(--ink-dark)';
+    var cellBorder = isSel && !isToday ? '2px solid var(--accent)' : '2px solid transparent';
+
+    h += '<button onclick="selectCalDate(\'sched\',\''+key+'\')" style="background:'+cellBg+';color:'+cellColor+';border:'+cellBorder+';border-radius:10px;padding:4px 1px 3px;font-family:inherit;cursor:pointer;min-height:52px;display:flex;flex-direction:column;align-items:center;gap:1px;">';
+    // 日付
+    h += '<span style="font-size:12px;font-weight:'+(isToday||isSel?'800':'600')+';line-height:1;">'+d+'</span>';
+    // 祝日名（小さく）
+    if (holiday) h += '<span style="font-size:6px;color:'+(isToday?'rgba(255,255,255,0.8)':'#D9534F')+';line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+holiday+'</span>';
+    // 予定バー（最大2件）
+    if (dayScheds.length > 0) {
+      for (var si = 0; si < Math.min(dayScheds.length, 2); si++) {
+        var sc = dayScheds[si];
+        var barColor = sc.color || 'var(--accent-deep)';
+        h += '<div style="width:90%;height:12px;background:'+barColor+'20;border-left:2px solid '+barColor+';border-radius:2px;overflow:hidden;padding:0 2px;display:flex;align-items:center;"><span style="font-size:7px;font-weight:600;color:'+barColor+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(sc.title)+'</span></div>';
+      }
+      if (dayScheds.length > 2) {
+        h += '<span style="font-size:7px;color:'+(isToday?'rgba(255,255,255,0.7)':'var(--ink-light)')+';font-weight:700;">+' + (dayScheds.length - 2) + '</span>';
+      }
+    }
+    h += '</button>';
+  }
+  h += '</div>';
+  h += '</div>'; // カレンダーカード end
+
+  // 選択日の詳細
+  if (schedCalSelected) {
+    h += _renderSchedDayDetail(schedCalSelected, houseId);
+  }
+
+  return h;
+}
+
+// ── 日詳細カード ──
+function _renderSchedDayDetail(dateKey, houseId) {
+  var date = keyToDate(dateKey);
+  var wd = ['日','月','火','水','木','金','土'][date.getDay()];
+  var todayK = todayKey();
+  var isToday = dateKey === todayK;
+  var holiday = _JP_HOLIDAYS[dateKey] || null;
+  var schedules = (data.schedules||[]).filter(function(s){ return s.date === dateKey; });
+  var h = '';
+
+  h += '<div style="margin:10px 12px 0;background:white;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid var(--line);">';
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+  h += '<div style="display:flex;align-items:center;gap:6px;">';
+  if (isToday) h += '<span style="padding:2px 8px;background:var(--accent);color:white;border-radius:100px;font-size:9px;font-weight:800;">TODAY</span>';
+  h += '<span style="font-size:14px;font-weight:800;color:var(--ink-dark);">'+(date.getMonth()+1)+'/'+date.getDate()+'('+wd+')</span>';
+  if (holiday) h += '<span style="font-size:9px;color:#D9534F;font-weight:700;">'+holiday+'</span>';
+  h += '</div>';
+  h += '<button onclick="openAddScheduleModal();document.getElementById(\'scheduleDateInput\').value=\''+dateKey+'\'" style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;">add</span></button>';
+  h += '</div>';
+
+  if (schedules.length === 0) {
+    h += '<div style="text-align:center;padding:16px 8px;color:var(--ink-light);font-size:11px;line-height:1.7;">';
+    h += '<span class="material-symbols-rounded" style="font-size:28px;opacity:0.4;display:block;margin-bottom:4px;">event_available</span>';
+    h += '予定はないよ';
+    h += '</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:5px;">';
+    for (var i = 0; i < schedules.length; i++) {
+      var s = schedules[i];
+      var barColor = s.color || 'var(--accent-deep)';
+      var pet = (data.pets||[]).find(function(p){return p.id===s.petId;});
+      h += '<button onclick="openEditScheduleModal(\''+s.id+'\')" style="display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--surface-warm);border:none;border-left:3px solid '+barColor+';border-radius:8px;cursor:pointer;font-family:inherit;text-align:left;">';
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title)+'</div>';
+      var sub = [];
+      if (s.tag) sub.push(s.tag);
+      if (pet) sub.push(pet.name);
+      if (sub.length > 0) h += '<div style="font-size:9px;color:var(--ink-sub);margin-top:1px;">'+escapeHtml(sub.join(' / '))+'</div>';
+      h += '</div>';
+      h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);">chevron_right</span>';
+      h += '</button>';
+    }
+    h += '</div>';
+  }
+
+  // スタンプ記録も表示
+  var stampHist = (data.stampHistory||[]).filter(function(r){ return new Date(r.timestamp).toDateString() === keyToDate(dateKey).toDateString(); });
+  if (stampHist.length > 0) {
+    h += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line-soft);">';
+    h += '<div style="font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1px;margin-bottom:4px;">STAMP RECORD ('+stampHist.length+')</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:3px;">';
+    for (var si = 0; si < Math.min(stampHist.length, 8); si++) {
+      var sr = stampHist[si];
+      h += '<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:100px;font-size:8px;font-weight:600;color:var(--accent-deep);">';
+      h += '<span class="material-symbols-rounded" style="font-size:10px;">'+sr.icon+'</span>';
+      h += escapeHtml(sr.name);
+      h += '</span>';
+    }
+    if (stampHist.length > 8) h += '<span style="font-size:8px;color:var(--ink-light);font-weight:700;">+' + (stampHist.length - 8) + '</span>';
+    h += '</div></div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+// ── リストビュー ──
+function _renderSchedListView(houseId) {
+  var todayK = todayKey();
+  var allScheds = (data.schedules||[]).slice().sort(function(a,b){
+    if (a.date < b.date) return -1;
+    if (a.date > b.date) return 1;
+    return 0;
+  });
+
+  var upcoming = allScheds.filter(function(s){ return s.date >= todayK; });
+  var past = allScheds.filter(function(s){ return s.date < todayK; }).reverse().slice(0, 10);
+
+  var h = '';
+
+  // 今後の予定
+  h += '<div style="margin:0 12px;background:white;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid var(--line);">';
+  h += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">upcoming</span><span style="font-size:11px;font-weight:800;color:var(--ink-dark);">これからの予定</span><span style="font-size:9px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 7px;border-radius:100px;font-weight:700;">'+upcoming.length+'件</span></div>';
+
+  if (upcoming.length === 0) {
+    h += '<div style="text-align:center;padding:20px;color:var(--ink-light);font-size:11px;"><span class="material-symbols-rounded" style="font-size:32px;opacity:0.4;display:block;margin-bottom:6px;">event_available</span>予定はまだないよ</div>';
+  } else {
+    var lastSection = '';
+    h += '<div style="display:flex;flex-direction:column;gap:4px;">';
+    for (var i = 0; i < upcoming.length; i++) {
+      var s = upcoming[i];
+      var d = keyToDate(s.date);
+      var wd = ['日','月','火','水','木','金','土'][d.getDay()];
+      var isToday = s.date === todayK;
+      var holiday = _JP_HOLIDAYS[s.date] || null;
+      var barColor = s.color || 'var(--accent-deep)';
+      var pet = (data.pets||[]).find(function(p){return p.id===s.petId;});
+
+      // セクション区切り（週ごと）
+      var diff = Math.floor((keyToDate(s.date).getTime() - keyToDate(todayK).getTime()) / 86400000);
+      var section = diff === 0 ? '今日' : diff === 1 ? '明日' : diff < 7 ? '今週' : diff < 14 ? '来週' : (d.getMonth()+1)+'月';
+      if (section !== lastSection) {
+        lastSection = section;
+        h += '<div style="font-size:9px;font-weight:800;color:var(--accent-deep);letter-spacing:1.5px;padding:6px 0 2px;">'+section+'</div>';
+      }
+
+      h += '<button onclick="openEditScheduleModal(\''+s.id+'\')" style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--surface-warm);border:none;border-left:3px solid '+barColor+';border-radius:8px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">';
+      // 日付部分
+      h += '<div style="flex-shrink:0;width:42px;text-align:center;">';
+      h += '<div style="font-size:9px;color:'+(isToday?'var(--accent-deep)':'var(--ink-sub)')+';font-weight:700;">'+(d.getMonth()+1)+'月</div>';
+      h += '<div style="font-size:18px;font-weight:800;color:'+(isToday?'var(--accent-deep)':'var(--ink-dark)')+';line-height:1;">'+d.getDate()+'</div>';
+      h += '<div style="font-size:9px;color:'+(holiday?'#D9534F':'var(--ink-sub)')+';font-weight:600;">'+wd+(holiday?' 祝':'')+'</div>';
+      h += '</div>';
+      // 内容
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title)+'</div>';
+      var sub = [];
+      if (s.tag) sub.push(s.tag);
+      if (pet) sub.push(pet.name);
+      if (sub.length > 0) h += '<div style="font-size:9px;color:var(--ink-sub);margin-top:2px;">'+escapeHtml(sub.join(' / '))+'</div>';
+      h += '</div>';
+      h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);">chevron_right</span>';
+      h += '</button>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+
+  // 過去の予定（折りたたみ）
+  if (past.length > 0) {
+    h += '<div style="margin:10px 12px 0;background:white;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid var(--line);opacity:0.7;">';
+    h += '<div style="font-size:10px;font-weight:800;color:var(--ink-sub);letter-spacing:1px;margin-bottom:6px;">過去の予定（直近'+past.length+'件）</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:3px;">';
+    for (var pi = 0; pi < past.length; pi++) {
+      var ps = past[pi];
+      var pd = keyToDate(ps.date);
+      var pwd = ['日','月','火','水','木','金','土'][pd.getDay()];
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;background:var(--surface-warm);font-size:10px;">';
+      h += '<span style="flex-shrink:0;font-weight:700;color:var(--ink-sub);width:55px;">'+(pd.getMonth()+1)+'/'+pd.getDate()+'('+pwd+')</span>';
+      h += '<span style="flex:1;color:var(--ink-dark);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(ps.title)+'</span>';
+      h += '</div>';
+    }
+    h += '</div></div>';
+  }
+
+  return h;
+}
+
 
 function renderSettings() {
   document.getElementById('bottomNav').style.display = 'flex';
