@@ -26893,16 +26893,17 @@ function openAddScheduleModal(targetPetId) {
   document.getElementById('scheduleModalTitle').textContent = '予定をついか';
   document.getElementById('scheduleDeleteBtn').style.display = 'none';
   const house = getActiveHouse();
-  let pets;
-  if (targetPetId) {
-    const p = data.pets.find(x => x.id === targetPetId);
-    pets = p ? [p] : (house ? getHousePets(house.id) : data.pets);
-  } else {
-    pets = house ? getHousePets(house.id) : data.pets;
-  }
-  if (pets.length === 0) { showToast('まずは子をむかえてください'); return; }
+  let pets = [];
+  try {
+    if (targetPetId) {
+      const p = (data.pets||[]).find(x => x.id === targetPetId);
+      pets = p ? [p] : (house ? getHousePets(house.id) : (data.pets||[]));
+    } else {
+      pets = house ? getHousePets(house.id) : (data.pets||[]);
+    }
+  } catch(e) { pets = []; }
   const sel = document.getElementById('schedulePetInput');
-  let html = '';
+  let html = '<option value="">(自分の予定)</option>';
   for (const p of pets) html += '<option value="'+p.id+'"'+(p.id===targetPetId?' selected':'')+'>'+escapeHtml(p.name)+'</option>';
   sel.innerHTML = html;
   document.getElementById('scheduleTitleInput').value = '';
@@ -26918,8 +26919,8 @@ function openEditScheduleModal(scheduleId) {
   document.getElementById('scheduleModalTitle').textContent = '予定をへんしゅう';
   document.getElementById('scheduleDeleteBtn').style.display = '';
   const sel = document.getElementById('schedulePetInput');
-  let html = '';
-  for (const p of data.pets) {
+  let html = '<option value="">(自分の予定)</option>';
+  for (const p of (data.pets||[])) {
     html += '<option value="'+p.id+'" '+(p.id===s.petId?'selected':'')+'>'+escapeHtml(p.name)+'</option>';
   }
   sel.innerHTML = html;
@@ -26944,7 +26945,7 @@ function saveSchedule() {
   const petId = document.getElementById('schedulePetInput').value;
   const title = document.getElementById('scheduleTitleInput').value.trim();
   const date = document.getElementById('scheduleDateInput').value;
-  if (!petId || !title || !date) { showToast('入力をかく匹'); return; }
+  if (!title || !date) { showToast('タイトルと日付を入れてね'); return; }
   if (editingScheduleId) {
     const s = data.schedules.find(x => x.id === editingScheduleId);
     if (s) { s.petId = petId; s.title = title; s.date = date; s.tag = selectedTag; }
