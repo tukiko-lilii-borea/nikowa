@@ -1806,6 +1806,7 @@
     box-sizing: border-box;
   }
   .modal.show { display: flex; }
+  .pac-container { z-index: 3000 !important; }
   .modal-content {
     background: var(--surface); width: 100%; max-width: 480px;
     border-radius: 24px 24px 0 0;
@@ -3726,7 +3727,7 @@
   </div>
   
   <div class="form-group"><label class="form-label">かかりつけ小児科</label>
-    <input type="text" class="form-input" id="kidsChartHospitalInput" maxlength="50" placeholder="例：○○こどもクリニック">
+    <input type="text" class="form-input" id="kidsChartHospitalInput" maxlength="50" placeholder="例：○○子どもクリニック">
   </div>
   
   <div class="form-group"><label class="form-label">小児科の電話番号</label>
@@ -3925,7 +3926,7 @@
     </div>
     <div class="help-section">
       <div class="help-section-title">📓 日記とおもいで</div>
-      <p>「日記」タブの「＋日記」から、写真と一緒に思い出を残せる。<br>公開範囲は🔑じぶんだけ／🏡家のみんな／🌍みんなが選べる。</p>
+      <p>「日記」タブの「＋日記」から、写真と一緒に思い出を残せる。<br>公開範囲は🔑自分だけ／🏡家のみんな／🌍みんなが選べる。</p>
     </div>
     <div class="help-section">
       <div class="help-section-title">🎨 テーマ</div>
@@ -3995,7 +3996,7 @@
     <input type="url" class="form-input" id="facilityXInput" placeholder="https://x.com/..." maxlength="200"></div>
   <div class="form-group"><label class="form-label">紹介文 <span style="color:var(--ink-sub); font-weight:500; font-size:10.5px;">（公式情報があれば）</span></label>
     <textarea class="form-input" id="facilityDescInput" rows="3" maxlength="500" style="resize:vertical;" placeholder="例：わんちゃん・ねこちゃんにやさしいトリミングサロンです"></textarea></div>
-  <div class="form-group"><label class="form-label">じぶん用メモ <span style="color:var(--ink-sub); font-weight:500; font-size:10.5px;">（自分だけが見る）</span></label>
+  <div class="form-group"><label class="form-label">自分用メモ <span style="color:var(--ink-sub); font-weight:500; font-size:10.5px;">（自分だけが見る）</span></label>
     <textarea class="form-input" id="facilityMemoInput" rows="3" maxlength="500" style="resize:vertical;" placeholder="例：先生がやさしかった、駐車場あり"></textarea></div>
   <div id="facilityDeleteBtnWrap" style="display:none; margin-top:8px;">
     <button class="btn btn-secondary" style="width:100%; color:var(--accent-deep); font-size:12px;" onclick="deleteFacility()">この場所を整理する</button>
@@ -11859,7 +11860,7 @@ function renderStampCalendar() {
     let color = '#B8AFA8';
     if (isHol) color = '#D89090';
     else if (isSat) color = '#90B0C8';
-    h += '<div style="text-align:center;font-size:7.5px;font-weight:700;color:'+color+';padding:2px 0;letter-spacing:0.08em;">'+weekLabels[i]+'</div>';
+    h += '<div style="text-align:center;font-size:9px;font-weight:700;color:'+color+';padding:2px 0;letter-spacing:0.08em;">'+weekLabels[i]+'</div>';
   }
   h += '</div>';
   
@@ -20445,11 +20446,11 @@ function renderTabPetRoutine(pet) {
   return html;
 }
 
-// 仮実装：PETおでかけ
+// 仮実装：PETお出かけ
 function renderTabPetOuting(pet) {
   let html = '<div style="padding:16px;">';
   html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:24px 20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:13px;line-height:1.8;">';
-  html += '🌷 '+escapeHtml(pet.name)+'とのおでかけ<br>';
+  html += '🌷 '+escapeHtml(pet.name)+'とのお出かけ<br>';
   html += '<span style="font-size:11px;color:var(--ink-light);">公園・カフェ・ドッグラン・旅行<br>楽しかった場所を残せる</span><br><br>';
   html += '<span style="font-size:11px;color:var(--ink-light);">🌷 ただいま準備中</span>';
   html += '</div></div>';
@@ -20521,7 +20522,7 @@ function renderPet() {
       'routine':  { label: 'ルーティン', icon: '🔁' },
       'diary':    { label: '日記',       icon: '📓' },
       'photo':    { label: '写真',       icon: '📷' },
-      'outing':   { label: 'おでかけ',   icon: '🌷' },
+      'outing':   { label: 'お出かけ',   icon: '🌷' },
       'calendar': { label: 'カレンダー', icon: '📅' },
       'vaccine':  { label: 'ワクチン',   icon: '💉' },
       'weight':   { label: '体重',       icon: '⚖️' },
@@ -23319,7 +23320,7 @@ function renderFacility() {
   // 自分用メモ
   if (f.memo) {
     html += '<div class="facility-section facility-memo-section">';
-    html += '<div class="facility-section-title">📝 じぶん用メモ</div>';
+    html += '<div class="facility-section-title">📝 自分用メモ</div>';
     html += '<div class="facility-section-body facility-description">'+escapeHtml(f.memo).replace(/\n/g, '<br>')+'</div>';
     html += '</div>';
   }
@@ -23480,7 +23481,7 @@ function deleteFacility() {
   if (!editingFacilityId) return;
   const f = data.facilities.find(x => x.id === editingFacilityId);
   if (!f) return;
-  if (!confirm(f.name+'を消しますか？\n（じぶん用メモも消えます）')) return;
+  if (!confirm(f.name+'を消しますか？\n（自分用メモも消えます）')) return;
   // 写真も削除
   if (f.heroPhotoId) deletePhoto(f.heroPhotoId);
   data.facilities = data.facilities.filter(x => x.id !== editingFacilityId);
@@ -23545,11 +23546,60 @@ function goSchedule() {
 
 // ===== 日本の祝日データ =====
 const _JP_HOLIDAYS = {
-  '2025-01-01':'元日','2025-01-13':'成人の日','2025-02-11':'建国記念の日','2025-02-23':'天皇誕生日','2025-02-24':'振替休日','2025-03-20':'春分の日','2025-04-29':'昭和の日','2025-05-03':'憲法記念日','2025-05-04':'みどりの日','2025-05-05':'こどもの日','2025-05-06':'振替休日','2025-07-21':'海の日','2025-08-11':'山の日','2025-09-15':'敬老の日','2025-09-23':'秋分の日','2025-10-13':'スポーツの日','2025-11-03':'文化の日','2025-11-23':'勤労感謝の日','2025-11-24':'振替休日',
-  '2026-01-01':'元日','2026-01-12':'成人の日','2026-02-11':'建国記念の日','2026-02-23':'天皇誕生日','2026-03-20':'春分の日','2026-04-29':'昭和の日','2026-05-03':'憲法記念日','2026-05-04':'みどりの日','2026-05-05':'こどもの日','2026-05-06':'振替休日','2026-07-20':'海の日','2026-08-11':'山の日','2026-09-21':'敬老の日','2026-09-22':'国民の休日','2026-09-23':'秋分の日','2026-10-12':'スポーツの日','2026-11-03':'文化の日','2026-11-23':'勤労感謝の日',
-  '2027-01-01':'元日','2027-01-11':'成人の日','2027-02-11':'建国記念の日','2027-02-23':'天皇誕生日','2027-03-21':'春分の日','2027-03-22':'振替休日','2027-04-29':'昭和の日','2027-05-03':'憲法記念日','2027-05-04':'みどりの日','2027-05-05':'こどもの日','2027-07-19':'海の日','2027-08-11':'山の日','2027-09-20':'敬老の日','2027-09-23':'秋分の日','2027-10-11':'スポーツの日','2027-11-03':'文化の日','2027-11-23':'勤労感謝の日'
+  '2025-01-01':'元日','2025-01-13':'成人の日','2025-02-11':'建国記念の日','2025-02-23':'天皇誕生日','2025-02-24':'振替休日','2025-03-20':'春分の日','2025-04-29':'昭和の日','2025-05-03':'憲法記念日','2025-05-04':'みどりの日','2025-05-05':'子どもの日','2025-05-06':'振替休日','2025-07-21':'海の日','2025-08-11':'山の日','2025-09-15':'敬老の日','2025-09-23':'秋分の日','2025-10-13':'スポーツの日','2025-11-03':'文化の日','2025-11-23':'勤労感謝の日','2025-11-24':'振替休日',
+  '2026-01-01':'元日','2026-01-12':'成人の日','2026-02-11':'建国記念の日','2026-02-23':'天皇誕生日','2026-03-20':'春分の日','2026-04-29':'昭和の日','2026-05-03':'憲法記念日','2026-05-04':'みどりの日','2026-05-05':'子どもの日','2026-05-06':'振替休日','2026-07-20':'海の日','2026-08-11':'山の日','2026-09-21':'敬老の日','2026-09-22':'国民の休日','2026-09-23':'秋分の日','2026-10-12':'スポーツの日','2026-11-03':'文化の日','2026-11-23':'勤労感謝の日',
+  '2027-01-01':'元日','2027-01-11':'成人の日','2027-02-11':'建国記念の日','2027-02-23':'天皇誕生日','2027-03-21':'春分の日','2027-03-22':'振替休日','2027-04-29':'昭和の日','2027-05-03':'憲法記念日','2027-05-04':'みどりの日','2027-05-05':'子どもの日','2027-07-19':'海の日','2027-08-11':'山の日','2027-09-20':'敬老の日','2027-09-23':'秋分の日','2027-10-11':'スポーツの日','2027-11-03':'文化の日','2027-11-23':'勤労感謝の日'
 };
 window._JP_HOLIDAYS = _JP_HOLIDAYS;
+
+// ===== 誕生日取得（カレンダー用）=====
+function _getSchedBirthdays(month, day) {
+  var results = [];
+  var mm = String(month).padStart(2,'0');
+  var dd = String(day).padStart(2,'0');
+  var suffix = '-'+mm+'-'+dd;
+  var thisYear = new Date().getFullYear();
+  // 連絡先
+  var allContacts = [];
+  if (data.contacts) {
+    for (var secId in data.contacts) {
+      if (Array.isArray(data.contacts[secId])) {
+        for (var ci = 0; ci < data.contacts[secId].length; ci++) {
+          allContacts.push(data.contacts[secId][ci]);
+        }
+      }
+    }
+  }
+  for (var i = 0; i < allContacts.length; i++) {
+    var c = allContacts[i];
+    if (c.birthday && c.birthday.endsWith(suffix)) {
+      var age = thisYear - parseInt(c.birthday.slice(0,4));
+      results.push({name: c.name, age: age, type:'contact'});
+    }
+  }
+  // ペット
+  if (data.pets) {
+    for (var pi = 0; pi < data.pets.length; pi++) {
+      var p = data.pets[pi];
+      if (p.birthday && p.birthday.endsWith(suffix)) {
+        var age = thisYear - parseInt(p.birthday.slice(0,4));
+        results.push({name: p.name, age: age, type:'pet'});
+      }
+    }
+  }
+  // 自分のプロフィール
+  if (data.myProfiles) {
+    for (var mi = 0; mi < data.myProfiles.length; mi++) {
+      var mp = data.myProfiles[mi];
+      if (mp.birthday && mp.birthday.endsWith(suffix)) {
+        var age = thisYear - parseInt(mp.birthday.slice(0,4));
+        results.push({name: mp.name||mp.nickname||'Me', age: age, type:'me'});
+      }
+    }
+  }
+  return results;
+}
+window._getSchedBirthdays = _getSchedBirthdays;
 
 // ===== Schedule ビュー =====
 function renderSchedule() {
@@ -23570,7 +23620,7 @@ function renderSchedule() {
   html += '<div style="display:flex;align-items:center;padding:14px 16px 8px;gap:8px;">';
   html += '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">calendar_month</span>';
   html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);letter-spacing:0.5px;">Schedule</div>';
-  html += '<button onclick="openAddScheduleModal()" style="padding:7px 14px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>予定</button>';
+  html += '<button onclick="_openSchedAdd()" style="padding:7px 14px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>予定</button>';
   html += '</div>';
 
   // ── ビュー切替 ──
@@ -23596,6 +23646,985 @@ function switchSchedView(mode) {
   render();
 }
 window.switchSchedView = switchSchedView;
+
+// ── 新・予定追加モーダル（createElement方式）──
+// ── デフォルト予定スタンプ ──
+// ── 予定スタンプライブラリ（カテゴリ別）──
+// ── 予定スタンプライブラリ（カテゴリ別・大量版）──
+var _DEFAULT_SCHED_STAMPS = {
+'\u30A4\u30D9\u30F3\u30C8':[
+{icon:'cake',name:'\u8A95\u751F\u65E5'},{icon:'favorite',name:'\u8A18\u5FF5\u65E5'},{icon:'celebration',name:'\u304A\u795D\u3044'},
+{icon:'park',name:'\u304A\u82B1\u898B'},{icon:'festival',name:'\u304A\u796D\u308A'},{icon:'flight',name:'\u65C5\u884C'},
+{icon:'stadium',name:'\u30E9\u30A4\u30D6'},{icon:'movie',name:'\u6620\u753B'},{icon:'favorite',name:'\u30C7\u30FC\u30C8'},
+{icon:'church',name:'\u7D50\u5A5A\u5F0F'},{icon:'temple_buddhist',name:'\u6CD5\u4E8B'},{icon:'diversity_3',name:'\u96C6\u307E\u308A'},
+{icon:'ac_unit',name:'\u30AF\u30EA\u30B9\u30DE\u30B9'},{icon:'egg_alt',name:'\u30A4\u30FC\u30B9\u30BF\u30FC'},{icon:'local_fire_department',name:'\u82B1\u706B'},
+{icon:'temple_buddhist',name:'\u521D\u8A63'},{icon:'mood',name:'\u5E30\u7701'},{icon:'temple_buddhist',name:'\u304A\u5893\u53C2\u308A'},
+{icon:'photo_camera',name:'\u64AE\u5F71\u4F1A'},{icon:'redeem',name:'\u30D7\u30EC\u30BC\u30F3\u30C8'}
+],
+'\u751F\u6D3B':[
+{icon:'local_hospital',name:'\u75C5\u9662'},{icon:'dentistry',name:'\u6B6F\u533B\u8005'},{icon:'vaccines',name:'\u4E88\u9632\u63A5\u7A2E'},
+{icon:'health_and_safety',name:'\u5065\u5EB7\u8A3A\u65AD'},{icon:'medication',name:'\u304F\u3059\u308A'},{icon:'local_hospital',name:'\u901A\u9662'},
+{icon:'local_shipping',name:'\u5B85\u914D'},{icon:'account_balance',name:'\u9280\u884C'},{icon:'location_city',name:'\u5F79\u6240'},
+{icon:'payments',name:'\u652F\u6255\u3044'},{icon:'directions_car',name:'\u8ECA\u691C'},{icon:'verified_user',name:'\u4FDD\u967A'},
+{icon:'cleaning_services',name:'\u5927\u6383\u9664'},{icon:'build',name:'\u4FEE\u7406'},{icon:'shopping_bag',name:'\u8CB7\u3044\u7269'},
+{icon:'home',name:'\u5F15\u8D8A\u3057'},{icon:'local_gas_station',name:'\u7D66\u6CB9'},{icon:'recycling',name:'\u30B4\u30DF\u306E\u65E5'},
+{icon:'local_atm',name:'ATM'},{icon:'inventory_2',name:'\u8377\u7269\u53D7\u53D6'},{icon:'receipt_long',name:'\u5951\u7D04'}
+],
+'\u4ED5\u4E8B':[
+{icon:'work',name:'\u4F1A\u8B70'},{icon:'account_balance_wallet',name:'\u7D66\u6599\u65E5'},{icon:'laptop',name:'\u4ED5\u4E8B'},
+{icon:'co_present',name:'\u8B1B\u7FD2\u4F1A'},{icon:'person',name:'\u9762\u63A5'},{icon:'schedule',name:'\u5B9A\u6642'},
+{icon:'work_off',name:'\u4F11\u307F'},{icon:'savings',name:'\u30DC\u30FC\u30CA\u30B9'},{icon:'timer',name:'\u7D0D\u671F'},
+{icon:'more_time',name:'\u6B8B\u696D'},{icon:'beach_access',name:'\u6709\u7D66'},{icon:'handshake',name:'\u6253\u3061\u5408\u308F\u305B'},
+{icon:'home',name:'\u30EA\u30E2\u30FC\u30C8'},{icon:'flight_takeoff',name:'\u51FA\u5F35'},{icon:'slideshow',name:'\u30D7\u30EC\u30BC\u30F3'},
+{icon:'group_add',name:'\u6765\u5BA2'},{icon:'edit_calendar',name:'\u7DE0\u3081\u65E5'},{icon:'inventory',name:'\u68DA\u5378'},
+{icon:'event_repeat',name:'\u30B7\u30D5\u30C8'},{icon:'free_cancellation',name:'\u5348\u5F8C\u4F11'},{icon:'swap_horiz',name:'\u4EE3\u4F11'},
+{icon:'description',name:'\u8ACB\u6C42\u66F8'},{icon:'storefront',name:'\u4F1A\u793E'},{icon:'local_cafe',name:'\u61C7\u89AA\u4F1A'}
+],
+'\u5B66\u6821':[
+{icon:'school',name:'\u5165\u5B66\u5F0F'},{icon:'school',name:'\u5352\u696D\u5F0F'},{icon:'event',name:'\u59CB\u696D\u5F0F'},
+{icon:'event_busy',name:'\u7D42\u696D\u5F0F'},{icon:'quiz',name:'\u30C6\u30B9\u30C8'},{icon:'edit_note',name:'\u4E2D\u9593\u30C6\u30B9\u30C8'},
+{icon:'grading',name:'\u671F\u672B\u30C6\u30B9\u30C8'},{icon:'group',name:'\u6388\u696D\u53C2\u89B3'},{icon:'sprint',name:'\u904B\u52D5\u4F1A'},
+{icon:'chat',name:'\u61C7\u8AC7\u4F1A'},{icon:'groups',name:'PTA'},{icon:'hiking',name:'\u9060\u8DB3'},
+{icon:'flight',name:'\u4FEE\u5B66\u65C5\u884C'},{icon:'mic',name:'\u767A\u8868\u4F1A'},{icon:'music_note',name:'\u97F3\u697D\u4F1A'},
+{icon:'sports_basketball',name:'\u90E8\u6D3B'},{icon:'menu_book',name:'\u5BBF\u984C'},{icon:'festival',name:'\u5B66\u6821\u884C\u4E8B'},
+{icon:'hotel',name:'\u5408\u5BFF'},{icon:'workspace_premium',name:'\u691C\u5B9A'},{icon:'emoji_events',name:'\u8A66\u9A13'},
+{icon:'draw',name:'\u5857\u308A\u7D75'},{icon:'backpack',name:'\u5165\u5712\u5F0F'},{icon:'pool',name:'\u30D7\u30FC\u30EB'},
+{icon:'sunny',name:'\u590F\u4F11\u307F'},{icon:'ac_unit',name:'\u51AC\u4F11\u307F'}
+],
+'\u3053\u3069\u3082':[
+{icon:'vaccines',name:'\u4E88\u9632\u63A5\u7A2E'},{icon:'monitor_heart',name:'\u691C\u8A3A'},{icon:'edit',name:'\u7FD2\u3044\u4E8B'},
+{icon:'menu_book',name:'\u587E'},{icon:'directions_walk',name:'\u304A\u8FCE\u3048'},{icon:'celebration',name:'\u8A95\u751F\u4F1A'},
+{icon:'checkroom',name:'\u4E03\u4E94\u4E09'},{icon:'child_care',name:'\u4FDD\u80B2\u5712'},{icon:'backpack',name:'\u5165\u5712\u5F0F'},
+{icon:'local_hospital',name:'\u5C0F\u5150\u79D1'},{icon:'toys',name:'\u304A\u904A\u3073\u4F1A'},{icon:'group',name:'\u53C2\u89B3\u65E5'},
+{icon:'sprint',name:'\u904B\u52D5\u4F1A'},{icon:'psychology',name:'\u76F8\u8AC7'},{icon:'family_restroom',name:'\u5B50\u4F9B\u4F1A'}
+],
+'\u30DA\u30C3\u30C8':[
+{icon:'content_cut',name:'\u30C8\u30EA\u30DF\u30F3\u30B0'},{icon:'vaccines',name:'\u30EF\u30AF\u30C1\u30F3'},{icon:'bug_report',name:'\u30D5\u30A3\u30E9\u30EA\u30A2'},
+{icon:'health_and_safety',name:'\u5065\u5EB7\u8A3A\u65AD'},{icon:'hotel',name:'\u30DA\u30C3\u30C8\u30DB\u30C6\u30EB'},{icon:'local_hospital',name:'\u52D5\u7269\u75C5\u9662'},
+{icon:'shower',name:'\u30B7\u30E3\u30F3\u30D7\u30FC'},{icon:'medication',name:'\u304F\u3059\u308A'},{icon:'pets',name:'\u30C9\u30C3\u30B0\u30E9\u30F3'},
+{icon:'directions_walk',name:'\u6563\u6B69'},{icon:'shopping_bag',name:'\u30D5\u30FC\u30C9'},{icon:'local_hospital',name:'\u7814\u8A13'}
+],
+'\u304A\u3067\u304B\u3051':[
+{icon:'flight',name:'\u65C5\u884C'},{icon:'stadium',name:'\u30E9\u30A4\u30D6'},{icon:'movie',name:'\u6620\u753B'},
+{icon:'restaurant',name:'\u30E9\u30F3\u30C1'},{icon:'dinner_dining',name:'\u30C7\u30A3\u30CA\u30FC'},{icon:'festival',name:'\u30A4\u30D9\u30F3\u30C8'},
+{icon:'attractions',name:'\u30C6\u30FC\u30DE\u30D1\u30FC\u30AF'},{icon:'shopping_bag',name:'\u30B7\u30E7\u30C3\u30D4\u30F3\u30B0'},
+{icon:'water',name:'\u6C34\u65CF\u9928'},{icon:'cruelty_free',name:'\u52D5\u7269\u5712'},{icon:'forest',name:'\u30AD\u30E3\u30F3\u30D7'},
+{icon:'outdoor_grill',name:'BBQ'},{icon:'hot_tub',name:'\u6E29\u6CC9'},{icon:'directions_car',name:'\u30C9\u30E9\u30A4\u30D6'},
+{icon:'sports_soccer',name:'\u30B9\u30DD\u30FC\u30C4'},{icon:'golf_course',name:'\u30B4\u30EB\u30D5'},{icon:'downhill_skiing',name:'\u30B9\u30AD\u30FC'}
+],
+'\u7F8E\u5BB9':[
+{icon:'content_cut',name:'\u7F8E\u5BB9\u9662'},{icon:'spa',name:'\u30A8\u30B9\u30C6'},{icon:'palette',name:'\u30CD\u30A4\u30EB'},
+{icon:'visibility',name:'\u307E\u3064\u30A8\u30AF'},{icon:'flash_on',name:'\u8131\u6BDB'},{icon:'colorize',name:'\u30D8\u30A2\u30AB\u30E9\u30FC'},
+{icon:'waves',name:'\u30D1\u30FC\u30DE'},{icon:'face',name:'\u30D5\u30A7\u30A4\u30B7\u30E3\u30EB'},{icon:'self_improvement',name:'\u6574\u4F53'},
+{icon:'monitor_weight',name:'\u30C0\u30A4\u30A8\u30C3\u30C8'},{icon:'fitness_center',name:'\u30B8\u30E0'}
+]
+};
+
+var _SCHED_CAT_COLORS = {
+'\u30A4\u30D9\u30F3\u30C8':'#E8729A','\u751F\u6D3B':'#4A90D9','\u4ED5\u4E8B':'#5B7BA8',
+'\u5B66\u6821':'#5CB85C','\u3053\u3069\u3082':'#E8729A','\u30DA\u30C3\u30C8':'#F0AD4E',
+'\u304A\u3067\u304B\u3051':'#5BC0BE','\u7F8E\u5BB9':'#C76DAD'
+};
+
+function _getSchedStamps() {
+  if (!data.schedStampLib) data.schedStampLib = JSON.parse(JSON.stringify(_DEFAULT_SCHED_STAMPS));
+  return data.schedStampLib;
+}
+
+// ── 予定スタンプピッカーモーダル（折りたたみ＋3列横スクロール）──
+function _openSchedAdd(dateKey) {
+  var ex = document.getElementById('schedAddModal');
+  if (ex) ex.remove();
+  var defaultDate = dateKey || schedCalSelected || todayKey();
+  window._schedAddCurrentDate = defaultDate;
+  var lib = _getSchedStamps();
+  var cats = Object.keys(lib);
+  var wdArr = ['\u65E5','\u6708','\u706B','\u6C34','\u6728','\u91D1','\u571F'];
+  var dd = new Date(defaultDate+'T00:00:00');
+
+  var overlay = document.createElement('div');
+  overlay.id = 'schedAddModal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
+  overlay.onclick = function(e){ if(e.target===overlay){ overlay.remove(); _suppressScrollTop=true; render(); }};
+
+  var box = document.createElement('div');
+  box.style.cssText = 'width:100%;max-width:560px;background:var(--surface);border-radius:18px 18px 0 0;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;';
+
+  // ── ヘッダー ──
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;gap:6px;padding:12px 14px 8px;border-bottom:1px solid var(--line-soft);';
+  hdr.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">event</span><div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">\u4E88\u5B9A\u3092\u8FFD\u52A0</div>';
+  var dateBadge = document.createElement('button');
+  dateBadge.id = 'schedAddDateBadge';
+  dateBadge.style.cssText = 'font-size:10px;font-weight:700;color:var(--accent-deep);background:var(--accent-bg);padding:3px 10px;border-radius:100px;border:1px solid var(--accent);cursor:pointer;font-family:inherit;';
+  dateBadge.textContent = (dd.getMonth()+1)+'/'+dd.getDate()+'('+wdArr[dd.getDay()]+')';
+  dateBadge.onclick = function(){ _schedChangeDateFromBadge(); };
+  hdr.appendChild(dateBadge);
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:2px;margin-left:4px;';
+  closeBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:20px;">close</span>';
+  closeBtn.onclick = function(){ overlay.remove(); _suppressScrollTop=true; render(); };
+  hdr.appendChild(closeBtn);
+  box.appendChild(hdr);
+
+  // ── フィードバック ──
+  var feedback = document.createElement('div');
+  feedback.id = 'schedAddFeedback';
+  feedback.style.cssText = 'display:none;padding:6px 14px;background:var(--accent-bg);border-bottom:1px solid var(--accent);font-size:10px;font-weight:700;color:var(--accent-deep);align-items:center;gap:4px;';
+  box.appendChild(feedback);
+
+  // ── メインスクロール ──
+  var body = document.createElement('div');
+  body.style.cssText = 'flex:1;overflow-y:auto;padding:8px 14px 12px;display:flex;flex-direction:column;gap:10px;';
+
+  // ── 入力行: [+] [テキスト] [送信] ──
+  var inputRow = document.createElement('div');
+  inputRow.style.cssText = 'display:flex;gap:6px;align-items:center;';
+
+  var plusBtn = document.createElement('button');
+  plusBtn.setAttribute('data-sched-plus-btn','1');
+  plusBtn.style.cssText = 'flex-shrink:0;width:38px;height:38px;border:1.5px solid var(--accent);background:var(--surface-warm);color:var(--accent-deep);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;';
+  plusBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:20px;">add</span>';
+
+  var titleInput = document.createElement('input');
+  titleInput.type = 'text';
+  titleInput.placeholder = '\u4E88\u5B9A\u306E\u540D\u524D';
+  titleInput.style.cssText = 'flex:1;padding:9px 10px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);';
+
+  var sendBtn = document.createElement('button');
+  sendBtn.style.cssText = 'flex-shrink:0;width:38px;height:38px;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+  sendBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px;">send</span>';
+
+  inputRow.appendChild(plusBtn);
+  inputRow.appendChild(titleInput);
+  inputRow.appendChild(sendBtn);
+  body.appendChild(inputRow);
+
+  // +ボタン → 別モーダルでスタンプ選択
+  plusBtn.onclick = function(){
+    _openSchedStampPicker(titleInput, dateKey);
+  };
+
+  // ── 詳細セクション ──
+  var detailSection = document.createElement('div');
+  detailSection.style.cssText = 'display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line-soft);padding-top:10px;';
+
+  // 時間
+  var timeWrap = document.createElement('div');
+  timeWrap.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
+  var allDayRow = document.createElement('div');
+  allDayRow.style.cssText = 'display:flex;align-items:center;gap:6px;';
+  allDayRow.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">schedule</span><span style="font-size:11px;font-weight:700;color:var(--ink-sub);">\u6642\u9593</span>';
+  var allDayChk = document.createElement('input');
+  allDayChk.type = 'checkbox'; allDayChk.checked = true;
+  allDayChk.style.cssText = 'margin-left:auto;width:16px;height:16px;accent-color:var(--accent);';
+  var allDayLbl = document.createElement('span');
+  allDayLbl.style.cssText = 'font-size:10px;font-weight:700;color:var(--ink-dark);';
+  allDayLbl.textContent = '\u7D42\u65E5';
+  allDayRow.appendChild(allDayChk);
+  allDayRow.appendChild(allDayLbl);
+  timeWrap.appendChild(allDayRow);
+
+  var timeRow = document.createElement('div');
+  timeRow.style.cssText = 'display:none;flex-direction:row;gap:6px;align-items:center;';
+  var tStart = document.createElement('input'); tStart.type='time';
+  tStart.style.cssText = 'flex:1;padding:8px;border:1px solid var(--card-border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;';
+  var tSep = document.createElement('span'); tSep.textContent='\u301C'; tSep.style.cssText='font-size:11px;color:var(--ink-sub);font-weight:700;';
+  var tEnd = document.createElement('input'); tEnd.type='time';
+  tEnd.style.cssText = tStart.style.cssText;
+  timeRow.appendChild(tStart); timeRow.appendChild(tSep); timeRow.appendChild(tEnd);
+  timeWrap.appendChild(timeRow);
+  allDayChk.onchange = function(){ timeRow.style.display = allDayChk.checked ? 'none' : 'flex'; };
+  detailSection.appendChild(timeWrap);
+
+  // 場所
+  var locRow = document.createElement('div');
+  locRow.style.cssText = 'display:flex;align-items:center;gap:6px;';
+  locRow.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">location_on</span>';
+  var locInput = document.createElement('input'); locInput.type='text';
+  locInput.placeholder = '\u5834\u6240\u3092\u5165\u529B...';
+  locInput.id = 'schedLocInput';
+  locInput.style.cssText = 'flex:1;padding:8px 10px;border:1px solid var(--card-border);border-radius:8px;font-size:11px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);';
+  var locSearchBtn = document.createElement('button');
+  locSearchBtn.style.cssText = 'flex-shrink:0;width:34px;height:34px;border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent-deep);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+  locSearchBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">search</span>';
+  locRow.appendChild(locInput);
+  locRow.appendChild(locSearchBtn);
+  detailSection.appendChild(locRow);
+  // 場所詳細表示エリア（検索後に表示）
+  var locDetail = document.createElement('div');
+  locDetail.id = 'schedLocDetail';
+  locDetail.style.cssText = 'display:none;';
+  detailSection.appendChild(locDetail);
+  var locLatLng = null;
+  var locPlaceData = null;
+  locSearchBtn.onclick = function(){
+    var q = locInput.value.trim();
+    _openPlaceSearchModal(q, function(place){
+      locInput.value = place.name;
+      locLatLng = place.latLng;
+      locPlaceData = place;
+      _renderLocDetail(locDetail, place);
+    });
+  };
+
+  // 通知
+  var notiRow = document.createElement('div');
+  notiRow.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+  notiRow.innerHTML = '<div style="display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">notifications</span><span style="font-size:11px;font-weight:700;color:var(--ink-sub);">\u901A\u77E5</span><span style="font-size:8px;color:var(--ink-light);">(\u30A2\u30D7\u30EA\u5316\u5F8C)</span></div>';
+  var notiGrid = document.createElement('div');
+  notiGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;';
+  var selReminders = [];
+  for (var ri = 0; ri < _REMINDER_OPTIONS.length; ri++) {
+    (function(opt){
+      var btn = document.createElement('button'); btn.type='button';
+      btn.style.cssText = 'padding:4px 9px;border-radius:100px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:white;color:var(--ink-sub);';
+      btn.textContent = opt.label;
+      btn.onclick = function(){
+        var idx = selReminders.indexOf(opt.min);
+        if (idx>=0) { selReminders.splice(idx,1); btn.style.background='white'; btn.style.color='var(--ink-sub)'; btn.style.borderColor='var(--line)'; }
+        else { selReminders.push(opt.min); btn.style.background='var(--accent)'; btn.style.color='white'; btn.style.borderColor='var(--accent)'; }
+      };
+      notiGrid.appendChild(btn);
+    })(_REMINDER_OPTIONS[ri]);
+  }
+  notiRow.appendChild(notiGrid);
+  detailSection.appendChild(notiRow);
+
+  // 繰り返し
+  var repRow = document.createElement('div');
+  repRow.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+  repRow.innerHTML = '<div style="display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">repeat</span><span style="font-size:11px;font-weight:700;color:var(--ink-sub);">\u7E70\u308A\u8FD4\u3057</span></div>';
+  var repSel = document.createElement('select');
+  repSel.style.cssText = 'padding:8px 10px;border:1px solid var(--card-border);border-radius:8px;font-size:11px;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);';
+  var repOpts = [
+    {v:'none',l:'\u306A\u3057'},{v:'daily',l:'\u6BCE\u65E5'},{v:'weekly',l:'\u6BCE\u9031'},
+    {v:'weekday',l:'\u66DC\u65E5\u6307\u5B9A'},{v:'monthly',l:'\u6BCE\u6708'},{v:'yearly',l:'\u6BCE\u5E74'}
+  ];
+  for (var oi = 0; oi < repOpts.length; oi++) {
+    var o = document.createElement('option'); o.value=repOpts[oi].v; o.textContent=repOpts[oi].l;
+    repSel.appendChild(o);
+  }
+  repRow.appendChild(repSel);
+
+  // 曜日指定（weekday選択時のみ表示）
+  var wdPicker = document.createElement('div');
+  wdPicker.style.cssText = 'display:none;flex-wrap:wrap;gap:4px;';
+  var selDays = [];
+  var dayNames = ['\u65E5','\u6708','\u706B','\u6C34','\u6728','\u91D1','\u571F'];
+  var dayColors = ['#D9534F','#333','#333','#333','#333','#333','#4A90D9'];
+  for (var di = 0; di < 7; di++) {
+    (function(dayIdx){
+      var btn = document.createElement('button'); btn.type='button';
+      btn.style.cssText = 'width:32px;height:32px;border-radius:50%;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--line);background:white;color:'+dayColors[dayIdx]+';';
+      btn.textContent = dayNames[dayIdx];
+      btn.onclick = function(){
+        var idx = selDays.indexOf(dayIdx);
+        if (idx>=0) { selDays.splice(idx,1); btn.style.background='white'; btn.style.borderColor='var(--line)'; }
+        else { selDays.push(dayIdx); btn.style.background='var(--accent)'; btn.style.color='white'; btn.style.borderColor='var(--accent)'; }
+      };
+      wdPicker.appendChild(btn);
+    })(di);
+  }
+  repRow.appendChild(wdPicker);
+
+  // 第N週指定（monthlyの場合）
+  var nthPicker = document.createElement('div');
+  nthPicker.style.cssText = 'display:none;flex-wrap:wrap;gap:4px;';
+  var nthOpts = [{v:0,l:'\u6BCE\u6708'+dd.getDate()+'\u65E5'},{v:1,l:'\u7B2C1'},{v:2,l:'\u7B2C2'},{v:3,l:'\u7B2C3'},{v:4,l:'\u7B2C4'},{v:-1,l:'\u6700\u7D42'}];
+  var selNth = 0;
+  for (var ni = 0; ni < nthOpts.length; ni++) {
+    (function(opt){
+      var btn = document.createElement('button'); btn.type='button';
+      var isAct = opt.v === 0;
+      btn.style.cssText = 'padding:5px 10px;border-radius:100px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;border:1px solid '+(isAct?'var(--accent)':'var(--line)')+';background:'+(isAct?'var(--accent)':'white')+';color:'+(isAct?'white':'var(--ink-sub)')+';';
+      btn.textContent = opt.l + (opt.v > 0 ? wdArr[dd.getDay()] : '');
+      btn.onclick = function(){
+        selNth = opt.v;
+        nthPicker.querySelectorAll('button').forEach(function(b){ b.style.background='white'; b.style.color='var(--ink-sub)'; b.style.borderColor='var(--line)'; });
+        btn.style.background='var(--accent)'; btn.style.color='white'; btn.style.borderColor='var(--accent)';
+      };
+      nthPicker.appendChild(btn);
+    })(nthOpts[ni]);
+  }
+  repRow.appendChild(nthPicker);
+
+  repSel.onchange = function(){
+    wdPicker.style.display = repSel.value==='weekday' ? 'flex' : 'none';
+    nthPicker.style.display = repSel.value==='monthly' ? 'flex' : 'none';
+  };
+  detailSection.appendChild(repRow);
+
+  // メモ
+  var memoRow = document.createElement('div');
+  memoRow.style.cssText = 'display:flex;align-items:flex-start;gap:6px;';
+  memoRow.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);margin-top:8px;">notes</span>';
+  var memoInput = document.createElement('textarea');
+  memoInput.rows = 2; memoInput.placeholder = '\u30E1\u30E2...';
+  memoInput.style.cssText = 'flex:1;padding:8px 10px;border:1px solid var(--card-border);border-radius:8px;font-size:11px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);resize:vertical;';
+  memoRow.appendChild(memoInput);
+  detailSection.appendChild(memoRow);
+
+  body.appendChild(detailSection);
+  box.appendChild(body);
+
+  // ── 保存関数 ──
+  function doSave(title) {
+    if (!title) { showToast('\u30BF\u30A4\u30C8\u30EB\u3092\u5165\u308C\u3066\u306D'); return; }
+    var curDate = window._schedAddCurrentDate || defaultDate;
+    if (!data.schedules) data.schedules = [];
+    var rec = {
+      id:'sched_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+      petId:'', title:title, date:curDate,
+      tag:'', color: titleInput.dataset.color || '',
+      icon: titleInput.dataset.icon || '',
+      allDay: allDayChk.checked,
+      timeStart: allDayChk.checked ? '' : tStart.value,
+      timeEnd: allDayChk.checked ? '' : tEnd.value,
+      location: locInput.value.trim(),
+      locationLatLng: locLatLng || null,
+      locationAddress: locPlaceData ? locPlaceData.address : '',
+      locationPhone: locPlaceData ? locPlaceData.phone : '',
+      reminders: selReminders.slice(),
+      repeat: repSel.value,
+      repeatDays: repSel.value==='weekday' ? selDays.slice() : [],
+      repeatNth: repSel.value==='monthly' ? selNth : 0,
+      memo: memoInput.value.trim(),
+      createdAt: Date.now()
+    };
+    data.schedules.push(rec);
+    saveData();
+    console.log('[Schedule] saved:', rec.title, 'date:', rec.date, 'total:', data.schedules.length);
+    // 即座にモーダル閉じてカレンダー更新
+    schedCalSelected = curDate;
+    overlay.remove();
+    _suppressScrollTop = true;
+    render();
+    showToast('\u300C'+title+'\u300D\u3092\u8FFD\u52A0\u3057\u305F\u3088');
+  }
+
+  sendBtn.onclick = function(){ doSave(titleInput.value.trim()); };
+  titleInput.onkeydown = function(e){ if(e.key==='Enter'){e.preventDefault();doSave(titleInput.value.trim());}};
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  setTimeout(function(){ titleInput.focus(); }, 100);
+}
+window._openSchedAdd = _openSchedAdd;
+
+// ── 予定スタンプピッカーモーダル（MEスタンプと同じデザイン）──
+function _openSchedStampPicker(titleInput, dateKey) {
+  var ex = document.getElementById('schedStampPickerModal');
+  if (ex) ex.remove();
+  var lib = _getSchedStamps();
+  var cats = Object.keys(lib);
+
+  var overlay = document.createElement('div');
+  overlay.id = 'schedStampPickerModal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:2300;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
+  overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+
+  var box = document.createElement('div');
+  box.style.cssText = 'width:100%;max-width:560px;background:var(--surface);border-radius:18px 18px 0 0;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;';
+
+  // ヘッダー
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;border-bottom:1px solid var(--line-soft);';
+  hdr.innerHTML = '<div style="display:flex;align-items:center;gap:6px;flex:1;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">add_circle</span><span style="font-size:14px;font-weight:800;color:var(--ink-dark);">\u30B9\u30BF\u30F3\u30D7\u3092\u9078\u3093\u3067\u306D</span></div>';
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:4px;';
+  closeBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:24px;">close</span>';
+  closeBtn.onclick = function(){ overlay.remove(); };
+  hdr.appendChild(closeBtn);
+  box.appendChild(hdr);
+
+  // スクロール
+  var body = document.createElement('div');
+  body.style.cssText = 'flex:1;overflow-y:auto;padding:6px 0 16px;';
+
+  // カテゴリ別（MEスタンプと同じ4列グリッド＋折りたたみ）
+  for (var ci = 0; ci < cats.length; ci++) {
+    (function(cat){
+      var stamps = lib[cat] || [];
+      var catColor = _SCHED_CAT_COLORS[cat] || 'var(--accent-deep)';
+
+      // カテゴリ見出し
+      var catHdr = document.createElement('div');
+      catHdr.style.cssText = 'padding:14px 16px 4px;display:flex;align-items:center;gap:8px;cursor:pointer;';
+      catHdr.innerHTML = '<span style="font-size:11px;font-weight:800;color:'+catColor+';letter-spacing:1.2px;flex-shrink:0;">'+escapeHtml(cat)+'</span><div style="flex:1;height:2px;background:'+catColor+';border-radius:2px;opacity:0.4;"></div>';
+      var arrowIco = document.createElement('span');
+      arrowIco.className = 'material-symbols-rounded';
+      arrowIco.style.cssText = 'font-size:18px;color:'+catColor+';transition:transform 0.2s;';
+      arrowIco.textContent = 'expand_more';
+      catHdr.appendChild(arrowIco);
+
+      // グリッド（4列、折りたたみ）
+      var gridWrap = document.createElement('div');
+      gridWrap.style.cssText = 'display:none;padding:0 12px;';
+      var grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:6px;';
+
+      for (var si = 0; si < stamps.length; si++) {
+        (function(st){
+          var btn = document.createElement('button');
+          btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 3px 8px;background:var(--surface-warm);border:1px solid var(--line);border-radius:11px;cursor:pointer;font-family:inherit;';
+          btn.innerHTML = '<span style="width:38px;height:38px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><span class="material-symbols-rounded" style="font-size:24px;color:'+catColor+';">'+st.icon+'</span></span><span style="font-size:10px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(st.name)+'</span>';
+          btn.onclick = function(){
+            titleInput.value = st.name;
+            titleInput.dataset.color = catColor;
+            titleInput.dataset.icon = st.icon;
+            // 親モーダルの＋ボタンにアイコン表示
+            var plusEl = document.querySelector('#schedAddModal [data-sched-plus-btn]');
+            if (plusEl) {
+              plusEl.innerHTML = '<span class="material-symbols-rounded" style="font-size:20px;color:'+catColor+';">'+st.icon+'</span>';
+              plusEl.style.borderColor = catColor;
+            }
+            overlay.remove();
+          };
+          grid.appendChild(btn);
+        })(stamps[si]);
+      }
+      // +追加（グリッド内）
+      var addGridBtn = document.createElement('button');
+      addGridBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:10px 3px 8px;background:none;border:1.5px dashed '+catColor+';border-radius:11px;cursor:pointer;font-family:inherit;opacity:0.6;';
+      addGridBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:22px;color:'+catColor+';">add</span>';
+      addGridBtn.onclick = function(){
+        // prompt代替：インライン入力
+        var inp = document.createElement('input');
+        inp.type = 'text'; inp.placeholder = '\u540D\u524D\u3092\u5165\u529B';
+        inp.style.cssText = 'width:100%;padding:8px;border:2px solid '+catColor+';border-radius:8px;font-size:12px;font-family:inherit;background:white;color:var(--ink-dark);box-sizing:border-box;grid-column:1/-1;';
+        inp.onkeydown = function(e){
+          if (e.key==='Enter') {
+            var nm = inp.value.trim();
+            if (!nm) return;
+            lib[cat].push({icon:'event',name:nm});
+            data.schedStampLib = lib; saveData();
+            overlay.remove(); _openSchedStampPicker(titleInput, dateKey);
+          }
+        };
+        grid.appendChild(inp);
+        setTimeout(function(){ inp.focus(); }, 50);
+      };
+      grid.appendChild(addGridBtn);
+      gridWrap.appendChild(grid);
+
+      var isOpen = false;
+      catHdr.onclick = function(){
+        isOpen = !isOpen;
+        gridWrap.style.display = isOpen ? 'block' : 'none';
+        arrowIco.style.transform = isOpen ? 'rotate(180deg)' : '';
+      };
+
+      body.appendChild(catHdr);
+      body.appendChild(gridWrap);
+    })(cats[ci]);
+  }
+
+  box.appendChild(body);
+
+  // フッター
+  var foot = document.createElement('div');
+  foot.style.cssText = 'padding:10px 16px;border-top:1px solid var(--line-soft);';
+  var doneBtn = document.createElement('button');
+  doneBtn.style.cssText = 'width:100%;padding:11px;background:var(--surface-warm);color:var(--ink-dark);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;';
+  doneBtn.textContent = '\u5B8C\u4E86';
+  doneBtn.onclick = function(){ overlay.remove(); };
+  foot.appendChild(doneBtn);
+  box.appendChild(foot);
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+window._openSchedStampPicker = _openSchedStampPicker;
+
+// ── 場所詳細表示 ──
+function _renderLocDetail(container, place) {
+  if (!place || !place.name) { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+  container.style.cssText = 'margin-top:4px;background:white;border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;';
+  var h = '';
+  h += '<div style="display:flex;align-items:center;gap:6px;">';
+  h += '<span style="font-size:12px;font-weight:800;color:var(--ink-dark);flex:1;">'+escapeHtml(place.name)+'</span>';
+  h += '<button onclick="this.closest(\'[id=schedLocDetail]\').style.display=\'none\'" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:2px;"><span class="material-symbols-rounded" style="font-size:14px;">close</span></button>';
+  h += '</div>';
+  if (place.address) h += '<div style="font-size:10px;color:var(--ink-sub);display:flex;align-items:flex-start;gap:4px;"><span class="material-symbols-rounded" style="font-size:12px;flex-shrink:0;margin-top:1px;">location_on</span>'+escapeHtml(place.address)+'</div>';
+  if (place.phone) h += '<a href="tel:'+place.phone.replace(/[^\d+]/g,'')+'" style="font-size:10px;color:var(--accent-deep);text-decoration:none;display:flex;align-items:center;gap:4px;font-weight:700;"><span class="material-symbols-rounded" style="font-size:12px;">call</span>'+escapeHtml(place.phone)+'</a>';
+  if (place.latLng) {
+    h += '<a href="https://www.google.com/maps/search/?api=1&query='+place.latLng.lat+','+place.latLng.lng+'" target="_blank" rel="noopener" style="font-size:10px;color:var(--accent-deep);text-decoration:none;display:flex;align-items:center;gap:4px;font-weight:700;"><span class="material-symbols-rounded" style="font-size:12px;">map</span>Google\u30DE\u30C3\u30D7\u3067\u958B\u304F</a>';
+    h += '<div id="schedLocMap" style="width:100%;height:100px;border-radius:8px;overflow:hidden;border:1px solid var(--line);"></div>';
+  }
+  container.innerHTML = h;
+  if (place.latLng) {
+    setTimeout(function(){
+      try {
+        var mapEl = document.getElementById('schedLocMap');
+        if (mapEl && window.google && google.maps) {
+          var map = new google.maps.Map(mapEl, {center:place.latLng, zoom:15, disableDefaultUI:true, zoomControl:true});
+          new google.maps.Marker({position:place.latLng, map:map});
+        }
+      } catch(e){}
+    }, 150);
+  }
+}
+window._renderLocDetail = _renderLocDetail;
+
+// ── 場所検索モーダル ──
+function _openPlaceSearchModal(initialQuery, onSelect) {
+  var ex = document.getElementById('placeSearchModal');
+  if (ex) ex.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'placeSearchModal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:2400;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
+  overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+
+  var box = document.createElement('div');
+  box.style.cssText = 'width:100%;max-width:560px;background:var(--surface);border-radius:18px 18px 0 0;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;';
+
+  // ヘッダー
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;gap:6px;padding:12px 14px 8px;border-bottom:1px solid var(--line-soft);';
+  hdr.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">search</span><div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">\u5834\u6240\u3092\u691C\u7D22</div>';
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:2px;';
+  closeBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:20px;">close</span>';
+  closeBtn.onclick = function(){ overlay.remove(); };
+  hdr.appendChild(closeBtn);
+  box.appendChild(hdr);
+
+  // 検索入力
+  var searchRow = document.createElement('div');
+  searchRow.style.cssText = 'padding:8px 14px;display:flex;gap:6px;';
+  var searchInput = document.createElement('input');
+  searchInput.type = 'text';
+  searchInput.value = initialQuery || '';
+  searchInput.placeholder = '\u304A\u5E97\u540D\u3001\u4F4F\u6240\u3001\u99C5\u540D\u306A\u3069...';
+  searchInput.style.cssText = 'flex:1;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);';
+  var searchBtn = document.createElement('button');
+  searchBtn.style.cssText = 'flex-shrink:0;padding:10px 14px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;';
+  searchBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">search</span>';
+  searchRow.appendChild(searchInput);
+  searchRow.appendChild(searchBtn);
+  box.appendChild(searchRow);
+
+  // 結果エリア
+  var results = document.createElement('div');
+  results.style.cssText = 'flex:1;overflow-y:auto;padding:6px 14px 16px;';
+  results.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink-light);font-size:11px;"><span class="material-symbols-rounded" style="font-size:32px;opacity:0.4;display:block;margin-bottom:6px;">explore</span>\u691C\u7D22\u3057\u3066\u307F\u3066\u306D</div>';
+  box.appendChild(results);
+
+  function doSearch() {
+    var q = searchInput.value.trim();
+    if (!q) return;
+    results.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink-sub);font-size:11px;"><span class="material-symbols-rounded" style="font-size:24px;display:block;margin-bottom:4px;animation:spin 1s linear infinite;">progress_activity</span>\u691C\u7D22\u4E2D...</div>';
+    try {
+      if (!window.google || !google.maps || !google.maps.places) {
+        results.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink-sub);font-size:11px;">Google Maps API\u304C\u5229\u7528\u3067\u304D\u307E\u305B\u3093<br>GitHub Pages\u306B\u30C7\u30D7\u30ED\u30A4\u5F8C\u306B\u304A\u8A66\u3057\u304F\u3060\u3055\u3044</div>';
+        return;
+      }
+      var mapDiv = document.createElement('div');
+      mapDiv.style.cssText = 'width:1px;height:1px;position:absolute;top:-100px;';
+      document.body.appendChild(mapDiv);
+      var svc = new google.maps.places.PlacesService(mapDiv);
+      svc.textSearch({query: q, region: 'jp'}, function(places, status) {
+        mapDiv.remove();
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !places || places.length === 0) {
+          results.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink-sub);font-size:11px;"><span class="material-symbols-rounded" style="font-size:28px;opacity:0.4;display:block;margin-bottom:6px;">search_off</span>\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3067\u3057\u305F</div>';
+          return;
+        }
+        var h = '';
+        for (var i = 0; i < Math.min(places.length, 8); i++) {
+          var p = places[i];
+          var lat = p.geometry ? p.geometry.location.lat() : 0;
+          var lng = p.geometry ? p.geometry.location.lng() : 0;
+          h += '<div data-idx="'+i+'" style="display:flex;align-items:flex-start;gap:10px;padding:10px;background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;cursor:pointer;margin-bottom:6px;" onclick="_selectPlace('+i+')">';
+          h += '<span style="flex-shrink:0;width:36px;height:36px;border-radius:8px;background:var(--accent-bg);color:var(--accent-deep);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;">location_on</span></span>';
+          h += '<div style="flex:1;min-width:0;">';
+          h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(p.name)+'</div>';
+          if (p.formatted_address) h += '<div style="font-size:9px;color:var(--ink-sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.formatted_address.replace(/\u65E5\u672C\u3001?/g,''))+'</div>';
+          if (p.rating) h += '<div style="font-size:9px;color:#E8A040;margin-top:2px;">\u2605 '+p.rating+'</div>';
+          h += '</div>';
+          h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);margin-top:4px;">chevron_right</span>';
+          h += '</div>';
+        }
+        results.innerHTML = h;
+        // 各場所の詳細取得用にデータ保持
+        window._placeSearchResults = places;
+      });
+    } catch(e) {
+      results.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink-sub);font-size:11px;">'+escapeHtml(e.message||'\u30A8\u30E9\u30FC')+'</div>';
+    }
+  }
+
+  searchBtn.onclick = doSearch;
+  searchInput.onkeydown = function(e){ if(e.key==='Enter'){e.preventDefault();doSearch();}};
+
+  // 場所選択時のコールバック
+  window._selectPlace = function(idx) {
+    var p = (window._placeSearchResults||[])[idx];
+    if (!p) return;
+    // 詳細を取得（電話番号等）
+    try {
+      var mapDiv2 = document.createElement('div');
+      mapDiv2.style.cssText = 'width:1px;height:1px;position:absolute;top:-100px;';
+      document.body.appendChild(mapDiv2);
+      var svc2 = new google.maps.places.PlacesService(mapDiv2);
+      svc2.getDetails({placeId: p.place_id, fields:['name','formatted_address','formatted_phone_number','geometry','opening_hours','website','url']}, function(detail, st2){
+        mapDiv2.remove();
+        var result = {
+          name: (detail && detail.name) || p.name,
+          address: (detail && detail.formatted_address) || p.formatted_address || '',
+          phone: (detail && detail.formatted_phone_number) || '',
+          website: (detail && detail.website) || '',
+          mapsUrl: (detail && detail.url) || '',
+          latLng: null
+        };
+        result.address = result.address.replace(/\u65E5\u672C\u3001?/g,'');
+        if (detail && detail.geometry && detail.geometry.location) {
+          result.latLng = {lat: detail.geometry.location.lat(), lng: detail.geometry.location.lng()};
+        } else if (p.geometry && p.geometry.location) {
+          result.latLng = {lat: p.geometry.location.lat(), lng: p.geometry.location.lng()};
+        }
+        overlay.remove();
+        if (typeof onSelect === 'function') onSelect(result);
+      });
+    } catch(e) {
+      // 詳細取得失敗時は基本情報だけ
+      var result = {
+        name: p.name, address: (p.formatted_address||'').replace(/\u65E5\u672C\u3001?/g,''),
+        phone: '', website: '', mapsUrl: '', latLng: null
+      };
+      if (p.geometry && p.geometry.location) {
+        result.latLng = {lat: p.geometry.location.lat(), lng: p.geometry.location.lng()};
+      }
+      overlay.remove();
+      if (typeof onSelect === 'function') onSelect(result);
+    }
+  };
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  setTimeout(function(){ searchInput.focus(); if(initialQuery) doSearch(); }, 100);
+}
+window._openPlaceSearchModal = _openPlaceSearchModal;
+
+
+function _schedAddRecord(title, color, date) {
+  if (!data.schedules) data.schedules = [];
+  data.schedules.push({
+    id:'sched_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+    petId:'',title:title,date:date,tag:'',color:color||'',allDay:true,timeStart:'',timeEnd:'',location:'',reminders:[],memo:'',createdAt:Date.now()
+  });
+  saveData();
+  var fb=document.getElementById('schedAddFeedback');
+  if(fb){fb.style.display='flex';
+    fb.innerHTML='<span class="material-symbols-rounded" style="font-size:13px;">check_circle</span>\u300C'+escapeHtml(title)+'\u300D\u3092\u8FFD\u52A0';
+    clearTimeout(window._schedFbTimer);
+    window._schedFbTimer=setTimeout(function(){fb.style.display='none';},1200);
+  }
+}
+window._schedAddRecord = _schedAddRecord;
+
+function _schedChangeDateFromBadge() {
+  var badge = document.getElementById('schedAddDateBadge');
+  if (!badge) return;
+  var existInp = document.getElementById('schedDateChangeInput');
+  if (existInp) { existInp.remove(); return; }
+  var wrap = document.createElement('div');
+  wrap.id = 'schedDateChangeInput';
+  wrap.style.cssText = 'position:absolute;top:100%;left:0;right:0;padding:8px;background:white;border:2px solid var(--accent);border-radius:10px;z-index:10;box-shadow:0 4px 16px rgba(0,0,0,0.15);display:flex;gap:4px;align-items:center;';
+  badge.parentElement.style.position = 'relative';
+  var inp = document.createElement('input');
+  inp.type = 'date';
+  inp.value = window._schedAddCurrentDate || '';
+  inp.style.cssText = 'flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;color:var(--ink-dark);background:var(--surface-warm);';
+  var okBtn = document.createElement('button');
+  okBtn.style.cssText = 'padding:8px 12px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;';
+  okBtn.textContent = 'OK';
+  okBtn.onclick = function(){
+    if (inp.value) {
+      var wdArr = ['\u65E5','\u6708','\u706B','\u6C34','\u6728','\u91D1','\u571F'];
+      var nd = new Date(inp.value+'T00:00:00');
+      badge.textContent = (nd.getMonth()+1)+'/'+nd.getDate()+'('+wdArr[nd.getDay()]+')';
+      window._schedAddCurrentDate = inp.value;
+    }
+    wrap.remove();
+  };
+  wrap.appendChild(inp);
+  wrap.appendChild(okBtn);
+  badge.parentElement.appendChild(wrap);
+  setTimeout(function(){ inp.focus(); }, 50);
+}
+window._schedChangeDateFromBadge = _schedChangeDateFromBadge;
+
+// ── 予定編集モーダル（時間・場所・通知付き）──
+var _REMINDER_OPTIONS = [
+  {min:5,label:'5\u5206\u524D'},{min:30,label:'30\u5206\u524D'},{min:60,label:'1\u6642\u9593\u524D'},
+  {min:180,label:'3\u6642\u9593\u524D'},{min:300,label:'5\u6642\u9593\u524D'},
+  {min:1440,label:'1\u65E5\u524D'},{min:2880,label:'2\u65E5\u524D'}
+];
+
+function openEditScheduleModal(scheduleId) {
+  var s = (data.schedules||[]).find(function(x){return x.id===scheduleId;});
+  if (!s) return;
+  var ex = document.getElementById('schedEditModal');
+  if (ex) ex.remove();
+  var wdArr = ['\u65E5','\u6708','\u706B','\u6C34','\u6728','\u91D1','\u571F'];
+
+  var overlay = document.createElement('div');
+  overlay.id = 'schedEditModal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
+  overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+
+  var box = document.createElement('div');
+  box.style.cssText = 'width:100%;max-width:560px;background:var(--surface);border-radius:18px 18px 0 0;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;';
+
+  // ヘッダー
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;gap:6px;padding:14px 16px 10px;border-bottom:1px solid var(--line-soft);';
+  hdr.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">edit_calendar</span><div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">\u4E88\u5B9A\u3092\u7DE8\u96C6</div>';
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:2px;';
+  closeBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:20px;">close</span>';
+  closeBtn.onclick = function(){ overlay.remove(); };
+  hdr.appendChild(closeBtn);
+  box.appendChild(hdr);
+
+  var body = document.createElement('div');
+  body.style.cssText = 'flex:1;overflow-y:auto;padding:14px 16px 80px;display:flex;flex-direction:column;gap:12px;';
+
+  // タイトル
+  var titleLabel = document.createElement('label');
+  titleLabel.style.cssText = 'font-size:11px;font-weight:700;color:var(--ink-sub);';
+  titleLabel.textContent = '\u4E88\u5B9A\u540D';
+  body.appendChild(titleLabel);
+  var titleInput = document.createElement('input');
+  titleInput.type = 'text'; titleInput.value = s.title||'';
+  titleInput.style.cssText = 'width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);';
+  body.appendChild(titleInput);
+
+  // 日付（年/月/日セレクト）
+  var dateLabel = document.createElement('label');
+  dateLabel.style.cssText = 'font-size:11px;font-weight:700;color:var(--ink-sub);';
+  dateLabel.textContent = '\u65E5\u4ED8';
+  body.appendChild(dateLabel);
+  var dateRow = document.createElement('div');
+  dateRow.style.cssText = 'display:flex;gap:6px;';
+  var _dp = (s.date||'').split('-');
+  var _dy = parseInt(_dp[0])||new Date().getFullYear();
+  var _dm = parseInt(_dp[1])||new Date().getMonth()+1;
+  var _dd = parseInt(_dp[2])||new Date().getDate();
+  var selStyle = 'flex:1;padding:10px 6px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);-webkit-appearance:none;text-align:center;';
+  var yearSel = document.createElement('select'); yearSel.style.cssText = selStyle;
+  for (var yi = 2020; yi <= 2035; yi++) {
+    var o = document.createElement('option'); o.value=yi; o.textContent=yi+'\u5E74';
+    if (yi===_dy) o.selected=true;
+    yearSel.appendChild(o);
+  }
+  var monthSel = document.createElement('select'); monthSel.style.cssText = selStyle;
+  for (var mi = 1; mi <= 12; mi++) {
+    var o = document.createElement('option'); o.value=mi; o.textContent=mi+'\u6708';
+    if (mi===_dm) o.selected=true;
+    monthSel.appendChild(o);
+  }
+  var daySel = document.createElement('select'); daySel.style.cssText = selStyle;
+  for (var di = 1; di <= 31; di++) {
+    var o = document.createElement('option'); o.value=di; o.textContent=di+'\u65E5';
+    if (di===_dd) o.selected=true;
+    daySel.appendChild(o);
+  }
+  dateRow.appendChild(yearSel);
+  dateRow.appendChild(monthSel);
+  dateRow.appendChild(daySel);
+  body.appendChild(dateRow);
+  // 日付取得ヘルパー
+  function _getEditDate() {
+    var y = parseInt(yearSel.value);
+    var m = String(parseInt(monthSel.value)).padStart(2,'0');
+    var d = String(parseInt(daySel.value)).padStart(2,'0');
+    return y+'-'+m+'-'+d;
+  }
+
+  // 終日チェック
+  var allDayRow = document.createElement('div');
+  allDayRow.style.cssText = 'display:flex;align-items:center;gap:8px;';
+  var allDayChk = document.createElement('input');
+  allDayChk.type = 'checkbox'; allDayChk.checked = s.allDay !== false;
+  allDayChk.id = 'schedEditAllDay';
+  allDayChk.style.cssText = 'width:18px;height:18px;accent-color:var(--accent);';
+  var allDayLabel = document.createElement('label');
+  allDayLabel.setAttribute('for','schedEditAllDay');
+  allDayLabel.style.cssText = 'font-size:12px;font-weight:700;color:var(--ink-dark);';
+  allDayLabel.textContent = '\u7D42\u65E5';
+  allDayRow.appendChild(allDayChk);
+  allDayRow.appendChild(allDayLabel);
+  body.appendChild(allDayRow);
+
+  // 時間（終日でないとき表示）
+  var timeRow = document.createElement('div');
+  timeRow.style.cssText = 'display:flex;gap:8px;align-items:center;'+(allDayChk.checked?'display:none;':'');
+  var timeStart = document.createElement('input');
+  timeStart.type = 'time'; timeStart.value = s.timeStart||'';
+  timeStart.style.cssText = 'flex:1;padding:10px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);';
+  var timeSep = document.createElement('span');
+  timeSep.style.cssText = 'font-size:12px;font-weight:700;color:var(--ink-sub);';
+  timeSep.textContent = '\u301C';
+  var timeEnd = document.createElement('input');
+  timeEnd.type = 'time'; timeEnd.value = s.timeEnd||'';
+  timeEnd.style.cssText = 'flex:1;padding:10px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);';
+  timeRow.appendChild(timeStart);
+  timeRow.appendChild(timeSep);
+  timeRow.appendChild(timeEnd);
+  body.appendChild(timeRow);
+
+  allDayChk.onchange = function(){
+    timeRow.style.display = allDayChk.checked ? 'none' : 'flex';
+  };
+
+  // 場所
+  var locLabel = document.createElement('label');
+  locLabel.style.cssText = 'font-size:11px;font-weight:700;color:var(--ink-sub);display:flex;align-items:center;gap:4px;';
+  locLabel.innerHTML = '<span class="material-symbols-rounded" style="font-size:13px;">location_on</span>\u5834\u6240';
+  body.appendChild(locLabel);
+  var locInput = document.createElement('input');
+  locInput.type = 'text'; locInput.value = s.location||'';
+  locInput.placeholder = '\u4F8B\uFF1A\u5927\u962A\u5E02\u4E2D\u592E\u533A... / \u30AB\u30D5\u30A7\u540D';
+  locInput.style.cssText = 'width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);';
+  body.appendChild(locInput);
+  // 地図プレビュー（座標がある場合）
+  var mapDiv = document.createElement('div');
+  mapDiv.style.cssText = 'width:100%;height:120px;border-radius:10px;overflow:hidden;display:none;border:1px solid var(--line);';
+  body.appendChild(mapDiv);
+  if (s.locationLatLng && s.locationLatLng.lat) {
+    mapDiv.style.display = 'block';
+    setTimeout(function(){
+      try {
+        var map = new google.maps.Map(mapDiv, {
+          center: s.locationLatLng, zoom: 15,
+          disableDefaultUI: true, zoomControl: true,
+          mapId: 'SCHEDULE_MAP'
+        });
+        new google.maps.Marker({position: s.locationLatLng, map: map});
+      } catch(e){ console.log('Map error:', e); }
+    }, 200);
+  }
+  // Autocomplete
+  var editLocLatLng = s.locationLatLng || null;
+  setTimeout(function(){
+    try {
+      if (window.google && google.maps && google.maps.places) {
+        var ac2 = new google.maps.places.Autocomplete(locInput, {
+          types: ['establishment','geocode'], componentRestrictions: {country:'jp'},
+          fields: ['name','formatted_address','geometry']
+        });
+        ac2.addListener('place_changed', function(){
+          var place = ac2.getPlace();
+          if (place && place.name) {
+            locInput.value = place.name + (place.formatted_address ? ' ('+place.formatted_address.replace(/\u65E5\u672C\u3001?/g,'').slice(0,30)+')' : '');
+            if (place.geometry && place.geometry.location) {
+              editLocLatLng = {lat:place.geometry.location.lat(), lng:place.geometry.location.lng()};
+              mapDiv.style.display = 'block';
+              try {
+                var map = new google.maps.Map(mapDiv, {
+                  center: editLocLatLng, zoom: 15,
+                  disableDefaultUI: true, zoomControl: true
+                });
+                new google.maps.Marker({position: editLocLatLng, map: map});
+              } catch(e){}
+            }
+          }
+        });
+      }
+    } catch(e){}
+  }, 200);
+
+  // 通知
+  var notiLabel = document.createElement('label');
+  notiLabel.style.cssText = 'font-size:11px;font-weight:700;color:var(--ink-sub);display:flex;align-items:center;gap:4px;';
+  notiLabel.innerHTML = '<span class="material-symbols-rounded" style="font-size:13px;">notifications</span>\u901A\u77E5\uFF08\u30A2\u30D7\u30EA\u5316\u5F8C\u6709\u52B9\uFF09';
+  body.appendChild(notiLabel);
+  var reminders = (s.reminders||[]).slice();
+  var notiGrid = document.createElement('div');
+  notiGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;';
+  for (var ri = 0; ri < _REMINDER_OPTIONS.length; ri++) {
+    (function(opt){
+      var isOn = reminders.indexOf(opt.min) >= 0;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.style.cssText = 'padding:6px 11px;border-radius:100px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;border:1.5px solid '+(isOn?'var(--accent)':'var(--line)')+';background:'+(isOn?'var(--accent)':'white')+';color:'+(isOn?'white':'var(--ink-sub)')+';';
+      btn.textContent = opt.label;
+      btn.onclick = function(){
+        var idx = reminders.indexOf(opt.min);
+        if (idx >= 0) { reminders.splice(idx,1); btn.style.background='white'; btn.style.color='var(--ink-sub)'; btn.style.borderColor='var(--line)'; }
+        else { reminders.push(opt.min); btn.style.background='var(--accent)'; btn.style.color='white'; btn.style.borderColor='var(--accent)'; }
+      };
+      notiGrid.appendChild(btn);
+    })(_REMINDER_OPTIONS[ri]);
+  }
+  body.appendChild(notiGrid);
+
+  // メモ
+  var memoLabel = document.createElement('label');
+  memoLabel.style.cssText = 'font-size:11px;font-weight:700;color:var(--ink-sub);';
+  memoLabel.textContent = '\u30E1\u30E2';
+  body.appendChild(memoLabel);
+  var memoInput = document.createElement('textarea');
+  memoInput.value = s.memo||'';
+  memoInput.rows = 4;
+  memoInput.placeholder = '\u81EA\u7531\u30E1\u30E2...';
+  memoInput.style.cssText = 'width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);resize:vertical;';
+  body.appendChild(memoInput);
+
+  box.appendChild(body);
+
+  // フッター
+  var foot = document.createElement('div');
+  foot.style.cssText = 'padding:10px 16px;border-top:1px solid var(--line-soft);display:flex;gap:8px;align-items:center;';
+  // 削除
+  var delBtn = document.createElement('button');
+  delBtn.style.cssText = 'flex:0 0 auto;padding:10px;background:white;color:#D9534F;border:1px solid #D9534F40;border-radius:10px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+  delBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">delete</span>';
+  delBtn.onclick = function(){
+    data.schedules = (data.schedules||[]).filter(function(x){return x.id!==scheduleId;});
+    saveData(); overlay.remove(); _suppressScrollTop=true; render();
+    showToast('\u524A\u9664\u3057\u305F\u3088');
+  };
+  // キャンセル
+  var cancelBtn = document.createElement('button');
+  cancelBtn.style.cssText = 'flex:0 0 auto;padding:10px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;';
+  cancelBtn.textContent = '\u30AD\u30E3\u30F3\u30BB\u30EB';
+  cancelBtn.onclick = function(){ overlay.remove(); };
+  // 保存
+  var saveBtn = document.createElement('button');
+  saveBtn.style.cssText = 'flex:1;padding:10px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;';
+  saveBtn.textContent = '\u4FDD\u5B58';
+  saveBtn.onclick = function(){
+    var t = titleInput.value.trim();
+    if (!t) { showToast('\u30BF\u30A4\u30C8\u30EB\u3092\u5165\u308C\u3066\u306D'); return; }
+    s.title = t;
+    s.date = _getEditDate();
+    s.allDay = allDayChk.checked;
+    s.timeStart = allDayChk.checked ? '' : timeStart.value;
+    s.timeEnd = allDayChk.checked ? '' : timeEnd.value;
+    s.location = locInput.value.trim();
+    s.locationLatLng = editLocLatLng || s.locationLatLng || null;
+    s.reminders = reminders.slice();
+    s.memo = memoInput.value.trim();
+    saveData(); overlay.remove(); _suppressScrollTop=true; render();
+    showToast('\u4FDD\u5B58\u3057\u305F\u3088');
+  };
+  foot.appendChild(delBtn);
+  foot.appendChild(cancelBtn);
+  foot.appendChild(saveBtn);
+  box.appendChild(foot);
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+window.openEditScheduleModal = openEditScheduleModal;
+
+
+
 
 // ── 月ビュー ──
 function _renderSchedMonthView(houseId) {
@@ -23647,25 +24676,42 @@ function _renderSchedMonthView(houseId) {
     var holiday = _JP_HOLIDAYS[key] || null;
     var dayScheds = monthScheds.filter(function(s){ return s.date === key; });
 
-    var cellBg = isToday ? 'var(--accent)' : isSel ? 'var(--accent-bg)' : 'transparent';
-    var cellColor = isToday ? 'white' : dow===0||holiday ? '#D9534F' : dow===6 ? '#4A90D9' : 'var(--ink-dark)';
-    var cellBorder = isSel && !isToday ? '2px solid var(--accent)' : '2px solid transparent';
+    var cellBg = isSel ? 'var(--accent-bg)' : 'transparent';
+    var cellColor = isToday ? 'var(--accent-deep)' : dow===0||holiday ? '#D9534F' : dow===6 ? '#4A90D9' : 'var(--ink-dark)';
+    var cellBorder = isToday ? '2px solid var(--accent)' : isSel ? '2px solid var(--accent-bg)' : '2px solid transparent';
+    var cellFontW = isToday || isSel ? '800' : '600';
 
     h += '<button onclick="selectCalDate(\'sched\',\''+key+'\')" style="background:'+cellBg+';color:'+cellColor+';border:'+cellBorder+';border-radius:10px;padding:4px 1px 3px;font-family:inherit;cursor:pointer;min-height:52px;display:flex;flex-direction:column;align-items:center;gap:1px;">';
     // 日付
-    h += '<span style="font-size:12px;font-weight:'+(isToday||isSel?'800':'600')+';line-height:1;">'+d+'</span>';
+    h += '<span style="font-size:12px;font-weight:'+cellFontW+';line-height:1;">'+d+'</span>';
+    // 今日の天気
+    if (isToday && typeof getDateWeatherIcon === 'function') {
+      var _wIco = getDateWeatherIcon(key);
+      if (_wIco) h += '<span style="font-size:9px;line-height:1;">'+_wIco+'</span>';
+    }
     // 祝日名（小さく）
-    if (holiday) h += '<span style="font-size:6px;color:'+(isToday?'rgba(255,255,255,0.8)':'#D9534F')+';line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+holiday+'</span>';
-    // 予定バー（最大2件）
-    if (dayScheds.length > 0) {
-      for (var si = 0; si < Math.min(dayScheds.length, 2); si++) {
-        var sc = dayScheds[si];
-        var barColor = sc.color || 'var(--accent-deep)';
-        h += '<div style="width:90%;height:12px;background:'+barColor+'20;border-left:2px solid '+barColor+';border-radius:2px;overflow:hidden;padding:0 2px;display:flex;align-items:center;"><span style="font-size:7px;font-weight:600;color:'+barColor+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(sc.title)+'</span></div>';
+    if (holiday) h += '<span style="font-size:6px;color:#D9534F;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+holiday+'</span>';
+    // アイコングリッド（2x2、最大4個）
+    var cellIcons = [];
+    // 誕生日チェック
+    var bdays = _getSchedBirthdays(month+1, d);
+    for (var bi = 0; bi < bdays.length; bi++) {
+      cellIcons.push({icon:'cake', color:'#E8729A'});
+    }
+    // 予定
+    for (var si = 0; si < dayScheds.length; si++) {
+      cellIcons.push({icon: dayScheds[si].icon || 'event', color: dayScheds[si].color || 'var(--accent-deep)'});
+    }
+    if (cellIcons.length > 0) {
+      var show = Math.min(cellIcons.length, 4);
+      var extra = cellIcons.length - show;
+      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-top:1px;">';
+      for (var ci = 0; ci < show; ci++) {
+        var ic = cellIcons[ci];
+        h += '<span class="material-symbols-rounded" style="font-size:10px;color:'+ic.color+';line-height:1;text-align:center;">'+ic.icon+'</span>';
       }
-      if (dayScheds.length > 2) {
-        h += '<span style="font-size:7px;color:'+(isToday?'rgba(255,255,255,0.7)':'var(--ink-light)')+';font-weight:700;">+' + (dayScheds.length - 2) + '</span>';
-      }
+      h += '</div>';
+      if (extra > 0) h += '<span style="font-size:6px;color:var(--ink-light);font-weight:700;line-height:1;">+'+extra+'</span>';
     }
     h += '</button>';
   }
@@ -23698,10 +24744,23 @@ function _renderSchedDayDetail(dateKey, houseId) {
   h += '<span style="font-size:14px;font-weight:800;color:var(--ink-dark);">'+(date.getMonth()+1)+'/'+date.getDate()+'('+wd+')</span>';
   if (holiday) h += '<span style="font-size:9px;color:#D9534F;font-weight:700;">'+holiday+'</span>';
   h += '</div>';
-  h += '<button onclick="openAddScheduleModal();document.getElementById(\'scheduleDateInput\').value=\''+dateKey+'\'" style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;">add</span></button>';
+  h += '<button onclick="_openSchedAdd(\''+dateKey+'\')" style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;">add</span></button>';
   h += '</div>';
 
-  if (schedules.length === 0) {
+  // 誕生日
+  var bdays = _getSchedBirthdays(date.getMonth()+1, date.getDate());
+  if (bdays.length > 0) {
+    for (var bi = 0; bi < bdays.length; bi++) {
+      var bd = bdays[bi];
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:linear-gradient(135deg,#FFF0F5,#FFE4EC);border:1px solid #F8C8D8;border-radius:8px;margin-bottom:5px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:18px;color:#E8729A;">cake</span>';
+      h += '<div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(bd.name)+'</div>';
+      h += '<div style="font-size:9px;color:#E8729A;font-weight:600;">'+bd.age+' years old \u2022 Happy Birthday!</div></div>';
+      h += '</div>';
+    }
+  }
+
+  if (schedules.length === 0 && bdays.length === 0) {
     h += '<div style="text-align:center;padding:16px 8px;color:var(--ink-light);font-size:11px;line-height:1.7;">';
     h += '<span class="material-symbols-rounded" style="font-size:28px;opacity:0.4;display:block;margin-bottom:4px;">event_available</span>';
     h += '予定はないよ';
@@ -23713,12 +24772,28 @@ function _renderSchedDayDetail(dateKey, houseId) {
       var barColor = s.color || 'var(--accent-deep)';
       var pet = (data.pets||[]).find(function(p){return p.id===s.petId;});
       h += '<button onclick="openEditScheduleModal(\''+s.id+'\')" style="display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--surface-warm);border:none;border-left:3px solid '+barColor+';border-radius:8px;cursor:pointer;font-family:inherit;text-align:left;">';
+      if (s.icon) h += '<span style="width:28px;height:28px;border-radius:8px;background:'+barColor+'15;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;color:'+barColor+';">'+s.icon+'</span></span>';
       h += '<div style="flex:1;min-width:0;">';
       h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title)+'</div>';
+      // 時間バッジ
+      if (s.allDay) {
+        h += '<span style="font-size:8px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 5px;border-radius:100px;font-weight:700;display:inline-block;margin-top:2px;">\u7D42\u65E5</span>';
+      } else if (s.timeStart) {
+        h += '<span style="font-size:8px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 5px;border-radius:100px;font-weight:700;display:inline-block;margin-top:2px;">'+s.timeStart+(s.timeEnd?'\u301C'+s.timeEnd:'')+'</span>';
+      }
       var sub = [];
-      if (s.tag) sub.push(s.tag);
+      if (s.location) sub.push(s.location);
       if (pet) sub.push(pet.name);
       if (sub.length > 0) h += '<div style="font-size:9px;color:var(--ink-sub);margin-top:1px;">'+escapeHtml(sub.join(' / '))+'</div>';
+      // メモ
+      if (s.memo) h += '<div style="font-size:8px;color:var(--ink-light);margin-top:2px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.memo)+'</div>';
+      // 電話・地図リンク
+      if (s.locationPhone || s.locationLatLng) {
+        h += '<div style="display:flex;gap:6px;margin-top:3px;">';
+        if (s.locationPhone) h += '<a href="tel:'+s.locationPhone.replace(/[^\d+]/g,'')+'" onclick="event.stopPropagation()" style="font-size:8px;color:var(--accent-deep);text-decoration:none;display:flex;align-items:center;gap:2px;font-weight:700;background:var(--accent-bg);padding:2px 6px;border-radius:100px;"><span class="material-symbols-rounded" style="font-size:10px;">call</span>'+escapeHtml(s.locationPhone)+'</a>';
+        if (s.locationLatLng) h += '<a href="https://www.google.com/maps/search/?api=1&query='+s.locationLatLng.lat+','+s.locationLatLng.lng+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:8px;color:var(--accent-deep);text-decoration:none;display:flex;align-items:center;gap:2px;font-weight:700;background:var(--accent-bg);padding:2px 6px;border-radius:100px;"><span class="material-symbols-rounded" style="font-size:10px;">map</span>\u5730\u56F3</a>';
+        h += '</div>';
+      }
       h += '</div>';
       h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);">chevron_right</span>';
       h += '</button>';
@@ -23777,10 +24852,14 @@ function _renderSchedListView(houseId) {
       h += '<div style="font-size:18px;font-weight:800;color:'+(isToday?'var(--accent-deep)':'var(--ink-dark)')+';line-height:1;">'+d.getDate()+'</div>';
       h += '<div style="font-size:9px;color:'+(holiday?'#D9534F':'var(--ink-sub)')+';font-weight:600;">'+wd+(holiday?' 祝':'')+'</div>';
       h += '</div>';
+      // アイコン
+      if (s.icon) h += '<span style="width:28px;height:28px;border-radius:8px;background:'+barColor+'15;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;color:'+barColor+';">'+s.icon+'</span></span>';
       // 内容
       h += '<div style="flex:1;min-width:0;">';
       h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title)+'</div>';
       var sub = [];
+      if (s.timeStart && !s.allDay) sub.push(s.timeStart + (s.timeEnd ? '\u301C'+s.timeEnd : ''));
+      if (s.location) sub.push(s.location);
       if (s.tag) sub.push(s.tag);
       if (pet) sub.push(pet.name);
       if (sub.length > 0) h += '<div style="font-size:9px;color:var(--ink-sub);margin-top:2px;">'+escapeHtml(sub.join(' / '))+'</div>';
@@ -26912,24 +27991,7 @@ function openAddScheduleModal(targetPetId) {
   setupTagButtons();
   document.getElementById('addScheduleModal').classList.add('show');
 }
-function openEditScheduleModal(scheduleId) {
-  const s = data.schedules.find(x => x.id === scheduleId);
-  if (!s) return;
-  editingScheduleId = scheduleId;
-  document.getElementById('scheduleModalTitle').textContent = '予定をへんしゅう';
-  document.getElementById('scheduleDeleteBtn').style.display = '';
-  const sel = document.getElementById('schedulePetInput');
-  let html = '<option value="">(自分の予定)</option>';
-  for (const p of (data.pets||[])) {
-    html += '<option value="'+p.id+'" '+(p.id===s.petId?'selected':'')+'>'+escapeHtml(p.name)+'</option>';
-  }
-  sel.innerHTML = html;
-  document.getElementById('scheduleTitleInput').value = s.title;
-  document.getElementById('scheduleDateInput').value = s.date;
-  selectedTag = s.tag;
-  setupTagButtons();
-  document.getElementById('addScheduleModal').classList.add('show');
-}
+// openEditScheduleModal は新版（上方）を使用
 function setupTagButtons() {
   const all = document.querySelectorAll('#scheduleTagGrid .place-btn, #scheduleTagGrid2 .place-btn');
   for (const btn of all) {
@@ -26969,7 +28031,6 @@ function deleteSchedule() {
   render();
 }
 window.openAddScheduleModal = openAddScheduleModal;
-window.openEditScheduleModal = openEditScheduleModal;
 window.saveSchedule = saveSchedule;
 window.deleteSchedule = deleteSchedule;
 window.setupTagButtons = setupTagButtons;
