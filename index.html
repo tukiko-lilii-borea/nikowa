@@ -1331,38 +1331,42 @@
   .me-menu-item-add .me-menu-label { color: var(--ink-sub); }
 
   /* ── モードページタブ（2列・下向き） ─────────── */
-  .mode-page-tabs-wrap { padding: 0 12px; }
+  .mode-page-tabs-wrap { padding: 0 12px 4px; }
   .mode-page-tabs {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
   }
+  .mode-page-tabs::-webkit-scrollbar { display: none; }
   .mode-page-tab {
-    padding: 5px 4px 7px;
-    border: 1px solid rgba(255,255,255,0.35); border-top: none;
-    border-radius: 0 0 10px 10px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border: 1.5px solid rgba(255,255,255,0.5);
+    border-radius: 100px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.35) 100%);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     color: var(--ink-sub);
-    font-family: inherit; font-size: 10.5px; font-weight: 700;
+    font-family: inherit; font-size: 11px; font-weight: 700;
     cursor: pointer; text-align: center; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis;
-    margin-bottom: 6px;
-    transition: margin-bottom 0.12s ease, background 0.12s ease;
+    transition: background 0.12s ease, color 0.12s ease;
+    margin-bottom: 0;
   }
   .mode-page-tab.active {
     background: linear-gradient(135deg,
-      color-mix(in srgb, var(--accent) 35%, transparent) 0%,
-      color-mix(in srgb, var(--accent-deep) 30%, transparent) 100%);
-    border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+      color-mix(in srgb, var(--accent) 45%, white) 0%,
+      color-mix(in srgb, var(--accent-deep) 40%, white) 100%);
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
     color: var(--ink-dark);
     backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%);
-    margin-bottom: 0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.10), inset 0 0 0 1px rgba(255,255,255,0.5);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10), inset 0 0 0 1px rgba(255,255,255,0.5);
   }
   .mode-page-tab-edit {
     display: flex; align-items: center; gap: 2px;
-    margin-bottom: 4px;
+    flex-shrink: 0;
   }
 
   /* これからの出来事 */
@@ -6491,12 +6495,7 @@ function renderTop() {
   
   let html = '<div class="hero-section">';
   // 上部チップ
-  html += '<div class="hero-top">';
-  html += '<button class="hero-user-chip" onclick="openUserModal()">';
-  html += renderAvatarHtml(data.user.avatar || '🌷', 22);
-  if (userName) html += '<span>'+escapeHtml(userName)+'</span>';
-  else html += '<span class="hero-user-prompt">名前をつける</span>';
-  html += '</button>';
+  html += '<div class="hero-top" style="justify-content:flex-end;">';
   html += '<button onclick="openHelpGuide(\'app\')" style="background:rgba(255,255,255,0.6);border:1.5px solid var(--card-border);width:34px;height:34px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;" title="使い方ガイド"><span class="material-symbols-rounded" style="font-size:20px;">help_outline</span></button>';
   html += '</div>';
   // 桜吹雪 + すりガラスカード
@@ -14279,12 +14278,13 @@ window._snsUrl = _snsUrl;
 
 function _ensureMyProfiles() {
   if (!data.myProfiles || !Array.isArray(data.myProfiles) || data.myProfiles.length === 0) {
-    // 既存のmyProfileを「リアル用」として移行
+    // 既存のmyProfileを「カード01」として移行
     const old = data.myProfile || {};
     data.myProfiles = [{
       id: 'mp_real_' + Date.now().toString(36),
       label: 'リアル用',
       color: '#E8A040',
+      pattern: 'solid',
       name: old.name || '',
       nickname: '',
       birthday: old.birthday || '',
@@ -14297,18 +14297,79 @@ function _ensureMyProfiles() {
       tiktok: '', youtube: '', facebook: '', bluesky: '', bereal: ''
     }];
   }
+  // 5枚に揃える
+  while (data.myProfiles.length < 5) {
+    data.myProfiles.push({
+      id: 'mp_card_' + Date.now().toString(36) + '_' + data.myProfiles.length,
+      label: 'No name',
+      color: '#B0B0C8',
+      pattern: 'solid',
+      name: '', nickname: '', birthday: '', bloodType: '',
+      phone: '', email: '', address: '', memo: '',
+      line: '', instagram: '', x: '', threads: '',
+      tiktok: '', youtube: '', facebook: '', bluesky: '', bereal: ''
+    });
+  }
   if (!data.myProfileActiveId) data.myProfileActiveId = data.myProfiles[0].id;
   if (!data.myProfiles.find(p => p.id === data.myProfileActiveId)) {
     data.myProfileActiveId = data.myProfiles[0].id;
   }
   // 旧フィールドを各プロフィールに補完
   for (const pp of data.myProfiles) {
-    for (const f of ['name','nickname','birthday','bloodType','phone','email','address','memo','line','instagram','x','threads','tiktok','youtube','facebook','bluesky','bereal']) {
+    for (const f of ['name','nickname','birthday','bloodType','phone','email','address','memo','line','instagram','x','threads','tiktok','youtube','facebook','bluesky','bereal','discord','note','website','other']) {
       if (pp[f] === undefined) pp[f] = '';
     }
+    if (!pp.label) pp.label = 'No name';
+    if (!pp.pattern) pp.pattern = 'solid';
+    if (!pp.color) pp.color = '#E8A040';
   }
 }
 window._ensureMyProfiles = _ensureMyProfiles;
+
+// 柄パターンのCSS background 生成
+const CARD_PATTERNS = [
+  { id: 'solid',    label: '無地' },
+  { id: 'checkers', label: 'マス目' },
+  { id: 'gingham',  label: 'ギンガム' },
+  { id: 'dots',     label: '水玉' },
+  { id: 'stripes',  label: 'ストライプ' },
+  { id: 'diagonal', label: '斜め' },
+  { id: 'cross',    label: 'クロス' },
+  { id: 'wave',     label: '波' },
+];
+
+function _getCardPatternBg(color, pattern, size) {
+  const c = color || '#E8A040';
+  const light = c + '40'; // 透明度25%
+  const mid   = c + '80'; // 透明度50%
+  const s = Math.max(size || 24, 16);
+  switch (pattern) {
+    case 'checkers':
+      // チェッカーボード（白×カラー）
+      return 'background-color:'+c+';background-image:linear-gradient(45deg,white 25%,transparent 25%,transparent 75%,white 75%),linear-gradient(45deg,white 25%,transparent 25%,transparent 75%,white 75%);background-size:'+(s/2)+'px '+(s/2)+'px;background-position:0 0,'+(s/4)+'px '+(s/4)+'px;';
+    case 'gingham':
+      // ギンガムチェック（縦横の半透明線）
+      return 'background-color:white;background-image:repeating-linear-gradient(0deg,'+mid+' 0,'+mid+' '+(s/8)+'px,transparent '+(s/8)+'px,transparent '+(s/4)+'px),repeating-linear-gradient(90deg,'+mid+' 0,'+mid+' '+(s/8)+'px,transparent '+(s/8)+'px,transparent '+(s/4)+'px);';
+    case 'dots':
+      // 水玉
+      return 'background-color:white;background-image:radial-gradient('+c+' '+(s/12)+'px,transparent '+(s/12 + 0.5)+'px);background-size:'+(s/3)+'px '+(s/3)+'px;';
+    case 'stripes':
+      // 横ストライプ
+      return 'background-color:white;background-image:repeating-linear-gradient(0deg,'+light+' 0,'+light+' '+(s/6)+'px,transparent '+(s/6)+'px,transparent '+(s/3)+'px);';
+    case 'diagonal':
+      // 斜めストライプ
+      return 'background-color:white;background-image:repeating-linear-gradient(45deg,'+light+' 0,'+light+' '+(s/8)+'px,transparent '+(s/8)+'px,transparent '+(s/4)+'px);';
+    case 'cross':
+      // クロス（格子）
+      return 'background-color:white;background-image:linear-gradient('+c+' 1px,transparent 1px),linear-gradient(90deg,'+c+' 1px,transparent 1px);background-size:'+(s/4)+'px '+(s/4)+'px;';
+    case 'wave':
+      // 波模様（円の繰り返し）
+      return 'background-color:white;background-image:radial-gradient(circle at 50% 100%,'+light+' '+(s/4)+'px,transparent '+(s/4 + 0.5)+'px);background-size:'+(s/2.5)+'px '+(s/2.5)+'px;';
+    default: // solid
+      return 'background-color:'+c+';';
+  }
+}
+window._getCardPatternBg = _getCardPatternBg;
 
 function _getActiveMyProfile() {
   _ensureMyProfiles();
@@ -14360,17 +14421,17 @@ function openMyProfileModal() {
   const pColor = p.color || 'var(--accent)';
   
   let h = '<div id="myProfileModal" onclick="if(event.target===this)closeMyProfileModal()" style="position:fixed;inset:0;z-index:2050;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;">';
-  h += '<div style="width:100%;max-width:560px;background:var(--surface);border-radius:18px 18px 0 0;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">';
+  h += '<div style="width:100%;max-width:560px;background:var(--surface);border-radius:18px 18px 0 0;height:90vh;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">';
   
   // ヘッダー
-  h += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);">';
+  h += '<div style="flex-shrink:0;display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);">';
   h += '<span style="width:14px;height:14px;border-radius:50%;background:'+pColor+';flex-shrink:0;"></span>';
   h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.label||'プロフィール')+'を編集</div>';
   h += '<button onclick="closeMyProfileModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
   h += '</div>';
   
-  // 中身
-  h += '<div style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:11px;">';
+  // 中身（確実にスクロール可能に）
+  h += '<div style="flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;padding:14px 16px;display:flex;flex-direction:column;gap:11px;">';
   
   // 写真ハンドラ用にwindow変数を初期化
   window._myProfilePhotoData = p.photo || null;
@@ -14414,8 +14475,25 @@ function openMyProfileModal() {
   h += '<input id="mp_label" type="text" value="'+escapeHtml(p.label||'')+'" placeholder="例：リアル用 / ネット用" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
   h += '</div>';
   h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">カラー</label>';
-  h += '<input id="mp_color" type="color" value="'+escapeHtml(p.color||'#E8A040')+'" style="width:46px;height:42px;padding:2px;border:1.5px solid var(--card-border);border-radius:10px;background:white;cursor:pointer;">';
+  h += '<input id="mp_color" type="color" value="'+escapeHtml(p.color||'#E8A040')+'" oninput="_previewCardDesign()" style="width:46px;height:42px;padding:2px;border:1.5px solid var(--card-border);border-radius:10px;background:white;cursor:pointer;">';
   h += '</div></div>';
+  // 柄選択
+  h += '<div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">カードの柄</label>';
+  h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;" id="mp_pattern_grid">';
+  for (const pat of CARD_PATTERNS) {
+    const isOn = (p.pattern || 'solid') === pat.id;
+    const prevBg = _getCardPatternBg(p.color || '#E8A040', pat.id, 40);
+    h += '<div onclick="document.getElementById(\'mp_pattern_val\').value=\''+pat.id+'\';_previewCardDesign();" data-pat="'+pat.id+'" style="cursor:pointer;border-radius:10px;overflow:hidden;border:1.5px solid var(--line);'+(isOn?'outline:2px solid var(--accent);':'')+'">';
+    h += '<div style="height:32px;'+prevBg+'"></div>';
+    h += '<div style="font-size:9px;font-weight:700;color:var(--ink-sub);text-align:center;padding:3px 2px;background:var(--surface);">'+pat.label+'</div>';
+    h += '</div>';
+  }
+  h += '</div>';
+  h += '<input type="hidden" id="mp_pattern_val" value="'+(p.pattern||'solid')+'">';
+  // プレビュー
+  h += '<div style="margin-top:8px;border-radius:12px;height:40px;transition:all 0.2s;'+_getCardPatternBg(p.color||'#E8A040', p.pattern||'solid', 40)+'" id="mp_card_preview"></div>';
+  h += '</div>';
   
   // 区切り
   h += '<div style="height:1px;background:var(--line-soft);"></div>';
@@ -14441,31 +14519,22 @@ function openMyProfileModal() {
   h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">一言メモ</label>';
   h += '<textarea id="mp_memo" placeholder="自己紹介や好きなことなど" style="width:100%;min-height:60px;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.6;">'+escapeHtml(p.memo||'')+'</textarea></div>';
   
-  // SNS セクション（アコーディオン）
+  // SNS セクション（常時表示）
   h += '<div style="height:1px;background:var(--line-soft);margin-top:6px;"></div>';
-  const _snsCount = SNS_PLATFORMS.filter(s => p[s.id]).length;
-  h += '<div style="border:1px solid var(--card-border);border-radius:10px;overflow:hidden;">';
-  h += '<button type="button" onclick="var el=document.getElementById(\'mpSnsBody\');var ico=document.getElementById(\'mpSnsIco\');var open=el.style.display===\'flex\';el.style.display=open?\'none\':\'flex\';ico.textContent=open?\'expand_more\':\'expand_less\';" style="width:100%;display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface-warm);border:none;font-family:inherit;cursor:pointer;">';
-  h += '<span class="material-symbols-rounded" style="font-size:15px;color:var(--accent-deep);">hub</span>';
-  h += '<span style="flex:1;font-size:11px;font-weight:800;color:var(--accent-deep);letter-spacing:1.2px;text-align:left;">SNS / ソーシャル</span>';
-  if (_snsCount > 0) h += '<span style="font-size:9px;background:var(--accent);color:white;padding:1px 7px;border-radius:100px;font-weight:700;">'+_snsCount+'件</span>';
-  h += '<span id="mpSnsIco" class="material-symbols-rounded" style="font-size:18px;color:var(--ink-sub);">expand_more</span>';
-  h += '</button>';
-  h += '<div id="mpSnsBody" style="display:none;flex-direction:column;gap:8px;padding:10px 14px 14px;border-top:1px solid var(--line-soft);">';
-  h += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.5;">ID/ユーザー名だけでOK（@や全URLでもOK）</div>';
+  h += '<div style="font-size:10px;font-weight:800;color:'+pColor+';letter-spacing:1.5px;display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:14px;">hub</span>SNS / ソーシャル</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.5;">ID/ユーザー名だけでOK（@や全URLでもOK）入力したいものだけでOK</div>';
   for (const s of SNS_PLATFORMS) {
     h += '<div style="display:flex;align-items:center;gap:8px;">';
     h += '<span style="flex-shrink:0;width:28px;height:28px;border-radius:7px;background:'+s.color+';color:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:15px;">'+s.icon+'</span></span>';
-    h += '<div style="flex:1;"><label style="font-size:9px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:2px;letter-spacing:1px;">'+s.label+'</label>';
+    h += '<div style="flex:1;min-width:0;"><label style="font-size:9px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:2px;letter-spacing:1px;">'+s.label+'</label>';
     h += '<input id="mp_'+s.id+'" type="text" value="'+escapeHtml(p[s.id]||'')+'" placeholder="@username" style="width:100%;padding:7px 10px;border:1px solid var(--card-border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
     h += '</div></div>';
   }
-  h += '</div></div>';
   
   h += '</div>'; // 中身 end
   
-  // フッター
-  h += '<div style="display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--line-soft);align-items:center;">';
+  // フッター（固定）
+  h += '<div style="flex-shrink:0;display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--line-soft);align-items:center;background:var(--surface);">';
   h += '<button onclick="closeMyProfileModal()" style="flex:0 0 auto;padding:11px 14px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
   // 削除ボタン（複数あるときだけ）
   if ((data.myProfiles||[]).length > 1) {
@@ -14474,15 +14543,6 @@ function openMyProfileModal() {
   h += '<button onclick="saveMyProfile()" style="flex:1;padding:11px;background:'+pColor+';color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
   h += '</div></div></div>';
   document.body.insertAdjacentHTML('beforeend', h);
-  // 入力済みSNSがあれば最初から開く
-  if (_snsCount > 0) {
-    setTimeout(function(){
-      const body = document.getElementById('mpSnsBody');
-      const ico = document.getElementById('mpSnsIco');
-      if (body) body.style.display = 'flex';
-      if (ico) ico.textContent = 'expand_less';
-    }, 30);
-  }
 }
 window.openMyProfileModal = openMyProfileModal;
 
@@ -14499,6 +14559,7 @@ function saveMyProfile() {
   const get = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
   p.label     = get('mp_label').trim() || 'プロフィール';
   p.color     = get('mp_color') || p.color;
+  p.pattern   = document.getElementById('mp_pattern_val')?.value || p.pattern || 'solid';
   p.name      = get('mp_name');
   p.nickname  = get('mp_nickname');
   p.birthday  = get('mp_birthday');
@@ -14527,6 +14588,29 @@ function saveMyProfile() {
   showToast('プロフィールを保存したよ🌷');
 }
 window.saveMyProfile = saveMyProfile;
+
+function _previewCardDesign() {
+  const color = document.getElementById('mp_color')?.value || '#E8A040';
+  const selectedPat = document.getElementById('mp_pattern_val')?.value || 'solid';
+  // メインプレビュー
+  const prev = document.getElementById('mp_card_preview');
+  if (prev) {
+    const bg = _getCardPatternBg(color, selectedPat, 40);
+    prev.style.cssText = 'margin-top:8px;border-radius:12px;height:40px;transition:all 0.2s;' + bg;
+  }
+  // 各柄プレビュー（自分のpat IDで描画。選択中は枠線維持）
+  document.querySelectorAll('[data-pat]').forEach(el => {
+    const myPat = el.dataset.pat;  // ← 各要素自身の柄ID
+    const inner = el.querySelector('div');
+    if (inner) {
+      const newBg = _getCardPatternBg(color, myPat, 40);
+      inner.style.cssText = 'height:32px;' + newBg;
+    }
+    // 選択中の枠線を保持
+    el.style.outline = (myPat === selectedPat) ? '2px solid var(--accent)' : 'none';
+  });
+}
+window._previewCardDesign = _previewCardDesign;
 
 // プロフィール追加
 function openAddMyProfileModal() {
@@ -15231,12 +15315,9 @@ function openMyProfileCard() {
   // 表面
   h += '<div style="position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:white;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.3);overflow:hidden;display:flex;border:1px solid '+pColor+'40;">';
   
-  // 左側
-  h += '<div style="flex:0 0 36%;position:relative;background:'+pColorBg+';display:flex;align-items:center;justify-content:center;overflow:hidden;">';
-  if (bodyBgImg && bodyBgImg !== 'none') {
-    h += '<div style="position:absolute;inset:0;background-image:'+bodyBgImg+';background-repeat:repeat;background-size:'+bodyBgSize+';background-position:'+bodyBgPos+';opacity:0.6;pointer-events:none;"></div>';
-  }
-  h += '<div style="position:absolute;inset:0;background:linear-gradient(135deg,'+pColor+'30,'+pColor+'15);"></div>';
+  // 左側（このカードの柄＋カラー）
+  const _myCardPatBg = _getCardPatternBg(pColor, p.pattern || 'solid', 60);
+  h += '<div style="flex:0 0 36%;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;'+_myCardPatBg+'">';
   const _userAv = (data.user && data.user.avatar) || 'person';
   if (p.photo) {
     h += '<img src="'+p.photo+'" style="position:relative;width:62%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:3px solid white;box-shadow:0 3px 8px rgba(0,0,0,0.18);">';
@@ -25420,10 +25501,30 @@ function renderSettings() {
     html += '<div style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(currentUser.email||'')+'</div></div></div>';
     if (data.nikowaId) {
       html += '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface-warm);border:1.5px solid var(--card-border);border-radius:10px;padding:10px 12px;margin-bottom:10px;">';
-      html += '<div><div style="font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1.5px;margin-bottom:2px;">にこわID</div>';
+      html += '<div><div style="font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1.5px;margin-bottom:2px;">にこわID（本体）</div>';
       html += '<div style="font-size:14px;font-weight:800;color:var(--accent-deep);letter-spacing:0.5px;">'+escapeHtml(data.nikowaId)+'</div></div>';
       html += '<button onclick="navigator.clipboard.writeText(\''+escapeHtml(data.nikowaId)+'\').then(()=>showToast(\'IDをコピーしたよ📋\'))" style="padding:6px 12px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">コピー</button>';
       html += '</div>';
+      // プロフィールカード一覧
+      _ensureMyProfiles();
+      html += '<div style="font-size:10px;font-weight:700;color:var(--ink-sub);letter-spacing:1px;margin:12px 0 6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;">badge</span>プロフィールカード</div>';
+      data.myProfiles.forEach((p, i) => {
+        const cardId = data.nikowaId + '-0' + (i + 1);
+        const _patBg = _getCardPatternBg(p.color || '#E8A040', p.pattern || 'solid', 28);
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:5px;">';
+        // カラー柄プレビュー
+        html += '<div style="width:28px;height:28px;border-radius:7px;flex-shrink:0;border:1px solid rgba(0,0,0,0.08);'+_patBg+'"></div>';
+        // 番号+ラベル
+        html += '<div style="flex:1;min-width:0;">';
+        html += '<div style="font-size:9px;color:var(--ink-sub);font-weight:700;letter-spacing:0.5px;">-0'+(i+1)+'</div>';
+        html += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.label||'No name')+'</div>';
+        html += '</div>';
+        // カードIDコピー
+        html += '<button onclick="navigator.clipboard.writeText(\''+cardId+'\').then(()=>showToast(\''+cardId+' をコピー📋\'))" style="padding:4px 9px;background:var(--surface-warm);border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:10px;font-weight:700;color:var(--accent-deep);cursor:pointer;white-space:nowrap;">ID</button>';
+        // 編集
+        html += '<button onclick="switchMyProfile(\''+p.id+'\');openMyProfileModal()" style="padding:4px 9px;background:var(--accent);color:white;border:none;border-radius:7px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;">編集</button>';
+        html += '</div>';
+      });
     }
     html += '<div style="font-size:11.5px;color:var(--mint-deep);margin-bottom:10px;">☁️ クラウドに同期中</div>';
     html += '<button class="btn btn-secondary" style="width:100%;" onclick="signOut()">ログアウト</button>';
