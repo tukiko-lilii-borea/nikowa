@@ -2701,11 +2701,49 @@
     background:#FFEBEE; border-radius:12px; margin:0 0 12px;
   }
   /* ── プレースカード ──────────────────────────── */
-  .place-cards { display:flex; flex-direction:column; gap:8px; padding:4px 16px 24px; }
+  .place-cards { display:flex; flex-direction:column; gap:10px; padding:4px 16px 24px; }
   .place-card {
     background:var(--surface); border:1.5px solid var(--line-soft);
-    border-radius:14px; padding:11px 12px 10px; box-shadow:var(--shadow-soft);
+    border-radius:14px; box-shadow:var(--shadow-soft); overflow:hidden;
   }
+  .place-card-body { padding:11px 12px 10px; }
+  .place-card-photo-wrap {
+    position:relative; width:100%; height:130px; overflow:hidden;
+    background:linear-gradient(135deg,#fef7e8 0%,#f0e6d2 100%);
+  }
+  .place-card-photo {
+    width:100%; height:100%; object-fit:cover; display:block;
+    transition:transform .3s ease;
+  }
+  .place-card:hover .place-card-photo { transform:scale(1.04); }
+  .place-card-photo-ph {
+    width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+    color:rgba(0,0,0,0.25);
+  }
+  .place-card-photo-ph .material-symbols-rounded { font-size:42px; }
+  .place-card-photo-overlay {
+    position:absolute; left:8px; bottom:8px; right:8px;
+    display:flex; align-items:center; justify-content:space-between; gap:6px;
+    pointer-events:none;
+  }
+  .place-card-rating-pill {
+    background:rgba(255,255,255,0.95); backdrop-filter:blur(6px);
+    border-radius:100px; padding:3px 8px;
+    font-size:10.5px; font-weight:700; color:var(--ink-dark);
+    display:inline-flex; align-items:center; gap:3px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.15);
+  }
+  .place-card-rating-pill .material-symbols-rounded {
+    font-size:12px; color:#FFB400; font-variation-settings:'FILL' 1;
+  }
+  .place-card-open-pill {
+    background:rgba(255,255,255,0.95); backdrop-filter:blur(6px);
+    border-radius:100px; padding:3px 8px;
+    font-size:10px; font-weight:700;
+    box-shadow:0 1px 3px rgba(0,0,0,0.15);
+  }
+  .place-card-open-pill.open { color:#2E7D32; }
+  .place-card-open-pill.closed { color:#C62828; }
   .place-card-header { display:flex; align-items:flex-start; gap:9px; margin-bottom:6px; }
   .place-card-icon {
     width:36px; height:36px; border-radius:9px; background:var(--mint-bg);
@@ -29112,19 +29150,50 @@ function buildPlaceCardHtml(p, catIcon) {
   const isFav = !!(placesFavs[townMainTab] && placesFavs[townMainTab][id]);
   const memo = escapeHtml(placesMemos[id] || '');
   const pos = _extractPlaceLatLng(p);
-  if (id) placesResultsMap[id] = { id, name, addr, mapsUrl, catIcon, lat: pos && pos.lat, lng: pos && pos.lng };
+  // 写真（Google Place Photo API）
+  const photoName = (p.photos && p.photos[0] && p.photos[0].name) || '';
+  const photoUrl = photoName
+    ? 'https://places.googleapis.com/v1/' + photoName + '/media?maxHeightPx=400&maxWidthPx=600&key=' + PLACES_API_KEY
+    : '';
+  const rating = (typeof p.rating === 'number') ? p.rating.toFixed(1) : '';
+  const ratingCount = p.userRatingCount || 0;
+  if (id) placesResultsMap[id] = { id, name, addr, mapsUrl, catIcon, lat: pos && pos.lat, lng: pos && pos.lng, photoUrl: photoUrl, rating: rating };
 
   let html = '<div class="place-card">';
+  // 写真エリア
+  html += '<div class="place-card-photo-wrap">';
+  if (photoUrl) {
+    html += '<img class="place-card-photo" src="'+photoUrl+'" alt="'+escapeHtml(name)+'" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">';
+    html += '<div class="place-card-photo-ph" style="display:none;position:absolute;inset:0;"><span class="material-symbols-rounded">photo_camera</span></div>';
+  } else {
+    html += '<div class="place-card-photo-ph"><span class="material-symbols-rounded">photo_camera</span></div>';
+  }
+  // オーバーレイ（評価・営業状況）
+  html += '<div class="place-card-photo-overlay">';
+  if (rating) {
+    html += '<span class="place-card-rating-pill"><span class="material-symbols-rounded">star</span>'+rating;
+    if (ratingCount) html += '<span style="opacity:0.6;font-weight:500;">('+ratingCount+')</span>';
+    html += '</span>';
+  } else {
+    html += '<span></span>';
+  }
+  if (hasOpenInfo) {
+    html += '<span class="place-card-open-pill '+(isOpen?'open':'closed')+'">'+(isOpen?'営業中':'閉店中')+'</span>';
+  }
+  html += '</div>';
+  html += '</div>'; // photo-wrap end
+
+  // 本体
+  html += '<div class="place-card-body">';
   html += '<div class="place-card-header">';
   html += '<div class="place-card-icon">'+catIcon+'</div>';
   html += '<div class="place-card-info">';
   html += '<div class="place-card-name">'+escapeHtml(name)+'</div>';
-  html += '<div style="display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap;">';
-  if (hasOpenInfo) html += '<span style="font-size:10px;font-weight:600;color:'+(isOpen?'#2e7d32':'#c62828')+';">'+(isOpen?'営業中':'閉店中')+'</span>';
-  if (hours) html += '<span style="font-size:9.5px;color:var(--ink-sub);">'+escapeHtml(hours)+'</span>';
-  html += '</div>';
-  html += '<div class="place-card-addr">'+escapeHtml(addr)+'</div>';
+  if (hours) html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;">'+escapeHtml(hours)+'</div>';
+  html += '<div class="place-card-addr" style="margin-top:2px;">'+escapeHtml(addr)+'</div>';
   html += '</div></div>';
+  html += '</div>'; // body end
+
   // アイコンボタン行
   const routeUrl = pos ? 'https://www.google.com/maps/dir/?api=1&destination='+pos.lat+','+pos.lng : '';
   html += '<div style="display:flex;gap:4px;padding:6px 10px 8px;border-top:1px solid var(--line-soft);">';
@@ -29713,7 +29782,7 @@ async function _placesNearby(type, lat, lng) {
     headers: {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': PLACES_API_KEY,
-      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.currentOpeningHours,places.googleMapsUri,places.location'
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.currentOpeningHours,places.googleMapsUri,places.location,places.photos,places.rating,places.userRatingCount,places.priceLevel'
     },
     body: JSON.stringify({
       includedTypes: [type],
@@ -29734,7 +29803,7 @@ async function _placesTextSearch(query, lat, lng) {
     headers: {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': PLACES_API_KEY,
-      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.currentOpeningHours,places.googleMapsUri,places.location'
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.currentOpeningHours,places.googleMapsUri,places.location,places.photos,places.rating,places.userRatingCount,places.priceLevel'
     },
     body: JSON.stringify({
       textQuery: query,
