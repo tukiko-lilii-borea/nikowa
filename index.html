@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   :root {
@@ -7906,6 +7907,369 @@ function _setActiveStampDate(source, ds) {
 }
 window._setActiveStampDate = _setActiveStampDate;
 
+// ===== 今日のカード機能（SNSシェア用） =====
+const TODAY_CARD_THEMES = [
+  {id:'pink', accent:'#e05070', chip:'rgba(224,80,112,0.12)', text:'#7a2030', overlay:'rgba(255,240,244,VV)'},
+  {id:'blue', accent:'#3a7ad4', chip:'rgba(58,122,212,0.12)', text:'#1a3a70', overlay:'rgba(240,245,255,VV)'},
+  {id:'sage', accent:'#4a9870', chip:'rgba(74,152,112,0.12)', text:'#1a4a30', overlay:'rgba(240,248,243,VV)'},
+  {id:'amber',accent:'#b87030', chip:'rgba(184,112,48,0.12)', text:'#6a3a10', overlay:'rgba(253,245,238,VV)'},
+  {id:'slate',accent:'#7080a0', chip:'rgba(150,170,200,0.18)', text:'#d0ddf0', overlay:'rgba(28,36,52,VV)', dark:true},
+];
+const TODAY_CARD_MSGS = [
+  'ちゃんと生きた。',
+  'I showed up today.',
+  'I did the work.',
+  'I gave it my all.',
+  'I kept going.',
+];
+let _todayCardState = { themeIdx:0, msgIdx:0, bgDataUrl:null, bgAlpha:0.5, selectedCats:null, stampScale:1.0, customName:null, avatarMode:'current', customAvatarUrl:null, source:'me' };
+
+function openTodayCardModal(source) {
+  if (typeof html2canvas === 'undefined') {
+    showToast('カード機能を準備中…再度お試しください');
+    return;
+  }
+  _todayCardState.source = source || 'me';
+  _todayCardState.selectedCats = null; // リセット
+  const ex = document.getElementById('todayCardModal');
+  if (ex) ex.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'todayCardModal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2100;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 12px 90px;';
+  overlay.onclick = (e) => { if (e.target === overlay) closeTodayCardModal(); };
+  overlay.innerHTML = _buildTodayCardModalHtml();
+  document.body.appendChild(overlay);
+  _renderTodayCardPreview();
+}
+
+function closeTodayCardModal() {
+  const m = document.getElementById('todayCardModal');
+  if (m) m.remove();
+}
+
+function _buildTodayCardModalHtml() {
+  let h = '<div onclick="event.stopPropagation()" style="background:white;border-radius:18px;padding:18px 16px 16px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.25);">';
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">';
+  h += '<div style="font-size:15px;font-weight:800;color:var(--ink-dark);display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">collections</span>今日のカード</div>';
+  h += '<button onclick="closeTodayCardModal()" style="background:none;border:none;font-size:22px;color:var(--ink-light);cursor:pointer;padding:0 4px;line-height:1;">×</button>';
+  h += '</div>';
+  // プレビューエリア
+  h += '<div id="todayCardPreviewWrap" style="background:#f5f0e8;border-radius:14px;padding:14px;display:flex;justify-content:center;margin-bottom:12px;"></div>';
+  // テーマ
+  h += '<div style="margin-bottom:10px;">';
+  h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:5px;font-weight:700;">テーマ</div>';
+  h += '<div style="display:flex;gap:7px;">';
+  TODAY_CARD_THEMES.forEach((t,i) => {
+    const isOn = _todayCardState.themeIdx === i;
+    h += '<button onclick="_setTodayCardTheme('+i+')" style="width:30px;height:30px;border-radius:50%;border:'+(isOn?'2.5px':'1px')+' solid '+(isOn?'var(--ink-dark)':'var(--line)')+';background:'+t.accent+';cursor:pointer;padding:0;"></button>';
+  });
+  h += '</div></div>';
+  // カテゴリ選択
+  const allCats = _getTodayCategoriesForCard();
+  if (allCats.length > 0) {
+    // 初回はnullなので全選択扱い
+    const sel = _todayCardState.selectedCats;
+    const isAllOn = sel === null || sel.length === 0 || sel.length === allCats.length;
+    h += '<div style="margin-bottom:10px;">';
+    h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;"><span>表示するカテゴリ</span>';
+    h += '<button onclick="_toggleAllTodayCardCats()" style="font-size:10px;padding:2px 8px;background:'+(isAllOn?'var(--accent-bg)':'var(--surface)')+';color:'+(isAllOn?'var(--accent-deep)':'var(--ink-sub)')+';border:1px solid '+(isAllOn?'var(--accent)':'var(--line)')+';border-radius:100px;cursor:pointer;font-family:inherit;font-weight:700;">'+(isAllOn?'全部':'全選択')+'</button>';
+    h += '</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:5px;">';
+    allCats.forEach(cat => {
+      const isOn = sel === null ? true : sel.indexOf(cat) !== -1;
+      const catEsc = cat.replace(/'/g, "\\'");
+      h += '<button onclick="_toggleTodayCardCat(\''+catEsc+'\')" style="font-size:11px;padding:5px 10px;background:'+(isOn?'var(--accent-bg)':'var(--surface)')+';color:'+(isOn?'var(--accent-deep)':'var(--ink-sub)')+';border:1px solid '+(isOn?'var(--accent)':'var(--line)')+';border-radius:100px;cursor:pointer;font-family:inherit;font-weight:'+(isOn?'700':'500')+';display:inline-flex;align-items:center;gap:3px;">'+(isOn?'<span class="material-symbols-rounded" style="font-size:13px;">check</span>':'')+escapeHtml(cat)+'</button>';
+    });
+    h += '</div></div>';
+  }
+  // 背景写真
+  // 名前・アイコン
+  const _u = data.user || {};
+  const _curName = _todayCardState.customName !== null ? _todayCardState.customName : (_u.name || '');
+  h += '<div style="margin-bottom:10px;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;">';
+  h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:7px;font-weight:700;">なまえ・アイコン</div>';
+  // 名前入力
+  h += '<input type="text" value="'+escapeHtml(_curName)+'" placeholder="表示名" maxlength="20" oninput="_setTodayCardName(this.value)" style="width:100%;box-sizing:border-box;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-family:inherit;margin-bottom:7px;">';
+  // アイコン選択
+  h += '<div style="display:flex;gap:6px;align-items:center;">';
+  // 現在のアイコン プレビュー
+  const _av = _todayCardState.avatarMode === 'photo' && _todayCardState.customAvatarUrl
+    ? '<img src="'+_todayCardState.customAvatarUrl+'" style="width:100%;height:100%;object-fit:cover;">'
+    : (_isEmojiAvatar(_u.avatar||'person')
+        ? '<span style="font-size:18px;">'+escapeHtml(_u.avatar||'person')+'</span>'
+        : '<span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-sub);">'+escapeHtml(_u.avatar||'person')+'</span>');
+  h += '<div style="width:36px;height:36px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px solid var(--line);">'+_av+'</div>';
+  // 切替ボタン
+  const _useCur = _todayCardState.avatarMode === 'current';
+  h += '<button onclick="_setTodayCardAvatarMode(\'current\')" style="flex:1;font-size:11px;padding:7px 8px;border:1px solid '+(_useCur?'var(--accent)':'var(--line)')+';background:'+(_useCur?'var(--accent-bg)':'#fff')+';color:'+(_useCur?'var(--accent-deep)':'var(--ink-sub)')+';border-radius:8px;cursor:pointer;font-family:inherit;font-weight:'+(_useCur?'700':'500')+';">いつもの</button>';
+  h += '<label style="flex:1;font-size:11px;padding:7px 8px;border:1px solid '+(!_useCur?'var(--accent)':'var(--line)')+';background:'+(!_useCur?'var(--accent-bg)':'#fff')+';color:'+(!_useCur?'var(--accent-deep)':'var(--ink-sub)')+';border-radius:8px;cursor:pointer;font-family:inherit;text-align:center;font-weight:'+(!_useCur?'700':'500')+';display:inline-flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">photo_camera</span>写真<input type="file" accept="image/*" style="display:none" onchange="_loadTodayCardAvatar(this)"></label>';
+  h += '</div>';
+  h += '</div>';
+  // 背景写真
+  h += '<div style="margin-bottom:10px;">';
+  h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:5px;font-weight:700;">背景写真</div>';
+  h += '<div style="display:flex;gap:6px;align-items:center;">';
+  h += '<label style="flex:1;font-size:11px;padding:7px 10px;border:1px dashed var(--line);border-radius:8px;color:var(--ink-sub);cursor:pointer;text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:4px;background:var(--surface);"><span class="material-symbols-rounded" style="font-size:14px;">image</span>写真を選ぶ<input type="file" accept="image/*" style="display:none" onchange="_loadTodayCardBg(this)"></label>';
+  if (_todayCardState.bgDataUrl) {
+    h += '<button onclick="_clearTodayCardBg()" style="font-size:11px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-sub);cursor:pointer;font-family:inherit;">クリア</button>';
+  }
+  h += '</div>';
+  if (_todayCardState.bgDataUrl) {
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;">';
+    h += '<span style="font-size:10px;color:var(--ink-sub);white-space:nowrap;min-width:32px;">透過</span>';
+    h += '<input type="range" min="10" max="90" value="'+Math.round(_todayCardState.bgAlpha*100)+'" oninput="_setTodayCardAlpha(this.value)" style="flex:1;">';
+    h += '</div>';
+  }
+  h += '</div>';
+  // スタンプサイズ
+  h += '<div style="margin-bottom:14px;">';
+  h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;"><span>スタンプの大きさ</span><span style="color:var(--ink-light);font-weight:500;">'+Math.round(_todayCardState.stampScale*100)+'%</span></div>';
+  h += '<div style="display:flex;align-items:center;gap:6px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--ink-light);">circle</span>';
+  h += '<input type="range" min="50" max="600" value="'+Math.round(_todayCardState.stampScale*100)+'" oninput="_setTodayCardStampScale(this.value)" style="flex:1;">';
+  h += '<span class="material-symbols-rounded" style="font-size:24px;color:var(--ink-light);">circle</span>';
+  h += '</div></div>';
+  // メッセージ
+  h += '<div style="margin-bottom:14px;">';
+  h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:5px;font-weight:700;">メッセージ</div>';
+  h += '<div style="display:flex;flex-direction:column;gap:4px;">';
+  TODAY_CARD_MSGS.forEach((m,i) => {
+    const isOn = _todayCardState.msgIdx === i;
+    h += '<button onclick="_setTodayCardMsg('+i+')" style="font-size:12px;padding:7px 11px;background:'+(isOn?'var(--accent-bg)':'var(--surface)')+';color:'+(isOn?'var(--accent-deep)':'var(--ink-sub)')+';border:1px solid '+(isOn?'var(--accent)':'var(--line)')+';border-radius:8px;cursor:pointer;font-family:inherit;text-align:left;font-weight:'+(isOn?'700':'500')+';">'+escapeHtml(m)+'</button>';
+  });
+  h += '</div></div>';
+  // ダウンロードボタン
+  h += '<button onclick="downloadTodayCard()" id="todayCardDlBtn" style="width:100%;padding:11px;background:var(--accent);color:white;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">download</span>保存する</button>';
+  h += '</div>';
+  return h;
+}
+
+function _setTodayCardTheme(i) { _todayCardState.themeIdx = i; _refreshTodayCardModal(); }
+function _setTodayCardMsg(i) { _todayCardState.msgIdx = i; _refreshTodayCardModal(); }
+function _setTodayCardAlpha(v) { _todayCardState.bgAlpha = v/100; _renderTodayCardPreview(); }
+function _setTodayCardStampScale(v) { _todayCardState.stampScale = v/100; _refreshTodayCardModal(); }
+function _toggleTodayCardCat(cat) {
+  const all = _getTodayCategoriesForCard();
+  if (_todayCardState.selectedCats === null) {
+    _todayCardState.selectedCats = all.filter(c => c !== cat);
+  } else {
+    const idx = _todayCardState.selectedCats.indexOf(cat);
+    if (idx === -1) _todayCardState.selectedCats.push(cat);
+    else _todayCardState.selectedCats.splice(idx, 1);
+  }
+  _refreshTodayCardModal();
+}
+function _toggleAllTodayCardCats() {
+  const all = _getTodayCategoriesForCard();
+  const sel = _todayCardState.selectedCats;
+  const isAllOn = sel === null || sel.length === 0 || sel.length === all.length;
+  if (isAllOn) _todayCardState.selectedCats = [];
+  else _todayCardState.selectedCats = null;
+  _refreshTodayCardModal();
+}
+function _clearTodayCardBg() { _todayCardState.bgDataUrl = null; _refreshTodayCardModal(); }
+function _setTodayCardName(v) { _todayCardState.customName = v; _renderTodayCardPreview(); }
+function _setTodayCardAvatarMode(m) {
+  _todayCardState.avatarMode = m;
+  if (m === 'current') _todayCardState.customAvatarUrl = null;
+  _refreshTodayCardModal();
+}
+function _loadTodayCardAvatar(input) {
+  const f = input.files && input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = (e) => {
+    _todayCardState.customAvatarUrl = e.target.result;
+    _todayCardState.avatarMode = 'photo';
+    _refreshTodayCardModal();
+  };
+  r.readAsDataURL(f);
+}
+function _loadTodayCardBg(input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = (e) => { _todayCardState.bgDataUrl = e.target.result; _refreshTodayCardModal(); };
+  r.readAsDataURL(f);
+}
+
+function _refreshTodayCardModal() {
+  const overlay = document.getElementById('todayCardModal');
+  if (!overlay) return;
+  overlay.innerHTML = _buildTodayCardModalHtml();
+  _renderTodayCardPreview();
+}
+
+function _aggregateTodayStamps() {
+  const history = _todayCardState.source === 'office'
+    ? (data.officeStampHistory || [])
+    : (data.stampHistory || []);
+  const todayStr = new Date().toDateString();
+  const today = history.filter(r => new Date(r.timestamp).toDateString() === todayStr);
+  // ポジティブカテゴリ除外
+  const filtered = today.filter(r => {
+    const cat = (r.category || '').toLowerCase();
+    if (cat.indexOf('ポジティブ') !== -1 || cat.indexOf('positive') !== -1) return false;
+    // 選択カテゴリでさらにフィルター（nullなら全部表示）
+    if (_todayCardState.selectedCats && _todayCardState.selectedCats.length > 0) {
+      return _todayCardState.selectedCats.indexOf(r.category) !== -1;
+    }
+    return true;
+  });
+  // icon でグルーピング
+  const grouped = {};
+  for (const r of filtered) {
+    const key = r.icon || 'star';
+    if (!grouped[key]) grouped[key] = { icon: key, name: r.name || '', count: 0 };
+    grouped[key].count++;
+  }
+  return { stamps: Object.values(grouped), total: filtered.length };
+}
+
+// 今日の出現カテゴリ一覧（ポジティブ除外）
+function _getTodayCategoriesForCard() {
+  const history = _todayCardState.source === 'office'
+    ? (data.officeStampHistory || [])
+    : (data.stampHistory || []);
+  const todayStr = new Date().toDateString();
+  const cats = new Set();
+  for (const r of history) {
+    if (new Date(r.timestamp).toDateString() !== todayStr) continue;
+    const cat = (r.category || '').toLowerCase();
+    if (cat.indexOf('ポジティブ') !== -1 || cat.indexOf('positive') !== -1) continue;
+    if (r.category) cats.add(r.category);
+  }
+  return Array.from(cats);
+}
+
+function _isEmojiAvatar(av) {
+  if (!av) return false;
+  // material icon名は英数字+アンダースコアのみ
+  return !/^[a-z0-9_]+$/i.test(av);
+}
+
+function _renderTodayCardPreview() {
+  const wrap = document.getElementById('todayCardPreviewWrap');
+  if (!wrap) return;
+  wrap.innerHTML = _buildTodayCardHtml(true);
+}
+
+function _buildTodayCardHtml(isPreview) {
+  const t = TODAY_CARD_THEMES[_todayCardState.themeIdx];
+  const msg = TODAY_CARD_MSGS[_todayCardState.msgIdx];
+  const isDark = !!t.dark;
+  const agg = _aggregateTodayStamps();
+  const user = data.user || {};
+  const userName = user.name || 'me';
+  const userAv = user.avatar || 'person';
+  const isEmojiAv = _isEmojiAvatar(userAv);
+  const now = new Date();
+  const dateStr = now.getFullYear()+'.'+String(now.getMonth()+1).padStart(2,'0')+'.'+String(now.getDate()).padStart(2,'0');
+
+  const W = isPreview ? 280 : 480;
+  const scale = W / 480;
+
+  let h = '<div id="todayCardEl" style="position:relative;width:'+W+'px;height:'+(800*scale)+'px;border-radius:'+(20*scale)+'px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.18);background:'+(isDark?'#1a2030':'#fff5f8')+';">';
+  // 背景画像レイヤー
+  if (_todayCardState.bgDataUrl) {
+    h += '<div style="position:absolute;inset:0;background-image:url('+_todayCardState.bgDataUrl+');background-size:cover;background-position:center;"></div>';
+  }
+  // カラーオーバーレイ
+  const ovAlpha = _todayCardState.bgDataUrl ? _todayCardState.bgAlpha : 0.97;
+  h += '<div style="position:absolute;inset:0;background:'+t.overlay.replace('VV', ovAlpha)+';"></div>';
+  // 上部アクセントバー
+  h += '<div style="position:absolute;top:0;left:0;right:0;height:'+(4*scale)+'px;background:'+t.accent+';"></div>';
+  // コンテンツ
+  h += '<div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:'+(28*scale)+'px '+(22*scale)+'px '+(18*scale)+'px;">';
+  // ロゴ（お目目つき画像）
+  h += '<div style="text-align:center;margin-bottom:'+(4*scale)+'px;"><img src="'+LOGO_DATA_URL+'" style="height:'+(28*scale)+'px;width:auto;display:inline-block;vertical-align:middle;'+(isDark?'filter:brightness(0) invert(1);opacity:0.95;':'')+'" alt="nikowa"></div>';
+  // 日付
+  h += '<div style="text-align:center;font-size:'+(11*scale)+'px;color:'+t.text+';opacity:0.5;letter-spacing:0.05em;margin-bottom:'+(14*scale)+'px;font-family:sans-serif;">'+dateStr+'</div>';
+  // プロフィール（アイコン横に名前）
+  const dispName = _todayCardState.customName !== null ? _todayCardState.customName : userName;
+  const useCustomAv = _todayCardState.avatarMode === 'photo' && _todayCardState.customAvatarUrl;
+  h += '<div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:'+(10*scale)+'px;margin-bottom:'+(10*scale)+'px;">';
+  h += '<div style="width:'+(50*scale)+'px;height:'+(50*scale)+'px;border-radius:50%;background:'+t.chip.replace('0.12','0.25').replace('0.18','0.3')+';display:flex;align-items:center;justify-content:center;color:'+t.accent+';overflow:hidden;flex-shrink:0;">';
+  if (useCustomAv) {
+    h += '<img src="'+_todayCardState.customAvatarUrl+'" style="width:100%;height:100%;object-fit:cover;">';
+  } else if (isEmojiAv) {
+    h += '<span style="font-size:'+(26*scale)+'px;line-height:1;">'+escapeHtml(userAv)+'</span>';
+  } else {
+    h += '<span class="material-symbols-rounded" style="font-size:'+(28*scale)+'px;color:'+t.accent+';">'+escapeHtml(userAv)+'</span>';
+  }
+  h += '</div>';
+  h += '<div style="font-size:'+(15*scale)+'px;font-weight:700;color:'+t.text+';font-family:sans-serif;text-align:left;">'+escapeHtml(dispName||'')+'</div>';
+  h += '</div>';
+  // 区切り線
+  h += '<div style="height:1px;background:'+t.text+';opacity:0.15;margin:'+(4*scale)+'px 0;"></div>';
+  // カウント
+  h += '<div style="text-align:center;margin:'+(8*scale)+'px 0 '+(10*scale)+'px;">';
+  h += '<div style="font-size:'+(48*scale)+'px;font-weight:800;color:'+t.accent+';line-height:1;font-family:sans-serif;">'+agg.total+'</div>';
+  h += '<div style="font-size:'+(11*scale)+'px;font-weight:600;color:'+t.text+';opacity:0.6;letter-spacing:0.15em;text-transform:uppercase;margin-top:'+(3*scale)+'px;font-family:sans-serif;">stamps today</div>';
+  h += '</div>';
+  // スタンプグリッド
+  h += '<div style="flex:1;display:flex;flex-wrap:wrap;gap:'+(6*scale)+'px;justify-content:center;align-content:center;padding:0 '+(4*scale)+'px;">';
+  if (agg.stamps.length === 0) {
+    h += '<div style="font-size:'+(11*scale)+'px;color:'+t.text+';opacity:0.5;">今日のスタンプはまだないよ</div>';
+  } else {
+    for (const s of agg.stamps) {
+      const ss = _todayCardState.stampScale;
+      h += '<div style="display:inline-flex;flex-direction:column;align-items:center;gap:'+(2*scale*ss)+'px;background:'+t.chip+';color:'+t.text+';border-radius:'+(14*scale*ss)+'px;padding:'+(6*scale*ss)+'px '+(10*scale*ss)+'px;font-family:sans-serif;min-width:0;">';
+      // アイコン行（必要なら×N）
+      h += '<div style="display:inline-flex;align-items:center;gap:'+(2*scale*ss)+'px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:'+(16*scale*ss)+'px;color:'+t.accent+';line-height:1;">'+escapeHtml(s.icon)+'</span>';
+      if (s.count > 1) h += '<span style="font-size:'+(10*scale*ss)+'px;font-weight:800;opacity:0.85;">×'+s.count+'</span>';
+      h += '</div>';
+      // スタンプ名
+      if (s.name) {
+        h += '<div style="font-size:'+(9*scale*ss)+'px;font-weight:700;line-height:1.1;text-align:center;max-width:'+(70*scale*ss)+'px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.name)+'</div>';
+      }
+      h += '</div>';
+    }
+  }
+  h += '</div>';
+  // 区切り線
+  h += '<div style="height:1px;background:'+t.text+';opacity:0.15;margin:'+(8*scale)+'px 0 '+(2*scale)+'px;"></div>';
+  // メッセージ
+  h += '<div style="text-align:center;font-size:'+(15*scale)+'px;font-weight:700;color:'+t.text+';padding:'+(10*scale)+'px '+(8*scale)+'px '+(4*scale)+'px;letter-spacing:0.02em;line-height:1.35;font-family:sans-serif;">'+escapeHtml(msg)+'</div>';
+  // 下バー
+  h += '<div style="position:absolute;bottom:0;left:0;right:0;height:'+(4*scale)+'px;background:'+t.accent+';opacity:0.4;"></div>';
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+
+async function downloadTodayCard() {
+  const btn = document.getElementById('todayCardDlBtn');
+  if (!btn) return;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">hourglass_top</span>生成中…';
+  btn.disabled = true;
+  // 一時的に大きいサイズでレンダー
+  const tempWrap = document.createElement('div');
+  tempWrap.style.cssText = 'position:fixed;left:-9999px;top:0;background:transparent;';
+  tempWrap.innerHTML = _buildTodayCardHtml(false);
+  document.body.appendChild(tempWrap);
+  // フォント読み込み待機
+  try { await document.fonts.ready; } catch(e) {}
+  await new Promise(r => setTimeout(r, 100));
+  try {
+    const cardEl = tempWrap.querySelector('#todayCardEl');
+    const canvas = await html2canvas(cardEl, { scale: 2, useCORS: true, logging: false, backgroundColor: null });
+    const a = document.createElement('a');
+    const dt = new Date();
+    a.download = 'nikowa_'+dt.getFullYear()+String(dt.getMonth()+1).padStart(2,'0')+String(dt.getDate()).padStart(2,'0')+'.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    showToast('保存したよ🌷');
+  } catch(e) {
+    console.error('card save failed:', e);
+    showToast('保存に失敗しました');
+  }
+  tempWrap.remove();
+  btn.innerHTML = orig;
+  btn.disabled = false;
+}
+
 // ===== スタンプピッカーモーダル =====
 function openStampPickerModal() {
   const ex = document.getElementById('stampPickerModal');
@@ -7943,6 +8307,10 @@ function _getFavoriteStamps(limit) {
   });
 }
 
+let _openPickerCats = {};
+function _togglePickerCat(cat) { _openPickerCats[cat] = !_openPickerCats[cat]; _renderStampPickerModal(); }
+window._togglePickerCat = _togglePickerCat;
+
 function _renderStampPickerModal() {
   const overlay = document.getElementById('stampPickerModal');
   if (!overlay) return;
@@ -7960,47 +8328,52 @@ function _renderStampPickerModal() {
   // 中身（スクロール）
   h += '<div style="flex:1;overflow-y:auto;padding:6px 0 16px;">';
   
-  // よく使う
+  // よく使う（常時表示）
   if (favs.length > 0) {
     h += '<div style="font-size:10px;font-weight:800;color:var(--ink-sub);letter-spacing:1.2px;padding:10px 16px 6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:#E89A4A;">history</span>履歴</div>';
     h += '<div style="padding:0 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
     for (const s of favs) {
-      h += '<button onclick="_pickerTapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\\'/g,"\\\\\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 4px 9px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border:1.5px solid transparent;border-radius:12px;cursor:pointer;font-family:inherit;">';
-      h += '<span style="width:40px;height:40px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);">'+renderStampIcon(s.icon,'font-size:22px;line-height:1;color:var(--accent-deep);')+'</span>';
-      h += '<span style="font-size:10px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+      h += '<button onclick="_pickerTapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\\'/g,"\\\\\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 7px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border:1.5px solid transparent;border-radius:12px;cursor:pointer;font-family:inherit;">';
+      h += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);">'+renderStampIcon(s.icon,'font-size:24px;line-height:1;color:var(--accent-deep);')+'</span>';
+      h += '<span style="font-size:11px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
     }
     h += '</div>';
   }
   
-  // カテゴリごと
+  // カテゴリごと（折りたたみ式）
   for (const cat of cats) {
     const allStamps = (data.stampLib && data.stampLib[cat]) || [];
     const visibleStamps = allStamps.filter(s => !s.hidden);
     const _catColor = _stampCatColor(cat);
+    const isOpen = !!_openPickerCats[cat];
     
-    // 見出し（色ライン付き・右に+追加ボタン）
-    h += '<div style="padding:14px 16px 4px;display:flex;align-items:center;gap:8px;">';
-    h += '<div style="flex:1;display:flex;align-items:center;gap:8px;min-width:0;">';
-    h += '<span style="font-size:11px;font-weight:800;color:'+_catColor+';letter-spacing:1.2px;flex-shrink:0;">'+escapeHtml(cat)+'</span>';
-    h += '<div style="flex:1;height:2px;background:'+_catColor+';border-radius:2px;opacity:0.5;"></div>';
+    // 見出し（折りたたみヘッダー）
+    h += '<div style="padding:10px 12px 0;">';
+    h += '<div onclick="_togglePickerCat(\''+escapeHtml(cat).replace(/'/g,"\\\\'")+'\');" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:'+_catColor+'12;border:1px solid '+_catColor+'30;border-radius:10px;cursor:pointer;user-select:none;">';
+    h += '<div style="display:flex;align-items:center;gap:6px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:16px;color:'+_catColor+';transition:transform 0.2s;transform:rotate('+(isOpen?'90':'0')+'deg);">chevron_right</span>';
+    h += '<span style="font-size:12px;font-weight:800;color:'+_catColor+';letter-spacing:0.5px;">'+escapeHtml(cat)+'</span>';
+    h += '<span style="font-size:10px;color:'+_catColor+';opacity:0.7;font-weight:600;">'+visibleStamps.length+'</span>';
     h += '</div>';
-    h += '<button onclick="addCustomStamp(\''+escapeHtml(cat).replace(/\\'/g,"\\\\\\\\\'")+'\');" title="このカテゴリにスタンプ追加" style="flex-shrink:0;width:24px;height:24px;border:1px solid '+_catColor+';background:white;color:'+_catColor+';border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;padding:0;"><span class="material-symbols-rounded" style="font-size:14px;font-weight:700;">add</span></button>';
+    h += '<button onclick="event.stopPropagation();addCustomStamp(\''+escapeHtml(cat).replace(/'/g,"\\\\\\\\\'")+'\');" style="width:22px;height:22px;border:1px solid '+_catColor+';background:white;color:'+_catColor+';border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;"><span class="material-symbols-rounded" style="font-size:13px;">add</span></button>';
     h += '</div>';
     
-    // スタンプグリッド
-    h += '<div style="padding:0 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">';
-    for (const s of visibleStamps) {
-      const _isPin = _isPinnedStamp('me', s.icon, s.name);
-      const _safeName = escapeHtml(s.name).replace(/\\'/g,"\\\\'");
-      h += '<button onclick="_pickerTapStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 3px 8px;background:var(--surface-warm);border:1px solid var(--line);border-radius:11px;cursor:pointer;font-family:inherit;">';
-      h += '<span onclick="event.stopPropagation();togglePinnedStamp(\'me\',\''+s.icon+'\',\''+_safeName+'\')" style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
-      h += '<span style="width:34px;height:34px;border-radius:9px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:19px;line-height:1;color:'+_catColor+';')+'</span>';
-      h += '<span style="font-size:9px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
-      h += '</button>';
+    // スタンプグリッド（折りたたみ中身）
+    if (isOpen) {
+      h += '<div style="padding:6px 0 0;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">';
+      for (const s of visibleStamps) {
+        const _isPin = _isPinnedStamp('me', s.icon, s.name);
+        const _safeName = escapeHtml(s.name).replace(/\\'/g,"\\\\'");
+        h += '<button onclick="_pickerTapStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 3px 6px;background:var(--surface-warm);border:1px solid var(--line);border-radius:11px;cursor:pointer;font-family:inherit;">';
+        h += '<span onclick="event.stopPropagation();togglePinnedStamp(\'me\',\''+s.icon+'\',\''+_safeName+'\')" style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
+        h += '<span style="width:34px;height:34px;border-radius:9px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:24px;line-height:1;color:'+_catColor+';')+'</span>';
+        h += '<span style="font-size:11px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+        h += '</button>';
+      }
+      h += '<button onclick="addCustomStamp(\''+escapeHtml(cat).replace(/'/g,"\\\\\\\\\'")+'\');" style="display:flex;align-items:center;justify-content:center;padding:8px 3px 6px;background:none;border:1.5px dashed '+_catColor+';border-radius:11px;cursor:pointer;font-family:inherit;opacity:0.6;"><span class="material-symbols-rounded" style="font-size:22px;color:'+_catColor+';">add</span></button>';
+      h += '</div>';
     }
-    // 末尾に透明な＋ボタン
-    h += '<button onclick="addCustomStamp(\''+escapeHtml(cat).replace(/\\'/g,"\\\\\\\\\'")+'\');" title="スタンプを追加" style="display:flex;align-items:center;justify-content:center;padding:10px 3px 8px;background:none;border:1.5px dashed '+_catColor+';border-radius:11px;cursor:pointer;font-family:inherit;opacity:0.6;"><span class="material-symbols-rounded" style="font-size:22px;color:'+_catColor+';">add</span></button>';
     h += '</div>';
   }
   
@@ -16166,11 +16539,18 @@ function renderMeMode() {
         '生活': [
           {icon:'water_drop',name:'水'},{icon:'bathtub',name:'おふろ'},
           {icon:'bed',name:'睡眠'},{icon:'coffee',name:'コーヒー'},
-          {icon:'local_cafe',name:'お茶'},{icon:'shower',name:'シャワー'}
+          {icon:'local_cafe',name:'お茶'},{icon:'shower',name:'シャワー'},
+          {icon:'dentistry',name:'歯みがき'},{icon:'pets',name:'散歩'},
+          {icon:'egg_alt',name:'朝ごはん'},{icon:'ramen_dining',name:'昼ごはん'},
+          {icon:'dinner_dining',name:'晩ごはん'},{icon:'cookie',name:'おやつ'}
         ],
         '美容': [
           {icon:'face',name:'スキンケア'},{icon:'palette',name:'メイク'},{icon:'content_cut',name:'ヘア'},
-          {icon:'colors',name:'ネイル'},{icon:'spa',name:'マッサージ'},{icon:'checkroom',name:'おしゃれ'}
+          {icon:'colors',name:'ネイル'},{icon:'spa',name:'マッサージ'},{icon:'checkroom',name:'おしゃれ'},
+          {icon:'face_retouching_natural',name:'パック'},{icon:'back_hand',name:'ハンドクリーム'},
+          {icon:'soap',name:'ボディケア'},{icon:'wb_sunny',name:'日焼け止め'},
+          {icon:'sentiment_satisfied',name:'リップケア'},{icon:'water_drop',name:'美容液'},
+          {icon:'visibility',name:'まつげ'}
         ],
         'ダイエット': [
           {icon:'monitor_weight',name:'体重',type:'number',unit:'kg',step:0.1,min:10,max:200,photo:true},
@@ -16179,7 +16559,15 @@ function renderMeMode() {
           {icon:'lunch_dining',name:'食事記録',type:'text',placeholder:'何たべた？',photo:true},
           {icon:'fitness_center',name:'筋トレ',type:'number',unit:'分',step:1,min:0,max:300},
           {icon:'directions_run',name:'ジョギング',type:'number',unit:'km',step:0.1,min:0,max:50},
-          {icon:'directions_walk',name:'ウォーキング',type:'number',unit:'歩',step:100,min:0,max:50000}
+          {icon:'directions_walk',name:'ウォーキング',type:'number',unit:'歩',step:100,min:0,max:50000},
+          {icon:'sprint',name:'スクワット',type:'number',unit:'回',step:1,min:0,max:500},
+          {icon:'straighten',name:'腹筋',type:'number',unit:'回',step:1,min:0,max:500},
+          {icon:'sports_gymnastics',name:'尻トレ',type:'number',unit:'回',step:1,min:0,max:500},
+          {icon:'exercise',name:'胸トレ',type:'number',unit:'回',step:1,min:0,max:500},
+          {icon:'iron_fist',name:'腕トレ',type:'number',unit:'回',step:1,min:0,max:500},
+          {icon:'horizontal_rule',name:'プランク',type:'number',unit:'秒',step:10,min:0,max:600},
+          {icon:'self_improvement',name:'ストレッチ',type:'number',unit:'分',step:1,min:0,max:120},
+          {icon:'self_improvement',name:'ヨガ',type:'number',unit:'分',step:1,min:0,max:180}
         ],
         '体調': [
           {icon:'medication',name:'くすり'},
@@ -16188,12 +16576,19 @@ function renderMeMode() {
           {icon:'mood_bad',name:'PMS',period:'pms'},
           {icon:'sick',name:'体調不良'},
           {icon:'local_hospital',name:'通院'},
-          {icon:'self_improvement',name:'ヨガ'},
-          {icon:'thermostat',name:'体温',type:'number',unit:'℃',step:0.1,min:34,max:42}
+          {icon:'thermostat',name:'体温',type:'number',unit:'℃',step:0.1,min:34,max:42},
+          {icon:'neurology',name:'頭痛'},
+          {icon:'gastroenterology',name:'腹痛'},
+          {icon:'accessibility',name:'肩こり'},
+          {icon:'visibility_off',name:'目の疲れ'},
+          {icon:'hotel',name:'よく寝た'},
+          {icon:'bedtime_off',name:'寝不足'},
+          {icon:'mindfulness',name:'瞑想',type:'number',unit:'分',step:1,min:0,max:120}
         ],
         '家事': [
           {icon:'cleaning_services',name:'掃除'},{icon:'local_laundry_service',name:'洗濯'},{icon:'kitchen',name:'料理'},
-          {icon:'shopping_cart',name:'買い物'},{icon:'delete',name:'ゴミ出し'},{icon:'wash',name:'食器洗い'}
+          {icon:'shopping_cart',name:'買い物'},{icon:'delete',name:'ゴミ出し'},{icon:'wash',name:'食器洗い'},
+          {icon:'iron',name:'アイロン'},{icon:'inventory_2',name:'片づけ'},{icon:'bento',name:'お弁当'}
         ],
         '仕事': [
           {icon:'work',name:'仕事'},{icon:'call',name:'電話'},{icon:'mail',name:'メール'},
@@ -16201,7 +16596,9 @@ function renderMeMode() {
         ],
         '趣味': [
           {icon:'sports_esports',name:'ゲーム'},{icon:'menu_book',name:'読書'},{icon:'music_note',name:'音楽'},
-          {icon:'brush',name:'お絵描き'},{icon:'live_tv',name:'動画'},{icon:'mic',name:'カラオケ'}
+          {icon:'brush',name:'お絵描き'},{icon:'live_tv',name:'動画'},{icon:'mic',name:'カラオケ'},
+          {icon:'movie',name:'映画'},{icon:'local_cafe',name:'カフェ'},{icon:'favorite',name:'推し活'},
+          {icon:'photo_camera',name:'写真'},{icon:'nature_people',name:'お散歩'}
         ],
         'ポジティブ': [
           {icon:'star',name:'えらい'},{icon:'auto_awesome',name:'神ってる'},{icon:'favorite',name:'可愛い'},
@@ -16265,6 +16662,28 @@ function renderMeMode() {
         data._stampIconMigrated_v8 = true;
         try { saveData(); } catch(e) {}
       }
+      // v9マイグレーション：新スタンプ追加（各カテゴリ充実・ヨガ移動・瞑想追加）
+      if (!data._stampMigrated_v9) {
+        for (const cat in DEFAULT_STAMPS) {
+          if (!data.stampLib[cat]) {
+            data.stampLib[cat] = DEFAULT_STAMPS[cat].map(s => ({...s, id: 's_'+cat+'_'+s.name, hidden: false}));
+          } else {
+            for (const def of DEFAULT_STAMPS[cat]) {
+              const defId = 's_'+cat+'_'+def.name;
+              const exists = data.stampLib[cat].some(s => s.id === defId || (s.icon === def.icon && s.name === def.name));
+              if (!exists) {
+                data.stampLib[cat].push({...def, id: defId, hidden: false});
+              }
+            }
+          }
+        }
+        // 体調からヨガを削除（ダイエットに移動済み）
+        if (data.stampLib['体調']) {
+          data.stampLib['体調'] = data.stampLib['体調'].filter(s => !(s.name === 'ヨガ' && !s.id?.startsWith('cs_')));
+        }
+        data._stampMigrated_v9 = true;
+        try { saveData(); } catch(e) {}
+      }
       
       // ===== 「日付」「STAMP」「✏」 + ピン留めエリア =====
       const _meDateLabel = _formatStampActiveDate('me');
@@ -16290,9 +16709,12 @@ function renderMeMode() {
       
       html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
       html += '<div style="display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">history</span><span style="font-size:11px;font-weight:800;color:var(--ink-dark);">今日のきろく</span></div>';
+      html += '<div style="display:flex;align-items:center;gap:6px;">';
       if (todayHistory.length > 0) {
+        html += '<button onclick="openTodayCardModal()" style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:12px;">collections</span>カードにする</button>';
         html += '<span style="font-size:9px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 7px;border-radius:100px;font-weight:700;">'+todayHistory.length+'件</span>';
       }
+      html += '</div>';
       html += '</div>';
       
       // スクロールコンテナ（高さ固定）
@@ -17896,7 +18318,10 @@ function renderOfficeStampTab() {
   h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
   h += '<div style="display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">history</span><span style="font-size:11px;font-weight:800;color:var(--ink-dark);">今日のきろく</span></div>';
   if (todayHist.length > 0) {
+    h += '<div style="display:flex;align-items:center;gap:5px;">';
+    h += '<button onclick="openTodayCardModal(\'office\')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:12px;">collections</span>カードにする</button>';
     h += '<span style="font-size:9px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 7px;border-radius:100px;font-weight:700;">'+todayHist.length+'件</span>';
+    h += '</div>';
   }
   h += '</div>';
   h += '<div data-office-history-area style="max-height:280px;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-right:2px;">';
@@ -17941,6 +18366,10 @@ function _getFavoriteOfficeStamps(limit) {
     .map(([key]) => { const [icon, name] = key.split('|'); return {icon,name}; });
 }
 
+let _openOfficePickerCats = {};
+function _toggleOfficePickerCat(cat) { _openOfficePickerCats[cat] = !_openOfficePickerCats[cat]; _renderOfficeStampPickerContent(); }
+window._toggleOfficePickerCat = _toggleOfficePickerCat;
+
 function _renderOfficeStampPickerContent() {
   const overlay = document.getElementById('officeStampPickerModal');
   if (!overlay) return;
@@ -17955,38 +18384,48 @@ function _renderOfficeStampPickerContent() {
   h += '<div id="officeStampPickerFeedback" style="display:none;padding:7px 16px;background:var(--accent-bg);border-bottom:1px solid var(--accent);font-size:11px;font-weight:700;color:var(--accent-deep);align-items:center;gap:6px;"></div>';
   h += '<div style="flex:1;overflow-y:auto;padding:6px 0 16px;">';
   
-  // よく使う
+  // よく使う（常時表示）
   if (favs.length > 0) {
     h += '<div style="font-size:10px;font-weight:800;color:var(--ink-sub);letter-spacing:1.2px;padding:10px 16px 6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:#E89A4A;">history</span>履歴</div>';
     h += '<div style="padding:0 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
     for (const s of favs) {
-      h += '<button onclick="_officePickerTapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\'")+'\')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 4px 9px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border:1.5px solid transparent;border-radius:12px;cursor:pointer;font-family:inherit;">';
-      h += '<span style="width:40px;height:40px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+s.icon+'</span></span>';
-      h += '<span style="font-size:10px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+      h += '<button onclick="_officePickerTapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\'")+'\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 7px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border:1.5px solid transparent;border-radius:12px;cursor:pointer;font-family:inherit;">';
+      h += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);"><span class="material-symbols-rounded" style="font-size:24px;color:var(--accent-deep);">'+s.icon+'</span></span>';
+      h += '<span style="font-size:11px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
     }
     h += '</div>';
   }
   
-  // カテゴリ別
+  // カテゴリ別（折りたたみ式）
   for (const cat of OFFICE_STAMP_CATS) {
     const catStamps = (data.officeStampLib[cat]||[]).filter(s=>!s.hidden);
-    h += '<div style="padding:14px 16px 4px;display:flex;align-items:center;gap:8px;">';
-    h += '<span style="font-size:11px;font-weight:800;color:var(--accent-deep);letter-spacing:1.2px;flex-shrink:0;">'+escapeHtml(cat)+'</span>';
-    h += '<div style="flex:1;height:2px;background:var(--accent);border-radius:2px;opacity:0.4;"></div>';
-    h += '<button onclick="addOfficeCustomStamp(\''+escapeHtml(cat)+'\')" style="flex-shrink:0;width:24px;height:24px;border:1px solid var(--accent);background:white;color:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:14px;">add</span></button>';
+    const isOpen = !!_openOfficePickerCats[cat];
+    
+    h += '<div style="padding:10px 12px 0;">';
+    h += '<div onclick="_toggleOfficePickerCat(\''+escapeHtml(cat)+'\');" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--accent)12;border:1px solid var(--accent)30;border-radius:10px;cursor:pointer;user-select:none;">';
+    h += '<div style="display:flex;align-items:center;gap:6px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);transition:transform 0.2s;transform:rotate('+(isOpen?'90':'0')+'deg);">chevron_right</span>';
+    h += '<span style="font-size:12px;font-weight:800;color:var(--accent-deep);letter-spacing:0.5px;">'+escapeHtml(cat)+'</span>';
+    h += '<span style="font-size:10px;color:var(--accent-deep);opacity:0.7;font-weight:600;">'+catStamps.length+'</span>';
     h += '</div>';
-    h += '<div style="padding:0 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">';
-    for (const s of catStamps) {
-      const _isPin = _isPinnedStamp('office', s.icon, s.name);
-      const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
-      h += '<button onclick="_officePickerTapStamp(\''+s.icon+'\',\''+_safeName+'\')" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 3px 8px;background:var(--surface-warm);border:1px solid var(--line);border-radius:11px;cursor:pointer;font-family:inherit;">';
-      h += '<span onclick="event.stopPropagation();togglePinnedStamp(\'office\',\''+s.icon+'\',\''+_safeName+'\')" style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
-      h += '<span style="width:34px;height:34px;border-radius:9px;background:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:19px;color:var(--accent-deep);">'+s.icon+'</span></span>';
-      h += '<span style="font-size:9px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
-      h += '</button>';
+    h += '<button onclick="event.stopPropagation();addOfficeCustomStamp(\''+escapeHtml(cat)+'\')" style="width:22px;height:22px;border:1px solid var(--accent);background:white;color:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:13px;">add</span></button>';
+    h += '</div>';
+    
+    if (isOpen) {
+      h += '<div style="padding:6px 0 0;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">';
+      for (const s of catStamps) {
+        const _isPin = _isPinnedStamp('office', s.icon, s.name);
+        const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
+        h += '<button onclick="_officePickerTapStamp(\''+s.icon+'\',\''+_safeName+'\')" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 3px 6px;background:var(--surface-warm);border:1px solid var(--line);border-radius:11px;cursor:pointer;font-family:inherit;">';
+        h += '<span onclick="event.stopPropagation();togglePinnedStamp(\'office\',\''+s.icon+'\',\''+_safeName+'\')" style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
+        h += '<span style="width:34px;height:34px;border-radius:9px;background:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:24px;color:var(--accent-deep);">'+s.icon+'</span></span>';
+        h += '<span style="font-size:11px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+        h += '</button>';
+      }
+      h += '<button onclick="addOfficeCustomStamp(\''+escapeHtml(cat)+'\')" style="display:flex;align-items:center;justify-content:center;padding:8px 3px 6px;background:none;border:1.5px dashed var(--accent);border-radius:11px;cursor:pointer;font-family:inherit;opacity:0.6;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent);">add</span></button>';
+      h += '</div>';
     }
-    h += '<button onclick="addOfficeCustomStamp(\''+escapeHtml(cat)+'\')" style="display:flex;align-items:center;justify-content:center;padding:10px 3px 8px;background:none;border:1.5px dashed var(--accent);border-radius:11px;cursor:pointer;font-family:inherit;opacity:0.6;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent);">add</span></button>';
     h += '</div>';
   }
   
@@ -18106,8 +18545,13 @@ function _renderOfficeHistoryHtml() {
 
 function tapOfficeStamp(icon, name, evt) {
   if (!data.officeStampHistory) data.officeStampHistory = [];
-  // スタンプ定義を確認
-  const def = (data.officeStampLib || []).find(s => s.icon === icon && s.name === name);
+  // スタンプ定義を確認（officeStampLibはカテゴリ別オブジェクト）
+  let _allODefs = [];
+  const _oLib = data.officeStampLib;
+  if (_oLib && typeof _oLib === 'object' && !Array.isArray(_oLib)) {
+    for (const k in _oLib) { if (Array.isArray(_oLib[k])) _allODefs = _allODefs.concat(_oLib[k]); }
+  } else if (Array.isArray(_oLib)) { _allODefs = _oLib; }
+  const def = _allODefs.find(s => s.icon === icon && s.name === name);
   
   // text型の場合は専用入力モーダル
   if (def && def.type === 'text') {
@@ -18132,9 +18576,9 @@ function tapOfficeStamp(icon, name, evt) {
   data.officeStampHistory.unshift(rec);
   if (data.officeStampHistory.length > 100) data.officeStampHistory = data.officeStampHistory.slice(0,100);
   saveData();
-  // 履歴部分だけ更新
-  const area = document.querySelector('[data-office-history-area]');
-  if (area) area.innerHTML = _renderOfficeHistoryHtml();
+  // タブ全体を再描画（カードにするボタン等も更新）
+  const wrap = document.getElementById('officeStampWrap');
+  if (wrap) { wrap.outerHTML = renderOfficeStampTab(); }
   // ボタンアニメーション
   try {
     const e = evt || (typeof event !== 'undefined' ? event : null);
@@ -18198,9 +18642,9 @@ function saveOfficeTextStamp(icon, name) {
   if (data.officeStampHistory.length > 100) data.officeStampHistory = data.officeStampHistory.slice(0,100);
   saveData();
   closeOfficeTextStampModal();
-  // 履歴部分だけ更新
-  const area = document.querySelector('[data-office-history-area]');
-  if (area) area.innerHTML = _renderOfficeHistoryHtml();
+  // タブ全体を再描画
+  const wrap = document.getElementById('officeStampWrap');
+  if (wrap) { wrap.outerHTML = renderOfficeStampTab(); }
 }
 window.saveOfficeTextStamp = saveOfficeTextStamp;
 
@@ -18208,8 +18652,8 @@ function deleteOfficeStamp(id) {
   if (!confirm('この記録を削除する？')) return;
   data.officeStampHistory = (data.officeStampHistory||[]).filter(r => r.id !== id);
   saveData();
-  const area = document.querySelector('[data-office-history-area]');
-  if (area) area.innerHTML = _renderOfficeHistoryHtml();
+  const wrap = document.getElementById('officeStampWrap');
+  if (wrap) { wrap.outerHTML = renderOfficeStampTab(); }
 }
 window.deleteOfficeStamp = deleteOfficeStamp;
 
@@ -22674,7 +23118,7 @@ function renderTown() {
   html += '<button class="town-sub-tab '+(townSubTab==='town'  ?'active':'')+'" onclick="setTownSubTab(\'town\')"><span class="material-symbols-rounded">location_city</span></button>';
   html += '<button class="town-sub-tab '+(townSubTab==='search'?'active':'')+'" onclick="setTownSubTab(\'search\')"><span class="material-symbols-rounded">search</span></button>';
   html += '<button class="town-sub-tab '+(townSubTab==='transit'?'active':'')+'" onclick="setTownSubTab(\'transit\')"><span class="material-symbols-rounded">train</span></button>';
-  html += '<button class="town-sub-tab '+(townSubTab==='nearby' ?'active':'')+'" onclick="setTownSubTab(\'nearby\')"><span class="material-symbols-rounded">location_on</span></button>';
+
   html += '<button class="town-sub-tab '+(townSubTab==='fav'   ?'active':'')+'" onclick="setTownSubTab(\'fav\')"><span class="material-symbols-rounded">favorite</span></button>';
   html += '</div>';
 
@@ -22848,84 +23292,13 @@ function renderTown() {
   if (townSubTab === 'search') {
     html += '<div class="places-section">';
     html += '<div class="places-loc-toggle">';
-    html += '<button class="places-loc-btn '+(placesLocMode==='addr'?'active':'')+'" onclick="setPlacesLocMode(\'addr\')">🏙 住所で探す</button>';
-    html += '<button class="places-loc-btn '+(placesLocMode==='geo'?'active':'')+'" onclick="setPlacesLocMode(\'geo\')">📍 現在地で探す</button>';
+    html += '<button class="places-loc-btn '+(placesLocMode==='addr'?'active':'')+'" onclick="setPlacesLocMode(\'addr\')"><span class=\"material-symbols-rounded\" style=\"font-size:14px;vertical-align:-2px;\">location_city</span> 住所</button>';
+    html += '<button class="places-loc-btn '+(placesLocMode==='geo'?'active':'')+'" onclick="setPlacesLocMode(\'geo\')"><span class=\"material-symbols-rounded\" style=\"font-size:14px;vertical-align:-2px;\">my_location</span> 現在地</button>';
+    html += '<button class="places-loc-btn '+(placesLocMode==='nearby'?'active':'')+'" onclick="setPlacesLocMode(\'nearby\')"><span class=\"material-symbols-rounded\" style=\"font-size:14px;vertical-align:-2px;\">near_me</span> 近く</button>';
     html += '</div>';
-    html += '<div class="places-cat-chips">';
-    for (const c of (PLACES_CATS_MAP[townMainTab] || [])) {
-      html += '<button class="places-cat-chip '+(placesSelCat===c.id?'active':'')+'" onclick="setPlacesCat(\''+c.id+'\')">'+c.icon+' '+c.label+'</button>';
-    }
-    html += '</div>';
-    if (placesLocMode === 'addr') {
-      html += '<div class="places-text-row">';
-      html += '<input type="text" class="places-text-input" id="placesAddrInput" placeholder="例：大阪、梅田、新宿…" value="'+escapeHtml(placesAddrText)+'">';
+    if (placesLocMode === 'nearby') {
       html += '</div>';
-    }
-    html += '<div class="places-text-row">';
-    html += '<input type="text" class="places-text-input" id="placesTextInput" placeholder="キーワードで検索（任意）" value="'+escapeHtml(placesText)+'">';
-    html += '<button class="places-search-btn" onclick="searchPlaces()"><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;">search</span> 探す</button>';
-    html += '</div>';
-    if (placesError) html += '<div class="places-error">'+escapeHtml(placesError)+'</div>';
-    html += '</div>';
-    if (placesLoading) {
-      html += '<div class="places-loading">'+(placesLocMode==='addr'?'🏙 住所から検索中…':'📍 現在地を取得して検索中…')+'</div>';
-    } else if (placesResults.length > 0) {
-      const cat = (PLACES_CATS_MAP[townMainTab] || []).find(c => c.id === placesSelCat);
-      const catIcon = cat ? cat.icon : '📍';
-      // にこわ登録個人店を抽出してGoogle結果より先に表示
-      const _locText = placesLocMode === 'addr' ? placesAddrText : '';
-      const nikowaMatched = getMatchingNikowaShops(placesSelCat, _locText, placesText);
-      html += '<div class="place-cards">';
-      // にこわ店を先頭に
-      for (const s of nikowaMatched) {
-        html += buildNikowaShopCardHtml(s);
-      }
-      // Google結果
-      for (const p of placesResults) html += buildPlaceCardHtml(p, catIcon);
-      html += '</div>';
-    } else if (!placesError) {
-      // 検索前でも、カテゴリだけ選んでたらにこわ店だけ先に見せる
-      const _locText = placesLocMode === 'addr' ? placesAddrText : '';
-      const nikowaMatched = placesSelCat ? getMatchingNikowaShops(placesSelCat, _locText, placesText) : [];
-      if (nikowaMatched.length > 0) {
-        html += '<div style="padding:8px 16px 4px;font-size:11px;color:var(--ink-sub);font-weight:700;">🌷 にこわタウン登録のお店</div>';
-        html += '<div class="place-cards">';
-        for (const s of nikowaMatched) {
-          html += buildNikowaShopCardHtml(s);
-        }
-        html += '</div>';
-      } else {
-        html += '<div class="places-loading">カテゴリを選んで「探す」をタップしてね🐾</div>';
-      }
-    }
-    document.getElementById('app').innerHTML = html;
-    const placesInput = document.getElementById('placesTextInput');
-    if (placesInput) {
-      placesInput.oninput = (e) => { placesText = e.target.value; };
-      placesInput.onkeydown = (e) => { if (e.key === 'Enter') searchPlaces(); };
-    }
-    const placesAddrInput = document.getElementById('placesAddrInput');
-    if (placesAddrInput) {
-      placesAddrInput.oninput = (e) => { placesAddrText = e.target.value; };
-      placesAddrInput.onkeydown = (e) => { if (e.key === 'Enter') searchPlaces(); };
-    }
-    return;
-  }
-
-  // ── 🚆 路線サブタブ
-  if (townSubTab === 'transit') {
-    html += renderTransitSubTab();
-  }
-
-  // ── 📍 近くサブタブ
-  if (townSubTab === 'nearby') {
-    html += '<div style="padding:12px 14px;">';
-    // タイトル＋説明を1行に
-    html += '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">';
-    html += '<div style="font-size:16px;font-weight:700;color:var(--ink-dark);">近くを探す</div>';
-    html += '<div style="font-size:10.5px;color:var(--ink-light);">現在地周辺のスポットを表示します</div>';
-    html += '</div>';
-
+      html += '<div style="padding:12px 14px;">';
     // カテゴリチップ（横スクロール）
     const nearbyCats = ['喫煙所','居酒屋','カフェ','バー','動物病院','美容院','公園','コンビニ','薬局','ラーメン','病院'];
     const selCat = window._nearbyCat || '喫煙所';
@@ -23035,7 +23408,79 @@ function renderTown() {
 
     html += '<div style="background:var(--surface-warm);border-radius:10px;padding:8px 10px;font-size:10px;color:var(--ink-light);line-height:1.5;margin-top:4px;">※ 表示情報はGoogleのデータに基づいています。営業時間や内容が実際と異なる場合があります。</div>';
     html += '</div>';
+      document.getElementById('app').innerHTML = html;
+      if (window._nearbyGeoStatus === 'ok') setTimeout(initNearbyMap, 0);
+      var _nsi = document.getElementById('nearbySearchInput');
+      if (_nsi) _nsi.value = window._nearbyCustomQuery || '';
+      return;
+    }
+    html += '<div class="places-cat-chips">';
+    for (const c of (PLACES_CATS_MAP[townMainTab] || [])) {
+      html += '<button class="places-cat-chip '+(placesSelCat===c.id?'active':'')+'" onclick="setPlacesCat(\''+c.id+'\')">'+c.icon+' '+c.label+'</button>';
+    }
+    html += '</div>';
+    if (placesLocMode === 'addr') {
+      html += '<div class="places-text-row">';
+      html += '<input type="text" class="places-text-input" id="placesAddrInput" placeholder="例：大阪、梅田、新宿…" value="'+escapeHtml(placesAddrText)+'">';
+      html += '</div>';
+    }
+    html += '<div class="places-text-row">';
+    html += '<input type="text" class="places-text-input" id="placesTextInput" placeholder="キーワードで検索（任意）" value="'+escapeHtml(placesText)+'">';
+    html += '<button class="places-search-btn" onclick="searchPlaces()"><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;">search</span> 探す</button>';
+    html += '</div>';
+    if (placesError) html += '<div class="places-error">'+escapeHtml(placesError)+'</div>';
+    html += '</div>';
+    if (placesLoading) {
+      html += '<div class="places-loading">'+(placesLocMode==='addr'?'🏙 住所から検索中…':'📍 現在地を取得して検索中…')+'</div>';
+    } else if (placesResults.length > 0) {
+      const cat = (PLACES_CATS_MAP[townMainTab] || []).find(c => c.id === placesSelCat);
+      const catIcon = cat ? cat.icon : '📍';
+      // にこわ登録個人店を抽出してGoogle結果より先に表示
+      const _locText = placesLocMode === 'addr' ? placesAddrText : '';
+      const nikowaMatched = getMatchingNikowaShops(placesSelCat, _locText, placesText);
+      html += '<div class="place-cards">';
+      // にこわ店を先頭に
+      for (const s of nikowaMatched) {
+        html += buildNikowaShopCardHtml(s);
+      }
+      // Google結果
+      for (const p of placesResults) html += buildPlaceCardHtml(p, catIcon);
+      html += '</div>';
+    } else if (!placesError) {
+      // 検索前でも、カテゴリだけ選んでたらにこわ店だけ先に見せる
+      const _locText = placesLocMode === 'addr' ? placesAddrText : '';
+      const nikowaMatched = placesSelCat ? getMatchingNikowaShops(placesSelCat, _locText, placesText) : [];
+      if (nikowaMatched.length > 0) {
+        html += '<div style="padding:8px 16px 4px;font-size:11px;color:var(--ink-sub);font-weight:700;">🌷 にこわタウン登録のお店</div>';
+        html += '<div class="place-cards">';
+        for (const s of nikowaMatched) {
+          html += buildNikowaShopCardHtml(s);
+        }
+        html += '</div>';
+      } else {
+        html += '<div class="places-loading">カテゴリを選んで「探す」をタップしてね🐾</div>';
+      }
+    }
+    document.getElementById('app').innerHTML = html;
+    const placesInput = document.getElementById('placesTextInput');
+    if (placesInput) {
+      placesInput.oninput = (e) => { placesText = e.target.value; };
+      placesInput.onkeydown = (e) => { if (e.key === 'Enter') searchPlaces(); };
+    }
+    const placesAddrInput = document.getElementById('placesAddrInput');
+    if (placesAddrInput) {
+      placesAddrInput.oninput = (e) => { placesAddrText = e.target.value; };
+      placesAddrInput.onkeydown = (e) => { if (e.key === 'Enter') searchPlaces(); };
+    }
+    return;
   }
+
+  // ── 🚆 路線サブタブ
+  if (townSubTab === 'transit') {
+    html += renderTransitSubTab();
+  }
+
+
 
   // ── お気に入りサブタブ
   if (townSubTab === 'fav') {
