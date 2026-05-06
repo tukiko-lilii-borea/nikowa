@@ -23726,23 +23726,6 @@ function _renderSchedDayDetail(dateKey, houseId) {
     h += '</div>';
   }
 
-  // スタンプ記録も表示
-  var stampHist = (data.stampHistory||[]).filter(function(r){ return new Date(r.timestamp).toDateString() === keyToDate(dateKey).toDateString(); });
-  if (stampHist.length > 0) {
-    h += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line-soft);">';
-    h += '<div style="font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1px;margin-bottom:4px;">STAMP RECORD ('+stampHist.length+')</div>';
-    h += '<div style="display:flex;flex-wrap:wrap;gap:3px;">';
-    for (var si = 0; si < Math.min(stampHist.length, 8); si++) {
-      var sr = stampHist[si];
-      h += '<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:100px;font-size:8px;font-weight:600;color:var(--accent-deep);">';
-      h += '<span class="material-symbols-rounded" style="font-size:10px;">'+sr.icon+'</span>';
-      h += escapeHtml(sr.name);
-      h += '</span>';
-    }
-    if (stampHist.length > 8) h += '<span style="font-size:8px;color:var(--ink-light);font-weight:700;">+' + (stampHist.length - 8) + '</span>';
-    h += '</div></div>';
-  }
-
   h += '</div>';
   return h;
 }
@@ -26984,6 +26967,11 @@ function deleteSchedule() {
   closeModal('addScheduleModal');
   render();
 }
+window.openAddScheduleModal = openAddScheduleModal;
+window.openEditScheduleModal = openEditScheduleModal;
+window.saveSchedule = saveSchedule;
+window.deleteSchedule = deleteSchedule;
+window.setupTagButtons = setupTagButtons;
 function openCareEditModal() {
   const pet = getActivePet();
   if (!pet) return;
