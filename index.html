@@ -6845,6 +6845,54 @@ function renderTop() {
   html += '</button>';
   html += '</div>';
 
+  // ===== マイショップ（ミニHP）セクション =====
+  if (!data.myShops) data.myShops = [];
+  const _myShops = data.myShops || [];
+  
+  html += '<div class="section" style="padding-top:14px;">';
+  html += '<div class="section-head" style="display:flex;align-items:center;justify-content:space-between;">';
+  html += '<h2 class="section-title">マイショップ</h2>';
+  if (_myShops.length > 0) {
+    html += '<button onclick="openShopCreateModal()" style="background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:4px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>追加</button>';
+  }
+  html += '</div></div>';
+  
+  if (_myShops.length === 0) {
+    // 開設誘導カード
+    html += '<div style="margin:0 16px 16px;padding:24px 18px;background:linear-gradient(135deg,var(--accent-bg) 0%,var(--surface-warm) 100%);border:1.5px dashed var(--accent);border-radius:18px;text-align:center;">';
+    html += '<div style="margin-bottom:10px;"><span class="material-symbols-rounded" style="font-size:42px;color:var(--accent-deep);">storefront</span></div>';
+    html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">あなたのミニHPを開設しよう</div>';
+    html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;margin-bottom:14px;">お店・作家・ライバー・写真家<br>みんなが「にこわタウン」に出店できるよ🌷</div>';
+    html += '<button onclick="openShopCreateModal()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><span class="material-symbols-rounded" style="font-size:16px;">add_circle</span>開設する</button>';
+    html += '</div>';
+  } else {
+    // ショップカード一覧
+    html += '<div style="display:flex;flex-direction:column;gap:10px;margin:0 16px 16px;">';
+    for (const shop of _myShops) {
+      const _typeLabel = shop.type === 'bookshelf' ? '本棚' : 'ショップ';
+      const _typeIcon = shop.type === 'bookshelf' ? 'menu_book' : 'storefront';
+      const _isPublic = shop.isPublic !== false;
+      const _heroBg = shop.heroImage ? 'background-image:url('+shop.heroImage+');background-size:cover;background-position:center;' : 'background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));';
+      html += '<button onclick="openShopManager(\''+shop.id+'\')" style="background:white;border:1px solid var(--line);border-radius:14px;padding:0;overflow:hidden;cursor:pointer;font-family:inherit;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+      html += '<div style="height:70px;'+_heroBg+'position:relative;">';
+      html += '<div style="position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.92);padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;color:var(--ink-dark);display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:12px;">'+_typeIcon+'</span>'+_typeLabel+'</div>';
+      if (!_isPublic) html += '<div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);color:white;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;">非公開</div>';
+      html += '</div>';
+      html += '<div style="padding:10px 14px;">';
+      html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:3px;">'+escapeHtml(shop.name||'(名前なし)')+'</div>';
+      if (shop.profile) html += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+escapeHtml(shop.profile)+'</div>';
+      const _postCount = (shop.posts || []).length;
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-top:7px;font-size:9.5px;color:var(--ink-light);">';
+      html += '<span style="display:inline-flex;align-items:center;gap:2px;"><span class="material-symbols-rounded" style="font-size:11px;">edit_note</span>'+_postCount+'件</span>';
+      if (shop.tags && shop.tags.length > 0) {
+        for (const tg of shop.tags.slice(0, 3)) html += '<span style="background:var(--accent-bg);color:var(--accent-deep);padding:1px 6px;border-radius:100px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
+      }
+      html += '</div>';
+      html += '</div>';
+      html += '</button>';
+    }
+    html += '</div>';
+  }
 
   html += '<div style="height: 24px;"></div>';
   app.innerHTML = html;
@@ -12061,6 +12109,105 @@ function _doInjectSampleData() {
       { id:'g_6', name:'掃除機の紙パック', category:'掃除', brand:'パナソニック純正', updatedAt: todayMs - 30*dayMs }
     ];
   }
+  
+  // ===== マイショップ（ミニHP）サンプル6種類 =====
+  data.myShops = [
+    {
+      id: 'shop_sample_a', type: 'shop', template: 'A',
+      name: 'ふわふわトリミング',
+      profile: '大阪市にこわ町の小さなトリミングサロンです🌷\n小型犬・中型犬OK。完全予約制で、わんちゃんにストレスのない丁寧なケアを心がけています。',
+      tags: ['トリミング','大阪','犬','サロン','にこわ町'],
+      heroImage: '', iconImage: '',
+      contact: { phone: '06-1234-5678', line: 'fuwa-fuwa-trim', instagram: 'fuwafuwa_trimming', web: '', address: '大阪府大阪市にこわ町1-2-3' },
+      posts: [
+        { id:'p_a1', type:'news', title:'', content:'本日トリミング空きあります🐶 13時〜可能です', tags:['空き枠','本日'], timestamp: todayMs - 1*60*60*1000 },
+        { id:'p_a2', type:'news', title:'', content:'5月の予約受付開始しました！', tags:['予約'], timestamp: todayMs - 2*dayMs },
+        { id:'p_a3', type:'column', title:'夏前のトリミングのコツ', content:'これからの季節、わんちゃんの被毛が蒸れやすくなります。\n\nおすすめは「サマーカット」よりも「適度な毛量を残したカット」。皮膚を直射日光から守りつつ、通気性を確保するのがポイントです🌷\n\nお気軽にご相談ください。', tags:['トリミング','夏','犬'], timestamp: todayMs - 5*dayMs },
+        { id:'p_a4', type:'work', title:'トリミング基本コース', content:'シャンプー・カット・爪切り・耳掃除込み', price:'¥6,000〜', url:'', tags:['コース'], timestamp: todayMs - 7*dayMs },
+        { id:'p_a5', type:'work', title:'デンタルケア追加', content:'歯磨き・口臭ケアまで丁寧に', price:'¥1,500', url:'', tags:['オプション'], timestamp: todayMs - 7*dayMs }
+      ],
+      isPublic: true, plan: 'free', createdAt: todayMs - 30*dayMs, updatedAt: todayMs - 1*60*60*1000
+    },
+    {
+      id: 'shop_sample_b', type: 'shop', template: 'B',
+      name: 'やさしい消しゴムはんこ ぽわん',
+      profile: 'ひとつひとつ手彫りの消しゴムはんこを作っています。\nお名前はんこ・お祝いはんこ・ペットの似顔絵はんこなど、世界に一つだけのはんこをお届けします🌸',
+      tags: ['消しゴムはんこ','作家','ハンドメイド','minne','オーダーメイド'],
+      heroImage: '', iconImage: '',
+      contact: { phone: '', line: '', instagram: 'powan_hanko', web: 'https://minne.com/@powan-hanko', address: '' },
+      posts: [
+        { id:'p_b1', type:'news', title:'', content:'5月の新作受付始まりました🌸', tags:['新作'], timestamp: todayMs - 12*60*60*1000 },
+        { id:'p_b2', type:'work', title:'ねこちゃん似顔絵はんこ', content:'お写真からお作りします。1.5cm角サイズ。', price:'¥2,800', url:'https://minne.com/items/sample1', tags:['ねこ','似顔絵'], timestamp: todayMs - 3*dayMs },
+        { id:'p_b3', type:'work', title:'お名前はんこ（ひらがな）', content:'お子さまのお名前に🌷', price:'¥1,500', url:'https://minne.com/items/sample2', tags:['名前','子ども'], timestamp: todayMs - 5*dayMs },
+        { id:'p_b4', type:'work', title:'お祝いはんこ', content:'結婚祝い・出産祝いに添えて', price:'¥3,500', url:'https://minne.com/items/sample3', tags:['お祝い'], timestamp: todayMs - 8*dayMs },
+        { id:'p_b5', type:'work', title:'お花のはんこセット', content:'5種類の小花が彫られたミニはんこ集', price:'¥2,200', url:'https://minne.com/items/sample4', tags:['花','セット'], timestamp: todayMs - 10*dayMs },
+        { id:'p_b6', type:'column', title:'消しゴムはんこの楽しみ方', content:'消しゴムはんこは、お手紙に押すだけで一気に温かみが出ます。\n\nわたしのおすすめは、便箋の余白に小さな花のはんこをポンと一つ。それだけで世界がやさしくなる気がします🌷', tags:['ハンドメイド','コラム'], timestamp: todayMs - 15*dayMs }
+      ],
+      isPublic: true, plan: 'free', createdAt: todayMs - 60*dayMs, updatedAt: todayMs - 12*60*60*1000
+    },
+    {
+      id: 'shop_sample_c', type: 'shop', template: 'C',
+      name: '夜カフェ配信 もも',
+      profile: '毎晩22時から、おしゃべり配信してます☕\n\nリスナーさんとゆるっと夜を過ごす配信スタイル。お悩み相談・雑談・歌枠など。お気軽に遊びに来てね🌙',
+      tags: ['配信者','ライバー','夜カフェ','雑談','歌'],
+      heroImage: '', iconImage: '',
+      contact: { phone: '', line: '', instagram: 'yorucafe_momo', web: 'https://twitcasting.tv/yorucafe_momo', address: '' },
+      posts: [
+        { id:'p_c1', type:'news', title:'', content:'今夜22時から配信します🌙 リクエスト受付中', tags:['配信予定','今夜'], timestamp: todayMs - 30*60*1000 },
+        { id:'p_c2', type:'news', title:'', content:'昨日の配信ありがとう！次は土曜の歌枠です', tags:['お礼'], timestamp: todayMs - 1*dayMs },
+        { id:'p_c3', type:'column', title:'夜カフェのこだわり', content:'配信中はいつも、本物のコーヒーを淹れて飲んでます☕\n\n音にこだわって、コーヒー豆を挽く音、お湯を注ぐ音、カップを置く音──全部リスナーさんに届くように。「夜カフェ」の名前の由来でもあります。', tags:['配信','コーヒー'], timestamp: todayMs - 7*dayMs },
+        { id:'p_c4', type:'work', title:'リクエスト曲リスト', content:'よく歌う曲をまとめました', price:'', url:'', tags:['歌','リスト'], timestamp: todayMs - 10*dayMs }
+      ],
+      isPublic: true, plan: 'free', createdAt: todayMs - 90*dayMs, updatedAt: todayMs - 30*60*1000
+    },
+    {
+      id: 'shop_sample_d', type: 'shop', template: 'D',
+      name: 'にこにこ動物クリニック',
+      profile: '大阪市にこわ町の動物病院です。\n犬・猫・小動物の診療を行っています。\n\n地域の動物たちの健康を、家族の方と一緒に守っていきます🐶🐱',
+      tags: ['動物病院','大阪','犬','猫','診療'],
+      heroImage: '', iconImage: '',
+      contact: { phone: '06-9876-5432', line: '', instagram: '', web: 'https://niconico-vet.example.com', address: '大阪府大阪市にこわ町4-5-6' },
+      posts: [
+        { id:'p_d1', type:'news', title:'', content:'GW中の診療時間のお知らせ', tags:['お知らせ','GW'], timestamp: todayMs - 4*60*60*1000 },
+        { id:'p_d2', type:'column', title:'シニア犬の食事ケア', content:'7歳を超えたら「シニア期」に入ります。\n\nこの時期は、消化機能が落ち、腎臓・肝臓への負担も増えてきます。\n\n大切なのは──\n①低たんぱく・高品質な食事\n②食事回数を増やして1回量を減らす\n③水分をしっかり摂らせる\n\n気になる症状があれば、いつでもご相談くださいね🐕', tags:['シニア犬','食事','ケア'], timestamp: todayMs - 6*dayMs },
+        { id:'p_d3', type:'column', title:'ねこちゃんの夏バテ対策', content:'夏は猫ちゃんも体調を崩しやすい季節です。\n\n室温は25〜28℃が目安。エアコンの風が直接当たらないように、寝場所を工夫してあげてください。\n\nお水は新鮮なものを複数箇所に。食欲が落ちたらすぐにご相談を🐱', tags:['猫','夏','健康'], timestamp: todayMs - 12*dayMs },
+        { id:'p_d4', type:'column', title:'予防接種スケジュール', content:'子犬・子猫を迎えたら、ワクチンスケジュールを早めに決めましょう。\n\n初回は生後6〜8週、その後3〜4週間隔で計3回。成犬・成猫は年1回の追加接種が基本です。', tags:['ワクチン','子犬','子猫'], timestamp: todayMs - 20*dayMs }
+      ],
+      isPublic: true, plan: 'free', createdAt: todayMs - 120*dayMs, updatedAt: todayMs - 4*60*60*1000
+    },
+    {
+      id: 'shop_sample_e', type: 'bookshelf', template: 'E',
+      name: 'ねこ詩人ミケ',
+      profile: 'ことばの散歩。\n\nねこと暮らす日々の中で、ふと拾ったやさしい言葉を、詩というかたちで置いていきます🐾',
+      tags: ['詩','ねこ','エッセイ','日常','本棚'],
+      heroImage: '', iconImage: '',
+      contact: { phone: '', line: '', instagram: '', web: '', address: '' },
+      posts: [
+        { id:'p_e1', type:'work', title:'小さな幸せを見つける時間', content:'朝の光がカーテンのすき間から\nこぼれるとき、\nねこはしっぽをゆらして\n窓辺であくびをします。\n\nそんな何気ない時間が、\nいちばんの宝物かもしれません。', tags:['詩','朝','ねこ'], timestamp: todayMs - 2*dayMs },
+        { id:'p_e2', type:'work', title:'雨の日の独白', content:'雨音は、\n言葉にならない気持ちを\nそっとなでてくれる。\n\n誰かに伝えなくていい\n感情だってあるんだよ、と\n窓を流れる水滴が言う。', tags:['詩','雨'], timestamp: todayMs - 6*dayMs },
+        { id:'p_e3', type:'work', title:'ふたりの夜', content:'ねこは私の足元で\n小さな寝息をたてている。\n\nそれだけで、\nこの世界はずっと\nやさしい場所だと\n思える。', tags:['詩','夜','ねこ'], timestamp: todayMs - 10*dayMs },
+        { id:'p_e4', type:'work', title:'手のひらの春', content:'桜の花びらが\n手のひらに落ちてきた。\n\n春は、\nときどきこんなふうに\n小さな贈り物をくれる。', tags:['詩','春','花'], timestamp: todayMs - 18*dayMs }
+      ],
+      isPublic: true, plan: 'free', createdAt: todayMs - 200*dayMs, updatedAt: todayMs - 2*dayMs
+    },
+    {
+      id: 'shop_sample_f', type: 'bookshelf', template: 'F',
+      name: '窓辺のひかり｜街フォト',
+      profile: '街角の光と影を切り取るフォトグラファー。\n大阪・京都・奈良を中心に、何気ない日常を撮っています📷',
+      tags: ['写真','街','光','フォトグラファー','日常'],
+      heroImage: '', iconImage: '',
+      contact: { phone: '', line: '', instagram: 'madobenohikari_photo', web: '', address: '' },
+      posts: [
+        { id:'p_f1', type:'work', title:'朝のカフェ', content:'梅田の路地裏のカフェにて。', tags:['カフェ','朝','大阪'], timestamp: todayMs - 1*dayMs },
+        { id:'p_f2', type:'work', title:'夕暮れの並木道', content:'御堂筋の銀杏並木。', tags:['夕暮れ','並木','大阪'], timestamp: todayMs - 4*dayMs },
+        { id:'p_f3', type:'work', title:'雨上がりの石畳', content:'祇園の早朝。', tags:['雨','京都','朝'], timestamp: todayMs - 9*dayMs },
+        { id:'p_f4', type:'work', title:'窓辺のねこ', content:'近所のねこは、いつもこの窓にいる。', tags:['ねこ','窓','日常'], timestamp: todayMs - 14*dayMs },
+        { id:'p_f5', type:'work', title:'夏の影', content:'奈良公園、木漏れ日の下。', tags:['夏','影','奈良'], timestamp: todayMs - 22*dayMs },
+        { id:'p_f6', type:'work', title:'夜のレトロ看板', content:'新世界の路地。', tags:['夜','レトロ','大阪'], timestamp: todayMs - 30*dayMs }
+      ],
+      isPublic: true, plan: 'free', createdAt: todayMs - 150*dayMs, updatedAt: todayMs - 1*dayMs
+    }
+  ];
   
   saveData();
   showToast('サンプルデータを入れたよ🌷');
@@ -23723,8 +23870,8 @@ let editingFacilityId = null;
 let selectedFacilityCategory = 'hospital';
 let townSearchQuery = '';
 let townCategoryFilter = 'all';
-let townMainTab = 'me';    // 'me' | 'pet' | 'kids' | 'work'
-let townSubTab  = 'search'; // 'town' | 'search' | 'transit' | 'fav'
+let townMainTab = 'search';    // 'search' | 'town' | 'book' | 'board'
+let townSubTab  = 'search'; // 'search' | 'transit' | 'fav' （「探す」タブ内のサブタブ）
 let placesSelCat = '';
 let placesText = '';
 let placesResults = [];
@@ -23858,6 +24005,40 @@ let _newsIndex = 0;
 let _newsTimer = null;
 const NEWS_INTERVAL_MS = 10000; // 10秒
 
+// マイショップのお知らせとサンプルニュースを統合（最新順、最大10件）
+function getCombinedNews() {
+  const userNewsList = [];
+  for (const s of (data.myShops || [])) {
+    if (s.isPublic === false) continue;
+    for (const p of (s.posts || [])) {
+      if (p.type !== 'news') continue;
+      const ms = Date.now() - (p.timestamp || 0);
+      const minutes = Math.max(0, Math.floor(ms / 60000));
+      userNewsList.push({
+        region: data.userRegion || '大阪',
+        tag: (p.tags && p.tags[0]) || (s.tags && s.tags[0]) || '',
+        kind: s.type === 'bookshelf' ? 'personal' : 'shop',
+        name: s.name || '',
+        text: p.content || '',
+        minutes: minutes,
+        _shopId: s.id, // タップ時に開けるように
+        _ts: p.timestamp || 0
+      });
+    }
+  }
+  // ユーザー投稿を優先、足りなければサンプル
+  userNewsList.sort((a, b) => (b._ts || 0) - (a._ts || 0));
+  const combined = userNewsList.slice(0, 6);
+  // 6件未満ならサンプルで埋める
+  if (combined.length < SAMPLE_NEWS.length) {
+    for (const s of SAMPLE_NEWS) {
+      if (combined.length >= 10) break;
+      combined.push(s);
+    }
+  }
+  return combined;
+}
+
 function newsItemHtml(n) {
   const kindIcon = { shop:'🏪', personal:'🌷', marche:'🎪' }[n.kind] || '🏪';
   const timeStr = n.minutes < 60
@@ -23875,8 +24056,9 @@ function newsItemHtml(n) {
 }
 
 function newsDotsHtml() {
+  const list = getCombinedNews();
   let html = '<div class="news-dots">';
-  for (let i = 0; i < SAMPLE_NEWS.length; i++) {
+  for (let i = 0; i < list.length; i++) {
     html += '<div class="news-dot'+(i === _newsIndex ? ' active' : '')+'"></div>';
   }
   html += '</div>';
@@ -23884,14 +24066,15 @@ function newsDotsHtml() {
 }
 
 function tickNewsTicker() {
-  _newsIndex = (_newsIndex + 1) % SAMPLE_NEWS.length;
+  const list = getCombinedNews();
+  if (list.length === 0) return;
+  _newsIndex = (_newsIndex + 1) % list.length;
   const inner = document.getElementById('newsTickerInner');
   const dots = document.getElementById('newsTickerDots');
   if (!inner) return;
-  // フェードアウト→中身更新→フェードイン
   inner.style.opacity = '0';
   setTimeout(() => {
-    inner.innerHTML = newsItemHtml(SAMPLE_NEWS[_newsIndex]);
+    inner.innerHTML = newsItemHtml(list[_newsIndex]);
     inner.style.opacity = '1';
     if (dots) dots.outerHTML = newsDotsHtml().replace('<div class="news-dots">', '<div class="news-dots" id="newsTickerDots">');
   }, 250);
@@ -25056,7 +25239,7 @@ function findNikowaShopByName(name) {
 
 // 検索結果から「にこわで見る」を開く
 function openShopDetailFromSearch(shopId) {
-  townSubTab = 'town';
+  townMainTab = 'town';
   openShopDetail(shopId);
 }
 
@@ -25066,6 +25249,38 @@ const PLACES_API_KEY = 'AIzaSyBJBgC5uSO2J0MV7Hlwdt7zY8SxLUvZbP8';
 const PLACES_FAV_KEY = 'nikowa_place_favorites';
 const PLACES_MEMO_KEY = 'nikowa_place_memos';
 const PLACES_CATS_MAP = {
+  // 「探す」タブの統合カテゴリ（よく使う順）
+  search: [
+    { id: 'cafe',       icon: '☕', label: 'カフェ',          type: 'cafe' },
+    { id: 'restaurant', icon: '🍽', label: 'レストラン',      type: 'restaurant' },
+    { id: 'beauty',     icon: '💇', label: '美容院',         keyword: '美容院' },
+    { id: 'shopping',   icon: '🛍', label: 'ショッピング',    type: 'shopping_mall' },
+    { id: 'park',       icon: '🌳', label: '公園',            type: 'park' },
+    { id: 'hospital',   icon: '🏥', label: '病院',            type: 'hospital' },
+    { id: 'pharmacy',   icon: '💊', label: '薬局',            type: 'pharmacy' },
+    { id: 'vet',        icon: '🐾', label: '動物病院',        type: 'veterinary_care' },
+    { id: 'trim',       icon: '✂️', label: 'トリミング',      keyword: 'トリミングサロン' },
+    { id: 'petshop',    icon: '🐶', label: 'ペットショップ',  type: 'pet_store' },
+    { id: 'dogrun',     icon: '🦴', label: 'ドッグラン',      keyword: 'ドッグラン' },
+    { id: 'pediatric',  icon: '👶', label: '小児科',          keyword: '小児科' },
+    { id: 'dental',     icon: '🦷', label: '歯科',            type: 'dentist' },
+    { id: 'library',    icon: '📖', label: '図書館',          type: 'library' },
+    { id: 'gym',        icon: '💪', label: 'ジム',            keyword: 'フィットネスジム' },
+    { id: 'bookstore',  icon: '📚', label: '本屋',            type: 'book_store' },
+    { id: 'cinema',     icon: '🎬', label: '映画館',          type: 'movie_theater' },
+    { id: 'cityhall',   icon: '🏛', label: '役所',            keyword: '市役所' },
+    { id: 'post',       icon: '📮', label: '郵便局',          type: 'post_office' },
+    { id: 'bank',       icon: '🏦', label: '銀行',            type: 'bank' },
+    { id: 'hotel',      icon: '🏨', label: 'ホテル',          type: 'lodging' },
+    { id: 'parking',    icon: '🅿️', label: '駐車場',          type: 'parking' },
+    { id: 'cowork',     icon: '💻', label: 'コワーキング',    keyword: 'コワーキングスペース' },
+    { id: 'camp',       icon: '⛺', label: 'キャンプ場',      keyword: 'キャンプ場' },
+    { id: 'anime',      icon: '🎌', label: 'アニメショップ',  keyword: 'アニメショップ' },
+    { id: 'nursery',    icon: '🏫', label: '保育園',          keyword: '保育園' },
+    { id: 'juku',       icon: '📝', label: '塾',              keyword: '学習塾' },
+    { id: 'kidscafe',   icon: '🧒', label: '子供OKカフェ',    keyword: '子供連れOKカフェ' },
+    { id: 'petcafe',    icon: '🐱', label: 'ペットカフェ',    keyword: 'ペットカフェ' },
+  ],
   me: [
     { id: 'beauty',     icon: '💇', label: '美容院',         keyword: '美容院' },
     { id: 'cafe',       icon: '☕', label: 'カフェ',          type: 'cafe' },
@@ -25104,21 +25319,25 @@ const PLACES_CATS_MAP = {
     { id: 'parking',    icon: '🅿️', label: '駐車場',          type: 'parking' },
   ],
 };
-let placesFavs = { me: {}, pet: {}, kids: {}, work: {} };
+let placesFavs = { search: {}, me: {}, pet: {}, kids: {}, work: {} };
 try {
   const _pf = JSON.parse(localStorage.getItem(PLACES_FAV_KEY) || '{}');
-  if (_pf && ('me' in _pf || 'pet' in _pf || 'kids' in _pf || 'work' in _pf)) {
-    placesFavs = { me: _pf.me||{}, pet: _pf.pet||{}, kids: _pf.kids||{}, work: _pf.work||{} };
+  if (_pf && ('search' in _pf || 'me' in _pf || 'pet' in _pf || 'kids' in _pf || 'work' in _pf)) {
+    placesFavs = { search: _pf.search||{}, me: _pf.me||{}, pet: _pf.pet||{}, kids: _pf.kids||{}, work: _pf.work||{} };
+    // 旧データ互換：me/pet/kids/workのfavを'search'にマージ（重複は上書きOK）
+    if (!_pf.search) {
+      Object.assign(placesFavs.search, _pf.me||{}, _pf.pet||{}, _pf.kids||{}, _pf.work||{});
+    }
   }
 } catch(e) {}
 
 // ===== フォルダ管理（カテゴリ別） =====
 const PLACES_FOLDERS_KEY = 'nikowa_place_folders';
-let placesFolders = { me: [], pet: [], kids: [], work: [] };
+let placesFolders = { search: [], me: [], pet: [], kids: [], work: [] };
 try {
   const _pf = JSON.parse(localStorage.getItem(PLACES_FOLDERS_KEY) || '{}');
   if (_pf) {
-    placesFolders = { me: _pf.me||[], pet: _pf.pet||[], kids: _pf.kids||[], work: _pf.work||[] };
+    placesFolders = { search: _pf.search||[], me: _pf.me||[], pet: _pf.pet||[], kids: _pf.kids||[], work: _pf.work||[] };
   }
 } catch(e) {}
 function savePlacesFolders() {
@@ -25127,11 +25346,11 @@ function savePlacesFolders() {
 
 // ===== カスタム場所（友達の家・オフィスなど個人登録） =====
 const PLACES_CUSTOM_KEY = 'nikowa_place_custom';
-let placesCustom = { me: {}, pet: {}, kids: {}, work: {} };
+let placesCustom = { search: {}, me: {}, pet: {}, kids: {}, work: {} };
 try {
   const _pc = JSON.parse(localStorage.getItem(PLACES_CUSTOM_KEY) || '{}');
   if (_pc) {
-    placesCustom = { me: _pc.me||{}, pet: _pc.pet||{}, kids: _pc.kids||{}, work: _pc.work||{} };
+    placesCustom = { search: _pc.search||{}, me: _pc.me||{}, pet: _pc.pet||{}, kids: _pc.kids||{}, work: _pc.work||{} };
   }
 } catch(e) {}
 function savePlacesCustom() {
@@ -25161,11 +25380,772 @@ function savePlaceMemoStubFromObj(placeId, p) {
 }
 
 const TOWN_MAIN_TABS = [
-  { id: 'me',   icon: '🌸', label: 'ME' },
-  { id: 'pet',  icon: '🐾', label: 'PET' },
-  { id: 'kids', icon: '🧸', label: 'KIDS' },
-  { id: 'work', icon: '💼', label: 'OFFICE' },
+  { id: 'search', icon: '🔍', label: '探す' },
+  { id: 'town',   icon: '🏙', label: '街歩き' },
+  { id: 'book',   icon: '📚', label: '本屋' },
+  { id: 'board',  icon: '📋', label: '掲示板' },
 ];
+
+// ====================================================
+// ===== マイショップ（ミニHP）機能 =====
+// ====================================================
+
+const SHOP_TEMPLATES = {
+  'A': { type: 'shop',      label: 'お店型',     icon: 'storefront',  desc: '写真メイン＋連絡先（カフェ・サロンなど）' },
+  'B': { type: 'shop',      label: '作家型',     icon: 'palette',     desc: '作品グリッド＋購入リンク（minne・BASEなど）' },
+  'C': { type: 'shop',      label: '配信者型',   icon: 'campaign',    desc: 'プロフィール＋SNS連携（ライバー・YouTuber）' },
+  'D': { type: 'shop',      label: 'シンプル型', icon: 'description', desc: '紹介文＋お知らせ（病院・教室など）' },
+  'E': { type: 'bookshelf', label: '文字型',     icon: 'menu_book',   desc: '小説・詩（縦書き・続きを読む）' },
+  'F': { type: 'bookshelf', label: '写真型',     icon: 'photo_library', desc: '写真集・フォトギャラリー' }
+};
+
+// ショップを作成
+function createShop(type, template, name, profile, tags) {
+  if (!data.myShops) data.myShops = [];
+  const id = 'shop_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  const shop = {
+    id: id,
+    type: type,
+    template: template,
+    name: name || '',
+    profile: profile || '',
+    tags: tags || [],
+    heroImage: '',
+    iconImage: '',
+    cardDesign: data.userPrefs && data.userPrefs.cardDesign ? JSON.parse(JSON.stringify(data.userPrefs.cardDesign)) : null,
+    contact: { phone: '', line: '', instagram: '', web: '', address: '' },
+    posts: [],
+    isPublic: true,
+    plan: 'free',
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+  data.myShops.push(shop);
+  saveData();
+  return id;
+}
+window.createShop = createShop;
+
+// 開設モーダル（5ステップ）
+function openShopCreateModal() {
+  if (!window._shopCreateState) window._shopCreateState = { step: 1, type: '', template: '', name: '', profile: '', tags: [] };
+  window._shopCreateState = { step: 1, type: '', template: '', name: '', profile: '', tags: [] };
+  _renderShopCreateModal();
+}
+window.openShopCreateModal = openShopCreateModal;
+
+function _renderShopCreateModal() {
+  const ex = document.getElementById('shopCreateModal');
+  if (ex) ex.remove();
+  const s = window._shopCreateState;
+  const ov = document.createElement('div');
+  ov.id = 'shopCreateModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2200;background:rgba(45,74,60,0.55);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);padding-bottom:calc(75px + env(safe-area-inset-bottom));box-sizing:border-box;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  
+  let h = '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">';
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);">';
+  if (s.step > 1) h += '<button onclick="shopCreateBack()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:4px;"><span class="material-symbols-rounded" style="font-size:20px;">arrow_back</span></button>';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">add_business</span>';
+  h += '<div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">ミニHPを開設</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);font-weight:700;">'+s.step+'/4</div>';
+  h += '<button onclick="document.getElementById(\'shopCreateModal\').remove()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div style="flex:1;overflow-y:auto;padding:16px;">';
+  
+  if (s.step === 1) {
+    // タイプ選択
+    h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">どんなページを作る？</div>';
+    h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:16px;line-height:1.6;">最初に大きく2つから選んでね</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:10px;">';
+    h += '<button onclick="shopCreateSetType(\'shop\')" style="display:flex;align-items:center;gap:12px;padding:14px;background:white;border:1.5px solid '+(s.type==='shop'?'var(--accent)':'var(--line)')+';border-radius:14px;cursor:pointer;font-family:inherit;text-align:left;">';
+    h += '<div style="width:48px;height:48px;border-radius:12px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">storefront</span></div>';
+    h += '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--ink-dark);">🏪 ショップ型</div><div style="font-size:11px;color:var(--ink-sub);line-height:1.5;margin-top:2px;">お店・作家・ライバー・教室など<br>「商品やサービスを発信する人」向け</div></div>';
+    h += '</button>';
+    h += '<button onclick="shopCreateSetType(\'bookshelf\')" style="display:flex;align-items:center;gap:12px;padding:14px;background:white;border:1.5px solid '+(s.type==='bookshelf'?'var(--accent)':'var(--line)')+';border-radius:14px;cursor:pointer;font-family:inherit;text-align:left;">';
+    h += '<div style="width:48px;height:48px;border-radius:12px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">menu_book</span></div>';
+    h += '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--ink-dark);">📖 本棚型</div><div style="font-size:11px;color:var(--ink-sub);line-height:1.5;margin-top:2px;">小説・詩・写真集など<br>「アート作品を見せる人」向け</div></div>';
+    h += '</button>';
+    h += '</div>';
+  } else if (s.step === 2) {
+    // テンプレ選択
+    h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">テンプレートを選んでね</div>';
+    h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:16px;line-height:1.6;">あとで変更できるよ</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+    for (const tid in SHOP_TEMPLATES) {
+      const t = SHOP_TEMPLATES[tid];
+      if (t.type !== s.type) continue;
+      const _act = s.template === tid;
+      h += '<button onclick="shopCreateSetTemplate(\''+tid+'\')" style="display:flex;align-items:center;gap:12px;padding:12px;background:'+(_act?'var(--accent-bg)':'white')+';border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;">';
+      h += '<div style="width:40px;height:40px;border-radius:10px;background:'+(_act?'white':'var(--accent-bg)')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+t.icon+'</span></div>';
+      h += '<div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+t.label+'</div><div style="font-size:10.5px;color:var(--ink-sub);line-height:1.5;">'+t.desc+'</div></div>';
+      h += '</button>';
+    }
+    h += '</div>';
+  } else if (s.step === 3) {
+    // 基本情報
+    h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">基本情報</div>';
+    h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:16px;line-height:1.6;">あなたのページの名前と紹介を入れてね</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:14px;">';
+    h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">ページ名 <span style="color:#D9534F;">*</span></label>';
+    h += '<input type="text" id="shopCreateName" value="'+escapeHtml(s.name||'')+'" placeholder="例：ふわふわトリミング" maxlength="30" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+    h += '</div>';
+    h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">紹介文</label>';
+    h += '<textarea id="shopCreateProfile" placeholder="どんなお店・作品を発信するか書いてね" maxlength="200" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);min-height:80px;resize:vertical;">'+escapeHtml(s.profile||'')+'</textarea>';
+    h += '</div>';
+    h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">タグ <span style="font-weight:500;color:var(--ink-light);">(カンマ区切り、最大5つ)</span></label>';
+    h += '<input type="text" id="shopCreateTags" value="'+escapeHtml((s.tags||[]).join(', '))+'" placeholder="例：トリミング, 大阪, 犬" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+    h += '<div style="font-size:9.5px;color:var(--ink-light);margin-top:4px;">タグから検索されやすくなるよ🌷</div>';
+    h += '</div>';
+    h += '</div>';
+  } else if (s.step === 4) {
+    // 確認
+    const tplLabel = SHOP_TEMPLATES[s.template] ? SHOP_TEMPLATES[s.template].label : '';
+    h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">確認</div>';
+    h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:16px;line-height:1.6;">この内容で開設するよ</div>';
+    h += '<div style="background:var(--surface-warm);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;">';
+    h += '<div style="display:flex;gap:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;width:80px;">タイプ</span><span style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+(s.type==='shop'?'🏪 ショップ型':'📖 本棚型')+'</span></div>';
+    h += '<div style="display:flex;gap:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;width:80px;">テンプレ</span><span style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(tplLabel)+'</span></div>';
+    h += '<div style="display:flex;gap:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;width:80px;">名前</span><span style="font-size:12px;color:var(--ink-dark);font-weight:700;flex:1;">'+escapeHtml(s.name||'')+'</span></div>';
+    if (s.profile) h += '<div style="display:flex;gap:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;width:80px;">紹介</span><span style="font-size:11px;color:var(--ink-dark);line-height:1.5;flex:1;">'+escapeHtml(s.profile)+'</span></div>';
+    if ((s.tags||[]).length) {
+      h += '<div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;width:80px;">タグ</span><div style="flex:1;display:flex;flex-wrap:wrap;gap:4px;">';
+      for (const tg of s.tags) h += '<span style="background:var(--accent-bg);color:var(--accent-deep);padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
+      h += '</div></div>';
+    }
+    h += '</div>';
+    h += '<div style="margin-top:14px;padding:10px 12px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;font-size:11px;color:var(--accent-deep);line-height:1.5;"><span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;">info</span> 開設後は管理画面から写真や連絡先を追加できるよ</div>';
+  }
+  
+  h += '</div>';
+  
+  // フッター
+  h += '<div style="padding:12px 16px;border-top:1px solid var(--line-soft);display:flex;gap:8px;">';
+  if (s.step < 4) {
+    const _canNext = (s.step === 1 && s.type) || (s.step === 2 && s.template) || (s.step === 3);
+    h += '<button onclick="shopCreateNext()" '+(!_canNext?'disabled':'')+' style="flex:1;padding:11px;background:'+(_canNext?'var(--accent)':'var(--line)')+';color:'+(_canNext?'white':'var(--ink-light)')+';border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:'+(_canNext?'pointer':'not-allowed')+';">次へ</button>';
+  } else {
+    h += '<button onclick="shopCreateFinish()" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">🌷 開設する</button>';
+  }
+  h += '</div>';
+  h += '</div>';
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+  if (s.step === 3) setTimeout(() => document.getElementById('shopCreateName')?.focus(), 100);
+}
+
+function shopCreateSetType(type) {
+  window._shopCreateState.type = type;
+  window._shopCreateState.template = '';
+  _renderShopCreateModal();
+}
+window.shopCreateSetType = shopCreateSetType;
+
+function shopCreateSetTemplate(tid) {
+  window._shopCreateState.template = tid;
+  _renderShopCreateModal();
+}
+window.shopCreateSetTemplate = shopCreateSetTemplate;
+
+function shopCreateNext() {
+  const s = window._shopCreateState;
+  if (s.step === 3) {
+    s.name = document.getElementById('shopCreateName').value.trim();
+    s.profile = document.getElementById('shopCreateProfile').value.trim();
+    const tagsStr = document.getElementById('shopCreateTags').value.trim();
+    s.tags = tagsStr ? tagsStr.split(/[,、]\s*/).map(t => t.trim()).filter(Boolean).slice(0, 5) : [];
+    if (!s.name) { showToast('名前を入れてね'); return; }
+  }
+  s.step++;
+  _renderShopCreateModal();
+}
+window.shopCreateNext = shopCreateNext;
+
+function shopCreateBack() {
+  const s = window._shopCreateState;
+  if (s.step === 3) {
+    // 入力欄から取得して保持
+    s.name = document.getElementById('shopCreateName').value.trim();
+    s.profile = document.getElementById('shopCreateProfile').value.trim();
+    const tagsStr = document.getElementById('shopCreateTags').value.trim();
+    s.tags = tagsStr ? tagsStr.split(/[,、]\s*/).map(t => t.trim()).filter(Boolean).slice(0, 5) : [];
+  }
+  s.step--;
+  _renderShopCreateModal();
+}
+window.shopCreateBack = shopCreateBack;
+
+function shopCreateFinish() {
+  const s = window._shopCreateState;
+  const id = createShop(s.type, s.template, s.name, s.profile, s.tags);
+  document.getElementById('shopCreateModal')?.remove();
+  showToast('🌷 ミニHPを開設したよ！');
+  setTimeout(() => openShopManager(id), 200);
+}
+window.shopCreateFinish = shopCreateFinish;
+
+// ===== 管理画面 =====
+function openShopManager(shopId) {
+  data._shopManagerId = shopId;
+  data._shopManagerTab = 'overview';
+  saveData();
+  currentView = 'shop_manager';
+  render();
+}
+window.openShopManager = openShopManager;
+
+function renderShopManager() {
+  const shopId = data._shopManagerId;
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) { currentView = 'top'; render(); return; }
+  const tab = data._shopManagerTab || 'overview';
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav('houses');
+  
+  let html = '<div class="topbar">'+topbarPetalHtml();
+  html += '<div class="topbar-spacer"></div>';
+  html += '<div class="topbar-title"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:middle;">storefront</span> '+escapeHtml(shop.name||'(名前なし)')+'</div>';
+  html += '<div class="topbar-spacer"></div></div>';
+  
+  // タブ
+  html += '<div style="display:flex;gap:6px;padding:10px 14px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">';
+  const _tabs = [
+    {id:'overview', label:'プレビュー', icon:'visibility'},
+    {id:'profile',  label:'基本情報',   icon:'edit'},
+    {id:'posts',    label:'投稿',       icon:'edit_note'},
+    {id:'design',   label:'デザイン',   icon:'palette'},
+    {id:'settings', label:'設定',       icon:'settings'}
+  ];
+  for (const t of _tabs) {
+    const _act = tab === t.id;
+    html += '<button onclick="setShopManagerTab(\''+t.id+'\')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">'+t.icon+'</span>'+t.label+'</button>';
+  }
+  html += '</div>';
+  
+  html += '<div class="mode-content-wrap" style="padding:14px;">';
+  
+  if (tab === 'overview') {
+    html += renderShopPreview(shop);
+  } else if (tab === 'profile') {
+    html += renderShopProfileEdit(shop);
+  } else if (tab === 'posts') {
+    html += renderShopPostsManager(shop);
+  } else if (tab === 'design') {
+    html += renderShopDesignEdit(shop);
+  } else if (tab === 'settings') {
+    html += renderShopSettings(shop);
+  }
+  
+  html += '</div>';
+  document.getElementById('app').innerHTML = html;
+}
+window.renderShopManager = renderShopManager;
+
+function setShopManagerTab(t) {
+  data._shopManagerTab = t;
+  saveData();
+  renderShopManager();
+}
+window.setShopManagerTab = setShopManagerTab;
+
+// ===== プレビュー =====
+function renderShopPreview(shop) {
+  let h = '<div style="background:white;border-radius:14px;border:1px solid var(--line);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  h += renderShopPublicView(shop);
+  h += '</div>';
+  h += '<div style="margin-top:12px;padding:12px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:12px;font-size:11px;color:var(--accent-deep);line-height:1.6;"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">info</span> これがあなたのページの見た目だよ。タブから編集できるよ🌷</div>';
+  return h;
+}
+
+// ===== 基本情報編集 =====
+function renderShopProfileEdit(shop) {
+  let h = '<div style="display:flex;flex-direction:column;gap:14px;">';
+  // ヒーロー画像
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">ヘッダー画像</label>';
+  h += '<button onclick="pickShopImage(\''+shop.id+'\',\'heroImage\')" style="width:100%;height:120px;border:1.5px dashed var(--line);border-radius:12px;background:'+(shop.heroImage?'url('+shop.heroImage+') center/cover':'var(--surface-warm)')+';cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);">';
+  if (!shop.heroImage) h += '<div style="text-align:center;"><span class="material-symbols-rounded" style="font-size:28px;display:block;margin-bottom:4px;">add_photo_alternate</span><span style="font-size:11px;">タップして画像を選ぶ</span></div>';
+  h += '</button></div>';
+  // アイコン
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">アイコン</label>';
+  h += '<button onclick="pickShopImage(\''+shop.id+'\',\'iconImage\')" style="width:80px;height:80px;border:1.5px dashed var(--line);border-radius:50%;background:'+(shop.iconImage?'url('+shop.iconImage+') center/cover':'var(--surface-warm)')+';cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);">';
+  if (!shop.iconImage) h += '<span class="material-symbols-rounded" style="font-size:24px;">add</span>';
+  h += '</button></div>';
+  
+  h += _shopField('ページ名', 'name', shop.name||'', 'text');
+  h += _shopFieldArea('紹介文', 'profile', shop.profile||'', 200);
+  h += _shopFieldArea('タグ（カンマ区切り）', 'tags', (shop.tags||[]).join(', '), 100);
+  
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-top:8px;">📞 連絡先</div>';
+  h += _shopField('電話番号', 'contact_phone', shop.contact?.phone||'', 'tel');
+  h += _shopField('LINE', 'contact_line', shop.contact?.line||'', 'text');
+  h += _shopField('Instagram', 'contact_instagram', shop.contact?.instagram||'', 'text');
+  h += _shopField('ウェブサイト', 'contact_web', shop.contact?.web||'', 'url');
+  h += _shopField('住所', 'contact_address', shop.contact?.address||'', 'text');
+  
+  h += '<button onclick="saveShopProfile(\''+shop.id+'\')" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;margin-top:10px;">保存</button>';
+  h += '</div>';
+  return h;
+}
+
+function _shopField(label, id, val, type) {
+  return '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">'+label+'</label><input type="'+type+'" id="shopFld_'+id+'" value="'+escapeHtml(val)+'" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+}
+function _shopFieldArea(label, id, val, max) {
+  return '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">'+label+'</label><textarea id="shopFld_'+id+'" maxlength="'+max+'" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);min-height:60px;resize:vertical;">'+escapeHtml(val)+'</textarea></div>';
+}
+
+function saveShopProfile(shopId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  shop.name = document.getElementById('shopFld_name').value.trim();
+  shop.profile = document.getElementById('shopFld_profile').value.trim();
+  const tagsStr = document.getElementById('shopFld_tags').value.trim();
+  shop.tags = tagsStr ? tagsStr.split(/[,、]\s*/).map(t => t.trim()).filter(Boolean).slice(0, 10) : [];
+  if (!shop.contact) shop.contact = {};
+  shop.contact.phone = document.getElementById('shopFld_contact_phone').value.trim();
+  shop.contact.line = document.getElementById('shopFld_contact_line').value.trim();
+  shop.contact.instagram = document.getElementById('shopFld_contact_instagram').value.trim();
+  shop.contact.web = document.getElementById('shopFld_contact_web').value.trim();
+  shop.contact.address = document.getElementById('shopFld_contact_address').value.trim();
+  shop.updatedAt = Date.now();
+  saveData();
+  showToast('🌷 保存したよ');
+  renderShopManager();
+}
+window.saveShopProfile = saveShopProfile;
+
+function pickShopImage(shopId, fld) {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = function(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const proc = (b64) => {
+      const shop = (data.myShops || []).find(s => s.id === shopId);
+      if (!shop) return;
+      shop[fld] = b64;
+      shop.updatedAt = Date.now();
+      saveData();
+      showToast('🌷 画像を更新したよ');
+      renderShopManager();
+    };
+    const max = fld === 'heroImage' ? 1200 : 600;
+    if (typeof resizeImageToBase64 === 'function') resizeImageToBase64(file, max, 0.85).then(proc);
+    else { const r = new FileReader(); r.onload = ev => proc(ev.target.result); r.readAsDataURL(file); }
+  };
+  inp.click();
+}
+window.pickShopImage = pickShopImage;
+
+// ===== 投稿管理 =====
+function renderShopPostsManager(shop) {
+  const posts = shop.posts || [];
+  const isBookshelf = shop.type === 'bookshelf';
+  let h = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">';
+  h += '<button onclick="openShopPostModal(\''+shop.id+'\',\'news\')" style="flex:1;padding:10px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">campaign</span>お知らせ</button>';
+  if (!isBookshelf) {
+    h += '<button onclick="openShopPostModal(\''+shop.id+'\',\'column\')" style="flex:1;padding:10px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">article</span>コラム</button>';
+    h += '<button onclick="openShopPostModal(\''+shop.id+'\',\'work\')" style="flex:1;padding:10px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">inventory_2</span>商品/作品</button>';
+  } else {
+    const _workIcon = shop.template === 'F' ? 'photo_library' : 'menu_book';
+    const _workLabel = shop.template === 'F' ? '写真' : '作品';
+    h += '<button onclick="openShopPostModal(\''+shop.id+'\',\'work\')" style="flex:1;padding:10px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">'+_workIcon+'</span>'+_workLabel+'を追加</button>';
+  }
+  h += '</div>';
+  
+  if (posts.length === 0) {
+    h += '<div style="padding:24px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);font-size:11px;line-height:1.7;">まだ投稿がないよ<br>上のボタンから追加してね🌷</div>';
+    return h;
+  }
+  
+  // 新しい順
+  const sorted = [...posts].sort((a, b) => (b.timestamp||0) - (a.timestamp||0));
+  h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+  for (const p of sorted) {
+    const _t = new Date(p.timestamp || 0);
+    const _typeBadge = p.type === 'news' ? {icon:'campaign', label:'お知らせ', color:'#E89A4A'} : p.type === 'column' ? {icon:'article', label:'コラム', color:'#6BA8D0'} : {icon:'inventory_2', label:'作品', color:'var(--accent-deep)'};
+    h += '<div style="background:white;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;" onclick="openShopPostModal(\''+shop.id+'\',\''+p.type+'\',\''+p.id+'\')">';
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">';
+    h += '<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;color:'+_typeBadge.color+';background:var(--surface-warm);padding:1px 7px;border-radius:100px;font-weight:700;"><span class="material-symbols-rounded" style="font-size:11px;">'+_typeBadge.icon+'</span>'+_typeBadge.label+'</span>';
+    h += '<span style="font-size:9px;color:var(--ink-light);">'+(_t.getMonth()+1)+'/'+_t.getDate()+' '+String(_t.getHours()).padStart(2,'0')+':'+String(_t.getMinutes()).padStart(2,'0')+'</span>';
+    h += '<div style="flex:1;"></div>';
+    h += '<button onclick="event.stopPropagation();deleteShopPost(\''+shop.id+'\',\''+p.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:2px;"><span class="material-symbols-rounded" style="font-size:14px;">delete</span></button>';
+    h += '</div>';
+    if (p.title) h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:3px;">'+escapeHtml(p.title)+'</div>';
+    if (p.content) h += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+escapeHtml(p.content)+'</div>';
+    if (p.photo) h += '<div style="margin-top:6px;"><img src="'+p.photo+'" style="max-width:100%;max-height:120px;border-radius:8px;display:block;"></div>';
+    h += '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+
+function openShopPostModal(shopId, type, postId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  if (!shop.posts) shop.posts = [];
+  const isEdit = !!postId;
+  const post = isEdit ? shop.posts.find(p => p.id === postId) : null;
+  const def = post || { type, title: '', content: '', photo: '', tags: [], price: '', url: '' };
+  const ex = document.getElementById('shopPostModal');
+  if (ex) ex.remove();
+  const ov = document.createElement('div');
+  ov.id = 'shopPostModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2200;background:rgba(45,74,60,0.55);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);padding-bottom:calc(75px + env(safe-area-inset-bottom));box-sizing:border-box;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  const titles = { news: 'お知らせ', column: 'コラム', work: shop.type==='bookshelf' ? (shop.template==='F'?'写真':'作品') : '商品/作品' };
+  let h = '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">'+(type==='news'?'campaign':type==='column'?'article':'inventory_2')+'</span><div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">'+(isEdit?titles[type]+'を編集':titles[type]+'を投稿')+'</div><button onclick="document.getElementById(\'shopPostModal\').remove()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button></div>';
+  h += '<div style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px;">';
+  
+  if (type === 'news') {
+    h += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;background:var(--surface-warm);padding:8px 10px;border-radius:8px;"><span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;">info</span> 短い1行のお知らせ。タウンの「街歩き」に流れるよ</div>';
+    h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">本文 <span style="color:#D9534F;">*</span></label><input type="text" id="shopPostContent" value="'+escapeHtml(def.content||'')+'" placeholder="例：本日トリミング空きあります" maxlength="80" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  } else if (type === 'column') {
+    h += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;background:var(--surface-warm);padding:8px 10px;border-radius:8px;"><span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;">info</span> 長文記事。タウンの「掲示板」に流れるよ</div>';
+    h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">タイトル <span style="color:#D9534F;">*</span></label><input type="text" id="shopPostTitle" value="'+escapeHtml(def.title||'')+'" maxlength="60" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+    h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">本文</label><textarea id="shopPostContent" maxlength="3000" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);min-height:160px;resize:vertical;">'+escapeHtml(def.content||'')+'</textarea></div>';
+  } else {
+    // work
+    h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">タイトル <span style="color:#D9534F;">*</span></label><input type="text" id="shopPostTitle" value="'+escapeHtml(def.title||'')+'" maxlength="60" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+    h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">説明 / 本文</label><textarea id="shopPostContent" maxlength="3000" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);min-height:120px;resize:vertical;">'+escapeHtml(def.content||'')+'</textarea></div>';
+    if (shop.type === 'shop') {
+      h += _shopField('価格（任意）', '_postPrice_', def.price||'', 'text').replace('shopFld__postPrice_', 'shopPostPrice');
+      h += _shopField('購入リンク（任意）', '_postUrl_', def.url||'', 'url').replace('shopFld__postUrl_', 'shopPostUrl');
+    }
+  }
+  
+  // 写真添付
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">写真（任意）</label>';
+  h += '<button onclick="pickShopPostPhoto()" id="shopPostPhotoBtn" style="width:100%;height:'+(def.photo?'160px':'80px')+';border:1.5px dashed var(--line);border-radius:10px;background:'+(def.photo?'url('+def.photo+') center/cover':'var(--surface-warm)')+';cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);">';
+  if (!def.photo) h += '<div style="text-align:center;"><span class="material-symbols-rounded" style="font-size:22px;display:block;margin-bottom:2px;">add_photo_alternate</span><span style="font-size:10px;">タップして追加</span></div>';
+  h += '</button></div>';
+  
+  // タグ
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">タグ（カンマ区切り、任意）</label><input type="text" id="shopPostTags" value="'+escapeHtml((def.tags||[]).join(', '))+'" placeholder="例：おすすめ, 新作" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  
+  h += '</div>';
+  // フッター
+  h += '<div style="padding:12px 16px;border-top:1px solid var(--line-soft);display:flex;gap:8px;">';
+  if (isEdit) h += '<button onclick="deleteShopPost(\''+shop.id+'\',\''+postId+'\')" style="padding:11px 14px;background:none;border:1px solid var(--line);color:#D9534F;border-radius:10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+  h += '<button onclick="saveShopPost(\''+shop.id+'\',\''+type+'\','+(isEdit?'\''+postId+'\'':'null')+')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div></div>';
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+  // 保存中の写真用
+  window._shopPostPhotoPending = def.photo || '';
+}
+window.openShopPostModal = openShopPostModal;
+
+function pickShopPostPhoto() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = function(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const proc = (b64) => {
+      window._shopPostPhotoPending = b64;
+      const btn = document.getElementById('shopPostPhotoBtn');
+      if (btn) {
+        btn.style.height = '160px';
+        btn.style.background = 'url('+b64+') center/cover';
+        btn.innerHTML = '';
+      }
+    };
+    if (typeof resizeImageToBase64 === 'function') resizeImageToBase64(file, 1200, 0.85).then(proc);
+    else { const r = new FileReader(); r.onload = ev => proc(ev.target.result); r.readAsDataURL(file); }
+  };
+  inp.click();
+}
+window.pickShopPostPhoto = pickShopPostPhoto;
+
+function saveShopPost(shopId, type, postId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  if (!shop.posts) shop.posts = [];
+  const isEdit = postId && postId !== 'null';
+  const titleEl = document.getElementById('shopPostTitle');
+  const contentEl = document.getElementById('shopPostContent');
+  const tagsEl = document.getElementById('shopPostTags');
+  const priceEl = document.getElementById('shopPostPrice');
+  const urlEl = document.getElementById('shopPostUrl');
+  const title = titleEl ? titleEl.value.trim() : '';
+  const content = contentEl ? contentEl.value.trim() : '';
+  const tagsStr = tagsEl ? tagsEl.value.trim() : '';
+  const tags = tagsStr ? tagsStr.split(/[,、]\s*/).map(t => t.trim()).filter(Boolean).slice(0, 8) : [];
+  const photo = window._shopPostPhotoPending || '';
+  const price = priceEl ? priceEl.value.trim() : '';
+  const url = urlEl ? urlEl.value.trim() : '';
+  
+  if (type === 'news' && !content) { showToast('本文を入れてね'); return; }
+  if ((type === 'column' || type === 'work') && !title) { showToast('タイトルを入れてね'); return; }
+  
+  if (isEdit) {
+    const p = shop.posts.find(x => x.id === postId);
+    if (p) { p.title = title; p.content = content; p.photo = photo; p.tags = tags; p.price = price; p.url = url; }
+  } else {
+    shop.posts.push({
+      id: 'post_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
+      type, title, content, photo, tags, price, url,
+      timestamp: Date.now()
+    });
+  }
+  shop.updatedAt = Date.now();
+  saveData();
+  document.getElementById('shopPostModal')?.remove();
+  showToast('🌷 ' + (isEdit ? '保存したよ' : '投稿したよ'));
+  renderShopManager();
+}
+window.saveShopPost = saveShopPost;
+
+function deleteShopPost(shopId, postId) {
+  if (!confirm('この投稿を削除しますか？')) return;
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  shop.posts = (shop.posts || []).filter(p => p.id !== postId);
+  shop.updatedAt = Date.now();
+  saveData();
+  document.getElementById('shopPostModal')?.remove();
+  showToast('削除したよ');
+  renderShopManager();
+}
+window.deleteShopPost = deleteShopPost;
+
+// ===== デザイン =====
+function renderShopDesignEdit(shop) {
+  let h = '<div style="display:flex;flex-direction:column;gap:14px;">';
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">テンプレート</div>';
+  h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+  for (const tid in SHOP_TEMPLATES) {
+    const t = SHOP_TEMPLATES[tid];
+    if (t.type !== shop.type) continue;
+    const _act = shop.template === tid;
+    h += '<button onclick="setShopTemplate(\''+shop.id+'\',\''+tid+'\')" style="display:flex;align-items:center;gap:10px;padding:11px;background:'+(_act?'var(--accent-bg)':'white')+';border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+    h += '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+t.icon+'</span>';
+    h += '<div style="flex:1;"><div style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+t.label+'</div><div style="font-size:10px;color:var(--ink-sub);line-height:1.4;">'+t.desc+'</div></div>';
+    if (_act) h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">check_circle</span>';
+    h += '</button>';
+  }
+  h += '</div>';
+  h += '<div style="margin-top:10px;padding:12px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;font-size:11px;color:var(--accent-deep);line-height:1.6;"><span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;">palette</span> 色や柄のカスタマイズは今後実装予定だよ🌷</div>';
+  h += '</div>';
+  return h;
+}
+
+function setShopTemplate(shopId, tid) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  shop.template = tid;
+  shop.updatedAt = Date.now();
+  saveData();
+  showToast('🌷 テンプレートを変更したよ');
+  renderShopManager();
+}
+window.setShopTemplate = setShopTemplate;
+
+// ===== 設定 =====
+function renderShopSettings(shop) {
+  let h = '<div style="display:flex;flex-direction:column;gap:14px;">';
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:12px;padding:14px;">';
+  h += '<div style="display:flex;align-items:center;gap:10px;"><span class="material-symbols-rounded" style="font-size:20px;color:'+(shop.isPublic!==false?'#3CB878':'var(--ink-light)')+';">'+(shop.isPublic!==false?'public':'lock')+'</span>';
+  h += '<div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+(shop.isPublic!==false?'公開中':'非公開')+'</div><div style="font-size:10.5px;color:var(--ink-sub);">'+(shop.isPublic!==false?'にこわタウンで見れる状態':'自分にしか見えない')+'</div></div>';
+  h += '<button onclick="toggleShopPublic(\''+shop.id+'\')" style="background:'+(shop.isPublic!==false?'#3CB878':'var(--line)')+';border:none;width:42px;height:24px;border-radius:100px;position:relative;cursor:pointer;"><span style="position:absolute;top:2px;left:'+(shop.isPublic!==false?'20px':'2px')+';width:20px;height:20px;border-radius:50%;background:white;"></span></button>';
+  h += '</div></div>';
+  
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:12px;padding:14px;">';
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;">プラン</div>';
+  h += '<div style="font-size:12px;color:var(--accent-deep);background:var(--accent-bg);padding:6px 10px;border-radius:8px;display:inline-block;font-weight:700;">無料プラン</div>';
+  h += '<div style="font-size:10.5px;color:var(--ink-sub);margin-top:6px;line-height:1.5;">課金機能は今後実装予定だよ🌷</div>';
+  h += '</div>';
+  
+  h += '<button onclick="deleteShop(\''+shop.id+'\')" style="width:100%;padding:12px;background:none;border:1px solid #D9534F;color:#D9534F;border-radius:12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;">delete</span>このページを削除</button>';
+  h += '</div>';
+  return h;
+}
+
+function toggleShopPublic(shopId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  shop.isPublic = shop.isPublic === false ? true : false;
+  shop.updatedAt = Date.now();
+  saveData();
+  showToast(shop.isPublic ? '🌷 公開したよ' : '非公開にしたよ');
+  renderShopManager();
+}
+window.toggleShopPublic = toggleShopPublic;
+
+function deleteShop(shopId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  if (!confirm('「'+(shop.name||'このページ')+'」を削除しますか？\n投稿も全て削除されます。')) return;
+  data.myShops = (data.myShops || []).filter(s => s.id !== shopId);
+  saveData();
+  showToast('削除したよ');
+  currentView = 'top'; render();
+}
+window.deleteShop = deleteShop;
+
+// ===== 公開ビュー（テンプレに応じて表示）=====
+function renderShopPublicView(shop) {
+  const tmpl = shop.template || 'A';
+  let h = '<div style="background:var(--surface);">';
+  // ヘッダー画像
+  if (shop.heroImage) {
+    h += '<div style="width:100%;height:140px;background:url('+shop.heroImage+') center/cover;"></div>';
+  } else {
+    h += '<div style="width:100%;height:100px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));"></div>';
+  }
+  // プロフィール部分
+  h += '<div style="padding:14px 16px;">';
+  if (shop.iconImage) {
+    h += '<div style="margin-top:-44px;margin-bottom:8px;"><div style="width:64px;height:64px;border-radius:50%;background:url('+shop.iconImage+') center/cover;border:3px solid var(--surface);box-shadow:0 2px 6px rgba(0,0,0,0.1);"></div></div>';
+  }
+  h += '<div style="font-size:18px;font-weight:900;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(shop.name||'(名前なし)')+'</div>';
+  if (shop.profile) h += '<div style="font-size:11.5px;color:var(--ink-sub);line-height:1.7;margin-bottom:8px;white-space:pre-wrap;">'+escapeHtml(shop.profile)+'</div>';
+  if (shop.tags && shop.tags.length) {
+    h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">';
+    for (const tg of shop.tags) h += '<span style="background:var(--accent-bg);color:var(--accent-deep);padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
+    h += '</div>';
+  }
+  // 連絡先ボタン（ショップ型のみ）
+  if (shop.type === 'shop' && shop.contact) {
+    const c = shop.contact;
+    const btns = [];
+    if (c.phone) btns.push({icon:'call', label:'電話', href:'tel:'+c.phone.replace(/[^\d+]/g,'')});
+    if (c.line) btns.push({icon:'chat', label:'LINE', href:c.line.startsWith('http')?c.line:'https://line.me/R/ti/p/'+c.line});
+    if (c.instagram) btns.push({icon:'photo_camera', label:'Insta', href:'https://instagram.com/'+(c.instagram.replace('@',''))});
+    if (c.web) btns.push({icon:'language', label:'HP', href:c.web});
+    if (c.address) btns.push({icon:'map', label:'地図', href:'https://maps.google.com/?q='+encodeURIComponent(c.address)});
+    if (btns.length) {
+      h += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">';
+      for (const b of btns) h += '<a href="'+b.href+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:7px 12px;background:white;border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;font-size:11px;font-weight:700;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:14px;">'+b.icon+'</span>'+b.label+'</a>';
+      h += '</div>';
+    }
+  }
+  h += '</div>';
+  
+  // 投稿一覧（テンプレ別表示）
+  const posts = (shop.posts || []).slice().sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  const newsList = posts.filter(p => p.type === 'news');
+  const columnList = posts.filter(p => p.type === 'column');
+  const workList = posts.filter(p => p.type === 'work');
+  
+  // お知らせ（最新1件をハイライト表示）
+  if (newsList.length > 0) {
+    const latest = newsList[0];
+    const t = new Date(latest.timestamp);
+    h += '<div style="margin:0 16px 12px;padding:10px 12px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border-left:3px solid var(--accent);border-radius:8px;">';
+    h += '<div style="font-size:9px;color:var(--accent-deep);font-weight:700;margin-bottom:2px;">📢 【'+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+'】お知らせ</div>';
+    h += '<div style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(latest.content||'')+'</div>';
+    h += '</div>';
+  }
+  
+  // 作品/商品（テンプレ別レイアウト）
+  if (workList.length > 0) {
+    h += '<div style="padding:0 16px 12px;">';
+    h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">'+(tmpl==='F'?'photo_library':tmpl==='B'?'palette':'inventory_2')+'</span>'+(tmpl==='F'?'写真':tmpl==='E'?'作品':shop.type==='bookshelf'?'作品':'商品/作品')+'</div>';
+    
+    if (tmpl === 'F' || tmpl === 'B') {
+      // 写真型・作家型：グリッド
+      h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">';
+      for (const p of workList) {
+        h += '<div style="background:white;border:1px solid var(--line);border-radius:8px;overflow:hidden;">';
+        if (p.photo) h += '<div style="width:100%;aspect-ratio:1;background:url('+p.photo+') center/cover;"></div>';
+        else h += '<div style="width:100%;aspect-ratio:1;background:var(--surface-warm);display:flex;align-items:center;justify-content:center;color:var(--ink-light);"><span class="material-symbols-rounded" style="font-size:32px;">image</span></div>';
+        h += '<div style="padding:6px 8px;"><div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.title||'')+'</div>';
+        if (p.price) h += '<div style="font-size:10px;color:var(--accent-deep);font-weight:700;">'+escapeHtml(p.price)+'</div>';
+        h += '</div></div>';
+      }
+      h += '</div>';
+    } else if (tmpl === 'E') {
+      // 文字型：縦リスト・続きを読む
+      for (const p of workList) {
+        h += '<div style="background:white;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:8px;">';
+        h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:6px;">'+escapeHtml(p.title||'')+'</div>';
+        if (p.content) {
+          const preview = p.content.length > 100 ? p.content.slice(0, 100)+'…' : p.content;
+          h += '<div style="font-size:11.5px;color:var(--ink-sub);line-height:1.7;white-space:pre-wrap;">'+escapeHtml(preview)+'</div>';
+        }
+        h += '</div>';
+      }
+    } else {
+      // ショップ型・シンプル型：横並び
+      for (const p of workList.slice(0, 6)) {
+        h += '<div style="display:flex;gap:10px;background:white;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:6px;">';
+        if (p.photo) h += '<div style="width:60px;height:60px;border-radius:8px;background:url('+p.photo+') center/cover;flex-shrink:0;"></div>';
+        h += '<div style="flex:1;min-width:0;">';
+        h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.title||'')+'</div>';
+        if (p.content) h += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+escapeHtml(p.content)+'</div>';
+        if (p.price) h += '<div style="font-size:11px;color:var(--accent-deep);font-weight:700;margin-top:2px;">'+escapeHtml(p.price)+'</div>';
+        h += '</div></div>';
+      }
+    }
+    h += '</div>';
+  }
+  
+  // コラム
+  if (columnList.length > 0) {
+    h += '<div style="padding:0 16px 14px;">';
+    h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">article</span>コラム</div>';
+    for (const p of columnList.slice(0, 5)) {
+      h += '<div style="background:white;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;">';
+      h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:3px;">'+escapeHtml(p.title||'')+'</div>';
+      if (p.content) {
+        const preview = p.content.length > 80 ? p.content.slice(0, 80)+'…' : p.content;
+        h += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.5;">'+escapeHtml(preview)+'</div>';
+      }
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  
+  // 投稿が全くない場合
+  if (posts.length === 0) {
+    h += '<div style="padding:24px 16px 32px;text-align:center;color:var(--ink-light);font-size:11px;">まだ投稿がないよ🌷</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+
+// ===== 公開ショップを見る（タウンから）=====
+function openPublicShop(shopId) {
+  data._publicShopId = shopId;
+  saveData();
+  currentView = 'public_shop';
+  render();
+}
+window.openPublicShop = openPublicShop;
+
+function renderPublicShop() {
+  const shopId = data._publicShopId;
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) { currentView = 'town'; render(); return; }
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav('town');
+  
+  let html = '<div class="topbar">'+topbarPetalHtml();
+  html += '<div class="topbar-spacer"></div>';
+  html += '<div class="topbar-title"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:middle;">'+(shop.type==='bookshelf'?'menu_book':'storefront')+'</span> '+escapeHtml(shop.name||'')+'</div>';
+  html += '<div class="topbar-spacer"></div></div>';
+  
+  // 戻るボタン
+  html += '<div style="padding:10px 14px 0;"><button onclick="currentView=\'town\';render();" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">arrow_back</span>タウンに戻る</button></div>';
+  
+  html += '<div style="padding:14px;">';
+  html += '<div style="background:white;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  html += renderShopPublicView(shop);
+  html += '</div>';
+  html += '</div>';
+  document.getElementById('app').innerHTML = html;
+}
+window.renderPublicShop = renderPublicShop;
+
+// ===== マイショップここまで =====
 
 function renderTown() {
   document.getElementById('bottomNav').style.display = 'flex';
@@ -25181,31 +26161,37 @@ function renderTown() {
   }
   html += '</div>';
 
-  // ── サブタブ
-  html += '<div class="town-sub-tabs">';
-  html += '<button class="town-sub-tab '+(townSubTab==='town'  ?'active':'')+'" onclick="setTownSubTab(\'town\')"><span class="material-symbols-rounded">location_city</span></button>';
-  html += '<button class="town-sub-tab '+(townSubTab==='search'?'active':'')+'" onclick="setTownSubTab(\'search\')"><span class="material-symbols-rounded">search</span></button>';
-  html += '<button class="town-sub-tab '+(townSubTab==='transit'?'active':'')+'" onclick="setTownSubTab(\'transit\')"><span class="material-symbols-rounded">train</span></button>';
-
-  html += '<button class="town-sub-tab '+(townSubTab==='fav'   ?'active':'')+'" onclick="setTownSubTab(\'fav\')"><span class="material-symbols-rounded">favorite</span></button>';
-  html += '</div>';
+  // ── サブタブ（「探す」タブの時だけ表示）
+  if (townMainTab === 'search') {
+    html += '<div class="town-sub-tabs">';
+    html += '<button class="town-sub-tab '+(townSubTab==='search'?'active':'')+'" onclick="setTownSubTab(\'search\')"><span class="material-symbols-rounded">search</span></button>';
+    html += '<button class="town-sub-tab '+(townSubTab==='transit'?'active':'')+'" onclick="setTownSubTab(\'transit\')"><span class="material-symbols-rounded">train</span></button>';
+    html += '<button class="town-sub-tab '+(townSubTab==='fav'?'active':'')+'" onclick="setTownSubTab(\'fav\')"><span class="material-symbols-rounded">favorite</span></button>';
+    html += '</div>';
+  }
 
   // コンテンツエリア（白い角丸背景）
   html += '<div class="mode-content-wrap">';
 
-  // ── タウンサブタブ：ショップ一覧 or 詳細
-  if (townSubTab === 'town') {
+  // ── 街歩きタブ：旧 townSubTab === 'town' の内容
+  if (townMainTab === 'town') {
+    const _combinedNews = getCombinedNews();
+    if (_newsIndex >= _combinedNews.length) _newsIndex = 0;
+    const _curNews = _combinedNews[_newsIndex];
     // ── 流れるニュース（list/detail両方で表示）
-    html += '<div class="news-ticker" id="newsTicker" onclick="showToast(\'サンプル：'+escapeHtml(SAMPLE_NEWS[_newsIndex].name)+'のページへ🌷\')">';
-    html += '<div class="news-ticker-inner" id="newsTickerInner">';
-    html += newsItemHtml(SAMPLE_NEWS[_newsIndex]);
-    html += '</div>';
-    html += '<div class="news-dots" id="newsTickerDots">';
-    for (let i = 0; i < SAMPLE_NEWS.length; i++) {
-      html += '<div class="news-dot'+(i === _newsIndex ? ' active' : '')+'"></div>';
+    if (_curNews) {
+      const _onclick = _curNews._shopId ? 'openPublicShop(\\\''+_curNews._shopId+'\\\')' : 'showToast(\\\'サンプル：'+escapeHtml(_curNews.name)+'のページへ🌷\\\')';
+      html += '<div class="news-ticker" id="newsTicker" onclick="'+_onclick+'">';
+      html += '<div class="news-ticker-inner" id="newsTickerInner">';
+      html += newsItemHtml(_curNews);
+      html += '</div>';
+      html += '<div class="news-dots" id="newsTickerDots">';
+      for (let i = 0; i < _combinedNews.length; i++) {
+        html += '<div class="news-dot'+(i === _newsIndex ? ' active' : '')+'"></div>';
+      }
+      html += '</div>';
+      html += '</div>';
     }
-    html += '</div>';
-    html += '</div>';
 
     if (townShopView === 'list') {
       // ── ショップカード一覧
@@ -25357,7 +26343,7 @@ function renderTown() {
   stopNewsTicker();
 
   // ── 検索サブタブ
-  if (townSubTab === 'search') {
+  if (townMainTab === 'search' && townSubTab === 'search') {
     html += '<div class="places-section">';
     html += '<div class="places-loc-toggle">';
     html += '<button class="places-loc-btn '+(placesLocMode==='addr'?'active':'')+'" onclick="setPlacesLocMode(\'addr\')"><span class=\"material-symbols-rounded\" style=\"font-size:14px;vertical-align:-2px;\">location_city</span> 住所</button>';
@@ -25544,14 +26530,14 @@ function renderTown() {
   }
 
   // ── 🚆 路線サブタブ
-  if (townSubTab === 'transit') {
+  if (townMainTab === 'search' && townSubTab === 'transit') {
     html += renderTransitSubTab();
   }
 
 
 
   // ── お気に入りサブタブ
-  if (townSubTab === 'fav') {
+  if (townMainTab === 'search' && townSubTab === 'fav') {
     const cat = townMainTab;
     const favMap = placesFavs[cat] || {};
     const favList = Object.values(favMap);
@@ -25750,6 +26736,137 @@ function renderTown() {
         html += '</button>';
       }
       html += '</div>';
+    }
+  }
+
+  // ── 本屋タブ
+  if (townMainTab === 'book') {
+    // 公開されている本棚型ショップを集める
+    const _bookshelves = (data.myShops || []).filter(s => s.isPublic !== false && s.type === 'bookshelf');
+    // 全作品をフラット化
+    const _allWorks = [];
+    for (const s of _bookshelves) {
+      for (const p of (s.posts || [])) {
+        if (p.type === 'work') _allWorks.push({ shop: s, post: p });
+      }
+    }
+    // 新しい順
+    _allWorks.sort((a, b) => (b.post.timestamp || 0) - (a.post.timestamp || 0));
+    
+    if (_allWorks.length === 0) {
+      html += '<div style="padding:60px 24px 40px;text-align:center;">';
+      html += '<div style="font-size:48px;margin-bottom:12px;"><span class="material-symbols-rounded" style="font-size:48px;color:var(--accent-deep);">menu_book</span></div>';
+      html += '<div style="font-size:16px;font-weight:800;color:var(--ink-dark);margin-bottom:6px;">まちの本棚</div>';
+      html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;">まだ作品が置かれていません🌷<br>あなたも本棚を開設してみよう</div>';
+      html += '</div>';
+    } else {
+      // ヘッダー
+      html += '<div style="padding:14px 16px 8px;display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">auto_stories</span><span style="font-size:13px;font-weight:800;color:var(--ink-dark);">まちの本棚</span><span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 8px;border-radius:100px;font-weight:700;">'+_allWorks.length+'作品</span></div>';
+      
+      // 文字型と写真型で分けて表示
+      const _textWorks = _allWorks.filter(x => x.shop.template === 'E');
+      const _photoWorks = _allWorks.filter(x => x.shop.template === 'F');
+      
+      // 写真の窓
+      if (_photoWorks.length > 0) {
+        html += '<div style="padding:10px 16px 6px;font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">photo_library</span>写真の窓</div>';
+        html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:0 16px 14px;">';
+        for (const x of _photoWorks.slice(0, 6)) {
+          const p = x.post; const s = x.shop;
+          html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;">';
+          if (p.photo) html += '<div style="width:100%;aspect-ratio:1;background:url('+p.photo+') center/cover;"></div>';
+          else html += '<div style="width:100%;aspect-ratio:1;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));display:flex;align-items:center;justify-content:center;color:var(--accent-deep);"><span class="material-symbols-rounded" style="font-size:36px;">image</span></div>';
+          html += '<div style="padding:7px 9px;">';
+          html += '<div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.title||'')+'</div>';
+          html += '<div style="font-size:9px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.name||'')+'</div>';
+          html += '</div></div>';
+        }
+        html += '</div>';
+      }
+      
+      // 短い詩・小説
+      if (_textWorks.length > 0) {
+        html += '<div style="padding:10px 16px 6px;font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">menu_book</span>新しく置かれた本</div>';
+        html += '<div style="padding:0 16px 14px;display:flex;flex-direction:column;gap:8px;">';
+        for (const x of _textWorks.slice(0, 8)) {
+          const p = x.post; const s = x.shop;
+          const _preview = (p.content || '').slice(0, 60) + ((p.content||'').length > 60 ? '…' : '');
+          html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;">';
+          html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="font-size:9.5px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 7px;border-radius:100px;font-weight:700;">'+escapeHtml(s.name||'')+'</span></div>';
+          html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(p.title||'')+'</div>';
+          html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;white-space:pre-wrap;">'+escapeHtml(_preview)+'</div>';
+          if (p.tags && p.tags.length) {
+            html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">';
+            for (const tg of p.tags.slice(0, 4)) html += '<span style="font-size:9px;color:var(--ink-light);">#'+escapeHtml(tg)+'</span>';
+            html += '</div>';
+          }
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+    }
+  }
+
+  // ── 掲示板タブ
+  if (townMainTab === 'board') {
+    // 公開されているショップ型ショップを集める
+    const _shops = (data.myShops || []).filter(s => s.isPublic !== false);
+    // コラム + 新着お知らせを集める
+    const _columns = [];
+    const _newsItems = [];
+    for (const s of _shops) {
+      for (const p of (s.posts || [])) {
+        if (p.type === 'column') _columns.push({ shop: s, post: p });
+        else if (p.type === 'news') _newsItems.push({ shop: s, post: p });
+      }
+    }
+    _columns.sort((a, b) => (b.post.timestamp || 0) - (a.post.timestamp || 0));
+    _newsItems.sort((a, b) => (b.post.timestamp || 0) - (a.post.timestamp || 0));
+    
+    if (_columns.length === 0 && _newsItems.length === 0) {
+      html += '<div style="padding:60px 24px 40px;text-align:center;">';
+      html += '<div style="font-size:48px;margin-bottom:12px;"><span class="material-symbols-rounded" style="font-size:48px;color:var(--accent-deep);">forum</span></div>';
+      html += '<div style="font-size:16px;font-weight:800;color:var(--ink-dark);margin-bottom:6px;">たすけ舟・掲示板</div>';
+      html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;">まだ投稿がありません🌷</div>';
+      html += '</div>';
+    } else {
+      html += '<div style="padding:14px 16px 8px;display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">forum</span><span style="font-size:13px;font-weight:800;color:var(--ink-dark);">たすけ舟・掲示板</span></div>';
+      
+      // コラム
+      if (_columns.length > 0) {
+        html += '<div style="padding:6px 16px;font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">article</span>まちのコラム</div>';
+        html += '<div style="padding:0 16px 14px;display:flex;flex-direction:column;gap:8px;">';
+        for (const x of _columns.slice(0, 10)) {
+          const p = x.post; const s = x.shop;
+          const _preview = (p.content || '').slice(0, 80) + ((p.content||'').length > 80 ? '…' : '');
+          html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;">';
+          html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">storefront</span><span style="font-size:10.5px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(s.name||'')+'</span></div>';
+          html += '<div style="font-size:13.5px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(p.title||'')+'</div>';
+          html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;">'+escapeHtml(_preview)+'</div>';
+          if (p.tags && p.tags.length) {
+            html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">';
+            for (const tg of p.tags.slice(0, 5)) html += '<span style="font-size:9.5px;color:var(--accent-deep);background:var(--accent-bg);padding:2px 7px;border-radius:100px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
+            html += '</div>';
+          }
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+      
+      // 新着お知らせ（最新5件）
+      if (_newsItems.length > 0) {
+        html += '<div style="padding:6px 16px;font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">campaign</span>まち便り（新着お知らせ）</div>';
+        html += '<div style="padding:0 16px 14px;display:flex;flex-direction:column;gap:6px;">';
+        for (const x of _newsItems.slice(0, 8)) {
+          const p = x.post; const s = x.shop;
+          const t = new Date(p.timestamp || 0);
+          html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:9px 12px;cursor:pointer;">';
+          html += '<div style="display:flex;align-items:center;gap:5px;font-size:9px;color:var(--accent-deep);font-weight:700;margin-bottom:2px;">【'+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+'】<span style="color:var(--ink-sub);">'+escapeHtml(s.name||'')+'</span></div>';
+          html += '<div style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(p.content||'')+'</div>';
+          html += '</div>';
+        }
+        html += '</div>';
+      }
     }
   }
   
@@ -32489,7 +33606,7 @@ async function searchPlaces() {
     }
   }
 
-  const TAB_PREFIX = { me: '', pet: 'ペット可', kids: '子連れOK', work: 'Wi-Fi' };
+  const TAB_PREFIX = { search: '', me: '', pet: 'ペット可', kids: '子連れOK', work: 'Wi-Fi' };
   const tabPrefix = TAB_PREFIX[townMainTab] || '';
   const cat = (PLACES_CATS_MAP[townMainTab] || []).find(c => c.id === placesSelCat);
   try {
@@ -33485,6 +34602,8 @@ function render() {
   else if (currentView === 'town') renderTown();
   else if (currentView === 'facility') renderFacility();
   else if (currentView === 'secret_memo') renderSecretMemo();
+  else if (currentView === 'shop_manager') renderShopManager();
+  else if (currentView === 'public_shop') renderPublicShop();
   else renderTop();
   renderSidePanel();
   if (!_suppressScrollTop) window.scrollTo(0, 0);
