@@ -813,12 +813,13 @@
   .section-title {
     font-size: 13px; font-weight: 700; color: var(--ink-dark);
     letter-spacing: 0.8px; margin: 0;
-    display: flex; align-items: center; gap: 5px;
+    display: inline-flex; align-items: center; gap: 5px;
     padding-bottom: 5px;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'><path d='M2,4 Q10,2 18,4 T36,4 T54,3 T72,5 T90,4 T108,3 T126,5 T144,4 T162,3 T180,5 T198,4' stroke='%23C8956A' stroke-width='2' fill='none' stroke-linecap='round' opacity='0.7'/></svg>");
     background-repeat: no-repeat;
     background-position: 0 100%;
-    background-size: auto 5px;
+    background-size: 100% 5px;
+    width: fit-content;
   }
   .section-title::before {
     content: ''; display: inline-block;
@@ -5307,9 +5308,19 @@ function loadData() {
     saveData();
   }
 }
+let _saveDataErrorShown = false;
 function saveData() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-  catch(e) { showToast('保存できませんでした😢'); }
+  try { 
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); 
+    _saveDataErrorShown = false;
+  }
+  catch(e) { 
+    console.warn('localStorage保存失敗:', e.message);
+    if (!_saveDataErrorShown) {
+      showToast('容量がいっぱいかも🌷 古い写真を整理してね');
+      _saveDataErrorShown = true;
+    }
+  }
   saveToFirestore();
 }
 
@@ -6795,10 +6806,10 @@ function renderTop() {
   html += '</div>';
   html += '</div>';
 
+  // ── Welcome 見出し（白カードなし、クレヨン下線のみ）
+  html += '<div style="padding:14px 16px 8px;"><h2 class="section-title" style="margin:0;">Welcome</h2></div>';
+  
   // モード選択カード（横一列）
-  html += '<div class="section" style="padding-top:4px;">';
-  html += '<div class="section-head"><h2 class="section-title">Welcome</h2></div>';
-  html += '</div>';
   html += '<div class="mode-section">';
   // テーマのcardShapeを取得
   const _theme = THEMES[data.themeId || 'mint'] || THEMES.mint;
@@ -6849,53 +6860,42 @@ function renderTop() {
   if (!data.myShops) data.myShops = [];
   const _myShops = data.myShops || [];
   
-  html += '<div class="section" style="padding-top:14px;">';
-  html += '<div class="section-head" style="display:flex;align-items:center;justify-content:space-between;">';
-  html += '<h2 class="section-title">マイショップ</h2>';
-  if (_myShops.length > 0) {
-    html += '<button onclick="openShopCreateModal()" style="background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:4px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>追加</button>';
-  }
-  html += '</div></div>';
+  // ── My Shop 見出し（白カードなし、クレヨン下線のみ、間あける）
+  html += '<div style="padding:18px 16px 8px;"><h2 class="section-title" style="margin:0;">My Shop</h2></div>';
   
-  if (_myShops.length === 0) {
-    // 開設誘導カード
-    html += '<div style="margin:0 16px 16px;padding:24px 18px;background:linear-gradient(135deg,var(--accent-bg) 0%,var(--surface-warm) 100%);border:1.5px dashed var(--accent);border-radius:18px;text-align:center;">';
-    html += '<div style="margin-bottom:10px;"><span class="material-symbols-rounded" style="font-size:42px;color:var(--accent-deep);">storefront</span></div>';
-    html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">あなたのミニHPを開設しよう</div>';
-    html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;margin-bottom:14px;">お店・作家・ライバー・写真家<br>みんなが「にこわタウン」に出店できるよ🌷</div>';
-    html += '<button onclick="openShopCreateModal()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><span class="material-symbols-rounded" style="font-size:16px;">add_circle</span>開設する</button>';
-    html += '</div>';
-  } else {
-    // ショップカード一覧
-    html += '<div style="display:flex;flex-direction:column;gap:10px;margin:0 16px 16px;">';
-    for (const shop of _myShops) {
-      const _typeLabel = shop.type === 'bookshelf' ? '本棚' : 'ショップ';
-      const _typeIcon = shop.type === 'bookshelf' ? 'menu_book' : 'storefront';
-      const _isPublic = shop.isPublic !== false;
-      const _cd = shop.cardDesign || { color:'#E8A040', pattern:'solid' };
-      const _heroBg = shop.heroImage 
-        ? 'background-image:url('+shop.heroImage+');background-size:cover;background-position:center;' 
-        : _getCardPatternBg(_cd.color, _cd.pattern, 60);
-      html += '<button onclick="openShopManager(\''+shop.id+'\')" style="background:white;border:1px solid var(--line);border-radius:14px;padding:0;overflow:hidden;cursor:pointer;font-family:inherit;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
-      html += '<div style="height:70px;'+_heroBg+'position:relative;">';
-      html += '<div style="position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.92);padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;color:var(--ink-dark);display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:12px;">'+_typeIcon+'</span>'+_typeLabel+'</div>';
-      if (!_isPublic) html += '<div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);color:white;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;">非公開</div>';
-      html += '</div>';
-      html += '<div style="padding:10px 14px;">';
-      html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:3px;">'+escapeHtml(shop.name||'(名前なし)')+'</div>';
-      if (shop.profile) html += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+escapeHtml(shop.profile)+'</div>';
-      const _postCount = (shop.posts || []).length;
-      html += '<div style="display:flex;align-items:center;gap:8px;margin-top:7px;font-size:9.5px;color:var(--ink-light);">';
-      html += '<span style="display:inline-flex;align-items:center;gap:2px;"><span class="material-symbols-rounded" style="font-size:11px;">edit_note</span>'+_postCount+'件</span>';
-      if (shop.tags && shop.tags.length > 0) {
-        for (const tg of shop.tags.slice(0, 3)) html += '<span style="background:var(--accent-bg);color:var(--accent-deep);padding:1px 6px;border-radius:100px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
-      }
-      html += '</div>';
-      html += '</div>';
-      html += '</button>';
+  // mode-sectionと同じグリッド形式（テーマの形を踏襲）
+  html += '<div class="mode-section" style="padding-top:0;">';
+  
+  // 既存ショップ
+  for (const shop of _myShops) {
+    const _cd = shop.cardDesign || { color:'#E8A040', pattern:'solid' };
+    const _isPublic = shop.isPublic !== false;
+    const _typeIcon = shop.type === 'bookshelf' ? 'menu_book' : 'storefront';
+    
+    // 背景：cardDesign の色＋柄
+    const _bgStyle = _getCardPatternBg(_cd.color, _cd.pattern, 60);
+    
+    html += '<button class="mode-card'+_shapeClass+'" onclick="openShopManager(\''+shop.id+'\')" style="'+_bgStyle+'border-color:'+_cd.color+'66;">';
+    // アイコン部分（iconImageあれば写真、なければマテリアルアイコン）
+    if (shop.iconImage) {
+      html += '<div class="mode-card-icon" style="width:34px;height:34px;border-radius:50%;background:url('+shop.iconImage+') center/cover;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.15);"></div>';
+    } else {
+      html += '<div class="mode-card-icon"><span class="material-symbols-rounded" style="color:white;text-shadow:0 1px 2px rgba(0,0,0,0.2);font-size:24px;">'+_typeIcon+'</span></div>';
     }
-    html += '</div>';
+    // ショップ名（短縮）
+    const _shortName = (shop.name||'').length > 6 ? (shop.name||'').slice(0, 5)+'…' : (shop.name||'');
+    html += '<div class="mode-card-label" style="color:var(--ink-dark);font-weight:800;text-shadow:0 1px 2px rgba(255,255,255,0.6);">'+escapeHtml(_shortName)+'</div>';
+    if (!_isPublic) html += '<div style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.55);color:white;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;"><span class="material-symbols-rounded" style="font-size:10px;">lock</span></div>';
+    html += '</button>';
   }
+  
+  // 開設ボタン（コンパクト版・mode-cardと同じ形）
+  html += '<button class="mode-card'+_shapeClass+'" onclick="openShopCreateModal()" style="border-style:dashed;border-color:var(--accent);background:linear-gradient(135deg,var(--accent-bg)40 0%,var(--surface-warm)80 100%);">';
+  html += '<div class="mode-card-icon"><span class="material-symbols-rounded" style="color:var(--accent-deep);font-size:26px;">add_business</span></div>';
+  html += '<div class="mode-card-label" style="color:var(--accent-deep);font-size:9.5px;">'+(_myShops.length === 0 ? 'ミニHP開設' : '＋追加')+'</div>';
+  html += '</button>';
+  
+  html += '</div>';
 
   html += '<div style="height: 24px;"></div>';
   app.innerHTML = html;
@@ -26184,89 +26184,137 @@ window.deleteShop = deleteShop;
 function renderShopPublicView(shop) {
   const tmpl = shop.template || 'A';
   const cd = shop.cardDesign || { color: '#E8A040', pattern: 'solid' };
-  let h = '<div style="background:var(--surface);">';
-  // ヘッダー画像 or デザイン背景
+  const c = cd.color || '#E8A040';
+  // 色を加工
+  const cBg = c + '15'; // 8% 背景用
+  const cBgMid = c + '33'; // 20% 中間
+  let h = '<div style="background:var(--surface);border:2px solid '+c+'66;border-radius:14px;overflow:hidden;">';
+  
+  // ヘッダー画像 or デザイン背景（画像ありでも下に色帯）
   if (shop.heroImage) {
-    h += '<div style="width:100%;height:140px;background:url('+shop.heroImage+') center/cover;"></div>';
+    h += '<div style="width:100%;height:140px;background:url('+shop.heroImage+') center/cover;border-bottom:3px solid '+c+';"></div>';
   } else {
-    // cardDesign の柄＋色を使う
-    h += '<div style="width:100%;height:120px;'+_getCardPatternBg(cd.color, cd.pattern, 80)+'"></div>';
+    // cardDesign の柄＋色（がっつり）
+    h += '<div style="width:100%;height:120px;'+_getCardPatternBg(c, cd.pattern, 80)+'border-bottom:3px solid '+c+';"></div>';
   }
-  // プロフィール部分
-  h += '<div style="padding:14px 16px;">';
+  
+  // プロフィール部分（うっすら柄背景）
+  h += '<div style="padding:14px 16px;'+_getCardPatternBg(c, cd.pattern, 100).replace(/opacity[^;]*;?/g,'').replace('background', 'background-color:'+c+'08;background-image').replace(';', ';opacity:1;')+'">';
   if (shop.iconImage) {
-    h += '<div style="margin-top:-44px;margin-bottom:8px;"><div style="width:64px;height:64px;border-radius:50%;background:url('+shop.iconImage+') center/cover;border:3px solid var(--surface);box-shadow:0 2px 6px rgba(0,0,0,0.1);"></div></div>';
+    h += '<div style="margin-top:-44px;margin-bottom:8px;"><div style="width:64px;height:64px;border-radius:50%;background:url('+shop.iconImage+') center/cover;border:3px solid '+c+';box-shadow:0 2px 6px rgba(0,0,0,0.1);"></div></div>';
   }
   h += '<div style="font-size:18px;font-weight:900;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(shop.name||'(名前なし)')+'</div>';
+  h += '<div style="width:30px;height:3px;background:'+c+';border-radius:2px;margin-bottom:8px;"></div>';
   if (shop.profile) h += '<div style="font-size:11.5px;color:var(--ink-sub);line-height:1.7;margin-bottom:8px;white-space:pre-wrap;">'+escapeHtml(shop.profile)+'</div>';
   if (shop.tags && shop.tags.length) {
     h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">';
-    for (const tg of shop.tags) h += '<span style="background:'+(cd.color||'var(--accent)')+'22;color:'+(cd.color||'var(--accent-deep)')+';padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
-    h += '</div>';
-  }
-  // 連絡先（電話・住所）
-  if (shop.contact) {
-    const c = shop.contact;
-    const baseBtns = [];
-    if (c.phone) baseBtns.push({icon:'call', label:'電話', href:'tel:'+c.phone.replace(/[^\d+]/g,''), color:cd.color||'#E8A040'});
-    if (c.address) baseBtns.push({icon:'map', label:'地図', href:'https://maps.google.com/?q='+encodeURIComponent(c.address), color:cd.color||'#E8A040'});
-    if (baseBtns.length) {
-      h += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">';
-      for (const b of baseBtns) h += '<a href="'+b.href+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:7px 12px;background:white;border:1.5px solid '+b.color+';color:'+b.color+';border-radius:100px;font-size:11px;font-weight:700;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:14px;">'+b.icon+'</span>'+b.label+'</a>';
-      h += '</div>';
-    }
-  }
-  // SNSリンク（カラーアイコン丸ボタン）
-  if (shop.snsLinks && shop.snsLinks.length > 0) {
-    h += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">';
-    for (const link of shop.snsLinks) {
-      if (!link.value) continue;
-      const platform = SNS_PLATFORMS.find(p => p.id === link.platform) || SNS_PLATFORMS.find(p => p.id === 'other');
-      const url = _snsUrl(link.platform, link.value);
-      const lbl = link.customLabel || platform.label;
-      h += '<a href="'+url+'" target="_blank" rel="noopener" title="'+escapeHtml(lbl)+'" style="display:inline-flex;align-items:center;gap:5px;padding:6px 11px;background:'+platform.color+';color:white;border-radius:100px;font-size:10.5px;font-weight:700;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:14px;">'+platform.icon+'</span>'+escapeHtml(lbl)+'</a>';
-    }
+    for (const tg of shop.tags) h += '<span style="background:'+cBgMid+';color:'+c+';padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
     h += '</div>';
   }
   h += '</div>';
   
-  // 投稿一覧（テンプレ別表示）
+  // 投稿一覧の準備
   const posts = (shop.posts || []).slice().sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
   const newsList = posts.filter(p => p.type === 'news');
   const columnList = posts.filter(p => p.type === 'column');
   const workList = posts.filter(p => p.type === 'work');
   
-  // お知らせ（最新1件をハイライト表示）
-  if (newsList.length > 0) {
-    const latest = newsList[0];
-    const t = new Date(latest.timestamp);
-    h += '<div style="margin:0 16px 12px;padding:10px 12px;background:'+(cd.color||'#E8A040')+'15;border-left:3px solid '+(cd.color||'var(--accent)')+';border-radius:8px;">';
-    h += '<div style="font-size:9px;color:'+(cd.color||'var(--accent-deep)')+';font-weight:700;margin-bottom:2px;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">campaign</span>【'+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+'】お知らせ</div>';
-    h += '<div style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(latest.content||'')+'</div>';
-    h += '</div>';
-  }
+  // ===== テンプレ別レンダリング =====
   
-  // 作品/商品（テンプレ別レイアウト）
-  if (workList.length > 0) {
-    h += '<div style="padding:0 16px 12px;">';
-    h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:'+(cd.color||'var(--accent-deep)')+';">'+(tmpl==='F'?'photo_library':tmpl==='B'?'palette':'inventory_2')+'</span>'+(tmpl==='F'?'写真':tmpl==='E'?'作品':shop.type==='bookshelf'?'作品':'商品/作品')+'</div>';
-    
-    if (tmpl === 'F' || tmpl === 'B') {
-      // 写真型・作家型：グリッド
-      h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">';
-      for (const p of workList) {
-        h += '<div style="background:white;border:1px solid var(--line);border-radius:8px;overflow:hidden;">';
-        if (p.photo) h += '<div style="width:100%;aspect-ratio:1;background:url('+p.photo+') center/cover;"></div>';
-        else h += '<div style="width:100%;aspect-ratio:1;'+_getCardPatternBg(cd.color, cd.pattern, 30)+'display:flex;align-items:center;justify-content:center;color:white;"><span class="material-symbols-rounded" style="font-size:32px;opacity:0.6;">image</span></div>';
-        h += '<div style="padding:6px 8px;"><div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.title||'')+'</div>';
-        if (p.price) h += '<div style="font-size:10px;color:'+(cd.color||'var(--accent-deep)')+';font-weight:700;">'+escapeHtml(p.price)+'</div>';
-        h += '</div></div>';
-      }
+  if (tmpl === 'C') {
+    // 配信者型：SNSがでっかいタイル、配信予定を大きく
+    h += _renderShopBigSns(shop, c);
+    // 配信予定（最新お知らせを目立たせる）
+    if (newsList.length > 0) {
+      const latest = newsList[0];
+      const t = new Date(latest.timestamp);
+      h += '<div style="margin:0 16px 14px;padding:14px;background:linear-gradient(135deg,'+c+' 0%,'+c+'CC 100%);color:white;border-radius:14px;box-shadow:0 4px 12px '+c+'44;">';
+      h += '<div style="font-size:10px;font-weight:800;letter-spacing:1px;opacity:0.95;margin-bottom:4px;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">campaign</span>【'+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+'】NEWS</div>';
+      h += '<div style="font-size:14px;font-weight:800;line-height:1.6;">'+escapeHtml(latest.content||'')+'</div>';
       h += '</div>';
-    } else if (tmpl === 'E') {
-      // 文字型：縦リスト・続きを読む
+      // 過去のお知らせもリスト化
+      if (newsList.length > 1) {
+        h += '<div style="padding:0 16px 12px;">';
+        h += '<div style="font-size:11px;font-weight:800;color:'+c+';margin-bottom:6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">history</span>過去のお知らせ</div>';
+        for (const p of newsList.slice(1, 6)) {
+          const tt = new Date(p.timestamp);
+          h += '<div style="background:white;border:1px solid '+c+'33;border-left:3px solid '+c+';border-radius:8px;padding:7px 10px;margin-bottom:4px;font-size:11px;color:var(--ink-sub);"><span style="color:'+c+';font-weight:700;font-size:9px;">'+(tt.getMonth()+1)+'/'+tt.getDate()+'</span> '+escapeHtml(p.content||'')+'</div>';
+        }
+        h += '</div>';
+      }
+    }
+    // 作品（プレイリスト等）
+    if (workList.length > 0) {
+      h += _renderShopSection(c, 'queue_music', '配信メニュー', workList.slice(0, 6).map(p => _renderShopWorkLine(p, c, cd, 'C')).join(''));
+    }
+    // コラム
+    if (columnList.length > 0) {
+      h += _renderShopSection(c, 'article', 'こだわりコラム', columnList.slice(0, 5).map(p => _renderShopColumnCard(p, c)).join(''));
+    }
+  }
+  else if (tmpl === 'A') {
+    // お店型：連絡先デカボタン、住所地図、メニュー
+    h += _renderShopContactBig(shop, c);
+    // お知らせバナー
+    if (newsList.length > 0) {
+      const latest = newsList[0];
+      const t = new Date(latest.timestamp);
+      h += '<div style="margin:0 16px 12px;padding:10px 12px;background:'+cBg+';border-left:3px solid '+c+';border-radius:8px;">';
+      h += '<div style="font-size:9px;color:'+c+';font-weight:800;margin-bottom:2px;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">campaign</span>【'+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+'】お知らせ</div>';
+      h += '<div style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(latest.content||'')+'</div>';
+      h += '</div>';
+    }
+    // メニュー（横並びカード）
+    if (workList.length > 0) {
+      h += _renderShopSection(c, 'restaurant_menu', 'メニュー / 商品', workList.slice(0, 8).map(p => _renderShopWorkLine(p, c, cd, 'A')).join(''));
+    }
+    // コラム
+    if (columnList.length > 0) {
+      h += _renderShopSection(c, 'article', 'お役立ちコラム', columnList.slice(0, 5).map(p => _renderShopColumnCard(p, c)).join(''));
+    }
+  }
+  else if (tmpl === 'B') {
+    // 作家型：作品グリッド大きく、SNSはアイコン
+    h += _renderShopSnsRow(shop, c);
+    if (newsList.length > 0) {
+      const latest = newsList[0];
+      const t = new Date(latest.timestamp);
+      h += '<div style="margin:0 16px 12px;padding:10px 12px;background:'+cBg+';border-left:3px solid '+c+';border-radius:8px;">';
+      h += '<div style="font-size:9px;color:'+c+';font-weight:800;margin-bottom:2px;">【'+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+'】お知らせ</div>';
+      h += '<div style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(latest.content||'')+'</div></div>';
+    }
+    if (workList.length > 0) {
+      h += '<div style="padding:0 16px 12px;">';
+      h += '<div style="font-size:12px;font-weight:800;color:'+c+';margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;">palette</span>作品</div>';
+      h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">';
+      for (const p of workList) h += _renderShopWorkGridCard(p, c, cd);
+      h += '</div></div>';
+    }
+    if (columnList.length > 0) h += _renderShopSection(c, 'article', 'コラム', columnList.slice(0, 5).map(p => _renderShopColumnCard(p, c)).join(''));
+  }
+  else if (tmpl === 'D') {
+    // シンプル型：紹介＋お知らせ＋コラムリスト
+    h += _renderShopContactBig(shop, c);
+    if (newsList.length > 0) {
+      h += _renderShopSection(c, 'campaign', 'お知らせ', newsList.slice(0, 5).map(p => {
+        const t = new Date(p.timestamp);
+        return '<div style="background:white;border:1px solid '+c+'33;border-left:3px solid '+c+';border-radius:8px;padding:8px 10px;margin-bottom:5px;"><div style="font-size:9px;color:'+c+';font-weight:800;">'+(t.getMonth()+1)+'/'+(t.getDate())+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+'</div><div style="font-size:12px;color:var(--ink-dark);font-weight:700;margin-top:2px;">'+escapeHtml(p.content||'')+'</div></div>';
+      }).join(''));
+    }
+    if (columnList.length > 0) h += _renderShopSection(c, 'article', 'コラム', columnList.slice(0, 8).map(p => _renderShopColumnCard(p, c)).join(''));
+  }
+  else if (tmpl === 'E') {
+    // 文字型：作品縦リスト、SNSは控えめ
+    h += _renderShopSnsRow(shop, c);
+    if (newsList.length > 0) {
+      const latest = newsList[0];
+      h += '<div style="margin:0 16px 12px;padding:10px 12px;background:'+cBg+';border-left:3px solid '+c+';border-radius:8px;font-size:11.5px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(latest.content||'')+'</div>';
+    }
+    if (workList.length > 0) {
+      h += '<div style="padding:0 16px 14px;">';
+      h += '<div style="font-size:12px;font-weight:800;color:'+c+';margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;">menu_book</span>作品</div>';
       for (const p of workList) {
-        h += '<div style="background:white;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:8px;">';
+        h += '<div style="background:white;border:1px solid '+c+'33;border-radius:10px;padding:14px;margin-bottom:8px;border-left:3px solid '+c+';">';
         h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:6px;">'+escapeHtml(p.title||'')+'</div>';
         if (p.content) {
           const preview = p.content.length > 100 ? p.content.slice(0, 100)+'…' : p.content;
@@ -26274,35 +26322,19 @@ function renderShopPublicView(shop) {
         }
         h += '</div>';
       }
-    } else {
-      // ショップ型・シンプル型：横並び
-      for (const p of workList.slice(0, 6)) {
-        h += '<div style="display:flex;gap:10px;background:white;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:6px;">';
-        if (p.photo) h += '<div style="width:60px;height:60px;border-radius:8px;background:url('+p.photo+') center/cover;flex-shrink:0;"></div>';
-        h += '<div style="flex:1;min-width:0;">';
-        h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.title||'')+'</div>';
-        if (p.content) h += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+escapeHtml(p.content)+'</div>';
-        if (p.price) h += '<div style="font-size:11px;color:'+(cd.color||'var(--accent-deep)')+';font-weight:700;margin-top:2px;">'+escapeHtml(p.price)+'</div>';
-        h += '</div></div>';
-      }
-    }
-    h += '</div>';
-  }
-  
-  // コラム
-  if (columnList.length > 0) {
-    h += '<div style="padding:0 16px 14px;">';
-    h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:'+(cd.color||'var(--accent-deep)')+';">article</span>コラム</div>';
-    for (const p of columnList.slice(0, 5)) {
-      h += '<div style="background:white;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;">';
-      h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:3px;">'+escapeHtml(p.title||'')+'</div>';
-      if (p.content) {
-        const preview = p.content.length > 80 ? p.content.slice(0, 80)+'…' : p.content;
-        h += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.5;">'+escapeHtml(preview)+'</div>';
-      }
       h += '</div>';
     }
-    h += '</div>';
+  }
+  else if (tmpl === 'F') {
+    // 写真型：グリッド大きく
+    h += _renderShopSnsRow(shop, c);
+    if (workList.length > 0) {
+      h += '<div style="padding:0 16px 14px;">';
+      h += '<div style="font-size:12px;font-weight:800;color:'+c+';margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;">photo_library</span>写真</div>';
+      h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">';
+      for (const p of workList) h += _renderShopWorkGridCard(p, c, cd);
+      h += '</div></div>';
+    }
   }
   
   // 投稿が全くない場合
@@ -26310,6 +26342,109 @@ function renderShopPublicView(shop) {
     h += '<div style="padding:24px 16px 32px;text-align:center;color:var(--ink-light);font-size:11px;">まだ投稿がないよ🌷</div>';
   }
   
+  h += '</div>';
+  return h;
+}
+
+// ===== 共通ヘルパー =====
+function _renderShopSection(color, icon, title, bodyHtml) {
+  let h = '<div style="padding:0 16px 14px;">';
+  h += '<div style="font-size:12px;font-weight:800;color:'+color+';margin-bottom:8px;display:flex;align-items:center;gap:5px;border-bottom:1.5px solid '+color+'33;padding-bottom:4px;"><span class="material-symbols-rounded" style="font-size:14px;">'+icon+'</span>'+title+'</div>';
+  h += bodyHtml;
+  h += '</div>';
+  return h;
+}
+
+function _renderShopContactBig(shop, c) {
+  if (!shop.contact) return '';
+  const contact = shop.contact;
+  const items = [];
+  if (contact.phone) items.push({icon:'call', label:'でんわ', href:'tel:'+contact.phone.replace(/[^\d+]/g,''), text:contact.phone});
+  if (contact.address) items.push({icon:'map', label:'ちず', href:'https://maps.google.com/?q='+encodeURIComponent(contact.address), text:contact.address});
+  // SNSも一部混ぜる（LINE, Insta優先）
+  if (shop.snsLinks) {
+    for (const link of shop.snsLinks.slice(0, 2)) {
+      if (!link.value) continue;
+      const platform = SNS_PLATFORMS.find(p => p.id === link.platform);
+      if (!platform) continue;
+      items.push({icon:platform.icon, label:link.customLabel||platform.label, href:_snsUrl(link.platform, link.value), text:'', isSns:true, snsColor:platform.color});
+    }
+  }
+  if (items.length === 0) return '';
+  let h = '<div style="padding:0 16px 12px;display:grid;grid-template-columns:repeat('+Math.min(items.length, 4)+',1fr);gap:6px;">';
+  for (const it of items) {
+    const bgC = it.isSns ? it.snsColor : c;
+    h += '<a href="'+it.href+'" target="_blank" rel="noopener" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;background:white;border:1.5px solid '+bgC+';border-radius:12px;text-decoration:none;color:'+bgC+';"><span class="material-symbols-rounded" style="font-size:22px;">'+it.icon+'</span><span style="font-size:9.5px;font-weight:800;letter-spacing:0.3px;">'+escapeHtml(it.label)+'</span></a>';
+  }
+  h += '</div>';
+  return h;
+}
+
+function _renderShopBigSns(shop, c) {
+  if (!shop.snsLinks || shop.snsLinks.length === 0) return '';
+  const links = shop.snsLinks.filter(l => l.value);
+  if (links.length === 0) return '';
+  let h = '<div style="padding:0 16px 14px;">';
+  h += '<div style="font-size:11px;font-weight:800;color:'+c+';margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">campaign</span>配信プラットフォーム</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">';
+  for (const link of links) {
+    const platform = SNS_PLATFORMS.find(p => p.id === link.platform) || SNS_PLATFORMS.find(p => p.id === 'other');
+    const url = _snsUrl(link.platform, link.value);
+    const lbl = link.customLabel || platform.label;
+    h += '<a href="'+url+'" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;padding:11px 12px;background:'+platform.color+';color:white;border-radius:12px;text-decoration:none;box-shadow:0 2px 6px '+platform.color+'44;"><span class="material-symbols-rounded" style="font-size:22px;">'+platform.icon+'</span><div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:800;line-height:1;">'+escapeHtml(lbl)+'</div><div style="font-size:9px;opacity:0.85;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@'+escapeHtml((link.value||'').replace(/^@/,''))+'</div></div></a>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
+function _renderShopSnsRow(shop, c) {
+  if (!shop.snsLinks || shop.snsLinks.length === 0) return '';
+  const links = shop.snsLinks.filter(l => l.value);
+  if (links.length === 0) return '';
+  let h = '<div style="padding:0 16px 12px;display:flex;flex-wrap:wrap;gap:6px;">';
+  for (const link of links) {
+    const platform = SNS_PLATFORMS.find(p => p.id === link.platform) || SNS_PLATFORMS.find(p => p.id === 'other');
+    const url = _snsUrl(link.platform, link.value);
+    const lbl = link.customLabel || platform.label;
+    h += '<a href="'+url+'" target="_blank" rel="noopener" title="'+escapeHtml(lbl)+'" style="display:inline-flex;align-items:center;gap:5px;padding:6px 11px;background:'+platform.color+';color:white;border-radius:100px;text-decoration:none;font-size:10.5px;font-weight:700;"><span class="material-symbols-rounded" style="font-size:14px;">'+platform.icon+'</span>'+escapeHtml(lbl)+'</a>';
+  }
+  h += '</div>';
+  return h;
+}
+
+function _renderShopWorkLine(p, c, cd, tmpl) {
+  let h = '<div style="display:flex;gap:10px;background:white;border:1px solid '+c+'33;border-radius:10px;padding:10px;margin-bottom:6px;">';
+  if (p.photo) h += '<div style="width:60px;height:60px;border-radius:8px;background:url('+p.photo+') center/cover;flex-shrink:0;"></div>';
+  else h += '<div style="width:60px;height:60px;border-radius:8px;'+_getCardPatternBg(c, cd.pattern, 30)+'flex-shrink:0;display:flex;align-items:center;justify-content:center;color:white;"><span class="material-symbols-rounded" style="font-size:28px;opacity:0.7;">image</span></div>';
+  h += '<div style="flex:1;min-width:0;">';
+  h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.title||'')+'</div>';
+  if (p.content) h += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+escapeHtml(p.content)+'</div>';
+  if (p.price) h += '<div style="font-size:11px;color:'+c+';font-weight:800;margin-top:2px;">'+escapeHtml(p.price)+'</div>';
+  h += '</div></div>';
+  return h;
+}
+
+function _renderShopWorkGridCard(p, c, cd) {
+  let h = '<div style="background:white;border:1px solid '+c+'33;border-radius:10px;overflow:hidden;">';
+  if (p.photo) h += '<div style="width:100%;aspect-ratio:1;background:url('+p.photo+') center/cover;"></div>';
+  else h += '<div style="width:100%;aspect-ratio:1;'+_getCardPatternBg(c, cd.pattern, 40)+'display:flex;align-items:center;justify-content:center;color:white;"><span class="material-symbols-rounded" style="font-size:36px;opacity:0.6;">image</span></div>';
+  h += '<div style="padding:7px 9px;">';
+  h += '<div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.title||'')+'</div>';
+  if (p.price) h += '<div style="font-size:10px;color:'+c+';font-weight:800;">'+escapeHtml(p.price)+'</div>';
+  h += '</div></div>';
+  return h;
+}
+
+function _renderShopColumnCard(p, c) {
+  const preview = (p.content||'').length > 80 ? (p.content||'').slice(0, 80)+'…' : (p.content||'');
+  let h = '<div style="background:white;border:1px solid '+c+'33;border-radius:10px;padding:10px 12px;margin-bottom:6px;border-left:3px solid '+c+';">';
+  h += '<div style="font-size:12.5px;font-weight:800;color:var(--ink-dark);margin-bottom:3px;">'+escapeHtml(p.title||'')+'</div>';
+  if (preview) h += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.5;white-space:pre-wrap;">'+escapeHtml(preview)+'</div>';
+  if (p.tags && p.tags.length) {
+    h += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;">';
+    for (const tg of p.tags.slice(0, 4)) h += '<span style="font-size:9px;color:'+c+';background:'+c+'15;padding:1px 6px;border-radius:100px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
+    h += '</div>';
+  }
   h += '</div>';
   return h;
 }
