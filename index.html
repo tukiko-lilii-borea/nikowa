@@ -18947,23 +18947,305 @@ function _initOfficeStampLib() {
   saveData();
 }
 
+// ====================================================
+// ===== 汎用スタンプ編集モーダル（PET/KIDS/Office用）=====
+// ====================================================
+// source: 'office' | 'pet' | 'kids'
+// PET/KIDSは _getCareStore() からlib取得
+
+const _STAMP_EDIT_ICONS = ['star','favorite','check_circle','restaurant','water_drop','local_cafe','wc','bathtub','dentistry','bed','wb_sunny','checkroom','cleaning_services','edit','menu_book','school','quiz','language','calculate','science','music_note','sports_soccer','sports_basketball','park','tv','sports_esports','phone_iphone','palette','extension','group','sentiment_very_satisfied','sentiment_satisfied','sentiment_dissatisfied','thumb_up','celebration','directions_car','shopping_cart','restaurant_menu','beach_access','medical_services','pets','child_care','spa','self_improvement','monitor_weight','medication','fitness_center','directions_run','directions_walk','flight','park','psychology','savings','credit_card','work','laptop','description','call','mail','groups','task','notifications','flag','live_tv','mic','brush','volunteer_activism','auto_awesome','local_florist','eco','local_drink','icecream','cake','egg','store','smartphone','nightlight','approval','campaign','article','inventory_2'];
+
+function _getStampLibForSource(source) {
+  if (source === 'office') {
+    _initOfficeStampLib();
+    return data.officeStampLib;
+  }
+  // pet / kids（モード判定はcurrentMode）
+  if (source === 'pet' || source === 'kids') {
+    if (typeof _getCareStore !== 'function') return null;
+    if (typeof _initPetCareData === 'function') _initPetCareData();
+    if (typeof _getPetStampLib === 'function') _getPetStampLib(); // 初期化
+    return _getCareStore().stampLib;
+  }
+  return null;
+}
+
+function _refreshAfterStampManagerEdit(source) {
+  saveData();
+  _suppressScrollTop = true;
+  // モーダル再描画
+  _renderUnifiedStampManager(source);
+  // 背景の画面も再描画
+  setTimeout(() => render(), 50);
+}
+
+function openUnifiedStampManager(source) {
+  const lib = _getStampLibForSource(source);
+  if (!lib) return;
+  if (!window._unifiedStampMgr) window._unifiedStampMgr = {};
+  if (!window._unifiedStampMgr[source]) {
+    const cats = Object.keys(lib);
+    window._unifiedStampMgr[source] = { selCat: cats[0] || '' };
+  }
+  _renderUnifiedStampManager(source);
+}
+window.openUnifiedStampManager = openUnifiedStampManager;
+
+function _renderUnifiedStampManager(source) {
+  const ex = document.getElementById('unifiedStampMgrModal');
+  if (ex) ex.remove();
+  const lib = _getStampLibForSource(source);
+  if (!lib) return;
+  const state = window._unifiedStampMgr[source];
+  const cats = Object.keys(lib);
+  if (!cats.includes(state.selCat)) state.selCat = cats[0] || '';
+  const selCat = state.selCat;
+  const stamps = lib[selCat] || [];
+  
+  const sourceLabels = { office: 'Office', pet: 'PET', kids: 'KIDS' };
+  const sourceLabel = sourceLabels[source] || '';
+  
+  let h = '<div id="unifiedStampMgrModal" onclick="if(event.target===this)closeUnifiedStampManager()" style="position:fixed;inset:0;z-index:2200;background:rgba(45,74,60,0.55);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);padding-bottom:calc(75px + env(safe-area-inset-bottom));box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">';
+  
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">tune</span>';
+  h += '<div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">'+sourceLabel+' スタンプ管理</div>';
+  h += '<button onclick="closeUnifiedStampManager()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '</div>';
+  
+  // カテゴリ選択
+  h += '<div style="padding:10px 14px 6px;display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">';
+  for (const cat of cats) {
+    const _act = cat === selCat;
+    h += '<button onclick="_unifiedStampMgrSelCat(\''+source+'\',\''+escapeHtml(cat).replace(/\'/g,"\\\\'")+'\')" style="flex-shrink:0;padding:6px 12px;border-radius:100px;border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'transparent')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+  }
+  h += '</div>';
+  
+  // ボディ：スタンプ一覧（並び替え/編集/非表示/削除）
+  h += '<div style="flex:1;overflow-y:auto;padding:8px 14px 14px;">';
+  if (stamps.length === 0) {
+    h += '<div style="padding:24px;text-align:center;color:var(--ink-light);font-size:11px;">このカテゴリにはまだスタンプがないよ</div>';
+  } else {
+    for (let i = 0; i < stamps.length; i++) {
+      const s = stamps[i];
+      const isHidden = !!s.hidden;
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:'+(isHidden?'var(--surface-warm)':'white')+';border:1px solid var(--line);border-radius:10px;margin-bottom:5px;'+(isHidden?'opacity:0.55;':'')+'">';
+      // アイコン
+      h += '<span style="width:34px;height:34px;border-radius:9px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+renderStampIcon(s.icon||'star','font-size:20px;color:var(--accent-deep);')+'</span>';
+      // 名前
+      h += '<div style="flex:1;min-width:0;font-size:12px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.name||'')+'</div>';
+      // 並び替え（上）
+      if (i > 0) h += '<button onclick="_unifiedStampMgrMove(\''+source+'\','+i+',-1)" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:3px;"><span class="material-symbols-rounded" style="font-size:18px;">arrow_upward</span></button>';
+      else h += '<div style="width:24px;"></div>';
+      // 並び替え（下）
+      if (i < stamps.length - 1) h += '<button onclick="_unifiedStampMgrMove(\''+source+'\','+i+',1)" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:3px;"><span class="material-symbols-rounded" style="font-size:18px;">arrow_downward</span></button>';
+      else h += '<div style="width:24px;"></div>';
+      // 非表示
+      h += '<button onclick="_unifiedStampMgrToggleHide(\''+source+'\','+i+')" title="'+(isHidden?'表示':'非表示')+'" style="background:none;border:none;cursor:pointer;color:'+(isHidden?'var(--ink-light)':'var(--ink-sub)')+';padding:3px;"><span class="material-symbols-rounded" style="font-size:18px;">'+(isHidden?'visibility_off':'visibility')+'</span></button>';
+      // 編集
+      h += '<button onclick="_unifiedStampMgrEdit(\''+source+'\','+i+')" title="編集" style="background:none;border:none;cursor:pointer;color:var(--accent-deep);padding:3px;"><span class="material-symbols-rounded" style="font-size:18px;">edit</span></button>';
+      // 削除
+      h += '<button onclick="_unifiedStampMgrDelete(\''+source+'\','+i+')" title="削除" style="background:none;border:none;cursor:pointer;color:#D9534F;padding:3px;"><span class="material-symbols-rounded" style="font-size:18px;">delete</span></button>';
+      h += '</div>';
+    }
+  }
+  
+  // 追加ボタン
+  h += '<button onclick="_unifiedStampMgrAdd(\''+source+'\')" style="width:100%;padding:10px;margin-top:6px;background:var(--accent-bg);border:1.5px dashed var(--accent);color:var(--accent-deep);border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>このカテゴリにスタンプを追加</button>';
+  
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+
+function closeUnifiedStampManager() {
+  const el = document.getElementById('unifiedStampMgrModal');
+  if (el) el.remove();
+}
+window.closeUnifiedStampManager = closeUnifiedStampManager;
+
+function _unifiedStampMgrSelCat(source, cat) {
+  if (!window._unifiedStampMgr) window._unifiedStampMgr = {};
+  if (!window._unifiedStampMgr[source]) window._unifiedStampMgr[source] = {};
+  window._unifiedStampMgr[source].selCat = cat;
+  _renderUnifiedStampManager(source);
+}
+window._unifiedStampMgrSelCat = _unifiedStampMgrSelCat;
+
+function _unifiedStampMgrMove(source, idx, delta) {
+  const lib = _getStampLibForSource(source);
+  if (!lib) return;
+  const cat = window._unifiedStampMgr[source].selCat;
+  const arr = lib[cat];
+  if (!arr) return;
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  const tmp = arr[idx]; arr[idx] = arr[newIdx]; arr[newIdx] = tmp;
+  _refreshAfterStampManagerEdit(source);
+}
+window._unifiedStampMgrMove = _unifiedStampMgrMove;
+
+function _unifiedStampMgrToggleHide(source, idx) {
+  const lib = _getStampLibForSource(source);
+  if (!lib) return;
+  const cat = window._unifiedStampMgr[source].selCat;
+  const arr = lib[cat];
+  if (!arr || !arr[idx]) return;
+  arr[idx].hidden = !arr[idx].hidden;
+  _refreshAfterStampManagerEdit(source);
+}
+window._unifiedStampMgrToggleHide = _unifiedStampMgrToggleHide;
+
+function _unifiedStampMgrDelete(source, idx) {
+  const lib = _getStampLibForSource(source);
+  if (!lib) return;
+  const cat = window._unifiedStampMgr[source].selCat;
+  const arr = lib[cat];
+  if (!arr || !arr[idx]) return;
+  if (!confirm('「'+(arr[idx].name||'')+'」を削除しますか？')) return;
+  arr.splice(idx, 1);
+  _refreshAfterStampManagerEdit(source);
+  showToast('削除したよ');
+}
+window._unifiedStampMgrDelete = _unifiedStampMgrDelete;
+
+function _unifiedStampMgrEdit(source, idx) {
+  const lib = _getStampLibForSource(source);
+  if (!lib) return;
+  const cat = window._unifiedStampMgr[source].selCat;
+  const arr = lib[cat];
+  if (!arr || !arr[idx]) return;
+  _openStampIconNamePicker(source, cat, idx, arr[idx]);
+}
+window._unifiedStampMgrEdit = _unifiedStampMgrEdit;
+
+function _unifiedStampMgrAdd(source) {
+  const cat = window._unifiedStampMgr[source].selCat;
+  _openStampIconNamePicker(source, cat, null, { icon:'star', name:'' });
+}
+window._unifiedStampMgrAdd = _unifiedStampMgrAdd;
+
+function _openStampIconNamePicker(source, cat, idx, def) {
+  const ex = document.getElementById('stampIconPicker');
+  if (ex) ex.remove();
+  window._stampIconPickerSel = def.icon || 'star';
+  let h = '<div id="stampIconPicker" onclick="if(event.target===this)document.getElementById(\'stampIconPicker\').remove()" style="position:fixed;inset:0;z-index:2300;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:380px;background:var(--surface);border-radius:18px;padding:18px;max-height:80vh;display:flex;flex-direction:column;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">edit</span><div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+(idx===null?'スタンプ追加':'スタンプ編集')+'</div><button onclick="document.getElementById(\'stampIconPicker\').remove()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button></div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">名前</label>';
+  h += '<input type="text" id="sipName" value="'+escapeHtml(def.name||'')+'" maxlength="20" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);margin-bottom:12px;">';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">アイコン</label>';
+  h += '<div id="sipIconGrid" style="flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(6,1fr);gap:4px;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--surface-warm);">';
+  for (const ic of _STAMP_EDIT_ICONS) {
+    const isSel = ic === (def.icon||'star');
+    h += '<button data-ic="'+ic+'" onclick="_sipPickIcon(this,\''+ic+'\')" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:'+(isSel?'var(--accent-bg)':'white')+';border:1.5px solid '+(isSel?'var(--accent)':'transparent')+';border-radius:8px;cursor:pointer;color:var(--accent-deep);"><span class="material-symbols-rounded" style="font-size:20px;">'+ic+'</span></button>';
+  }
+  h += '</div>';
+  h += '<div style="display:flex;gap:8px;margin-top:12px;">';
+  h += '<button onclick="document.getElementById(\'stampIconPicker\').remove()" style="flex:1;padding:10px;background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="_sipSave(\''+source+'\',\''+escapeHtml(cat).replace(/\'/g,"\\\\'")+'\','+(idx===null?'null':idx)+')" style="flex:1;padding:10px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => document.getElementById('sipName')?.focus(), 100);
+}
+
+function _sipPickIcon(btn, ic) {
+  window._stampIconPickerSel = ic;
+  // 全ボタンのスタイルリセット
+  const grid = document.getElementById('sipIconGrid');
+  if (grid) {
+    grid.querySelectorAll('button').forEach(b => {
+      b.style.background = 'white';
+      b.style.borderColor = 'transparent';
+    });
+  }
+  btn.style.background = 'var(--accent-bg)';
+  btn.style.borderColor = 'var(--accent)';
+}
+window._sipPickIcon = _sipPickIcon;
+
+function _sipSave(source, cat, idx) {
+  const name = document.getElementById('sipName').value.trim();
+  if (!name) { showToast('名前を入れてね'); return; }
+  const icon = window._stampIconPickerSel || 'star';
+  const lib = _getStampLibForSource(source);
+  if (!lib) return;
+  if (!lib[cat]) lib[cat] = [];
+  if (idx === null || idx === 'null') {
+    lib[cat].push({ icon, name });
+  } else {
+    lib[cat][idx].icon = icon;
+    lib[cat][idx].name = name;
+  }
+  document.getElementById('stampIconPicker')?.remove();
+  _refreshAfterStampManagerEdit(source);
+  showToast('🌷 保存したよ');
+}
+window._sipSave = _sipSave;
+
+// ====================================================
+// ===== 汎用スタンプ編集モーダルここまで =====
+// ====================================================
+
 function renderOfficeStampTab() {
   _initOfficeStampLib();
   if (!data.officeStampHistory) data.officeStampHistory = [];
+  if (!data.officeStampSelCat) data.officeStampSelCat = OFFICE_STAMP_CATS[0];
+  // 削除されたカテゴリが選ばれてたら最初に戻す
+  if (!data.officeStampLib[data.officeStampSelCat]) data.officeStampSelCat = OFFICE_STAMP_CATS[0];
+  const selCat = data.officeStampSelCat;
   
   let h = '<div id="officeStampWrap" style="padding:8px 12px 12px;">';
   
-  // 日付 + STAMP + 編集
-  const _ofcDateLabel = _formatStampActiveDate('office');
-  const _ofcIsToday = _isActiveStampDateToday('office');
-  h += '<div style="display:flex;gap:8px;margin-bottom:10px;align-items:stretch;">';
-  h += '<button onclick="openStampDatePicker(\'office\')" style="padding:11px 12px;background:'+(_ofcIsToday?'var(--surface)':'var(--accent-bg)')+';color:'+(_ofcIsToday?'var(--ink-dark)':'var(--accent-deep)')+';border:1px solid '+(_ofcIsToday?'var(--line)':'var(--accent)')+';border-radius:100px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;letter-spacing:0.3px;"><span class=\"material-symbols-rounded\" style=\"font-size:16px;\">'+(_ofcIsToday?'today':'event')+'</span>'+escapeHtml(_ofcDateLabel)+'</button>';
-  h += '<button onclick="openOfficeStampPickerModal()" style="flex:1;padding:13px 16px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,0.15);"><span class=\"material-symbols-rounded\" style=\"font-size:18px;\">approval</span>STAMP</button>';
-  h += '<button onclick="openOfficeStampEditModal()" style="width:46px;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:100px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class=\"material-symbols-rounded\" style=\"font-size:18px;\">edit</span></button>';
+  // ===== 編集ボタン（汎用管理モーダル）=====
+  h += '<div style="padding:4px 0 8px;display:flex;justify-content:flex-end;">';
+  h += '<button onclick="openUnifiedStampManager(\'office\')" title="スタンプ管理" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:6px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span>編集</button>';
   h += '</div>';
   
   // ピン留め
   h += '<div style="margin:0 -12px;">'+renderPinnedStampsRow('office')+'</div>';
+  
+  // ===== カテゴリ選択タブ（横スクロール）=====
+  const _ofcCats = Object.keys(data.officeStampLib).filter(c => OFFICE_STAMP_CATS.includes(c) || (data.officeStampLib[c]||[]).length > 0);
+  if (_ofcCats.length > 0) {
+    h += '<div style="margin:8px 0 8px;display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;">';
+    for (const cat of _ofcCats) {
+      const _act = cat === selCat;
+      h += '<button onclick="setOfficeStampCat(\''+escapeHtml(cat).replace(/\'/g,"\\\\'")+'\')" style="flex-shrink:0;padding:6px 12px;border-radius:100px;border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'transparent')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+    }
+    h += '</div>';
+    
+    // ===== スタンプグリッド（2行×横スクロール）=====
+    const _ofcCatStamps = (data.officeStampLib[selCat] || []).filter(s => !s.hidden);
+    const _ofcPinnedSet = new Set((data.pinnedOfficeStamps || []).map(p => (p.icon||'')+'|'+(p.name||'')));
+    
+    h += '<div style="margin:0 0 14px;display:grid;grid-auto-flow:column;grid-template-rows:1fr 1fr;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:8px;">';
+    for (const s of _ofcCatStamps) {
+      const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
+      const _isPin = _ofcPinnedSet.has((s.icon||'')+'|'+(s.name||''));
+      const _isValueType = s.type === 'number' || s.type === 'text';
+      h += '<button onclick="tapOfficeStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
+      // 右上ピン留めトグル
+      h += '<span onclick="event.stopPropagation();toggleOfficeStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
+      // 値入力型のミニバッジ
+      if (_isValueType) {
+        h += '<span style="position:absolute;top:3px;left:3px;font-size:8px;background:var(--accent);color:white;padding:1px 4px;border-radius:6px;font-weight:700;">'+(s.unit||'入力')+'</span>';
+      }
+      h += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:22px;color:var(--accent-deep);')+'</span>';
+      h += '<span style="font-size:10.5px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+      h += '</button>';
+    }
+    // ＋追加ボタン（点線□、各カテゴリ最後）
+    const _safeCat = escapeHtml(selCat).replace(/\'/g,"\\\\'");
+    h += '<button onclick="addCustomOfficeStamp(\''+_safeCat+'\')" style="flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;background:transparent;border:1.5px dashed var(--accent);border-radius:12px;cursor:pointer;font-family:inherit;color:var(--accent-deep);">';
+    h += '<span style="width:34px;height:34px;border-radius:10px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">add</span></span>';
+    h += '<span style="font-size:10.5px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;">追加</span>';
+    h += '</button>';
+    h += '</div>';
+  }
   
   // 今日の記録カード
   h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
@@ -18987,6 +19269,42 @@ function renderOfficeStampTab() {
   return h;
 }
 window.renderOfficeStampTab = renderOfficeStampTab;
+
+// カテゴリ切替
+function setOfficeStampCat(cat) {
+  data.officeStampSelCat = cat;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.setOfficeStampCat = setOfficeStampCat;
+
+// ピン留めトグル（Office用）
+function toggleOfficeStampPin(icon, name, ev) {
+  if (ev) ev.stopPropagation();
+  if (!data.pinnedOfficeStamps) data.pinnedOfficeStamps = [];
+  const key = icon + '|' + name;
+  const idx = data.pinnedOfficeStamps.findIndex(p => (p.icon + '|' + p.name) === key);
+  if (idx >= 0) {
+    data.pinnedOfficeStamps.splice(idx, 1);
+  } else {
+    if (data.pinnedOfficeStamps.length >= 10) { showToast('ピン留めは10個までやで'); return; }
+    data.pinnedOfficeStamps.unshift({ icon, name });
+  }
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.toggleOfficeStampPin = toggleOfficeStampPin;
+
+// 新規カスタムスタンプ追加（Office用：アイコン選べる）
+function addCustomOfficeStamp(cat) {
+  if (!window._unifiedStampMgr) window._unifiedStampMgr = {};
+  if (!window._unifiedStampMgr['office']) window._unifiedStampMgr['office'] = {};
+  window._unifiedStampMgr['office'].selCat = cat;
+  _openStampIconNamePicker('office', cat, null, { icon:'star', name:'' });
+}
+window.addCustomOfficeStamp = addCustomOfficeStamp;
 
 // ===== Office スタンプピッカーモーダル =====
 function openOfficeStampPickerModal() {
@@ -22696,6 +23014,12 @@ function renderPetStampUI(pet) {
   
   let h = '<div style="padding:10px 12px 16px;">';
   
+  // ===== 編集ボタン（右上、汎用管理モーダル）=====
+  const _editSource = (currentMode === 'kids') ? 'kids' : 'pet';
+  h += '<div style="display:flex;justify-content:flex-end;margin-bottom:6px;">';
+  h += '<button onclick="openUnifiedStampManager(\''+_editSource+'\')" title="スタンプ管理" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:5px 11px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">edit</span>編集</button>';
+  h += '</div>';
+  
   // ピン留めセクション
   h += '<div style="margin-bottom:12px;">';
   h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;color:#E89A4A;">push_pin</span>ピン留め <span style="font-weight:500;color:var(--ink-light);">('+pinned.length+'/10)</span></div>';
@@ -22734,6 +23058,13 @@ function renderPetStampUI(pet) {
     h += '<span style="font-size:10.5px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
     h += '</button>';
   }
+  // ＋追加ボタン（点線□）
+  const _petAddSource = (currentMode === 'kids') ? 'kids' : 'pet';
+  const _safeSelCat = escapeHtml(selCat||'').replace(/\'/g,"\\\\'");
+  h += '<button onclick="(function(){if(!window._unifiedStampMgr)window._unifiedStampMgr={};if(!window._unifiedStampMgr[\''+_petAddSource+'\'])window._unifiedStampMgr[\''+_petAddSource+'\']={};window._unifiedStampMgr[\''+_petAddSource+'\'].selCat=\''+_safeSelCat+'\';_openStampIconNamePicker(\''+_petAddSource+'\',\''+_safeSelCat+'\',null,{icon:\'star\',name:\'\'});})();" style="flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;background:transparent;border:1.5px dashed var(--accent);border-radius:12px;cursor:pointer;font-family:inherit;color:var(--accent-deep);">';
+  h += '<span style="width:34px;height:34px;border-radius:10px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">add</span></span>';
+  h += '<span style="font-size:10.5px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;">追加</span>';
+  h += '</button>';
   h += '</div>';
   
   // 今日のきろく
@@ -25845,12 +26176,18 @@ function pickShopImage(shopId, fld) {
       if (!shop) return;
       shop[fld] = b64;
       shop.updatedAt = Date.now();
-      saveData();
-      showToast('🌷 画像を更新したよ');
+      try {
+        saveData();
+        showToast('🌷 画像を更新したよ');
+      } catch(err) {
+        showToast('容量がいっぱいかも🌷 もっと小さい画像を選んでね');
+      }
       renderShopManager();
     };
-    const max = fld === 'heroImage' ? 1200 : 600;
-    if (typeof resizeImageToBase64 === 'function') resizeImageToBase64(file, max, 0.85).then(proc);
+    // 容量を抑えるため小さめに圧縮
+    const max = fld === 'heroImage' ? 800 : 400;
+    const quality = 0.75;
+    if (typeof resizeImageToBase64 === 'function') resizeImageToBase64(file, max, quality).then(proc);
     else { const r = new FileReader(); r.onload = ev => proc(ev.target.result); r.readAsDataURL(file); }
   };
   inp.click();
@@ -26187,23 +26524,29 @@ function renderShopPublicView(shop) {
   // 色を加工
   const cBg = c + '15'; // 8% 背景用
   const cBgMid = c + '33'; // 20% 中間
-  let h = '<div style="background:var(--surface);border:2px solid '+c+'66;border-radius:14px;overflow:hidden;">';
+  // ===== 外側：柄が見える枠 =====
+  let h = '<div style="'+_getCardPatternBg(c, cd.pattern, 60)+'padding:14px;border-radius:18px;">';
+  // ===== 内側：白カード =====
+  h += '<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">';
   
-  // ヘッダー画像 or デザイン背景（画像ありでも下に色帯）
+  // ヘッダー画像（常に表示・なければ白背景＋色付きアイコン）
   if (shop.heroImage) {
-    h += '<div style="width:100%;height:140px;background:url('+shop.heroImage+') center/cover;border-bottom:3px solid '+c+';"></div>';
+    h += '<div style="width:100%;height:160px;background:url('+shop.heroImage+') center/cover;border-bottom:3px solid '+c+';"></div>';
   } else {
-    // cardDesign の柄＋色（がっつり）
-    h += '<div style="width:100%;height:120px;'+_getCardPatternBg(c, cd.pattern, 80)+'border-bottom:3px solid '+c+';"></div>';
+    const _typeIcon = shop.type === 'bookshelf' ? 'menu_book' : 'storefront';
+    h += '<div style="width:100%;height:130px;background:white;border-bottom:3px solid '+c+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:48px;color:'+c+';">'+_typeIcon+'</span>';
+    h += '<div style="font-size:10px;color:'+c+';font-weight:700;opacity:0.7;">写真を追加してね</div>';
+    h += '</div>';
   }
   
-  // プロフィール部分（うっすら柄背景）
-  h += '<div style="padding:14px 16px;'+_getCardPatternBg(c, cd.pattern, 100).replace(/opacity[^;]*;?/g,'').replace('background', 'background-color:'+c+'08;background-image').replace(';', ';opacity:1;')+'">';
+  // プロフィール部分（白背景・柄なし）
+  h += '<div style="padding:14px 16px;background:white;">';
   if (shop.iconImage) {
     h += '<div style="margin-top:-44px;margin-bottom:8px;"><div style="width:64px;height:64px;border-radius:50%;background:url('+shop.iconImage+') center/cover;border:3px solid '+c+';box-shadow:0 2px 6px rgba(0,0,0,0.1);"></div></div>';
   }
   h += '<div style="font-size:18px;font-weight:900;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(shop.name||'(名前なし)')+'</div>';
-  h += '<div style="width:30px;height:3px;background:'+c+';border-radius:2px;margin-bottom:8px;"></div>';
+  h += '<div style="height:3px;background:'+c+';border-radius:2px;margin:0 -16px 12px;"></div>';
   if (shop.profile) h += '<div style="font-size:11.5px;color:var(--ink-sub);line-height:1.7;margin-bottom:8px;white-space:pre-wrap;">'+escapeHtml(shop.profile)+'</div>';
   if (shop.tags && shop.tags.length) {
     h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">';
@@ -26341,7 +26684,8 @@ function renderShopPublicView(shop) {
     h += '<div style="padding:24px 16px 32px;text-align:center;color:var(--ink-light);font-size:11px;">まだ投稿がないよ🌷</div>';
   }
   
-  h += '</div>';
+  h += '</div>'; // 白カード閉じ
+  h += '</div>'; // 外側柄枠閉じ
   return h;
 }
 
