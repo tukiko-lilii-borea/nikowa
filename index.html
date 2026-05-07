@@ -4432,6 +4432,40 @@
 </div>
 
 <!-- Nestグッズ（おうち備品）モーダル -->
+<!-- PET/KIDS用 Goods モーダル -->
+<div class="modal" id="petGoodsModal">
+  <div class="modal-content">
+    <h3 class="modal-title" id="petGoodsTitle">ペット用品</h3>
+    <p class="modal-sub" id="petGoodsSub">いつものもの🐾</p>
+    
+    <!-- 写真エリア -->
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:5px;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);">photo_camera</span>写真（任意）</div>
+      <button type="button" onclick="pickPetGoodsPhoto()" id="petGoodsPhotoBtn" style="width:100%;height:120px;border:1.5px dashed var(--line);border-radius:12px;background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background-size:cover;background-position:center;">
+        <span class="material-symbols-rounded" id="petGoodsPhotoIcon" style="font-size:28px;">add_photo_alternate</span>
+        <span id="petGoodsPhotoLabel">タップして写真を追加</span>
+      </button>
+      <button type="button" onclick="clearPetGoodsPhoto()" id="petGoodsPhotoClearBtn" style="display:none;margin-top:6px;width:100%;background:none;border:none;color:var(--ink-light);font-size:10.5px;font-family:inherit;cursor:pointer;">写真を削除</button>
+    </div>
+    
+    <input type="text" id="petGoodsNameInput" placeholder="名前（例：ロイヤルカナン パピー）" maxlength="40" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
+    
+    <input type="text" id="petGoodsBrandInput" placeholder="ブランド・銘柄（任意）" maxlength="30" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
+    
+    <select id="petGoodsCategoryInput" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
+      <!-- カテゴリはJSから動的に挿入 -->
+    </select>
+    
+    <textarea id="petGoodsNoteInput" placeholder="メモ（買う場所、量、備考など）" style="width:100%;min-height:70px;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
+    
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closePetGoodsModal()" style="flex:1;">キャンセル</button>
+      <button class="btn btn-primary" onclick="savePetGoodsFromModal()" style="flex:1;">💾 保存</button>
+    </div>
+    <button onclick="deletePetGoods()" id="petGoodsDeleteBtn" style="margin-top:10px;width:100%;background:none;border:none;color:var(--ink-light);font-size:11.5px;font-family:inherit;cursor:pointer;text-decoration:underline;display:none;">この用品を削除する</button>
+  </div>
+</div>
+
 <div class="modal" id="nestGoodsModal">
   <div class="modal-content">
     <h3 class="modal-title" id="nestGoodsTitle">おうち備品</h3>
@@ -4443,6 +4477,16 @@
     </div>
     
     <div id="nestGoodsIconGrid" style="display:none;flex-wrap:wrap;gap:4px;padding:8px;background:var(--surface-warm);border-radius:10px;margin-bottom:10px;max-height:160px;overflow-y:auto;"></div>
+    
+    <!-- 写真エリア -->
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:5px;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);">photo_camera</span>写真（任意）</div>
+      <button type="button" onclick="pickNestGoodsPhoto()" id="nestGoodsPhotoBtn" style="width:100%;height:120px;border:1.5px dashed var(--line);border-radius:12px;background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background-size:cover;background-position:center;">
+        <span class="material-symbols-rounded" id="nestGoodsPhotoIcon" style="font-size:28px;">add_photo_alternate</span>
+        <span id="nestGoodsPhotoLabel">タップして写真を追加</span>
+      </button>
+      <button type="button" onclick="clearNestGoodsPhoto()" id="nestGoodsPhotoClearBtn" style="display:none;margin-top:6px;width:100%;background:none;border:none;color:var(--ink-light);font-size:10.5px;font-family:inherit;cursor:pointer;">写真を削除</button>
+    </div>
     
     <input type="text" id="nestGoodsNameInput" placeholder="名前（例：シャンプー）" maxlength="30" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;margin-bottom:8px;">
     
@@ -11098,60 +11142,234 @@ function openGlobalSearch() {
   window._searchMode = 'all';
   window._searchCollapsed = {}; // セクションごとの折りたたみ状態
   window._globalSearchOpen = true; // Backボタン連動用
+  if (!window._searchTab) window._searchTab = 'quick'; // 'quick' | 'find'
   
   // bodyに検索モード中のクラス付与（Backボタン表示制御）
   document.body.classList.add('global-search-active');
   
   let h = '<div id="globalSearchModal" style="position:fixed;left:0;right:0;top:0;bottom:calc(60px + env(safe-area-inset-bottom));z-index:1400;background:var(--surface);display:flex;flex-direction:column;font-family:inherit;max-width:480px;margin:0 auto;border-bottom:1px solid var(--line);">';
   
-  // ヘッダー：検索バー
-  h += '<div style="padding:12px 14px 8px;border-bottom:1px solid var(--line);background:var(--surface);box-sizing:border-box;">';
-  h += '<div style="display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;">';
+  // ヘッダー
+  h += '<div style="padding:10px 14px 0;border-bottom:1px solid var(--line);background:var(--surface);box-sizing:border-box;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;margin-bottom:10px;">';
   h += '<button onclick="closeGlobalSearch()" style="background:none;border:none;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--ink-dark);flex-shrink:0;padding:0;"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
-  h += '<div style="flex:1;display:flex;align-items:center;gap:6px;background:var(--surface-warm);border:1.5px solid var(--accent);border-radius:100px;padding:6px 12px;min-width:0;">';
-  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);flex-shrink:0;">search</span>';
-  h += '<input id="globalSearchInput" type="search" placeholder="探したい言葉を入力..." oninput="performGlobalSearch()" autocomplete="off" style="flex:1;background:transparent;border:none;outline:none;font-size:14px;font-family:inherit;color:var(--ink-dark);min-width:0;width:100%;padding:0;" />';
-  h += '<button onclick="document.getElementById(\'globalSearchInput\').value=\'\';performGlobalSearch();" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;"><span class="material-symbols-rounded" style="font-size:16px;">cancel</span></button>';
-  h += '</div>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">検索</div>';
   h += '</div>';
   
-  // モードフィルタータブ（横スクロール）
-  h += '<div id="searchModeTabs" style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-top:10px;padding:0 2px;">';
-  for (const m of SEARCH_MODES) {
-    const isAct = m.id === 'all';
-    h += '<button data-mode="'+m.id+'" onclick="switchSearchMode(\''+m.id+'\')" style="flex-shrink:0;padding:6px 14px;border-radius:100px;border:1.5px solid '+(isAct?'var(--accent)':'var(--line)')+';background:'+(isAct?'var(--accent)':'var(--surface)')+';color:'+(isAct?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">';
-    h += '<span class="material-symbols-rounded" style="font-size:14px;">'+m.icon+'</span>';
-    h += m.label+'</button>';
-  }
+  // ───── クイック / 探す のタブ ─────
+  const tabQuickAct = window._searchTab === 'quick';
+  h += '<div style="display:flex;gap:6px;padding:0 0 8px;">';
+  h += '<button onclick="switchSearchTab(\'quick\')" style="flex:1;padding:9px;border-radius:100px;border:1.5px solid '+(tabQuickAct?'var(--accent)':'var(--line)')+';background:'+(tabQuickAct?'var(--accent-bg)':'var(--surface)')+';color:'+(tabQuickAct?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:15px;">bolt</span>クイック</button>';
+  h += '<button onclick="switchSearchTab(\'find\')" style="flex:1;padding:9px;border-radius:100px;border:1.5px solid '+(!tabQuickAct?'var(--accent)':'var(--line)')+';background:'+(!tabQuickAct?'var(--accent-bg)':'var(--surface)')+';color:'+(!tabQuickAct?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:15px;">search</span>探す</button>';
   h += '</div>';
-  h += '<style>#searchModeTabs::-webkit-scrollbar{display:none;}</style>';
+  
+  // ───── 探す タブの時だけ、検索バー＋モードフィルター ─────
+  if (window._searchTab === 'find') {
+    // 検索バー
+    h += '<div style="display:flex;align-items:center;gap:6px;background:var(--surface-warm);border:1.5px solid var(--accent);border-radius:100px;padding:6px 12px;min-width:0;margin-bottom:8px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);flex-shrink:0;">search</span>';
+    h += '<input id="globalSearchInput" type="search" placeholder="探したい言葉を入力..." oninput="performGlobalSearch()" autocomplete="off" style="flex:1;background:transparent;border:none;outline:none;font-size:14px;font-family:inherit;color:var(--ink-dark);min-width:0;width:100%;padding:0;" />';
+    h += '<button onclick="document.getElementById(\'globalSearchInput\').value=\'\';performGlobalSearch();" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;"><span class="material-symbols-rounded" style="font-size:16px;">cancel</span></button>';
+    h += '</div>';
+    
+    // モードフィルター
+    h += '<div id="searchModeTabs" style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 2px 8px;">';
+    for (const m of SEARCH_MODES) {
+      const isAct = m.id === 'all';
+      h += '<button data-mode="'+m.id+'" onclick="switchSearchMode(\''+m.id+'\')" style="flex-shrink:0;padding:6px 14px;border-radius:100px;border:1.5px solid '+(isAct?'var(--accent)':'var(--line)')+';background:'+(isAct?'var(--accent)':'var(--surface)')+';color:'+(isAct?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:14px;">'+m.icon+'</span>';
+      h += m.label+'</button>';
+    }
+    h += '</div>';
+    h += '<style>#searchModeTabs::-webkit-scrollbar{display:none;}</style>';
+  }
   h += '</div>';
   
   // 結果エリア
   h += '<div id="globalSearchResults" style="flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch;">';
-  h += _globalSearchEmptyState();
+  if (window._searchTab === 'quick') {
+    h += _renderQuickJumpContent();
+  } else {
+    h += _globalSearchEmptyState();
+  }
   h += '</div>';
   
   h += '</div>';
   document.body.insertAdjacentHTML('beforeend', h);
   
-  // 自動フォーカス
-  setTimeout(() => {
-    const inp = document.getElementById('globalSearchInput');
-    if (inp) inp.focus();
-  }, 100);
+  // 自動フォーカス（探すタブの時のみ）
+  if (window._searchTab === 'find') {
+    setTimeout(() => {
+      const inp = document.getElementById('globalSearchInput');
+      if (inp) inp.focus();
+    }, 100);
+  }
   
-  // Backボタンを表示（トップ画面でも検索中は表示）
+  // Backボタンを表示
   const backBtn = document.getElementById('navBackBtn');
   if (backBtn) backBtn.style.display = 'flex';
   
   // 検索ボタンをアクティブ表示
   const searchBtn = document.getElementById('navSearchBtn');
   if (searchBtn) searchBtn.classList.add('active');
-  // 他のdata-viewボタンの active を外す
   const otherBtns = document.querySelectorAll('.nav-btn[data-view]');
   otherBtns.forEach(b => b.classList.remove('active'));
 }
+
+// クイック/探す タブ切り替え
+function switchSearchTab(tab) {
+  window._searchTab = tab;
+  openGlobalSearch();
+}
+window.switchSearchTab = switchSearchTab;
+
+// クイックジャンプの中身
+function _renderQuickJumpContent() {
+  let h = '';
+  
+  // 共通：72px □カード生成ヘルパー（スタンプサイズ）
+  function _qCard(onclick, photo, iconHtml, bgColor, name) {
+    let s = '<button onclick="'+onclick+'" style="flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;background:white;border:1px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
+    if (photo) {
+      s += '<span style="width:38px;height:38px;border-radius:50%;background:url('+photo+') center/cover;flex-shrink:0;border:1.5px solid white;box-shadow:0 1px 2px rgba(0,0,0,0.08);"></span>';
+    } else {
+      s += '<span style="width:38px;height:38px;border-radius:50%;background:'+bgColor+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+iconHtml+'</span>';
+    }
+    s += '<div style="font-size:10.5px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(name||'')+'</div>';
+    s += '</button>';
+    return s;
+  }
+  
+  // セクションヘッダー
+  function _qHeader(icon, color, label) {
+    return '<div style="font-size:11px;font-weight:800;color:var(--ink-sub);letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:'+color+';">'+icon+'</span>'+label+'</div>';
+  }
+  
+  // 横スクロール2行グリッドラッパー
+  const gridStyle = 'display:grid;grid-auto-flow:column;grid-template-rows:1fr 1fr;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:6px;';
+  
+  // ── ME（自分のプロフィール）
+  h += '<div style="margin-bottom:14px;">';
+  h += _qHeader('eco', '#7BBE5C', 'ME');
+  h += '<div style="'+gridStyle+'">';
+  const _meName = (data.user && data.user.name) ? data.user.name : 'わたし';
+  const _meAvatar = data.user && data.user.profilePhoto ? data.user.profilePhoto : null;
+  h += _qCard(
+    'quickJumpTo(\'me\')', _meAvatar,
+    '<span class="material-symbols-rounded" style="font-size:22px;color:#7BBE5C;">person</span>',
+    '#E8F5DA', _meName
+  );
+  h += '</div></div>';
+  
+  // ── NEST（家グループ）
+  if (data.houses && data.houses.length > 0) {
+    h += '<div style="margin-bottom:14px;">';
+    h += _qHeader('cottage', '#5C9CD4', 'NEST');
+    h += '<div style="'+gridStyle+'">';
+    for (const house of data.houses) {
+      h += _qCard(
+        'quickJumpTo(\'nest\',\''+house.id+'\')', null,
+        '<span style="font-size:22px;">'+(house.icon||'🏡')+'</span>',
+        '#E0F0FA', house.name||''
+      );
+    }
+    h += '</div></div>';
+  }
+  
+  // ── PET
+  const petList = (data.pets || []).filter(p => !p.archived && p.place !== 'rainbow' && !p.kidsGender);
+  if (petList.length > 0) {
+    h += '<div style="margin-bottom:14px;">';
+    h += _qHeader('pets', '#B87850', 'PET');
+    h += '<div style="'+gridStyle+'">';
+    for (const pet of petList) {
+      const _ms = PET_MS_ICONS[pet.type] || PET_MS_ICONS.other;
+      const _photo = pet.profilePhotoId && photos[pet.profilePhotoId];
+      h += _qCard(
+        'quickJumpTo(\'pet\',\''+pet.id+'\')', _photo,
+        '<span class="material-symbols-rounded" style="font-size:22px;color:'+_ms.color+';">'+_ms.icon+'</span>',
+        _ms.color+'22', pet.name||''
+      );
+    }
+    h += '</div></div>';
+  }
+  
+  // ── KIDS
+  const kidsList = (data.pets || []).filter(p => !p.archived && p.place !== 'rainbow' && p.kidsGender);
+  if (kidsList.length > 0) {
+    h += '<div style="margin-bottom:14px;">';
+    h += _qHeader('child_care', '#D88AB0', 'KIDS');
+    h += '<div style="'+gridStyle+'">';
+    for (const kid of kidsList) {
+      const _ms = PET_MS_ICONS[kid.kidsGender] || PET_MS_ICONS.boy;
+      const _photo = kid.profilePhotoId && photos[kid.profilePhotoId];
+      h += _qCard(
+        'quickJumpTo(\'kids\',\''+kid.id+'\')', _photo,
+        '<span class="material-symbols-rounded" style="font-size:22px;color:'+_ms.color+';">'+_ms.icon+'</span>',
+        _ms.color+'22', kid.name||''
+      );
+    }
+    h += '</div></div>';
+  }
+  
+  // ── My Shop
+  const shopList = data.myShops || [];
+  if (shopList.length > 0) {
+    h += '<div style="margin-bottom:14px;">';
+    h += _qHeader('storefront', '#E8A040', 'My Shop');
+    h += '<div style="'+gridStyle+'">';
+    for (const shop of shopList) {
+      const _cd = shop.cardDesign || { color:'#E8A040', pattern:'solid' };
+      const _typeIcon = shop.type === 'bookshelf' ? 'menu_book' : 'storefront';
+      h += _qCard(
+        'quickJumpTo(\'shop\',\''+shop.id+'\')', shop.iconImage || null,
+        '<span class="material-symbols-rounded" style="font-size:22px;color:'+_cd.color+';">'+_typeIcon+'</span>',
+        _cd.color+'22', shop.name||''
+      );
+    }
+    h += '</div></div>';
+  }
+  
+  if (petList.length === 0 && kidsList.length === 0 && (!data.houses || data.houses.length === 0) && shopList.length === 0) {
+    h += '<div style="padding:30px 20px;text-align:center;color:var(--ink-light);font-size:11px;line-height:1.7;">まだ登録された子がいないよ🌷<br>ME / NEST / PET / KIDSモードから登録してね</div>';
+  }
+  
+  return h;
+}
+window._renderQuickJumpContent = _renderQuickJumpContent;
+
+// クイックジャンプ実行
+function quickJumpTo(target, id) {
+  closeGlobalSearch();
+  setTimeout(() => {
+    if (target === 'me') {
+      if (typeof switchMode === 'function') switchMode('me');
+      currentView = 'top';
+    } else if (target === 'nest') {
+      if (typeof switchMode === 'function') switchMode('pet');
+      data.activeHouseId = id;
+      currentView = 'house';
+    } else if (target === 'pet') {
+      if (typeof switchMode === 'function') switchMode('pet');
+      data.activePetId = id;
+      data.petTab = 'care';
+      currentView = 'pet';
+    } else if (target === 'kids') {
+      if (typeof switchMode === 'function') switchMode('kids');
+      data.activePetId = id;
+      data.petTab = 'care';
+      currentView = 'pet';
+    } else if (target === 'shop') {
+      if (typeof openShopManager === 'function') {
+        openShopManager(id);
+        return;
+      }
+    }
+    saveData();
+    render();
+  }, 50);
+}
+window.quickJumpTo = quickJumpTo;
 
 function switchSearchMode(modeId) {
   window._searchMode = modeId;
@@ -16697,7 +16915,11 @@ function renderMeGoodsTab() {
         h += '<div style="display:flex;flex-direction:column;gap:6px;">';
         for (const g of _byCategory[cat]) {
           h += '<div onclick="openNestGoodsModal(\''+g.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.32) 50%,rgba(255,255,255,0.50) 100%);border:1.5px solid var(--card-border);border-radius:12px;backdrop-filter:blur(8px);cursor:pointer;">';
-          h += '<div style="width:40px;height:40px;border-radius:10px;background:var(--accent-bg);border:1px solid var(--line-soft);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">'+(g.icon || '📦')+'</div>';
+          if (g.photo) {
+            h += '<div style="width:40px;height:40px;border-radius:10px;background:url('+g.photo+') center/cover;border:1px solid var(--line-soft);flex-shrink:0;"></div>';
+          } else {
+            h += '<div style="width:40px;height:40px;border-radius:10px;background:var(--accent-bg);border:1px solid var(--line-soft);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">'+(g.icon || '📦')+'</div>';
+          }
           h += '<div style="flex:1;min-width:0;">';
           h += '<div style="font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(g.name || '名前なし')+'</div>';
           if (g.brand) h += '<div style="font-size:11px;color:var(--ink-sub);">'+escapeHtml(g.brand)+'</div>';
@@ -22038,6 +22260,7 @@ function renderPet() {
       'memory':   { label: 'おもいで',   icon: 'favorite',       children: ['diary','photo','outing'] },
       'calendar': { label: 'カレンダー', icon: 'calendar_month', children: ['calendar'] },
       'health':   { label: '健康',       icon: 'vaccines',       children: ['vaccine','weight','chart'] },
+      'goods':    { label: 'Goods',      icon: 'inventory_2',    children: ['goods'] },
       'town':     { label: 'タウン',     icon: 'location_city',  children: ['town'] }
     };
     for (const pid in _petParentTabs) {
@@ -22070,6 +22293,7 @@ function renderPet() {
       'memory':   { children: ['diary'] },
       'calendar': { children: ['calendar'] },
       'health':   { children: ['chart'] },
+      'goods':    { children: ['goods'] },
       'town':     { children: ['town'] }
     };
     const _childLabels = {
@@ -22078,6 +22302,7 @@ function renderPet() {
       'diary':    { label: 'おもいで',   icon: 'menu_book' },
       'calendar': { label: 'カレンダー', icon: 'calendar_month' },
       'chart':    { label: 'カルテ',     icon: 'medical_information' },
+      'goods':    { label: 'Goods',      icon: 'inventory_2' },
       'town':     { label: 'タウン',     icon: 'location_city' }
     };
     
@@ -22100,6 +22325,7 @@ function renderPet() {
     else if (tab === 'calendar') html += renderTabCalendar(pet);
     else if (tab === 'diary') html += renderPetTweetsDiary(pet);
     else if (tab === 'chart') html += renderPetMedicalAllInOne(pet);
+    else if (tab === 'goods') html += renderPetGoodsTab(pet);
     else if (tab === 'routine') html += renderTabPetRoutine(pet);
     else if (tab === 'town') html += renderTabPetTown(pet);
     else { data.petTab = 'care'; html += renderTabCareMeStyle(pet); }
@@ -22145,7 +22371,7 @@ function _initPetCareData() {
   if (!store.pinned) store.pinned = [];
 }
 
-// KIDSモード時はアクティブなkidのkidsCare、PETモード時は_getCareStore()
+// KIDSモード時はアクティブなkidのkidsCare、PETモード時は data.petCare
 function _getCareStore() {
   if (currentMode === 'kids') {
     const kid = getActivePet();
@@ -22154,8 +22380,8 @@ function _getCareStore() {
       return kid.kidsCare;
     }
   }
-  if (!_getCareStore()) _getCareStore() = {};
-  return _getCareStore();
+  if (!data.petCare) data.petCare = {};
+  return data.petCare;
 }
 window._getCareStore = _getCareStore;
 
@@ -22516,6 +22742,307 @@ function _medCard(title, icon, sec, petId, bodyHtml, addLabel, addFn) {
 function _medField(label, value) {
   return '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--surface-warm);border-radius:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;flex-shrink:0;width:74px;line-height:1.5;">'+label+'</span><span style="flex:1;font-size:11.5px;color:var(--ink-dark);font-weight:600;line-height:1.5;word-break:break-word;">'+escapeHtml(String(value))+'</span></div>';
 }
+
+// ===== PET/KIDS Goods（用品管理）=====
+const PET_GOODS_CATS = [
+  { id:'food', label:'🍚 ごはん' },
+  { id:'snack', label:'🍪 おやつ' },
+  { id:'milk', label:'🍼 ミルク' },
+  { id:'medicine', label:'💊 薬' },
+  { id:'toy', label:'🎾 おもちゃ' },
+  { id:'toilet', label:'🚽 トイレ用品' },
+  { id:'care', label:'🧴 ケア用品' },
+  { id:'other', label:'📦 その他' }
+];
+const KIDS_GOODS_CATS = [
+  { id:'milk', label:'🍼 ミルク' },
+  { id:'food', label:'🍙 離乳食・食事' },
+  { id:'diaper', label:'👶 おむつ' },
+  { id:'clothes', label:'👕 服' },
+  { id:'toy', label:'🎈 おもちゃ' },
+  { id:'medicine', label:'💊 薬' },
+  { id:'baby', label:'🧸 ベビー用品' },
+  { id:'other', label:'📦 その他' }
+];
+
+let _editingPetGoodsId = null;
+let _editingPetGoodsPetId = null;
+
+function openPetGoodsModal(petId, goodsId) {
+  const pet = (data.pets || []).find(p => p.id === petId);
+  if (!pet) return;
+  if (!pet.goods) pet.goods = [];
+  
+  _editingPetGoodsId = goodsId || null;
+  _editingPetGoodsPetId = petId;
+  
+  const isKids = !!pet.kidsGender;
+  const cats = isKids ? KIDS_GOODS_CATS : PET_GOODS_CATS;
+  
+  let name = '', brand = '', category = cats[0].id, note = '', photo = null;
+  if (goodsId) {
+    const g = pet.goods.find(x => x.id === goodsId);
+    if (g) {
+      name = g.name || '';
+      brand = g.brand || '';
+      category = g.category || cats[0].id;
+      note = g.note || '';
+      photo = g.photo || null;
+    }
+  }
+  window._editingPetGoodsPhoto = photo;
+  
+  // タイトル
+  const titleEl = document.getElementById('petGoodsTitle');
+  const subEl = document.getElementById('petGoodsSub');
+  if (titleEl) titleEl.textContent = goodsId ? '用品を編集' : '新しい用品';
+  if (subEl) subEl.textContent = (isKids?'👶 ':'🐾 ') + (pet.name || '') + ' の用品';
+  
+  // フォーム値セット
+  const setEl = (id, prop, val) => { const el = document.getElementById(id); if (el) el[prop] = val; };
+  setEl('petGoodsNameInput', 'value', name);
+  setEl('petGoodsBrandInput', 'value', brand);
+  setEl('petGoodsNoteInput', 'value', note);
+  
+  // カテゴリoptions動的生成
+  const sel = document.getElementById('petGoodsCategoryInput');
+  if (sel) {
+    sel.innerHTML = cats.map(c => '<option value="'+c.id+'"'+(c.id===category?' selected':'')+'>'+c.label+'</option>').join('');
+  }
+  
+  // 削除ボタン
+  const delBtn = document.getElementById('petGoodsDeleteBtn');
+  if (delBtn) delBtn.style.display = goodsId ? 'block' : 'none';
+  
+  // モーダル表示
+  const m = document.getElementById('petGoodsModal');
+  if (!m) return;
+  m.classList.add('show');
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(45,74,60,0.4);display:flex;align-items:flex-end;justify-content:center;z-index:2200;backdrop-filter:blur(4px);padding-bottom:calc(75px + env(safe-area-inset-bottom));box-sizing:border-box;';
+  m.onclick = function(ev) { if (ev.target === m) closePetGoodsModal(); };
+  
+  // 写真プレビュー
+  setTimeout(() => _updatePetGoodsPhotoPreview(window._editingPetGoodsPhoto), 50);
+}
+window.openPetGoodsModal = openPetGoodsModal;
+
+function closePetGoodsModal() {
+  const m = document.getElementById('petGoodsModal');
+  if (m) { m.classList.remove('show'); m.style.display = 'none'; m.onclick = null; }
+  _editingPetGoodsId = null;
+  _editingPetGoodsPetId = null;
+  window._editingPetGoodsPhoto = null;
+}
+window.closePetGoodsModal = closePetGoodsModal;
+
+function savePetGoodsFromModal() {
+  const petId = _editingPetGoodsPetId;
+  if (!petId) { closePetGoodsModal(); return; }
+  const pet = (data.pets || []).find(p => p.id === petId);
+  if (!pet) { closePetGoodsModal(); return; }
+  if (!pet.goods) pet.goods = [];
+  
+  const name = document.getElementById('petGoodsNameInput').value.trim();
+  const brand = document.getElementById('petGoodsBrandInput').value.trim();
+  const category = document.getElementById('petGoodsCategoryInput').value;
+  const note = document.getElementById('petGoodsNoteInput').value.trim();
+  
+  if (!name) { showToast('名前を入れてね🌷'); return; }
+  
+  const now = Date.now();
+  const photo = window._editingPetGoodsPhoto || null;
+  
+  if (_editingPetGoodsId) {
+    const g = pet.goods.find(x => x.id === _editingPetGoodsId);
+    if (g) {
+      g.name = name; g.brand = brand; g.category = category;
+      g.note = note; g.photo = photo; g.updatedAt = now;
+    }
+    showToast('用品を更新したよ🌸');
+  } else {
+    pet.goods.push({
+      id: 'pgoods_' + now + '_' + Math.floor(Math.random()*1000),
+      name, brand, category, note, photo,
+      createdAt: now, updatedAt: now
+    });
+    showToast('用品を追加したよ🌸');
+  }
+  
+  saveData();
+  closePetGoodsModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.savePetGoodsFromModal = savePetGoodsFromModal;
+
+function deletePetGoods() {
+  if (!_editingPetGoodsId || !_editingPetGoodsPetId) return;
+  const pet = (data.pets || []).find(p => p.id === _editingPetGoodsPetId);
+  if (!pet || !pet.goods) return;
+  if (!confirm('この用品を削除する？')) return;
+  pet.goods = pet.goods.filter(x => x.id !== _editingPetGoodsId);
+  saveData();
+  showToast('削除したよ');
+  closePetGoodsModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.deletePetGoods = deletePetGoods;
+
+function pickPetGoodsPhoto() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const proc = (b64) => {
+      window._editingPetGoodsPhoto = b64;
+      _updatePetGoodsPhotoPreview(b64);
+    };
+    if (typeof resizeImageToBase64 === 'function') resizeImageToBase64(file, 600, 0.75).then(proc);
+    else { const r = new FileReader(); r.onload = ev => proc(ev.target.result); r.readAsDataURL(file); }
+  };
+  inp.click();
+}
+window.pickPetGoodsPhoto = pickPetGoodsPhoto;
+
+function clearPetGoodsPhoto() {
+  window._editingPetGoodsPhoto = null;
+  _updatePetGoodsPhotoPreview(null);
+}
+window.clearPetGoodsPhoto = clearPetGoodsPhoto;
+
+function _updatePetGoodsPhotoPreview(b64) {
+  const btn = document.getElementById('petGoodsPhotoBtn');
+  const icon = document.getElementById('petGoodsPhotoIcon');
+  const label = document.getElementById('petGoodsPhotoLabel');
+  const clearBtn = document.getElementById('petGoodsPhotoClearBtn');
+  if (!btn) return;
+  if (b64) {
+    btn.style.backgroundImage = 'url('+b64+')';
+    btn.style.borderStyle = 'solid';
+    if (icon) icon.style.display = 'none';
+    if (label) label.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'block';
+  } else {
+    btn.style.backgroundImage = '';
+    btn.style.borderStyle = 'dashed';
+    if (icon) icon.style.display = 'block';
+    if (label) label.style.display = 'block';
+    if (clearBtn) clearBtn.style.display = 'none';
+  }
+}
+
+// Goodsタブ専用（独立画面）
+function renderPetGoodsTab(pet) {
+  if (!pet.goods) pet.goods = [];
+  const isKids = !!pet.kidsGender;
+  const cats = isKids ? KIDS_GOODS_CATS : PET_GOODS_CATS;
+  const list = pet.goods.slice().sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+  
+  let h = '<div style="padding:12px 14px 16px;">';
+  
+  // ヘッダー＋追加ボタン
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+  h += '<div style="display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">inventory_2</span><span style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+(isKids?escapeHtml(pet.name)+'のいつものもの':escapeHtml(pet.name)+'のいつものもの')+'</span><span style="font-size:10px;color:var(--ink-light);background:var(--surface-warm);padding:2px 7px;border-radius:100px;font-weight:700;">'+list.length+'件</span></div>';
+  h += '<button onclick="openPetGoodsModal(\''+pet.id+'\')" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:6px 12px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>追加</button>';
+  h += '</div>';
+  
+  if (list.length === 0) {
+    h += '<div style="padding:40px 20px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:42px;color:var(--accent-deep);opacity:0.6;">inventory_2</span>';
+    h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-top:8px;">まだ用品がないよ🌷</div>';
+    h += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;margin-top:4px;">'+(isKids?'ミルク・離乳食・おむつ・服など<br>いつも使うものを記録しておこう':'ごはん・薬・おもちゃ・トイレ用品など<br>いつも使うものを記録しておこう')+'</div>';
+    h += '</div>';
+  } else {
+    // カテゴリ別にグループ化
+    const byCat = {};
+    for (const g of list) {
+      const c = g.category || 'other';
+      if (!byCat[c]) byCat[c] = [];
+      byCat[c].push(g);
+    }
+    for (const cat of cats) {
+      if (!byCat[cat.id]) continue;
+      h += '<div style="display:flex;align-items:center;gap:5px;margin:14px 0 6px;padding:0 4px;">';
+      h += '<span style="font-size:12px;color:var(--ink-dark);font-weight:800;">'+cat.label+'</span>';
+      h += '<span style="font-size:10px;color:var(--ink-light);">'+byCat[cat.id].length+'件</span>';
+      h += '</div>';
+      h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+      for (const g of byCat[cat.id]) {
+        h += '<button onclick="openPetGoodsModal(\''+pet.id+'\',\''+g.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:white;border:1px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,0.03);">';
+        if (g.photo) {
+          h += '<div style="flex-shrink:0;width:48px;height:48px;border-radius:10px;background:url('+g.photo+') center/cover;border:1px solid var(--line);"></div>';
+        } else {
+          h += '<div style="flex-shrink:0;width:48px;height:48px;border-radius:10px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:24px;">📦</div>';
+        }
+        h += '<div style="flex:1;min-width:0;">';
+        h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(g.name||'')+'</div>';
+        if (g.brand) h += '<div style="font-size:11px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(g.brand)+'</div>';
+        if (g.note) h += '<div style="font-size:10px;color:var(--ink-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">📝 '+escapeHtml(g.note)+'</div>';
+        h += '</div>';
+        h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);">chevron_right</span>';
+        h += '</button>';
+      }
+      h += '</div>';
+    }
+  }
+  
+  h += '</div>';
+  return h;
+}
+window.renderPetGoodsTab = renderPetGoodsTab;
+
+// Goodsカードを描画（カルテ画面に追加）
+function renderPetGoodsCard(pet) {
+  if (!pet.goods) pet.goods = [];
+  const isKids = !!pet.kidsGender;
+  const cats = isKids ? KIDS_GOODS_CATS : PET_GOODS_CATS;
+  const list = pet.goods.slice().sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+  
+  let body = '';
+  body += '<button onclick="openPetGoodsModal(\''+pet.id+'\')" style="width:100%;padding:10px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>用品を追加</button>';
+  
+  if (list.length === 0) {
+    body += '<div style="padding:20px 12px;text-align:center;color:var(--ink-light);font-size:11px;line-height:1.6;">'+(isKids?'まだ用品が登録されてないよ🌷<br>ミルク・離乳食・おむつ・服など':'まだ用品が登録されてないよ🌷<br>ごはん・薬・おもちゃなど')+'</div>';
+  } else {
+    // カテゴリ別にグループ化
+    const byCat = {};
+    for (const g of list) {
+      const c = g.category || 'other';
+      if (!byCat[c]) byCat[c] = [];
+      byCat[c].push(g);
+    }
+    for (const cat of cats) {
+      if (!byCat[cat.id]) continue;
+      body += '<div style="display:flex;align-items:center;gap:5px;margin:10px 0 5px;padding:0 4px;">';
+      body += '<span style="font-size:11.5px;color:var(--ink-dark);font-weight:700;">'+cat.label+'</span>';
+      body += '<span style="font-size:9.5px;color:var(--ink-light);">'+byCat[cat.id].length+'件</span>';
+      body += '</div>';
+      body += '<div style="display:flex;flex-direction:column;gap:5px;">';
+      for (const g of byCat[cat.id]) {
+        body += '<button onclick="openPetGoodsModal(\''+pet.id+'\',\''+g.id+'\')" style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:white;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+        if (g.photo) {
+          body += '<div style="flex-shrink:0;width:42px;height:42px;border-radius:9px;background:url('+g.photo+') center/cover;border:1px solid var(--line);"></div>';
+        } else {
+          body += '<div style="flex-shrink:0;width:42px;height:42px;border-radius:9px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:20px;">📦</div>';
+        }
+        body += '<div style="flex:1;min-width:0;">';
+        body += '<div style="font-size:12.5px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(g.name||'')+'</div>';
+        if (g.brand) body += '<div style="font-size:10.5px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(g.brand)+'</div>';
+        if (g.note) body += '<div style="font-size:10px;color:var(--ink-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📝 '+escapeHtml(g.note)+'</div>';
+        body += '</div>';
+        body += '</button>';
+      }
+      body += '</div>';
+    }
+  }
+  
+  return _medCard(isKids?'いつものもの':'いつものもの', 'inventory_2', 'goods', pet.id, body);
+}
+window.renderPetGoodsCard = renderPetGoodsCard;
+// ===== PET/KIDS Goods ここまで =====
 
 function renderPetMedicalAllInOne(pet) {
   _initPetMedical(pet);
@@ -24766,7 +25293,7 @@ function openNestGoodsModal(goodsId) {
     _editingNestGoodsId = goodsId || null;
     _editingNestGoodsIcon = '📦';
     
-    let name = '', brand = '', category = 'バスルーム', note = '';
+    let name = '', brand = '', category = 'バスルーム', note = '', photo = null;
     if (goodsId) {
       const g = data.nestGoods[_nestId].find(x => x.id === goodsId);
       if (g) {
@@ -24775,8 +25302,10 @@ function openNestGoodsModal(goodsId) {
         category = g.category || 'バスルーム';
         note = g.note || '';
         _editingNestGoodsIcon = g.icon || '📦';
+        photo = g.photo || null;
       }
     }
+    window._editingNestGoodsPhoto = photo;
     
     // 各要素を安全にセット
     const setEl = (id, prop, val) => {
@@ -24790,6 +25319,8 @@ function openNestGoodsModal(goodsId) {
     setEl('nestGoodsBrandInput', 'value', brand);
     setEl('nestGoodsCategoryInput', 'value', category);
     setEl('nestGoodsNoteInput', 'value', note);
+    // 写真プレビュー初期化
+    setTimeout(() => _updateNestGoodsPhotoPreview(window._editingNestGoodsPhoto), 50);
     const delBtn = document.getElementById('nestGoodsDeleteBtn');
     if (delBtn) delBtn.style.display = goodsId ? 'block' : 'none';
     const grid = document.getElementById('nestGoodsIconGrid');
@@ -24845,6 +25376,7 @@ function saveNestGoodsFromModal() {
   }
   
   const now = Date.now();
+  const photo = window._editingNestGoodsPhoto || null;
   if (_editingNestGoodsId) {
     const g = data.nestGoods[_nestId].find(x => x.id === _editingNestGoodsId);
     if (g) {
@@ -24853,6 +25385,7 @@ function saveNestGoodsFromModal() {
       g.category = category;
       g.note = note;
       g.icon = _editingNestGoodsIcon;
+      g.photo = photo;
       g.updatedAt = now;
     }
     showToast('備品更新したよ🌸');
@@ -24864,16 +25397,64 @@ function saveNestGoodsFromModal() {
       category: category,
       note: note,
       icon: _editingNestGoodsIcon,
+      photo: photo,
       createdAt: now,
       updatedAt: now
     });
     showToast('備品追加したよ🌸');
   }
+  window._editingNestGoodsPhoto = null;
   
   saveData();
   closeNestGoodsModal();
   _suppressScrollTop = true;
   render();
+}
+
+// 写真追加・削除関数
+function pickNestGoodsPhoto() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const proc = (b64) => {
+      window._editingNestGoodsPhoto = b64;
+      _updateNestGoodsPhotoPreview(b64);
+    };
+    if (typeof resizeImageToBase64 === 'function') resizeImageToBase64(file, 600, 0.75).then(proc);
+    else { const r = new FileReader(); r.onload = ev => proc(ev.target.result); r.readAsDataURL(file); }
+  };
+  inp.click();
+}
+window.pickNestGoodsPhoto = pickNestGoodsPhoto;
+
+function clearNestGoodsPhoto() {
+  window._editingNestGoodsPhoto = null;
+  _updateNestGoodsPhotoPreview(null);
+}
+window.clearNestGoodsPhoto = clearNestGoodsPhoto;
+
+function _updateNestGoodsPhotoPreview(b64) {
+  const btn = document.getElementById('nestGoodsPhotoBtn');
+  const icon = document.getElementById('nestGoodsPhotoIcon');
+  const label = document.getElementById('nestGoodsPhotoLabel');
+  const clearBtn = document.getElementById('nestGoodsPhotoClearBtn');
+  if (!btn) return;
+  if (b64) {
+    btn.style.backgroundImage = 'url('+b64+')';
+    btn.style.borderStyle = 'solid';
+    if (icon) icon.style.display = 'none';
+    if (label) label.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'block';
+  } else {
+    btn.style.backgroundImage = '';
+    btn.style.borderStyle = 'dashed';
+    if (icon) icon.style.display = 'block';
+    if (label) label.style.display = 'block';
+    if (clearBtn) clearBtn.style.display = 'none';
+  }
 }
 
 function deleteNestGoods() {
