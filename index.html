@@ -17303,16 +17303,9 @@ function renderMeMode() {
         try { saveData(); } catch(e) {}
       }
       
-      // ===== 「日付」「STAMP」「✏」 + ピン留めエリア =====
-      const _meDateLabel = _formatStampActiveDate('me');
-      const _meIsToday = _isActiveStampDateToday('me');
-      html += '<div style="padding:10px 14px 8px;display:flex;gap:8px;align-items:stretch;">';
-      // 日付ボタン
-      html += '<button onclick="openStampDatePicker(\'me\')" style="padding:9px 12px;background:'+(_meIsToday?'var(--surface)':'var(--accent-bg)')+';color:'+(_meIsToday?'var(--ink-dark)':'var(--accent-deep)')+';border:1px solid '+(_meIsToday?'var(--line)':'var(--accent)')+';border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;letter-spacing:0.3px;"><span class="material-symbols-rounded" style="font-size:15px;">'+(_meIsToday?'today':'event')+'</span>'+escapeHtml(_meDateLabel)+'</button>';
-      // STAMPボタン
-      html += '<button onclick="openStampPickerModal()" style="flex:1;padding:9px 14px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:12px;font-weight:800;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><span class="material-symbols-rounded" style="font-size:18px;">approval</span>STAMP</button>';
-      // 編集ボタン
-      html += '<button onclick="openStampManagerModal()" title="スタンプ管理" style="flex-shrink:0;width:36px;border:1px solid var(--line);background:var(--surface);color:var(--ink-sub);border-radius:100px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:16px;">edit</span></button>';
+      // ===== 編集（管理）ボタン only =====
+      html += '<div style="padding:10px 14px 4px;display:flex;justify-content:flex-end;">';
+      html += '<button onclick="openStampManagerModal()" title="スタンプ管理" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:6px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span>編集</button>';
       html += '</div>';
       
       // ピン留めスタンプ横スクロール
@@ -17351,6 +17344,12 @@ function renderMeMode() {
             html += '<span style="font-size:10.5px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
             html += '</button>';
           }
+          // ＋追加ボタン（点線□、各カテゴリ最後）
+          const _safeCat = escapeHtml(selCat).replace(/\'/g,"\\\\'");
+          html += '<button onclick="addCustomStamp(\''+_safeCat+'\')" style="flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;background:transparent;border:1.5px dashed var(--accent);border-radius:12px;cursor:pointer;font-family:inherit;color:var(--accent-deep);">';
+          html += '<span style="width:34px;height:34px;border-radius:10px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">add</span></span>';
+          html += '<span style="font-size:10.5px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;">追加</span>';
+          html += '</button>';
           html += '</div>';
         }
       }
