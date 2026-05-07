@@ -904,7 +904,7 @@
   .cal-wd.sat { color: #5C8FB5; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
   .cal-cell {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 1 / 1.45;
     background: var(--surface-warm);
     border: 1.5px solid transparent;
     border-radius: 8px; cursor: pointer; font-family: inherit;
@@ -912,6 +912,36 @@
     display: flex; flex-direction: column;
     align-items: center; justify-content: flex-start; gap: 2px;
     position: relative; transition: all 0.15s;
+    overflow: hidden;
+  }
+  .cal-stamps {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+    width: 100%;
+    padding: 1px;
+    box-sizing: border-box;
+    flex: 1;
+    align-content: center;
+    justify-items: center;
+  }
+  .cal-stamp-item {
+    font-size: 20px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cal-stamp-item .material-symbols-rounded {
+    font-size: 20px !important;
+  }
+  /* スタンプ1個だけのとき大きく見せる */
+  .cal-stamps:has(.cal-stamp-item:only-child) .cal-stamp-item {
+    font-size: 28px;
+    grid-column: span 2;
+  }
+  .cal-stamps:has(.cal-stamp-item:only-child) .cal-stamp-item .material-symbols-rounded {
+    font-size: 28px !important;
   }
   .cal-cell:active { transform: scale(0.94); }
   .cal-cell.empty { background: transparent; cursor: default; pointer-events: none; }
@@ -921,13 +951,18 @@
   .cal-day-num {
     font-size: 12.5px; font-weight: 700; color: var(--ink-dark);
     line-height: 1; margin-top: 2px;
-    display: inline-flex; align-items: center; gap: 1px;
+    display: inline-flex; align-items: center; gap: 2px;
   }
   .cal-day-weather {
-    font-size: 8.5px;
+    font-size: 9px !important;
     line-height: 1;
-    opacity: 0.9;
-    margin-left: 0;
+    opacity: 0.55;
+    margin-left: 1px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .cal-day-weather .material-symbols-rounded {
+    font-size: 9px !important;
   }
   .cal-cell.sun .cal-day-num { color: var(--accent-deep); }
   .cal-cell.sat .cal-day-num { color: #5C8FB5; }
@@ -6264,6 +6299,84 @@ function calcMonthSummary(year, month, scope) {
   return summary;
 }
 
+// ===== カレンダー: スタンプアイコン→絵文字マップ =====
+const STAMP_ICON_TO_EMOJI = {
+  // 生活
+  water_drop:'💧', bathtub:'🛁', bed:'🛏️', coffee:'☕', local_cafe:'🍵',
+  shower:'🚿', dentistry:'🦷', pets:'🐾', egg_alt:'🍳', ramen_dining:'🍜',
+  dinner_dining:'🍽️', cookie:'🍪',
+  // 美容
+  face:'💆', palette:'💄', content_cut:'💇', colors:'💅', spa:'🧖', checkroom:'👗',
+  face_retouching_natural:'✨', back_hand:'🤲', soap:'🧼', wb_sunny:'☀️',
+  sentiment_satisfied:'😊', visibility:'👁️',
+  // ダイエット
+  monitor_weight:'⚖️', percent:'📊', square_foot:'📏', lunch_dining:'🍱',
+  fitness_center:'💪', directions_run:'🏃', directions_walk:'🚶',
+  sprint:'🏋️', straighten:'📐', sports_gymnastics:'🍑', exercise:'🏋️‍♀️',
+  iron_fist:'💪', horizontal_rule:'🧘', self_improvement:'🧘‍♀️',
+  // 体調
+  medication:'💊', water_full:'🩸', mood_bad:'😣', sick:'🤒',
+  local_hospital:'🏥', thermostat:'🌡️', neurology:'🧠', gastroenterology:'🫃',
+  accessibility:'🧍', visibility_off:'😵', hotel:'😴', bedtime_off:'😩',
+  mindfulness:'🧘', bedtime:'🌙',
+  // 家事
+  cleaning_services:'🧹', local_laundry_service:'🧺', kitchen:'🍳',
+  shopping_cart:'🛒', delete:'🗑️', wash:'🍽️', iron:'👔', inventory_2:'📦', bento:'🍱',
+  // 仕事
+  work:'💼', call:'📞', mail:'📧', groups:'👥', description:'📄', laptop:'💻',
+  // 趣味
+  sports_esports:'🎮', menu_book:'📚', music_note:'🎵', brush:'🎨',
+  live_tv:'📺', mic:'🎤', movie:'🎬', favorite:'💖', photo_camera:'📷',
+  nature_people:'🌳',
+  // ポジティブ
+  star:'⭐', auto_awesome:'✨', psychology:'🧠', trophy:'🏆',
+  local_fire_department:'🔥', celebration:'🎉', bolt:'⚡', mood:'😊',
+  thumb_up:'👍', favorite_border:'♡', volunteer_activism:'🤲',
+  diamond:'💎', workspace_premium:'🏅', sentiment_very_satisfied:'😄',
+  face_3:'👩', cloud:'☁️', partly_cloudy_day:'⛅', rainy:'🌧️',
+  thunderstorm:'⛈️', ac_unit:'❄️', foggy:'🌫️'
+};
+function _stampToEmoji(icon) {
+  if (!icon) return '📌';
+  // 既に絵文字ならそのまま
+  if (!/^[a-z][a-z0-9_]*$/.test(icon)) return icon;
+  return STAMP_ICON_TO_EMOJI[icon] || '📌';
+}
+
+// ===== カレンダー: 日付ごとのスタンプ取得 =====
+function getDateStamps(dateKey, maxCount) {
+  const max = maxCount || 4;
+  const result = [];
+  // ME stampHistory
+  if (data.stampHistory) {
+    for (const r of data.stampHistory) {
+      const d = new Date(r.timestamp);
+      const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      if (k === dateKey) {
+        result.push({ icon: r.icon, name: r.name });
+        if (result.length >= max) break;
+      }
+    }
+  }
+  return result;
+}
+
+function _stampToEmoji_export() { return STAMP_ICON_TO_EMOJI; }
+window._stampToEmoji = _stampToEmoji;
+window.getDateStamps = getDateStamps;
+
+// ===== カレンダー表示モード ('icon' | 'emoji') =====
+function getCalStampMode() {
+  return data.calStampMode || 'icon';
+}
+function setCalStampMode(mode) {
+  data.calStampMode = mode;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.setCalStampMode = setCalStampMode;
+
 function renderCalendar(monthYear, selectedDate, scope, idPrefix) {
   const year = monthYear.year;
   const month = monthYear.month;
@@ -6281,6 +6394,12 @@ function renderCalendar(monthYear, selectedDate, scope, idPrefix) {
   if (!isCurrent) html += '<button class="cal-today-btn" onclick="goToToday(\''+idPrefix+'\')">今日</button>';
   html += '</div>';
   html += '<button class="cal-nav" onclick="changeCalMonth(\''+idPrefix+'\', 1)">›</button>';
+  html += '</div>';
+  // スタンプモード切替（アイコン/絵文字）
+  const _calMode = getCalStampMode();
+  html += '<div style="display:flex;justify-content:flex-end;padding:0 8px 6px;gap:4px;">';
+  html += '<button onclick="setCalStampMode(\'icon\')" style="padding:3px 9px;border-radius:100px;border:1px solid '+(_calMode==='icon'?'var(--accent)':'var(--line)')+';background:'+(_calMode==='icon'?'var(--accent-bg)':'transparent')+';color:'+(_calMode==='icon'?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:9.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">apps</span>アイコン</button>';
+  html += '<button onclick="setCalStampMode(\'emoji\')" style="padding:3px 9px;border-radius:100px;border:1px solid '+(_calMode==='emoji'?'var(--accent)':'var(--line)')+';background:'+(_calMode==='emoji'?'var(--accent-bg)':'transparent')+';color:'+(_calMode==='emoji'?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:9.5px;font-weight:700;cursor:pointer;">😊 絵文字</button>';
   html += '</div>';
   html += '<div class="cal-wd-row">';
   const wds = ['日','月','火','水','木','金','土'];
@@ -6306,7 +6425,25 @@ function renderCalendar(monthYear, selectedDate, scope, idPrefix) {
     if (isFuture) cls += ' future';
     html += '<button class="cal-cell'+cls+'" onclick="selectCalDate(\''+idPrefix+'\', \''+key+'\')">';
     const _wIcon = getDateWeatherIcon(key);
-    html += '<span class="cal-day-num">'+d+(_wIcon ? '<span class="cal-day-weather">'+weatherIconHtml(_wIcon,'font-size:11px;')+'</span>' : '')+'</span>';
+    html += '<span class="cal-day-num">'+d+(_wIcon ? '<span class="cal-day-weather">'+weatherIconHtml(_wIcon,'font-size:9px;')+'</span>' : '')+'</span>';
+    // その日のスタンプを大きく表示（最大4個、2x2グリッド）
+    const _dayStamps = getDateStamps(key, 4);
+    if (_dayStamps.length > 0) {
+      html += '<div class="cal-stamps">';
+      for (const s of _dayStamps) {
+        if (_calMode === 'emoji') {
+          html += '<span class="cal-stamp-item">'+_stampToEmoji(s.icon)+'</span>';
+        } else {
+          // アイコン版
+          if (/^[a-z][a-z0-9_]*$/.test(s.icon)) {
+            html += '<span class="cal-stamp-item"><span class="material-symbols-rounded" style="color:var(--accent-deep);">'+s.icon+'</span></span>';
+          } else {
+            html += '<span class="cal-stamp-item">'+s.icon+'</span>';
+          }
+        }
+      }
+      html += '</div>';
+    }
     html += '<div class="cal-dots">';
     if (sum.sched) html += '<span class="cal-dot sched"></span>';
     if (sum.care) html += '<span class="cal-dot care"></span>';
@@ -16215,13 +16352,13 @@ function renderMeGoodsTab() {
     const _sorted = [..._goods].sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
     
     h += '<div style="padding:12px 16px 8px;">';
-    h += '<div class="section-head"><h2 class="section-title">自分のおうち備品</h2><button onclick="openNestGoodsModal()" class="section-link" style="margin-left:auto;">＋ 追加</button></div>';
+    h += '<div class="section-head"><h2 class="section-title">自分のおうち備品</h2><button onclick="alert(\'クリック届いた！\');openNestGoodsModal()" class="section-link" style="margin-left:auto;position:relative;z-index:10;">＋ 追加</button></div>';
     
     if (_sorted.length === 0) {
       h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:16px;padding:20px;backdrop-filter:blur(8px);text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.8;">';
       h += '🛍 自分のおうち備品<br>';
       h += '<span style="font-size:11px;color:var(--ink-light);">シャンプー・洗剤・電球など<br>「あれ何使ってたっけ？」を防ぐリスト</span><br><br>';
-      h += '<button onclick="openNestGoodsModal()" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 最初のグッズを追加</button>';
+      h += '<button onclick="alert(\'最初の追加クリック届いた！\');openNestGoodsModal()" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;position:relative;z-index:10;">＋ 最初のグッズを追加</button>';
       h += '</div>';
     } else {
       const _catEmoji = { 'バスルーム':'🛁', 'キッチン':'🍳', 'リビング':'🛋', 'ベッドルーム':'🛏', 'トイレ':'🚽', '洗濯':'🧺', '掃除':'🧹', '文房具':'✏️', 'その他':'📦' };
@@ -22215,54 +22352,66 @@ function selectNestGoodsIcon(icon) {
 }
 
 function openNestGoodsModal(goodsId) {
-  // 現在表示中のグッズタブのコンテキストを優先（MEモード対応）
-  let _nestId, _nestName;
-  if (window._activeGoodsNestId) {
-    _nestId = window._activeGoodsNestId;
-    _nestName = window._activeGoodsNestName || '自分';
-  } else {
-    const _activeNest = getActiveNest();
-    if (!_activeNest) return;
-    _nestId = _activeNest.id;
-    _nestName = _activeNest.name;
-  }
-  if (!data.nestGoods) data.nestGoods = {};
-  if (!data.nestGoods[_nestId]) data.nestGoods[_nestId] = [];
-  
-  _editingNestGoodsId = goodsId || null;
-  _editingNestGoodsIcon = '📦';
-  
-  let name = '', brand = '', category = 'バスルーム', note = '';
-  if (goodsId) {
-    const g = data.nestGoods[_nestId].find(x => x.id === goodsId);
-    if (g) {
-      name = g.name || '';
-      brand = g.brand || '';
-      category = g.category || 'バスルーム';
-      note = g.note || '';
-      _editingNestGoodsIcon = g.icon || '📦';
+  console.log('[Goods] openNestGoodsModal called', { goodsId, activeId: window._activeGoodsNestId });
+  try {
+    // コンテキスト決定
+    let _nestId = window._activeGoodsNestId || '__me__';
+    let _nestName = window._activeGoodsNestName || '自分';
+    if (!window._activeGoodsNestId) {
+      const _activeNest = (typeof getActiveNest === 'function') ? getActiveNest() : null;
+      if (_activeNest) {
+        _nestId = _activeNest.id;
+        _nestName = _activeNest.name;
+      }
     }
+    if (!data.nestGoods) data.nestGoods = {};
+    if (!data.nestGoods[_nestId]) data.nestGoods[_nestId] = [];
+    
+    _editingNestGoodsId = goodsId || null;
+    _editingNestGoodsIcon = '📦';
+    
+    let name = '', brand = '', category = 'バスルーム', note = '';
+    if (goodsId) {
+      const g = data.nestGoods[_nestId].find(x => x.id === goodsId);
+      if (g) {
+        name = g.name || '';
+        brand = g.brand || '';
+        category = g.category || 'バスルーム';
+        note = g.note || '';
+        _editingNestGoodsIcon = g.icon || '📦';
+      }
+    }
+    
+    // 各要素を安全にセット
+    const setEl = (id, prop, val) => {
+      const el = document.getElementById(id);
+      if (el) el[prop] = val;
+    };
+    setEl('nestGoodsTitle', 'textContent', goodsId ? 'おうち備品を編集' : '新しいおうち備品');
+    setEl('nestGoodsSub', 'textContent', '🪺 ' + _nestName + ' の備品');
+    setEl('nestGoodsIconPreview', 'textContent', _editingNestGoodsIcon);
+    setEl('nestGoodsNameInput', 'value', name);
+    setEl('nestGoodsBrandInput', 'value', brand);
+    setEl('nestGoodsCategoryInput', 'value', category);
+    setEl('nestGoodsNoteInput', 'value', note);
+    const delBtn = document.getElementById('nestGoodsDeleteBtn');
+    if (delBtn) delBtn.style.display = goodsId ? 'block' : 'none';
+    const grid = document.getElementById('nestGoodsIconGrid');
+    if (grid) grid.style.display = 'none';
+    
+    // モーダル表示（確実に）
+    const m = document.getElementById('nestGoodsModal');
+    if (!m) { console.error('[Goods] nestGoodsModal not found!'); return; }
+    m.classList.add('show');
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(45,74,60,0.4);display:flex;align-items:flex-end;justify-content:center;z-index:2200;backdrop-filter:blur(4px);padding-bottom:calc(75px + env(safe-area-inset-bottom));box-sizing:border-box;';
+    m.onclick = function(ev) {
+      if (ev.target === m) closeNestGoodsModal();
+    };
+    console.log('[Goods] modal shown');
+  } catch (err) {
+    console.error('[Goods] openNestGoodsModal error:', err);
+    alert('エラー: ' + err.message);
   }
-  
-  document.getElementById('nestGoodsTitle').textContent = goodsId ? 'おうち備品を編集' : '新しいおうち備品';
-  document.getElementById('nestGoodsSub').textContent = '🪺 ' + _nestName + ' の備品';
-  document.getElementById('nestGoodsIconPreview').textContent = _editingNestGoodsIcon;
-  document.getElementById('nestGoodsNameInput').value = name;
-  document.getElementById('nestGoodsBrandInput').value = brand;
-  document.getElementById('nestGoodsCategoryInput').value = category;
-  document.getElementById('nestGoodsNoteInput').value = note;
-  document.getElementById('nestGoodsDeleteBtn').style.display = goodsId ? 'block' : 'none';
-  document.getElementById('nestGoodsIconGrid').style.display = 'none';
-  
-  const m = document.getElementById('nestGoodsModal');
-  m.style.display = '';
-  m.classList.add('show');
-  m.onclick = function(ev) {
-    if (ev.target === m) closeNestGoodsModal();
-  };
-  setTimeout(function() {
-    document.getElementById('nestGoodsNameInput').focus();
-  }, 100);
 }
 
 function closeNestGoodsModal() {
