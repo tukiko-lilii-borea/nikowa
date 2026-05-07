@@ -6872,7 +6872,10 @@ function renderTop() {
       const _typeLabel = shop.type === 'bookshelf' ? '本棚' : 'ショップ';
       const _typeIcon = shop.type === 'bookshelf' ? 'menu_book' : 'storefront';
       const _isPublic = shop.isPublic !== false;
-      const _heroBg = shop.heroImage ? 'background-image:url('+shop.heroImage+');background-size:cover;background-position:center;' : 'background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));';
+      const _cd = shop.cardDesign || { color:'#E8A040', pattern:'solid' };
+      const _heroBg = shop.heroImage 
+        ? 'background-image:url('+shop.heroImage+');background-size:cover;background-position:center;' 
+        : _getCardPatternBg(_cd.color, _cd.pattern, 60);
       html += '<button onclick="openShopManager(\''+shop.id+'\')" style="background:white;border:1px solid var(--line);border-radius:14px;padding:0;overflow:hidden;cursor:pointer;font-family:inherit;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
       html += '<div style="height:70px;'+_heroBg+'position:relative;">';
       html += '<div style="position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.92);padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;color:var(--ink-dark);display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:12px;">'+_typeIcon+'</span>'+_typeLabel+'</div>';
@@ -12118,7 +12121,12 @@ function _doInjectSampleData() {
       profile: '大阪市にこわ町の小さなトリミングサロンです🌷\n小型犬・中型犬OK。完全予約制で、わんちゃんにストレスのない丁寧なケアを心がけています。',
       tags: ['トリミング','大阪','犬','サロン','にこわ町'],
       heroImage: '', iconImage: '',
-      contact: { phone: '06-1234-5678', line: 'fuwa-fuwa-trim', instagram: 'fuwafuwa_trimming', web: '', address: '大阪府大阪市にこわ町1-2-3' },
+      cardDesign: { color:'#FFB6C1', pattern:'gingham' },
+      contact: { phone: '06-1234-5678', address: '大阪府大阪市にこわ町1-2-3' },
+      snsLinks: [
+        { platform:'line', value:'fuwa-fuwa-trim' },
+        { platform:'instagram', value:'fuwafuwa_trimming' }
+      ],
       posts: [
         { id:'p_a1', type:'news', title:'', content:'本日トリミング空きあります🐶 13時〜可能です', tags:['空き枠','本日'], timestamp: todayMs - 1*60*60*1000 },
         { id:'p_a2', type:'news', title:'', content:'5月の予約受付開始しました！', tags:['予約'], timestamp: todayMs - 2*dayMs },
@@ -12134,7 +12142,13 @@ function _doInjectSampleData() {
       profile: 'ひとつひとつ手彫りの消しゴムはんこを作っています。\nお名前はんこ・お祝いはんこ・ペットの似顔絵はんこなど、世界に一つだけのはんこをお届けします🌸',
       tags: ['消しゴムはんこ','作家','ハンドメイド','minne','オーダーメイド'],
       heroImage: '', iconImage: '',
-      contact: { phone: '', line: '', instagram: 'powan_hanko', web: 'https://minne.com/@powan-hanko', address: '' },
+      cardDesign: { color:'#F4A6C4', pattern:'dots' },
+      contact: { phone: '', address: '' },
+      snsLinks: [
+        { platform:'instagram', value:'powan_hanko' },
+        { platform:'website', value:'minne.com/@powan-hanko', customLabel:'minne' },
+        { platform:'x', value:'powan_hanko' }
+      ],
       posts: [
         { id:'p_b1', type:'news', title:'', content:'5月の新作受付始まりました🌸', tags:['新作'], timestamp: todayMs - 12*60*60*1000 },
         { id:'p_b2', type:'work', title:'ねこちゃん似顔絵はんこ', content:'お写真からお作りします。1.5cm角サイズ。', price:'¥2,800', url:'https://minne.com/items/sample1', tags:['ねこ','似顔絵'], timestamp: todayMs - 3*dayMs },
@@ -12151,7 +12165,14 @@ function _doInjectSampleData() {
       profile: '毎晩22時から、おしゃべり配信してます☕\n\nリスナーさんとゆるっと夜を過ごす配信スタイル。お悩み相談・雑談・歌枠など。お気軽に遊びに来てね🌙',
       tags: ['配信者','ライバー','夜カフェ','雑談','歌'],
       heroImage: '', iconImage: '',
-      contact: { phone: '', line: '', instagram: 'yorucafe_momo', web: 'https://twitcasting.tv/yorucafe_momo', address: '' },
+      cardDesign: { color:'#7B6FA8', pattern:'stripes' },
+      contact: { phone: '', address: '' },
+      snsLinks: [
+        { platform:'instagram', value:'yorucafe_momo' },
+        { platform:'youtube', value:'yorucafe_momo' },
+        { platform:'tiktok', value:'yorucafe_momo' },
+        { platform:'x', value:'yorucafe_momo' }
+      ],
       posts: [
         { id:'p_c1', type:'news', title:'', content:'今夜22時から配信します🌙 リクエスト受付中', tags:['配信予定','今夜'], timestamp: todayMs - 30*60*1000 },
         { id:'p_c2', type:'news', title:'', content:'昨日の配信ありがとう！次は土曜の歌枠です', tags:['お礼'], timestamp: todayMs - 1*dayMs },
@@ -12166,7 +12187,12 @@ function _doInjectSampleData() {
       profile: '大阪市にこわ町の動物病院です。\n犬・猫・小動物の診療を行っています。\n\n地域の動物たちの健康を、家族の方と一緒に守っていきます🐶🐱',
       tags: ['動物病院','大阪','犬','猫','診療'],
       heroImage: '', iconImage: '',
-      contact: { phone: '06-9876-5432', line: '', instagram: '', web: 'https://niconico-vet.example.com', address: '大阪府大阪市にこわ町4-5-6' },
+      cardDesign: { color:'#7BB8E0', pattern:'cross' },
+      contact: { phone: '06-9876-5432', address: '大阪府大阪市にこわ町4-5-6' },
+      snsLinks: [
+        { platform:'website', value:'niconico-vet.example.com', customLabel:'公式サイト' },
+        { platform:'instagram', value:'niconico_vet' }
+      ],
       posts: [
         { id:'p_d1', type:'news', title:'', content:'GW中の診療時間のお知らせ', tags:['お知らせ','GW'], timestamp: todayMs - 4*60*60*1000 },
         { id:'p_d2', type:'column', title:'シニア犬の食事ケア', content:'7歳を超えたら「シニア期」に入ります。\n\nこの時期は、消化機能が落ち、腎臓・肝臓への負担も増えてきます。\n\n大切なのは──\n①低たんぱく・高品質な食事\n②食事回数を増やして1回量を減らす\n③水分をしっかり摂らせる\n\n気になる症状があれば、いつでもご相談くださいね🐕', tags:['シニア犬','食事','ケア'], timestamp: todayMs - 6*dayMs },
@@ -12181,7 +12207,12 @@ function _doInjectSampleData() {
       profile: 'ことばの散歩。\n\nねこと暮らす日々の中で、ふと拾ったやさしい言葉を、詩というかたちで置いていきます🐾',
       tags: ['詩','ねこ','エッセイ','日常','本棚'],
       heroImage: '', iconImage: '',
-      contact: { phone: '', line: '', instagram: '', web: '', address: '' },
+      cardDesign: { color:'#A89478', pattern:'wave' },
+      contact: { phone: '', address: '' },
+      snsLinks: [
+        { platform:'note', value:'neko_poet_mike' },
+        { platform:'x', value:'neko_poet_mike' }
+      ],
       posts: [
         { id:'p_e1', type:'work', title:'小さな幸せを見つける時間', content:'朝の光がカーテンのすき間から\nこぼれるとき、\nねこはしっぽをゆらして\n窓辺であくびをします。\n\nそんな何気ない時間が、\nいちばんの宝物かもしれません。', tags:['詩','朝','ねこ'], timestamp: todayMs - 2*dayMs },
         { id:'p_e2', type:'work', title:'雨の日の独白', content:'雨音は、\n言葉にならない気持ちを\nそっとなでてくれる。\n\n誰かに伝えなくていい\n感情だってあるんだよ、と\n窓を流れる水滴が言う。', tags:['詩','雨'], timestamp: todayMs - 6*dayMs },
@@ -12196,7 +12227,13 @@ function _doInjectSampleData() {
       profile: '街角の光と影を切り取るフォトグラファー。\n大阪・京都・奈良を中心に、何気ない日常を撮っています📷',
       tags: ['写真','街','光','フォトグラファー','日常'],
       heroImage: '', iconImage: '',
-      contact: { phone: '', line: '', instagram: 'madobenohikari_photo', web: '', address: '' },
+      cardDesign: { color:'#5A8A8A', pattern:'diagonal' },
+      contact: { phone: '', address: '' },
+      snsLinks: [
+        { platform:'instagram', value:'madobenohikari_photo' },
+        { platform:'threads', value:'madobenohikari' },
+        { platform:'website', value:'madobe-hikari.example.com', customLabel:'ポートフォリオ' }
+      ],
       posts: [
         { id:'p_f1', type:'work', title:'朝のカフェ', content:'梅田の路地裏のカフェにて。', tags:['カフェ','朝','大阪'], timestamp: todayMs - 1*dayMs },
         { id:'p_f2', type:'work', title:'夕暮れの並木道', content:'御堂筋の銀杏並木。', tags:['夕暮れ','並木','大阪'], timestamp: todayMs - 4*dayMs },
@@ -25403,6 +25440,12 @@ const SHOP_TEMPLATES = {
 function createShop(type, template, name, profile, tags) {
   if (!data.myShops) data.myShops = [];
   const id = 'shop_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  // MYプロフィールのアクティブカードのデザインを引き継ぎ
+  let _initDesign = { color: '#E8A040', pattern: 'solid' };
+  if (data.myProfiles && data.myProfileActiveId) {
+    const ap = data.myProfiles.find(p => p.id === data.myProfileActiveId);
+    if (ap) _initDesign = { color: ap.color || '#E8A040', pattern: ap.pattern || 'solid' };
+  }
   const shop = {
     id: id,
     type: type,
@@ -25412,8 +25455,9 @@ function createShop(type, template, name, profile, tags) {
     tags: tags || [],
     heroImage: '',
     iconImage: '',
-    cardDesign: data.userPrefs && data.userPrefs.cardDesign ? JSON.parse(JSON.stringify(data.userPrefs.cardDesign)) : null,
-    contact: { phone: '', line: '', instagram: '', web: '', address: '' },
+    cardDesign: _initDesign,
+    contact: { phone: '', address: '' },
+    snsLinks: [], // [{platform: 'instagram', value: 'username'}]
     posts: [],
     isPublic: true,
     plan: 'free',
@@ -25661,6 +25705,8 @@ function renderShopPreview(shop) {
 
 // ===== 基本情報編集 =====
 function renderShopProfileEdit(shop) {
+  if (!shop.snsLinks) shop.snsLinks = [];
+  if (!shop.contact) shop.contact = {};
   let h = '<div style="display:flex;flex-direction:column;gap:14px;">';
   // ヒーロー画像
   h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">ヘッダー画像</label>';
@@ -25677,17 +25723,85 @@ function renderShopProfileEdit(shop) {
   h += _shopFieldArea('紹介文', 'profile', shop.profile||'', 200);
   h += _shopFieldArea('タグ（カンマ区切り）', 'tags', (shop.tags||[]).join(', '), 100);
   
-  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-top:8px;">📞 連絡先</div>';
-  h += _shopField('電話番号', 'contact_phone', shop.contact?.phone||'', 'tel');
-  h += _shopField('LINE', 'contact_line', shop.contact?.line||'', 'text');
-  h += _shopField('Instagram', 'contact_instagram', shop.contact?.instagram||'', 'text');
-  h += _shopField('ウェブサイト', 'contact_web', shop.contact?.web||'', 'url');
-  h += _shopField('住所', 'contact_address', shop.contact?.address||'', 'text');
+  // ===== 連絡先 =====
+  h += '<div style="height:1px;background:var(--line-soft);margin-top:6px;"></div>';
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">contact_phone</span>連絡先</div>';
+  h += _shopField('電話番号', 'contact_phone', shop.contact.phone||'', 'tel');
+  h += _shopField('住所', 'contact_address', shop.contact.address||'', 'text');
+  
+  // ===== SNS / リンク =====
+  h += '<div style="height:1px;background:var(--line-soft);margin-top:6px;"></div>';
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">hub</span>SNS / リンク</div>';
+  h += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.6;">主要SNSや、お店のWEBサイト、配信プラットフォームなどを追加できるよ</div>';
+  
+  // 既存のSNSリンク
+  if (shop.snsLinks && shop.snsLinks.length > 0) {
+    h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+    for (let i = 0; i < shop.snsLinks.length; i++) {
+      const link = shop.snsLinks[i];
+      const platform = SNS_PLATFORMS.find(p => p.id === link.platform) || SNS_PLATFORMS.find(p => p.id === 'other');
+      h += '<div style="display:flex;align-items:center;gap:8px;background:white;border:1px solid var(--line);border-radius:10px;padding:8px 10px;">';
+      h += '<span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:'+platform.color+';color:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;">'+platform.icon+'</span></span>';
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="font-size:10px;font-weight:700;color:var(--ink-sub);">'+platform.label+(link.customLabel?' / '+escapeHtml(link.customLabel):'')+'</div>';
+      h += '<input type="text" id="snsLink_'+i+'" value="'+escapeHtml(link.value||'')+'" placeholder="@username またはURL" style="width:100%;padding:5px 0;border:none;background:transparent;font-family:inherit;font-size:12px;color:var(--ink-dark);outline:none;">';
+      h += '</div>';
+      h += '<button onclick="removeShopSns(\''+shop.id+'\','+i+')" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:4px;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">close</span></button>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  
+  // 追加ボタン（ホーム＝既追加以外を表示）
+  const _usedSet = new Set((shop.snsLinks||[]).map(l => l.platform));
+  const _availPlatforms = SNS_PLATFORMS.filter(p => p.id === 'other' || p.id === 'website' || !_usedSet.has(p.id));
+  h += '<div><div style="font-size:10.5px;color:var(--ink-sub);margin-bottom:6px;font-weight:700;">＋ SNSを追加</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">';
+  for (const p of _availPlatforms) {
+    h += '<button onclick="addShopSns(\''+shop.id+'\',\''+p.id+'\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:white;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;">';
+    h += '<span style="width:30px;height:30px;border-radius:8px;background:'+p.color+';color:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:17px;">'+p.icon+'</span></span>';
+    h += '<span style="font-size:9px;font-weight:700;color:var(--ink-dark);">'+p.label+'</span>';
+    h += '</button>';
+  }
+  h += '</div></div>';
   
   h += '<button onclick="saveShopProfile(\''+shop.id+'\')" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;margin-top:10px;">保存</button>';
   h += '</div>';
   return h;
 }
+
+function addShopSns(shopId, platformId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  if (!shop.snsLinks) shop.snsLinks = [];
+  // 「その他」の場合は名前入力
+  let customLabel = '';
+  if (platformId === 'other') {
+    customLabel = prompt('リンク名を入力してね', '');
+    if (!customLabel) return;
+    customLabel = customLabel.slice(0, 20);
+  }
+  shop.snsLinks.push({ platform: platformId, value: '', customLabel });
+  shop.updatedAt = Date.now();
+  saveData();
+  renderShopManager();
+}
+window.addShopSns = addShopSns;
+
+function removeShopSns(shopId, idx) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop || !shop.snsLinks) return;
+  // 入力欄から保存
+  for (let i = 0; i < shop.snsLinks.length; i++) {
+    const el = document.getElementById('snsLink_'+i);
+    if (el) shop.snsLinks[i].value = el.value.trim();
+  }
+  shop.snsLinks.splice(idx, 1);
+  shop.updatedAt = Date.now();
+  saveData();
+  renderShopManager();
+}
+window.removeShopSns = removeShopSns;
 
 function _shopField(label, id, val, type) {
   return '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">'+label+'</label><input type="'+type+'" id="shopFld_'+id+'" value="'+escapeHtml(val)+'" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
@@ -25705,10 +25819,14 @@ function saveShopProfile(shopId) {
   shop.tags = tagsStr ? tagsStr.split(/[,、]\s*/).map(t => t.trim()).filter(Boolean).slice(0, 10) : [];
   if (!shop.contact) shop.contact = {};
   shop.contact.phone = document.getElementById('shopFld_contact_phone').value.trim();
-  shop.contact.line = document.getElementById('shopFld_contact_line').value.trim();
-  shop.contact.instagram = document.getElementById('shopFld_contact_instagram').value.trim();
-  shop.contact.web = document.getElementById('shopFld_contact_web').value.trim();
   shop.contact.address = document.getElementById('shopFld_contact_address').value.trim();
+  // SNSリンク値を保存
+  if (shop.snsLinks) {
+    for (let i = 0; i < shop.snsLinks.length; i++) {
+      const el = document.getElementById('snsLink_'+i);
+      if (el) shop.snsLinks[i].value = el.value.trim();
+    }
+  }
   shop.updatedAt = Date.now();
   saveData();
   showToast('🌷 保存したよ');
@@ -25917,7 +26035,37 @@ window.deleteShopPost = deleteShopPost;
 
 // ===== デザイン =====
 function renderShopDesignEdit(shop) {
+  if (!shop.cardDesign) shop.cardDesign = { color: '#E8A040', pattern: 'solid' };
+  const cd = shop.cardDesign;
   let h = '<div style="display:flex;flex-direction:column;gap:14px;">';
+  
+  // ===== プレビュー（一番上に大きく）=====
+  h += '<div><div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:6px;">プレビュー</div>';
+  h += '<div id="shopDesignPreview" style="border-radius:14px;height:80px;border:1px solid var(--line);'+_getCardPatternBg(cd.color, cd.pattern, 60)+'"></div>';
+  h += '</div>';
+  
+  // ===== 色 =====
+  h += '<div><div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:6px;">カラー</div>';
+  h += '<div style="display:flex;align-items:center;gap:10px;background:white;border:1px solid var(--line);border-radius:12px;padding:10px;">';
+  h += '<input type="color" id="shopDesignColor" value="'+escapeHtml(cd.color||'#E8A040')+'" oninput="_previewShopDesign(\''+shop.id+'\')" style="width:48px;height:48px;padding:2px;border:1.5px solid var(--line);border-radius:10px;background:white;cursor:pointer;flex-shrink:0;">';
+  h += '<div style="flex:1;font-size:11px;color:var(--ink-sub);line-height:1.5;">タップして色を選んでね🌷<br>右上のプレビューにすぐ反映されるよ</div>';
+  h += '</div></div>';
+  
+  // ===== 柄 =====
+  h += '<div><div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:6px;">カードの柄</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+  for (const pat of CARD_PATTERNS) {
+    const isOn = (cd.pattern || 'solid') === pat.id;
+    const prevBg = _getCardPatternBg(cd.color || '#E8A040', pat.id, 40);
+    h += '<button onclick="_setShopDesignPattern(\''+shop.id+'\',\''+pat.id+'\')" style="cursor:pointer;border-radius:10px;overflow:hidden;border:1.5px solid '+(isOn?'var(--accent)':'var(--line)')+';padding:0;background:none;font-family:inherit;'+(isOn?'outline:2px solid var(--accent);outline-offset:1px;':'')+'">';
+    h += '<div style="height:40px;'+prevBg+'"></div>';
+    h += '<div style="font-size:10px;font-weight:700;color:'+(isOn?'var(--accent-deep)':'var(--ink-sub)')+';text-align:center;padding:4px 2px;background:'+(isOn?'var(--accent-bg)':'var(--surface)')+';">'+pat.label+'</div>';
+    h += '</button>';
+  }
+  h += '</div></div>';
+  
+  // ===== テンプレート =====
+  h += '<div style="height:1px;background:var(--line-soft);margin-top:6px;"></div>';
   h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">テンプレート</div>';
   h += '<div style="display:flex;flex-direction:column;gap:8px;">';
   for (const tid in SHOP_TEMPLATES) {
@@ -25931,10 +26079,53 @@ function renderShopDesignEdit(shop) {
     h += '</button>';
   }
   h += '</div>';
-  h += '<div style="margin-top:10px;padding:12px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;font-size:11px;color:var(--accent-deep);line-height:1.6;"><span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;">palette</span> 色や柄のカスタマイズは今後実装予定だよ🌷</div>';
+  
+  h += '<button onclick="saveShopDesign(\''+shop.id+'\')" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;margin-top:10px;">デザインを保存</button>';
   h += '</div>';
   return h;
 }
+
+function _previewShopDesign(shopId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  const colorEl = document.getElementById('shopDesignColor');
+  if (!colorEl) return;
+  const newColor = colorEl.value;
+  const cd = shop.cardDesign || { color:'#E8A040', pattern:'solid' };
+  cd.color = newColor;
+  shop.cardDesign = cd;
+  // プレビューだけ更新（保存はしない）
+  const prev = document.getElementById('shopDesignPreview');
+  if (prev) prev.style.cssText = 'border-radius:14px;height:80px;border:1px solid var(--line);'+_getCardPatternBg(cd.color, cd.pattern, 60);
+}
+window._previewShopDesign = _previewShopDesign;
+
+function _setShopDesignPattern(shopId, patId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  const cd = shop.cardDesign || { color:'#E8A040', pattern:'solid' };
+  cd.pattern = patId;
+  // 色は現在の入力値を取る
+  const colorEl = document.getElementById('shopDesignColor');
+  if (colorEl) cd.color = colorEl.value;
+  shop.cardDesign = cd;
+  renderShopManager();
+}
+window._setShopDesignPattern = _setShopDesignPattern;
+
+function saveShopDesign(shopId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  const cd = shop.cardDesign || { color:'#E8A040', pattern:'solid' };
+  const colorEl = document.getElementById('shopDesignColor');
+  if (colorEl) cd.color = colorEl.value;
+  shop.cardDesign = cd;
+  shop.updatedAt = Date.now();
+  saveData();
+  showToast('🌷 デザインを保存したよ');
+  renderShopManager();
+}
+window.saveShopDesign = saveShopDesign;
 
 function setShopTemplate(shopId, tid) {
   const shop = (data.myShops || []).find(s => s.id === shopId);
@@ -25992,12 +26183,14 @@ window.deleteShop = deleteShop;
 // ===== 公開ビュー（テンプレに応じて表示）=====
 function renderShopPublicView(shop) {
   const tmpl = shop.template || 'A';
+  const cd = shop.cardDesign || { color: '#E8A040', pattern: 'solid' };
   let h = '<div style="background:var(--surface);">';
-  // ヘッダー画像
+  // ヘッダー画像 or デザイン背景
   if (shop.heroImage) {
     h += '<div style="width:100%;height:140px;background:url('+shop.heroImage+') center/cover;"></div>';
   } else {
-    h += '<div style="width:100%;height:100px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));"></div>';
+    // cardDesign の柄＋色を使う
+    h += '<div style="width:100%;height:120px;'+_getCardPatternBg(cd.color, cd.pattern, 80)+'"></div>';
   }
   // プロフィール部分
   h += '<div style="padding:14px 16px;">';
@@ -26008,23 +26201,32 @@ function renderShopPublicView(shop) {
   if (shop.profile) h += '<div style="font-size:11.5px;color:var(--ink-sub);line-height:1.7;margin-bottom:8px;white-space:pre-wrap;">'+escapeHtml(shop.profile)+'</div>';
   if (shop.tags && shop.tags.length) {
     h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">';
-    for (const tg of shop.tags) h += '<span style="background:var(--accent-bg);color:var(--accent-deep);padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
+    for (const tg of shop.tags) h += '<span style="background:'+(cd.color||'var(--accent)')+'22;color:'+(cd.color||'var(--accent-deep)')+';padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
     h += '</div>';
   }
-  // 連絡先ボタン（ショップ型のみ）
-  if (shop.type === 'shop' && shop.contact) {
+  // 連絡先（電話・住所）
+  if (shop.contact) {
     const c = shop.contact;
-    const btns = [];
-    if (c.phone) btns.push({icon:'call', label:'電話', href:'tel:'+c.phone.replace(/[^\d+]/g,'')});
-    if (c.line) btns.push({icon:'chat', label:'LINE', href:c.line.startsWith('http')?c.line:'https://line.me/R/ti/p/'+c.line});
-    if (c.instagram) btns.push({icon:'photo_camera', label:'Insta', href:'https://instagram.com/'+(c.instagram.replace('@',''))});
-    if (c.web) btns.push({icon:'language', label:'HP', href:c.web});
-    if (c.address) btns.push({icon:'map', label:'地図', href:'https://maps.google.com/?q='+encodeURIComponent(c.address)});
-    if (btns.length) {
-      h += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">';
-      for (const b of btns) h += '<a href="'+b.href+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:7px 12px;background:white;border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;font-size:11px;font-weight:700;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:14px;">'+b.icon+'</span>'+b.label+'</a>';
+    const baseBtns = [];
+    if (c.phone) baseBtns.push({icon:'call', label:'電話', href:'tel:'+c.phone.replace(/[^\d+]/g,''), color:cd.color||'#E8A040'});
+    if (c.address) baseBtns.push({icon:'map', label:'地図', href:'https://maps.google.com/?q='+encodeURIComponent(c.address), color:cd.color||'#E8A040'});
+    if (baseBtns.length) {
+      h += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">';
+      for (const b of baseBtns) h += '<a href="'+b.href+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:7px 12px;background:white;border:1.5px solid '+b.color+';color:'+b.color+';border-radius:100px;font-size:11px;font-weight:700;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:14px;">'+b.icon+'</span>'+b.label+'</a>';
       h += '</div>';
     }
+  }
+  // SNSリンク（カラーアイコン丸ボタン）
+  if (shop.snsLinks && shop.snsLinks.length > 0) {
+    h += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">';
+    for (const link of shop.snsLinks) {
+      if (!link.value) continue;
+      const platform = SNS_PLATFORMS.find(p => p.id === link.platform) || SNS_PLATFORMS.find(p => p.id === 'other');
+      const url = _snsUrl(link.platform, link.value);
+      const lbl = link.customLabel || platform.label;
+      h += '<a href="'+url+'" target="_blank" rel="noopener" title="'+escapeHtml(lbl)+'" style="display:inline-flex;align-items:center;gap:5px;padding:6px 11px;background:'+platform.color+';color:white;border-radius:100px;font-size:10.5px;font-weight:700;text-decoration:none;"><span class="material-symbols-rounded" style="font-size:14px;">'+platform.icon+'</span>'+escapeHtml(lbl)+'</a>';
+    }
+    h += '</div>';
   }
   h += '</div>';
   
@@ -26038,8 +26240,8 @@ function renderShopPublicView(shop) {
   if (newsList.length > 0) {
     const latest = newsList[0];
     const t = new Date(latest.timestamp);
-    h += '<div style="margin:0 16px 12px;padding:10px 12px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border-left:3px solid var(--accent);border-radius:8px;">';
-    h += '<div style="font-size:9px;color:var(--accent-deep);font-weight:700;margin-bottom:2px;">📢 【'+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+'】お知らせ</div>';
+    h += '<div style="margin:0 16px 12px;padding:10px 12px;background:'+(cd.color||'#E8A040')+'15;border-left:3px solid '+(cd.color||'var(--accent)')+';border-radius:8px;">';
+    h += '<div style="font-size:9px;color:'+(cd.color||'var(--accent-deep)')+';font-weight:700;margin-bottom:2px;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">campaign</span>【'+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+'】お知らせ</div>';
     h += '<div style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(latest.content||'')+'</div>';
     h += '</div>';
   }
@@ -26047,7 +26249,7 @@ function renderShopPublicView(shop) {
   // 作品/商品（テンプレ別レイアウト）
   if (workList.length > 0) {
     h += '<div style="padding:0 16px 12px;">';
-    h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">'+(tmpl==='F'?'photo_library':tmpl==='B'?'palette':'inventory_2')+'</span>'+(tmpl==='F'?'写真':tmpl==='E'?'作品':shop.type==='bookshelf'?'作品':'商品/作品')+'</div>';
+    h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:'+(cd.color||'var(--accent-deep)')+';">'+(tmpl==='F'?'photo_library':tmpl==='B'?'palette':'inventory_2')+'</span>'+(tmpl==='F'?'写真':tmpl==='E'?'作品':shop.type==='bookshelf'?'作品':'商品/作品')+'</div>';
     
     if (tmpl === 'F' || tmpl === 'B') {
       // 写真型・作家型：グリッド
@@ -26055,9 +26257,9 @@ function renderShopPublicView(shop) {
       for (const p of workList) {
         h += '<div style="background:white;border:1px solid var(--line);border-radius:8px;overflow:hidden;">';
         if (p.photo) h += '<div style="width:100%;aspect-ratio:1;background:url('+p.photo+') center/cover;"></div>';
-        else h += '<div style="width:100%;aspect-ratio:1;background:var(--surface-warm);display:flex;align-items:center;justify-content:center;color:var(--ink-light);"><span class="material-symbols-rounded" style="font-size:32px;">image</span></div>';
+        else h += '<div style="width:100%;aspect-ratio:1;'+_getCardPatternBg(cd.color, cd.pattern, 30)+'display:flex;align-items:center;justify-content:center;color:white;"><span class="material-symbols-rounded" style="font-size:32px;opacity:0.6;">image</span></div>';
         h += '<div style="padding:6px 8px;"><div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.title||'')+'</div>';
-        if (p.price) h += '<div style="font-size:10px;color:var(--accent-deep);font-weight:700;">'+escapeHtml(p.price)+'</div>';
+        if (p.price) h += '<div style="font-size:10px;color:'+(cd.color||'var(--accent-deep)')+';font-weight:700;">'+escapeHtml(p.price)+'</div>';
         h += '</div></div>';
       }
       h += '</div>';
@@ -26080,7 +26282,7 @@ function renderShopPublicView(shop) {
         h += '<div style="flex:1;min-width:0;">';
         h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.title||'')+'</div>';
         if (p.content) h += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+escapeHtml(p.content)+'</div>';
-        if (p.price) h += '<div style="font-size:11px;color:var(--accent-deep);font-weight:700;margin-top:2px;">'+escapeHtml(p.price)+'</div>';
+        if (p.price) h += '<div style="font-size:11px;color:'+(cd.color||'var(--accent-deep)')+';font-weight:700;margin-top:2px;">'+escapeHtml(p.price)+'</div>';
         h += '</div></div>';
       }
     }
@@ -26090,7 +26292,7 @@ function renderShopPublicView(shop) {
   // コラム
   if (columnList.length > 0) {
     h += '<div style="padding:0 16px 14px;">';
-    h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">article</span>コラム</div>';
+    h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:'+(cd.color||'var(--accent-deep)')+';">article</span>コラム</div>';
     for (const p of columnList.slice(0, 5)) {
       h += '<div style="background:white;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;">';
       h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:3px;">'+escapeHtml(p.title||'')+'</div>';
