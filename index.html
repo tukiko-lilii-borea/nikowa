@@ -762,6 +762,22 @@
     50% { opacity: 1; transform: scale(1.1) rotate(var(--rot, 0deg)); }
   }
   .section { padding: 14px 14px 0; }
+  /* PET/KIDSモード時、各sectionをカード化 */
+  body.mode-pet .section,
+  body.mode-kids .section {
+    margin: 0 12px 10px;
+    padding: 14px;
+    background: rgba(255,255,255,0.78);
+    border: 1px solid rgba(255,255,255,0.9);
+    border-radius: 18px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  body.mode-pet .section + .section,
+  body.mode-kids .section + .section {
+    margin-top: 0;
+  }
   /* コンテンツエリアの白い角丸背景（全モード共通） */
   .mode-content-wrap {
     margin: 10px 10px 0;
@@ -1205,16 +1221,19 @@
   .rainbow-pet-name { font-size: 11px; color: var(--ink-dark); font-weight: 600; }
   
   .pet-detail-window {
-    background: var(--surface); margin: 16px;
+    background: var(--surface); margin: 12px;
     border-radius: 18px; padding: 12px;
     border: 1.5px solid var(--line); box-shadow: var(--shadow);
     position: relative; overflow: hidden;
+    display: flex; align-items: stretch; gap: 12px;
   }
   .pet-detail-room {
-    position: relative; width: 100%;
-    aspect-ratio: 4 / 3;
+    position: relative;
+    flex-shrink: 0;
+    width: 110px;
+    aspect-ratio: 1;
     border-radius: 14px; overflow: hidden;
-    border: 2.5px solid var(--line);
+    border: 2px solid var(--line);
     background: linear-gradient(180deg, #EAF6EE 0%, #EAF6EE 60%, #C8E0CF 60%, #C8E0CF 100%);
   }
   .pet-detail-room.has-photo { background-size: cover; background-position: center; }
@@ -1225,68 +1244,142 @@
   }
   .pet-detail-sprite svg, .pet-detail-sprite .pet-emoji {
     image-rendering: pixelated;
-    width: 38%; height: 60%;
+    width: 50%; height: 65%;
     animation: bob 2.5s ease-in-out infinite;
   }
   .pet-detail-sprite .pet-emoji {
-    font-size: 80px; width: auto; height: auto;
+    font-size: 50px; width: auto; height: auto;
   }
   .pet-detail-info {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 6px 4px; gap: 8px;
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 4px 2px 2px; gap: 6px;
   }
-  .pet-detail-name { font-size: 18px; font-weight: 700; color: var(--ink-dark); margin: 0; }
-  .pet-detail-meta { font-size: 11px; color: var(--ink-sub); margin-top: 2px; }
+  /* 写真の右に□タイルタブ：縦2行×横スクロール */
+  .pet-detail-side {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column;
+    padding: 0;
+    align-self: stretch;
+  }
+  .pet-side-tabs {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: 1fr 1fr;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    height: 100%;
+    padding: 0 2px 4px 0;
+  }
+  .pet-side-tabs::-webkit-scrollbar { display: none; }
+  .pet-side-tab {
+    width: 50px;
+    aspect-ratio: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px;
+    padding: 4px 2px; cursor: pointer;
+    background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.45));
+    border: 1.5px solid rgba(255,255,255,0.6);
+    border-radius: 12px;
+    font-family: inherit; color: var(--ink-sub);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    transition: all 0.12s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .pet-side-tab.active {
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--accent) 50%, white) 0%,
+      color-mix(in srgb, var(--accent-deep) 45%, white) 100%);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--ink-dark);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(255,255,255,0.5);
+  }
+  .pet-side-tab-icon {
+    font-size: 20px;
+    color: var(--accent-deep);
+    line-height: 1;
+  }
+  .pet-side-tab.active .pet-side-tab-icon {
+    color: var(--ink-dark);
+  }
+  .pet-side-tab-label {
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .pet-detail-info-top {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .pet-detail-info-bottom {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  .pet-detail-name { font-size: 18px; font-weight: 700; color: var(--ink-dark); margin: 0; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pet-detail-meta { font-size: 11px; color: var(--ink-sub); line-height: 1.4; }
   .pet-detail-place-tag {
     font-size: 10px; padding: 4px 10px; border-radius: 999px;
     background: var(--mint-bg); color: var(--mint-deep);
     font-weight: 700; flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 3px;
   }
   .photo-set-btn {
-    position: absolute; top: 20px; right: 20px; z-index: 5;
-    background: rgba(255,255,255,0.92);
+    background: var(--surface-warm);
     border: 1px solid var(--line); border-radius: 999px;
-    padding: 5px 10px; font-size: 10.5px; color: var(--ink-dark);
+    padding: 4px 10px; font-size: 10.5px; color: var(--ink-dark);
     cursor: pointer; font-family: inherit; font-weight: 600;
+    flex-shrink: 0;
   }
-  .pet-tabs-bar { display: flex; gap: 4px; padding: 0 16px; margin-top: 8px; }
+  .pet-tabs-bar {
+    display: flex; gap: 6px; padding: 0 12px;
+    margin-top: 8px; overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .pet-tabs-bar::-webkit-scrollbar { display: none; }
   .pet-tab-btn {
-    flex: 1; padding: 8px 4px; cursor: pointer;
-    background: var(--surface-warm); border: 1.5px solid var(--line);
-    border-bottom: none; border-radius: 10px 10px 0 0;
+    flex-shrink: 0;
+    padding: 7px 14px; cursor: pointer;
+    background: linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.35));
+    border: 1.5px solid rgba(255,255,255,0.5);
+    border-radius: 100px;
     font-family: inherit; color: var(--ink-sub);
-    display: flex; flex-direction: column; align-items: center;
-    gap: 2px; min-width: 0;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11.5px; font-weight: 700;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    white-space: nowrap;
+    transition: all 0.12s ease;
   }
   .pet-tab-btn.active {
-    background: var(--surface);
-    color: var(--mint-deep);
-    border-color: var(--mint);
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--accent) 45%, white) 0%,
+      color-mix(in srgb, var(--accent-deep) 40%, white) 100%);
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+    color: var(--ink-dark);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10), inset 0 0 0 1px rgba(255,255,255,0.5);
   }
-  .pet-tab-icon { font-size: 16px; }
+  .pet-tab-icon { font-size: 14px; }
   .pet-tab-label {
-    font-size: 10.5px; font-weight: 900; letter-spacing: 0.3px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+    font-size: 11px; font-weight: 700;
+    white-space: nowrap;
   }
-  /* スリム横並び版：絵文字＋文字を一行で */
   .pet-tab-btn-slim {
-    flex-direction: row !important;
-    padding: 5px 8px !important;
-    gap: 5px !important;
+    padding: 7px 14px !important;
+    gap: 4px !important;
     font-size: 11.5px;
     font-weight: 700;
-    border-radius: 10px 10px 0 0;
   }
   .pet-tab-btn-slim .pet-tab-icon {
     font-size: 14px;
   }
   .pet-tab-content {
-    margin: 10px 10px 0;
-    background: rgba(255,255,255,0.72);
-    border-radius: 20px 20px 0 0;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.8);
+    margin: 10px 0 0;
+    background: transparent;
+    border: none;
     border-bottom: none;
     min-height: 40vh;
     padding-bottom: 100px;
@@ -3645,7 +3738,7 @@
     <input type="hidden" id="editPetRainbowDateInput"></div>
   <div class="form-group">
     <label class="form-label">プロフィール写真</label>
-    <button class="btn btn-secondary" style="width:100%;" onclick="setProfilePhotoFromModal()">📷 写真を変更する</button>
+    <button class="btn btn-secondary" style="width:100%;" onclick="setProfilePhotoFromModal()"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px;">photo_camera</span>写真を変更する</button>
   </div>
   <div class="form-group"><label class="form-label">居場所</label>
     <div id="editPlaceContent"></div></div>
@@ -3654,8 +3747,6 @@
     <button class="btn btn-primary" onclick="saveEditPet()">ほぞん</button>
   </div>
 </div></div>
-
-<div class="modal" id="addHouseModal"><div class="modal-content">
 
 <!-- Resume（履歴書）編集モーダル -->
 <div class="modal" id="resumeEditModal"><div class="modal-content" style="max-height:calc(90vh - 100px);overflow-y:auto;padding-bottom:90px;">
@@ -3907,6 +3998,7 @@
     <button class="btn btn-secondary" onclick="closeModal('editHouseModal')">やめる</button>
     <button class="btn btn-primary" onclick="saveEditHouse()">ほぞん</button>
   </div>
+  <button onclick="deleteHouseFromModal()" id="editHouseDeleteBtn" style="margin-top:14px;width:100%;background:none;border:none;color:#D9534F;font-size:11.5px;font-family:inherit;cursor:pointer;text-decoration:underline;display:none;">この家を削除する</button>
 </div></div>
 
 <div class="modal" id="addScheduleModal"><div class="modal-content">
@@ -6299,42 +6391,66 @@ function calcMonthSummary(year, month, scope) {
   return summary;
 }
 
-// ===== カレンダー: スタンプアイコン→絵文字マップ =====
+// ===== カレンダー: スタンプアイコン→絵文字マップ（完全版） =====
 const STAMP_ICON_TO_EMOJI = {
   // 生活
   water_drop:'💧', bathtub:'🛁', bed:'🛏️', coffee:'☕', local_cafe:'🍵',
   shower:'🚿', dentistry:'🦷', pets:'🐾', egg_alt:'🍳', ramen_dining:'🍜',
-  dinner_dining:'🍽️', cookie:'🍪',
+  dinner_dining:'🍽️', cookie:'🍪', restaurant:'🍴', breakfast_dining:'🥐',
+  brunch_dining:'🍳', lunch_dining:'🍱', icecream:'🍦', cake:'🍰',
   // 美容
   face:'💆', palette:'💄', content_cut:'💇', colors:'💅', spa:'🧖', checkroom:'👗',
   face_retouching_natural:'✨', back_hand:'🤲', soap:'🧼', wb_sunny:'☀️',
-  sentiment_satisfied:'😊', visibility:'👁️',
-  // ダイエット
-  monitor_weight:'⚖️', percent:'📊', square_foot:'📏', lunch_dining:'🍱',
+  sentiment_satisfied:'😊', visibility:'👁️', wash:'🧴', dry:'💨',
+  // ダイエット・運動
+  monitor_weight:'⚖️', percent:'📊', square_foot:'📏',
   fitness_center:'💪', directions_run:'🏃', directions_walk:'🚶',
   sprint:'🏋️', straighten:'📐', sports_gymnastics:'🍑', exercise:'🏋️‍♀️',
   iron_fist:'💪', horizontal_rule:'🧘', self_improvement:'🧘‍♀️',
+  pool:'🏊', directions_bike:'🚴', hiking:'🥾', sports_tennis:'🎾',
+  sports_basketball:'🏀', sports_soccer:'⚽', sports_baseball:'⚾',
   // 体調
   medication:'💊', water_full:'🩸', mood_bad:'😣', sick:'🤒',
   local_hospital:'🏥', thermostat:'🌡️', neurology:'🧠', gastroenterology:'🫃',
   accessibility:'🧍', visibility_off:'😵', hotel:'😴', bedtime_off:'😩',
-  mindfulness:'🧘', bedtime:'🌙',
+  mindfulness:'🧘', bedtime:'🌙', vaccines:'💉', health_and_safety:'🩺',
+  healing:'🩹', emergency:'🚨', psychology:'🧠', sentiment_dissatisfied:'😞',
   // 家事
   cleaning_services:'🧹', local_laundry_service:'🧺', kitchen:'🍳',
-  shopping_cart:'🛒', delete:'🗑️', wash:'🍽️', iron:'👔', inventory_2:'📦', bento:'🍱',
+  shopping_cart:'🛒', delete:'🗑️', iron:'👔', inventory_2:'📦', bento:'🍱',
+  recycling:'♻️', shopping_bag:'🛍️', local_grocery_store:'🏪',
   // 仕事
   work:'💼', call:'📞', mail:'📧', groups:'👥', description:'📄', laptop:'💻',
+  business_center:'💼', co_present:'🎤', schedule:'📅', task_alt:'✅',
+  meeting_room:'🪑', print:'🖨️', edit_note:'📝', folder:'📁',
   // 趣味
   sports_esports:'🎮', menu_book:'📚', music_note:'🎵', brush:'🎨',
   live_tv:'📺', mic:'🎤', movie:'🎬', favorite:'💖', photo_camera:'📷',
-  nature_people:'🌳',
+  nature_people:'🌳', headphones:'🎧', piano:'🎹', sports:'🎯',
+  videocam:'📹', camera:'📸', book:'📖', games:'🎲',
   // ポジティブ
-  star:'⭐', auto_awesome:'✨', psychology:'🧠', trophy:'🏆',
+  star:'⭐', auto_awesome:'✨', trophy:'🏆',
   local_fire_department:'🔥', celebration:'🎉', bolt:'⚡', mood:'😊',
   thumb_up:'👍', favorite_border:'♡', volunteer_activism:'🤲',
   diamond:'💎', workspace_premium:'🏅', sentiment_very_satisfied:'😄',
-  face_3:'👩', cloud:'☁️', partly_cloudy_day:'⛅', rainy:'🌧️',
-  thunderstorm:'⛈️', ac_unit:'❄️', foggy:'🌫️'
+  face_3:'👩', emoji_emotions:'😊', heart_check:'💗',
+  // 天気
+  cloud:'☁️', partly_cloudy_day:'⛅', rainy:'🌧️',
+  thunderstorm:'⛈️', ac_unit:'❄️', foggy:'🌫️',
+  // イベント・予定
+  event:'📅', today:'📆', date_range:'🗓️',
+  church:'⛪', temple_buddhist:'🛕', diversity_3:'👨‍👩‍👧',
+  flight:'✈️', luggage:'🧳', train:'🚆', directions_car:'🚗',
+  hotel_class:'🏨', beach_access:'🏖️', park:'🌳', festival:'🎪',
+  stadium:'🏟️', theater_comedy:'🎭', redeem:'🎁',
+  // お金
+  payments:'💴', account_balance:'🏦', account_balance_wallet:'👛',
+  credit_card:'💳', savings:'🐖', currency_yen:'¥', shopping:'🛒',
+  receipt_long:'🧾', local_atm:'🏧', wallet:'👛',
+  // ペット
+  cruelty_free:'🐰', water_drop:'💧', cake:'🎂',
+  // 子供
+  child_care:'👶', school:'🏫', backpack:'🎒', edit_calendar:'📅'
 };
 function _stampToEmoji(icon) {
   if (!icon) return '📌';
@@ -6395,12 +6511,6 @@ function renderCalendar(monthYear, selectedDate, scope, idPrefix) {
   html += '</div>';
   html += '<button class="cal-nav" onclick="changeCalMonth(\''+idPrefix+'\', 1)">›</button>';
   html += '</div>';
-  // スタンプモード切替（アイコン/絵文字）
-  const _calMode = getCalStampMode();
-  html += '<div style="display:flex;justify-content:flex-end;padding:0 8px 6px;gap:4px;">';
-  html += '<button onclick="setCalStampMode(\'icon\')" style="padding:3px 9px;border-radius:100px;border:1px solid '+(_calMode==='icon'?'var(--accent)':'var(--line)')+';background:'+(_calMode==='icon'?'var(--accent-bg)':'transparent')+';color:'+(_calMode==='icon'?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:9.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">apps</span>アイコン</button>';
-  html += '<button onclick="setCalStampMode(\'emoji\')" style="padding:3px 9px;border-radius:100px;border:1px solid '+(_calMode==='emoji'?'var(--accent)':'var(--line)')+';background:'+(_calMode==='emoji'?'var(--accent-bg)':'transparent')+';color:'+(_calMode==='emoji'?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:9.5px;font-weight:700;cursor:pointer;">😊 絵文字</button>';
-  html += '</div>';
   html += '<div class="cal-wd-row">';
   const wds = ['日','月','火','水','木','金','土'];
   for (let i = 0; i < 7; i++) {
@@ -6431,15 +6541,10 @@ function renderCalendar(monthYear, selectedDate, scope, idPrefix) {
     if (_dayStamps.length > 0) {
       html += '<div class="cal-stamps">';
       for (const s of _dayStamps) {
-        if (_calMode === 'emoji') {
-          html += '<span class="cal-stamp-item">'+_stampToEmoji(s.icon)+'</span>';
+        if (/^[a-z][a-z0-9_]*$/.test(s.icon)) {
+          html += '<span class="cal-stamp-item"><span class="material-symbols-rounded" style="color:var(--accent-deep);">'+s.icon+'</span></span>';
         } else {
-          // アイコン版
-          if (/^[a-z][a-z0-9_]*$/.test(s.icon)) {
-            html += '<span class="cal-stamp-item"><span class="material-symbols-rounded" style="color:var(--accent-deep);">'+s.icon+'</span></span>';
-          } else {
-            html += '<span class="cal-stamp-item">'+s.icon+'</span>';
-          }
+          html += '<span class="cal-stamp-item">'+s.icon+'</span>';
         }
       }
       html += '</div>';
@@ -7923,6 +8028,24 @@ function _refreshPinnedStampsArea(source) {
   area.outerHTML = renderPinnedStampsRow(source);
 }
 window._refreshPinnedStampsArea = _refreshPinnedStampsArea;
+
+// ピン留め切替（MEスタンプ用）
+function toggleStampPin(icon, name, ev) {
+  if (ev) ev.stopPropagation();
+  if (!data.pinnedStamps) data.pinnedStamps = [];
+  const key = icon + '|' + name;
+  const idx = data.pinnedStamps.findIndex(p => (p.icon + '|' + p.name) === key);
+  if (idx >= 0) {
+    data.pinnedStamps.splice(idx, 1);
+  } else {
+    if (data.pinnedStamps.length >= 10) { showToast('ピン留めは10個までやで'); return; }
+    data.pinnedStamps.unshift({ icon, name });
+  }
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.toggleStampPin = toggleStampPin;
 
 function renderPinnedStampsRow(source) {
   const pinned = source === 'office' ? (data.pinnedOfficeStamps||[]) : (data.pinnedStamps||[]);
@@ -16407,6 +16530,20 @@ function renderStampIcon(icon, sizeStyle) {
   return '<span style="'+sizeStyle+'">'+icon+'</span>';
 }
 
+// ===== モード対応版（絵文字 or アイコン） =====
+function renderStampIconAuto(icon, sizeStyle) {
+  if (!icon) return '';
+  const mode = (typeof getCalStampMode === 'function') ? getCalStampMode() : 'icon';
+  if (mode === 'emoji' && /^[a-z][a-z0-9_]*$/.test(icon)) {
+    // アイコン名 → 絵文字に変換
+    const emoji = (typeof _stampToEmoji === 'function') ? _stampToEmoji(icon) : icon;
+    return '<span style="'+sizeStyle+'">'+emoji+'</span>';
+  }
+  // アイコンモード or 既に絵文字
+  return renderStampIcon(icon, sizeStyle);
+}
+window.renderStampIconAuto = renderStampIconAuto;
+
 // ===== ダイエット推移グラフ =====
 // 画像リサイズ＆圧縮（File or Blob → Base64文字列）
 function resizeImageToBase64(file, maxSize, quality) {
@@ -16690,14 +16827,93 @@ function renderDietPhotoTimeline() {
   return h;
 }
 
+// ===== ME用 写真+□タイル親タブ（ペット部屋スタイル）=====
+function renderMePhotoTabs() {
+  const tabs = getModeTabsForMode('me');
+  const cur = currentModeTab['me'] || tabs[0]?.id;
+  
+  // 編集モード：右上のヘルプ&編集ボタンは残す
+  let html = '';
+  
+  html += '<div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 16px 0;align-items:center;">';
+  const _curTabId = currentModeTab['me'] || 'stamp';
+  const _validHelpTabs = ['stamp','diary','money','goods','collection','resume','office','memo','secret'];
+  const _helpScope = _validHelpTabs.includes(_curTabId) ? ('me_'+_curTabId) : 'me';
+  html += '<button onclick="openHelpGuide(\''+_helpScope+'\')" style="background:none;border:none;cursor:pointer;font-family:inherit;padding:2px 4px;color:var(--accent-deep);display:inline-flex;align-items:center;" title="このタブの使い方"><span class="material-symbols-rounded" style="font-size:16px;">help_outline</span></button>';
+  html += '<button onclick="modeTabEditMode=!modeTabEditMode;_suppressScrollTop=true;render();" style="background:none;border:none;font-size:11px;color:var(--ink-sub);cursor:pointer;font-family:inherit;padding:2px 6px;display:inline-flex;align-items:center;">';
+  html += modeTabEditMode ? '完了' : '<span class="material-symbols-rounded" style="font-size:14px;">edit</span>';
+  html += '</button></div>';
+  
+  // 編集モード時は既存UI（並び替え/削除可能）
+  if (modeTabEditMode) {
+    html += renderModePageTabs('me');
+    return html;
+  }
+  
+  // ★通常時：写真+□タイル
+  html += '<div class="pet-detail-window" style="margin-top:4px;">';
+  
+  // 写真エリア（クリックで変更）
+  const mePhoto = data.mePhoto || null;
+  html += '<div class="pet-detail-room" onclick="openMePhotoPicker()" style="cursor:pointer;'+(mePhoto?'background-image:url('+mePhoto+');background-size:cover;background-position:center;border-color:transparent;':'')+'">';
+  if (!mePhoto) {
+    html += '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-light);"><span class="material-symbols-rounded" style="font-size:30px;opacity:0.5;">add_a_photo</span><span style="font-size:9px;font-weight:700;margin-top:3px;opacity:0.6;">写真</span></div>';
+  } else {
+    // 写真ある時は右下に小さく編集マーク
+    html += '<div style="position:absolute;bottom:4px;right:4px;background:rgba(255,255,255,0.85);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);"><span class="material-symbols-rounded" style="font-size:13px;color:var(--ink-sub);">edit</span></div>';
+  }
+  html += '</div>';
+  
+  // 右側：□タイル横スクロール（縦2行）
+  html += '<div class="pet-detail-side">';
+  html += '<div class="pet-side-tabs">';
+  for (const t of tabs) {
+    const _act = (cur === t.id);
+    const iconName = TAB_ICONS[t.id] || 'category';
+    html += '<button onclick="setModePageTab(\'me\',\''+t.id+'\')" class="pet-side-tab '+(_act?'active':'')+'"><span class="material-symbols-rounded pet-side-tab-icon">'+iconName+'</span><span class="pet-side-tab-label">'+escapeHtml(t.label)+'</span></button>';
+  }
+  html += '</div>';
+  html += '</div>';
+  
+  html += '</div>';
+  return html;
+}
+
+// MEの写真選択
+function openMePhotoPicker() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = function(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const proc = (b64) => {
+      data.mePhoto = b64;
+      saveData();
+      showToast('写真を変更したよ🌷');
+      _suppressScrollTop = true;
+      render();
+    };
+    if (typeof resizeImageToBase64 === 'function') {
+      resizeImageToBase64(file, 800, 0.85).then(proc);
+    } else {
+      const reader = new FileReader();
+      reader.onload = function(ev){ proc(ev.target.result); };
+      reader.readAsDataURL(file);
+    }
+  };
+  inp.click();
+}
+window.openMePhotoPicker = openMePhotoPicker;
+
 function renderMeMode() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('pet');
   const app = document.getElementById('app');
   let html = renderModeIndexTabs();
   
-  // ページタブ（2列・下向き）
-  html += renderModePageTabs('me');
+  // ★新UI：写真+□タイルタブ（ペット部屋風）
+  html += renderMePhotoTabs();
   html += '<div style="height:2px;background:linear-gradient(90deg,transparent,var(--mint),var(--accent),var(--mint),transparent);margin:0 0 0;opacity:0.6;"></div>';
   
   // コンテンツエリア（白い角丸背景）
@@ -16917,6 +17133,43 @@ function renderMeMode() {
       
       // ピン留めスタンプ横スクロール
       html += renderPinnedStampsRow('me');
+      
+      // ===== ペット型レイアウト：カテゴリ＋スタンプグリッド =====
+      const _meVisibleCats = _getVisibleStampCats();
+      if (_meVisibleCats.length > 0) {
+        // カテゴリ選択タブ（横スクロール）
+        html += '<div style="margin:0 12px 8px;display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;">';
+        for (const cat of _meVisibleCats) {
+          const _act = cat === selCat;
+          html += '<button onclick="switchStampCat(\''+escapeHtml(cat).replace(/\'/g,"\\\\'")+'\')" style="flex-shrink:0;padding:6px 12px;border-radius:100px;border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'transparent')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+        }
+        html += '</div>';
+        
+        // スタンプグリッド（2行×横スクロール）
+        const _meCatStamps = (data.stampLib[selCat] || []).filter(s => !s.hidden);
+        const _mePinnedSet = new Set((data.pinnedStamps || []).map(p => (p.icon||'')+'|'+(p.name||'')));
+        if (_meCatStamps.length === 0) {
+          html += '<div style="margin:0 12px 14px;padding:18px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:12px;font-size:11px;color:var(--ink-light);">このカテゴリにはまだスタンプがないよ<br>「✏」から追加できるよ</div>';
+        } else {
+          html += '<div style="margin:0 12px 14px;display:grid;grid-auto-flow:column;grid-template-rows:1fr 1fr;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:8px;">';
+          for (const s of _meCatStamps) {
+            const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
+            const _isPin = _mePinnedSet.has((s.icon||'')+'|'+(s.name||''));
+            const _isValueType = s.type === 'number' || s.type === 'text';
+            html += '<button onclick="tapStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
+            // 右上ピン留めトグル
+            html += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
+            // 値入力型のミニバッジ（左上）
+            if (_isValueType) {
+              html += '<span style="position:absolute;top:3px;left:3px;font-size:8px;background:var(--accent);color:white;padding:1px 4px;border-radius:6px;font-weight:700;">'+(s.unit||'入力')+'</span>';
+            }
+            html += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:22px;color:var(--accent-deep);')+'</span>';
+            html += '<span style="font-size:10.5px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+            html += '</button>';
+          }
+          html += '</div>';
+        }
+      }
       
       // ===== カードB: 今日の記録（白カード・細枠、高さ固定＋中スクロール） =====
       html += '<div style="margin:0 12px 12px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
@@ -20087,6 +20340,83 @@ function deleteOfficeContact(contactId) {
 }
 window.deleteOfficeContact = deleteOfficeContact;
 
+// ===== Nest用 写真+□タイル親タブ（ペット部屋スタイル）=====
+function renderNestPhotoTabs() {
+  const tabs = getModeTabsForMode('nest');
+  const cur = currentModeTab['nest'] || tabs[0]?.id;
+  
+  let html = '';
+  
+  html += '<div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 16px 0;align-items:center;">';
+  html += '<button onclick="modeTabEditMode=!modeTabEditMode;_suppressScrollTop=true;render();" style="background:none;border:none;font-size:11px;color:var(--ink-sub);cursor:pointer;font-family:inherit;padding:2px 6px;display:inline-flex;align-items:center;">';
+  html += modeTabEditMode ? '完了' : '<span class="material-symbols-rounded" style="font-size:14px;">edit</span>';
+  html += '</button></div>';
+  
+  // 編集モード時は既存UI
+  if (modeTabEditMode) {
+    html += renderModePageTabs('nest');
+    return html;
+  }
+  
+  // ★通常時：写真+□タイル（Nestごとに写真）
+  const activeNest = (typeof getActiveNest === 'function') ? getActiveNest() : null;
+  const nestId = activeNest ? activeNest.id : 'default';
+  if (!data.nestPhotos) data.nestPhotos = {};
+  const nestPhoto = data.nestPhotos[nestId] || null;
+  
+  html += '<div class="pet-detail-window" style="margin-top:4px;">';
+  
+  // 写真エリア
+  html += '<div class="pet-detail-room" onclick="openNestPhotoPicker(\''+nestId+'\')" style="cursor:pointer;'+(nestPhoto?'background-image:url('+nestPhoto+');background-size:cover;background-position:center;border-color:transparent;':'')+'">';
+  if (!nestPhoto) {
+    html += '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-light);"><span class="material-symbols-rounded" style="font-size:30px;opacity:0.5;">add_a_photo</span><span style="font-size:9px;font-weight:700;margin-top:3px;opacity:0.6;">写真</span></div>';
+  } else {
+    html += '<div style="position:absolute;bottom:4px;right:4px;background:rgba(255,255,255,0.85);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);"><span class="material-symbols-rounded" style="font-size:13px;color:var(--ink-sub);">edit</span></div>';
+  }
+  html += '</div>';
+  
+  // □タイル横スクロール
+  html += '<div class="pet-detail-side">';
+  html += '<div class="pet-side-tabs">';
+  for (const t of tabs) {
+    const _act = (cur === t.id);
+    const iconName = TAB_ICONS[t.id] || 'category';
+    html += '<button onclick="setModePageTab(\'nest\',\''+t.id+'\')" class="pet-side-tab '+(_act?'active':'')+'"><span class="material-symbols-rounded pet-side-tab-icon">'+iconName+'</span><span class="pet-side-tab-label">'+escapeHtml(t.label)+'</span></button>';
+  }
+  html += '</div>';
+  html += '</div>';
+  
+  html += '</div>';
+  return html;
+}
+
+function openNestPhotoPicker(nestId) {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = function(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const proc = (b64) => {
+      if (!data.nestPhotos) data.nestPhotos = {};
+      data.nestPhotos[nestId] = b64;
+      saveData();
+      showToast('写真を変更したよ🌷');
+      _suppressScrollTop = true;
+      render();
+    };
+    if (typeof resizeImageToBase64 === 'function') {
+      resizeImageToBase64(file, 800, 0.85).then(proc);
+    } else {
+      const reader = new FileReader();
+      reader.onload = function(ev){ proc(ev.target.result); };
+      reader.readAsDataURL(file);
+    }
+  };
+  inp.click();
+}
+window.openNestPhotoPicker = openNestPhotoPicker;
+
 function renderNestMode() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('pet');
@@ -20094,7 +20424,8 @@ function renderNestMode() {
   let html = renderModeIndexTabs();
   html += renderNestTabs();
 
-  html += renderModePageTabs('nest');
+  // ★新UI：写真+□タイルタブ（ペット部屋風）
+  html += renderNestPhotoTabs();
   html += '<div style="height:2px;background:linear-gradient(90deg,transparent,var(--mint),var(--accent),var(--mint),transparent);margin:0 0 0;opacity:0.6;"></div>';
   // コンテンツエリア（白い角丸背景）
   html += '<div class="mode-content-wrap">';
@@ -20525,12 +20856,15 @@ function renderHouses() {
       html += '<div class="other-houses-row">';
       for (const h of otherHouses) {
         const petCount = getHousePets(h.id).filter(p => !p.archived).length;
+        html += '<div style="position:relative;display:inline-block;">';
         html += '<button class="other-house-card" onclick="enterHouse(\''+h.id+'\')">';
         html += '<div class="other-house-icon">'+(h.icon || '🏡')+'</div>';
         html += '<div class="other-house-info">';
         html += '<div class="other-house-name">'+escapeHtml(h.name)+'</div>';
         html += '<div class="other-house-meta">'+(petCount > 0 ? petCount+'匹' : 'まだ子はいません')+'</div>';
         html += '</div></button>';
+        html += '<button onclick="event.stopPropagation();openEditHouseModal(\''+h.id+'\')" title="家を編集" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.95);border:1px solid var(--line);color:var(--ink-sub);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.08);"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button>';
+        html += '</div>';
       }
       html += '<button class="other-house-add" onclick="openAddHouseModal()">';
       html += '<div class="other-house-add-icon">＋</div>';
@@ -20752,17 +21086,12 @@ function renderHouse() {
   const houseName = (house && house.name) ? house.name : 'みんな';
   html += '<div class="pet-tabs-bar pet-tabs-bar-slim" style="margin-top: 12px;">';
   html += '<button class="pet-tab-btn pet-tab-btn-slim '+(houseTab==='home'?'active':'')+'" onclick="setHouseTab(\'home\')"><span class="pet-tab-icon">🏠</span>ホーム</button>';
-  if (currentMode === 'pet') {
-    html += '<button class="pet-tab-btn pet-tab-btn-slim '+(houseTab==='news'?'active':'')+'" onclick="setHouseTab(\'news\')"><span class="pet-tab-icon">📰</span>ニュース</button>';
-  }
   html += '<button class="pet-tab-btn pet-tab-btn-slim '+(houseTab==='diary'?'active':'')+'" onclick="setHouseTab(\'diary\')"><span class="pet-tab-icon">📖</span>'+escapeHtml(houseName)+'家の日記</button>';
   html += '</div>';
   html += '<div class="pet-tab-content">';
   
   if (houseTab === 'diary') {
     html += renderHouseDiaryTab(house);
-  } else if (houseTab === 'news' && currentMode === 'pet') {
-    html += renderHouseNewsTab(house);
   } else {
     html += renderHouseHomeTab(house);
   }
@@ -21120,10 +21449,10 @@ function setPetTab(tab) {
 // 親タブ切替：その親の最初の子タブを開く
 function setPetParentTab(parentId) {
   const _map = {
-    'care':     ['care','routine'],
-    'memory':   ['diary','photo','outing'],
+    'care':     ['care'],
+    'memory':   ['diary'],
     'calendar': ['calendar'],
-    'health':   ['vaccine','weight'],
+    'health':   ['chart'],
     'town':     ['town']
   };
   const _children = _map[parentId];
@@ -21177,102 +21506,94 @@ function renderPet() {
   const age = calcAge(pet.birth);
   const memorials = getTodayMemorial(pet);
   const streak = pet.place === 'home' ? calcStreak(pet.id) : 0;
+  // 廃止されたタブの補正（vaccine/weight→chart、photo/outing→diary、routine→care）
+  if (data.petTab === 'vaccine' || data.petTab === 'weight') data.petTab = 'chart';
+  if (data.petTab === 'photo' || data.petTab === 'outing') data.petTab = 'diary';
+  if (data.petTab === 'routine') data.petTab = 'care';
   const tab = data.petTab || 'care';
   const todayD = new Date();
   const todayDateStr = todayD.getFullYear()+'/'+String(todayD.getMonth()+1).padStart(2,'0')+'/'+String(todayD.getDate()).padStart(2,'0');
   const todayWd = ['日','月','火','水','木','金','土'][todayD.getDay()];
   let html = '<div class="topbar">'+topbarPetalHtml();
   html += '<div class="topbar-spacer"></div>';
-  html += '<div class="topbar-title">'+petIconHtml(pet.type, 'font-size:18px;vertical-align:middle;')+' '+escapeHtml(pet.name)+'の部屋</div>';
-  html += '<div class="topbar-spacer"></div></div>';
+  const _roomLabel = (currentMode === 'kids') ? 'のおへや' : 'の部屋';
+  html += '<div class="topbar-title">'+petIconHtml(pet.type, 'font-size:18px;vertical-align:middle;')+' '+escapeHtml(pet.name)+_roomLabel+'</div>';
+  html += '<button class="topbar-btn" onclick="openEditPetModal(\''+pet.id+'\')" title="設定" style="background:transparent;border:none;cursor:pointer;padding:4px 10px;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">settings</span></button></div>';
   html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
-  html += '<div class="pet-detail-window">';
-  html += renderRoomBox(pet, true);
-  html += '<button class="photo-set-btn" onclick="openEditPetModal(\''+pet.id+'\')">⚙️ 設定</button>';
-  // 種類（breed）・誕生日表示
-  const breedStr = pet.breed ? escapeHtml(pet.breed) : PET_TYPE_NAMES[pet.type];
-  let birthDisplay = '';
-  if (pet.birth) {
-    const bd = new Date(pet.birth);
-    birthDisplay = '🎂 '+(bd.getFullYear())+'/'+(bd.getMonth()+1)+'/'+(bd.getDate());
-  }
-  const metaParts = [birthDisplay, breedStr].filter(Boolean);
-  html += '<div class="pet-detail-info"><div><h2 class="pet-detail-name">'+escapeHtml(pet.name)+' '+petIconHtml(pet.type, 'font-size:20px;vertical-align:middle;')+'</h2>';
-  html += '<div class="pet-detail-meta">'+metaParts.join(' ・ ')+'</div></div>';
-  html += '<div class="pet-detail-place-tag">'+PLACE_ICONS[pet.place]+' '+PLACE_NAMES[pet.place]+'</div></div></div>';
-  if (memorials.length > 0) {
-    html += '<div class="section"><div class="memorial-card"><div class="memorial-title">✨ 今日は特別な日</div>';
-    html += '<div class="memorial-text">'+memorials.join('<br>')+'</div></div></div>';
-  }
-  // streak表示（英語シンプルver）
-  if (streak >= 3 && pet.place === 'home') {
-    html += '<div class="section" style="padding:0 16px;"><span class="badge-en">'+streakLabelEn(streak)+'</span></div>';
-  }
+  // 親タブ（写真の右に□タイル2行×横スクロール表示用）を先に組み立てる
+  let _petParentTabsHtml = '';
+  let _currentParent = 'care';
   if (pet.place === 'home') {
-    // 親タブ⇄子タブのマッピング
     const _petParentTabs = {
-      'care':     { label: 'お世話',     icon: '🌿', children: ['care','routine'] },
-      'memory':   { label: 'おもいで',   icon: '💕', children: ['diary','photo','outing'] },
-      'calendar': { label: 'カレンダー', icon: '📅', children: ['calendar'] },
-      'health':   { label: '健康',       icon: '💉', children: ['vaccine','weight','chart'] },
-      'town':     { label: 'タウン',     icon: '🏘', children: ['town'] }
+      'care':     { label: 'お世話',     icon: 'pets',           children: ['care','routine'] },
+      'memory':   { label: 'おもいで',   icon: 'favorite',       children: ['diary','photo','outing'] },
+      'calendar': { label: 'カレンダー', icon: 'calendar_month', children: ['calendar'] },
+      'health':   { label: '健康',       icon: 'vaccines',       children: ['vaccine','weight','chart'] },
+      'town':     { label: 'タウン',     icon: 'location_city',  children: ['town'] }
     };
-    const _childLabels = {
-      'care':     { label: 'お世話',     icon: '🌿' },
-      'routine':  { label: 'ルーティン', icon: '🔁' },
-      'diary':    { label: '日記',       icon: '📓' },
-      'photo':    { label: '写真',       icon: '📷' },
-      'outing':   { label: 'お出かけ',   icon: '🌷' },
-      'calendar': { label: 'カレンダー', icon: '📅' },
-      'vaccine':  { label: 'ワクチン',   icon: '💉' },
-      'weight':   { label: '体重',       icon: '⚖️' },
-      'chart':    { label: 'カルテ',     icon: '📋' },
-      'town':     { label: 'タウン',     icon: '🏘' }
-    };
-    
-    // 現在の子タブから親を逆引き
-    let _currentParent = 'care';
     for (const pid in _petParentTabs) {
       if (_petParentTabs[pid].children.indexOf(tab) !== -1) {
         _currentParent = pid;
         break;
       }
     }
-    
-    // 親タブ（5つ均等割り）
-    html += '<div class="pet-tabs-bar">';
+    _petParentTabsHtml = '<div class="pet-side-tabs">';
     for (const pid in _petParentTabs) {
       const p = _petParentTabs[pid];
       const _isActive = (pid === _currentParent);
-      html += '<button class="pet-tab-btn '+(_isActive?'active':'')+'" onclick="setPetParentTab(\''+pid+'\')"><span class="pet-tab-icon">'+p.icon+'</span><span class="pet-tab-label">'+p.label+'</span></button>';
+      _petParentTabsHtml += '<button class="pet-side-tab '+(_isActive?'active':'')+'" onclick="setPetParentTab(\''+pid+'\')"><span class="material-symbols-rounded pet-side-tab-icon">'+p.icon+'</span><span class="pet-side-tab-label">'+p.label+'</span></button>';
     }
-    html += '</div>';
+    _petParentTabsHtml += '</div>';
+  }
+
+  html += '<div class="pet-detail-window">';
+  html += renderRoomBox(pet, true);
+  html += '<div class="pet-detail-side">' + _petParentTabsHtml + '</div>';
+  html += '</div>';
+  // streak表示（英語シンプルver）
+  if (streak >= 3 && pet.place === 'home') {
+    html += '<div class="section" style="padding:0 16px;"><span class="badge-en">'+streakLabelEn(streak)+'</span></div>';
+  }
+  if (pet.place === 'home') {
+    // 親タブは写真の右に既に表示済み。サブタブ用にchildren再取得。
+    const _petParentTabsForSub = {
+      'care':     { children: ['care'] },
+      'memory':   { children: ['diary'] },
+      'calendar': { children: ['calendar'] },
+      'health':   { children: ['chart'] },
+      'town':     { children: ['town'] }
+    };
+    const _childLabels = {
+      'care':     { label: 'お世話',     icon: 'pets' },
+      'routine':  { label: 'ルーティン', icon: 'autorenew' },
+      'diary':    { label: 'おもいで',   icon: 'menu_book' },
+      'calendar': { label: 'カレンダー', icon: 'calendar_month' },
+      'chart':    { label: 'カルテ',     icon: 'medical_information' },
+      'town':     { label: 'タウン',     icon: 'location_city' }
+    };
     
     // サブタブ（子タブが2つ以上ある場合のみ表示・ノートインデックス風）
-    const _children = _petParentTabs[_currentParent].children;
+    const _children = _petParentTabsForSub[_currentParent].children;
     if (_children.length > 1) {
       html += '<div class="mode-page-tabs-wrap" style="margin-top:2px;">';
       html += '<div class="mode-page-tabs" style="grid-template-columns:repeat('+_children.length+',1fr);">';
       for (const cid of _children) {
         const c = _childLabels[cid];
         const _isActive = (cid === tab);
-        html += '<button class="mode-page-tab'+(_isActive?' active':'')+'" onclick="setPetTab(\''+cid+'\')">'+c.icon+' '+c.label+'</button>';
+        html += '<button class="mode-page-tab'+(_isActive?' active':'')+'" onclick="setPetTab(\''+cid+'\')"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px;">'+c.icon+'</span>'+c.label+'</button>';
       }
       html += '</div></div>';
     }
     
     html += '<div class="pet-tab-content">';
-    if (tab === 'care') html += renderTabCare(pet, careItems);
+    // KIDSの場合もペット用関数を使う（内部でcurrentMode判定してkid.kidsCare等参照）
+    if (tab === 'care') html += renderTabCareMeStyle(pet);
     else if (tab === 'calendar') html += renderTabCalendar(pet);
-    else if (tab === 'diary') html += renderTabDiary(pet);
-    else if (tab === 'photo') html += renderTabPhoto(pet);
-    else if (tab === 'vaccine') html += renderTabVaccine(pet);
-    else if (tab === 'weight') html += renderTabWeight(pet);
-    else if (tab === 'chart') html += (currentMode === 'kids' ? renderTabKidsChart(pet) : renderTabPetChart(pet));
+    else if (tab === 'diary') html += renderPetTweetsDiary(pet);
+    else if (tab === 'chart') html += renderPetMedicalAllInOne(pet);
     else if (tab === 'routine') html += renderTabPetRoutine(pet);
-    else if (tab === 'outing') html += renderTabPetOuting(pet);
     else if (tab === 'town') html += renderTabPetTown(pet);
-    else html += renderTabCare(pet, careItems);
+    else { data.petTab = 'care'; html += renderTabCareMeStyle(pet); }
     html += '</div>';
   } else if (pet.place === 'rainbow') {
     html += '<div class="section"><div class="memorial-card">';
@@ -21302,6 +21623,1523 @@ function renderPet() {
   html += '<button class="btn btn-secondary" style="width:100%; max-width: 200px; margin: 48px auto 24px; display: block; color: var(--ink-light); font-size: 11px; padding: 8px 12px; border: 1px dashed var(--line-soft);" onclick="openTidyPetModal(\''+pet.id+'\')">この子の記録を整理する</button></div>';
   document.getElementById('app').innerHTML = html;
 }
+
+// ===== ペット用「お世話」タブ：MEのRecord型 =====
+// データはペット共通：_getCareStore() = { stampHistory, stampLib, planner, ... }
+function _initPetCareData() {
+  const store = _getCareStore();
+  if (!store.stampHistory) store.stampHistory = [];
+  if (!store.stampSubTab) store.stampSubTab = 'stamp';
+  if (!store.stampSelCat) store.stampSelCat = (currentMode === 'kids') ? '生活' : 'お世話';
+  if (!store.stampLib) store.stampLib = null;
+  if (!store.planner) store.planner = { items: [] };
+  if (!store.pinned) store.pinned = [];
+}
+
+// KIDSモード時はアクティブなkidのkidsCare、PETモード時は_getCareStore()
+function _getCareStore() {
+  if (currentMode === 'kids') {
+    const kid = getActivePet();
+    if (kid) {
+      if (!kid.kidsCare) kid.kidsCare = {};
+      return kid.kidsCare;
+    }
+  }
+  if (!_getCareStore()) _getCareStore() = {};
+  return _getCareStore();
+}
+window._getCareStore = _getCareStore;
+
+function getPetStampSubTab() {
+  _initPetCareData();
+  return _getCareStore().stampSubTab || 'stamp';
+}
+function setPetStampSubTab(sub) {
+  _initPetCareData();
+  _getCareStore().stampSubTab = sub;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.setPetStampSubTab = setPetStampSubTab;
+
+function renderTabCareMeStyle(pet) {
+  _initPetCareData();
+  const ssTab = getPetStampSubTab();
+  let html = '<div id="petCareWrap">';
+  // サブサブタブ
+  html += '<div style="padding:10px 14px 0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
+  const _tabs = [
+    {id:'stamp', label:'スタンプ', icon:'check_circle'},
+    {id:'planner', label:'プランナー', icon:'edit_calendar'},
+    {id:'calendar', label:'カレンダー', icon:'calendar_month'},
+    {id:'gallery', label:'ギャラリー', icon:'photo_library'}
+  ];
+  for (const t of _tabs) {
+    const _act = ssTab === t.id;
+    html += '<button onclick="setPetStampSubTab(\''+t.id+'\')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">'+t.icon+'</span>'+t.label+'</button>';
+  }
+  html += '</div>';
+  
+  if (ssTab === 'stamp') {
+    html += renderPetStampUI(pet);
+  } else if (ssTab === 'planner') {
+    html += renderPetPlannerUI(pet);
+  } else if (ssTab === 'calendar') {
+    html += renderPetStampCalendarUI(pet);
+  } else if (ssTab === 'gallery') {
+    html += renderPetStampGalleryUI(pet);
+  }
+  html += '</div>';
+  return html;
+}
+window.renderTabCareMeStyle = renderTabCareMeStyle;
+
+// ===== ペット用 つぶやき日記（MEのDiary風） =====
+function _initPetTweets() {
+  _initPetCareData();
+  if (!_getCareStore().tweets) _getCareStore().tweets = [];
+  if (!_getCareStore().tweetViewDate) _getCareStore().tweetViewDate = new Date().toDateString();
+}
+
+function renderPetTweetsDiary(pet) {
+  _initPetTweets();
+  const today = new Date();
+  const todayK = today.toDateString();
+  const viewDateKey = _getCareStore().tweetViewDate || todayK;
+  const viewDate = new Date(viewDateKey);
+  const isToday = viewDateKey === todayK;
+  const filterTag = _getCareStore().tweetFilterTag || null;
+  
+  // タグ集計
+  const tagCounts = {};
+  for (const tw of _getCareStore().tweets) {
+    for (const tg of (tw.tags||[])) {
+      tagCounts[tg] = (tagCounts[tg]||0) + 1;
+    }
+  }
+  const allTags = Object.keys(tagCounts).sort((a,b) => tagCounts[b]-tagCounts[a]);
+  
+  // 表示中の日のつぶやき
+  let tweets = _getCareStore().tweets.filter(t => new Date(t.timestamp||0).toDateString() === viewDateKey);
+  if (filterTag) tweets = tweets.filter(t => (t.tags||[]).includes(filterTag));
+  tweets.sort((a,b) => (a.timestamp||0) - (b.timestamp||0));
+  
+  let h = '<div id="petTweetWrap" style="display:flex;flex-direction:column;padding:8px 10px 16px;gap:8px;">';
+  
+  // 日付ナビゲーション
+  const wd = ['日','月','火','水','木','金','土'][viewDate.getDay()];
+  const dateLabel = (viewDate.getMonth()+1)+'/'+viewDate.getDate()+'('+wd+')';
+  h += '<div style="display:flex;align-items:center;gap:6px;background:white;border:1px solid var(--line);border-radius:12px;padding:6px 10px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  h += '<button onclick="petTweetChangeDate(-1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;padding:4px 8px;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;"><span class="material-symbols-rounded" style="font-size:14px;">chevron_left</span></button>';
+  h += '<div style="flex:1;text-align:center;font-size:13px;font-weight:800;color:var(--ink-dark);">'+dateLabel+(isToday?' <span style="font-size:9px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 6px;border-radius:100px;font-weight:700;margin-left:4px;">TODAY</span>':'')+'</div>';
+  h += '<button onclick="petTweetChangeDate(1)" '+(isToday?'disabled style="background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;padding:4px 8px;color:var(--ink-light);opacity:0.4;display:flex;align-items:center;"':'style="background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;padding:4px 8px;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;"')+'><span class="material-symbols-rounded" style="font-size:14px;">chevron_right</span></button>';
+  if (!isToday) {
+    h += '<button onclick="petTweetGoToday()" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:4px 10px;cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;">今日</button>';
+  }
+  h += '</div>';
+  
+  // タグフィルタ（あれば）
+  if (allTags.length > 0) {
+    h += '<div style="display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;">';
+    h += '<button onclick="petTweetSetFilterTag(null)" style="flex-shrink:0;padding:4px 10px;border-radius:100px;border:1px solid '+(!filterTag?'var(--accent)':'var(--line)')+';background:'+(!filterTag?'var(--accent-bg)':'transparent')+';color:'+(!filterTag?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">すべて</button>';
+    for (const tg of allTags.slice(0, 12)) {
+      const _act = filterTag === tg;
+      h += '<button onclick="petTweetSetFilterTag(\''+escapeHtml(tg).replace(/\'/g,"\\\\'")+'\')" style="flex-shrink:0;padding:4px 10px;border-radius:100px;border:1px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'transparent')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">#'+escapeHtml(tg)+' '+tagCounts[tg]+'</button>';
+    }
+    h += '</div>';
+  }
+  
+  // つぶやきリスト
+  if (tweets.length === 0) {
+    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65),rgba(255,255,255,0.45));border:1.5px dashed var(--accent);border-radius:14px;padding:24px 16px;text-align:center;margin-top:8px;">';
+    h += '<div style="margin-bottom:8px;"><span class="material-symbols-rounded" style="font-size:36px;color:var(--accent-deep);">edit_note</span></div>';
+    if (filterTag) {
+      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);">「#'+escapeHtml(filterTag)+'」のつぶやきはまだないよ</div>';
+    } else if (isToday) {
+      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">きょうのつぶやきはまだないよ</div>';
+      h += '<div style="font-size:10px;color:var(--ink-light);">下からひとこと書いてみよう🌷</div>';
+    } else {
+      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);">この日はつぶやきなし</div>';
+    }
+    h += '</div>';
+  } else {
+    for (const tw of tweets) {
+      const tm = new Date(tw.timestamp);
+      const tStr = String(tm.getHours()).padStart(2,'0')+':'+String(tm.getMinutes()).padStart(2,'0');
+      h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:11px 13px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+      h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">';
+      h += '<span style="font-size:10px;color:var(--ink-light);font-weight:600;">'+tStr+'</span>';
+      h += '<div style="flex:1;"></div>';
+      h += '<button onclick="openPetTweetEdit(\''+tw.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:2px;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button>';
+      h += '<button onclick="deletePetTweet(\''+tw.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:2px;"><span class="material-symbols-rounded" style="font-size:14px;">delete</span></button>';
+      h += '</div>';
+      // 本文
+      h += '<div style="font-size:13px;line-height:1.6;color:var(--ink-dark);white-space:pre-wrap;word-break:break-word;">'+_linkifyTags(escapeHtml(tw.text||''))+'</div>';
+      // 写真
+      if (tw.photo) {
+        h += '<div style="margin-top:8px;"><img src="'+tw.photo+'" onclick="openPetTweetPhoto(\''+tw.id+'\')" style="max-width:100%;max-height:280px;border-radius:10px;cursor:pointer;display:block;"></div>';
+      }
+      // タグ
+      if ((tw.tags||[]).length > 0) {
+        h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">';
+        for (const tg of tw.tags) {
+          h += '<span style="font-size:9.5px;color:var(--accent-deep);background:var(--accent-bg);padding:2px 7px;border-radius:100px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
+        }
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+  }
+  
+  // 入力エリア（今日表示時のみ）
+  if (isToday) {
+    h += '<div style="position:sticky;bottom:0;background:linear-gradient(to top,var(--surface) 60%,transparent);padding:12px 0 0;margin-top:8px;">';
+    h += '<div style="background:white;border:1.5px solid var(--accent);border-radius:14px;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,0.08);">';
+    h += '<textarea id="petTweetInput" placeholder="ももの今日のひとこと…  #タグもつけられるよ" style="width:100%;min-height:60px;border:none;outline:none;resize:none;font-family:inherit;font-size:13px;line-height:1.5;color:var(--ink-dark);background:transparent;box-sizing:border-box;"></textarea>';
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;">';
+    h += '<button onclick="petTweetAttachPhoto()" id="petTweetPhotoBtn" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;gap:4px;font-family:inherit;font-size:11px;font-weight:700;"><span class="material-symbols-rounded" style="font-size:14px;">photo_camera</span><span id="petTweetPhotoLabel">写真</span></button>';
+    h += '<div style="flex:1;"></div>';
+    h += '<button onclick="postPetTweet()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 18px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:800;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:15px;">send</span>投稿</button>';
+    h += '</div>';
+    h += '</div></div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+
+function _linkifyTags(text) {
+  // #タグをハイライト（クリック可能）
+  return text.replace(/#([^\s#<]+)/g, function(m, tg){
+    return '<span onclick="petTweetSetFilterTag(\''+escapeHtml(tg).replace(/\'/g,"\\\\'")+'\')" style="color:var(--accent-deep);font-weight:700;cursor:pointer;">#'+escapeHtml(tg)+'</span>';
+  });
+}
+
+function petTweetChangeDate(delta) {
+  _initPetTweets();
+  const cur = new Date(_getCareStore().tweetViewDate || new Date().toDateString());
+  cur.setDate(cur.getDate() + delta);
+  const today = new Date();
+  if (cur > today) return; // 未来は不可
+  _getCareStore().tweetViewDate = cur.toDateString();
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.petTweetChangeDate = petTweetChangeDate;
+
+function petTweetGoToday() {
+  _initPetTweets();
+  _getCareStore().tweetViewDate = new Date().toDateString();
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.petTweetGoToday = petTweetGoToday;
+
+function petTweetSetFilterTag(tg) {
+  _initPetTweets();
+  _getCareStore().tweetFilterTag = tg;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.petTweetSetFilterTag = petTweetSetFilterTag;
+
+let _petTweetPendingPhoto = null;
+
+function petTweetAttachPhoto() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = function(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const proc = (b64) => {
+      _petTweetPendingPhoto = b64;
+      const lbl = document.getElementById('petTweetPhotoLabel');
+      if (lbl) lbl.textContent = '写真追加済';
+      const btn = document.getElementById('petTweetPhotoBtn');
+      if (btn) { btn.style.background = 'var(--accent-bg)'; btn.style.borderColor = 'var(--accent)'; btn.style.color = 'var(--accent-deep)'; }
+    };
+    if (typeof resizeImageToBase64 === 'function') {
+      resizeImageToBase64(file, 1200, 0.85).then(proc);
+    } else {
+      const reader = new FileReader();
+      reader.onload = function(ev){ proc(ev.target.result); };
+      reader.readAsDataURL(file);
+    }
+  };
+  inp.click();
+}
+window.petTweetAttachPhoto = petTweetAttachPhoto;
+
+function postPetTweet() {
+  _initPetTweets();
+  const inp = document.getElementById('petTweetInput');
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text && !_petTweetPendingPhoto) { showToast('ひとこと書いてね'); return; }
+  // タグ抽出
+  const tags = [];
+  const re = /#([^\s#]+)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) tags.push(m[1]);
+  // 投稿
+  _getCareStore().tweets.push({
+    id: 'pettw_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+    text: text,
+    photo: _petTweetPendingPhoto || null,
+    tags: tags,
+    timestamp: Date.now()
+  });
+  if (_getCareStore().tweets.length > 2000) {
+    _getCareStore().tweets = _getCareStore().tweets.slice(-2000);
+  }
+  _petTweetPendingPhoto = null;
+  saveData();
+  showToast('投稿したよ🌷');
+  _suppressScrollTop = true;
+  render();
+}
+window.postPetTweet = postPetTweet;
+
+function deletePetTweet(id) {
+  if (!confirm('このつぶやきを削除しますか？')) return;
+  _initPetTweets();
+  _getCareStore().tweets = _getCareStore().tweets.filter(t => t.id !== id);
+  saveData();
+  showToast('削除したよ');
+  _suppressScrollTop = true;
+  render();
+}
+window.deletePetTweet = deletePetTweet;
+
+function openPetTweetEdit(id) {
+  _initPetTweets();
+  const tw = _getCareStore().tweets.find(t => t.id === id);
+  if (!tw) return;
+  const newText = prompt('編集する内容', tw.text || '');
+  if (newText === null) return;
+  tw.text = newText;
+  // タグ再抽出
+  const tags = [];
+  const re = /#([^\s#]+)/g;
+  let m;
+  while ((m = re.exec(newText)) !== null) tags.push(m[1]);
+  tw.tags = tags;
+  saveData();
+  showToast('編集したよ🌷');
+  _suppressScrollTop = true;
+  render();
+}
+window.openPetTweetEdit = openPetTweetEdit;
+
+function openPetTweetPhoto(id) {
+  _initPetTweets();
+  const tw = _getCareStore().tweets.find(t => t.id === id);
+  if (!tw || !tw.photo) return;
+  const ex = document.getElementById('petTweetPhotoViewer');
+  if (ex) ex.remove();
+  const ov = document.createElement('div');
+  ov.id = 'petTweetPhotoViewer';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2300;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  ov.innerHTML = '<button onclick="document.getElementById(\'petTweetPhotoViewer\').remove()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);border:none;color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button><img src="'+tw.photo+'" style="max-width:100%;max-height:90vh;border-radius:12px;object-fit:contain;">';
+  document.body.appendChild(ov);
+}
+window.openPetTweetPhoto = openPetTweetPhoto;
+
+// ===== ペット用 オールインワンカルテ（健康タブ） =====
+function _initPetMedical(pet) {
+  if (!pet.medical) pet.medical = {};
+  if (!pet.medical.basic) pet.medical.basic = {
+    chipNumber: '',
+    bloodType: '',
+    allergies: '',
+    illnesses: '',
+    spayNeuter: false,
+    spayDate: '',
+    notes: ''
+  };
+  if (!pet.medical.hospital) pet.medical.hospital = { name: '', phone: '', address: '', doctor: '', notes: '' };
+  if (!pet.medical.vaccines) pet.medical.vaccines = [];
+  if (!pet.medical.meds) pet.medical.meds = [];
+  if (!pet.medical.weights) pet.medical.weights = [];
+  if (!pet.medical.heights) pet.medical.heights = []; // KIDS用：身長
+  if (!pet.medical.visits) pet.medical.visits = [];
+}
+
+function _getMedicalOpen(petId, sec) {
+  if (!data._petMedicalOpen) data._petMedicalOpen = {};
+  if (!data._petMedicalOpen[petId]) data._petMedicalOpen[petId] = {};
+  return !!data._petMedicalOpen[petId][sec];
+}
+function togglePetMedicalSection(petId, sec) {
+  if (!data._petMedicalOpen) data._petMedicalOpen = {};
+  if (!data._petMedicalOpen[petId]) data._petMedicalOpen[petId] = {};
+  data._petMedicalOpen[petId][sec] = !data._petMedicalOpen[petId][sec];
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.togglePetMedicalSection = togglePetMedicalSection;
+
+function _medCard(title, icon, sec, petId, bodyHtml, addLabel, addFn) {
+  const isOpen = _getMedicalOpen(petId, sec);
+  let h = '<div style="background:white;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  h += '<button onclick="togglePetMedicalSection(\''+petId+'\',\''+sec+'\')" style="width:100%;display:flex;align-items:center;gap:8px;padding:11px 13px;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);flex-shrink:0;">'+icon+'</span>';
+  h += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">'+title+'</span>';
+  if (addLabel && addFn) {
+    h += '<button onclick="event.stopPropagation();'+addFn+'" style="background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:3px 10px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">add</span>'+addLabel+'</button>';
+  }
+  h += '<span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-light);transition:transform 0.2s;transform:rotate('+(isOpen?'90':'0')+'deg);">chevron_right</span>';
+  h += '</button>';
+  if (isOpen) {
+    h += '<div style="padding:0 13px 13px;">'+bodyHtml+'</div>';
+  }
+  h += '</div>';
+  return h;
+}
+
+function _medField(label, value) {
+  return '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--surface-warm);border-radius:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;flex-shrink:0;width:74px;line-height:1.5;">'+label+'</span><span style="flex:1;font-size:11.5px;color:var(--ink-dark);font-weight:600;line-height:1.5;word-break:break-word;">'+escapeHtml(String(value))+'</span></div>';
+}
+
+function renderPetMedicalAllInOne(pet) {
+  _initPetMedical(pet);
+  const m = pet.medical;
+  const petId = pet.id;
+  
+  let h = '<div style="padding:10px 12px 16px;">';
+  
+  // 全開閉ボタン
+  h += '<div style="display:flex;justify-content:flex-end;margin-bottom:8px;">';
+  h += '<button onclick="togglePetMedicalAll(\''+petId+'\')" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">unfold_more</span>全開閉</button>';
+  h += '</div>';
+  
+  // === 1. 基本情報 ===
+  let basicBody = '<div style="display:flex;flex-direction:column;gap:8px;">';
+  basicBody += _medField('マイクロチップ', m.basic.chipNumber || '未登録');
+  basicBody += _medField('血液型', m.basic.bloodType || '未登録');
+  basicBody += _medField('アレルギー', m.basic.allergies || 'なし');
+  basicBody += _medField('既往症', m.basic.illnesses || 'なし');
+  basicBody += _medField('避妊・去勢', m.basic.spayNeuter ? '済'+(m.basic.spayDate?'（'+m.basic.spayDate+'）':'') : '未');
+  if (m.basic.notes) basicBody += _medField('メモ', m.basic.notes);
+  basicBody += '</div>';
+  basicBody += '<button onclick="openPetMedicalEdit(\''+petId+'\',\'basic\')" style="margin-top:10px;width:100%;padding:8px;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">edit</span>編集</button>';
+  h += _medCard('基本情報', 'badge', 'basic', petId, basicBody);
+  
+  // === 2. かかりつけ病院 ===
+  let hospBody = '';
+  if (!m.hospital.name) {
+    hospBody += '<div style="text-align:center;padding:14px 8px;color:var(--ink-light);font-size:11px;">まだ登録されていません</div>';
+  } else {
+    hospBody += '<div style="display:flex;flex-direction:column;gap:8px;">';
+    hospBody += _medField('病院名', m.hospital.name);
+    if (m.hospital.doctor) hospBody += _medField('担当医', m.hospital.doctor);
+    if (m.hospital.phone) {
+      hospBody += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-warm);border-radius:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;flex-shrink:0;width:74px;">電話</span><a href="tel:'+m.hospital.phone.replace(/[^\d+]/g,'')+'" style="flex:1;font-size:12px;color:var(--accent-deep);font-weight:700;text-decoration:none;">'+escapeHtml(m.hospital.phone)+'</a><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">call</span></div>';
+    }
+    if (m.hospital.address) {
+      hospBody += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-warm);border-radius:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;flex-shrink:0;width:74px;">住所</span><a href="https://maps.google.com/?q='+encodeURIComponent(m.hospital.address)+'" target="_blank" rel="noopener" style="flex:1;font-size:11.5px;color:var(--accent-deep);font-weight:600;text-decoration:none;line-height:1.4;">'+escapeHtml(m.hospital.address)+'</a><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">map</span></div>';
+    }
+    if (m.hospital.notes) hospBody += _medField('メモ', m.hospital.notes);
+    hospBody += '</div>';
+  }
+  hospBody += '<button onclick="openPetMedicalEdit(\''+petId+'\',\'hospital\')" style="margin-top:10px;width:100%;padding:8px;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">edit</span>編集</button>';
+  h += _medCard('かかりつけ病院', 'local_hospital', 'hospital', petId, hospBody);
+  
+  // === 3. ワクチン ===
+  let vacBody = '';
+  if (m.vaccines.length === 0) {
+    vacBody += '<div style="text-align:center;padding:14px 8px;color:var(--ink-light);font-size:11px;">まだ記録がありません</div>';
+  } else {
+    const sortedV = [...m.vaccines].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    vacBody += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const v of sortedV) {
+      vacBody += '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--surface-warm);border-radius:10px;border-left:3px solid var(--accent);"><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(v.name||'')+'</div>';
+      if (v.date) vacBody += '<div style="font-size:10px;color:var(--ink-sub);">'+escapeHtml(v.date)+(v.nextDate?' → 次回 '+escapeHtml(v.nextDate):'')+'</div>';
+      if (v.notes) vacBody += '<div style="font-size:10px;color:var(--ink-light);margin-top:2px;">'+escapeHtml(v.notes)+'</div>';
+      vacBody += '</div><button onclick="deletePetMedItem(\''+petId+'\',\'vaccines\',\''+v.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:4px;"><span class="material-symbols-rounded" style="font-size:15px;">close</span></button></div>';
+    }
+    vacBody += '</div>';
+  }
+  h += _medCard('ワクチン', 'vaccines', 'vaccines', petId, vacBody, '追加', 'openPetMedicalAdd(\''+petId+'\',\'vaccine\')');
+  
+  // === 4. おくすり ===
+  let medsBody = '';
+  if (m.meds.length === 0) {
+    medsBody += '<div style="text-align:center;padding:14px 8px;color:var(--ink-light);font-size:11px;">まだ登録されていません</div>';
+  } else {
+    medsBody += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const md of m.meds) {
+      medsBody += '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--surface-warm);border-radius:10px;border-left:3px solid #F0A050;"><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(md.name||'')+'</div>';
+      if (md.dosage || md.frequency) medsBody += '<div style="font-size:10px;color:var(--ink-sub);">'+escapeHtml(md.dosage||'')+(md.frequency?' / '+escapeHtml(md.frequency):'')+'</div>';
+      if (md.notes) medsBody += '<div style="font-size:10px;color:var(--ink-light);margin-top:2px;">'+escapeHtml(md.notes)+'</div>';
+      medsBody += '</div><button onclick="deletePetMedItem(\''+petId+'\',\'meds\',\''+md.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:4px;"><span class="material-symbols-rounded" style="font-size:15px;">close</span></button></div>';
+    }
+    medsBody += '</div>';
+  }
+  h += _medCard('おくすり', 'medication', 'meds', petId, medsBody, '追加', 'openPetMedicalAdd(\''+petId+'\',\'med\')');
+  
+  // === 5. 身長（KIDSのみ）===
+  if (currentMode === 'kids') {
+    let heightBody = '';
+    if ((m.heights||[]).length === 0) {
+      heightBody += '<div style="text-align:center;padding:14px 8px;color:var(--ink-light);font-size:11px;">まだ記録がありません</div>';
+    } else {
+      const sortedH = [...m.heights].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+      const latestH = sortedH[0];
+      const prevH = sortedH[1];
+      heightBody += '<div style="background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border-radius:12px;padding:12px;text-align:center;margin-bottom:10px;">';
+      heightBody += '<div style="font-size:10px;color:var(--ink-sub);font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">いまの身長</div>';
+      heightBody += '<div style="font-size:28px;font-weight:900;color:var(--accent-deep);line-height:1;">'+latestH.value+' <span style="font-size:14px;font-weight:700;">cm</span></div>';
+      heightBody += '<div style="font-size:10px;color:var(--ink-light);margin-top:3px;">'+escapeHtml(latestH.date||'')+'</div>';
+      if (prevH) {
+        const diff = (parseFloat(latestH.value) - parseFloat(prevH.value)).toFixed(1);
+        heightBody += '<div style="font-size:10px;color:#3CB878;font-weight:700;margin-top:3px;">前回比 +'+diff+' cm</div>';
+      }
+      heightBody += '</div>';
+      heightBody += '<div style="display:flex;flex-direction:column;gap:4px;">';
+      for (const w of sortedH.slice(0, 5)) {
+        heightBody += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface-warm);border-radius:8px;"><span style="font-size:10px;color:var(--ink-sub);flex:1;">'+escapeHtml(w.date||'')+'</span><span style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+w.value+' cm</span><button onclick="deletePetMedItem(\''+petId+'\',\'heights\',\''+w.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:2px;"><span class="material-symbols-rounded" style="font-size:13px;">close</span></button></div>';
+      }
+      if (sortedH.length > 5) heightBody += '<div style="text-align:center;font-size:9px;color:var(--ink-light);padding:4px;">他 '+(sortedH.length-5)+' 件</div>';
+      heightBody += '</div>';
+    }
+    h += _medCard('身長', 'straighten', 'heights', petId, heightBody, '記録', 'openPetMedicalAdd(\''+petId+'\',\'height\')');
+  }
+  
+  // === 6. 体重 ===
+  let weightBody = '';
+  if (m.weights.length === 0) {
+    weightBody += '<div style="text-align:center;padding:14px 8px;color:var(--ink-light);font-size:11px;">まだ記録がありません</div>';
+  } else {
+    const sortedW = [...m.weights].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    const latest = sortedW[0];
+    const prev = sortedW[1];
+    weightBody += '<div style="background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border-radius:12px;padding:12px;text-align:center;margin-bottom:10px;"><div style="font-size:10px;color:var(--ink-sub);font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">いまの体重</div>';
+    weightBody += '<div style="font-size:28px;font-weight:900;color:var(--accent-deep);line-height:1;">'+latest.value+' <span style="font-size:14px;font-weight:700;">kg</span></div>';
+    weightBody += '<div style="font-size:10px;color:var(--ink-light);margin-top:3px;">'+escapeHtml(latest.date||'')+'</div>';
+    if (prev) {
+      const diff = (parseFloat(latest.value) - parseFloat(prev.value)).toFixed(2);
+      const diffNum = parseFloat(diff);
+      const diffColor = Math.abs(diffNum) < 0.05 ? 'var(--ink-sub)' : (diffNum > 0 ? '#D9534F' : '#3CB878');
+      const diffSign = diffNum > 0 ? '+' : '';
+      weightBody += '<div style="font-size:10px;color:'+diffColor+';font-weight:700;margin-top:3px;">前回比 '+diffSign+diff+' kg</div>';
+    }
+    weightBody += '</div>';
+    weightBody += '<div style="display:flex;flex-direction:column;gap:4px;">';
+    for (const w of sortedW.slice(0, 5)) {
+      weightBody += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface-warm);border-radius:8px;"><span style="font-size:10px;color:var(--ink-sub);flex:1;">'+escapeHtml(w.date||'')+'</span><span style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+w.value+' kg</span><button onclick="deletePetMedItem(\''+petId+'\',\'weights\',\''+w.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:2px;"><span class="material-symbols-rounded" style="font-size:13px;">close</span></button></div>';
+    }
+    if (sortedW.length > 5) weightBody += '<div style="text-align:center;font-size:9px;color:var(--ink-light);padding:4px;">他 '+(sortedW.length-5)+' 件</div>';
+    weightBody += '</div>';
+  }
+  h += _medCard('体重', 'monitor_weight', 'weight', petId, weightBody, '記録', 'openPetMedicalAdd(\''+petId+'\',\'weight\')');
+  
+  // === 6. 通院記録 ===
+  let visitBody = '';
+  if (m.visits.length === 0) {
+    visitBody += '<div style="text-align:center;padding:14px 8px;color:var(--ink-light);font-size:11px;">まだ記録がありません</div>';
+  } else {
+    const sortedVis = [...m.visits].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    visitBody += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const vis of sortedVis.slice(0, 10)) {
+      visitBody += '<div style="padding:9px 11px;background:var(--surface-warm);border-radius:10px;border-left:3px solid #6BA8D0;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:10px;color:var(--accent-deep);background:white;padding:1px 7px;border-radius:100px;font-weight:700;">'+escapeHtml(vis.date||'')+'</span>';
+      if (vis.cost) visitBody += '<span style="font-size:10px;color:var(--ink-sub);font-weight:700;">¥'+vis.cost.toLocaleString()+'</span>';
+      visitBody += '<div style="flex:1;"></div><button onclick="deletePetMedItem(\''+petId+'\',\'visits\',\''+vis.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:2px;"><span class="material-symbols-rounded" style="font-size:13px;">close</span></button></div>';
+      if (vis.symptom) visitBody += '<div style="font-size:11px;color:var(--ink-dark);font-weight:700;margin-bottom:2px;">'+escapeHtml(vis.symptom)+'</div>';
+      if (vis.diagnosis) visitBody += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.5;">診断：'+escapeHtml(vis.diagnosis)+'</div>';
+      if (vis.notes) visitBody += '<div style="font-size:10px;color:var(--ink-light);margin-top:3px;line-height:1.5;">'+escapeHtml(vis.notes)+'</div>';
+      visitBody += '</div>';
+    }
+    if (sortedVis.length > 10) visitBody += '<div style="text-align:center;font-size:9px;color:var(--ink-light);padding:4px;">他 '+(sortedVis.length-10)+' 件</div>';
+    visitBody += '</div>';
+  }
+  h += _medCard('通院記録', 'medical_services', 'visits', petId, visitBody, '追加', 'openPetMedicalAdd(\''+petId+'\',\'visit\')');
+  
+  h += '</div>';
+  return h;
+}
+window.renderPetMedicalAllInOne = renderPetMedicalAllInOne;
+
+function togglePetMedicalAll(petId) {
+  if (!data._petMedicalOpen) data._petMedicalOpen = {};
+  if (!data._petMedicalOpen[petId]) data._petMedicalOpen[petId] = {};
+  const sections = ['basic','hospital','vaccines','meds','weight','visits'];
+  const allOpen = sections.every(s => data._petMedicalOpen[petId][s]);
+  for (const s of sections) {
+    data._petMedicalOpen[petId][s] = !allOpen;
+  }
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.togglePetMedicalAll = togglePetMedicalAll;
+
+function deletePetMedItem(petId, listName, itemId) {
+  if (!confirm('この項目を削除しますか？')) return;
+  const pet = (data.pets || []).find(p => p.id === petId);
+  if (!pet || !pet.medical) return;
+  pet.medical[listName] = (pet.medical[listName] || []).filter(x => x.id !== itemId);
+  saveData();
+  showToast('削除したよ');
+  _suppressScrollTop = true;
+  render();
+}
+window.deletePetMedItem = deletePetMedItem;
+
+function _medInput(label, id, value, type, ph) {
+  return '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">'+label+'</label><input type="'+(type||'text')+'" id="'+id+'" value="'+escapeHtml(value||'')+'" placeholder="'+(ph||'')+'" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:12.5px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+}
+function _medInputArea(label, id, value, ph) {
+  return '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">'+label+'</label><textarea id="'+id+'" placeholder="'+(ph||'')+'" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:12.5px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);min-height:50px;resize:vertical;">'+escapeHtml(value||'')+'</textarea></div>';
+}
+
+function openPetMedicalEdit(petId, sec) {
+  const pet = (data.pets || []).find(p => p.id === petId);
+  if (!pet) return;
+  _initPetMedical(pet);
+  const ex = document.getElementById('petMedEditModal');
+  if (ex) ex.remove();
+  const ov = document.createElement('div');
+  ov.id = 'petMedEditModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2200;background:rgba(45,74,60,0.5);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);padding-bottom:calc(75px + env(safe-area-inset-bottom));box-sizing:border-box;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  let h = '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">edit</span><div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">'+(sec==='basic'?'基本情報':'かかりつけ病院')+'を編集</div><button onclick="document.getElementById(\'petMedEditModal\').remove()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button></div>';
+  h += '<div style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px;">';
+  if (sec === 'basic') {
+    const b = pet.medical.basic;
+    h += _medInput('マイクロチップ番号', 'medChip', b.chipNumber, 'text');
+    h += _medInput('血液型', 'medBlood', b.bloodType, 'text', '例：DEA1.1+');
+    h += _medInputArea('アレルギー', 'medAllergy', b.allergies, '例：鶏肉、特定の薬...');
+    h += _medInputArea('既往症', 'medIllness', b.illnesses, '例：心臓病、てんかん...');
+    h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="medSpay" '+(b.spayNeuter?'checked':'')+' style="width:16px;height:16px;accent-color:var(--accent);">避妊・去勢手術 済</label></div>';
+    h += _medInput('手術日（任意）', 'medSpayDate', b.spayDate || '', 'date');
+    h += _medInputArea('メモ', 'medNotes', b.notes, '');
+  } else if (sec === 'hospital') {
+    const hp = pet.medical.hospital;
+    h += _medInput('病院名', 'medHospName', hp.name, 'text');
+    h += _medInput('担当医', 'medHospDoctor', hp.doctor, 'text');
+    h += _medInput('電話番号', 'medHospPhone', hp.phone, 'tel');
+    h += _medInputArea('住所', 'medHospAddress', hp.address, '');
+    h += _medInputArea('メモ', 'medHospNotes', hp.notes, '');
+  }
+  h += '</div><div style="padding:12px 16px;border-top:1px solid var(--line-soft);"><button onclick="savePetMedicalEdit(\''+petId+'\',\''+sec+'\')" style="width:100%;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button></div></div>';
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+}
+window.openPetMedicalEdit = openPetMedicalEdit;
+
+function savePetMedicalEdit(petId, sec) {
+  const pet = (data.pets || []).find(p => p.id === petId);
+  if (!pet) return;
+  _initPetMedical(pet);
+  if (sec === 'basic') {
+    pet.medical.basic.chipNumber = document.getElementById('medChip').value.trim();
+    pet.medical.basic.bloodType = document.getElementById('medBlood').value.trim();
+    pet.medical.basic.allergies = document.getElementById('medAllergy').value.trim();
+    pet.medical.basic.illnesses = document.getElementById('medIllness').value.trim();
+    pet.medical.basic.spayNeuter = document.getElementById('medSpay').checked;
+    pet.medical.basic.spayDate = document.getElementById('medSpayDate').value;
+    pet.medical.basic.notes = document.getElementById('medNotes').value.trim();
+  } else if (sec === 'hospital') {
+    pet.medical.hospital.name = document.getElementById('medHospName').value.trim();
+    pet.medical.hospital.doctor = document.getElementById('medHospDoctor').value.trim();
+    pet.medical.hospital.phone = document.getElementById('medHospPhone').value.trim();
+    pet.medical.hospital.address = document.getElementById('medHospAddress').value.trim();
+    pet.medical.hospital.notes = document.getElementById('medHospNotes').value.trim();
+  }
+  saveData();
+  document.getElementById('petMedEditModal')?.remove();
+  showToast('保存したよ🌷');
+  _suppressScrollTop = true;
+  render();
+}
+window.savePetMedicalEdit = savePetMedicalEdit;
+
+function openPetMedicalAdd(petId, kind) {
+  const pet = (data.pets || []).find(p => p.id === petId);
+  if (!pet) return;
+  _initPetMedical(pet);
+  const ex = document.getElementById('petMedAddModal');
+  if (ex) ex.remove();
+  const ov = document.createElement('div');
+  ov.id = 'petMedAddModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2200;background:rgba(45,74,60,0.5);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);padding-bottom:calc(75px + env(safe-area-inset-bottom));box-sizing:border-box;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  const titles = { vaccine:'ワクチンを追加', med:'おくすりを追加', weight:'体重を記録', visit:'通院記録を追加' };
+  const today = new Date();
+  const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  let h = '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">add_circle</span><div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">'+titles[kind]+'</div><button onclick="document.getElementById(\'petMedAddModal\').remove()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button></div>';
+  h += '<div style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px;">';
+  if (kind === 'vaccine') {
+    h += _medInput('ワクチン名', 'medAddName', '', 'text', '例：8種混合ワクチン');
+    h += _medInput('接種日', 'medAddDate', todayStr, 'date');
+    h += _medInput('次回予定日（任意）', 'medAddNext', '', 'date');
+    h += _medInputArea('メモ', 'medAddNotes', '', '');
+  } else if (kind === 'med') {
+    h += _medInput('薬の名前', 'medAddName', '', 'text', '例：心臓の薬');
+    h += _medInput('用量', 'medAddDosage', '', 'text', '例：1錠');
+    h += _medInput('回数', 'medAddFreq', '', 'text', '例：朝晩');
+    h += _medInputArea('メモ', 'medAddNotes', '', '');
+  } else if (kind === 'weight') {
+    h += _medInput('体重 (kg)', 'medAddValue', '', 'number');
+    h += _medInput('日付', 'medAddDate', todayStr, 'date');
+  } else if (kind === 'height') {
+    h += _medInput('身長 (cm)', 'medAddValue', '', 'number');
+    h += _medInput('日付', 'medAddDate', todayStr, 'date');
+  } else if (kind === 'visit') {
+    h += _medInput('日付', 'medAddDate', todayStr, 'date');
+    h += _medInput('症状', 'medAddSymptom', '', 'text', '例：食欲がない');
+    h += _medInputArea('診断', 'medAddDiagnosis', '', '');
+    h += _medInput('費用 (円)', 'medAddCost', '', 'number');
+    h += _medInputArea('メモ', 'medAddNotes', '', '');
+  }
+  h += '</div><div style="padding:12px 16px;border-top:1px solid var(--line-soft);"><button onclick="savePetMedicalAdd(\''+petId+'\',\''+kind+'\')" style="width:100%;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button></div></div>';
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+}
+window.openPetMedicalAdd = openPetMedicalAdd;
+
+function savePetMedicalAdd(petId, kind) {
+  const pet = (data.pets || []).find(p => p.id === petId);
+  if (!pet) return;
+  _initPetMedical(pet);
+  const id = 'petmed_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+  if (kind === 'vaccine') {
+    const name = document.getElementById('medAddName').value.trim();
+    if (!name) { showToast('ワクチン名を入れてね'); return; }
+    pet.medical.vaccines.push({ id, name, date: document.getElementById('medAddDate').value, nextDate: document.getElementById('medAddNext').value, notes: document.getElementById('medAddNotes').value.trim() });
+  } else if (kind === 'med') {
+    const name = document.getElementById('medAddName').value.trim();
+    if (!name) { showToast('薬の名前を入れてね'); return; }
+    pet.medical.meds.push({ id, name, dosage: document.getElementById('medAddDosage').value.trim(), frequency: document.getElementById('medAddFreq').value.trim(), notes: document.getElementById('medAddNotes').value.trim() });
+  } else if (kind === 'weight') {
+    const value = parseFloat(document.getElementById('medAddValue').value);
+    if (isNaN(value) || value <= 0) { showToast('体重を入れてね'); return; }
+    pet.medical.weights.push({ id, value, date: document.getElementById('medAddDate').value });
+  } else if (kind === 'height') {
+    const value = parseFloat(document.getElementById('medAddValue').value);
+    if (isNaN(value) || value <= 0) { showToast('身長を入れてね'); return; }
+    if (!pet.medical.heights) pet.medical.heights = [];
+    pet.medical.heights.push({ id, value, date: document.getElementById('medAddDate').value });
+  } else if (kind === 'visit') {
+    const symptom = document.getElementById('medAddSymptom').value.trim();
+    const diagnosis = document.getElementById('medAddDiagnosis').value.trim();
+    if (!symptom && !diagnosis) { showToast('症状か診断のどちらかを入れてね'); return; }
+    const costStr = document.getElementById('medAddCost').value;
+    pet.medical.visits.push({ id, date: document.getElementById('medAddDate').value, symptom, diagnosis, cost: costStr ? parseInt(costStr) : 0, notes: document.getElementById('medAddNotes').value.trim() });
+  }
+  saveData();
+  document.getElementById('petMedAddModal')?.remove();
+  showToast('追加したよ🌷');
+  _suppressScrollTop = true;
+  render();
+}
+window.savePetMedicalAdd = savePetMedicalAdd;
+
+const PET_DEFAULT_STAMPS = {
+  'お世話': [
+    {icon:'restaurant', name:'ごはん'},
+    {icon:'water_drop', name:'おみず'},
+    {icon:'wc', name:'トイレ'},
+    {icon:'pets', name:'おさんぽ'},
+    {icon:'cookie', name:'おやつ'},
+    {icon:'medication', name:'おくすり'},
+    {icon:'bathtub', name:'シャンプー'},
+    {icon:'content_cut', name:'ブラッシング'},
+    {icon:'dentistry', name:'歯みがき'},
+    {icon:'cut', name:'爪切り'},
+    {icon:'cleaning_services', name:'おそうじ'},
+    {icon:'bed', name:'おやすみ'}
+  ],
+  '健康': [
+    {icon:'monitor_weight', name:'体重'},
+    {icon:'thermostat', name:'体温'},
+    {icon:'vaccines', name:'ワクチン'},
+    {icon:'local_hospital', name:'病院'},
+    {icon:'healing', name:'ケガ'},
+    {icon:'sick', name:'体調わるい'},
+    {icon:'mood', name:'元気いっぱい'},
+    {icon:'hotel', name:'よく寝た'}
+  ],
+  '気持ち': [
+    {icon:'favorite', name:'だいすき'},
+    {icon:'sentiment_very_satisfied', name:'うれしい'},
+    {icon:'star', name:'よくできた'},
+    {icon:'celebration', name:'お祝い'},
+    {icon:'photo_camera', name:'かわいい瞬間'},
+    {icon:'auto_awesome', name:'とくべつな日'}
+  ],
+  'お出かけ': [
+    {icon:'park', name:'公園'},
+    {icon:'directions_car', name:'ドライブ'},
+    {icon:'local_florist', name:'おはな見'},
+    {icon:'storefront', name:'お買い物'},
+    {icon:'beach_access', name:'おでかけ'}
+  ]
+};
+
+const KIDS_DEFAULT_STAMPS = {
+  '生活': [
+    {icon:'restaurant', name:'ごはん'},{icon:'water_drop', name:'おみず'},
+    {icon:'wc', name:'トイレ'},{icon:'bathtub', name:'おふろ'},
+    {icon:'dentistry', name:'歯みがき'},{icon:'bed', name:'おやすみ'},
+    {icon:'wb_sunny', name:'おはよう'},{icon:'checkroom', name:'おきがえ'},
+    {icon:'cleaning_services', name:'おかたづけ'}
+  ],
+  '学習': [
+    {icon:'edit', name:'宿題'},{icon:'menu_book', name:'読書'},
+    {icon:'school', name:'登校'},{icon:'quiz', name:'テスト'},
+    {icon:'language', name:'英語'},{icon:'calculate', name:'算数'},
+    {icon:'science', name:'勉強'},{icon:'music_note', name:'ピアノ'},
+    {icon:'sports_soccer', name:'習い事'}
+  ],
+  '遊び': [
+    {icon:'sports_basketball', name:'外遊び'},{icon:'park', name:'公園'},
+    {icon:'tv', name:'テレビ'},{icon:'sports_esports', name:'ゲーム'},
+    {icon:'palette', name:'お絵かき'},{icon:'extension', name:'ブロック'},
+    {icon:'group', name:'お友達'}
+  ],
+  '気持ち': [
+    {icon:'sentiment_very_satisfied', name:'うれしい'},{icon:'star', name:'よくできた'},
+    {icon:'celebration', name:'お祝い'},{icon:'thumb_up', name:'がんばった'},
+    {icon:'favorite', name:'だいすき'},{icon:'sentiment_dissatisfied', name:'悲しい'}
+  ],
+  'お出かけ': [
+    {icon:'directions_car', name:'ドライブ'},{icon:'shopping_cart', name:'お買い物'},
+    {icon:'restaurant_menu', name:'外食'},{icon:'beach_access', name:'おでかけ'},
+    {icon:'medical_services', name:'病院'}
+  ]
+};
+
+function _getPetStampLib() {
+  _initPetCareData();
+  const store = _getCareStore();
+  if (!store.stampLib || Object.keys(store.stampLib).length === 0) {
+    const defaultLib = (currentMode === 'kids') ? KIDS_DEFAULT_STAMPS : PET_DEFAULT_STAMPS;
+    store.stampLib = JSON.parse(JSON.stringify(defaultLib));
+    saveData();
+  }
+  return store.stampLib;
+}
+
+function _getPetStampCats() {
+  const lib = _getPetStampLib();
+  return Object.keys(lib);
+}
+
+function setPetStampCat(cat) {
+  _initPetCareData();
+  _getCareStore().stampSelCat = cat;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.setPetStampCat = setPetStampCat;
+
+// スタンプを押す（履歴に追加）
+function tapPetStamp(icon, name, ev) {
+  if (ev) ev.stopPropagation();
+  _initPetCareData();
+  const rec = {
+    id: 'pets_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+    icon: icon,
+    name: name,
+    timestamp: Date.now()
+  };
+  _getCareStore().stampHistory.unshift(rec);
+  if (_getCareStore().stampHistory.length > 500) {
+    _getCareStore().stampHistory = _getCareStore().stampHistory.slice(0, 500);
+  }
+  saveData();
+  showToast('「'+name+'」を記録したよ🌷');
+  _suppressScrollTop = true;
+  render();
+}
+window.tapPetStamp = tapPetStamp;
+
+// ピン留め切り替え
+function togglePetStampPin(icon, name, ev) {
+  if (ev) ev.stopPropagation();
+  _initPetCareData();
+  if (!_getCareStore().pinned) _getCareStore().pinned = [];
+  const key = icon + '|' + name;
+  const idx = _getCareStore().pinned.findIndex(p => (p.icon + '|' + p.name) === key);
+  if (idx >= 0) {
+    _getCareStore().pinned.splice(idx, 1);
+  } else {
+    if (_getCareStore().pinned.length >= 10) { showToast('ピン留めは10個までやで'); return; }
+    _getCareStore().pinned.unshift({ icon, name });
+  }
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.togglePetStampPin = togglePetStampPin;
+
+// 履歴削除（取り消し）
+function undoPetStamp(id, ev) {
+  if (ev) ev.stopPropagation();
+  _initPetCareData();
+  _getCareStore().stampHistory = _getCareStore().stampHistory.filter(r => r.id !== id);
+  saveData();
+  showToast('取り消したよ');
+  _suppressScrollTop = true;
+  render();
+}
+window.undoPetStamp = undoPetStamp;
+
+function renderPetStampUI(pet) {
+  _initPetCareData();
+  const lib = _getPetStampLib();
+  const cats = _getPetStampCats();
+  const selCat = _getCareStore().stampSelCat || cats[0];
+  const pinned = _getCareStore().pinned || [];
+  const history = _getCareStore().stampHistory || [];
+  const todayStr = todayKey();
+  const todayLogs = history.filter(r => {
+    const d = new Date(r.timestamp);
+    const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    return k === todayStr;
+  });
+  
+  let h = '<div style="padding:10px 12px 16px;">';
+  
+  // ピン留めセクション
+  h += '<div style="margin-bottom:12px;">';
+  h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;color:#E89A4A;">push_pin</span>ピン留め <span style="font-weight:500;color:var(--ink-light);">('+pinned.length+'/10)</span></div>';
+  if (pinned.length === 0) {
+    h += '<div style="padding:14px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:12px;font-size:11px;color:var(--ink-light);">スタンプの📌で よく使うのを ピン留めできるよ</div>';
+  } else {
+    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+    for (const p of pinned) {
+      const _safeName = escapeHtml(p.name).replace(/\'/g,"\\\\'");
+      h += '<button onclick="tapPetStamp(\''+p.icon+'\',\''+_safeName+'\',event)" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border:1.5px solid transparent;border-radius:12px;cursor:pointer;font-family:inherit;">';
+      h += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+p.icon+'</span></span>';
+      h += '<span style="font-size:10.5px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(p.name)+'</span>';
+      h += '</button>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  
+  // カテゴリ選択タブ
+  h += '<div style="display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:6px;margin-bottom:8px;">';
+  for (const cat of cats) {
+    const _act = cat === selCat;
+    h += '<button onclick="setPetStampCat(\''+escapeHtml(cat).replace(/\'/g,"\\\\'")+'\')" style="flex-shrink:0;padding:6px 12px;border-radius:100px;border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'transparent')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+  }
+  h += '</div>';
+  
+  // スタンプグリッド（縦2行×横スクロール）
+  const catStamps = (lib[selCat] || []).filter(s => !s.hidden);
+  h += '<div style="display:grid;grid-auto-flow:column;grid-template-rows:1fr 1fr;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:8px;margin-bottom:14px;">';
+  for (const s of catStamps) {
+    const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
+    const isPin = pinned.some(p => p.icon === s.icon && p.name === s.name);
+    h += '<button onclick="tapPetStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
+    h += '<span onclick="event.stopPropagation();togglePetStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:'+(isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(isPin?'var(--accent)':'var(--line)')+';color:'+(isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
+    h += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+s.icon+'</span></span>';
+    h += '<span style="font-size:10.5px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  // 今日のきろく
+  h += '<div style="margin-top:14px;">';
+  h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);">history</span>きょうの きろく <span style="color:var(--ink-light);font-weight:500;">('+todayLogs.length+')</span></div>';
+  if (todayLogs.length === 0) {
+    h += '<div style="padding:18px;text-align:center;background:var(--surface);border-radius:12px;border:1px solid var(--line);font-size:11px;color:var(--ink-light);">スタンプを押すと<br>ここに記録が流れるよ🌷</div>';
+  } else {
+    h += '<div style="background:var(--surface);border-radius:12px;border:1px solid var(--line);overflow:hidden;">';
+    for (let i = 0; i < Math.min(todayLogs.length, 20); i++) {
+      const r = todayLogs[i];
+      const tm = new Date(r.timestamp);
+      const tStr = String(tm.getHours()).padStart(2,'0')+':'+String(tm.getMinutes()).padStart(2,'0');
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;'+(i>0?'border-top:1px solid var(--line-soft);':'')+'">';
+      h += '<span style="width:28px;height:28px;border-radius:8px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">'+r.icon+'</span></span>';
+      h += '<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(r.name)+'</div><div style="font-size:9px;color:var(--ink-light);">'+tStr+'</div></div>';
+      // 写真サムネ or 追加ボタン
+      if (r.photo) {
+        h += '<button onclick="openPetGalleryPhoto(\''+r.id+'\')" style="width:32px;height:32px;border-radius:8px;background-image:url('+r.photo+');background-size:cover;background-position:center;border:1px solid var(--line);cursor:pointer;flex-shrink:0;padding:0;"></button>';
+      } else {
+        h += '<button onclick="addPhotoToPetStamp(\''+r.id+'\')" title="写真を追加" style="background:var(--surface-warm);border:1px solid var(--line);cursor:pointer;color:var(--ink-light);padding:5px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:15px;">photo_camera</span></button>';
+      }
+      h += '<button onclick="undoPetStamp(\''+r.id+'\',event)" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:4px;"><span class="material-symbols-rounded" style="font-size:16px;">close</span></button>';
+      h += '</div>';
+    }
+    if (todayLogs.length > 20) {
+      h += '<div style="padding:8px;text-align:center;font-size:10px;color:var(--ink-light);">他 '+(todayLogs.length-20)+' 件</div>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  
+  h += '</div>';
+  return h;
+}
+// ペット用プランナーカテゴリ（マテリアルアイコン使用）
+const PET_PLANNER_CATEGORIES = [
+  { id: 'morning',  label: '朝',   icon: 'wb_twilight' },
+  { id: 'noon',     label: '昼',   icon: 'wb_sunny' },
+  { id: 'evening',  label: '夕',   icon: 'wb_shade' },
+  { id: 'night',    label: '夜',   icon: 'bedtime' },
+  { id: 'midnight', label: '深夜', icon: 'nights_stay' }
+];
+
+function renderPetPlannerUI(pet) {
+  _initPetCareData();
+  const items = _getCareStore().planner.items || [];
+  const today = new Date().toDateString();
+  
+  let h = '<div style="padding:12px 14px 16px;">';
+  
+  // 説明
+  h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:10px;line-height:1.5;">時間帯ごとに今日のお世話を管理。完了したらスタンプにも記録されるよ🌷</div>';
+  
+  // 追加ボタン
+  h += '<button onclick="openPetPlannerAddModal()" style="width:100%;padding:10px;border:1.5px dashed var(--accent);background:var(--accent-bg);color:var(--accent-deep);border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;">add</span>予定を追加</button>';
+  
+  // カテゴリごとに表示
+  for (const cat of PET_PLANNER_CATEGORIES) {
+    const catItems = items.filter(i => i.category === cat.id);
+    if (catItems.length === 0) continue;
+    
+    catItems.sort((a, b) => {
+      if (!a.time && !b.time) return 0;
+      if (!a.time) return 1;
+      if (!b.time) return -1;
+      return a.time.localeCompare(b.time);
+    });
+    
+    const incomplete = catItems.filter(i => !i.completed || i.completedAt !== today);
+    const complete = catItems.filter(i => i.completed && i.completedAt === today);
+    const sorted = [...incomplete, ...complete];
+    
+    // カテゴリ見出し
+    h += '<div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">'+cat.icon+'</span>';
+    h += '<span style="font-size:13px;font-weight:800;color:var(--ink-dark);letter-spacing:0.5px;">'+cat.label+'</span>';
+    h += '<div style="flex:1;height:1px;background:linear-gradient(90deg,var(--accent) 0%,transparent 100%);opacity:0.4;"></div>';
+    h += '</div>';
+    
+    for (const item of sorted) {
+      const isDone = item.completed && item.completedAt === today;
+      const opacity = isDone ? '0.5' : '1';
+      const textDeco = isDone ? 'text-decoration:line-through;color:var(--ink-light);' : '';
+      const bg = isDone ? 'var(--surface-warm)' : 'var(--surface)';
+      
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:'+bg+';border:1px solid var(--card-border);border-radius:12px;margin-bottom:6px;opacity:'+opacity+';cursor:pointer;" onclick="openPetPlannerEditModal(\''+item.id+'\')">';
+      
+      if (item.time) {
+        h += '<span style="display:flex;align-items:center;gap:2px;background:var(--accent-bg);color:var(--accent-deep);font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:11px;">schedule</span>'+item.time+'</span>';
+      }
+      
+      h += '<span style="flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">'+(item.icon||'check_box_outline_blank')+'</span></span>';
+      
+      h += '<span style="flex:1;font-size:13px;font-weight:600;color:var(--ink-dark);'+textDeco+'">'+escapeHtml(item.task)+'</span>';
+      
+      if (!isDone) {
+        h += '<button onclick="event.stopPropagation();completePetPlannerItem(\''+item.id+'\')" style="background:var(--accent);color:white;border:none;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">check</span></button>';
+      } else {
+        h += '<button onclick="event.stopPropagation();uncompletePetPlannerItem(\''+item.id+'\')" style="background:var(--surface-warm);color:var(--ink-light);border:1px solid var(--line);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;">undo</span></button>';
+      }
+      
+      h += '</div>';
+    }
+  }
+  
+  if (items.length === 0) {
+    h += '<div style="background:var(--surface-warm);border:1.5px solid var(--card-border);border-radius:16px;padding:32px 16px;text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;margin-top:8px;">';
+    h += 'まだ予定がないよ🌷<br><span style="font-size:10px;color:var(--ink-light);">「予定を追加」から作れるよ</span>';
+    h += '</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+
+// 追加・編集モーダル
+function openPetPlannerAddModal() {
+  _openPetPlannerModal(null);
+}
+window.openPetPlannerAddModal = openPetPlannerAddModal;
+
+function openPetPlannerEditModal(id) {
+  _openPetPlannerModal(id);
+}
+window.openPetPlannerEditModal = openPetPlannerEditModal;
+
+function _openPetPlannerModal(editId) {
+  _initPetCareData();
+  const isEdit = !!editId;
+  const item = isEdit ? (_getCareStore().planner.items || []).find(i => i.id === editId) : null;
+  const def = item || { task:'', icon:'check_box_outline_blank', category:'morning', time:'' };
+  
+  // 既存削除
+  const ex = document.getElementById('petPlannerModal');
+  if (ex) ex.remove();
+  
+  const ov = document.createElement('div');
+  ov.id = 'petPlannerModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2200;background:rgba(45,74,60,0.5);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);padding-bottom:calc(75px + env(safe-area-inset-bottom));box-sizing:border-box;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  
+  let h = '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">edit_calendar</span>';
+  h += '<div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">'+(isEdit?'予定を編集':'予定を追加')+'</div>';
+  h += '<button onclick="document.getElementById(\'petPlannerModal\').remove()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '</div>';
+  h += '<div style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px;">';
+  
+  // タスク名
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">予定の名前</label>';
+  h += '<input type="text" id="petPlannerTask" value="'+escapeHtml(def.task)+'" placeholder="例：ごはん、おさんぽ..." style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  
+  // 時間帯
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">時間帯</label>';
+  h += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">';
+  for (const c of PET_PLANNER_CATEGORIES) {
+    const _act = c.id === def.category;
+    h += '<button onclick="document.querySelectorAll(\'.pet-planner-cat-btn\').forEach(b=>b.dataset.act=\'0\');this.dataset.act=\'1\';this.style.background=\'var(--accent-bg)\';this.style.borderColor=\'var(--accent)\';this.style.color=\'var(--accent-deep)\';document.querySelectorAll(\'.pet-planner-cat-btn\').forEach(b=>{if(b!==this){b.style.background=\'var(--surface-warm)\';b.style.borderColor=\'var(--line)\';b.style.color=\'var(--ink-sub)\';}});" data-cat="'+c.id+'" data-act="'+(_act?1:0)+'" class="pet-planner-cat-btn" style="padding:8px 4px;border-radius:10px;border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="material-symbols-rounded" style="font-size:16px;">'+c.icon+'</span><span style="font-size:10px;font-weight:700;">'+c.label+'</span></button>';
+  }
+  h += '</div></div>';
+  
+  // 時刻（任意）
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">時刻（任意）</label>';
+  h += '<input type="time" id="petPlannerTime" value="'+(def.time||'')+'" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  
+  h += '</div>';
+  
+  // フッター
+  h += '<div style="padding:12px 16px;border-top:1px solid var(--line-soft);display:flex;gap:8px;">';
+  if (isEdit) {
+    h += '<button onclick="deletePetPlannerItem(\''+editId+'\')" style="padding:11px 14px;background:none;border:1px solid var(--line);color:#D9534F;border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;">削除</button>';
+  }
+  h += '<button onclick="savePetPlannerItem('+(isEdit?'\''+editId+'\'':'null')+')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div></div>';
+  
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+  setTimeout(() => document.getElementById('petPlannerTask')?.focus(), 100);
+}
+
+function savePetPlannerItem(editId) {
+  _initPetCareData();
+  const task = document.getElementById('petPlannerTask').value.trim();
+  if (!task) { showToast('予定の名前を入れてね'); return; }
+  const catBtn = document.querySelector('.pet-planner-cat-btn[data-act="1"]');
+  const category = catBtn ? catBtn.dataset.cat : 'morning';
+  const time = document.getElementById('petPlannerTime').value || '';
+  
+  // アイコン推定（タスク名から雑にマッチ）
+  let icon = 'check_box_outline_blank';
+  const t = task.toLowerCase();
+  if (/ごはん|食|餌/.test(task)) icon = 'restaurant';
+  else if (/みず|水|飲み/.test(task)) icon = 'water_drop';
+  else if (/さんぽ|散歩|walk/.test(task)) icon = 'pets';
+  else if (/おやつ|treat/.test(task)) icon = 'cookie';
+  else if (/くすり|薬|med/.test(task)) icon = 'medication';
+  else if (/シャン|風呂|bath/.test(task)) icon = 'bathtub';
+  else if (/ブラ|brush/.test(task)) icon = 'content_cut';
+  else if (/歯|tooth/.test(task)) icon = 'dentistry';
+  else if (/トイレ|toilet/.test(task)) icon = 'wc';
+  else if (/掃除|clean/.test(task)) icon = 'cleaning_services';
+  else if (/寝|ね|sleep/.test(task)) icon = 'bed';
+  
+  const isEdit = !!editId && editId !== 'null';
+  if (isEdit) {
+    const item = _getCareStore().planner.items.find(i => i.id === editId);
+    if (item) {
+      item.task = task;
+      item.category = category;
+      item.time = time;
+      item.icon = icon;
+    }
+  } else {
+    _getCareStore().planner.items.push({
+      id: 'petplan_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+      task, category, time, icon,
+      completed: false, completedAt: null,
+      createdAt: Date.now()
+    });
+  }
+  saveData();
+  document.getElementById('petPlannerModal')?.remove();
+  showToast(isEdit ? '保存したよ🌷' : '追加したよ🌷');
+  _suppressScrollTop = true;
+  render();
+}
+window.savePetPlannerItem = savePetPlannerItem;
+
+function deletePetPlannerItem(id) {
+  if (!confirm('この予定を削除しますか？')) return;
+  _initPetCareData();
+  _getCareStore().planner.items = _getCareStore().planner.items.filter(i => i.id !== id);
+  saveData();
+  document.getElementById('petPlannerModal')?.remove();
+  showToast('削除したよ');
+  _suppressScrollTop = true;
+  render();
+}
+window.deletePetPlannerItem = deletePetPlannerItem;
+
+function completePetPlannerItem(id) {
+  _initPetCareData();
+  const item = _getCareStore().planner.items.find(i => i.id === id);
+  if (!item) return;
+  const today = new Date().toDateString();
+  item.completed = true;
+  item.completedAt = today;
+  // スタンプ履歴にも自動記録
+  _getCareStore().stampHistory.unshift({
+    id: 'pets_plan_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+    icon: item.icon || 'task_alt',
+    name: item.task,
+    timestamp: Date.now(),
+    fromPlanner: true,
+    plannerId: id
+  });
+  if (_getCareStore().stampHistory.length > 500) {
+    _getCareStore().stampHistory = _getCareStore().stampHistory.slice(0, 500);
+  }
+  saveData();
+  showToast('「'+item.task+'」完了！🌷');
+  _suppressScrollTop = true;
+  render();
+}
+window.completePetPlannerItem = completePetPlannerItem;
+
+function uncompletePetPlannerItem(id) {
+  _initPetCareData();
+  const item = _getCareStore().planner.items.find(i => i.id === id);
+  if (!item) return;
+  item.completed = false;
+  item.completedAt = null;
+  // スタンプ履歴からプランナー由来のものを削除（同じplannerId・今日）
+  const today = new Date().toDateString();
+  _getCareStore().stampHistory = _getCareStore().stampHistory.filter(r => {
+    if (r.fromPlanner && r.plannerId === id && new Date(r.timestamp).toDateString() === today) {
+      return false;
+    }
+    return true;
+  });
+  saveData();
+  showToast('取り消したよ');
+  _suppressScrollTop = true;
+  render();
+}
+window.uncompletePetPlannerItem = uncompletePetPlannerItem;
+function renderPetStampCalendarUI(pet) {
+  _initPetCareData();
+  if (!window._petCalMonth) {
+    const d = new Date();
+    window._petCalMonth = { y: d.getFullYear(), m: d.getMonth() };
+  }
+  const { y, m } = window._petCalMonth;
+  const firstDay = new Date(y, m, 1);
+  const lastDay = new Date(y, m+1, 0);
+  const startWeekday = firstDay.getDay();
+  const daysInMonth = lastDay.getDate();
+  const today = new Date();
+  const todayK = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  const isCurrentMonth = (y === today.getFullYear() && m === today.getMonth());
+  
+  // 履歴を日付別マップに
+  const histMap = {};
+  for (const r of (_getCareStore().stampHistory || [])) {
+    const d = new Date(r.timestamp);
+    const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    if (!histMap[k]) histMap[k] = [];
+    histMap[k].push(r);
+  }
+  
+  let h = '<div style="padding:10px 14px 16px;">';
+  
+  // 月切替ヘッダー
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:10px;padding:6px 8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">';
+  h += '<button onclick="switchPetCalMonth(-1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--ink-sub);font-size:10px;font-family:inherit;display:flex;align-items:center;"><span class="material-symbols-rounded" style="font-size:13px;">chevron_left</span></button>';
+  h += '<div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--ink-dark);letter-spacing:0.05em;">'+y+'.'+String(m+1).padStart(2,'0')+'</div>';
+  h += '<button onclick="switchPetCalMonth(1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--ink-sub);font-size:10px;font-family:inherit;display:flex;align-items:center;"><span class="material-symbols-rounded" style="font-size:13px;">chevron_right</span></button>';
+  h += '</div>';
+  
+  if (!isCurrentMonth) {
+    h += '<button onclick="jumpPetCurrentMonth()" style="width:100%;padding:5px;background:none;color:var(--ink-light);border:1px dashed var(--line);border-radius:6px;font-family:inherit;font-size:9px;font-weight:600;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">today</span>今月へ</button>';
+  }
+  
+  // 曜日ヘッダー
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;">';
+  const wks = ['日','月','火','水','木','金','土'];
+  for (let i = 0; i < 7; i++) {
+    let col = 'var(--ink-sub)';
+    if (i === 0) col = '#D89090';
+    else if (i === 6) col = '#90B0C8';
+    h += '<div style="text-align:center;font-size:10px;font-weight:700;color:'+col+';padding:3px 0;">'+wks[i]+'</div>';
+  }
+  h += '</div>';
+  
+  // 日付セル
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">';
+  for (let i = 0; i < startWeekday; i++) {
+    h += '<div></div>';
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const k = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const stamps = histMap[k] || [];
+    const isToday = k === todayK;
+    const sel = window._petCalSelectedDate === k;
+    const dow = new Date(y, m, d).getDay();
+    let bg = 'var(--surface-warm)';
+    let bd = '1.5px solid transparent';
+    if (sel) { bg = 'var(--accent-bg)'; bd = '1.5px solid var(--accent)'; }
+    else if (isToday) bd = '1.5px solid var(--accent)';
+    let dCol = 'var(--ink-dark)';
+    if (dow === 0) dCol = '#D89090';
+    else if (dow === 6) dCol = '#90B0C8';
+    
+    h += '<button onclick="selectPetCalDate(\''+k+'\')" style="aspect-ratio:1/1.3;border-radius:8px;background:'+bg+';border:'+bd+';padding:3px 2px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;overflow:hidden;">';
+    h += '<span style="font-size:11px;font-weight:'+(isToday?'800':'700')+';color:'+dCol+';line-height:1;">'+d+'</span>';
+    if (stamps.length > 0) {
+      // 最大4個アイコン表示
+      const show = Math.min(stamps.length, 4);
+      if (show === 1) {
+        h += '<div style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;"><span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">'+stamps[0].icon+'</span></div>';
+      } else {
+        h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;width:100%;justify-items:center;">';
+        for (let i = 0; i < show; i++) {
+          h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);line-height:1;">'+stamps[i].icon+'</span>';
+        }
+        h += '</div>';
+      }
+    }
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  // 選択日の詳細
+  if (window._petCalSelectedDate) {
+    const selStamps = histMap[window._petCalSelectedDate] || [];
+    const selD = new Date(window._petCalSelectedDate+'T00:00:00');
+    h += '<div style="margin-top:14px;background:white;border:1px solid var(--line);border-radius:12px;padding:12px;">';
+    h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;">'+selD.getMonth()+1+'/'+selD.getDate()+' ('+wks[selD.getDay()]+')のきろく <span style="color:var(--ink-light);font-weight:500;">'+selStamps.length+'件</span></div>';
+    if (selStamps.length === 0) {
+      h += '<div style="text-align:center;padding:14px;color:var(--ink-light);font-size:11px;">この日はまだ記録なし🌷</div>';
+    } else {
+      for (const r of selStamps) {
+        const tm = new Date(r.timestamp);
+        const tStr = String(tm.getHours()).padStart(2,'0')+':'+String(tm.getMinutes()).padStart(2,'0');
+        h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line-soft);">';
+        h += '<span style="width:28px;height:28px;border-radius:8px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">'+r.icon+'</span></span>';
+        h += '<div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(r.name)+'</div><div style="font-size:9px;color:var(--ink-light);">'+tStr+'</div></div>';
+        h += '<button onclick="undoPetStamp(\''+r.id+'\',event)" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:4px;"><span class="material-symbols-rounded" style="font-size:16px;">close</span></button>';
+        h += '</div>';
+      }
+    }
+    h += '</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+
+function switchPetCalMonth(delta) {
+  if (!window._petCalMonth) {
+    const d = new Date();
+    window._petCalMonth = { y: d.getFullYear(), m: d.getMonth() };
+  }
+  let { y, m } = window._petCalMonth;
+  m += delta;
+  if (m < 0) { m = 11; y--; }
+  if (m > 11) { m = 0; y++; }
+  window._petCalMonth = { y, m };
+  _suppressScrollTop = true;
+  render();
+}
+window.switchPetCalMonth = switchPetCalMonth;
+
+function jumpPetCurrentMonth() {
+  const d = new Date();
+  window._petCalMonth = { y: d.getFullYear(), m: d.getMonth() };
+  _suppressScrollTop = true;
+  render();
+}
+window.jumpPetCurrentMonth = jumpPetCurrentMonth;
+
+function selectPetCalDate(dateKey) {
+  if (window._petCalSelectedDate === dateKey) {
+    window._petCalSelectedDate = null;
+  } else {
+    window._petCalSelectedDate = dateKey;
+  }
+  _suppressScrollTop = true;
+  render();
+}
+window.selectPetCalDate = selectPetCalDate;
+function renderPetStampGalleryUI(pet) {
+  _initPetCareData();
+  // 写真付きスタンプ履歴を抽出
+  const all = (_getCareStore().stampHistory || []).filter(r => r.photo || r.photoId);
+  
+  let h = '<div style="padding:10px 14px 16px;">';
+  
+  // 説明
+  h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:10px;line-height:1.5;">スタンプ履歴の📷から写真を追加できるよ。ここで一覧して見返せるよ🌷</div>';
+  
+  if (all.length === 0) {
+    h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65),rgba(255,255,255,0.45));border:1.5px dashed var(--accent);border-radius:16px;padding:30px 16px;text-align:center;">';
+    h += '<div style="margin-bottom:12px;"><span class="material-symbols-rounded" style="font-size:48px;color:var(--accent-deep);">photo_library</span></div>';
+    h += '<div style="font-size:14px;font-weight:800;color:var(--accent-deep);margin-bottom:8px;">まだ写真がないよ</div>';
+    h += '<div style="font-size:11px;color:#666;line-height:1.7;font-weight:500;">きょうのきろくの<span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;">photo_camera</span>マークから写真を追加できるよ</div>';
+    h += '</div>';
+    h += '</div>';
+    return h;
+  }
+  
+  // カテゴリ別件数
+  const byCat = {};
+  for (const r of all) {
+    const c = _findPetStampCategory(r.icon, r.name) || 'その他';
+    byCat[c] = (byCat[c]||0) + 1;
+    r._cat = c;
+  }
+  
+  const filter = window._petGalleryFilter || 'all';
+  const cats = Object.keys(byCat);
+  
+  // フィルター
+  h += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:8px;margin-bottom:10px;">';
+  const allActive = filter === 'all';
+  h += '<button onclick="setPetGalleryFilter(\'all\')" style="flex-shrink:0;padding:5px 12px;border-radius:100px;border:1.5px solid '+(allActive?'var(--accent)':'var(--line)')+';background:'+(allActive?'var(--accent)':'var(--surface)')+';color:'+(allActive?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">すべて '+all.length+'</button>';
+  for (const c of cats) {
+    const isAct = filter === c;
+    h += '<button onclick="setPetGalleryFilter(\''+escapeHtml(c).replace(/\'/g,"\\\\'")+'\')" style="flex-shrink:0;padding:5px 12px;border-radius:100px;border:1.5px solid var(--accent);background:'+(isAct?'var(--accent)':'var(--surface)')+';color:'+(isAct?'white':'var(--accent-deep)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(c)+' '+byCat[c]+'</button>';
+  }
+  h += '</div>';
+  
+  // フィルター適用
+  const filtered = filter === 'all' ? all : all.filter(r => r._cat === filter);
+  filtered.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  
+  // グリッド表示
+  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
+  for (const r of filtered) {
+    const photo = r.photo;
+    const t = new Date(r.timestamp||Date.now());
+    const dateStr = (t.getMonth()+1)+'/'+t.getDate();
+    h += '<div onclick="openPetGalleryPhoto(\''+r.id+'\')" style="position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--surface-warm);cursor:pointer;background-image:url('+(photo||'')+');background-size:cover;background-position:center;">';
+    h += '<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,transparent,rgba(0,0,0,0.6));padding:14px 6px 4px;">';
+    h += '<div style="display:flex;align-items:center;gap:3px;color:white;font-size:10px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,0.5);"><span class="material-symbols-rounded" style="font-size:11px;">'+r.icon+'</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.name)+'</span></div>';
+    h += '<div style="color:rgba(255,255,255,0.85);font-size:8px;font-weight:600;">'+dateStr+'</div>';
+    h += '</div>';
+    h += '</div>';
+  }
+  h += '</div>';
+  
+  h += '</div>';
+  return h;
+}
+
+// カテゴリ逆引き
+function _findPetStampCategory(icon, name) {
+  _initPetCareData();
+  const lib = _getCareStore().stampLib || {};
+  for (const cat in lib) {
+    for (const s of (lib[cat] || [])) {
+      if (s.icon === icon && s.name === name) return cat;
+    }
+  }
+  return null;
+}
+
+function setPetGalleryFilter(cat) {
+  window._petGalleryFilter = cat;
+  _suppressScrollTop = true;
+  render();
+}
+window.setPetGalleryFilter = setPetGalleryFilter;
+
+// 写真プレビュー
+function openPetGalleryPhoto(stampId) {
+  _initPetCareData();
+  const r = (_getCareStore().stampHistory || []).find(x => x.id === stampId);
+  if (!r || !r.photo) return;
+  const ex = document.getElementById('petGalleryViewer');
+  if (ex) ex.remove();
+  const ov = document.createElement('div');
+  ov.id = 'petGalleryViewer';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2300;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px;box-sizing:border-box;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  const t = new Date(r.timestamp);
+  const dStr = t.getFullYear()+'/'+(t.getMonth()+1)+'/'+t.getDate()+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+  let h = '<button onclick="document.getElementById(\'petGalleryViewer\').remove()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);border:none;color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '<img src="'+r.photo+'" style="max-width:100%;max-height:75vh;border-radius:12px;object-fit:contain;">';
+  h += '<div style="margin-top:12px;text-align:center;color:white;">';
+  h += '<div style="display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:700;"><span class="material-symbols-rounded" style="font-size:18px;">'+r.icon+'</span>'+escapeHtml(r.name)+'</div>';
+  h += '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:3px;">'+dStr+'</div>';
+  h += '<button onclick="deletePetStampPhoto(\''+r.id+'\')" style="margin-top:12px;padding:7px 16px;background:rgba(255,100,100,0.3);border:1px solid rgba(255,100,100,0.5);color:white;border-radius:100px;font-family:inherit;font-size:11px;cursor:pointer;">写真を削除</button>';
+  h += '</div>';
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+}
+window.openPetGalleryPhoto = openPetGalleryPhoto;
+
+function deletePetStampPhoto(stampId) {
+  if (!confirm('この写真を削除しますか？スタンプ自体は残ります。')) return;
+  _initPetCareData();
+  const r = (_getCareStore().stampHistory || []).find(x => x.id === stampId);
+  if (!r) return;
+  delete r.photo;
+  saveData();
+  document.getElementById('petGalleryViewer')?.remove();
+  showToast('写真を削除したよ');
+  _suppressScrollTop = true;
+  render();
+}
+window.deletePetStampPhoto = deletePetStampPhoto;
+
+// スタンプ履歴に写真追加
+function addPhotoToPetStamp(stampId) {
+  _initPetCareData();
+  const r = (_getCareStore().stampHistory || []).find(x => x.id === stampId);
+  if (!r) return;
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = function(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    if (typeof resizeImageToBase64 === 'function') {
+      resizeImageToBase64(file, 1200, 0.85).then(function(base64){
+        r.photo = base64;
+        saveData();
+        showToast('写真を追加したよ🌷');
+        _suppressScrollTop = true;
+        render();
+      });
+    } else {
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        r.photo = ev.target.result;
+        saveData();
+        showToast('写真を追加したよ🌷');
+        _suppressScrollTop = true;
+        render();
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  inp.click();
+}
+window.addPhotoToPetStamp = addPhotoToPetStamp;
 
 function renderTabCare(pet, careItems) {
   const recent = getRecent24hCareLogs(pet.id);
@@ -24457,6 +26295,104 @@ function _getSchedStamps() {
 }
 
 // ── 予定スタンプピッカーモーダル（折りたたみ＋3列横スクロール）──
+// ── スケジュールスコープ取得（ME / 家 / ペット / キッズ） ──
+function _getSchedScopes() {
+  var scopes = [{ id:'me', label:'ME', icon:'🌱', kind:'me' }];
+  var houses = (data.houses||[]).filter(function(h){ return h.id !== 'me_house'; });
+  for (var i = 0; i < houses.length; i++) {
+    var h = houses[i];
+    scopes.push({ id:'house_'+h.id, label:h.name, icon:'🏠', kind:'house', houseId:h.id });
+  }
+  var pets = (data.pets||[]).filter(function(p){
+    return !p.archived && p.id !== 'me_diary' && PET_TYPES.indexOf(p.kind) !== -1;
+  });
+  for (var i = 0; i < pets.length; i++) {
+    var p = pets[i];
+    var hsName = '';
+    var hs = (data.houses||[]).find(function(h){ return h.id === p.houseId; });
+    if (hs) hsName = hs.name;
+    scopes.push({ id:'pet_'+p.id, label:p.name + (hsName ? ' @ '+hsName : ''), icon:'🐾', kind:'pet', petId:p.id, houseId:p.houseId });
+  }
+  var kids = (data.pets||[]).filter(function(p){
+    return !p.archived && KIDS_TYPES.indexOf(p.kind) !== -1;
+  });
+  for (var i = 0; i < kids.length; i++) {
+    var k = kids[i];
+    var hsName = '';
+    var hs = (data.houses||[]).find(function(h){ return h.id === k.houseId; });
+    if (hs) hsName = hs.name;
+    scopes.push({ id:'kid_'+k.id, label:k.name + (hsName ? ' @ '+hsName : ''), icon:'🧸', kind:'kid', petId:k.id, houseId:k.houseId });
+  }
+  return scopes;
+}
+window._getSchedScopes = _getSchedScopes;
+
+// 現在選択中のスケジュールスコープID
+function _getCurrentSchedScope() {
+  return data._schedScope || 'me';
+}
+function _setSchedScope(id) {
+  data._schedScope = id;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window._setSchedScope = _setSchedScope;
+
+// スコープ選択モーダル
+function _openSchedScopePicker() {
+  var existing = document.getElementById('schedScopePickerOv');
+  if (existing) existing.remove();
+  var ov = document.createElement('div');
+  ov.id = 'schedScopePickerOv';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2300;background:rgba(45,74,60,0.5);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  var box = document.createElement('div');
+  box.style.cssText = 'width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;max-height:75vh;display:flex;flex-direction:column;overflow:hidden;';
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);';
+  hdr.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">groups</span><div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">どこの予定？</div>';
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--ink-sub);';
+  closeBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:22px;">close</span>';
+  closeBtn.onclick = function(){ ov.remove(); };
+  hdr.appendChild(closeBtn);
+  box.appendChild(hdr);
+  var list = document.createElement('div');
+  list.style.cssText = 'flex:1;overflow-y:auto;padding:8px 12px 16px;display:flex;flex-direction:column;gap:4px;';
+  var scopes = _getSchedScopes();
+  var curId = _getCurrentSchedScope();
+  for (var i = 0; i < scopes.length; i++) {
+    (function(s){
+      var item = document.createElement('button');
+      var isOn = s.id === curId;
+      item.style.cssText = 'display:flex;align-items:center;gap:10px;padding:11px 14px;background:'+(isOn?'var(--accent-bg)':'var(--surface-warm)')+';border:1.5px solid '+(isOn?'var(--accent)':'var(--line)')+';border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;';
+      item.innerHTML = '<span style="font-size:20px;">'+s.icon+'</span><span style="flex:1;font-size:13px;font-weight:'+(isOn?'800':'600')+';color:'+(isOn?'var(--accent-deep)':'var(--ink-dark)')+';">'+escapeHtml(s.label)+'</span>'+(isOn?'<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">check_circle</span>':'');
+      item.onclick = function(){
+        ov.remove();
+        // モーダル開いたまま再描画したいので、_openSchedAdd は呼び直さない
+        // 単に保存して、ヘッダー部分を再表示
+        data._schedScope = s.id;
+        saveData();
+        // 開いてる予定追加モーダルを再描画
+        var addModal = document.getElementById('schedAddModal');
+        if (addModal) {
+          addModal.remove();
+          _openSchedAdd(window._schedAddCurrentDate);
+        } else {
+          _suppressScrollTop = true;
+          render();
+        }
+      };
+      list.appendChild(item);
+    })(scopes[i]);
+  }
+  box.appendChild(list);
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+}
+window._openSchedScopePicker = _openSchedScopePicker;
+
 function _openSchedAdd(dateKey) {
   var ex = document.getElementById('schedAddModal');
   if (ex) ex.remove();
@@ -24478,7 +26414,19 @@ function _openSchedAdd(dateKey) {
   // ── ヘッダー ──
   var hdr = document.createElement('div');
   hdr.style.cssText = 'display:flex;align-items:center;gap:6px;padding:12px 14px 8px;border-bottom:1px solid var(--line-soft);';
-  hdr.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">event</span><div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">\u4E88\u5B9A\u3092\u8FFD\u52A0</div>';
+  // 現在のスコープを表示
+  var _curScopeId = _getCurrentSchedScope();
+  var _allScopes = _getSchedScopes();
+  var _curScope = _allScopes.find(function(s){ return s.id === _curScopeId; }) || _allScopes[0];
+  hdr.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);flex-shrink:0;">event</span><div style="font-size:13px;font-weight:800;color:var(--ink-dark);flex-shrink:0;">\u4E88\u5B9A</div>';
+  // スコープ選択ボタン
+  var scopeBtn = document.createElement('button');
+  scopeBtn.style.cssText = 'flex:1;min-width:0;font-size:11px;font-weight:700;color:var(--accent-deep);background:var(--surface-warm);padding:5px 10px;border-radius:100px;border:1px solid var(--line);cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;justify-content:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+  scopeBtn.innerHTML = '<span style="font-size:13px;">'+_curScope.icon+'</span><span style="overflow:hidden;text-overflow:ellipsis;">'+_curScope.label+'</span><span class="material-symbols-rounded" style="font-size:12px;flex-shrink:0;">expand_more</span>';
+  scopeBtn.onclick = function(){
+    _openSchedScopePicker(scopeBtn);
+  };
+  hdr.appendChild(scopeBtn);
   var dateBadge = document.createElement('button');
   dateBadge.id = 'schedAddDateBadge';
   dateBadge.style.cssText = 'font-size:10px;font-weight:700;color:var(--accent-deep);background:var(--accent-bg);padding:3px 10px;border-radius:100px;border:1px solid var(--accent);cursor:pointer;font-family:inherit;';
@@ -24698,9 +26646,17 @@ function _openSchedAdd(dateKey) {
     if (!title) { showToast('\u30BF\u30A4\u30C8\u30EB\u3092\u5165\u308C\u3066\u306D'); return; }
     var curDate = window._schedAddCurrentDate || defaultDate;
     if (!data.schedules) data.schedules = [];
+    var _saveScope = _getCurrentSchedScope();
+    var _saveScopeObj = (_getSchedScopes().find(function(s){ return s.id === _saveScope; })) || _getSchedScopes()[0];
     var rec = {
       id:'sched_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
-      petId:'', title:title, date:curDate,
+      houseId: _saveScopeObj.houseId || '',
+      petId: _saveScopeObj.petId || '',
+      scopeId: _saveScope,
+      scopeKind: _saveScopeObj.kind,
+      scopeLabel: _saveScopeObj.label,
+      scopeIcon: _saveScopeObj.icon,
+      title:title, date:curDate,
       tag:'', color: titleInput.dataset.color || '',
       icon: titleInput.dataset.icon || '',
       allDay: allDayChk.checked,
@@ -25360,7 +27316,7 @@ function _renderSchedMonthView(houseId) {
   var today = new Date();
   var isCurrent = (year === today.getFullYear() && month === today.getMonth());
 
-  // その月の予定を事前取得
+  // その月の予定を事前取得（全スコープ表示）
   var monthScheds = (data.schedules||[]).filter(function(s){
     if (!s.date) return false;
     var parts = s.date.split('-');
@@ -25406,14 +27362,14 @@ function _renderSchedMonthView(houseId) {
     var cellBorder = isToday ? '2px solid var(--accent)' : isSel ? '2px solid var(--accent-bg)' : '2px solid transparent';
     var cellFontW = isToday || isSel ? '800' : '600';
 
-    h += '<button onclick="selectCalDate(\'sched\',\''+key+'\')" style="background:'+cellBg+';color:'+cellColor+';border:'+cellBorder+';border-radius:10px;padding:4px 1px 3px;font-family:inherit;cursor:pointer;min-height:52px;display:flex;flex-direction:column;align-items:center;gap:1px;">';
-    // 日付
-    h += '<span style="font-size:12px;font-weight:'+cellFontW+';line-height:1;">'+d+'</span>';
-    // 今日の天気
-    if (isToday && typeof getDateWeatherIcon === 'function') {
-      var _wIco = getDateWeatherIcon(key);
-      if (_wIco) h += '<span style="font-size:9px;line-height:1;">'+_wIco+'</span>';
+    h += '<button onclick="selectCalDate(\'sched\',\''+key+'\')" style="background:'+cellBg+';color:'+cellColor+';border:'+cellBorder+';border-radius:10px;padding:5px 2px 4px;font-family:inherit;cursor:pointer;min-height:78px;display:flex;flex-direction:column;align-items:center;gap:2px;overflow:hidden;">';
+    // 日付＋天気（横並び）
+    var _wIco = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(key) : null;
+    h += '<span style="font-size:13px;font-weight:'+cellFontW+';line-height:1;display:inline-flex;align-items:center;gap:2px;">'+d;
+    if (_wIco) {
+      h += '<span style="opacity:0.55;display:inline-flex;align-items:center;">'+(typeof weatherIconHtml==='function' ? weatherIconHtml(_wIco,'font-size:9px;') : '')+'</span>';
     }
+    h += '</span>';
     // 祝日名（小さく）
     if (holiday) h += '<span style="font-size:6px;color:#D9534F;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+holiday+'</span>';
     // アイコングリッド（2x2、最大4個）
@@ -25425,18 +27381,39 @@ function _renderSchedMonthView(houseId) {
     }
     // 予定
     for (var si = 0; si < dayScheds.length; si++) {
-      cellIcons.push({icon: dayScheds[si].icon || 'event', color: dayScheds[si].color || 'var(--accent-deep)'});
+      cellIcons.push({
+        icon: dayScheds[si].icon || 'event',
+        color: dayScheds[si].color || 'var(--accent-deep)',
+        scopeIcon: dayScheds[si].scopeIcon || '🌱',
+        scopeKind: dayScheds[si].scopeKind || 'me'
+      });
     }
     if (cellIcons.length > 0) {
       var show = Math.min(cellIcons.length, 4);
       var extra = cellIcons.length - show;
-      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-top:1px;">';
-      for (var ci = 0; ci < show; ci++) {
-        var ic = cellIcons[ci];
-        h += '<span class="material-symbols-rounded" style="font-size:10px;color:'+ic.color+';line-height:1;text-align:center;">'+ic.icon+'</span>';
+      // 1個だけのときはドンと大きく
+      if (show === 1) {
+        var ic1 = cellIcons[0];
+        h += '<div style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;position:relative;">';
+        h += '<span class="material-symbols-rounded" style="font-size:28px;color:'+ic1.color+';line-height:1;">'+ic1.icon+'</span>';
+        if (ic1.scopeIcon && ic1.scopeKind && ic1.scopeKind !== 'me') {
+          h += '<span style="position:absolute;bottom:-2px;right:14%;font-size:10px;background:white;border-radius:50%;padding:1px;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,0.15);">'+ic1.scopeIcon+'</span>';
+        }
+        h += '</div>';
+      } else {
+        h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:1px;width:100%;justify-items:center;">';
+        for (var ci = 0; ci < show; ci++) {
+          var ic = cellIcons[ci];
+          h += '<span style="position:relative;display:inline-flex;align-items:center;justify-content:center;">';
+          h += '<span class="material-symbols-rounded" style="font-size:18px;color:'+ic.color+';line-height:1;">'+ic.icon+'</span>';
+          if (ic.scopeIcon && ic.scopeKind && ic.scopeKind !== 'me') {
+            h += '<span style="position:absolute;bottom:-3px;right:-3px;font-size:8px;line-height:1;">'+ic.scopeIcon+'</span>';
+          }
+          h += '</span>';
+        }
+        h += '</div>';
       }
-      h += '</div>';
-      if (extra > 0) h += '<span style="font-size:6px;color:var(--ink-light);font-weight:700;line-height:1;">+'+extra+'</span>';
+      if (extra > 0) h += '<span style="font-size:7px;color:var(--ink-light);font-weight:700;line-height:1;">+'+extra+'</span>';
     }
     h += '</button>';
   }
@@ -25499,7 +27476,13 @@ function _renderSchedDayDetail(dateKey, houseId) {
       h += '<button onclick="openEditScheduleModal(\''+s.id+'\')" style="display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--surface-warm);border:none;border-left:3px solid '+barColor+';border-radius:8px;cursor:pointer;font-family:inherit;text-align:left;">';
       if (s.icon) h += '<span style="width:28px;height:28px;border-radius:8px;background:'+barColor+'15;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;color:'+barColor+';">'+s.icon+'</span></span>';
       h += '<div style="flex:1;min-width:0;">';
-      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title)+'</div>';
+      h += '<div style="display:flex;align-items:center;gap:5px;">';
+      // スコープバッジ
+      if (s.scopeIcon && s.scopeKind && s.scopeKind !== 'me') {
+        h += '<span style="font-size:11px;background:var(--surface);padding:1px 6px;border-radius:100px;border:1px solid var(--line);font-weight:600;color:var(--ink-sub);display:inline-flex;align-items:center;gap:2px;flex-shrink:0;">'+s.scopeIcon+'<span style="font-size:9px;">'+escapeHtml(s.scopeLabel||'')+'</span></span>';
+      }
+      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">'+escapeHtml(s.title)+'</div>';
+      h += '</div>';
       // 時間バッジ
       if (s.allDay) {
         h += '<span style="font-size:8px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 5px;border-radius:100px;font-weight:700;display:inline-block;margin-top:2px;">\u7D42\u65E5</span>';
@@ -28396,8 +30379,21 @@ function openEditHouseModal(houseId) {
   document.getElementById('editHouseNameInput').value = h.name;
   selectedHouseIcon = h.icon || '🏡';
   renderHouseIconRow('editHouseIconRow', selectedHouseIcon);
+  // 家が2個以上のときだけ削除ボタン表示
+  const delBtn = document.getElementById('editHouseDeleteBtn');
+  if (delBtn) delBtn.style.display = (data.houses.length > 1) ? 'block' : 'none';
   document.getElementById('editHouseModal').classList.add('show');
 }
+window.openEditHouseModal = openEditHouseModal;
+
+function deleteHouseFromModal() {
+  if (!editingHouseId) return;
+  closeModal('editHouseModal');
+  confirmDeleteHouse(editingHouseId);
+  editingHouseId = null;
+}
+window.deleteHouseFromModal = deleteHouseFromModal;
+
 function saveEditHouse() {
   if (!editingHouseId) return;
   const h = data.houses.find(x => x.id === editingHouseId);
@@ -28611,9 +30607,9 @@ function openEditPetModal(petId) {
   const placeContent = document.getElementById('editPlaceContent');
   if (pet.place === 'home') {
     if (isKidsType) {
-      placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px; margin-bottom:6px;"><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">🏠 おうちにいます</span></div><button class="btn btn-secondary" style="width:100%; font-size:12px; color:var(--soft-purple);" onclick="askMoveToRainbow()">⭐ 星のひろばへ移す</button>';
+      placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px; margin-bottom:6px;"><span class="material-symbols-rounded" style="font-size:15px;color:var(--accent-deep);margin-right:5px;">home</span><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">おうちにいます</span></div><button class="btn btn-secondary" style="width:100%; font-size:12px; color:var(--soft-purple);" onclick="askMoveToRainbow()"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px;">star</span>星のひろばへ移す</button>';
     } else {
-      placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px; margin-bottom:6px;"><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">🏠 おうちにいます</span></div><button class="btn btn-secondary" style="width:100%; font-size:12px; color:var(--soft-purple);" onclick="askMoveToRainbow()">🌈 虹の橋へ移す</button>';
+      placeContent.innerHTML = '<div style="display:flex; align-items:center; padding:10px 12px; background:var(--surface-warm); border-radius:10px; margin-bottom:6px;"><span class="material-symbols-rounded" style="font-size:15px;color:var(--accent-deep);margin-right:5px;">home</span><span style="font-size:13px; color:var(--ink-dark); font-weight:600;">おうちにいます</span></div><button class="btn btn-secondary" style="width:100%; font-size:12px; color:var(--soft-purple);" onclick="askMoveToRainbow()"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px;">filter_drama</span>虹の橋へ移す</button>';
     }
   } else if (pet.place === 'rainbow') {
     if (isKidsType) {
@@ -31470,6 +33466,9 @@ function deleteWeightRecord(petId, recordId) {
 let _suppressScrollTop = false;
 function render() {
   const _t0 = performance.now();
+  // bodyクラスにcurrentModeを反映（CSSセレクタ用）
+  document.body.classList.remove('mode-pet','mode-kids','mode-me','mode-nest');
+  document.body.classList.add('mode-'+currentMode);
   // 初回起動時はオンボーディングモーダル表示
   maybeShowOnboarding();
   if (currentView === 'top') renderTop();
