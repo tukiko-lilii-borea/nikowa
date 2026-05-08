@@ -24641,6 +24641,8 @@ function renderAtelierManager() {
   html += '<div style="padding:10px 14px 0;display:flex;align-items:center;gap:8px;">';
   html += '<button onclick="currentView=\'atelier\';render();" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">arrow_back</span>戻る</button>';
   if (a.nikowaId) html += '<span style="font-size:10px;color:var(--ink-light);font-family:monospace;background:var(--surface-warm);padding:3px 8px;border-radius:100px;">'+a.nikowaId+'</span>';
+  html += '<div style="flex:1;"></div>';
+  html += '<button onclick="openPublicAtelier(\''+a.id+'\')" style="background:var(--mint-deep);color:white;border:none;border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">visibility</span>公開ページ</button>';
   html += '</div>';
   
   // ヘッダー情報
@@ -29268,6 +29270,7 @@ function renderShopManager() {
     {id:'overview', label:'プレビュー', icon:'visibility'},
     {id:'profile',  label:'基本情報',   icon:'edit'},
     {id:'posts',    label:'投稿',       icon:'edit_note'},
+    {id:'pages',    label:'固定ページ', icon:'article'},
     {id:'design',   label:'デザイン',   icon:'palette'},
     {id:'settings', label:'設定',       icon:'settings'}
   ];
@@ -29285,6 +29288,8 @@ function renderShopManager() {
     html += renderShopProfileEdit(shop);
   } else if (tab === 'posts') {
     html += renderShopPostsManager(shop);
+  } else if (tab === 'pages') {
+    html += renderShopPagesManager(shop);
   } else if (tab === 'design') {
     html += renderShopDesignEdit(shop);
   } else if (tab === 'settings') {
@@ -29844,6 +29849,28 @@ function renderShopPublicView(shop) {
   }
   h += '</div>';
   
+  // ===== 固定ページセクション =====
+  const _visiblePages = (shop.fixedPages || []).filter(pg => pg.isVisible !== false);
+  if (_visiblePages.length > 0) {
+    h += '<div style="padding:0 16px 14px;">';
+    h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const pg of _visiblePages) {
+      const _pgId = 'fpSection_'+pg.id;
+      h += '<div style="background:white;border:1px solid '+c+'33;border-radius:11px;overflow:hidden;">';
+      h += '<button onclick="const el=document.getElementById(\''+_pgId+'\');const isOpen=el.style.display!==\'none\';el.style.display=isOpen?\'none\':\'block\';this.querySelector(\'.fp-chevron\').style.transform=isOpen?\'rotate(0deg)\':\'rotate(180deg)\'" ';
+      h += 'style="width:100%;padding:11px 13px;background:'+c+'08;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:18px;color:'+c+';">'+escapeHtml(pg.icon||'description')+'</span>';
+      h += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);text-align:left;">'+escapeHtml(pg.title||'')+'</span>';
+      h += '<span class="material-symbols-rounded fp-chevron" style="font-size:18px;color:var(--ink-light);transition:transform 0.2s;">expand_more</span>';
+      h += '</button>';
+      h += '<div id="'+_pgId+'" style="display:none;padding:12px 14px;border-top:1px solid '+c+'22;">';
+      h += '<div style="font-size:12.5px;color:var(--ink-dark);line-height:1.9;white-space:pre-wrap;">'+escapeHtml(pg.content||'')+'</div>';
+      h += '</div>';
+      h += '</div>';
+    }
+    h += '</div></div>';
+  }
+  
   // 投稿一覧の準備
   const posts = (shop.posts || []).slice().sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
   const newsList = posts.filter(p => p.type === 'news');
@@ -30113,6 +30140,369 @@ function renderPublicShop() {
   document.getElementById('app').innerHTML = html;
 }
 window.renderPublicShop = renderPublicShop;
+
+// ===== My Shop 固定ページ管理 =====
+function renderShopPagesManager(shop) {
+  const pages = shop.fixedPages || [];
+  let h = '<div style="display:flex;flex-direction:column;gap:12px;">';
+  h += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;background:var(--surface-warm);padding:8px 10px;border-radius:8px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;">info</span> ';
+  h += 'メニュー・営業時間・ルールなど、固定の情報ページを追加できるよ。流れる投稿とは別に、いつでも見れる場所に表示されるよ。</div>';
+  h += '<button onclick="openShopFixedPageModal(\''+shop.id+'\',null)" style="width:100%;padding:11px;background:var(--accent);color:white;border:none;border-radius:11px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:15px;">add</span>固定ページを追加</button>';
+  if (pages.length === 0) {
+    h += '<div style="padding:28px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);font-size:11px;line-height:1.8;">';
+    h += '<span class="material-symbols-rounded" style="font-size:36px;display:block;margin-bottom:8px;opacity:0.5;">article</span>';
+    h += 'まだ固定ページがないよ<br>メニュー・営業時間・ルールなどを追加してね🌷</div>';
+    h += '</div>';
+    return h;
+  }
+  h += '<div style="display:flex;flex-direction:column;gap:7px;">';
+  for (const pg of pages) {
+    const _icon = pg.icon || 'description';
+    h += '<div style="background:white;border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+_icon+'</span>';
+    h += '<div style="flex:1;min-width:0;">';
+    h += '<div style="font-size:12.5px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(pg.title||'')+'</div>';
+    const _preview = (pg.content||'').slice(0,40)+((pg.content||'').length>40?'…':'');
+    h += '<div style="font-size:10.5px;color:var(--ink-sub);">'+escapeHtml(_preview)+'</div>';
+    h += '</div>';
+    h += '<span style="font-size:9px;font-weight:700;flex-shrink:0;color:'+(pg.isVisible!==false?'#3CB878':'var(--ink-light)')+';background:'+(pg.isVisible!==false?'#E8F8EE':'var(--surface-warm)')+';padding:2px 7px;border-radius:100px;">'+(pg.isVisible!==false?'表示中':'非表示')+'</span>';
+    h += '<button onclick="openShopFixedPageModal(\''+shop.id+'\',\''+pg.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:4px;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">edit</span></button>';
+    h += '</div>';
+  }
+  h += '</div></div>';
+  return h;
+}
+window.renderShopPagesManager = renderShopPagesManager;
+
+const SHOP_PAGE_ICONS = [
+  {id:'restaurant_menu', label:'メニュー'},
+  {id:'schedule',        label:'営業時間'},
+  {id:'gavel',           label:'ルール'},
+  {id:'info',            label:'案内'},
+  {id:'location_on',     label:'アクセス'},
+  {id:'mic',             label:'配信'},
+  {id:'music_note',      label:'カラオケ'},
+  {id:'pets',            label:'ペット'},
+  {id:'star',            label:'こだわり'},
+  {id:'description',     label:'その他'},
+];
+
+function openShopFixedPageModal(shopId, pageId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  if (!shop.fixedPages) shop.fixedPages = [];
+  const isEdit = !!pageId;
+  const pg = isEdit ? shop.fixedPages.find(p => p.id === pageId) : null;
+  const def = pg || { title:'', content:'', icon:'description', isVisible:true };
+  const ex = document.getElementById('shopFixedPageModal');
+  if (ex) ex.remove();
+  const ov = document.createElement('div');
+  ov.id = 'shopFixedPageModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2200;background:rgba(45,74,60,0.55);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);padding-bottom:calc(75px + env(safe-area-inset-bottom));box-sizing:border-box;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  let h = '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">article</span>';
+  h += '<div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">'+(isEdit?'固定ページを編集':'固定ページを追加')+'</div>';
+  h += '<button onclick="document.getElementById(\'shopFixedPageModal\').remove()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '</div>';
+  h += '<div style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px;">';
+  // アイコン選択
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">アイコン</label>';
+  h += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;" id="fpIconGrid">';
+  for (const ic of SHOP_PAGE_ICONS) {
+    const _sel = def.icon === ic.id;
+    h += '<button onclick="selectFpIcon(\''+ic.id+'\')" id="fpIcon_'+ic.id+'" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:'+(_sel?'var(--accent-bg)':'white')+';border:1.5px solid '+(_sel?'var(--accent)':'var(--line)')+';border-radius:10px;cursor:pointer;font-family:inherit;">';
+    h += '<span class="material-symbols-rounded" style="font-size:20px;color:'+(_sel?'var(--accent-deep)':'var(--ink-sub)')+';">'+ic.id+'</span>';
+    h += '<span style="font-size:8.5px;font-weight:700;color:'+(_sel?'var(--accent-deep)':'var(--ink-sub)')+';">'+ic.label+'</span>';
+    h += '</button>';
+  }
+  h += '</div></div>';
+  // タイトル
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">タイトル <span style="color:#D9534F;">*</span></label>';
+  h += '<input type="text" id="fpTitle" value="'+escapeHtml(def.title||'')+'" maxlength="30" placeholder="例：メニュー表" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  // 内容
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">内容</label>';
+  h += '<textarea id="fpContent" maxlength="2000" placeholder="メニューや営業時間、ルールなどを自由に書いてね" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);min-height:200px;resize:vertical;line-height:1.8;">'+escapeHtml(def.content||'')+'</textarea></div>';
+  // 表示/非表示
+  const _vis = def.isVisible !== false;
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;background:white;border:1px solid var(--line);border-radius:10px;padding:10px 12px;">';
+  h += '<div><div style="font-size:12px;font-weight:800;color:var(--ink-dark);">公開ページに表示</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);">OFFにすると一時的に非表示になるよ</div></div>';
+  h += '<button onclick="this.dataset.v=(this.dataset.v===\'1\'?\'0\':\'1\');this.style.background=(this.dataset.v===\'1\'?\'#3CB878\':\'var(--line)\');this.querySelector(\'span\').style.left=(this.dataset.v===\'1\'?\'20px\':\'2px\')" ';
+  h += 'data-v="'+(_vis?'1':'0')+'" id="fpVisibleToggle" ';
+  h += 'style="background:'+(_vis?'#3CB878':'var(--line)')+';border:none;width:42px;height:24px;border-radius:100px;position:relative;cursor:pointer;flex-shrink:0;">';
+  h += '<span style="position:absolute;top:2px;left:'+(_vis?'20px':'2px')+';width:20px;height:20px;border-radius:50%;background:white;transition:left 0.15s;"></span>';
+  h += '</button></div>';
+  h += '</div>';
+  h += '<div style="padding:12px 16px;border-top:1px solid var(--line-soft);display:flex;gap:8px;">';
+  if (isEdit) h += '<button onclick="deleteShopFixedPage(\''+shopId+'\',\''+pageId+'\')" style="padding:11px 14px;background:none;border:1px solid var(--line);color:#D9534F;border-radius:10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+  h += '<button onclick="saveShopFixedPage(\''+shopId+'\','+(isEdit?'\''+pageId+'\'':'null')+')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div></div>';
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+  window._fpSelectedIcon = def.icon || 'description';
+}
+window.openShopFixedPageModal = openShopFixedPageModal;
+
+function selectFpIcon(iconId) {
+  window._fpSelectedIcon = iconId;
+  document.querySelectorAll('#fpIconGrid button').forEach(btn => {
+    const ic = btn.id.replace('fpIcon_','');
+    const isSel = ic === iconId;
+    btn.style.background = isSel ? 'var(--accent-bg)' : 'white';
+    btn.style.borderColor = isSel ? 'var(--accent)' : 'var(--line)';
+    const spans = btn.querySelectorAll('span');
+    spans.forEach(sp => { sp.style.color = isSel ? 'var(--accent-deep)' : 'var(--ink-sub)'; });
+  });
+}
+window.selectFpIcon = selectFpIcon;
+
+function saveShopFixedPage(shopId, pageId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  if (!shop.fixedPages) shop.fixedPages = [];
+  const title = (document.getElementById('fpTitle')?.value || '').trim();
+  if (!title) { showToast('タイトルを入れてね🌷'); return; }
+  const content = document.getElementById('fpContent')?.value || '';
+  const icon = window._fpSelectedIcon || 'description';
+  const togEl = document.getElementById('fpVisibleToggle');
+  const isVisible = togEl ? togEl.dataset.v !== '0' : true;
+  if (pageId) {
+    const pg = shop.fixedPages.find(p => p.id === pageId);
+    if (pg) { pg.title=title; pg.content=content; pg.icon=icon; pg.isVisible=isVisible; pg.updatedAt=Date.now(); }
+  } else {
+    shop.fixedPages.push({ id:'fp_'+Date.now()+'_'+Math.random().toString(36).slice(2,5), title, content, icon, isVisible, order:shop.fixedPages.length, createdAt:Date.now(), updatedAt:Date.now() });
+  }
+  shop.updatedAt = Date.now();
+  saveData();
+  document.getElementById('shopFixedPageModal')?.remove();
+  showToast('🌷 保存したよ');
+  renderShopManager();
+}
+window.saveShopFixedPage = saveShopFixedPage;
+
+function deleteShopFixedPage(shopId, pageId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop || !shop.fixedPages) return;
+  if (!confirm('このページを削除しますか？')) return;
+  shop.fixedPages = shop.fixedPages.filter(p => p.id !== pageId);
+  shop.updatedAt = Date.now();
+  saveData();
+  document.getElementById('shopFixedPageModal')?.remove();
+  showToast('削除したよ');
+  renderShopManager();
+}
+window.deleteShopFixedPage = deleteShopFixedPage;
+
+// ===== Atelier 公開ページ =====
+function openPublicAtelier(atelierId) {
+  data._publicAtelierId = atelierId;
+  currentView = 'public_atelier';
+  render();
+}
+window.openPublicAtelier = openPublicAtelier;
+
+function renderPublicAtelier() {
+  const a = (data.ateliers || []).find(x => x.id === data._publicAtelierId);
+  if (!a) { currentView = 'atelier'; render(); return; }
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav(null);
+  const t = ATELIER_TYPES[a.type] || ATELIER_TYPES.photo;
+  const cd = a.cardDesign || { color:'#7BB8E0', pattern:'solid' };
+  const c = cd.color;
+  let html = '<div class="topbar">'+topbarPetalHtml();
+  html += '<div class="topbar-spacer"></div>';
+  html += '<div class="topbar-title"><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;margin-right:4px;">'+t.icon+'</span>'+escapeHtml(a.name)+'</div>';
+  html += '<div class="topbar-spacer"></div></div>';
+  html += '<div style="padding:10px 14px 0;display:flex;align-items:center;gap:8px;">';
+  html += '<button onclick="currentView=\'atelier_manager\';render();" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">arrow_back</span>管理に戻る</button>';
+  html += '</div>';
+  html += '<div style="padding:14px;">';
+  // ヘッダーカード
+  html += '<div style="'+_getCardPatternBg(c, cd.pattern, 60)+'padding:14px;border-radius:18px;margin-bottom:16px;">';
+  html += '<div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">';
+  html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:'+(a.about?'10px':'0px')+'">';
+  html += '<div style="width:54px;height:54px;border-radius:13px;'+_getCardPatternBg(c, cd.pattern, 30)+'display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+  html += '<span class="material-symbols-rounded" style="font-size:28px;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.3);">'+t.icon+'</span></div>';
+  html += '<div style="flex:1;min-width:0;">';
+  html += '<div style="font-size:17px;font-weight:900;color:var(--ink-dark);line-height:1.3;">'+escapeHtml(a.name||'')+'</div>';
+  html += '<div style="font-size:10.5px;color:var(--ink-sub);margin-top:2px;">'+t.label+' ・ '+(a.series||[]).length+t.unitName+'</div>';
+  html += '</div></div>';
+  if (a.about) html += '<div style="font-size:11.5px;color:var(--ink-sub);line-height:1.7;padding-top:10px;border-top:1px solid var(--line-soft);white-space:pre-wrap;">'+escapeHtml(a.about)+'</div>';
+  html += '</div></div>';
+  // 巻/話一覧
+  const series = (a.series || []).slice().sort((x,y) => (x.order||0) - (y.order||0));
+  if (series.length === 0) {
+    html += '<div style="padding:32px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);font-size:11.5px;">まだ'+t.unitName+'がないよ🌷</div>';
+  } else {
+    html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;display:flex;align-items:center;gap:6px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:16px;color:'+c+';">'+t.icon+'</span>'+t.unitName+'一覧</div>';
+    if (a.type === 'photo' || a.type === 'art') {
+      // 写真/アート → 2列グリッド
+      html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">';
+      for (const s of series) {
+        const cover = (s.photos && s.photos[0]) || s.coverPhoto;
+        const photoCount = (s.photos || []).length;
+        html += '<button onclick="openPublicAtelierSeries(\''+a.id+'\',\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:13px;overflow:hidden;cursor:pointer;font-family:inherit;text-align:left;padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.05);">';
+        if (cover) {
+          html += '<div style="width:100%;aspect-ratio:1;background:url('+cover+') center/cover;"></div>';
+        } else {
+          html += '<div style="width:100%;aspect-ratio:1;'+_getCardPatternBg(c, cd.pattern, 40)+'display:flex;align-items:center;justify-content:center;">';
+          html += '<span class="material-symbols-rounded" style="font-size:36px;color:white;opacity:0.7;">'+t.icon+'</span></div>';
+        }
+        html += '<div style="padding:8px 10px;">';
+        html += '<div style="font-size:11.5px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title||'')+'</div>';
+        html += '<div style="font-size:10px;color:var(--ink-light);">'+photoCount+'枚</div>';
+        html += '</div></button>';
+      }
+      html += '</div>';
+    } else {
+      // 小説/日記 → リスト表示
+      html += '<div style="display:flex;flex-direction:column;gap:7px;">';
+      for (const s of series) {
+        const wordCount = (s.text || '').length;
+        const cover = s.coverPhoto;
+        html += '<button onclick="openPublicAtelierSeries(\''+a.id+'\',\''+s.id+'\')" style="display:flex;align-items:center;gap:12px;padding:13px;background:white;border:1px solid var(--line);border-radius:13px;cursor:pointer;font-family:inherit;text-align:left;box-shadow:0 1px 4px rgba(0,0,0,0.04);">';
+        if (cover) {
+          html += '<div style="width:54px;height:54px;border-radius:10px;background:url('+cover+') center/cover;flex-shrink:0;"></div>';
+        } else {
+          html += '<div style="width:54px;height:54px;border-radius:10px;'+_getCardPatternBg(c, cd.pattern, 30)+'display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+          html += '<span class="material-symbols-rounded" style="font-size:26px;color:white;opacity:0.9;">'+t.icon+'</span></div>';
+        }
+        html += '<div style="flex:1;min-width:0;">';
+        html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title||'')+'</div>';
+        if (s.description) html += '<div style="font-size:10.5px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">'+escapeHtml(s.description)+'</div>';
+        html += '<div style="font-size:10px;color:var(--ink-light);margin-top:3px;">';
+        html += wordCount > 0 ? wordCount.toLocaleString()+'文字' : '未記入';
+        if (s.ageRating === 'r15') html += ' <span style="font-size:9.5px;color:#C04060;font-weight:800;background:#FFE0E8;padding:1px 5px;border-radius:100px;">R15</span>';
+        html += '</div></div>';
+        html += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);">chevron_right</span>';
+        html += '</button>';
+      }
+      html += '</div>';
+    }
+  }
+  // 他の作品セクション
+  const _otherA = (data.ateliers || []).filter(x => x.id !== a.id && x.isPublic);
+  if (_otherA.length > 0) {
+    html += '<div style="margin-top:18px;padding:14px 16px;background:var(--surface-warm);border:1px solid var(--line);border-radius:14px;">';
+    html += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:15px;color:var(--accent-deep);">auto_stories</span>この作者の他の作品</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;">';
+    for (const oa of _otherA.slice(0,6)) {
+      const ot = ATELIER_TYPES[oa.type] || ATELIER_TYPES.photo;
+      const ocd = oa.cardDesign || { color:'#7BB8E0', pattern:'solid' };
+      html += '<button onclick="openPublicAtelier(\''+oa.id+'\')" style="display:flex;align-items:center;gap:7px;padding:8px;background:white;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">';
+      if (oa.coverImage) {
+        html += '<div style="width:38px;height:38px;border-radius:8px;background:url('+oa.coverImage+') center/cover;flex-shrink:0;"></div>';
+      } else {
+        html += '<div style="width:38px;height:38px;border-radius:8px;'+_getCardPatternBg(ocd.color, ocd.pattern, 25)+'display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.3);">'+ot.icon+'</span></div>';
+      }
+      html += '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(oa.name||'')+'</div>';
+      html += '<div style="font-size:9px;color:var(--ink-light);">'+ot.label+'</div></div>';
+      html += '</button>';
+    }
+    html += '</div>';
+    if (_otherA.length > 6) html += '<div style="text-align:center;font-size:10px;color:var(--ink-light);margin-top:8px;">他 '+(_otherA.length-6)+' 作品</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  document.getElementById('app').innerHTML = html;
+}
+window.renderPublicAtelier = renderPublicAtelier;
+
+function openPublicAtelierSeries(atelierId, seriesId) {
+  data._publicAtelierId = atelierId;
+  data._publicAtelierSeriesId = seriesId;
+  currentView = 'public_atelier_series';
+  render();
+}
+window.openPublicAtelierSeries = openPublicAtelierSeries;
+
+function renderPublicAtelierSeries() {
+  const a = (data.ateliers || []).find(x => x.id === data._publicAtelierId);
+  if (!a) { currentView = 'atelier'; render(); return; }
+  const s = (a.series || []).find(x => x.id === data._publicAtelierSeriesId);
+  if (!s) { currentView = 'public_atelier'; render(); return; }
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav(null);
+  const t = ATELIER_TYPES[a.type] || ATELIER_TYPES.photo;
+  const cd = a.cardDesign || { color:'#7BB8E0', pattern:'solid' };
+  const c = cd.color;
+  let html = '<div class="topbar">'+topbarPetalHtml();
+  html += '<div class="topbar-spacer"></div>';
+  html += '<div class="topbar-title" style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title||'')+'</div>';
+  html += '<div class="topbar-spacer"></div></div>';
+  html += '<div style="padding:10px 14px 0;">';
+  html += '<button onclick="currentView=\'public_atelier\';render();" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:13px;">arrow_back</span>'+escapeHtml(a.name||'')+'</button>';
+  html += '</div>';
+  html += '<div style="padding:14px;">';
+  // タイトルカード
+  html += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">';
+  html += '<div style="font-size:11px;font-weight:700;color:'+c+';margin-bottom:4px;">'+t.label+'</div>';
+  html += '<div style="font-size:19px;font-weight:900;color:var(--ink-dark);line-height:1.4;">'+escapeHtml(s.title||'')+'</div>';
+  if (s.description) html += '<div style="font-size:11.5px;color:var(--ink-sub);margin-top:6px;line-height:1.6;">'+escapeHtml(s.description)+'</div>';
+  if (s.ageRating === 'r15') html += '<div style="margin-top:6px;"><span style="font-size:10px;color:#C04060;font-weight:800;background:#FFE0E8;padding:2px 8px;border-radius:100px;">R15</span></div>';
+  html += '</div>';
+  // コンテンツ
+  if (a.type === 'photo' || a.type === 'art') {
+    const photos = s.photos || [];
+    if (photos.length === 0) {
+      html += '<div style="padding:32px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);font-size:11px;">写真がないよ</div>';
+    } else {
+      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">';
+      for (const ph of photos) {
+        html += '<div style="aspect-ratio:1;background:url('+ph+') center/cover;cursor:pointer;" onclick="_openAtelierPhoto(\''+ph+'\')"></div>';
+      }
+      html += '</div>';
+      html += '<div style="text-align:right;font-size:10px;color:var(--ink-light);margin-top:6px;">'+photos.length+'枚</div>';
+    }
+  } else {
+    if (!s.text) {
+      html += '<div style="padding:32px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);font-size:11px;">まだ内容がないよ</div>';
+    } else {
+      html += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:20px 18px;line-height:2.1;font-size:14px;color:var(--ink-dark);white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 4px rgba(0,0,0,0.04);">'+escapeHtml(s.text)+'</div>';
+      html += '<div style="text-align:right;font-size:10px;color:var(--ink-light);margin-top:6px;">'+(s.text.length).toLocaleString()+'文字</div>';
+    }
+  }
+  // 前後ナビ
+  const allSeries = (a.series || []).slice().sort((x,y) => (x.order||0) - (y.order||0));
+  const curIdx = allSeries.findIndex(x => x.id === s.id);
+  const prevS = curIdx > 0 ? allSeries[curIdx-1] : null;
+  const nextS = curIdx < allSeries.length-1 ? allSeries[curIdx+1] : null;
+  if (prevS || nextS) {
+    html += '<div style="display:flex;gap:8px;margin-top:16px;">';
+    if (prevS) {
+      html += '<button onclick="openPublicAtelierSeries(\''+a.id+'\',\''+prevS.id+'\')" style="flex:1;padding:11px;background:white;border:1px solid var(--line);border-radius:11px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;gap:4px;justify-content:center;">';
+      html += '<span class="material-symbols-rounded" style="font-size:15px;flex-shrink:0;">chevron_left</span>';
+      html += '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(prevS.title||'')+'</span></button>';
+    }
+    if (nextS) {
+      html += '<button onclick="openPublicAtelierSeries(\''+a.id+'\',\''+nextS.id+'\')" style="flex:1;padding:11px;background:var(--accent);border:none;border-radius:11px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;color:white;display:flex;align-items:center;gap:4px;justify-content:center;">';
+      html += '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(nextS.title||'')+'</span>';
+      html += '<span class="material-symbols-rounded" style="font-size:15px;flex-shrink:0;">chevron_right</span></button>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  document.getElementById('app').innerHTML = html;
+}
+window.renderPublicAtelierSeries = renderPublicAtelierSeries;
+
+function _openAtelierPhoto(url) {
+  const ex = document.getElementById('atelierPhotoViewer');
+  if (ex) ex.remove();
+  const ov = document.createElement('div');
+  ov.id = 'atelierPhotoViewer';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;cursor:pointer;';
+  ov.onclick = () => ov.remove();
+  ov.innerHTML = '<img src="'+url+'" style="max-width:100%;max-height:100vh;object-fit:contain;pointer-events:none;">';
+  document.body.appendChild(ov);
+}
+window._openAtelierPhoto = _openAtelierPhoto;
 
 // ===== マイショップここまで =====
 
@@ -38657,6 +39047,8 @@ function render() {
   else if (currentView === 'friend') renderFriendView();
   else if (currentView === 'atelier') renderAtelierView();
   else if (currentView === 'atelier_manager') renderAtelierManager();
+  else if (currentView === 'public_atelier') renderPublicAtelier();
+  else if (currentView === 'public_atelier_series') renderPublicAtelierSeries();
   else renderTop();
   renderSidePanel();
   if (!_suppressScrollTop) window.scrollTo(0, 0);
