@@ -29465,10 +29465,12 @@ function pickShopImage(shopId, fld) {
   inp.onchange = function(e){
     const file = e.target.files[0];
     if (!file) return;
-    const proc = (b64) => {
+    // フィールドに応じて形を自動決定
+    const shape = fld === 'iconImage' ? 'circle' : 'rect-wide';
+    openImageCropper(file, shape, (croppedBase64) => {
       const shop = (data.myShops || []).find(s => s.id === shopId);
       if (!shop) return;
-      shop[fld] = b64;
+      shop[fld] = croppedBase64;
       shop.updatedAt = Date.now();
       try {
         saveData();
@@ -29477,12 +29479,7 @@ function pickShopImage(shopId, fld) {
         showToast('容量がいっぱいかも🌷 もっと小さい画像を選んでね');
       }
       renderShopManager();
-    };
-    // 容量を抑えるため小さめに圧縮
-    const max = fld === 'heroImage' ? 800 : 400;
-    const quality = 0.75;
-    if (typeof resizeImageToBase64 === 'function') resizeImageToBase64(file, max, quality).then(proc);
-    else { const r = new FileReader(); r.onload = ev => proc(ev.target.result); r.readAsDataURL(file); }
+    });
   };
   inp.click();
 }
@@ -30503,6 +30500,347 @@ function _openAtelierPhoto(url) {
   document.body.appendChild(ov);
 }
 window._openAtelierPhoto = _openAtelierPhoto;
+
+// =============================================
+// ===== 画像トリミング機能（共通） =====
+// =============================================
+// 使い方：openImageCropper(file, shape, callback)
+//   shape: 'circle'(○アイコン) / 'rect-wide'(横長ヘッダー) / 'square'(□カバー)
+//   callback: トリミング後のbase64を受け取る
+function openImageCropper(file, shape, callback) {
+  const SHAPE_CFG = {
+    'circle':    { aspect: 1,    outW: 400, outH: 400, label: 'アイコン', isCircle: true  },
+    'rect-wide': { aspect: 8/3,  outW: 800, outH: 300, label: 'ヘッダー', isCircle: false },
+    'square':    { aspect: 1,    outW: 600, outH: 600, label: 'カバー',   isCircle: false }
+  };
+  const cfg = SHAPE_CFG[shape] || SHAPE_CFG['square'];
+  if (!file) return;
+  if (!file.type || !file.type.startsWith('image/')) { showToast('画像ファイルを選んでね🌷'); return; }
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      // 大きすぎる画像は事前に縮小（メモリ対策）
+      const MAX_INPUT = 2400;
+      if (img.width > MAX_INPUT || img.height > MAX_INPUT) {
+        const scale = MAX_INPUT / Math.max(img.width, img.height);
+        const tmpCanvas = document.createElement('canvas');
+        tmpCanvas.width = Math.round(img.width * scale);
+        tmpCanvas.height = Math.round(img.height * scale);
+        tmpCanvas.getContext('2d').drawImage(img, 0, 0, tmpCanvas.width, tmpCanvas.height);
+        const newImg = new Image();
+        newImg.onload = () => _showCropperModal(newImg, shape, cfg, callback);
+        newImg.onerror = () => showToast('画像の処理に失敗したよ');
+        newImg.src = tmpCanvas.toDataURL('image/jpeg', 0.92);
+      } else {
+        _showCropperModal(img, shape, cfg, callback);
+      }
+    };
+    img.onerror = () => showToast('画像の読み込みに失敗したよ');
+    img.src = e.target.result;
+  };
+  reader.onerror = () => showToast('ファイルの読み込みに失敗したよ');
+  reader.readAsDataURL(file);
+}
+window.openImageCropper = openImageCropper;
+
+function _showCropperModal(img, shape, cfg, callback) {
+  const ex = document.getElementById('imgCropperModal');
+  if (ex) ex.remove();
+  
+  // 切り抜き枠サイズ計算
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const maxFrameW = Math.min(vw - 60, 320);
+  const maxFrameH = Math.min(vh - 320, 320);
+  let frameW, frameH;
+  if (cfg.aspect >= 1) {
+    frameW = Math.min(maxFrameW, maxFrameH * cfg.aspect);
+    frameH = frameW / cfg.aspect;
+  } else {
+    frameH = Math.min(maxFrameH, maxFrameW / cfg.aspect);
+    frameW = frameH * cfg.aspect;
+  }
+  frameW = Math.round(frameW);
+  frameH = Math.round(frameH);
+  
+  // 表示エリア（枠より大きめ）
+  const containerW = Math.min(vw - 20, 460);
+  const containerH = frameH + 100;
+  
+  // 初期スケール：枠を埋めるサイズ（cover）
+  const baseScale = Math.max(frameW / img.width, frameH / img.height);
+  
+  const state = {
+    img: img, shape: shape, cfg: cfg,
+    frameW: frameW, frameH: frameH,
+    containerW: containerW, containerH: containerH,
+    baseScale: baseScale, scale: 1.0,
+    offsetX: 0, offsetY: 0,
+    dragging: false, dragStartX: 0, dragStartY: 0,
+    dragOriginX: 0, dragOriginY: 0,
+    pinchStartDist: 0, pinchStartScale: 1.0,
+    callback: callback
+  };
+  window._cropperState = state;
+  
+  const ov = document.createElement('div');
+  ov.id = 'imgCropperModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2500;background:rgba(15,15,20,0.96);display:flex;flex-direction:column;color:white;';
+  
+  let h = '';
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;padding:14px 18px;flex-shrink:0;">';
+  h += '<button onclick="_cropperCancel()" style="background:none;border:none;cursor:pointer;color:white;padding:0;display:flex;align-items:center;"><span class="material-symbols-rounded" style="font-size:26px;">close</span></button>';
+  h += '<div style="flex:1;text-align:center;font-size:14px;font-weight:800;">'+cfg.label+'を調整</div>';
+  h += '<div style="width:26px;"></div>';
+  h += '</div>';
+  // 操作ガイド
+  h += '<div style="text-align:center;font-size:11px;opacity:0.65;padding:0 18px 10px;line-height:1.6;">画像をドラッグして位置を調整 / 下のスライダーで拡大縮小</div>';
+  // キャンバス領域
+  h += '<div style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px;">';
+  h += '<div id="cropperContainer" style="position:relative;width:'+containerW+'px;height:'+containerH+'px;overflow:hidden;border-radius:14px;background:#000;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;">';
+  h += '<canvas id="cropperCanvas" width="'+containerW+'" height="'+containerH+'" style="position:absolute;top:0;left:0;width:100%;height:100%;display:block;pointer-events:none;"></canvas>';
+  h += '</div></div>';
+  // フッター
+  h += '<div style="padding:12px 24px 26px;flex-shrink:0;">';
+  h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;opacity:0.7;">image</span>';
+  h += '<input type="range" id="cropperZoom" min="1" max="3" step="0.01" value="1" oninput="_cropperZoom(this.value)" style="flex:1;height:4px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,0.2);border-radius:100px;outline:none;">';
+  h += '<span class="material-symbols-rounded" style="font-size:24px;opacity:0.9;">image</span>';
+  h += '</div>';
+  h += '<div style="display:flex;gap:10px;">';
+  h += '<button onclick="_cropperCancel()" style="flex:1;padding:12px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;border-radius:11px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="_cropperConfirm()" style="flex:2;padding:12px;background:var(--accent);border:none;color:white;border-radius:11px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">決定</button>';
+  h += '</div></div>';
+  // スライダーつまみ
+  h += '<style>#cropperZoom::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:white;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.3);}#cropperZoom::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:white;cursor:pointer;border:none;box-shadow:0 2px 6px rgba(0,0,0,0.3);}</style>';
+  
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+  
+  _cropperDraw();
+  _cropperBindEvents();
+}
+
+function _cropperDraw() {
+  const s = window._cropperState;
+  if (!s) return;
+  const canvas = document.getElementById('cropperCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, s.containerW, s.containerH);
+  
+  const dispScale = s.baseScale * s.scale;
+  const imgDispW = s.img.width * dispScale;
+  const imgDispH = s.img.height * dispScale;
+  const imgX = (s.containerW - imgDispW) / 2 + s.offsetX;
+  const imgY = (s.containerH - imgDispH) / 2 + s.offsetY;
+  
+  // 全体に画像を薄めに描画
+  ctx.globalAlpha = 0.4;
+  ctx.drawImage(s.img, imgX, imgY, imgDispW, imgDispH);
+  ctx.globalAlpha = 1.0;
+  
+  // 切り抜き枠の中だけ濃く描く
+  const frameX = (s.containerW - s.frameW) / 2;
+  const frameY = (s.containerH - s.frameH) / 2;
+  
+  ctx.save();
+  ctx.beginPath();
+  if (s.cfg.isCircle) {
+    ctx.arc(s.containerW/2, s.containerH/2, s.frameW/2, 0, Math.PI*2);
+  } else {
+    const r = 12;
+    ctx.moveTo(frameX + r, frameY);
+    ctx.arcTo(frameX + s.frameW, frameY, frameX + s.frameW, frameY + r, r);
+    ctx.lineTo(frameX + s.frameW, frameY + s.frameH - r);
+    ctx.arcTo(frameX + s.frameW, frameY + s.frameH, frameX + s.frameW - r, frameY + s.frameH, r);
+    ctx.lineTo(frameX + r, frameY + s.frameH);
+    ctx.arcTo(frameX, frameY + s.frameH, frameX, frameY + s.frameH - r, r);
+    ctx.lineTo(frameX, frameY + r);
+    ctx.arcTo(frameX, frameY, frameX + r, frameY, r);
+  }
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(s.img, imgX, imgY, imgDispW, imgDispH);
+  ctx.restore();
+  
+  // 切り抜き枠の白枠線
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  if (s.cfg.isCircle) {
+    ctx.arc(s.containerW/2, s.containerH/2, s.frameW/2, 0, Math.PI*2);
+  } else {
+    const r = 12;
+    ctx.moveTo(frameX + r, frameY);
+    ctx.arcTo(frameX + s.frameW, frameY, frameX + s.frameW, frameY + r, r);
+    ctx.lineTo(frameX + s.frameW, frameY + s.frameH - r);
+    ctx.arcTo(frameX + s.frameW, frameY + s.frameH, frameX + s.frameW - r, frameY + s.frameH, r);
+    ctx.lineTo(frameX + r, frameY + s.frameH);
+    ctx.arcTo(frameX, frameY + s.frameH, frameX, frameY + s.frameH - r, r);
+    ctx.lineTo(frameX, frameY + r);
+    ctx.arcTo(frameX, frameY, frameX + r, frameY, r);
+  }
+  ctx.closePath();
+  ctx.stroke();
+}
+
+function _cropperClampOffset() {
+  const s = window._cropperState;
+  if (!s) return;
+  const dispScale = s.baseScale * s.scale;
+  const imgDispW = s.img.width * dispScale;
+  const imgDispH = s.img.height * dispScale;
+  const frameX = (s.containerW - s.frameW) / 2;
+  const frameY = (s.containerH - s.frameH) / 2;
+  const imgCenterX = (s.containerW - imgDispW) / 2;
+  const imgCenterY = (s.containerH - imgDispH) / 2;
+  // 画像が枠を覆い続けるように制約
+  const minOffsetX = frameX + s.frameW - imgDispW - imgCenterX;
+  const maxOffsetX = frameX - imgCenterX;
+  if (minOffsetX > maxOffsetX) { s.offsetX = 0; }
+  else {
+    if (s.offsetX > maxOffsetX) s.offsetX = maxOffsetX;
+    if (s.offsetX < minOffsetX) s.offsetX = minOffsetX;
+  }
+  const minOffsetY = frameY + s.frameH - imgDispH - imgCenterY;
+  const maxOffsetY = frameY - imgCenterY;
+  if (minOffsetY > maxOffsetY) { s.offsetY = 0; }
+  else {
+    if (s.offsetY > maxOffsetY) s.offsetY = maxOffsetY;
+    if (s.offsetY < minOffsetY) s.offsetY = minOffsetY;
+  }
+}
+
+function _cropperBindEvents() {
+  const cont = document.getElementById('cropperContainer');
+  if (!cont) return;
+  const s = window._cropperState;
+  if (!s) return;
+  
+  const onStart = (cx, cy) => {
+    s.dragging = true;
+    s.dragStartX = cx; s.dragStartY = cy;
+    s.dragOriginX = s.offsetX; s.dragOriginY = s.offsetY;
+    cont.style.cursor = 'grabbing';
+  };
+  const onMove = (cx, cy) => {
+    if (!s.dragging) return;
+    const rect = cont.getBoundingClientRect();
+    const ratioX = s.containerW / rect.width;
+    const ratioY = s.containerH / rect.height;
+    s.offsetX = s.dragOriginX + (cx - s.dragStartX) * ratioX;
+    s.offsetY = s.dragOriginY + (cy - s.dragStartY) * ratioY;
+    _cropperClampOffset();
+    _cropperDraw();
+  };
+  const onEnd = () => { s.dragging = false; cont.style.cursor = 'grab'; };
+  
+  cont.onmousedown = e => { e.preventDefault(); onStart(e.clientX, e.clientY); };
+  cont.ontouchstart = e => {
+    if (e.touches.length === 1) {
+      e.preventDefault();
+      onStart(e.touches[0].clientX, e.touches[0].clientY);
+    } else if (e.touches.length === 2) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      s.pinchStartDist = Math.sqrt(dx*dx + dy*dy);
+      s.pinchStartScale = s.scale;
+      s.dragging = false;
+    }
+  };
+  s._mvHandler = e => onMove(e.clientX, e.clientY);
+  s._tmHandler = e => {
+    if (e.touches.length === 1) {
+      onMove(e.touches[0].clientX, e.touches[0].clientY);
+    } else if (e.touches.length === 2 && s.pinchStartDist) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const newScale = s.pinchStartScale * (dist / s.pinchStartDist);
+      s.scale = Math.max(1, Math.min(3, newScale));
+      const slider = document.getElementById('cropperZoom');
+      if (slider) slider.value = s.scale;
+      _cropperClampOffset();
+      _cropperDraw();
+    }
+  };
+  s._upHandler = onEnd;
+  s._teHandler = () => { onEnd(); s.pinchStartDist = 0; };
+  window.addEventListener('mousemove', s._mvHandler);
+  window.addEventListener('touchmove', s._tmHandler, { passive: false });
+  window.addEventListener('mouseup', s._upHandler);
+  window.addEventListener('touchend', s._teHandler);
+  window.addEventListener('touchcancel', s._teHandler);
+}
+
+function _cropperZoom(val) {
+  const s = window._cropperState;
+  if (!s) return;
+  s.scale = parseFloat(val);
+  _cropperClampOffset();
+  _cropperDraw();
+}
+window._cropperZoom = _cropperZoom;
+
+function _cropperCleanup() {
+  const s = window._cropperState;
+  if (s) {
+    if (s._mvHandler) window.removeEventListener('mousemove', s._mvHandler);
+    if (s._tmHandler) window.removeEventListener('touchmove', s._tmHandler);
+    if (s._upHandler) window.removeEventListener('mouseup', s._upHandler);
+    if (s._teHandler) {
+      window.removeEventListener('touchend', s._teHandler);
+      window.removeEventListener('touchcancel', s._teHandler);
+    }
+  }
+  const ov = document.getElementById('imgCropperModal');
+  if (ov) ov.remove();
+  window._cropperState = null;
+}
+
+function _cropperCancel() { _cropperCleanup(); }
+window._cropperCancel = _cropperCancel;
+
+function _cropperConfirm() {
+  const s = window._cropperState;
+  if (!s) { _cropperCleanup(); return; }
+  const cb = s.callback;
+  
+  // 出力キャンバス
+  const out = document.createElement('canvas');
+  out.width = s.cfg.outW;
+  out.height = s.cfg.outH;
+  const ctx = out.getContext('2d');
+  
+  // 切り抜き枠から画像座標に逆算
+  const dispScale = s.baseScale * s.scale;
+  const imgDispW = s.img.width * dispScale;
+  const imgDispH = s.img.height * dispScale;
+  const imgX = (s.containerW - imgDispW) / 2 + s.offsetX;
+  const imgY = (s.containerH - imgDispH) / 2 + s.offsetY;
+  const frameX = (s.containerW - s.frameW) / 2;
+  const frameY = (s.containerH - s.frameH) / 2;
+  const srcX = Math.max(0, (frameX - imgX) / dispScale);
+  const srcY = Math.max(0, (frameY - imgY) / dispScale);
+  const srcW = s.frameW / dispScale;
+  const srcH = s.frameH / dispScale;
+  
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, s.cfg.outW, s.cfg.outH);
+  ctx.drawImage(s.img, srcX, srcY, srcW, srcH, 0, 0, s.cfg.outW, s.cfg.outH);
+  
+  const base64 = out.toDataURL('image/jpeg', 0.85);
+  _cropperCleanup();
+  if (cb) cb(base64);
+}
+window._cropperConfirm = _cropperConfirm;
 
 // ===== マイショップここまで =====
 
