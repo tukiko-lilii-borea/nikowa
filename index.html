@@ -31527,6 +31527,20 @@ function renderTown() {
 
   // ── 本屋タブ
   if (townMainTab === 'book') {
+    // 🐛 一時デバッグ表示（後で削除）
+    const _dbgShops = data.myShops || [];
+    const _dbgAt = data.ateliers || [];
+    html += '<div style="margin:10px 14px;padding:10px;background:#FFF3CD;border:1.5px solid #FFCA28;border-radius:8px;font-size:11px;color:#856404;font-family:monospace;line-height:1.7;">';
+    html += '🐛 デバッグ情報<br>';
+    html += '・myShops 全部: ' + _dbgShops.length + '個<br>';
+    html += '・myShops bookshelf型: ' + _dbgShops.filter(s => s.type==='bookshelf').length + '個<br>';
+    html += '・myShops 公開bookshelf: ' + _dbgShops.filter(s => s.isPublic!==false && s.type==='bookshelf').length + '個<br>';
+    html += '・ateliers 全部: ' + _dbgAt.length + '個<br>';
+    html += '・ateliers 公開: ' + _dbgAt.filter(a => a.isPublic).length + '個<br>';
+    if (_dbgShops.length > 0) html += '・myShops IDs: ' + _dbgShops.map(s => s.id).join(', ') + '<br>';
+    if (_dbgAt.length > 0) html += '・ateliers IDs: ' + _dbgAt.map(a => a.id).join(', ');
+    html += '</div>';
+    
     // ① bookshelf型My Shopの作品
     const _bookshelves = (data.myShops || []).filter(s => s.isPublic !== false && s.type === 'bookshelf');
     const _shopWorks = [];
@@ -31641,6 +31655,17 @@ function renderTown() {
 
   // ── 掲示板タブ
   if (townMainTab === 'board') {
+    // 🐛 一時デバッグ表示（後で削除）
+    const _dbgShopsB = data.myShops || [];
+    const _columnCount = _dbgShopsB.reduce((sum, s) => sum + (s.posts||[]).filter(p => p.type==='column').length, 0);
+    const _newsCount = _dbgShopsB.reduce((sum, s) => sum + (s.posts||[]).filter(p => p.type==='news').length, 0);
+    html += '<div style="margin:10px 14px;padding:10px;background:#FFF3CD;border:1.5px solid #FFCA28;border-radius:8px;font-size:11px;color:#856404;font-family:monospace;line-height:1.7;">';
+    html += '🐛 デバッグ情報<br>';
+    html += '・myShops 全部: ' + _dbgShopsB.length + '個<br>';
+    html += '・公開myShops: ' + _dbgShopsB.filter(s => s.isPublic!==false).length + '個<br>';
+    html += '・コラム投稿: ' + _columnCount + '個<br>';
+    html += '・お知らせ投稿: ' + _newsCount + '個<br>';
+    html += '</div>';
     // 公開されているショップ型ショップを集める
     const _shops = (data.myShops || []).filter(s => s.isPublic !== false);
     // コラム + 新着お知らせを集める
