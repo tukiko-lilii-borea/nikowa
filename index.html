@@ -3537,6 +3537,9 @@
 
 <!-- 初回登録モーダル（オンボーディング） -->
 <div class="modal" id="onboardingModal" style="z-index:200;"><div class="modal-content">
+  <div style="text-align:center;margin-bottom:8px;">
+    <img id="onbLogoImg" src="assets/logo-soft.svg" alt="にこわ Nicowa" style="height:32px;width:auto;display:inline-block;filter:var(--logo-filter,none);">
+  </div>
   <div style="display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:6px;">
     <img id="onbAnzuImg" style="width:48px;height:48px;flex-shrink:0;" alt="あんず">
     <h2 class="modal-title" style="margin:0;text-align:left;font-size:16px;">ようこそ、にこわへ🌸</h2>
@@ -30655,7 +30658,7 @@ function renderCreatorHome() {
   
   let html = '<div class="topbar">'+topbarPetalHtml();
   html += '<div class="topbar-spacer"></div>';
-  html += '<div class="topbar-title">にこわ／Nicowa</div>';
+  html += '<div class="topbar-title">'+nicowaLogoHtml(24)+'</div>';
   html += '<div class="topbar-spacer"></div></div>';
   
   // 戻るボタン
@@ -34415,8 +34418,9 @@ function renderSettings() {
   html += '</div></div>';
   
   html += '<div class="section" style="padding-bottom: 24px;"><div class="section-head"><h2 class="section-title">アプリのこと</h2></div>';
-  html += '<div style="background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; font-size: 12px; color: var(--ink-sub); line-height: 1.8;">';
-  html += '<strong style="color:var(--ink-dark);">にこわ -nikowa-</strong><br>version 1.0.0<br><br>';
+  html += '<div style="background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 16px; font-size: 12px; color: var(--ink-sub); line-height: 1.8; text-align:center;">';
+  html += '<div style="margin-bottom:10px;">'+nicowaLogoHtml(36)+'</div>';
+  html += 'version 1.0.0<br><br>';
   html += '虹（に）・心（こ）・輪（わ）<br>ニコニコな輪が広がりますように🌈</div></div>';
   document.getElementById('app').innerHTML = html;
 }
@@ -37164,6 +37168,38 @@ const KOTATU_IMG = 'assets/kotatu.svg';
 const TUKIKO_IMG = 'assets/tukiko.svg';
 const BETELI_IMG = 'assets/beteli.svg';
 const KOITO_IMG  = 'assets/koito.svg';
+
+// ===== ロゴ画像（テーマごとに切替） =====
+const LOGO_DARK = 'assets/logo-dark.svg'; // #101010（くっきり系）
+const LOGO_SOFT = 'assets/logo-soft.svg'; // #242527（やわらかめ）
+
+// テーマ → 使うロゴのマッピング
+const LOGO_BY_THEME = {
+  // パステル・スイーツ系 → やわらかめロゴ
+  mint: 'soft', candy_soda: 'soft', strawberry: 'soft', honey: 'soft',
+  pancake: 'soft', cream_soda: 'soft', lavender: 'soft', peach: 'soft',
+  // 和食・大人キレイ系 → くっきりロゴ
+  kurogoma: 'dark', tofu: 'dark', mitarashi: 'dark', edamame: 'dark',
+  cinderella: 'dark', neon: 'dark', monotone: 'dark'
+};
+
+// 現在のテーマに合わせたロゴ画像を返す
+function getCurrentLogoSrc() {
+  const themeId = (data && data.themeId) || 'mint';
+  const variant = LOGO_BY_THEME[themeId] || 'soft';
+  return variant === 'dark' ? LOGO_DARK : LOGO_SOFT;
+}
+window.getCurrentLogoSrc = getCurrentLogoSrc;
+
+// ロゴ画像のHTML生成（CSS filterでダークテーマでは自動で白反転）
+// height: pxの数値、デフォルト22
+// extraStyle: 追加スタイル
+function nicowaLogoHtml(height, extraStyle) {
+  const h = height || 22;
+  const ex = extraStyle || '';
+  return '<img src="'+getCurrentLogoSrc()+'" alt="にこわ Nicowa" loading="lazy" style="height:'+h+'px;width:auto;display:inline-block;vertical-align:middle;filter:var(--logo-filter,none);'+ex+'">';
+}
+window.nicowaLogoHtml = nicowaLogoHtml;
 
 // 共通関数：マスコット画像HTML生成
 // name: 'anzu' | 'yumeme' | 'kotatu' | 'tukiko' | 'beteli' | 'koito'
