@@ -13384,7 +13384,8 @@ function _doInjectSampleData() {
   }
   
   // ===== マイショップ（ミニHP）サンプル6種類 =====
-  data.myShops = [
+  if (!data.myShops) data.myShops = [];
+  const _shopSamples = [
     {
       id: 'shop_sample_a', type: 'shop', template: 'A',
       name: 'ふわふわトリミング',
@@ -13515,6 +13516,7 @@ function _doInjectSampleData() {
       isPublic: true, plan: 'free', createdAt: todayMs - 150*dayMs, updatedAt: todayMs - 1*dayMs
     }
   ];
+  for (const _s of _shopSamples) { if (!data.myShops.find(x => x.id === _s.id)) data.myShops.push(_s); }
   
   // ===== ★ 追加：虹の橋の子（あんず）=====
   if (!data.pets.find(p => p.id === 'sample_rainbow')) {
@@ -13717,7 +13719,7 @@ function _doInjectSampleData() {
 
   // ===== ★ 追加：Atelier（小説・写真集サンプル）=====
   if (!data.ateliers || data.ateliers.length === 0) {
-    data.ateliers = [
+    const _atelierSamples = [
       {
         id: 'atl_novel_1', nikowaId: 'A-NOVL1',
         type: 'novel', name: '月夜の彼方に',
@@ -13742,6 +13744,8 @@ function _doInjectSampleData() {
         isPublic: true, createdAt: todayMs-25*dayMs, updatedAt: todayMs-15*dayMs
       }
     ];
+    if (!data.ateliers) data.ateliers = [];
+    for (const _a of _atelierSamples) { if (!data.ateliers.find(x => x.id === _a.id)) data.ateliers.push(_a); }
   }
 
   // ===== ★ 追加：NESTにサンプル家（マイホーム）=====
@@ -31523,66 +31527,112 @@ function renderTown() {
 
   // ── 本屋タブ
   if (townMainTab === 'book') {
-    // 公開されている本棚型ショップを集める
+    // ① bookshelf型My Shopの作品
     const _bookshelves = (data.myShops || []).filter(s => s.isPublic !== false && s.type === 'bookshelf');
-    // 全作品をフラット化
-    const _allWorks = [];
+    const _shopWorks = [];
     for (const s of _bookshelves) {
       for (const p of (s.posts || [])) {
-        if (p.type === 'work') _allWorks.push({ shop: s, post: p });
+        if (p.type === 'work') _shopWorks.push({ source:'shop', shop:s, post:p, ts: p.timestamp||0 });
       }
     }
-    // 新しい順
-    _allWorks.sort((a, b) => (b.post.timestamp || 0) - (a.post.timestamp || 0));
-    
-    if (_allWorks.length === 0) {
+    // ② Atelier公開シリーズ
+    const _atelierWorks = [];
+    for (const a of (data.ateliers || [])) {
+      if (!a.isPublic) continue;
+      const t = ATELIER_TYPES[a.type] || ATELIER_TYPES.photo;
+      for (const s of (a.series || [])) {
+        _atelierWorks.push({ source:'atelier', atelier:a, series:s, ts: s.createdAt||0, type: a.type });
+      }
+    }
+    // ③ 全統合・新着順
+    const _allItems = [..._shopWorks, ..._atelierWorks].sort((a,b) => b.ts - a.ts);
+
+    if (_allItems.length === 0) {
       html += '<div style="padding:60px 24px 40px;text-align:center;">';
       html += '<div style="font-size:48px;margin-bottom:12px;"><span class="material-symbols-rounded" style="font-size:48px;color:var(--accent-deep);">menu_book</span></div>';
       html += '<div style="font-size:16px;font-weight:800;color:var(--ink-dark);margin-bottom:6px;">まちの本棚</div>';
-      html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;">まだ作品が置かれていません🌷<br>あなたも本棚を開設してみよう</div>';
+      html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;">まだ作品が置かれていません🌷<br>AtelierかマイショップのE/F型から投稿してみよう</div>';
       html += '</div>';
     } else {
-      // ヘッダー
-      html += '<div style="padding:14px 16px 8px;display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">auto_stories</span><span style="font-size:13px;font-weight:800;color:var(--ink-dark);">まちの本棚</span><span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 8px;border-radius:100px;font-weight:700;">'+_allWorks.length+'作品</span></div>';
-      
-      // 文字型と写真型で分けて表示
-      const _textWorks = _allWorks.filter(x => x.shop.template === 'E');
-      const _photoWorks = _allWorks.filter(x => x.shop.template === 'F');
-      
-      // 写真の窓
-      if (_photoWorks.length > 0) {
+      html += '<div style="padding:14px 16px 8px;display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">auto_stories</span><span style="font-size:13px;font-weight:800;color:var(--ink-dark);">まちの本棚</span><span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 8px;border-radius:100px;font-weight:700;">'+_allItems.length+'作品</span></div>';
+
+      // 写真・アート系 → グリッド
+      const _photoItems = _allItems.filter(x => (x.source==='atelier' && (x.type==='photo'||x.type==='art')) || (x.source==='shop' && x.shop.template==='F'));
+      if (_photoItems.length > 0) {
         html += '<div style="padding:10px 16px 6px;font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">photo_library</span>写真の窓</div>';
         html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:0 16px 14px;">';
-        for (const x of _photoWorks.slice(0, 6)) {
-          const p = x.post; const s = x.shop;
-          html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;">';
-          if (p.photo) html += '<div style="width:100%;aspect-ratio:1;background:url('+p.photo+') center/cover;"></div>';
-          else html += '<div style="width:100%;aspect-ratio:1;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));display:flex;align-items:center;justify-content:center;color:var(--accent-deep);"><span class="material-symbols-rounded" style="font-size:36px;">image</span></div>';
-          html += '<div style="padding:7px 9px;">';
-          html += '<div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.title||'')+'</div>';
-          html += '<div style="font-size:9px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.name||'')+'</div>';
-          html += '</div></div>';
+        for (const x of _photoItems.slice(0, 6)) {
+          if (x.source === 'atelier') {
+            const a = x.atelier; const s = x.series;
+            const cd = a.cardDesign || {color:'#7BB8E0',pattern:'solid'};
+            const cover = (s.photos && s.photos[0]) || s.coverPhoto;
+            html += '<div onclick="openPublicAtelier(\''+a.id+'\')" style="background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;">';
+            if (cover) html += '<div style="width:100%;aspect-ratio:1;background:url('+cover+') center/cover;"></div>';
+            else html += '<div style="width:100%;aspect-ratio:1;'+_getCardPatternBg(cd.color,cd.pattern,40)+'display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:36px;color:white;opacity:0.8;">photo_library</span></div>';
+            html += '<div style="padding:7px 9px;"><div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title||'')+'</div>';
+            html += '<div style="font-size:9px;color:var(--ink-sub);">'+escapeHtml(a.name||'')+'</div></div></div>';
+          } else {
+            const p = x.post; const s = x.shop;
+            html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;">';
+            if (p.photo) html += '<div style="width:100%;aspect-ratio:1;background:url('+p.photo+') center/cover;"></div>';
+            else html += '<div style="width:100%;aspect-ratio:1;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));display:flex;align-items:center;justify-content:center;color:var(--accent-deep);"><span class="material-symbols-rounded" style="font-size:36px;">image</span></div>';
+            html += '<div style="padding:7px 9px;"><div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.title||'')+'</div>';
+            html += '<div style="font-size:9px;color:var(--ink-sub);">'+escapeHtml(s.name||'')+'</div></div></div>';
+          }
         }
         html += '</div>';
       }
-      
-      // 短い詩・小説
-      if (_textWorks.length > 0) {
+
+      // 小説・日記・テキスト系 → リスト
+      const _textItems = _allItems.filter(x => (x.source==='atelier' && (x.type==='novel'||x.type==='diary')) || (x.source==='shop' && x.shop.template==='E'));
+      if (_textItems.length > 0) {
         html += '<div style="padding:10px 16px 6px;font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">menu_book</span>新しく置かれた本</div>';
         html += '<div style="padding:0 16px 14px;display:flex;flex-direction:column;gap:8px;">';
-        for (const x of _textWorks.slice(0, 8)) {
-          const p = x.post; const s = x.shop;
-          const _preview = (p.content || '').slice(0, 60) + ((p.content||'').length > 60 ? '…' : '');
-          html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;">';
-          html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="font-size:9.5px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 7px;border-radius:100px;font-weight:700;">'+escapeHtml(s.name||'')+'</span></div>';
-          html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(p.title||'')+'</div>';
-          html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;white-space:pre-wrap;">'+escapeHtml(_preview)+'</div>';
-          if (p.tags && p.tags.length) {
-            html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">';
-            for (const tg of p.tags.slice(0, 4)) html += '<span style="font-size:9px;color:var(--ink-light);">#'+escapeHtml(tg)+'</span>';
+        for (const x of _textItems.slice(0, 8)) {
+          if (x.source === 'atelier') {
+            const a = x.atelier; const s = x.series;
+            const cd = a.cardDesign || {color:'#7BB8E0',pattern:'solid'};
+            const t = ATELIER_TYPES[a.type] || ATELIER_TYPES.novel;
+            const _preview = (s.text || s.description || '').slice(0, 60) + ((s.text||s.description||'').length > 60 ? '…' : '');
+            html += '<div onclick="openPublicAtelierSeries(\''+a.id+'\',\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;">';
+            html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">';
+            html += '<span style="font-size:9.5px;color:'+cd.color+';background:'+cd.color+'22;padding:1px 7px;border-radius:100px;font-weight:700;">'+escapeHtml(a.name||'')+'</span>';
+            html += '<span style="font-size:9px;color:var(--ink-light);">'+t.label+'</span></div>';
+            html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(s.title||'')+'</div>';
+            if (_preview) html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;white-space:pre-wrap;">'+escapeHtml(_preview)+'</div>';
+            html += '</div>';
+          } else {
+            const p = x.post; const s = x.shop;
+            const _preview = (p.content || '').slice(0, 60) + ((p.content||'').length > 60 ? '…' : '');
+            html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;">';
+            html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="font-size:9.5px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 7px;border-radius:100px;font-weight:700;">'+escapeHtml(s.name||'')+'</span></div>';
+            html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(p.title||'')+'</div>';
+            if (_preview) html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;white-space:pre-wrap;">'+escapeHtml(_preview)+'</div>';
+            if (p.tags && p.tags.length) {
+              html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">';
+              for (const tg of p.tags.slice(0, 4)) html += '<span style="font-size:9px;color:var(--ink-light);">#'+escapeHtml(tg)+'</span>';
+              html += '</div>';
+            }
             html += '</div>';
           }
-          html += '</div>';
+        }
+        html += '</div>';
+      }
+
+      // アート系（Atelier art）
+      const _artItems = _allItems.filter(x => x.source==='atelier' && x.type==='art');
+      if (_artItems.length > 0) {
+        html += '<div style="padding:10px 16px 6px;font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">palette</span>アート・イラスト</div>';
+        html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:0 16px 14px;">';
+        for (const x of _artItems.slice(0, 6)) {
+          const a = x.atelier; const s = x.series;
+          const cd = a.cardDesign || {color:'#7BB8E0',pattern:'solid'};
+          const cover = (s.photos && s.photos[0]) || s.coverPhoto;
+          html += '<div onclick="openPublicAtelierSeries(\''+a.id+'\',\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;">';
+          if (cover) html += '<div style="width:100%;aspect-ratio:1;background:url('+cover+') center/cover;"></div>';
+          else html += '<div style="width:100%;aspect-ratio:1;'+_getCardPatternBg(cd.color,cd.pattern,40)+'display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:36px;color:white;opacity:0.8;">palette</span></div>';
+          html += '<div style="padding:7px 9px;"><div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title||'')+'</div>';
+          html += '<div style="font-size:9px;color:var(--ink-sub);">'+escapeHtml(a.name||'')+'</div></div></div>';
         }
         html += '</div>';
       }
