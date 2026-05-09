@@ -5224,7 +5224,9 @@ function _popNav() {
   if (prev.meTab) data.meTab = prev.meTab;
   if (prev.petId) data.activePetId = prev.petId;
   if (prev.houseId) data.activeHouseId = prev.houseId;
+  _isNavigatingBack = true;
   render();
+  _isNavigatingBack = false;
   return true;
 }
 
@@ -39703,8 +39705,44 @@ function deleteWeightRecord(petId, recordId) {
 }
 
 let _suppressScrollTop = false;
+// 自動履歴管理用の状態
+let _lastRenderedView = null;
+let _lastRenderedMode = null;
+let _lastRenderedMeTab = null;
+let _lastRenderedPetId = null;
+let _lastRenderedHouseId = null;
+let _isNavigatingBack = false;
+
 function render() {
   const _t0 = performance.now();
+  
+  // ===== 自動履歴管理 =====
+  // 前回 render と違うビュー/モード/タブに切り替わってる → 前回の状態を履歴に push
+  // ただし戻る操作中（_popNav経由）は重複追加を防ぐためスキップ
+  if (!_isNavigatingBack && _lastRenderedView !== null) {
+    const _viewChanged = _lastRenderedView !== currentView 
+                       || _lastRenderedMode !== currentMode 
+                       || _lastRenderedMeTab !== data.meTab
+                       || _lastRenderedPetId !== (data.activePetId || null)
+                       || _lastRenderedHouseId !== (data.activeHouseId || null);
+    if (_viewChanged) {
+      navHistory.push({
+        view: _lastRenderedView,
+        mode: _lastRenderedMode,
+        meTab: _lastRenderedMeTab,
+        petId: _lastRenderedPetId,
+        houseId: _lastRenderedHouseId,
+      });
+      if (navHistory.length > 30) navHistory.shift();
+    }
+  }
+  // 現状を保存（次回比較用）
+  _lastRenderedView = currentView;
+  _lastRenderedMode = currentMode;
+  _lastRenderedMeTab = data.meTab;
+  _lastRenderedPetId = data.activePetId || null;
+  _lastRenderedHouseId = data.activeHouseId || null;
+  
   // bodyクラスにcurrentModeを反映（CSSセレクタ用）
   document.body.classList.remove('mode-pet','mode-kids','mode-me','mode-nest');
   document.body.classList.add('mode-'+currentMode);
