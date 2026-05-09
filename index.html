@@ -24683,6 +24683,7 @@ function renderAtelierManager() {
   html += '<button onclick="currentView=\'atelier\';render();" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">arrow_back</span>戻る</button>';
   if (a.nikowaId) html += '<span style="font-size:10px;color:var(--ink-light);font-family:monospace;background:var(--surface-warm);padding:3px 8px;border-radius:100px;">'+a.nikowaId+'</span>';
   html += '<div style="flex:1;"></div>';
+  html += '<button onclick="openAtelierSettings(\''+a.id+'\')" style="background:white;color:var(--ink-sub);border:1px solid var(--line);border-radius:100px;padding:5px 11px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">settings</span>編集</button>';
   html += '<button onclick="openPublicAtelier(\''+a.id+'\')" style="background:var(--mint-deep);color:white;border:none;border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">visibility</span>公開ページ</button>';
   html += '</div>';
   
@@ -24772,6 +24773,136 @@ function renderAtelierManager() {
   document.getElementById('app').innerHTML = html;
 }
 window.renderAtelierManager = renderAtelierManager;
+
+// ===== Atelier 設定モーダル（編集・削除・デザイン）=====
+const ATELIER_COLOR_PALETTE = [
+  '#FFB6C1', '#FF9AA2', '#FFB89A', '#FFD89A',
+  '#FFE89A', '#C8E89A', '#9AD2C0', '#7BB8E0',
+  '#9AB0E0', '#A89AD0', '#C09AD0', '#E09AB8',
+  '#A89478', '#7B9080', '#888888', '#5A8A8A'
+];
+
+function openAtelierSettings(atlId) {
+  const a = (data.ateliers || []).find(x => x.id === atlId);
+  if (!a) return;
+  const cd = a.cardDesign || { color:'#7BB8E0', pattern:'solid' };
+  
+  const ex = document.getElementById('atelierSettingsModal');
+  if (ex) ex.remove();
+  const ov = document.createElement('div');
+  ov.id = 'atelierSettingsModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2300;background:rgba(45,74,60,0.55);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);box-sizing:border-box;padding:20px;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  
+  let h = '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18);">';
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">settings</span>';
+  h += '<div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">Atelier 設定</div>';
+  if (a.nikowaId) h += '<span style="font-size:9.5px;color:var(--ink-light);font-family:monospace;background:var(--surface-warm);padding:3px 8px;border-radius:100px;">'+a.nikowaId+'</span>';
+  h += '<button onclick="document.getElementById(\'atelierSettingsModal\').remove()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div style="flex:1;overflow-y:auto;padding:14px 16px;">';
+  
+  // タイトル編集
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:5px;display:block;">タイトル</label>';
+  h += '<input id="atlSettingsName" value="'+escapeHtml(a.name||'')+'" style="width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;background:var(--surface-warm);box-sizing:border-box;margin-bottom:14px;color:var(--ink-dark);">';
+  
+  // 説明編集
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:5px;display:block;">説明・自己紹介</label>';
+  h += '<textarea id="atlSettingsAbout" placeholder="この Atelier の紹介文..." style="width:100%;min-height:80px;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;resize:vertical;color:var(--ink-dark);line-height:1.7;margin-bottom:14px;">'+escapeHtml(a.about||'')+'</textarea>';
+  
+  // タイプ変更
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:5px;display:block;">タイプ</label>';
+  h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:14px;" id="atlSettingsTypeGrid">';
+  for (const tid in ATELIER_TYPES) {
+    const tt = ATELIER_TYPES[tid];
+    const _act = (a.type === tid);
+    h += '<button onclick="window._atlSettingsType=\''+tid+'\';document.querySelectorAll(\'#atlSettingsTypeGrid button\').forEach(b=>b.dataset.act=\'0\');this.dataset.act=\'1\';this.style.background=\'var(--accent-bg)\';this.style.borderColor=\'var(--accent)\';document.querySelectorAll(\'#atlSettingsTypeGrid button\').forEach(b=>{if(b!==this){b.style.background=\'white\';b.style.borderColor=\'var(--line)\';}})" data-tid="'+tid+'" data-act="'+(_act?'1':'0')+'" style="padding:9px 10px;background:'+(_act?'var(--accent-bg)':'white')+';border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';border-radius:11px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:6px;color:var(--ink-dark);">';
+    h += '<span class="material-symbols-rounded" style="font-size:15px;color:var(--accent-deep);">'+tt.icon+'</span>'+tt.label;
+    h += '</button>';
+  }
+  h += '</div>';
+  
+  // カードデザイン：色
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:5px;display:block;">カードの色</label>';
+  h += '<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-bottom:14px;" id="atlSettingsColorGrid">';
+  for (const col of ATELIER_COLOR_PALETTE) {
+    const _act = (cd.color === col);
+    h += '<button onclick="window._atlSettingsColor=\''+col+'\';document.querySelectorAll(\'#atlSettingsColorGrid button\').forEach(b=>b.style.boxShadow=\'none\');this.style.boxShadow=\'0 0 0 3px '+col+'88, 0 0 0 4px white inset\';" style="aspect-ratio:1;background:'+col+';border:none;border-radius:50%;cursor:pointer;'+(_act?'box-shadow:0 0 0 3px '+col+'88, 0 0 0 4px white inset;':'')+'" data-col="'+col+'"></button>';
+  }
+  h += '</div>';
+  
+  // カードデザイン：パターン
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:5px;display:block;">パターン</label>';
+  h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;" id="atlSettingsPatternGrid">';
+  for (const pat of CARD_PATTERNS) {
+    const _act = (cd.pattern === pat.id);
+    h += '<button onclick="window._atlSettingsPattern=\''+pat.id+'\';document.querySelectorAll(\'#atlSettingsPatternGrid button\').forEach(b=>{b.style.borderColor=\'var(--line)\';b.style.background=\'white\';});this.style.borderColor=\'var(--accent)\';this.style.background=\'var(--accent-bg)\';" style="padding:8px 4px;background:'+(_act?'var(--accent-bg)':'white')+';border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';border-radius:10px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--ink-dark);" data-pat="'+pat.id+'">'+pat.label+'</button>';
+  }
+  h += '</div>';
+  
+  // 削除セクション
+  h += '<div style="background:#FFF3F3;border:1.5px solid #F5C0C8;border-radius:12px;padding:11px;margin-bottom:8px;">';
+  h += '<div style="font-size:11.5px;color:#C04060;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;">warning</span>危険ゾーン</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.6;margin-bottom:8px;">この Atelier を削除すると、すべての'+(ATELIER_TYPES[a.type]?.unitName||'巻')+'と中身が消えます。元に戻せません。</div>';
+  h += '<button onclick="deleteAtelier(\''+a.id+'\')" style="width:100%;padding:9px;background:white;color:#C04060;border:1.5px solid #C04060;border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:15px;">delete_forever</span>この Atelier を削除する</button>';
+  h += '</div>';
+  
+  h += '</div>';
+  
+  // フッター
+  h += '<div style="padding:12px 16px;border-top:1px solid var(--line-soft);background:var(--surface);display:flex;gap:7px;">';
+  h += '<button onclick="document.getElementById(\'atelierSettingsModal\').remove()" style="flex:1;padding:12px;background:var(--surface-warm);color:var(--ink-sub);border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveAtelierSettings(\''+a.id+'\')" style="flex:1.5;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:15px;">save</span>保存</button>';
+  h += '</div>';
+  h += '</div>';
+  
+  // 初期値を保存
+  window._atlSettingsType = a.type;
+  window._atlSettingsColor = cd.color;
+  window._atlSettingsPattern = cd.pattern;
+  
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+}
+window.openAtelierSettings = openAtelierSettings;
+
+function saveAtelierSettings(atlId) {
+  const a = (data.ateliers || []).find(x => x.id === atlId);
+  if (!a) return;
+  const newName = (document.getElementById('atlSettingsName').value || '').trim();
+  const newAbout = (document.getElementById('atlSettingsAbout').value || '').trim();
+  if (!newName) { showToast('タイトルは必須やで'); return; }
+  a.name = newName;
+  a.about = newAbout;
+  if (window._atlSettingsType) a.type = window._atlSettingsType;
+  if (window._atlSettingsColor || window._atlSettingsPattern) {
+    a.cardDesign = a.cardDesign || {};
+    if (window._atlSettingsColor) a.cardDesign.color = window._atlSettingsColor;
+    if (window._atlSettingsPattern) a.cardDesign.pattern = window._atlSettingsPattern;
+  }
+  a.updatedAt = Date.now();
+  saveData();
+  document.getElementById('atelierSettingsModal').remove();
+  showToast('保存したよ🌷');
+  renderAtelierManager();
+}
+window.saveAtelierSettings = saveAtelierSettings;
+
+function deleteAtelier(atlId) {
+  const a = (data.ateliers || []).find(x => x.id === atlId);
+  if (!a) return;
+  if (!confirm('「'+a.name+'」を本当に削除しますか？\nすべての作品・写真・本文が消えます。元に戻せません。')) return;
+  data.ateliers = (data.ateliers || []).filter(x => x.id !== atlId);
+  saveData();
+  showToast('削除したよ');
+  document.getElementById('atelierSettingsModal').remove();
+  currentView = 'atelier';
+  render();
+}
+window.deleteAtelier = deleteAtelier;
 
 // Atelierカバー画像の選択（横長トリミング）
 function pickAtelierCover(atelierId) {
