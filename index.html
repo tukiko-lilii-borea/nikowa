@@ -2636,6 +2636,12 @@
     display:flex; padding:0 8px 8px; gap:3px;
     position:relative; z-index:1;
   }
+  @keyframes bouquetPop {
+    0%   { opacity:0; transform:translate(-50%,-50%) scale(0.3); }
+    20%  { opacity:1; transform:translate(-50%,-50%) scale(1.2); }
+    50%  { opacity:1; transform:translate(-50%,-50%) scale(1.0); }
+    100% { opacity:0; transform:translate(-50%,-150%) scale(0.8); }
+  }
   .town-main-tabs::after {
     content:''; position:absolute; top:0; left:0; right:0;
     height:2px; background:var(--line-soft); z-index:0;
@@ -24288,6 +24294,12 @@ const ATELIER_TYPES = {
     icon: 'palette', 
     desc: 'イラスト・絵・作品を発表',
     unitName: '作品' 
+  },
+  mix: {
+    label: '写真+文章ミックス',
+    icon: 'auto_stories',
+    desc: 'フォトエッセイ・絵本・図録など、写真と文章の両方で発表',
+    unitName: '巻'
   }
 };
 
@@ -24845,8 +24857,8 @@ function openAtelierSeriesEdit(atlId, seriesId) {
   if (ex) ex.remove();
   
   const t = ATELIER_TYPES[a.type] || ATELIER_TYPES.photo;
-  const isPhoto = (a.type === 'photo' || a.type === 'art');
-  const isText = (a.type === 'novel' || a.type === 'diary');
+  const isPhoto = (a.type === 'photo' || a.type === 'art' || a.type === 'mix');
+  const isText = (a.type === 'novel' || a.type === 'diary' || a.type === 'mix');
   
   const ov = document.createElement('div');
   ov.id = 'atelierSeriesEditModal';
@@ -25400,56 +25412,78 @@ function renderPetGallerie() {
   html += '</div>';
 
   html += '<div style="padding:14px;">';
+  // テンプレートを取得
+  const _galTmpl = pet.gallerieTemplate || 'daily';
+  const _isPhotoTmpl  = _galTmpl === 'photo';
+  const _isStoryTmpl  = _galTmpl === 'story';
+  const _isMemorial   = _galTmpl === 'memorial';
+  
   // 外側柄枠 + 中身白カード
-  html += '<div style="'+_getCardPatternBg(c, cd.pattern, 60)+'padding:14px;border-radius:18px;">';
+  html += '<div style="'+_getCardPatternBg(c, cd.pattern, _isMemorial?70:60)+'padding:14px;border-radius:18px;">';
   html += '<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">';
 
-  // ヘッダー写真
+  // ヘッダー写真（photo型はより大きく）
+  const _heroH = _isPhotoTmpl ? 280 : (_isStoryTmpl ? 140 : 160);
   if (profilePhoto) {
-    html += '<div style="width:100%;height:160px;background:url('+profilePhoto+') center/cover;border-bottom:3px solid '+c+';"></div>';
+    html += '<div style="width:100%;height:'+_heroH+'px;background:url('+profilePhoto+') center/cover;border-bottom:3px solid '+c+';"></div>';
   } else {
-    html += '<div style="width:100%;height:120px;'+_getCardPatternBg(c, cd.pattern, 70)+'border-bottom:3px solid '+c+';display:flex;align-items:center;justify-content:center;">';
+    html += '<div style="width:100%;height:'+(_heroH-40)+'px;'+_getCardPatternBg(c, cd.pattern, 70)+'border-bottom:3px solid '+c+';display:flex;align-items:center;justify-content:center;">';
     html += '<span class="material-symbols-rounded" style="font-size:54px;color:white;text-shadow:0 2px 6px rgba(0,0,0,0.2);">'+_ms.icon+'</span>';
     html += '</div>';
   }
 
   // プロフィール
   html += '<div style="padding:14px 16px 10px;">';
-  html += '<div style="font-size:20px;font-weight:900;color:var(--ink-dark);">'+escapeHtml(pet.name||'')+'</div>';
+  if (_isMemorial) {
+    html += '<div style="text-align:center;font-size:11px;color:'+c+';margin-bottom:4px;">🌈 虹の橋の子</div>';
+  }
+  html += '<div style="font-size:'+(_isPhotoTmpl?'24px':'20px')+';font-weight:900;color:var(--ink-dark);'+(_isMemorial||_isPhotoTmpl?'text-align:center;':'')+'">'+escapeHtml(pet.name||'')+'</div>';
   html += '<div style="height:3px;background:'+c+';margin:4px -16px 10px;"></div>';
   if (!isKids && (pet.breed || pet.type)) {
-    html += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;margin-bottom:3px;">'+escapeHtml(pet.breed || PET_TYPE_NAMES[pet.type] || '')+'</div>';
+    html += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;margin-bottom:3px;'+(_isMemorial||_isPhotoTmpl?'text-align:center;':'')+'">'+escapeHtml(pet.breed || PET_TYPE_NAMES[pet.type] || '')+'</div>';
   }
   if (pet.birthday) {
     const b = new Date(pet.birthday);
-    html += '<div style="font-size:10.5px;color:var(--ink-sub);display:inline-flex;align-items:center;gap:3px;margin-bottom:5px;"><span class="material-symbols-rounded" style="font-size:13px;color:'+c+';">cake</span>'+b.getFullYear()+'/'+(b.getMonth()+1)+'/'+b.getDate()+'</div>';
+    html += '<div style="font-size:10.5px;color:var(--ink-sub);display:'+(_isMemorial||_isPhotoTmpl?'flex;justify-content:center;':'inline-flex;')+'align-items:center;gap:3px;margin-bottom:5px;"><span class="material-symbols-rounded" style="font-size:13px;color:'+c+';">cake</span>'+b.getFullYear()+'/'+(b.getMonth()+1)+'/'+b.getDate()+'</div>';
   }
-  if (pet.note) html += '<div style="font-size:11.5px;color:var(--ink-sub);line-height:1.7;margin-bottom:8px;font-style:italic;">'+escapeHtml(pet.note)+'</div>';
+  // ストーリーテンプレートはノートを大きく表示
+  if (pet.note) {
+    if (_isStoryTmpl) {
+      html += '<div style="font-size:13px;color:var(--ink-dark);line-height:2;margin:10px 0;padding:12px;background:'+c+'12;border-left:3px solid '+c+';border-radius:6px;white-space:pre-wrap;">'+escapeHtml(pet.note)+'</div>';
+    } else if (_isMemorial) {
+      html += '<div style="font-size:12px;color:var(--ink-sub);line-height:1.9;margin-bottom:10px;text-align:center;font-style:italic;padding:0 8px;white-space:pre-wrap;">'+escapeHtml(pet.note)+'</div>';
+    } else {
+      html += '<div style="font-size:11.5px;color:var(--ink-sub);line-height:1.7;margin-bottom:8px;font-style:italic;">'+escapeHtml(pet.note)+'</div>';
+    }
+  }
   html += '</div>';
 
-  // お世話記録（最新5件）
-  const care = (data.petCare && data.petCare.stampHistory) ? data.petCare.stampHistory : [];
-  const recentCare = care.slice(0, 5);
-  if (recentCare.length > 0) {
-    html += '<div style="padding:0 16px 14px;">';
-    html += '<div style="font-size:12px;font-weight:800;color:'+c+';margin-bottom:8px;display:flex;align-items:center;gap:5px;border-bottom:1.5px solid '+c+'33;padding-bottom:4px;"><span class="material-symbols-rounded" style="font-size:14px;">favorite</span>最近のお世話</div>';
-    for (const r of recentCare) {
-      const t = new Date(r.timestamp || 0);
-      const tStr = String(t.getMonth()+1)+'/'+String(t.getDate())+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);">';
-      html += '<span style="width:30px;height:30px;border-radius:8px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:17px;color:'+c+';">'+escapeHtml(r.icon||'pets')+'</span></span>';
-      html += '<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(r.name||'')+'</div></div>';
-      html += '<div style="font-size:9px;color:var(--ink-light);">'+tStr+'</div>';
-      if (r.by) html += _renderRecordedBy(r.by);
+  // お世話記録（dailyテンプレートでのみ表示）
+  if (_galTmpl === 'daily') {
+    const care = (data.petCare && data.petCare.stampHistory) ? data.petCare.stampHistory : [];
+    const recentCare = care.slice(0, 5);
+    if (recentCare.length > 0) {
+      html += '<div style="padding:0 16px 14px;">';
+      html += '<div style="font-size:12px;font-weight:800;color:'+c+';margin-bottom:8px;display:flex;align-items:center;gap:5px;border-bottom:1.5px solid '+c+'33;padding-bottom:4px;"><span class="material-symbols-rounded" style="font-size:14px;">favorite</span>最近のお世話</div>';
+      for (const r of recentCare) {
+        const t = new Date(r.timestamp || 0);
+        const tStr = String(t.getMonth()+1)+'/'+String(t.getDate())+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);">';
+        html += '<span style="width:30px;height:30px;border-radius:8px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:17px;color:'+c+';">'+escapeHtml(r.icon||'pets')+'</span></span>';
+        html += '<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(r.name||'')+'</div></div>';
+        html += '<div style="font-size:9px;color:var(--ink-light);">'+tStr+'</div>';
+        if (r.by) html += _renderRecordedBy(r.by);
+        html += '</div>';
+      }
       html += '</div>';
     }
-    html += '</div>';
   }
 
-  // 公開アルバム
+  // 公開アルバム（テンプレ別レイアウト）
   html += '<div style="padding:0 16px 16px;">';
   html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
-  html += '<div style="font-size:12px;font-weight:800;color:'+c+';display:flex;align-items:center;gap:5px;border-bottom:1.5px solid '+c+'33;padding-bottom:4px;flex:1;"><span class="material-symbols-rounded" style="font-size:14px;">photo_library</span>アルバム</div>';
+  const _albumTitle = _isMemorial ? '思い出' : 'アルバム';
+  html += '<div style="font-size:12px;font-weight:800;color:'+c+';display:flex;align-items:center;gap:5px;border-bottom:1.5px solid '+c+'33;padding-bottom:4px;flex:1;"><span class="material-symbols-rounded" style="font-size:14px;">'+(_isMemorial?'local_florist':'photo_library')+'</span>'+_albumTitle+'</div>';
   html += '<button onclick="openGallerieAlbumPicker(\''+petId+'\')" style="margin-left:8px;padding:5px 12px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;">アルバムを選ぶ</button>';
   html += '</div>';
   const album = pet.gallerieAlbum || [];
@@ -25461,12 +25495,14 @@ function renderPetGallerie() {
   } else {
     const store = _getCareStore();
     const stampHistory = store.stampHistory || [];
-    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;">';
+    // photo型は2列大きく、それ以外は3列
+    const _albumCols = _isPhotoTmpl ? 2 : 3;
+    html += '<div style="display:grid;grid-template-columns:repeat('+_albumCols+',1fr);gap:'+(_isPhotoTmpl?'5':'3')+'px;">';
     for (const sid of album) {
       const rec = stampHistory.find(r => r.id === sid);
       const photoSrc = rec ? (rec.photo || (rec.photoId && photos[rec.photoId]) || '') : '';
       if (photoSrc) {
-        html += '<div style="aspect-ratio:1;border-radius:6px;overflow:hidden;background:var(--surface-warm);">';
+        html += '<div style="aspect-ratio:1;border-radius:'+(_isPhotoTmpl?'10':'6')+'px;overflow:hidden;background:var(--surface-warm);'+(_isPhotoTmpl?'box-shadow:0 1px 4px rgba(0,0,0,0.08);':'')+'">';
         html += '<img src="'+photoSrc+'" style="width:100%;height:100%;object-fit:cover;display:block;">';
         html += '</div>';
       }
@@ -29111,10 +29147,11 @@ function savePlaceMemoStubFromObj(placeId, p) {
 }
 
 const TOWN_MAIN_TABS = [
-  { id: 'search', icon: '🔍', label: '探す' },
-  { id: 'town',   icon: '🏙', label: '街歩き' },
-  { id: 'book',   icon: '📚', label: '本屋' },
-  { id: 'board',  icon: '📋', label: '掲示板' },
+  { id: 'search',  icon: '🔍', label: '探す' },
+  { id: 'town',    icon: '🏙', label: '街歩き' },
+  { id: 'book',    icon: '📚', label: '本屋' },
+  { id: 'board',   icon: '📋', label: '掲示板' },
+  { id: 'rainbow', icon: '🌈', label: '虹の橋' },
 ];
 
 // ====================================================
@@ -30421,8 +30458,7 @@ function renderPublicAtelier() {
   } else {
     html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;display:flex;align-items:center;gap:6px;">';
     html += '<span class="material-symbols-rounded" style="font-size:16px;color:'+c+';">'+t.icon+'</span>'+t.unitName+'一覧</div>';
-    if (a.type === 'photo' || a.type === 'art') {
-      // 写真/アート → 2列グリッド
+    if (a.type === 'photo' || a.type === 'art' || a.type === 'mix') {
       html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">';
       for (const s of series) {
         const cover = (s.photos && s.photos[0]) || s.coverPhoto;
@@ -30529,7 +30565,23 @@ function renderPublicAtelierSeries() {
   if (s.ageRating === 'r15') html += '<div style="margin-top:6px;"><span style="font-size:10px;color:#C04060;font-weight:800;background:#FFE0E8;padding:2px 8px;border-radius:100px;">R15</span></div>';
   html += '</div>';
   // コンテンツ
-  if (a.type === 'photo' || a.type === 'art') {
+  if (a.type === 'mix') {
+    // mix：写真→本文の順で両方表示
+    const photos = s.photos || [];
+    if (photos.length > 0) {
+      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:14px;">';
+      for (const ph of photos) {
+        html += '<div style="aspect-ratio:1;background:url('+ph+') center/cover;cursor:pointer;" onclick="_openAtelierPhoto(\''+ph+'\')"></div>';
+      }
+      html += '</div>';
+    }
+    if (s.text) {
+      html += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:20px 18px;line-height:2.1;font-size:14px;color:var(--ink-dark);white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 4px rgba(0,0,0,0.04);">'+escapeHtml(s.text)+'</div>';
+      html += '<div style="text-align:right;font-size:10px;color:var(--ink-light);margin-top:6px;">'+photos.length+'枚 ・ '+(s.text.length).toLocaleString()+'文字</div>';
+    } else if (photos.length === 0) {
+      html += '<div style="padding:32px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);font-size:11px;">まだ内容がないよ</div>';
+    }
+  } else if (a.type === 'photo' || a.type === 'art') {
     const photos = s.photos || [];
     if (photos.length === 0) {
       html += '<div style="padding:32px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);font-size:11px;">写真がないよ</div>';
@@ -31438,6 +31490,7 @@ function renderTown() {
   }
 
   // ── 旧マイ場所（タブからは非表示・コード保持）
+  if (false) {  // しほの要望で非表示（2026-05-09）
   const facilities = data.facilities || [];
   
   // 検索フィルター適用
@@ -31520,6 +31573,7 @@ function renderTown() {
       html += '</div>';
     }
   }
+  } // end if(false) 旧マイ場所
 
   // ── 本屋タブ
   if (townMainTab === 'book') {
@@ -31553,7 +31607,7 @@ function renderTown() {
       html += '<div style="padding:14px 16px 8px;display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">auto_stories</span><span style="font-size:13px;font-weight:800;color:var(--ink-dark);">まちの本棚</span><span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 8px;border-radius:100px;font-weight:700;">'+_allItems.length+'作品</span></div>';
 
       // 写真・アート系 → グリッド
-      const _photoItems = _allItems.filter(x => (x.source==='atelier' && (x.type==='photo'||x.type==='art')) || (x.source==='shop' && x.shop.template==='F'));
+      const _photoItems = _allItems.filter(x => (x.source==='atelier' && (x.type==='photo'||x.type==='art'||x.type==='mix')) || (x.source==='shop' && x.shop.template==='F'));
       if (_photoItems.length > 0) {
         html += '<div style="padding:10px 16px 6px;font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">photo_library</span>写真の窓</div>';
         html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:0 16px 14px;">';
@@ -31698,6 +31752,126 @@ function renderTown() {
         html += '</div>';
       }
     }
+    document.getElementById('app').innerHTML = html;
+    return;
+  }
+
+  // ── 虹の橋タブ
+  if (townMainTab === 'rainbow') {
+    // 虹の橋のペット（kidsGenderなし）と星のひろばの子（kidsGenderあり）
+    const rainbowPets = (data.pets || []).filter(p => p.place === 'rainbow' && !p.kidsGender);
+    const starKids   = (data.pets || []).filter(p => p.place === 'rainbow' && p.kidsGender);
+
+    // ヘッダー
+    html += '<div style="padding:18px 16px 12px;text-align:center;background:linear-gradient(135deg,#FFE5EC 0%,#E5D4F1 50%,#C7DFF7 100%);border-radius:0 0 16px 16px;margin-bottom:14px;">';
+    html += '<div style="font-size:36px;margin-bottom:4px;">🌈</div>';
+    html += '<div style="font-size:14px;font-weight:900;color:var(--ink-dark);margin-bottom:4px;">虹の橋・星のひろば</div>';
+    html += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.7;">旅立った子たちに、お花をそえましょう🌷</div>';
+    html += '</div>';
+
+    // 虹の橋セクション（ペット）
+    if (rainbowPets.length > 0) {
+      html += '<div style="padding:0 16px 18px;">';
+      html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;display:flex;align-items:center;gap:5px;"><span style="font-size:18px;">🌈</span>虹の橋にわたった子たち <span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 8px;border-radius:100px;font-weight:700;">'+rainbowPets.length+'匹</span></div>';
+      
+      // 日付別にグループ化（updatedAtを虹の橋に行った日として扱う）
+      const grouped = {};
+      for (const p of rainbowPets) {
+        const d = new Date(p.updatedAt || p.createdAt || Date.now());
+        const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        if (!grouped[key]) grouped[key] = { date: d, pets: [] };
+        grouped[key].pets.push(p);
+      }
+      const sortedKeys = Object.keys(grouped).sort().reverse();
+      
+      for (const k of sortedKeys) {
+        const g = grouped[k];
+        const dStr = g.date.getFullYear()+'年'+(g.date.getMonth()+1)+'月'+g.date.getDate()+'日';
+        // 経過日数
+        const daysAgo = Math.floor((Date.now() - g.date.getTime()) / (24*60*60*1000));
+        html += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin:8px 0 6px;padding-left:4px;">'+dStr+' に旅立った子たち <span style="font-size:9.5px;color:var(--ink-light);">('+daysAgo+'日前)</span></div>';
+        for (const p of g.pets) {
+          const cd = p.cardDesign || { color:'#FFB6C1', pattern:'flower' };
+          const c = cd.color;
+          const profilePhoto = p.profilePhotoId && photos[p.profilePhotoId];
+          const _ms = PET_MS_ICONS[p.type] || PET_MS_ICONS.other;
+          const bouquets = p.bouquetCount || 0;
+          html += '<div style="background:white;border:1.5px solid '+c+'55;border-radius:14px;padding:11px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;">';
+          // アイコン
+          if (profilePhoto) {
+            html += '<div style="width:48px;height:48px;border-radius:50%;background:url('+profilePhoto+') center/cover;border:2px solid '+c+';flex-shrink:0;"></div>';
+          } else {
+            html += '<div style="width:48px;height:48px;border-radius:50%;'+_getCardPatternBg(c, cd.pattern, 30)+'display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid '+c+';">';
+            html += '<span class="material-symbols-rounded" style="font-size:24px;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.3);">'+_ms.icon+'</span></div>';
+          }
+          // 情報
+          html += '<div style="flex:1;min-width:0;">';
+          html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.name||'')+'</div>';
+          if (p.breed || p.type) html += '<div style="font-size:10px;color:var(--ink-sub);">'+escapeHtml(p.breed || PET_TYPE_NAMES[p.type] || '')+'</div>';
+          if (bouquets > 0) html += '<div style="font-size:9.5px;color:'+c+';font-weight:700;margin-top:2px;">🌷 '+bouquets+' 人がお花をそえました</div>';
+          html += '</div>';
+          // 花束ボタン
+          html += '<button onclick="giveBouquet(\''+p.id+'\')" style="background:linear-gradient(135deg,#FFB6C1,#FFC0CB);color:white;border:none;border-radius:100px;padding:8px 14px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0;box-shadow:0 2px 6px rgba(255,182,193,0.4);">';
+          html += '<span style="font-size:14px;">🌷</span>お花をそえる</button>';
+          html += '</div>';
+        }
+      }
+      html += '</div>';
+    }
+
+    // 星のひろばセクション（KIDS）
+    if (starKids.length > 0) {
+      html += '<div style="padding:0 16px 18px;">';
+      html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;display:flex;align-items:center;gap:5px;"><span style="font-size:18px;">⭐</span>星のひろばの子 <span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 8px;border-radius:100px;font-weight:700;">'+starKids.length+'人</span></div>';
+      
+      const groupedK = {};
+      for (const p of starKids) {
+        const d = new Date(p.updatedAt || p.createdAt || Date.now());
+        const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        if (!groupedK[key]) groupedK[key] = { date: d, pets: [] };
+        groupedK[key].pets.push(p);
+      }
+      const sortedKK = Object.keys(groupedK).sort().reverse();
+      
+      for (const k of sortedKK) {
+        const g = groupedK[k];
+        const dStr = g.date.getFullYear()+'年'+(g.date.getMonth()+1)+'月'+g.date.getDate()+'日';
+        const daysAgo = Math.floor((Date.now() - g.date.getTime()) / (24*60*60*1000));
+        html += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin:8px 0 6px;padding-left:4px;">'+dStr+' に星になった子 <span style="font-size:9.5px;color:var(--ink-light);">('+daysAgo+'日前)</span></div>';
+        for (const p of g.pets) {
+          const cd = p.cardDesign || { color:'#C7DFF7', pattern:'star' };
+          const c = cd.color;
+          const profilePhoto = p.profilePhotoId && photos[p.profilePhotoId];
+          const _ms = PET_MS_ICONS[p.kidsGender] || PET_MS_ICONS.boy;
+          const bouquets = p.bouquetCount || 0;
+          html += '<div style="background:white;border:1.5px solid '+c+'55;border-radius:14px;padding:11px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;">';
+          if (profilePhoto) {
+            html += '<div style="width:48px;height:48px;border-radius:50%;background:url('+profilePhoto+') center/cover;border:2px solid '+c+';flex-shrink:0;"></div>';
+          } else {
+            html += '<div style="width:48px;height:48px;border-radius:50%;'+_getCardPatternBg(c, cd.pattern, 30)+'display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid '+c+';">';
+            html += '<span class="material-symbols-rounded" style="font-size:24px;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.3);">'+_ms.icon+'</span></div>';
+          }
+          html += '<div style="flex:1;min-width:0;">';
+          html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.name||'')+'</div>';
+          if (bouquets > 0) html += '<div style="font-size:9.5px;color:'+c+';font-weight:700;margin-top:2px;">⭐ '+bouquets+' 人が星をおくりました</div>';
+          html += '</div>';
+          html += '<button onclick="giveBouquet(\''+p.id+'\',true)" style="background:linear-gradient(135deg,#C7DFF7,#A5C7F0);color:white;border:none;border-radius:100px;padding:8px 14px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0;box-shadow:0 2px 6px rgba(199,223,247,0.4);">';
+          html += '<span style="font-size:14px;">⭐</span>星をおくる</button>';
+          html += '</div>';
+        }
+      }
+      html += '</div>';
+    }
+
+    // どちらも0件の時
+    if (rainbowPets.length === 0 && starKids.length === 0) {
+      html += '<div style="padding:48px 24px 60px;text-align:center;">';
+      html += '<div style="font-size:48px;margin-bottom:12px;">🌈</div>';
+      html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:6px;">まだ虹の橋・星のひろばに子はいないよ</div>';
+      html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;">大切な家族の旅立ちは、PETモードまたはKIDSモードの<br>個別ページから「虹の橋に送る」「星になる」が選べるよ</div>';
+      html += '</div>';
+    }
+
     document.getElementById('app').innerHTML = html;
     return;
   }
@@ -37246,6 +37420,25 @@ function setTownMainTab(tab) {
   placesError = '';
   renderTown();
 }
+
+// 花束（または星）を贈る
+function giveBouquet(petId, isStar) {
+  const pet = (data.pets || []).find(p => p.id === petId);
+  if (!pet) return;
+  pet.bouquetCount = (pet.bouquetCount || 0) + 1;
+  saveData();
+  const emoji = isStar ? '⭐' : '🌷';
+  const msg = isStar ? (pet.name+'に星をおくりました⭐') : (pet.name+'にお花をそえました🌷');
+  showToast(msg);
+  // ふわっと出るエフェクト
+  const eff = document.createElement('div');
+  eff.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:80px;z-index:9999;pointer-events:none;animation:bouquetPop 1.2s ease-out forwards;';
+  eff.textContent = emoji;
+  document.body.appendChild(eff);
+  setTimeout(() => eff.remove(), 1200);
+  renderTown();
+}
+window.giveBouquet = giveBouquet;
 
 function setTownSubTab(tab) {
   townSubTab = tab;
