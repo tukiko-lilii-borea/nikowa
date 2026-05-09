@@ -31437,10 +31437,6 @@ function renderTown() {
     return;
   }
 
-  // フォールバック（到達しないはずだが念のため）
-  document.getElementById('app').innerHTML = html;
-  return;
-
   // ── 旧マイ場所（タブからは非表示・コード保持）
   const facilities = data.facilities || [];
   
