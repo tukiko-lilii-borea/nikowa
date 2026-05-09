@@ -30237,6 +30237,69 @@ function openPublicShop(shopId) {
 }
 window.openPublicShop = openPublicShop;
 
+// ===== ショップ投稿（コラム・お知らせ）の読書モーダル =====
+function openPostReader(shopId, postId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  const post = (shop.posts || []).find(p => p.id === postId);
+  if (!post) return;
+  const cd = shop.cardDesign || { color:'#7BB8E0', pattern:'solid' };
+  const c = cd.color;
+  const isColumn = post.type === 'column';
+  const ex = document.getElementById('postReaderModal');
+  if (ex) ex.remove();
+  const ov = document.createElement('div');
+  ov.id = 'postReaderModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2400;background:rgba(45,74,60,0.55);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);box-sizing:border-box;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  let h = '<div style="width:100%;max-width:520px;background:var(--surface);border-radius:18px 18px 0 0;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">';
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line-soft);background:'+c+'15;">';
+  h += '<span style="font-size:9.5px;color:'+c+';background:white;padding:3px 9px;border-radius:100px;font-weight:800;">'+(isColumn?'📖 コラム':'📢 お知らせ')+'</span>';
+  h += '<div style="flex:1;"></div>';
+  h += '<button onclick="document.getElementById(\'postReaderModal\').remove()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:24px;">close</span></button>';
+  h += '</div>';
+  // 本文エリア
+  h += '<div style="flex:1;overflow-y:auto;padding:18px 18px 14px;">';
+  if (post.title) h += '<div style="font-size:18px;font-weight:900;color:var(--ink-dark);line-height:1.5;margin-bottom:10px;">'+escapeHtml(post.title)+'</div>';
+  if (post.timestamp) {
+    const d = new Date(post.timestamp);
+    h += '<div style="font-size:10.5px;color:var(--ink-light);margin-bottom:14px;">'+d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')+'</div>';
+  }
+  if (post.photo) {
+    h += '<div style="width:100%;border-radius:12px;overflow:hidden;margin-bottom:14px;background:var(--surface-warm);">';
+    h += '<img src="'+post.photo+'" style="width:100%;height:auto;display:block;">';
+    h += '</div>';
+  }
+  if (post.content) h += '<div style="font-size:14px;color:var(--ink-dark);line-height:2;white-space:pre-wrap;word-break:break-all;margin-bottom:12px;">'+escapeHtml(post.content)+'</div>';
+  if (post.tags && post.tags.length) {
+    h += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;">';
+    for (const tg of post.tags) h += '<span style="font-size:10.5px;color:'+c+';background:'+c+'18;padding:3px 9px;border-radius:100px;font-weight:700;">#'+escapeHtml(tg)+'</span>';
+    h += '</div>';
+  }
+  h += '</div>';
+  // フッター：作者リンク
+  h += '<div style="padding:12px 16px;border-top:1px solid var(--line-soft);background:var(--surface-warm);">';
+  h += '<button onclick="document.getElementById(\'postReaderModal\').remove();openPublicShop(\''+shopId+'\')" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;background:white;border:1.5px solid '+c+';border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;">';
+  // ショップアイコン
+  if (shop.iconImage) {
+    h += '<img src="'+shop.iconImage+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;">';
+  } else {
+    h += '<div style="width:38px;height:38px;border-radius:50%;background:'+c+';display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;"><span class="material-symbols-rounded" style="font-size:20px;">'+(shop.type==='bookshelf'?'menu_book':'storefront')+'</span></div>';
+  }
+  h += '<div style="flex:1;min-width:0;">';
+  h += '<div style="font-size:12.5px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(shop.name||'')+'</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);">このショップを見る →</div>';
+  h += '</div>';
+  h += '<span class="material-symbols-rounded" style="font-size:20px;color:'+c+';">arrow_forward</span>';
+  h += '</button>';
+  h += '</div>';
+  h += '</div>';
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+}
+window.openPostReader = openPostReader;
+
 function renderPublicShop() {
   const shopId = data._publicShopId;
   const shop = (data.myShops || []).find(s => s.id === shopId);
@@ -30441,18 +30504,64 @@ function renderPublicAtelier() {
   html += '<button onclick="currentView=\'atelier_manager\';render();" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">arrow_back</span>管理に戻る</button>';
   html += '</div>';
   html += '<div style="padding:14px;">';
-  // ヘッダーカード
-  html += '<div style="'+_getCardPatternBg(c, cd.pattern, 60)+'padding:14px;border-radius:18px;margin-bottom:16px;">';
-  html += '<div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">';
-  html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:'+(a.about?'10px':'0px')+'">';
-  html += '<div style="width:54px;height:54px;border-radius:13px;'+_getCardPatternBg(c, cd.pattern, 30)+'display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
-  html += '<span class="material-symbols-rounded" style="font-size:28px;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.3);">'+t.icon+'</span></div>';
+  // ===== 作家プロフィール風ヘッダーカード =====
+  const _allSeries = a.series || [];
+  const _seriesCount = _allSeries.length;
+  const _photoCount = _allSeries.reduce((sum, s) => sum + ((s.photos || []).length), 0);
+  const _textChars = _allSeries.reduce((sum, s) => sum + ((s.text || '').length), 0);
+  const cover = a.coverImage || a.iconImage;
+  
+  // 上部：パターン枠の中の白カード
+  html += '<div style="'+_getCardPatternBg(c, cd.pattern, 70)+'padding:18px 14px 16px;border-radius:18px;margin-bottom:18px;">';
+  html += '<div style="background:white;border-radius:16px;padding:18px 16px 14px;box-shadow:0 3px 14px rgba(0,0,0,0.07);">';
+  
+  // 大きい円形プロフィール写真 + 名前
+  html += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:'+(a.about?'14px':'10px')+';">';
+  html += '<div style="width:80px;height:80px;border-radius:50%;flex-shrink:0;border:3px solid '+c+';background:';
+  if (cover) {
+    html += 'url('+cover+') center/cover;"></div>';
+  } else {
+    html += _getCardPatternBg(c, cd.pattern, 40)+'display:flex;align-items:center;justify-content:center;">';
+    html += '<span class="material-symbols-rounded" style="font-size:38px;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.3);">'+t.icon+'</span></div>';
+  }
   html += '<div style="flex:1;min-width:0;">';
-  html += '<div style="font-size:17px;font-weight:900;color:var(--ink-dark);line-height:1.3;">'+escapeHtml(a.name||'')+'</div>';
-  html += '<div style="font-size:10.5px;color:var(--ink-sub);margin-top:2px;">'+t.label+' ・ '+(a.series||[]).length+t.unitName+'</div>';
+  html += '<div style="font-size:20px;font-weight:900;color:var(--ink-dark);line-height:1.3;margin-bottom:3px;">'+escapeHtml(a.name||'')+'</div>';
+  html += '<div style="font-size:10.5px;color:'+c+';font-weight:700;background:'+c+'15;padding:2px 9px;border-radius:100px;display:inline-flex;align-items:center;gap:4px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:13px;">'+t.icon+'</span>'+t.label+'</div>';
   html += '</div></div>';
-  if (a.about) html += '<div style="font-size:11.5px;color:var(--ink-sub);line-height:1.7;padding-top:10px;border-top:1px solid var(--line-soft);white-space:pre-wrap;">'+escapeHtml(a.about)+'</div>';
+  
+  // 自己紹介
+  if (a.about) {
+    html += '<div style="font-size:12.5px;color:var(--ink-sub);line-height:1.85;padding:12px 4px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);white-space:pre-wrap;margin-bottom:12px;">'+escapeHtml(a.about)+'</div>';
+  }
+  
+  // 統計バー（作品数・写真数・文字数）
+  html += '<div style="display:flex;justify-content:space-around;align-items:center;padding:6px 0 2px;">';
+  // 作品数
+  html += '<div style="text-align:center;">';
+  html += '<div style="font-size:18px;font-weight:900;color:'+c+';line-height:1;">'+_seriesCount+'</div>';
+  html += '<div style="font-size:9.5px;color:var(--ink-sub);font-weight:700;margin-top:3px;">'+t.unitName+'数</div>';
+  html += '</div>';
+  // 写真型・mix型は写真数
+  if (_photoCount > 0) {
+    html += '<div style="width:1px;height:32px;background:var(--line-soft);"></div>';
+    html += '<div style="text-align:center;">';
+    html += '<div style="font-size:18px;font-weight:900;color:'+c+';line-height:1;">'+_photoCount+'</div>';
+    html += '<div style="font-size:9.5px;color:var(--ink-sub);font-weight:700;margin-top:3px;">写真</div>';
+    html += '</div>';
+  }
+  // 小説型・mix型は文字数
+  if (_textChars > 0) {
+    html += '<div style="width:1px;height:32px;background:var(--line-soft);"></div>';
+    html += '<div style="text-align:center;">';
+    html += '<div style="font-size:18px;font-weight:900;color:'+c+';line-height:1;">'+_textChars.toLocaleString()+'</div>';
+    html += '<div style="font-size:9.5px;color:var(--ink-sub);font-weight:700;margin-top:3px;">文字</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  
   html += '</div></div>';
+  
   // 巻/話一覧
   const series = (a.series || []).slice().sort((x,y) => (x.order||0) - (y.order||0));
   if (series.length === 0) {
@@ -31618,18 +31727,22 @@ function renderTown() {
             const a = x.atelier; const s = x.series;
             const cd = a.cardDesign || {color:'#7BB8E0',pattern:'solid'};
             const cover = (s.photos && s.photos[0]) || s.coverPhoto;
-            html += '<div onclick="openPublicAtelier(\''+a.id+'\')" style="background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;">';
+            // カード本体タップ → 作品（個別シリーズ）へ
+            html += '<div onclick="openPublicAtelierSeries(\''+a.id+'\',\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;">';
             if (cover) html += '<div style="width:100%;aspect-ratio:1;background:url('+cover+') center/cover;"></div>';
             else html += '<div style="width:100%;aspect-ratio:1;'+_getCardPatternBg(cd.color,cd.pattern,40)+'display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:36px;color:white;opacity:0.8;">photo_library</span></div>';
             html += '<div style="padding:7px 9px;"><div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title||'')+'</div>';
-            html += '<div style="font-size:9px;color:var(--ink-sub);">'+escapeHtml(a.name||'')+'</div></div></div>';
+            // 作者名（タップで作家HPへ）
+            html += '<div onclick="event.stopPropagation();openPublicAtelier(\''+a.id+'\')" style="font-size:9px;color:'+cd.color+';font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px;">'+escapeHtml(a.name||'')+'</div></div></div>';
           } else {
             const p = x.post; const s = x.shop;
-            html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;">';
+            // カード本体タップ → 作品本文モーダル
+            html += '<div onclick="openPostReader(\''+s.id+'\',\''+p.id+'\')" style="background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;">';
             if (p.photo) html += '<div style="width:100%;aspect-ratio:1;background:url('+p.photo+') center/cover;"></div>';
             else html += '<div style="width:100%;aspect-ratio:1;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));display:flex;align-items:center;justify-content:center;color:var(--accent-deep);"><span class="material-symbols-rounded" style="font-size:36px;">image</span></div>';
             html += '<div style="padding:7px 9px;"><div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.title||'')+'</div>';
-            html += '<div style="font-size:9px;color:var(--ink-sub);">'+escapeHtml(s.name||'')+'</div></div></div>';
+            // 作者名（タップでショップHPへ）
+            html += '<div onclick="event.stopPropagation();openPublicShop(\''+s.id+'\')" style="font-size:9px;color:var(--accent-deep);font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px;">'+escapeHtml(s.name||'')+'</div></div></div>';
           }
         }
         html += '</div>';
@@ -31646,9 +31759,11 @@ function renderTown() {
             const cd = a.cardDesign || {color:'#7BB8E0',pattern:'solid'};
             const t = ATELIER_TYPES[a.type] || ATELIER_TYPES.novel;
             const _preview = (s.text || s.description || '').slice(0, 60) + ((s.text||s.description||'').length > 60 ? '…' : '');
+            // カード本体タップ → 作品本文（既存）
             html += '<div onclick="openPublicAtelierSeries(\''+a.id+'\',\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;">';
             html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">';
-            html += '<span style="font-size:9.5px;color:'+cd.color+';background:'+cd.color+'22;padding:1px 7px;border-radius:100px;font-weight:700;">'+escapeHtml(a.name||'')+'</span>';
+            // 作者名バッジ（タップで作家HPへ）
+            html += '<span onclick="event.stopPropagation();openPublicAtelier(\''+a.id+'\')" style="font-size:9.5px;color:'+cd.color+';background:'+cd.color+'22;padding:1px 7px;border-radius:100px;font-weight:700;cursor:pointer;">'+escapeHtml(a.name||'')+'</span>';
             html += '<span style="font-size:9px;color:var(--ink-light);">'+t.label+'</span></div>';
             html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(s.title||'')+'</div>';
             if (_preview) html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;white-space:pre-wrap;">'+escapeHtml(_preview)+'</div>';
@@ -31656,8 +31771,11 @@ function renderTown() {
           } else {
             const p = x.post; const s = x.shop;
             const _preview = (p.content || '').slice(0, 60) + ((p.content||'').length > 60 ? '…' : '');
-            html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;">';
-            html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="font-size:9.5px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 7px;border-radius:100px;font-weight:700;">'+escapeHtml(s.name||'')+'</span></div>';
+            // カード本体タップ → 作品本文モーダル
+            html += '<div onclick="openPostReader(\''+s.id+'\',\''+p.id+'\')" style="background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;">';
+            html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">';
+            // 作者名バッジ（タップでショップHPへ）
+            html += '<span onclick="event.stopPropagation();openPublicShop(\''+s.id+'\')" style="font-size:9.5px;color:var(--accent-deep);background:var(--accent-bg);padding:1px 7px;border-radius:100px;font-weight:700;cursor:pointer;">'+escapeHtml(s.name||'')+'</span></div>';
             html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(p.title||'')+'</div>';
             if (_preview) html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;white-space:pre-wrap;">'+escapeHtml(_preview)+'</div>';
             if (p.tags && p.tags.length) {
@@ -31680,11 +31798,13 @@ function renderTown() {
           const a = x.atelier; const s = x.series;
           const cd = a.cardDesign || {color:'#7BB8E0',pattern:'solid'};
           const cover = (s.photos && s.photos[0]) || s.coverPhoto;
+          // カード本体タップ → 個別シリーズへ
           html += '<div onclick="openPublicAtelierSeries(\''+a.id+'\',\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;">';
           if (cover) html += '<div style="width:100%;aspect-ratio:1;background:url('+cover+') center/cover;"></div>';
           else html += '<div style="width:100%;aspect-ratio:1;'+_getCardPatternBg(cd.color,cd.pattern,40)+'display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:36px;color:white;opacity:0.8;">palette</span></div>';
           html += '<div style="padding:7px 9px;"><div style="font-size:11px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title||'')+'</div>';
-          html += '<div style="font-size:9px;color:var(--ink-sub);">'+escapeHtml(a.name||'')+'</div></div></div>';
+          // 作者名（タップで作家HPへ）
+          html += '<div onclick="event.stopPropagation();openPublicAtelier(\''+a.id+'\')" style="font-size:9px;color:'+cd.color+';font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px;">'+escapeHtml(a.name||'')+'</div></div></div>';
         }
         html += '</div>';
       }
@@ -31725,7 +31845,7 @@ function renderTown() {
         for (const x of _columns.slice(0, 10)) {
           const p = x.post; const s = x.shop;
           const _preview = (p.content || '').slice(0, 80) + ((p.content||'').length > 80 ? '…' : '');
-          html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;">';
+          html += '<div onclick="openPostReader(\''+s.id+'\',\''+p.id+'\')" style="background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;">';
           html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">storefront</span><span style="font-size:10.5px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(s.name||'')+'</span></div>';
           html += '<div style="font-size:13.5px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(p.title||'')+'</div>';
           html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;">'+escapeHtml(_preview)+'</div>';
@@ -31746,7 +31866,7 @@ function renderTown() {
         for (const x of _newsItems.slice(0, 8)) {
           const p = x.post; const s = x.shop;
           const t = new Date(p.timestamp || 0);
-          html += '<div onclick="openPublicShop(\''+s.id+'\')" style="background:white;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:9px 12px;cursor:pointer;">';
+          html += '<div onclick="openPostReader(\''+s.id+'\',\''+p.id+'\')" style="background:white;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:9px 12px;cursor:pointer;">';
           html += '<div style="display:flex;align-items:center;gap:5px;font-size:9px;color:var(--accent-deep);font-weight:700;margin-bottom:2px;">【'+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+'】<span style="color:var(--ink-sub);">'+escapeHtml(s.name||'')+'</span></div>';
           html += '<div style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(p.content||'')+'</div>';
           html += '</div>';
