@@ -37356,14 +37356,14 @@ const LOGO_BY_THEME = {
   mint: 'dark', candy_soda: 'dark', strawberry: 'dark', honey: 'dark',
   pancake: 'dark', cream_soda: 'dark', lavender: 'dark', peach: 'dark',
   // 和食・大人キレイ目系 → 華柄ロゴ（落ち着き）
-  kurogoma: 'soft', tofu: 'soft', mitarashi: 'soft', edamame: 'soft',
-  cinderella: 'soft', neon: 'soft', monotone: 'soft'
+  kurogoma: 'dark', tofu: 'dark', mitarashi: 'dark', edamame: 'dark',
+  cinderella: 'dark', neon: 'dark', monotone: 'dark'
 };
 
 // 現在のテーマに合わせたロゴ画像を返す
 function getCurrentLogoSrc() {
   const themeId = (data && data.themeId) || 'mint';
-  const variant = LOGO_BY_THEME[themeId] || 'soft';
+  const variant = LOGO_BY_THEME[themeId] || 'dark';
   return variant === 'dark' ? LOGO_DARK : LOGO_SOFT;
 }
 window.getCurrentLogoSrc = getCurrentLogoSrc;
