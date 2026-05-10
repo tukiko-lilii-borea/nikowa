@@ -14621,6 +14621,7 @@ const STAMP_CAT_COLORS = {
   '美容':   '#C8709A',
   'ダイエット': '#D8C040',
   '体調':   '#5888B0',
+  'メンタル': '#A87CC8',
   '家事':   '#E89A4A',
   '仕事':   '#8868A8',
   '趣味':   '#48A8B8',
@@ -19314,7 +19315,7 @@ function renderMeMode() {
   // コンテンツエリア（白い角丸背景）
   html += '<div class="mode-content-wrap">';
   
-  const validMeTabs = ['stamp','diary','money','goods','collection','resume','office','secret'];
+  const validMeTabs = ['stamp','diary','study','money','goods','collection','resume','office','secret'];
   let tab = currentModeTab['me'] || 'stamp';
   if (!validMeTabs.includes(tab)) {
     tab = 'stamp';
@@ -19332,6 +19333,10 @@ function renderMeMode() {
   } else if (tab === 'office') {
     // ===== Office（仕事の小さな記録帳） =====
     html += renderOfficeInMeTab();
+    
+  } else if (tab === 'study') {
+    // ===== Study（学習記録ライフログ） =====
+    html += renderMeStudy();
     
   } else if (tab === 'resume') {
     // ===== My（自分のこと）：履歴書 / カルテ / ワクチン / くすり / 視力 / 緊急連絡先 =====
@@ -19386,6 +19391,7 @@ function renderMeMode() {
           {icon:'percent',name:'体脂肪',type:'number',unit:'%',step:0.1,min:5,max:60,photo:true},
           {icon:'square_foot',name:'ウエスト',type:'number',unit:'cm',step:0.1,min:40,max:200,photo:true},
           {icon:'lunch_dining',name:'食事記録',type:'text',placeholder:'何たべた？',photo:true},
+          {icon:'local_fire_department',name:'カロリー',type:'number',unit:'kcal',step:10,min:0,max:5000},
           {icon:'fitness_center',name:'筋トレ',type:'number',unit:'分',step:1,min:0,max:300},
           {icon:'directions_run',name:'ジョギング',type:'number',unit:'km',step:0.1,min:0,max:50},
           {icon:'directions_walk',name:'ウォーキング',type:'number',unit:'歩',step:100,min:0,max:50000},
@@ -19394,25 +19400,94 @@ function renderMeMode() {
           {icon:'sports_gymnastics',name:'尻トレ',type:'number',unit:'回',step:1,min:0,max:500},
           {icon:'exercise',name:'胸トレ',type:'number',unit:'回',step:1,min:0,max:500},
           {icon:'iron_fist',name:'腕トレ',type:'number',unit:'回',step:1,min:0,max:500},
+          {icon:'directions_walk',name:'足トレ',type:'number',unit:'回',step:1,min:0,max:500},
+          {icon:'rowing',name:'背筋',type:'number',unit:'回',step:1,min:0,max:500},
           {icon:'horizontal_rule',name:'プランク',type:'number',unit:'秒',step:10,min:0,max:600},
           {icon:'self_improvement',name:'ストレッチ',type:'number',unit:'分',step:1,min:0,max:120},
-          {icon:'self_improvement',name:'ヨガ',type:'number',unit:'分',step:1,min:0,max:180}
+          {icon:'self_improvement',name:'ヨガ',type:'number',unit:'分',step:1,min:0,max:180},
+          {icon:'accessibility_new',name:'ピラティス',type:'number',unit:'分',step:1,min:0,max:180},
+          {icon:'bolt',name:'HIIT',type:'number',unit:'分',step:1,min:0,max:120},
+          {icon:'sports_martial_arts',name:'有酸素',type:'number',unit:'分',step:1,min:0,max:300},
+          {icon:'pool',name:'水泳',type:'number',unit:'分',step:1,min:0,max:240},
+          {icon:'directions_bike',name:'サイクリング',type:'number',unit:'分',step:1,min:0,max:300},
+          {icon:'music_note',name:'ダンス',type:'number',unit:'分',step:1,min:0,max:180},
+          {icon:'jump_rope',name:'縄跳び',type:'number',unit:'回',step:10,min:0,max:5000},
+          {icon:'egg',name:'プロテイン'},
+          {icon:'no_food',name:'断食'},
+          {icon:'rice_bowl',name:'糖質制限'}
         ],
         '体調': [
           {icon:'medication',name:'くすり'},
           {icon:'water_full',name:'生理開始',period:'start'},
           {icon:'water_drop',name:'生理終了',period:'end'},
           {icon:'mood_bad',name:'PMS',period:'pms'},
+          {icon:'healing',name:'生理痛'},
           {icon:'sick',name:'体調不良'},
           {icon:'local_hospital',name:'通院'},
           {icon:'thermostat',name:'体温',type:'number',unit:'℃',step:0.1,min:34,max:42},
+          {icon:'thermostat',name:'熱'},
           {icon:'neurology',name:'頭痛'},
           {icon:'gastroenterology',name:'腹痛'},
+          {icon:'sick',name:'喉痛い'},
+          {icon:'water_drop',name:'鼻水'},
+          {icon:'sick',name:'咳'},
+          {icon:'severe_cold',name:'寒気'},
+          {icon:'mood_bad',name:'だるい'},
+          {icon:'cyclone',name:'めまい'},
+          {icon:'sick',name:'吐き気'},
+          {icon:'water_drop',name:'下痢'},
+          {icon:'block',name:'便秘'},
+          {icon:'masks',name:'アレルギー'},
           {icon:'accessibility',name:'肩こり'},
+          {icon:'self_improvement',name:'腰痛'},
           {icon:'visibility_off',name:'目の疲れ'},
+          {icon:'face',name:'肌荒れ'},
           {icon:'hotel',name:'よく寝た'},
           {icon:'bedtime_off',name:'寝不足'},
-          {icon:'mindfulness',name:'瞑想',type:'number',unit:'分',step:1,min:0,max:120}
+          {icon:'bedtime',name:'昼寝'},
+          {icon:'wb_sunny',name:'寝起き◎'},
+          {icon:'cloud',name:'寝起き×'},
+          {icon:'bathtub',name:'入浴'},
+          {icon:'hot_tub',name:'半身浴'},
+          {icon:'spa',name:'サウナ'},
+          {icon:'massage',name:'マッサージ'},
+          {icon:'healing',name:'整体'},
+          {icon:'acupuncture',name:'鍼灸'}
+        ],
+        'メンタル': [
+          // ポジ感情
+          {icon:'sentiment_very_satisfied',name:'嬉しい'},
+          {icon:'mood',name:'楽しい'},
+          {icon:'favorite',name:'幸せ'},
+          {icon:'auto_awesome',name:'感謝'},
+          {icon:'sentiment_satisfied',name:'機嫌◎'},
+          {icon:'spa',name:'落ち着いてる'},
+          {icon:'celebration',name:'達成感'},
+          {icon:'star',name:'充実'},
+          // ニュートラル
+          {icon:'sentiment_neutral',name:'普通'},
+          {icon:'cloud',name:'もやもや'},
+          {icon:'help',name:'迷い'},
+          // ネガ感情（共感対象として残す）
+          {icon:'sentiment_dissatisfied',name:'不安'},
+          {icon:'sentiment_very_dissatisfied',name:'悲しい'},
+          {icon:'sentiment_stressed',name:'落ち込み'},
+          {icon:'thunderstorm',name:'ストレス'},
+          {icon:'battery_alert',name:'疲れた'},
+          {icon:'mood_bad',name:'イライラ'},
+          {icon:'whatshot',name:'怒り'},
+          {icon:'water_drop',name:'涙'},
+          {icon:'flood',name:'孤独'},
+          {icon:'visibility_off',name:'やる気ない'},
+          // セルフケア・整え
+          {icon:'mindfulness',name:'瞑想',type:'number',unit:'分',step:1,min:0,max:120},
+          {icon:'air',name:'深呼吸'},
+          {icon:'self_improvement',name:'リラックス'},
+          {icon:'edit_note',name:'ジャーナリング'},
+          {icon:'volunteer_activism',name:'自分を許す'},
+          {icon:'psychology',name:'内省'},
+          {icon:'rocket_launch',name:'やる気'},
+          {icon:'center_focus_strong',name:'集中'}
         ],
         '家事': [
           {icon:'cleaning_services',name:'掃除'},{icon:'local_laundry_service',name:'洗濯'},{icon:'kitchen',name:'料理'},
@@ -19511,6 +19586,35 @@ function renderMeMode() {
           data.stampLib['体調'] = data.stampLib['体調'].filter(s => !(s.name === 'ヨガ' && !s.id?.startsWith('cs_')));
         }
         data._stampMigrated_v9 = true;
+        try { saveData(); } catch(e) {}
+      }
+      // v10マイグレーション：メンタルカテゴリ新設＋ダイエット/体調強化
+      if (!data._stampMigrated_v10) {
+        // メンタルが無ければ新設
+        if (!data.stampLib['メンタル']) {
+          data.stampLib['メンタル'] = DEFAULT_STAMPS['メンタル'].map(s => ({...s, id: 's_メンタル_'+s.name, hidden: false}));
+        } else {
+          // 既にあれば不足分を追加
+          for (const def of DEFAULT_STAMPS['メンタル']) {
+            const defId = 's_メンタル_'+def.name;
+            const exists = data.stampLib['メンタル'].some(s => s.id === defId || s.name === def.name);
+            if (!exists) data.stampLib['メンタル'].push({...def, id: defId, hidden: false});
+          }
+        }
+        // ダイエット・体調に不足スタンプ追加
+        for (const cat of ['ダイエット','体調']) {
+          if (!data.stampLib[cat]) continue;
+          for (const def of DEFAULT_STAMPS[cat]) {
+            const defId = 's_'+cat+'_'+def.name;
+            const exists = data.stampLib[cat].some(s => s.id === defId || s.name === def.name);
+            if (!exists) data.stampLib[cat].push({...def, id: defId, hidden: false});
+          }
+        }
+        // 体調から「瞑想」を削除（メンタルへ移動）
+        if (data.stampLib['体調']) {
+          data.stampLib['体調'] = data.stampLib['体調'].filter(s => !(s.name === '瞑想' && !s.id?.startsWith('cs_')));
+        }
+        data._stampMigrated_v10 = true;
         try { saveData(); } catch(e) {}
       }
       
@@ -24244,8 +24348,11 @@ function renderPet() {
   let _petParentTabsHtml = '';
   let _currentParent = 'care';
   if (pet.place === 'home') {
-    // KIDSモード判定（kidsGenderが正、フォールバックでkindも）
-    const _isKidPet = !!pet.kidsGender || pet.kind === 'kids' || pet.kind === 'kid';
+    // KIDSモード判定（kidsGender / kind / currentMode のどれかでKIDSと判定）
+    const _isKidPet = !!pet.kidsGender 
+      || pet.kind === 'kids' 
+      || pet.kind === 'kid'
+      || (typeof currentMode !== 'undefined' && currentMode === 'kids');
     // KIDSモードかどうかで親タブの順序を決定
     let _petParentTabs;
     if (_isKidPet) {
@@ -36418,6 +36525,7 @@ const DEFAULT_MODE_TABS = {
   me: [
     { id: 'stamp',      label: 'Record' },
     { id: 'diary',      label: 'Diary' },
+    { id: 'study',      label: 'Study' },
     { id: 'money',      label: 'Money' },
     { id: 'goods',      label: 'Goods' },
     { id: 'collection', label: 'Collection' },
@@ -41546,18 +41654,134 @@ function saveQuickVaccine() {
 // ============================================================
 // KIDS 成績記録（テスト & 学期成績）
 // ============================================================
+// 学年定義
+const KIDS_GRADE_LEVELS = [
+  { id:'elem1', label:'小1', stage:'elem' },
+  { id:'elem2', label:'小2', stage:'elem' },
+  { id:'elem3', label:'小3', stage:'elem' },
+  { id:'elem4', label:'小4', stage:'elem' },
+  { id:'elem5', label:'小5', stage:'elem' },
+  { id:'elem6', label:'小6', stage:'elem' },
+  { id:'jr1',   label:'中1', stage:'jr' },
+  { id:'jr2',   label:'中2', stage:'jr' },
+  { id:'jr3',   label:'中3', stage:'jr' },
+  { id:'high1', label:'高1', stage:'high' },
+  { id:'high2', label:'高2', stage:'high' },
+  { id:'high3', label:'高3', stage:'high' },
+  { id:'other', label:'その他', stage:'other' }
+];
+
+// 学校段階別デフォルト教科
 const KIDS_GRADES_DEFAULT_SUBJECTS_ELEM = ['国語','算数','理科','社会','英語','音楽','図工','体育','家庭','道徳'];
 const KIDS_GRADES_DEFAULT_SUBJECTS_JR = ['国語','数学','英語','理科','社会','音楽','美術','保健体育','技術・家庭'];
+const KIDS_GRADES_DEFAULT_SUBJECTS_HIGH = ['国語','数学','英語','理科','社会','情報','保健体育','芸術'];
+
+// 評定段階定義
+const KIDS_GRADES_SCALES = {
+  '3': {  // 小学校3段階
+    label: '3段階(◎○△)',
+    type: 'select',
+    options: [
+      { value:'3', label:'◎', color:'#74C5A4' },
+      { value:'2', label:'○', color:'#A8D5BA' },
+      { value:'1', label:'△', color:'#F4A261' }
+    ]
+  },
+  '5': {  // 中学校5段階
+    label: '5段階(1〜5)',
+    type: 'select',
+    options: [
+      { value:'5', label:'5', color:'#74C5A4' },
+      { value:'4', label:'4', color:'#A8D5BA' },
+      { value:'3', label:'3', color:'#F4D06F' },
+      { value:'2', label:'2', color:'#F4A261' },
+      { value:'1', label:'1', color:'#E57373' }
+    ]
+  },
+  '10': {  // 高校10段階
+    label: '10段階',
+    type: 'select',
+    options: Array.from({length:10}, function(_,i){
+      const n = 10 - i;
+      const colors = ['#74C5A4','#74C5A4','#A8D5BA','#A8D5BA','#F4D06F','#F4D06F','#F4A261','#F4A261','#E57373','#E57373'];
+      return { value: String(n), label: String(n), color: colors[i] };
+    })
+  },
+  '100': {  // 100点満点（数値入力）
+    label: '100点満点',
+    type: 'number',
+    min: 0,
+    max: 100,
+    suffix: '点'
+  },
+  'ib7': {  // IB 7段階（海外バカロレア）
+    label: 'IB(1〜7)',
+    type: 'select',
+    options: [
+      { value:'7', label:'7', color:'#74C5A4' },
+      { value:'6', label:'6', color:'#A8D5BA' },
+      { value:'5', label:'5', color:'#A8D5BA' },
+      { value:'4', label:'4', color:'#F4D06F' },
+      { value:'3', label:'3', color:'#F4A261' },
+      { value:'2', label:'2', color:'#F4A261' },
+      { value:'1', label:'1', color:'#E57373' }
+    ]
+  },
+  'abc': {  // A〜F評価（米英）
+    label: 'A〜F',
+    type: 'select',
+    options: [
+      { value:'A', label:'A', color:'#74C5A4' },
+      { value:'B', label:'B', color:'#A8D5BA' },
+      { value:'C', label:'C', color:'#F4D06F' },
+      { value:'D', label:'D', color:'#F4A261' },
+      { value:'F', label:'F', color:'#E57373' }
+    ]
+  },
+  'comment': {  // コメントのみ（自由記述）
+    label: 'コメントのみ',
+    type: 'text',
+    placeholder: '所見・コメント'
+  }
+};
+
+// 学校段階から推奨教科リストを取得
+function _kidsSubjectsByStage(stage) {
+  if (stage === 'elem') return KIDS_GRADES_DEFAULT_SUBJECTS_ELEM.slice();
+  if (stage === 'high') return KIDS_GRADES_DEFAULT_SUBJECTS_HIGH.slice();
+  return KIDS_GRADES_DEFAULT_SUBJECTS_JR.slice();
+}
+// 学校段階から推奨評定段階を取得
+function _kidsScaleByStage(stage) {
+  if (stage === 'elem') return '3';
+  if (stage === 'high') return '10';
+  return '5';
+}
+// 学年IDから段階を取得
+function _kidsStageByGradeId(gradeId) {
+  const g = KIDS_GRADE_LEVELS.find(x => x.id === gradeId);
+  return g ? g.stage : 'jr';
+}
 
 function _ensureKidsGrades(pet) {
   if (!pet.grades) pet.grades = {};
   const g = pet.grades;
   if (!g.tests) g.tests = [];
   if (!g.terms) g.terms = {};
-  if (!g.subjects) {
-    // 学年判定（kid.gradeLevel: 'elem' or 'jr'）。デフォルトは中学
-    g.subjects = (pet.gradeLevel === 'elem') ? KIDS_GRADES_DEFAULT_SUBJECTS_ELEM.slice() : KIDS_GRADES_DEFAULT_SUBJECTS_JR.slice();
+  // 学年（KIDS_GRADE_LEVELSのid）
+  if (!g.gradeLevel) {
+    // 旧フィールド対応
+    if (pet.gradeLevel) g.gradeLevel = pet.gradeLevel;
+    else g.gradeLevel = 'jr1';
   }
+  const stage = _kidsStageByGradeId(g.gradeLevel);
+  if (!g.subjects || g.subjects.length === 0) {
+    g.subjects = _kidsSubjectsByStage(stage);
+  }
+  // 評定段階
+  if (!g.scale) g.scale = _kidsScaleByStage(stage);
+  // 学期数
+  if (!g.termCount) g.termCount = 3; // 3=3学期, 2=2学期/前後期, 4=4学期
   if (!g.currentYear) g.currentYear = new Date().getFullYear();
   return g;
 }
@@ -41590,6 +41814,17 @@ function renderKidsGrades(pet) {
   
   let h = '<div style="padding:10px 14px 16px;">';
   
+  // 学年バッジ＋設定ボタン
+  const _gl = KIDS_GRADE_LEVELS.find(x => x.id === g.gradeLevel) || KIDS_GRADE_LEVELS[6];
+  const _sc = KIDS_GRADES_SCALES[g.scale] || KIDS_GRADES_SCALES['5'];
+  h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;background:rgba(255,255,255,0.78);border-radius:10px;padding:8px 10px;">';
+  h += '<span style="font-size:11px;font-weight:800;color:#C2185B;background:#FFE4EC;padding:3px 9px;border-radius:100px;">'+_gl.label+'</span>';
+  h += '<span style="font-size:9px;color:var(--ink-sub);font-weight:600;">評定: '+_sc.label+'</span>';
+  h += '<span style="font-size:9px;color:var(--ink-sub);font-weight:600;">/ '+g.termCount+'学期制</span>';
+  h += '<div style="flex:1;"></div>';
+  h += '<button onclick="openKidsGradesSettings(\''+pet.id+'\')" style="background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;font-family:inherit;font-size:10px;color:var(--ink-sub);font-weight:700;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">tune</span>設定</button>';
+  h += '</div>';
+  
   // サブタブ：テスト記録 / 学期成績
   h += '<div style="display:flex;gap:6px;margin-bottom:12px;">';
   const subs = [
@@ -41612,6 +41847,431 @@ function renderKidsGrades(pet) {
   return h;
 }
 window.renderKidsGrades = renderKidsGrades;
+
+// ============================================================
+// ME 学習記録（海外風ライフログ）
+// 大人の学習ログ：資格・コース・テスト・読書・語学など
+// ============================================================
+const ME_STUDY_TYPES = [
+  { id:'test',    label:'テスト',     icon:'edit_document', color:'#5B7FA8' },
+  { id:'course',  label:'コース',     icon:'school',        color:'#7BB892' },
+  { id:'cert',    label:'資格',       icon:'workspace_premium', color:'#C8A968' },
+  { id:'book',    label:'読書',       icon:'menu_book',     color:'#A87CC0' },
+  { id:'lang',    label:'語学',       icon:'translate',     color:'#D88098' },
+  { id:'lecture', label:'講義',       icon:'co_present',    color:'#7AAEB8' },
+  { id:'other',   label:'その他',     icon:'bookmark',      color:'#8A8A8A' }
+];
+
+const ME_STUDY_SCORE_TYPES = [
+  { id:'percent', label:'%',     placeholder:'85' },
+  { id:'grade',   label:'A〜F',  placeholder:'A' },
+  { id:'pass',    label:'合否',  placeholder:'合格' },
+  { id:'done',    label:'完了',  placeholder:'✓' },
+  { id:'none',    label:'なし',  placeholder:'' }
+];
+
+function _ensureMeStudy() {
+  if (!data.meStudy) data.meStudy = { records: [] };
+  if (!data.meStudy.records) data.meStudy.records = [];
+  return data.meStudy;
+}
+
+function renderMeStudy() {
+  const s = _ensureMeStudy();
+  const records = s.records.slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  
+  // 今月のサマリー
+  const now = new Date();
+  const thisYM = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  const thisMonthRecs = records.filter(r => (r.date||'').startsWith(thisYM));
+  
+  let h = '<div style="padding:14px 16px 60px;background:linear-gradient(180deg,#FAFBFC,#FFFFFF);min-height:100vh;">';
+  
+  // ===== ヘッダー（ミニマル）=====
+  h += '<div style="margin-bottom:18px;">';
+  h += '<div style="font-size:11px;font-weight:600;color:#8A95A5;letter-spacing:1.5px;margin-bottom:3px;">STUDY LOG</div>';
+  h += '<div style="font-size:22px;font-weight:800;color:#1F2937;letter-spacing:-0.3px;">My Learning</div>';
+  h += '<div style="font-size:11px;color:#6B7280;margin-top:3px;">静かに積み上げる、自分のための記録帳</div>';
+  h += '</div>';
+  
+  // ===== 今月のサマリー =====
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;">';
+  h += '<div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:14px;">';
+  h += '<div style="font-size:9px;color:#9CA3AF;font-weight:700;letter-spacing:1px;margin-bottom:4px;">THIS MONTH</div>';
+  h += '<div style="font-size:24px;font-weight:800;color:#1F2937;font-variant-numeric:tabular-nums;line-height:1;">'+thisMonthRecs.length+'</div>';
+  h += '<div style="font-size:10px;color:#6B7280;margin-top:3px;">件</div>';
+  h += '</div>';
+  h += '<div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:14px;">';
+  h += '<div style="font-size:9px;color:#9CA3AF;font-weight:700;letter-spacing:1px;margin-bottom:4px;">TOTAL</div>';
+  h += '<div style="font-size:24px;font-weight:800;color:#1F2937;font-variant-numeric:tabular-nums;line-height:1;">'+records.length+'</div>';
+  h += '<div style="font-size:10px;color:#6B7280;margin-top:3px;">これまで</div>';
+  h += '</div>';
+  h += '</div>';
+  
+  // ===== ＋ 追加ボタン =====
+  h += '<button onclick="openMeStudyAdd(null)" style="width:100%;padding:13px;background:#1F2937;color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:18px;letter-spacing:0.3px;"><span class="material-symbols-rounded" style="font-size:18px;">add</span>記録を追加</button>';
+  
+  // ===== 記録一覧 =====
+  if (records.length === 0) {
+    h += '<div style="background:white;border:1px dashed #D1D5DB;border-radius:12px;padding:32px 16px;text-align:center;color:#9CA3AF;font-size:11px;line-height:1.7;">';
+    h += 'まだ記録がないよ<br>';
+    h += '<span style="font-size:10px;">「記録を追加」から始めてみてね🌷</span>';
+    h += '</div>';
+  } else {
+    // 「Recent」ヘッダー
+    h += '<div style="font-size:10px;font-weight:700;color:#6B7280;letter-spacing:1.5px;margin-bottom:8px;">RECENT</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const r of records) {
+      const t = ME_STUDY_TYPES.find(x => x.id === r.type) || ME_STUDY_TYPES[6];
+      h += '<button onclick="openMeStudyAdd(\''+r.id+'\')" style="background:white;border:1px solid #E5E7EB;border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;text-align:left;display:flex;align-items:center;gap:12px;transition:transform 0.1s;">';
+      // タイプアイコン
+      h += '<div style="width:36px;height:36px;border-radius:8px;background:'+t.color+'15;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+      h += '<span class="material-symbols-rounded" style="font-size:18px;color:'+t.color+';">'+t.icon+'</span>';
+      h += '</div>';
+      // タイトル＋メタ
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="font-size:13px;font-weight:700;color:#1F2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;">'+escapeHtml(r.title||'Untitled')+'</div>';
+      h += '<div style="font-size:10px;color:#9CA3AF;margin-top:3px;display:flex;align-items:center;gap:6px;">';
+      h += '<span style="font-weight:600;">'+t.label+'</span>';
+      if (r.date) h += '<span>•</span><span>'+_formatStudyDate(r.date)+'</span>';
+      if (r.category) { h += '<span>•</span><span>'+escapeHtml(r.category)+'</span>'; }
+      h += '</div>';
+      h += '</div>';
+      // スコア
+      if (r.score) {
+        h += '<div style="font-size:16px;font-weight:800;color:'+t.color+';font-variant-numeric:tabular-nums;flex-shrink:0;">'+escapeHtml(r.score)+'</div>';
+      }
+      h += '</button>';
+    }
+    h += '</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+window.renderMeStudy = renderMeStudy;
+
+function _formatStudyDate(dateStr) {
+  // YYYY-MM-DD → "5/10" 風（日本語）
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return (d.getMonth()+1) + '/' + d.getDate();
+}
+
+// ===== 追加・編集モーダル =====
+function openMeStudyAdd(recordId) {
+  const s = _ensureMeStudy();
+  const isNew = !recordId;
+  let r;
+  if (isNew) {
+    r = { id: 'std_'+Date.now(), title:'', type:'test', score:'', scoreType:'percent', date: todayKey(), category:'', note:'' };
+  } else {
+    r = s.records.find(x => x.id === recordId);
+    if (!r) return;
+  }
+  
+  const ex = document.getElementById('meStudyAddModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="meStudyAddModal" onclick="if(event.target===this)closeMeStudyAdd()" style="position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.55);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="width:100%;max-width:560px;background:white;border-radius:24px 24px 0 0;max-height:92vh;display:flex;flex-direction:column;">';
+  
+  // ヘッダー
+  h += '<div style="padding:16px 18px 14px;display:flex;align-items:center;border-bottom:1px solid #F3F4F6;flex-shrink:0;">';
+  h += '<button onclick="closeMeStudyAdd()" style="background:none;border:none;cursor:pointer;color:#1F2937;padding:4px;margin-right:6px;"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:#1F2937;">'+(isNew?'新規記録':'記録を編集')+'</div>';
+  h += '<button onclick="saveMeStudyRecord(\''+r.id+'\')" style="background:#1F2937;color:white;border:none;border-radius:100px;padding:7px 18px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">保存</button>';
+  h += '</div>';
+  
+  h += '<div style="flex:1;overflow-y:auto;padding:18px 18px 90px;">';
+  
+  // タイトル
+  h += '<div style="margin-bottom:16px;">';
+  h += '<label style="font-size:10px;font-weight:700;color:#6B7280;letter-spacing:1px;display:block;margin-bottom:6px;">TITLE</label>';
+  h += '<input type="text" id="meStudyTitle" placeholder="例：TOEIC、簿記2級、〇〇のテスト" value="'+escapeHtml(r.title||'')+'" style="width:100%;padding:11px 14px;border:1px solid #E5E7EB;border-radius:10px;font-size:14px;font-family:inherit;background:white;color:#1F2937;box-sizing:border-box;">';
+  h += '</div>';
+  
+  // タイプ（カードグリッド）
+  h += '<div style="margin-bottom:16px;">';
+  h += '<label style="font-size:10px;font-weight:700;color:#6B7280;letter-spacing:1px;display:block;margin-bottom:6px;">TYPE</label>';
+  h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+  for (const t of ME_STUDY_TYPES) {
+    const isAct = r.type === t.id;
+    h += '<button onclick="document.getElementById(\'meStudyType\').value=\''+t.id+'\';this.parentElement.querySelectorAll(\'button\').forEach(b=>{b.style.background=\'white\';b.style.borderColor=\'#E5E7EB\';b.style.color=\'#6B7280\';});this.style.background=\''+t.color+'15\';this.style.borderColor=\''+t.color+'\';this.style.color=\''+t.color+'\';" style="padding:10px 4px;border:1.5px solid '+(isAct?t.color:'#E5E7EB')+';background:'+(isAct?t.color+'15':'white')+';color:'+(isAct?t.color:'#6B7280')+';border-radius:8px;font-family:inherit;font-size:9.5px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:18px;">'+t.icon+'</span>';
+    h += t.label;
+    h += '</button>';
+  }
+  h += '</div>';
+  h += '<input type="hidden" id="meStudyType" value="'+escapeHtml(r.type||'test')+'">';
+  h += '</div>';
+  
+  // 日付
+  h += '<div style="margin-bottom:16px;">';
+  h += '<label style="font-size:10px;font-weight:700;color:#6B7280;letter-spacing:1px;display:block;margin-bottom:6px;">DATE</label>';
+  h += '<input type="date" id="meStudyDate" value="'+escapeHtml(r.date||todayKey())+'" style="width:100%;padding:11px 14px;border:1px solid #E5E7EB;border-radius:10px;font-size:14px;font-family:inherit;background:white;color:#1F2937;box-sizing:border-box;">';
+  h += '</div>';
+  
+  // スコア（タイプ＋値）
+  h += '<div style="margin-bottom:16px;">';
+  h += '<label style="font-size:10px;font-weight:700;color:#6B7280;letter-spacing:1px;display:block;margin-bottom:6px;">SCORE</label>';
+  h += '<div style="display:flex;gap:6px;">';
+  h += '<select id="meStudyScoreType" onchange="document.getElementById(\'meStudyScore\').placeholder=this.options[this.selectedIndex].dataset.placeholder||\'\';" style="flex:0 0 110px;padding:11px 10px;border:1px solid #E5E7EB;border-radius:10px;font-size:13px;font-family:inherit;background:white;color:#1F2937;cursor:pointer;">';
+  for (const st of ME_STUDY_SCORE_TYPES) {
+    h += '<option value="'+st.id+'" data-placeholder="'+st.placeholder+'"'+(r.scoreType === st.id ? ' selected' : '')+'>'+st.label+'</option>';
+  }
+  h += '</select>';
+  const cur_st = ME_STUDY_SCORE_TYPES.find(x => x.id === r.scoreType) || ME_STUDY_SCORE_TYPES[0];
+  h += '<input type="text" id="meStudyScore" value="'+escapeHtml(r.score||'')+'" placeholder="'+cur_st.placeholder+'" style="flex:1;padding:11px 14px;border:1px solid #E5E7EB;border-radius:10px;font-size:14px;font-family:inherit;background:white;color:#1F2937;text-align:right;font-weight:700;">';
+  h += '</div>';
+  h += '</div>';
+  
+  // カテゴリ（任意）
+  h += '<div style="margin-bottom:16px;">';
+  h += '<label style="font-size:10px;font-weight:700;color:#6B7280;letter-spacing:1px;display:block;margin-bottom:6px;">CATEGORY <span style="font-weight:400;color:#9CA3AF;text-transform:none;letter-spacing:0;">（任意）</span></label>';
+  h += '<input type="text" id="meStudyCategory" placeholder="例：英語、プログラミング、簿記" value="'+escapeHtml(r.category||'')+'" style="width:100%;padding:11px 14px;border:1px solid #E5E7EB;border-radius:10px;font-size:14px;font-family:inherit;background:white;color:#1F2937;box-sizing:border-box;">';
+  h += '</div>';
+  
+  // メモ
+  h += '<div style="margin-bottom:16px;">';
+  h += '<label style="font-size:10px;font-weight:700;color:#6B7280;letter-spacing:1px;display:block;margin-bottom:6px;">NOTE <span style="font-weight:400;color:#9CA3AF;text-transform:none;letter-spacing:0;">（任意）</span></label>';
+  h += '<textarea id="meStudyNote" rows="3" placeholder="気づき、振り返り、感想など..." style="width:100%;padding:11px 14px;border:1px solid #E5E7EB;border-radius:10px;font-size:13px;font-family:inherit;background:white;color:#1F2937;box-sizing:border-box;resize:vertical;min-height:70px;">'+escapeHtml(r.note||'')+'</textarea>';
+  h += '</div>';
+  
+  // 削除（編集時のみ）
+  if (!isNew) {
+    h += '<button onclick="deleteMeStudyRecord(\''+r.id+'\')" style="width:100%;padding:11px;background:white;color:#DC2626;border:1px solid #FCA5A5;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;margin-top:10px;">この記録を削除</button>';
+  }
+  
+  h += '</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openMeStudyAdd = openMeStudyAdd;
+
+function closeMeStudyAdd() {
+  const m = document.getElementById('meStudyAddModal');
+  if (m) m.remove();
+}
+window.closeMeStudyAdd = closeMeStudyAdd;
+
+function saveMeStudyRecord(recordId) {
+  const s = _ensureMeStudy();
+  const title = (document.getElementById('meStudyTitle')||{}).value || '';
+  const type = (document.getElementById('meStudyType')||{}).value || 'test';
+  const date = (document.getElementById('meStudyDate')||{}).value || todayKey();
+  const scoreType = (document.getElementById('meStudyScoreType')||{}).value || 'percent';
+  const score = (document.getElementById('meStudyScore')||{}).value || '';
+  const category = (document.getElementById('meStudyCategory')||{}).value || '';
+  const note = (document.getElementById('meStudyNote')||{}).value || '';
+  
+  let r = s.records.find(x => x.id === recordId);
+  if (!r) {
+    r = { id: recordId };
+    s.records.push(r);
+  }
+  r.title = title;
+  r.type = type;
+  r.date = date;
+  r.scoreType = scoreType;
+  r.score = score;
+  r.category = category;
+  r.note = note;
+  
+  saveData();
+  closeMeStudyAdd();
+  showToast('保存したよ🌷');
+  _suppressScrollTop = true;
+  render();
+}
+window.saveMeStudyRecord = saveMeStudyRecord;
+
+function deleteMeStudyRecord(recordId) {
+  if (!confirm('この記録を削除する？')) return;
+  const s = _ensureMeStudy();
+  s.records = s.records.filter(x => x.id !== recordId);
+  saveData();
+  closeMeStudyAdd();
+  showToast('削除したよ');
+  _suppressScrollTop = true;
+  render();
+}
+window.deleteMeStudyRecord = deleteMeStudyRecord;
+
+// ===== 学年・教科・評定の設定モーダル =====
+function openKidsGradesSettings(petId) {
+  const pet = (data.pets||[]).find(p => p.id === petId);
+  if (!pet) return;
+  const g = _ensureKidsGrades(pet);
+  const ex = document.getElementById('kidsGradesSettingsModal');
+  if (ex) ex.remove();
+
+  let h = '<div id="kidsGradesSettingsModal" onclick="if(event.target===this)closeKidsGradesSettings()" style="position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.55);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="width:100%;max-width:560px;background:linear-gradient(180deg,#FFE4EC,#FFF6F8);border-radius:24px 24px 0 0;max-height:92vh;display:flex;flex-direction:column;">';
+
+  // ヘッダー
+  h += '<div style="padding:14px 18px 12px;display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,0.6);flex-shrink:0;background:rgba(255,255,255,0.4);border-radius:24px 24px 0 0;">';
+  h += '<button onclick="closeKidsGradesSettings()" style="background:none;border:none;cursor:pointer;color:#C2185B;padding:4px;margin-right:6px;"><span class="material-symbols-rounded" style="font-size:22px;">arrow_back</span></button>';
+  h += '<div style="flex:1;font-size:15px;font-weight:800;color:#C2185B;">成績の設定</div>';
+  h += '</div>';
+
+  h += '<div style="flex:1;overflow-y:auto;padding:14px 14px 90px;">';
+
+  // 学年
+  h += '<div style="background:white;border-radius:12px;padding:12px;margin-bottom:10px;">';
+  h += '<label style="font-size:11px;font-weight:800;color:var(--ink-sub);display:block;margin-bottom:8px;">📚 学年</label>';
+  h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">';
+  for (const lv of KIDS_GRADE_LEVELS) {
+    const isAct = g.gradeLevel === lv.id;
+    h += '<button onclick="setKidsGradeLevel(\''+petId+'\',\''+lv.id+'\')" style="padding:8px 4px;border-radius:8px;border:1.5px solid '+(isAct?'#E8729A':'var(--line)')+';background:'+(isAct?'#FFE4EC':'var(--surface-warm)')+';color:'+(isAct?'#C2185B':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">'+lv.label+'</button>';
+  }
+  h += '</div>';
+  h += '<div style="font-size:9px;color:var(--ink-light);margin-top:6px;line-height:1.5;">学年を変えると、教科リストと評定段階も推奨設定に切り替わるよ</div>';
+  h += '</div>';
+
+  // 評定段階
+  h += '<div style="background:white;border-radius:12px;padding:12px;margin-bottom:10px;">';
+  h += '<label style="font-size:11px;font-weight:800;color:var(--ink-sub);display:block;margin-bottom:8px;">⭐ 評定段階</label>';
+  h += '<div style="display:flex;flex-direction:column;gap:5px;">';
+  for (const sk of Object.keys(KIDS_GRADES_SCALES)) {
+    const sc = KIDS_GRADES_SCALES[sk];
+    const isAct = g.scale === sk;
+    h += '<button onclick="setKidsScale(\''+petId+'\',\''+sk+'\')" style="padding:9px 12px;border-radius:8px;border:1.5px solid '+(isAct?'#E8729A':'var(--line)')+';background:'+(isAct?'#FFE4EC':'var(--surface-warm)')+';color:'+(isAct?'#C2185B':'var(--ink-dark)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">'+sc.label+'</button>';
+  }
+  h += '</div>';
+  h += '</div>';
+
+  // 学期数
+  h += '<div style="background:white;border-radius:12px;padding:12px;margin-bottom:10px;">';
+  h += '<label style="font-size:11px;font-weight:800;color:var(--ink-sub);display:block;margin-bottom:8px;">📅 学期数</label>';
+  h += '<div style="display:flex;gap:5px;">';
+  const termOpts = [
+    { v:2, l:'2学期/前後期' },
+    { v:3, l:'3学期' },
+    { v:4, l:'4学期(クォーター)' }
+  ];
+  for (const t of termOpts) {
+    const isAct = g.termCount === t.v;
+    h += '<button onclick="setKidsTermCount(\''+petId+'\','+t.v+')" style="flex:1;padding:9px 6px;border-radius:8px;border:1.5px solid '+(isAct?'#E8729A':'var(--line)')+';background:'+(isAct?'#FFE4EC':'var(--surface-warm)')+';color:'+(isAct?'#C2185B':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">'+t.l+'</button>';
+  }
+  h += '</div>';
+  h += '</div>';
+
+  // 教科一覧
+  h += '<div style="background:white;border-radius:12px;padding:12px;margin-bottom:10px;">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+  h += '<label style="font-size:11px;font-weight:800;color:var(--ink-sub);">📖 教科</label>';
+  h += '<button onclick="resetKidsSubjects(\''+petId+'\')" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;font-family:inherit;font-size:10px;color:var(--ink-sub);font-weight:700;">学年デフォルトに戻す</button>';
+  h += '</div>';
+  h += '<div id="kidsSubjectsList" style="display:flex;flex-direction:column;gap:5px;">';
+  for (let si = 0; si < g.subjects.length; si++) {
+    const s = g.subjects[si];
+    h += '<div style="display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--surface-warm);border-radius:8px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);">drag_indicator</span>';
+    h += '<input type="text" value="'+escapeHtml(s)+'" onblur="updateKidsSubject(\''+petId+'\','+si+',this.value)" style="flex:1;background:transparent;border:none;font-size:12px;font-weight:700;color:var(--ink-dark);font-family:inherit;outline:none;">';
+    h += '<button onclick="removeKidsSubject(\''+petId+'\','+si+')" style="background:none;border:none;cursor:pointer;color:#E57373;padding:2px;"><span class="material-symbols-rounded" style="font-size:16px;">remove_circle</span></button>';
+    h += '</div>';
+  }
+  h += '</div>';
+  // 教科追加
+  h += '<button onclick="addKidsSubject(\''+petId+'\')" style="width:100%;margin-top:8px;padding:8px;background:var(--surface-warm);border:1px dashed var(--line);border-radius:8px;cursor:pointer;font-family:inherit;font-size:11px;color:var(--ink-sub);font-weight:700;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>教科を追加</button>';
+  h += '</div>';
+
+  h += '</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openKidsGradesSettings = openKidsGradesSettings;
+
+function closeKidsGradesSettings() {
+  const m = document.getElementById('kidsGradesSettingsModal');
+  if (m) m.remove();
+}
+window.closeKidsGradesSettings = closeKidsGradesSettings;
+
+function setKidsGradeLevel(petId, gradeId) {
+  const pet = (data.pets||[]).find(p => p.id === petId);
+  if (!pet) return;
+  const g = _ensureKidsGrades(pet);
+  g.gradeLevel = gradeId;
+  // 学年に合わせて教科・評定段階も自動切替（既存設定が残ってても上書き）
+  const stage = _kidsStageByGradeId(gradeId);
+  g.subjects = _kidsSubjectsByStage(stage);
+  g.scale = _kidsScaleByStage(stage);
+  saveData();
+  closeKidsGradesSettings();
+  openKidsGradesSettings(petId);
+  showToast('学年と教科・評定を更新したよ🌷');
+}
+window.setKidsGradeLevel = setKidsGradeLevel;
+
+function setKidsScale(petId, scaleKey) {
+  const pet = (data.pets||[]).find(p => p.id === petId);
+  if (!pet) return;
+  const g = _ensureKidsGrades(pet);
+  g.scale = scaleKey;
+  saveData();
+  closeKidsGradesSettings();
+  openKidsGradesSettings(petId);
+}
+window.setKidsScale = setKidsScale;
+
+function setKidsTermCount(petId, count) {
+  const pet = (data.pets||[]).find(p => p.id === petId);
+  if (!pet) return;
+  const g = _ensureKidsGrades(pet);
+  g.termCount = count;
+  saveData();
+  closeKidsGradesSettings();
+  openKidsGradesSettings(petId);
+}
+window.setKidsTermCount = setKidsTermCount;
+
+function resetKidsSubjects(petId) {
+  if (!confirm('教科を学年のデフォルトに戻す？追加した教科は消えるよ')) return;
+  const pet = (data.pets||[]).find(p => p.id === petId);
+  if (!pet) return;
+  const g = _ensureKidsGrades(pet);
+  const stage = _kidsStageByGradeId(g.gradeLevel);
+  g.subjects = _kidsSubjectsByStage(stage);
+  saveData();
+  closeKidsGradesSettings();
+  openKidsGradesSettings(petId);
+}
+window.resetKidsSubjects = resetKidsSubjects;
+
+function updateKidsSubject(petId, idx, newName) {
+  const pet = (data.pets||[]).find(p => p.id === petId);
+  if (!pet) return;
+  const g = _ensureKidsGrades(pet);
+  if (!newName || !newName.trim()) return;
+  g.subjects[idx] = newName.trim();
+  saveData();
+}
+window.updateKidsSubject = updateKidsSubject;
+
+function removeKidsSubject(petId, idx) {
+  const pet = (data.pets||[]).find(p => p.id === petId);
+  if (!pet) return;
+  const g = _ensureKidsGrades(pet);
+  g.subjects.splice(idx, 1);
+  saveData();
+  closeKidsGradesSettings();
+  openKidsGradesSettings(petId);
+}
+window.removeKidsSubject = removeKidsSubject;
+
+function addKidsSubject(petId) {
+  const name = prompt('追加する教科名は？');
+  if (!name || !name.trim()) return;
+  const pet = (data.pets||[]).find(p => p.id === petId);
+  if (!pet) return;
+  const g = _ensureKidsGrades(pet);
+  g.subjects.push(name.trim());
+  saveData();
+  closeKidsGradesSettings();
+  openKidsGradesSettings(petId);
+}
+window.addKidsSubject = addKidsSubject;
 
 // ===== デバッグ用：kidsGender確認＆設定 =====
 window.checkKid = function(name) {
@@ -41818,46 +42478,65 @@ window.deleteKidsTest = deleteKidsTest;
 // ===== 学期成績 =====
 function _renderKidsGradesTerms(pet, g) {
   const year = g.currentYear || new Date().getFullYear();
-  const term = getKidsGradesTermTab();
+  const termCount = g.termCount || 3;
+  let term = getKidsGradesTermTab();
+  if (term > termCount) { term = 1; data.kidsGradesTermTab = 1; }
   const termKey = year + '-' + term;
   if (!g.terms[termKey]) g.terms[termKey] = { subjects: {}, note: '' };
   const td = g.terms[termKey];
+  const scale = KIDS_GRADES_SCALES[g.scale] || KIDS_GRADES_SCALES['5'];
+  const termLabels = (termCount === 2) ? ['前期','後期'] : (termCount === 4) ? ['1Q','2Q','3Q','4Q'] : ['1学期','2学期','3学期'];
   
   let h = '';
   
   // 年度切替
   h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;background:rgba(255,255,255,0.78);border-radius:10px;padding:6px 8px;">';
-  h += '<button onclick="changeKidsGradesYear('+pet.id.split("'").join("")+',-1)" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:4px;display:inline-flex;"><span class="material-symbols-rounded" style="font-size:16px;">chevron_left</span></button>';
+  h += '<button onclick="changeKidsGradesYear(\''+pet.id+'\',-1)" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:4px;display:inline-flex;"><span class="material-symbols-rounded" style="font-size:16px;">chevron_left</span></button>';
   h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);font-variant-numeric:tabular-nums;">'+year+'年度</div>';
   h += '<button onclick="changeKidsGradesYear(\''+pet.id+'\',1)" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:4px;display:inline-flex;"><span class="material-symbols-rounded" style="font-size:16px;">chevron_right</span></button>';
   h += '</div>';
-  
-  // 学期タブ
+
+  // ===== 全学期サマリー比較表（見返し強化）=====
+  h += _renderKidsGradesYearSummary(pet, g, year, termLabels, scale);
+
+  // 学期タブ（学期数に応じて）
   h += '<div style="display:flex;gap:5px;margin-bottom:12px;">';
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= termCount; i++) {
     const isAct = term === i;
-    h += '<button onclick="setKidsGradesTermTab('+i+')" style="flex:1;padding:9px 6px;border:1.5px solid '+(isAct?'#E8729A':'var(--line)')+';background:'+(isAct?'#FFE4EC':'rgba(255,255,255,0.78)')+';color:'+(isAct?'#C2185B':'var(--ink-sub)')+';border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;">'+i+'学期</button>';
+    h += '<button onclick="setKidsGradesTermTab('+i+')" style="flex:1;padding:9px 6px;border:1.5px solid '+(isAct?'#E8729A':'var(--line)')+';background:'+(isAct?'#FFE4EC':'rgba(255,255,255,0.78)')+';color:'+(isAct?'#C2185B':'var(--ink-sub)')+';border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;">'+termLabels[i-1]+'</button>';
   }
   h += '</div>';
   
-  // 教科ごとの5段階評価
+  // 教科ごとの評定（評定段階に応じて）
   h += '<div style="background:white;border-radius:14px;padding:6px 10px;margin-bottom:12px;">';
   h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:2px solid var(--line);font-size:10px;font-weight:800;color:var(--ink-sub);letter-spacing:0.5px;"><span>教科</span><span>評定</span></div>';
   for (const sub of g.subjects) {
-    const v = (td.subjects && td.subjects[sub]) || '';
-    h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 4px;border-bottom:1px solid var(--line-soft);">';
-    h += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(sub)+'</span>';
-    h += '<select onchange="setKidsTermGrade(\''+pet.id+'\',\''+termKey+'\',\''+escapeHtml(sub).replace(/\'/g,"\\\\'")+'\',this.value)" style="padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;font-weight:800;background:#FFF6F8;color:#C2185B;cursor:pointer;min-width:60px;text-align:center;">';
-    h += '<option value="">--</option>';
-    for (let n = 5; n >= 1; n--) {
-      h += '<option value="'+n+'"'+(v == n ? ' selected' : '')+'>'+n+'</option>';
+    const v = (td.subjects && td.subjects[sub] != null) ? td.subjects[sub] : '';
+    const safeSub = escapeHtml(sub).replace(/'/g, "\\'");
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 4px;border-bottom:1px solid var(--line-soft);gap:10px;">';
+    h += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);flex-shrink:0;">'+escapeHtml(sub)+'</span>';
+    
+    // 評定タイプ別の入力UI
+    if (scale.type === 'number') {
+      h += '<div style="display:inline-flex;align-items:center;gap:4px;">';
+      h += '<input type="number" min="'+(scale.min||0)+'" max="'+(scale.max||100)+'" value="'+escapeHtml(String(v))+'" oninput="setKidsTermGrade(\''+pet.id+'\',\''+termKey+'\',\''+safeSub+'\',this.value)" placeholder="--" style="width:64px;padding:6px 8px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;font-weight:800;background:#FFF6F8;color:#C2185B;text-align:right;font-variant-numeric:tabular-nums;">';
+      if (scale.suffix) h += '<span style="font-size:10px;color:var(--ink-sub);font-weight:600;">'+scale.suffix+'</span>';
+      h += '</div>';
+    } else if (scale.type === 'text') {
+      h += '<input type="text" value="'+escapeHtml(String(v))+'" oninput="setKidsTermGrade(\''+pet.id+'\',\''+termKey+'\',\''+safeSub+'\',this.value)" placeholder="'+(scale.placeholder||'')+'" style="flex:1;max-width:200px;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:11px;font-family:inherit;background:#FFF6F8;color:var(--ink-dark);">';
+    } else {
+      h += '<select onchange="setKidsTermGrade(\''+pet.id+'\',\''+termKey+'\',\''+safeSub+'\',this.value)" style="padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;font-weight:800;background:#FFF6F8;color:#C2185B;cursor:pointer;min-width:64px;text-align:center;">';
+      h += '<option value="">--</option>';
+      for (const opt of scale.options) {
+        h += '<option value="'+opt.value+'"'+(String(v) === String(opt.value) ? ' selected' : '')+'>'+opt.label+'</option>';
+      }
+      h += '</select>';
     }
-    h += '</select>';
     h += '</div>';
   }
   h += '</div>';
   
-  h += '<div style="font-size:9px;color:var(--ink-light);text-align:center;margin-bottom:10px;">※ 5段階評価で記録</div>';
+  h += '<div style="font-size:9px;color:var(--ink-light);text-align:center;margin-bottom:10px;">※ '+scale.label+'で記録</div>';
   
   // 学期メモ
   h += '<div style="background:white;border-radius:12px;padding:12px;margin-bottom:12px;">';
@@ -41865,6 +42544,94 @@ function _renderKidsGradesTerms(pet, g) {
   h += '<textarea id="kidsTermNote_'+pet.id+'" onblur="saveKidsTermNote(\''+pet.id+'\',\''+termKey+'\',this.value)" placeholder="先生のコメント・所感など" rows="3" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;background:#FFF6F8;color:var(--ink-dark);box-sizing:border-box;resize:vertical;min-height:60px;">'+escapeHtml(td.note||'')+'</textarea>';
   h += '</div>';
   
+  return h;
+}
+
+// ===== 全学期サマリー比較表（見返し強化）=====
+function _renderKidsGradesYearSummary(pet, g, year, termLabels, scale) {
+  const termCount = g.termCount || 3;
+  // 各学期のデータがあるかチェック
+  let hasAnyData = false;
+  for (let i = 1; i <= termCount; i++) {
+    const tk = year + '-' + i;
+    if (g.terms[tk] && g.terms[tk].subjects && Object.keys(g.terms[tk].subjects).length > 0) {
+      hasAnyData = true; break;
+    }
+  }
+  if (!hasAnyData) return ''; // データなしなら表示しない（折りたたみ不要）
+  
+  // 折りたたみ状態
+  const collapseKey = '_kidsSummaryCollapsed_' + pet.id;
+  const isCollapsed = window[collapseKey] !== false; // デフォルト閉じる
+  
+  let h = '<div style="background:white;border-radius:12px;padding:8px 10px;margin-bottom:10px;border:1.5px solid #FFE4EC;">';
+  h += '<button onclick="window.'+collapseKey+'='+isCollapsed+';_suppressScrollTop=true;render();" style="width:100%;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;padding:4px 2px;">';
+  h += '<span style="font-size:11px;font-weight:800;color:#C2185B;display:inline-flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:15px;">analytics</span>学期比較</span>';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-sub);">'+(isCollapsed?'expand_more':'expand_less')+'</span>';
+  h += '</button>';
+  
+  if (!isCollapsed) {
+    // 比較テーブル：教科×学期
+    h += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px;">';
+    h += '<table style="width:100%;border-collapse:collapse;font-size:11px;">';
+    h += '<thead><tr>';
+    h += '<th style="padding:6px 4px;text-align:left;font-size:10px;font-weight:800;color:var(--ink-sub);border-bottom:2px solid var(--line);position:sticky;left:0;background:white;">教科</th>';
+    for (let i = 1; i <= termCount; i++) {
+      h += '<th style="padding:6px 4px;text-align:center;font-size:10px;font-weight:800;color:var(--ink-sub);border-bottom:2px solid var(--line);min-width:48px;">'+termLabels[i-1]+'</th>';
+    }
+    // 推移列（数値型のみ）
+    if (scale.type !== 'text') {
+      h += '<th style="padding:6px 4px;text-align:center;font-size:10px;font-weight:800;color:var(--ink-sub);border-bottom:2px solid var(--line);min-width:30px;">推移</th>';
+    }
+    h += '</tr></thead>';
+    h += '<tbody>';
+    
+    for (const sub of g.subjects) {
+      h += '<tr>';
+      h += '<td style="padding:7px 4px;font-size:11px;font-weight:700;color:var(--ink-dark);border-bottom:1px solid var(--line-soft);position:sticky;left:0;background:white;">'+escapeHtml(sub)+'</td>';
+      const values = [];
+      for (let i = 1; i <= termCount; i++) {
+        const tk = year + '-' + i;
+        const v = (g.terms[tk] && g.terms[tk].subjects) ? g.terms[tk].subjects[sub] : null;
+        values.push(v);
+        // セルの色付け
+        let cellColor = 'var(--ink-light)';
+        let cellBg = 'transparent';
+        if (v != null && v !== '') {
+          if (scale.options) {
+            const opt = scale.options.find(o => String(o.value) === String(v));
+            if (opt) { cellColor = opt.color; cellBg = opt.color + '18'; }
+          } else if (scale.type === 'number') {
+            cellColor = '#C2185B';
+            cellBg = '#FFE4EC';
+          } else if (scale.type === 'text') {
+            cellColor = 'var(--ink-dark)';
+          }
+        }
+        const dispV = (v == null || v === '') ? '–' : (scale.type === 'text' ? '✓' : v);
+        h += '<td style="padding:7px 4px;text-align:center;border-bottom:1px solid var(--line-soft);"><span style="display:inline-flex;align-items:center;justify-content:center;min-width:28px;padding:3px 8px;background:'+cellBg+';color:'+cellColor+';border-radius:8px;font-weight:800;font-size:12px;font-variant-numeric:tabular-nums;">'+dispV+'</span></td>';
+      }
+      // 推移矢印（数値型）
+      if (scale.type !== 'text') {
+        let arrow = '–';
+        let arrowColor = 'var(--ink-light)';
+        const numVals = values.filter(v => v != null && v !== '' && !isNaN(parseFloat(v))).map(v => parseFloat(v));
+        if (numVals.length >= 2) {
+          const first = numVals[0];
+          const last = numVals[numVals.length - 1];
+          if (last > first) { arrow = '↑'; arrowColor = '#74C5A4'; }
+          else if (last < first) { arrow = '↓'; arrowColor = '#E57373'; }
+          else { arrow = '→'; arrowColor = 'var(--ink-sub)'; }
+        }
+        h += '<td style="padding:7px 4px;text-align:center;border-bottom:1px solid var(--line-soft);font-size:14px;font-weight:800;color:'+arrowColor+';">'+arrow+'</td>';
+      }
+      h += '</tr>';
+    }
+    h += '</tbody></table>';
+    h += '</div>';
+  }
+  
+  h += '</div>';
   return h;
 }
 
@@ -41887,7 +42654,9 @@ function setKidsTermGrade(petId, termKey, subject, value) {
   if (value === '' || value === null) {
     delete g.terms[termKey].subjects[subject];
   } else {
-    g.terms[termKey].subjects[subject] = parseInt(value, 10);
+    // 数値スケールならparseInt、abc等の文字列スケールならそのまま
+    const n = parseInt(value, 10);
+    g.terms[termKey].subjects[subject] = isNaN(n) ? value : n;
   }
   saveData();
 }
