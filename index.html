@@ -2886,6 +2886,10 @@
     50%  { opacity:1; transform:translate(-50%,-50%) scale(1.0); }
     100% { opacity:0; transform:translate(-50%,-150%) scale(0.8); }
   }
+  @keyframes spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
   .town-main-tabs::after {
     content:''; position:absolute; top:0; left:0; right:0;
     height:2px; background:var(--line-soft); z-index:0;
@@ -26598,10 +26602,25 @@ async function _syncPetGallerieToFirestore(petId) {
     const profilePhoto = pet.profilePhotoId && photos[pet.profilePhotoId]
       ? (typeof photos[pet.profilePhotoId] === 'string' && !photos[pet.profilePhotoId].startsWith('data:')
         ? photos[pet.profilePhotoId] : '') : '';
+    // 管理にこわID（あれば）から所有者カードのにこわIDを引く
+    let _ownerNikowaId = '';
+    if (pet.managedByCardId && data.myProfiles) {
+      const _card = data.myProfiles.find(c => c.id === pet.managedByCardId);
+      if (_card) _ownerNikowaId = _card.nikowaId || '';
+    }
     await db.collection('petGalleries').doc(petId).set({
       ownerUid: currentUser.uid,
+      ownerNikowaId: _ownerNikowaId,
       petName: pet.name || '',
       petType: pet.type || '',
+      breed: pet.breed || '',
+      birth: pet.birth || '',
+      rainbowDate: pet.rainbowDate || '',
+      place: pet.place || 'home',
+      kidsGender: pet.kidsGender || '',
+      cardDesign: pet.cardDesign || null,
+      bouquetCount: pet.bouquetCount || 0,
+      cakeCount: pet.cakeCount || 0,
       profilePhoto: profilePhoto,
       recentCare: recentCare,
       albumPhotoIds: albumPhotoIds,
@@ -28584,8 +28603,9 @@ let editingFacilityId = null;
 let selectedFacilityCategory = 'hospital';
 let townSearchQuery = '';
 let townCategoryFilter = 'all';
-let townMainTab = 'search';    // 'search' | 'town' | 'book' | 'board'
+let townMainTab = 'search';    // 'search' | 'town' | 'book' | 'board' | 'rainbow'(=アニマル)
 let townSubTab  = 'search'; // 'search' | 'transit' | 'fav' （「探す」タブ内のサブタブ）
+let townAnimalSubTab = 'all'; // 'all' | 'birthday' | 'memorial' （アニマルタブ内のサブタブ）
 let placesSelCat = '';
 let placesText = '';
 let placesResults = [];
@@ -30160,7 +30180,7 @@ const TOWN_MAIN_TABS = [
   { id: 'town',    icon: '🏙', label: '街歩き' },
   { id: 'book',    icon: '📚', label: '本屋' },
   { id: 'board',   icon: '📋', label: '掲示板' },
-  { id: 'rainbow', icon: '🌈', label: '虹の橋' },
+  { id: 'rainbow', icon: '🐾', label: 'アニマル' },
 ];
 
 // ====================================================
@@ -30452,13 +30472,14 @@ function renderShopProfileEdit(shop) {
   if (!shop.snsLinks) shop.snsLinks = [];
   if (!shop.contact) shop.contact = {};
   let h = '<div style="display:flex;flex-direction:column;gap:14px;">';
-  // にこわID + 招待ボタン
+  // にこわID + 招待ボタン + 管理IDセレクト
   if (shop.nikowaId) {
     h += '<div style="display:flex;align-items:center;justify-content:space-between;background:#f5f5f8;border:1px solid var(--line);border-radius:8px;padding:8px 10px;">';
     h += '<div><div style="font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1px;">にこわID</div>';
     h += '<div style="font-size:13px;font-weight:800;color:var(--accent-deep);">' + escapeHtml(shop.nikowaId) + '</div></div>';
     h += '<button onclick="navigator.clipboard.writeText(\'' + escapeHtml(shop.nikowaId) + '\').then(()=>showToast(\'コピーしたよ🌷\'))" style="padding:4px 10px;background:var(--accent);color:white;border:none;border-radius:7px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">📋</button>';
     h += '</div>';
+    h += _renderManageCardSelect('shop', shop.id, shop.managedByCardId);
     h += '<button onclick="openHouseInviteModal(\'shop\',\'' + shop.id + '\',\'' + escapeHtml(shop.nikowaId) + '\')" style="width:100%;padding:9px;background:var(--surface-warm);border:1.5px dashed var(--accent);border-radius:9px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent-deep);display:flex;align-items:center;justify-content:center;gap:5px;">'
       + '<span class="material-symbols-rounded" style="font-size:14px;">person_add</span>メンバーを招待</button>';
   }
@@ -33208,123 +33229,299 @@ function renderTown() {
 
   // ── 虹の橋タブ
   if (townMainTab === 'rainbow') {
-    // 虹の橋のペット（kidsGenderなし）と星のひろばの子（kidsGenderあり）
-    const rainbowPets = (data.pets || []).filter(p => p.place === 'rainbow' && !p.kidsGender);
-    const starKids   = (data.pets || []).filter(p => p.place === 'rainbow' && p.kidsGender);
+    // 自分のペット
+    const myPets = (data.pets || []).filter(p => !p.archived);
+    // 世界のペット（キャッシュから）。初回は非同期取得を発火
+    if (currentUser && db) {
+      if (!globalPetsCache && !globalPetsLoading) {
+        fetchGlobalPets().then(() => renderTown());
+      }
+    }
+    const globalList = globalPetsCache || [];
+    // 自分のペットIDセットで重複除去
+    const myPetIds = new Set(myPets.map(p => p.id));
+    const otherGlobal = globalList.filter(p => !myPetIds.has(p.id));
+
+    // 全体（自分の生データ + 他人の世界データ）を統合した一覧
+    // 自分のは「ローカル形式」、他人は「グローバル形式」のまま。共通のフィールドは name/birth/rainbowDate/place/kidsGender/breed/cardDesign/bouquetCount/cakeCount/profilePhoto(URL)
+    // 自分のローカルペットを「描画用オブジェクト」に変換
+    const _myPetsView = myPets.map(p => ({
+      id: p.id,
+      name: p.name || '',
+      type: p.type || '',
+      breed: p.breed || '',
+      birth: p.birth || '',
+      rainbowDate: p.rainbowDate || '',
+      place: p.place || 'home',
+      kidsGender: p.kidsGender || '',
+      cardDesign: p.cardDesign || null,
+      profilePhotoLocal: (p.profilePhotoId && photos[p.profilePhotoId]) ? photos[p.profilePhotoId] : '',
+      profilePhoto: '',
+      bouquetCount: p.bouquetCount || 0,
+      cakeCount: p.cakeCount || 0,
+      _isGlobal: false,
+      _isMine: true
+    }));
+    const allView = [..._myPetsView, ...otherGlobal];
+
+    // 今日の月日
+    const _today = new Date();
+    const _todayMM = _today.getMonth() + 1;
+    const _todayDD = _today.getDate();
+    const _matchTodayMD = (dateStr) => {
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return false;
+      return (d.getMonth()+1) === _todayMM && d.getDate() === _todayDD;
+    };
+
+    const livingAll  = allView.filter(p => p.place !== 'rainbow');
+    const rainbowAll = allView.filter(p => p.place === 'rainbow');
+    const birthdayToday = livingAll.filter(p => _matchTodayMD(p.birth));
+    const memorialToday = rainbowAll.filter(p => _matchTodayMD(p.rainbowDate));
+
+    // 描画ヘルパー
+    const _renderAvatar = (p, size) => {
+      const cd = p.cardDesign || { color:'#FFB6C1', pattern:'flower' };
+      const c = cd.color;
+      const _isKid = !!p.kidsGender;
+      const _ms = _isKid ? (PET_MS_ICONS[p.kidsGender] || PET_MS_ICONS.boy) : (PET_MS_ICONS[p.type] || PET_MS_ICONS.other);
+      const photoSrc = p.profilePhotoLocal || p.profilePhoto || '';
+      if (photoSrc) {
+        return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:url('+photoSrc+') center/cover;border:2px solid '+c+';flex-shrink:0;"></div>';
+      }
+      return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;'+_getCardPatternBg(c, cd.pattern, size*0.6)+'display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid '+c+';">'
+        + '<span class="material-symbols-rounded" style="font-size:'+Math.round(size*0.5)+'px;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.3);">'+_ms.icon+'</span></div>';
+    };
 
     // ヘッダー
-    html += '<div style="padding:18px 16px 12px;text-align:center;background:linear-gradient(135deg,#FFE5EC 0%,#E5D4F1 50%,#C7DFF7 100%);border-radius:0 0 16px 16px;margin-bottom:14px;">';
-    html += '<div style="font-size:36px;margin-bottom:4px;">🌈</div>';
-    html += '<div style="font-size:14px;font-weight:900;color:var(--ink-dark);margin-bottom:4px;">虹の橋・星のひろば</div>';
-    html += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.7;">旅立った子たちに、お花をそえましょう🌷</div>';
+    html += '<div style="padding:18px 16px 12px;text-align:center;background:linear-gradient(135deg,#FFE5EC 0%,#E5D4F1 50%,#C7DFF7 100%);border-radius:0 0 16px 16px;margin-bottom:10px;">';
+    html += '<div style="font-size:36px;margin-bottom:4px;">🐾</div>';
+    html += '<div style="font-size:14px;font-weight:900;color:var(--ink-dark);margin-bottom:4px;">アニマル</div>';
+    html += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.7;">あの日もちゃんと生きてた、その記録たちへ</div>';
     html += '</div>';
 
-    // 虹の橋セクション（ペット）
-    if (rainbowPets.length > 0) {
-      html += '<div style="padding:0 16px 18px;">';
-      html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;display:flex;align-items:center;gap:5px;"><span style="font-size:18px;">🌈</span>虹の橋にわたった子たち <span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 8px;border-radius:100px;font-weight:700;">'+rainbowPets.length+'匹</span></div>';
-      
-      // 日付別にグループ化（updatedAtを虹の橋に行った日として扱う）
-      const grouped = {};
-      for (const p of rainbowPets) {
-        const d = new Date(p.updatedAt || p.createdAt || Date.now());
-        const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-        if (!grouped[key]) grouped[key] = { date: d, pets: [] };
-        grouped[key].pets.push(p);
+    // サブタブ
+    html += '<div style="display:flex;gap:6px;padding:0 12px 12px;overflow-x:auto;">';
+    const _animalSubTabs = [
+      { id: 'all',      label: 'みんな',   icon: 'pets',  count: allView.length },
+      { id: 'birthday', label: '誕生日',   icon: 'cake',  count: birthdayToday.length },
+      { id: 'memorial', label: '命日',     icon: 'local_florist', count: memorialToday.length },
+    ];
+    for (const t of _animalSubTabs) {
+      const _active = townAnimalSubTab === t.id;
+      const _badgeBg = _active ? 'rgba(255,255,255,0.4)' : 'var(--accent-bg)';
+      const _badgeColor = _active ? 'white' : 'var(--accent-deep)';
+      html += '<button onclick="setTownAnimalSubTab(\''+t.id+'\')" style="flex:1;min-width:90px;padding:10px 8px;border-radius:12px;border:1.5px solid '+(_active?'var(--accent)':'var(--line)')+';background:'+(_active?'var(--accent)':'white')+';color:'+(_active?'white':'var(--ink-dark)')+';font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;">';
+      html += '<span class="material-symbols-rounded" style="font-size:18px;">'+t.icon+'</span>';
+      html += '<span>'+t.label+'</span>';
+      if (t.count > 0 && t.id !== 'all') {
+        html += '<span style="position:absolute;top:4px;right:6px;background:'+_badgeBg+';color:'+_badgeColor+';font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 4px;">'+t.count+'</span>';
       }
-      const sortedKeys = Object.keys(grouped).sort().reverse();
-      
-      for (const k of sortedKeys) {
-        const g = grouped[k];
-        const dStr = g.date.getFullYear()+'年'+(g.date.getMonth()+1)+'月'+g.date.getDate()+'日';
-        // 経過日数
-        const daysAgo = Math.floor((Date.now() - g.date.getTime()) / (24*60*60*1000));
-        html += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin:8px 0 6px;padding-left:4px;">'+dStr+' に旅立った子たち <span style="font-size:9.5px;color:var(--ink-light);">('+daysAgo+'日前)</span></div>';
-        for (const p of g.pets) {
+      html += '</button>';
+    }
+    html += '</div>';
+
+    // ローディング表示（みんなタブで取得中のとき）
+    const _showLoading = globalPetsLoading && !globalPetsCache;
+
+    // ===== みんなタブ =====
+    if (townAnimalSubTab === 'all') {
+      if (_showLoading) {
+        html += '<div style="padding:48px 24px;text-align:center;">';
+        html += '<span class="material-symbols-rounded" style="font-size:38px;color:var(--accent);animation:spin 1s linear infinite;">refresh</span>';
+        html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:8px;">世界のペットを読み込み中…</div>';
+        html += '</div>';
+      } else if (allView.length === 0) {
+        html += '<div style="padding:48px 24px 60px;text-align:center;">';
+        html += '<div style="font-size:48px;margin-bottom:12px;">🐾</div>';
+        html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:6px;">まだ登録されてる子がいないよ</div>';
+        html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;">PETモード・KIDSモードから家族をむかえてね</div>';
+        html += '</div>';
+      } else {
+        // ▼ 世界のペット（スライド：今は横スクロールで表示）
+        const _worldLiving = livingAll;
+        if (_worldLiving.length > 0) {
+          html += '<div style="padding:0 0 14px;">';
+          html += '<div style="padding:0 16px;font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--mint-deep);">public</span>世界のおうちの子 <span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 8px;border-radius:100px;font-weight:700;">'+_worldLiving.length+'</span></div>';
+          // 横スクロール
+          html += '<div style="display:flex;gap:10px;overflow-x:auto;padding:4px 16px 8px;scrollbar-width:thin;">';
+          for (const p of _worldLiving) {
+            const cd = p.cardDesign || { color:'#FFB6C1', pattern:'flower' };
+            html += '<div style="flex-shrink:0;width:96px;background:white;border:1.5px solid '+cd.color+'66;border-radius:14px;padding:10px 6px;text-align:center;">';
+            html += _renderAvatar(p, 64).replace('width:64px;height:64px', 'width:64px;height:64px;margin:0 auto 6px');
+            html += '<div style="font-size:11px;font-weight:800;color:var(--ink-dark);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escapeHtml(p.name||'')+'</div>';
+            if (p.breed || p.type) html += '<div style="font-size:9px;color:var(--ink-sub);margin-top:2px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escapeHtml((p.breed||PET_TYPE_NAMES[p.type]||'').slice(0,8))+'</div>';
+            if (p._isMine) html += '<div style="font-size:8.5px;color:var(--mint-deep);margin-top:2px;font-weight:700;">じぶんの子</div>';
+            html += '</div>';
+          }
+          html += '</div></div>';
+        }
+        // ▼ 旅立った子
+        const _worldRainbow = rainbowAll;
+        if (_worldRainbow.length > 0) {
+          html += '<div style="padding:0 0 18px;">';
+          html += '<div style="padding:0 16px;font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--soft-purple);">filter_drama</span>旅立った子たち <span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 8px;border-radius:100px;font-weight:700;">'+_worldRainbow.length+'</span></div>';
+          html += '<div style="display:flex;gap:10px;overflow-x:auto;padding:4px 16px 8px;">';
+          for (const p of _worldRainbow) {
+            const cd = p.cardDesign || { color:'#FFB6C1', pattern:'flower' };
+            html += '<div style="flex-shrink:0;width:96px;background:white;border:1.5px solid '+cd.color+'55;border-radius:14px;padding:10px 6px;text-align:center;opacity:0.85;">';
+            html += _renderAvatar(p, 64).replace('width:64px;height:64px', 'width:64px;height:64px;margin:0 auto 6px');
+            html += '<div style="font-size:11px;font-weight:800;color:var(--ink-dark);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escapeHtml(p.name||'')+'</div>';
+            html += '<div style="font-size:10px;color:var(--ink-light);margin-top:2px;">'+(p.kidsGender?'⭐':'🌈')+'</div>';
+            html += '</div>';
+          }
+          html += '</div></div>';
+        }
+        // 更新ボタン
+        html += '<div style="text-align:center;padding:8px 16px 20px;">';
+        html += '<button onclick="fetchGlobalPets(true).then(()=>renderTown())" style="padding:8px 16px;background:white;border:1px solid var(--line);border-radius:100px;font-family:inherit;font-size:11px;color:var(--ink-sub);cursor:pointer;display:inline-flex;align-items:center;gap:5px;">';
+        html += '<span class="material-symbols-rounded" style="font-size:14px;">refresh</span>世界の子をさいしんに</button>';
+        html += '</div>';
+      }
+    }
+
+    // ===== 誕生日タブ =====
+    if (townAnimalSubTab === 'birthday') {
+      const _todayDateStr = _todayMM+'月'+_todayDD+'日';
+      html += '<div style="padding:0 16px 14px;">';
+      html += '<div style="text-align:center;padding:20px 12px 24px;background:linear-gradient(135deg,#FFF4E5,#FFE5EC);border-radius:14px;margin-bottom:14px;">';
+      html += '<span class="material-symbols-rounded" style="font-size:40px;color:#E88AA0;">cake</span>';
+      html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-top:6px;">'+_todayDateStr+' お誕生日の子</div>';
+      html += '</div>';
+
+      if (_showLoading) {
+        html += '<div style="padding:24px;text-align:center;"><span class="material-symbols-rounded" style="font-size:32px;color:var(--accent);animation:spin 1s linear infinite;">refresh</span><div style="font-size:10px;color:var(--ink-sub);margin-top:6px;">読み込み中…</div></div>';
+      } else if (birthdayToday.length === 0) {
+        html += '<div style="padding:36px 24px;text-align:center;background:white;border:1px dashed var(--line);border-radius:14px;">';
+        html += '<span class="material-symbols-rounded" style="font-size:42px;color:var(--ink-light);">cake</span>';
+        html += '<div style="font-size:12px;color:var(--ink-sub);margin-top:8px;line-height:1.7;">今日が誕生日の子はいないみたい<br>明日もチェックしてみてね🌷</div>';
+        html += '</div>';
+      } else {
+        for (const p of birthdayToday) {
           const cd = p.cardDesign || { color:'#FFB6C1', pattern:'flower' };
           const c = cd.color;
-          const profilePhoto = p.profilePhotoId && photos[p.profilePhotoId];
-          const _ms = PET_MS_ICONS[p.type] || PET_MS_ICONS.other;
-          const bouquets = p.bouquetCount || 0;
-          html += '<div style="background:white;border:1.5px solid '+c+'55;border-radius:14px;padding:11px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;">';
-          // アイコン
-          if (profilePhoto) {
-            html += '<div style="width:48px;height:48px;border-radius:50%;background:url('+profilePhoto+') center/cover;border:2px solid '+c+';flex-shrink:0;"></div>';
-          } else {
-            html += '<div style="width:48px;height:48px;border-radius:50%;'+_getCardPatternBg(c, cd.pattern, 30)+'display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid '+c+';">';
-            html += '<span class="material-symbols-rounded" style="font-size:24px;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.3);">'+_ms.icon+'</span></div>';
+          // 何歳か
+          let _age = '';
+          if (p.birth) {
+            const b = new Date(p.birth);
+            const yr = _today.getFullYear() - b.getFullYear();
+            if (yr >= 0) _age = yr + '才';
           }
-          // 情報
+          const cakes = p.cakeCount || 0;
+          const _clickFn = p._isMine ? ('giveCake(\''+p.id+'\')') : ('giveCakeGlobal(\''+p.id+'\')');
+          html += '<div style="background:linear-gradient(135deg,white,#FFF8FA);border:1.5px solid '+c+'77;border-radius:14px;padding:13px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(232,138,160,0.12);">';
+          html += _renderAvatar(p, 54);
           html += '<div style="flex:1;min-width:0;">';
-          html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.name||'')+'</div>';
+          html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.name||'')+(_age?' <span style="font-size:11px;color:'+c+';">'+_age+'</span>':'')+'</div>';
           if (p.breed || p.type) html += '<div style="font-size:10px;color:var(--ink-sub);">'+escapeHtml(p.breed || PET_TYPE_NAMES[p.type] || '')+'</div>';
-          if (bouquets > 0) html += '<div style="font-size:9.5px;color:'+c+';font-weight:700;margin-top:2px;">🌷 '+bouquets+' 人がお花をそえました</div>';
+          if (p._isMine) html += '<div style="font-size:9px;color:var(--mint-deep);font-weight:700;margin-top:1px;">じぶんの子</div>';
+          if (cakes > 0) html += '<div style="font-size:9.5px;color:'+c+';font-weight:700;margin-top:2px;">🎂 '+cakes+' 人</div>';
           html += '</div>';
-          // 花束ボタン
-          html += '<button onclick="giveBouquet(\''+p.id+'\')" style="background:linear-gradient(135deg,#FFB6C1,#FFC0CB);color:white;border:none;border-radius:100px;padding:8px 14px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0;box-shadow:0 2px 6px rgba(255,182,193,0.4);">';
-          html += '<span style="font-size:14px;">🌷</span>お花をそえる</button>';
+          html += '<button onclick="'+_clickFn+'" style="background:linear-gradient(135deg,#FFD6E0,#FFB6C1);color:white;border:none;border-radius:100px;padding:9px 14px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0;box-shadow:0 2px 6px rgba(255,182,193,0.5);">';
+          html += '<span style="font-size:14px;">🎂</span>ケーキ</button>';
           html += '</div>';
         }
       }
       html += '</div>';
     }
 
-    // 星のひろばセクション（KIDS）
-    if (starKids.length > 0) {
+    // ===== 命日タブ =====
+    if (townAnimalSubTab === 'memorial') {
       html += '<div style="padding:0 16px 18px;">';
-      html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;display:flex;align-items:center;gap:5px;"><span style="font-size:18px;">⭐</span>星のひろばの子 <span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 8px;border-radius:100px;font-weight:700;">'+starKids.length+'人</span></div>';
-      
-      const groupedK = {};
-      for (const p of starKids) {
-        const d = new Date(p.updatedAt || p.createdAt || Date.now());
-        const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-        if (!groupedK[key]) groupedK[key] = { date: d, pets: [] };
-        groupedK[key].pets.push(p);
-      }
-      const sortedKK = Object.keys(groupedK).sort().reverse();
-      
-      for (const k of sortedKK) {
-        const g = groupedK[k];
-        const dStr = g.date.getFullYear()+'年'+(g.date.getMonth()+1)+'月'+g.date.getDate()+'日';
-        const daysAgo = Math.floor((Date.now() - g.date.getTime()) / (24*60*60*1000));
-        html += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin:8px 0 6px;padding-left:4px;">'+dStr+' に星になった子 <span style="font-size:9.5px;color:var(--ink-light);">('+daysAgo+'日前)</span></div>';
-        for (const p of g.pets) {
-          const cd = p.cardDesign || { color:'#C7DFF7', pattern:'star' };
+      // 今日が命日の子（強調表示）
+      if (memorialToday.length > 0) {
+        const _todayDateStr = _todayMM+'月'+_todayDD+'日';
+        html += '<div style="text-align:center;padding:18px 12px;background:linear-gradient(135deg,#FFF0F5,#E5D4F1);border-radius:14px;margin-bottom:14px;border:1.5px solid #E5C4D6;">';
+        html += '<span class="material-symbols-rounded" style="font-size:36px;color:#B87BA8;">local_florist</span>';
+        html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-top:4px;">'+_todayDateStr+' 命日の子</div>';
+        html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:3px;">大切な家族にお花をそえましょう</div>';
+        html += '</div>';
+        for (const p of memorialToday) {
+          const cd = p.cardDesign || { color:'#FFB6C1', pattern:'flower' };
           const c = cd.color;
-          const profilePhoto = p.profilePhotoId && photos[p.profilePhotoId];
-          const _ms = PET_MS_ICONS[p.kidsGender] || PET_MS_ICONS.boy;
+          const _isKid = !!p.kidsGender;
           const bouquets = p.bouquetCount || 0;
-          html += '<div style="background:white;border:1.5px solid '+c+'55;border-radius:14px;padding:11px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;">';
-          if (profilePhoto) {
-            html += '<div style="width:48px;height:48px;border-radius:50%;background:url('+profilePhoto+') center/cover;border:2px solid '+c+';flex-shrink:0;"></div>';
-          } else {
-            html += '<div style="width:48px;height:48px;border-radius:50%;'+_getCardPatternBg(c, cd.pattern, 30)+'display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid '+c+';">';
-            html += '<span class="material-symbols-rounded" style="font-size:24px;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.3);">'+_ms.icon+'</span></div>';
+          let _yearsAgo = '';
+          if (p.rainbowDate) {
+            const r = new Date(p.rainbowDate);
+            const yr = _today.getFullYear() - r.getFullYear();
+            if (yr > 0) _yearsAgo = yr + '年前';
+            else if (yr === 0) _yearsAgo = '今年';
           }
+          const _clickFn = p._isMine ? ('giveBouquet(\''+p.id+'\','+(_isKid?'true':'false')+')') : ('giveBouquetGlobal(\''+p.id+'\','+(_isKid?'true':'false')+')');
+          html += '<div style="background:linear-gradient(135deg,white,#FAF5FA);border:1.5px solid '+c+'77;border-radius:14px;padding:13px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(184,123,168,0.12);">';
+          html += _renderAvatar(p, 54);
           html += '<div style="flex:1;min-width:0;">';
-          html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.name||'')+'</div>';
-          if (bouquets > 0) html += '<div style="font-size:9.5px;color:'+c+';font-weight:700;margin-top:2px;">⭐ '+bouquets+' 人が星をおくりました</div>';
+          html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.name||'')+(_yearsAgo?' <span style="font-size:10px;color:var(--ink-sub);">('+_yearsAgo+')</span>':'')+'</div>';
+          if (p.breed || p.type) html += '<div style="font-size:10px;color:var(--ink-sub);">'+escapeHtml(p.breed || PET_TYPE_NAMES[p.type] || '')+'</div>';
+          if (p._isMine) html += '<div style="font-size:9px;color:var(--mint-deep);font-weight:700;margin-top:1px;">じぶんの子</div>';
+          if (bouquets > 0) html += '<div style="font-size:9.5px;color:'+c+';font-weight:700;margin-top:2px;">🌷 '+bouquets+' 人</div>';
           html += '</div>';
-          html += '<button onclick="giveBouquet(\''+p.id+'\',true)" style="background:linear-gradient(135deg,#C7DFF7,#A5C7F0);color:white;border:none;border-radius:100px;padding:8px 14px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0;box-shadow:0 2px 6px rgba(199,223,247,0.4);">';
-          html += '<span style="font-size:14px;">⭐</span>星をおくる</button>';
+          html += '<button onclick="'+_clickFn+'" style="background:linear-gradient(135deg,'+(_isKid?'#C7DFF7,#A5C7F0':'#FFB6C1,#FFC0CB')+');color:white;border:none;border-radius:100px;padding:9px 14px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0;box-shadow:0 2px 6px rgba(255,182,193,0.4);">';
+          html += '<span style="font-size:14px;">'+(_isKid?'⭐':'🌷')+'</span>'+(_isKid?'星':'お花');
+          html += '</button>';
           html += '</div>';
         }
       }
-      html += '</div>';
-    }
 
-    // どちらも0件の時
-    if (rainbowPets.length === 0 && starKids.length === 0) {
-      html += '<div style="padding:48px 24px 60px;text-align:center;">';
-      html += '<div style="font-size:48px;margin-bottom:12px;">🌈</div>';
-      html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:6px;">まだ虹の橋・星のひろばに子はいないよ</div>';
-      html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;">大切な家族の旅立ちは、PETモードまたはKIDSモードの<br>個別ページから「虹の橋に送る」「星になる」が選べるよ</div>';
+      // これまでに旅立った子（時系列）
+      if (rainbowAll.length === 0) {
+        if (memorialToday.length === 0) {
+          html += '<div style="padding:48px 24px 60px;text-align:center;">';
+          html += '<span class="material-symbols-rounded" style="font-size:48px;color:var(--ink-light);">local_florist</span>';
+          html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-top:8px;margin-bottom:6px;">まだ命日の記録がないよ</div>';
+          html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;">PETモード・KIDSモードの個別ページから<br>「虹の橋に送る」「星になる」が選べるよ</div>';
+          html += '</div>';
+        }
+      } else {
+        // 日付別グループ化
+        const grouped = {};
+        for (const p of rainbowAll) {
+          const dateStr = p.rainbowDate;
+          if (!dateStr) continue;
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) continue;
+          const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+          if (!grouped[key]) grouped[key] = { date: d, pets: [] };
+          grouped[key].pets.push(p);
+        }
+        const sortedKeys = Object.keys(grouped).sort().reverse();
+        if (sortedKeys.length > 0) {
+          html += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin:14px 0 8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-sub);">history</span>これまでに旅立った子たち</div>';
+          for (const k of sortedKeys) {
+            const g = grouped[k];
+            const dStr = g.date.getFullYear()+'年'+(g.date.getMonth()+1)+'月'+g.date.getDate()+'日';
+            const daysAgo = Math.floor((Date.now() - g.date.getTime()) / (24*60*60*1000));
+            html += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin:8px 0 6px;padding-left:4px;">'+dStr+' に旅立った子 <span style="font-size:9.5px;color:var(--ink-light);">('+daysAgo+'日前)</span></div>';
+            for (const p of g.pets) {
+              const cd = p.cardDesign || { color:'#FFB6C1', pattern:'flower' };
+              const c = cd.color;
+              const _isKid = !!p.kidsGender;
+              const bouquets = p.bouquetCount || 0;
+              const _clickFn = p._isMine ? ('giveBouquet(\''+p.id+'\','+(_isKid?'true':'false')+')') : ('giveBouquetGlobal(\''+p.id+'\','+(_isKid?'true':'false')+')');
+              html += '<div style="background:white;border:1.5px solid '+c+'55;border-radius:14px;padding:11px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;">';
+              html += _renderAvatar(p, 48);
+              html += '<div style="flex:1;min-width:0;">';
+              html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(p.name||'')+'</div>';
+              if (p.breed || p.type) html += '<div style="font-size:10px;color:var(--ink-sub);">'+escapeHtml(p.breed || PET_TYPE_NAMES[p.type] || '')+'</div>';
+              if (bouquets > 0) html += '<div style="font-size:9.5px;color:'+c+';font-weight:700;margin-top:2px;">'+(_isKid?'⭐':'🌷')+' '+bouquets+'</div>';
+              html += '</div>';
+              html += '<button onclick="'+_clickFn+'" style="background:linear-gradient(135deg,'+(_isKid?'#C7DFF7,#A5C7F0':'#FFB6C1,#FFC0CB')+');color:white;border:none;border-radius:100px;padding:8px 14px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0;box-shadow:0 2px 6px rgba(255,182,193,0.4);">';
+              html += '<span style="font-size:14px;">'+(_isKid?'⭐':'🌷')+'</span>'+(_isKid?'星をおくる':'お花をそえる');
+              html += '</button>';
+              html += '</div>';
+            }
+          }
+        }
+      }
       html += '</div>';
     }
 
     document.getElementById('app').innerHTML = html;
     return;
   }
+
   
   document.getElementById('app').innerHTML = html;
   
@@ -39068,7 +39265,7 @@ function openEditHouseModal(houseId) {
   document.getElementById('editHouseNameInput').value = h.name;
   selectedHouseIcon = h.icon || '🏡';
   renderHouseIconRow('editHouseIconRow', selectedHouseIcon);
-  // にこわID + 招待ボタン
+  // にこわID + 招待ボタン + 管理IDセレクト
   const nikowaRow = document.getElementById('editHouseNikowaIdRow');
   if (nikowaRow && h.nikowaId) {
     nikowaRow.innerHTML =
@@ -39077,6 +39274,7 @@ function openEditHouseModal(houseId) {
       + '<div style="font-size:13px;font-weight:800;color:var(--accent-deep);">' + escapeHtml(h.nikowaId) + '</div></div>'
       + '<button onclick="navigator.clipboard.writeText(\'' + escapeHtml(h.nikowaId) + '\').then(()=>showToast(\'コピーしたよ🌷\'))" style="padding:4px 10px;background:var(--accent);color:white;border:none;border-radius:7px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">📋</button>'
       + '</div>'
+      + _renderManageCardSelect('house', houseId, h.managedByCardId)
       + '<button onclick="openHouseInviteModal(\'house\',\'' + houseId + '\',\'' + escapeHtml(h.nikowaId) + '\')" style="width:100%;padding:9px;background:var(--surface-warm);border:1.5px dashed var(--accent);border-radius:9px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent-deep);display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:8px;">'
       + '<span class="material-symbols-rounded" style="font-size:14px;">person_add</span>メンバーを招待</button>';
   } else if (nikowaRow) {
@@ -39339,7 +39537,7 @@ function openEditPetModal(petId) {
   editingPetId = petId;
   const pet = data.pets.find(p => p.id === petId);
   if (!pet) return;
-  // にこわID + 招待ボタン
+  // にこわID + 招待ボタン + 管理IDセレクト
   const nikowaRow = document.getElementById('editPetNikowaIdRow');
   if (nikowaRow && pet.nikowaId) {
     nikowaRow.innerHTML =
@@ -39348,6 +39546,7 @@ function openEditPetModal(petId) {
       + '<div style="font-size:13px;font-weight:800;color:var(--accent-deep);">' + escapeHtml(pet.nikowaId) + '</div></div>'
       + '<button onclick="navigator.clipboard.writeText(\'' + escapeHtml(pet.nikowaId) + '\').then(()=>showToast(\'コピーしたよ🌷\'))" style="padding:4px 10px;background:var(--accent);color:white;border:none;border-radius:7px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">📋</button>'
       + '</div>'
+      + _renderManageCardSelect('pet', petId, pet.managedByCardId)
       + '<button onclick="openHouseInviteModal(\'pet\',\'' + petId + '\',\'' + escapeHtml(pet.nikowaId) + '\')" style="width:100%;padding:9px;background:var(--surface-warm);border:1.5px dashed var(--accent);border-radius:9px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent-deep);display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:8px;">'
       + '<span class="material-symbols-rounded" style="font-size:14px;">person_add</span>メンバーを招待</button>';
   } else if (nikowaRow) {
@@ -39990,6 +40189,171 @@ function giveBouquet(petId, isStar) {
   renderTown();
 }
 window.giveBouquet = giveBouquet;
+
+// ケーキ（誕生日）を贈る
+function giveCake(petId) {
+  const pet = (data.pets || []).find(p => p.id === petId);
+  if (!pet) return;
+  pet.cakeCount = (pet.cakeCount || 0) + 1;
+  saveData();
+  showToast(pet.name+'にケーキをおくりました🎂');
+  const eff = document.createElement('div');
+  eff.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:80px;z-index:9999;pointer-events:none;animation:bouquetPop 1.2s ease-out forwards;';
+  eff.textContent = '🎂';
+  document.body.appendChild(eff);
+  setTimeout(() => eff.remove(), 1200);
+  renderTown();
+}
+window.giveCake = giveCake;
+
+// アニマルタブ内のサブタブ切替
+function setTownAnimalSubTab(tab) {
+  townAnimalSubTab = tab;
+  renderTown();
+}
+window.setTownAnimalSubTab = setTownAnimalSubTab;
+
+// ===== 世界のペット（petGalleries）取得 =====
+let globalPetsCache = null;       // 取得済みリスト
+let globalPetsLoading = false;    // 取得中フラグ
+let globalPetsFetchedAt = 0;      // 最終取得時刻
+const GLOBAL_PETS_CACHE_MS = 60 * 1000; // 1分キャッシュ
+
+async function fetchGlobalPets(force) {
+  if (!db || !currentUser) return [];
+  const now = Date.now();
+  if (!force && globalPetsCache && (now - globalPetsFetchedAt) < GLOBAL_PETS_CACHE_MS) {
+    return globalPetsCache;
+  }
+  if (globalPetsLoading) return globalPetsCache || [];
+  globalPetsLoading = true;
+  try {
+    const snap = await db.collection('petGalleries')
+      .where('isPublic', '==', true)
+      .orderBy('updatedAt', 'desc')
+      .limit(100)
+      .get();
+    const list = [];
+    snap.forEach(doc => {
+      const d = doc.data();
+      list.push({
+        id: doc.id,
+        ownerUid: d.ownerUid || '',
+        ownerNikowaId: d.ownerNikowaId || '',
+        name: d.petName || '',
+        type: d.petType || '',
+        breed: d.breed || '',
+        birth: d.birth || '',
+        rainbowDate: d.rainbowDate || '',
+        place: d.place || 'home',
+        kidsGender: d.kidsGender || '',
+        cardDesign: d.cardDesign || null,
+        profilePhoto: d.profilePhoto || '',
+        recentCare: d.recentCare || [],
+        bouquetCount: d.bouquetCount || 0,
+        cakeCount: d.cakeCount || 0,
+        _isGlobal: true,
+        _isMine: d.ownerUid === currentUser.uid
+      });
+    });
+    globalPetsCache = list;
+    globalPetsFetchedAt = now;
+    console.log('[世界のペット取得]', list.length+'件');
+    return list;
+  } catch(e) {
+    console.log('世界のペット取得エラー:', e);
+    return globalPetsCache || [];
+  } finally {
+    globalPetsLoading = false;
+  }
+}
+window.fetchGlobalPets = fetchGlobalPets;
+
+// 世界のペットに花束/星をおくる（Firestore increment）
+async function giveBouquetGlobal(petDocId, isStar) {
+  if (!db) return;
+  // ローカルキャッシュも増やしておく（即時反映）
+  if (globalPetsCache) {
+    const p = globalPetsCache.find(x => x.id === petDocId);
+    if (p) p.bouquetCount = (p.bouquetCount || 0) + 1;
+  }
+  const emoji = isStar ? '⭐' : '🌷';
+  const msg = isStar ? '星をおくりました⭐' : 'お花をそえました🌷';
+  showToast(msg);
+  const eff = document.createElement('div');
+  eff.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:80px;z-index:9999;pointer-events:none;animation:bouquetPop 1.2s ease-out forwards;';
+  eff.textContent = emoji;
+  document.body.appendChild(eff);
+  setTimeout(() => eff.remove(), 1200);
+  renderTown();
+  // Firestoreにincrement
+  try {
+    await db.collection('petGalleries').doc(petDocId).update({
+      bouquetCount: firebase.firestore.FieldValue.increment(1)
+    });
+  } catch(e) {
+    console.log('花束increment エラー（Rules要確認）:', e);
+  }
+}
+window.giveBouquetGlobal = giveBouquetGlobal;
+
+async function giveCakeGlobal(petDocId) {
+  if (!db) return;
+  if (globalPetsCache) {
+    const p = globalPetsCache.find(x => x.id === petDocId);
+    if (p) p.cakeCount = (p.cakeCount || 0) + 1;
+  }
+  showToast('ケーキをおくりました🎂');
+  const eff = document.createElement('div');
+  eff.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:80px;z-index:9999;pointer-events:none;animation:bouquetPop 1.2s ease-out forwards;';
+  eff.textContent = '🎂';
+  document.body.appendChild(eff);
+  setTimeout(() => eff.remove(), 1200);
+  renderTown();
+  try {
+    await db.collection('petGalleries').doc(petDocId).update({
+      cakeCount: firebase.firestore.FieldValue.increment(1)
+    });
+  } catch(e) {
+    console.log('ケーキincrement エラー（Rules要確認）:', e);
+  }
+}
+window.giveCakeGlobal = giveCakeGlobal;
+
+// ===== 管理にこわID（共通UI） =====
+// 家／ペット／KIDS／ショップを「どのにこわIDで管理するか」選ぶUI
+function _renderManageCardSelect(targetType, targetId, currentCardId) {
+  _ensureMyProfiles && _ensureMyProfiles();
+  const cards = (data.myProfiles || []).filter(p => p.label || p.name);
+  if (cards.length === 0) return '';
+  let h = '<div style="background:#FFF8F5;border:1px solid var(--accent-bg);border-radius:9px;padding:9px 11px;margin-bottom:8px;">';
+  h += '<div style="font-size:9.5px;font-weight:700;color:var(--accent-deep);letter-spacing:0.5px;margin-bottom:5px;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">badge</span>このグループを管理するにこわID</div>';
+  h += '<select onchange="setManagedByCard(\''+targetType+'\',\''+targetId+'\',this.value)" style="width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:12px;font-weight:600;background:white;color:var(--ink-dark);">';
+  const _curSel = currentCardId || '';
+  h += '<option value=""'+(_curSel===''?' selected':'')+'>未設定</option>';
+  for (const c of cards) {
+    const sel = (c.id === _curSel) ? ' selected' : '';
+    const _label = (c.nikowaId ? c.nikowaId + ' · ' : '') + (c.label || c.name || 'カード');
+    h += '<option value="'+c.id+'"'+sel+'>'+escapeHtml(_label)+'</option>';
+  }
+  h += '</select>';
+  h += '<div style="font-size:9.5px;color:var(--ink-sub);margin-top:5px;line-height:1.5;">招待や公開のときの「あなたのにこわID」になるよ</div>';
+  h += '</div>';
+  return h;
+}
+window._renderManageCardSelect = _renderManageCardSelect;
+
+function setManagedByCard(targetType, targetId, cardId) {
+  let target = null;
+  if (targetType === 'house')      target = (data.houses || []).find(x => x.id === targetId);
+  else if (targetType === 'pet')   target = (data.pets   || []).find(x => x.id === targetId);
+  else if (targetType === 'shop')  target = (data.myShops|| []).find(x => x.id === targetId);
+  if (!target) return;
+  target.managedByCardId = cardId || null;
+  saveData();
+  showToast('管理IDを設定しました🌷');
+}
+window.setManagedByCard = setManagedByCard;
 
 function setTownSubTab(tab) {
   townSubTab = tab;
