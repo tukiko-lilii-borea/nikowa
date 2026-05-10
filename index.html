@@ -34649,6 +34649,252 @@ window.openEditScheduleModal = openEditScheduleModal;
 
 
 // ── 月ビュー ──
+// ── カレンダー クイックスタンプ ──
+var _DEFAULT_QUICK_STAMPS = [
+  { id: 'qs1', icon: 'local_hospital', color: '#E57373', title: '病院' },
+  { id: 'qs2', icon: 'shopping_bag',   color: '#F4A261', title: '買い物' },
+  { id: 'qs3', icon: 'work',           color: '#5DADE2', title: '仕事' },
+  { id: 'qs4', icon: 'restaurant',     color: '#E8729A', title: 'ランチ' },
+  { id: 'qs5', icon: 'pets',           color: '#9B7BC1', title: 'お世話' },
+  { id: 'qs6', icon: 'school',         color: '#F1C232', title: '学校' },
+  { id: 'qs7', icon: 'cake',           color: '#E8729A', title: '誕生日' },
+  { id: 'qs8', icon: 'medication',     color: '#74C5A4', title: 'くすり' },
+  { id: 'qs9', icon: 'spa',            color: '#A8D5BA', title: '美容' },
+  { id: 'qs10', icon: 'payments',      color: '#E8A040', title: '支払い' },
+  { id: 'qs11', icon: 'directions_car',color: '#5DADE2', title: 'ドライブ' },
+  { id: 'qs12', icon: 'celebration',   color: '#9B7BC1', title: 'お祝い' }
+];
+
+function addQuickSchedStamp(stampId) {
+  if (!data.calQuickStamps) data.calQuickStamps = _DEFAULT_QUICK_STAMPS.slice();
+  var stamp = data.calQuickStamps.find(function(s){ return s.id === stampId; });
+  if (!stamp) return;
+  if (!schedCalSelected) {
+    showToast('日付を選んでからスタンプを押してね🌷');
+    return;
+  }
+  if (!data.schedules) data.schedules = [];
+  data.schedules.push({
+    id: 'sched_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    title: stamp.title,
+    date: schedCalSelected,
+    icon: stamp.icon,
+    color: stamp.color,
+    allDay: true,
+    timeStart: '',
+    timeEnd: '',
+    location: '',
+    memo: '',
+    scopeKind: 'me',
+    scopeIcon: '🌱',
+    createdAt: Date.now()
+  });
+  saveData();
+  showToast('「' + stamp.title + '」を追加したよ🌷');
+  _suppressScrollTop = true;
+  render();
+}
+window.addQuickSchedStamp = addQuickSchedStamp;
+
+function openQuickStampEditor() {
+  if (!data.calQuickStamps) data.calQuickStamps = _DEFAULT_QUICK_STAMPS.slice();
+  var ex = document.getElementById('quickStampEditor');
+  if (ex) ex.remove();
+  
+  var h = '<div id="quickStampEditor" onclick="if(event.target===this)closeQuickStampEditor()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.55);display:flex;align-items:flex-end;justify-content:center;padding:0;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:560px;background:var(--surface);border-radius:24px 24px 0 0;padding:0;max-height:85vh;display:flex;flex-direction:column;">';
+  
+  // ヘッダー
+  h += '<div style="padding:16px 18px 12px;display:flex;align-items:center;border-bottom:1px solid var(--line-soft);flex-shrink:0;">';
+  h += '<span class="material-symbols-rounded" style="color:var(--accent-deep);margin-right:8px;">edit</span>';
+  h += '<div style="flex:1;font-size:15px;font-weight:800;color:var(--ink-dark);">スタンプ編集</div>';
+  h += '<button onclick="closeQuickStampEditor()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-sub);padding:0;width:30px;height:30px;">✕</button>';
+  h += '</div>';
+  
+  // 説明
+  h += '<div style="padding:8px 18px 4px;font-size:11px;color:var(--ink-sub);line-height:1.5;">タップ＝予定をすぐ追加できるスタンプ。並び替え／削除／追加ができるよ🌷</div>';
+  
+  // スタンプリスト
+  h += '<div style="flex:1;overflow-y:auto;padding:8px 14px 14px;">';
+  for (var i = 0; i < data.calQuickStamps.length; i++) {
+    var s = data.calQuickStamps[i];
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:6px;background:var(--surface-warm);border-radius:12px;">';
+    h += '<div style="width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--card-border);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:20px;color:'+s.color+';">'+s.icon+'</span></div>';
+    h += '<div style="flex:1;font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(s.title)+'</div>';
+    // 上移動
+    if (i > 0) {
+      h += '<button onclick="moveQuickStamp(\''+s.id+'\',-1)" style="width:30px;height:30px;background:var(--surface);border:1px solid var(--card-border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-sub);">arrow_upward</span></button>';
+    } else {
+      h += '<div style="width:30px;height:30px;"></div>';
+    }
+    // 下移動
+    if (i < data.calQuickStamps.length - 1) {
+      h += '<button onclick="moveQuickStamp(\''+s.id+'\',1)" style="width:30px;height:30px;background:var(--surface);border:1px solid var(--card-border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-sub);">arrow_downward</span></button>';
+    } else {
+      h += '<div style="width:30px;height:30px;"></div>';
+    }
+    // 削除
+    h += '<button onclick="deleteQuickStamp(\''+s.id+'\')" style="width:30px;height:30px;background:rgba(229,115,115,0.1);border:1px solid #E57373;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;color:#E57373;">delete</span></button>';
+    h += '</div>';
+  }
+  h += '</div>';
+  
+  // フッター：追加ボタン
+  h += '<div style="padding:10px 14px 16px;background:var(--surface);border-top:1px solid var(--line-soft);flex-shrink:0;">';
+  h += '<button onclick="openAddQuickStampModal()" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;">add</span>新しいスタンプを追加';
+  h += '</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openQuickStampEditor = openQuickStampEditor;
+
+function closeQuickStampEditor() {
+  var m = document.getElementById('quickStampEditor');
+  if (m) m.remove();
+}
+window.closeQuickStampEditor = closeQuickStampEditor;
+
+function moveQuickStamp(id, dir) {
+  if (!data.calQuickStamps) return;
+  var idx = data.calQuickStamps.findIndex(function(s){ return s.id === id; });
+  if (idx < 0) return;
+  var newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= data.calQuickStamps.length) return;
+  var tmp = data.calQuickStamps[idx];
+  data.calQuickStamps[idx] = data.calQuickStamps[newIdx];
+  data.calQuickStamps[newIdx] = tmp;
+  saveData();
+  closeQuickStampEditor();
+  openQuickStampEditor();
+}
+window.moveQuickStamp = moveQuickStamp;
+
+function deleteQuickStamp(id) {
+  if (!data.calQuickStamps) return;
+  if (!confirm('このスタンプを削除する？')) return;
+  data.calQuickStamps = data.calQuickStamps.filter(function(s){ return s.id !== id; });
+  saveData();
+  closeQuickStampEditor();
+  openQuickStampEditor();
+  _suppressScrollTop = true;
+  // メイン画面も更新
+  setTimeout(function(){ render(); }, 100);
+}
+window.deleteQuickStamp = deleteQuickStamp;
+
+function openAddQuickStampModal() {
+  var ex = document.getElementById('addQuickStampModal');
+  if (ex) ex.remove();
+  
+  var iconChoices = [
+    'local_hospital','shopping_bag','work','restaurant','pets','school','cake','medication',
+    'spa','payments','directions_car','celebration','dinner_dining','flight','park','movie',
+    'sports_basketball','music_note','palette','content_cut','book','fitness_center','beach_access',
+    'hotel','event','favorite','star','psychology','self_improvement','redeem','phone','mail',
+    'home','child_care','elderly','volunteer_activism','local_cafe','local_florist','grass'
+  ];
+  var colorChoices = [
+    '#E57373','#F4A261','#F1C232','#74C5A4','#5DADE2','#9B7BC1','#E8729A','#A8D5BA','#E8A040','#7CB9D9'
+  ];
+  
+  var h = '<div id="addQuickStampModal" onclick="if(event.target===this)closeAddQuickStampModal()" style="position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:420px;background:var(--surface);border-radius:20px;padding:18px;max-height:85vh;overflow-y:auto;">';
+  
+  h += '<div style="display:flex;align-items:center;margin-bottom:14px;">';
+  h += '<div style="flex:1;font-size:15px;font-weight:800;color:var(--ink-dark);">スタンプを追加</div>';
+  h += '<button onclick="closeAddQuickStampModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  
+  // 名前
+  h += '<div style="margin-bottom:12px;">';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">名前</label>';
+  h += '<input id="newStampTitle" type="text" maxlength="6" placeholder="例：ヨガ" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface);box-sizing:border-box;">';
+  h += '</div>';
+  
+  // アイコン選択
+  h += '<div style="margin-bottom:12px;">';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">アイコン</label>';
+  h += '<div id="newStampIconGrid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-height:160px;overflow-y:auto;padding:4px;border:1px solid var(--card-border);border-radius:10px;">';
+  for (var ii = 0; ii < iconChoices.length; ii++) {
+    var ic = iconChoices[ii];
+    h += '<button data-icon="'+ic+'" onclick="_selectStampIcon(this)" style="width:36px;height:36px;border-radius:50%;background:var(--surface-warm);border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-dark);">'+ic+'</span></button>';
+  }
+  h += '</div>';
+  h += '</div>';
+  
+  // 色選択
+  h += '<div style="margin-bottom:14px;">';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">色</label>';
+  h += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+  for (var ci = 0; ci < colorChoices.length; ci++) {
+    var col = colorChoices[ci];
+    h += '<button data-color="'+col+'" onclick="_selectStampColor(this)" style="width:30px;height:30px;border-radius:50%;background:'+col+';border:2px solid transparent;cursor:pointer;"></button>';
+  }
+  h += '</div>';
+  h += '</div>';
+  
+  // 保存
+  h += '<button onclick="saveNewQuickStamp()" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  // デフォルト選択
+  _selectedStampIcon = 'star';
+  _selectedStampColor = '#F1C232';
+  setTimeout(function(){
+    var iconBtn = document.querySelector('[data-icon="star"]');
+    if (iconBtn) { iconBtn.style.borderColor = 'var(--accent)'; iconBtn.style.background = 'var(--accent-bg)'; }
+    var colBtn = document.querySelector('[data-color="#F1C232"]');
+    if (colBtn) colBtn.style.borderColor = 'var(--ink-dark)';
+  }, 50);
+}
+window.openAddQuickStampModal = openAddQuickStampModal;
+
+function closeAddQuickStampModal() {
+  var m = document.getElementById('addQuickStampModal');
+  if (m) m.remove();
+}
+window.closeAddQuickStampModal = closeAddQuickStampModal;
+
+var _selectedStampIcon = 'star';
+var _selectedStampColor = '#F1C232';
+function _selectStampIcon(btn) {
+  document.querySelectorAll('#newStampIconGrid button').forEach(function(b){ b.style.borderColor = 'transparent'; b.style.background = 'var(--surface-warm)'; });
+  btn.style.borderColor = 'var(--accent)';
+  btn.style.background = 'var(--accent-bg)';
+  _selectedStampIcon = btn.getAttribute('data-icon');
+}
+window._selectStampIcon = _selectStampIcon;
+function _selectStampColor(btn) {
+  document.querySelectorAll('#addQuickStampModal [data-color]').forEach(function(b){ b.style.borderColor = 'transparent'; });
+  btn.style.borderColor = 'var(--ink-dark)';
+  _selectedStampColor = btn.getAttribute('data-color');
+}
+window._selectStampColor = _selectStampColor;
+
+function saveNewQuickStamp() {
+  var titleInp = document.getElementById('newStampTitle');
+  var title = (titleInp.value || '').trim();
+  if (!title) { showToast('名前を入れてね🌷'); return; }
+  if (!data.calQuickStamps) data.calQuickStamps = _DEFAULT_QUICK_STAMPS.slice();
+  data.calQuickStamps.push({
+    id: 'qs_' + Date.now(),
+    icon: _selectedStampIcon,
+    color: _selectedStampColor,
+    title: title
+  });
+  saveData();
+  closeAddQuickStampModal();
+  closeQuickStampEditor();
+  openQuickStampEditor();
+  _suppressScrollTop = true;
+  setTimeout(function(){ render(); }, 100);
+}
+window.saveNewQuickStamp = saveNewQuickStamp;
+
 function _renderSchedMonthView(houseId) {
   var year = schedCalMonth.year, month = schedCalMonth.month;
   var todayK = todayKey();
@@ -34687,6 +34933,23 @@ function _renderSchedMonthView(houseId) {
   if (!isCurrent) h += '<button onclick="goToToday(\'sched\')" style="padding:3px 10px;background:var(--accent-bg);color:var(--accent-deep);border:1px solid var(--accent);border-radius:100px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;">今日</button>';
   h += '</div>';
   h += '<button onclick="changeCalMonth(\'sched\',1)" style="width:30px;height:30px;border-radius:50%;background:var(--surface-warm);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_right</span></button>';
+  h += '</div>';
+
+  // クイックスタンプ行（横スクロール）
+  if (!data.calQuickStamps) data.calQuickStamps = _DEFAULT_QUICK_STAMPS.slice();
+  var qstamps = data.calQuickStamps;
+  h += '<div style="display:flex;align-items:center;gap:6px;padding:4px 4px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;" class="hide-scrollbar">';
+  // 編集ボタン（左固定）
+  h += '<button onclick="openQuickStampEditor()" style="flex-shrink:0;width:34px;height:34px;border-radius:50%;background:var(--accent-bg);border:1.5px solid var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">edit</span></button>';
+  // 区切り
+  h += '<div style="flex-shrink:0;width:1px;height:20px;background:var(--line);"></div>';
+  // スタンプ一覧
+  for (var qsi = 0; qsi < qstamps.length; qsi++) {
+    var qs = qstamps[qsi];
+    h += '<button onclick="addQuickSchedStamp(\''+qs.id+'\')" title="'+escapeHtml(qs.title)+'" style="flex-shrink:0;width:34px;height:34px;border-radius:50%;background:var(--surface);border:1px solid var(--card-border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
+    h += '<span class="material-symbols-rounded" style="font-size:18px;color:'+qs.color+';">'+qs.icon+'</span>';
+    h += '</button>';
+  }
   h += '</div>';
 
   // 曜日ヘッダー
