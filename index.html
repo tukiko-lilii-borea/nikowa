@@ -594,46 +594,37 @@
     line-height: 1.6;
   }
 
-  /* ── 新ホーム：タウンクイックアクション（横長・4分割）── */
+  /* ── 新ホーム：タウンクイックアクション（独立楕円ボタン×4）── */
   .home-quick-actions {
-    margin: 0 40px 10px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 2px;
-    padding: 4px 6px;
+    margin: 0 14px 10px;
+    display: flex;
+    gap: 6px;
+  }
+  .home-quick-action {
+    flex: 1;
+    padding: 7px 4px;
     background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
     border: 1.5px solid var(--card-border);
     border-radius: 100px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
-  }
-  .home-quick-action {
+    cursor: pointer;
+    font-family: inherit;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
-    padding: 4px 2px;
-    background: transparent;
-    border: none;
-    border-radius: 100px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.1s;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.85);
+    transition: transform 0.1s;
+    color: var(--ink-dark);
   }
-  .home-quick-action:active {
-    background: rgba(255,255,255,0.5);
-  }
-  .home-quick-action .hqa-icon {
-    font-size: 14px;
-    line-height: 1;
-  }
-  .home-quick-action .hqa-label {
+  .home-quick-action:active { transform: scale(0.93); }
+  .home-quick-action .material-symbols-rounded { color: var(--accent-deep); }
+  .hqa-label {
     font-size: 10px;
     font-weight: 700;
     color: var(--ink-dark);
-    letter-spacing: 0.2px;
-    line-height: 1;
+    letter-spacing: 0.3px;
   }
 
   /* ── 新ホーム：今日のひとこと ── */
@@ -1694,28 +1685,27 @@
   /* ── きょうのお世話（一括登録） ─────────── */
   .bulk-care-row {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 4px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
     padding: 0 2px;
   }
   .bulk-care-btn {
-    background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.50) 100%);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border:1.5px solid var(--card-border);
+    background: var(--surface);
+    border: 1.5px solid var(--line);
     border-radius: 10px;
-    padding: 6px 2px 4px;
+    padding: 6px 2px 5px;
     cursor: pointer;
     font-family: inherit;
     display: flex; flex-direction: column; align-items: center;
-    gap: 2px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    gap: 1px;
+    box-shadow: var(--shadow-soft);
     transition: transform 0.1s ease;
     min-width: 0;
   }
   .bulk-care-btn:active { transform: scale(0.92); }
-  .bulk-care-icon { font-size: 22px; line-height: 1; }
+  .bulk-care-icon { font-size: 17px; line-height: 1.1; }
   .bulk-care-label { 
-    font-size: 11px; font-weight: 700; color: var(--ink-dark);
+    font-size: 9.5px; font-weight: 700; color: var(--ink-dark);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     max-width: 100%;
   }
@@ -8311,10 +8301,10 @@ function renderTop() {
 
   // ===== タウン クイックアクションバー（横長・4分割）=====
   html += '<div class="home-quick-actions">';
-  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'search\')"><span class="hqa-icon">🗾</span><span class="hqa-label">マップ</span></button>';
-  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'transit\')"><span class="hqa-icon">🚃</span><span class="hqa-label">路線</span></button>';
-  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'fav\')"><span class="hqa-icon">♡</span><span class="hqa-label">お気に入り</span></button>';
-  html += '<button class="home-quick-action" onclick="openGlobalSearch()"><span class="hqa-icon">🔍</span><span class="hqa-label">検索</span></button>';
+  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'search\')"><span class="material-symbols-rounded" style="font-size:16px;">map</span><span class="hqa-label">地図</span></button>';
+  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'transit\')"><span class="material-symbols-rounded" style="font-size:16px;">train</span><span class="hqa-label">路線</span></button>';
+  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'fav\')"><span class="material-symbols-rounded" style="font-size:16px;">favorite</span><span class="hqa-label">保存</span></button>';
+  html += '<button class="home-quick-action" onclick="openGlobalSearch()"><span class="material-symbols-rounded" style="font-size:16px;">search</span><span class="hqa-label">検索</span></button>';
   html += '</div>';
 
   // ===== To Day カード（写真＋スケジュール） =====
@@ -12954,10 +12944,10 @@ function openGlobalSearch() {
   // bodyに検索モード中のクラス付与（Backボタン表示制御）
   document.body.classList.add('global-search-active');
   
-  let h = '<div id="globalSearchModal" style="position:fixed;left:0;right:0;top:0;bottom:calc(60px + env(safe-area-inset-bottom));z-index:1400;background:var(--surface);display:flex;flex-direction:column;font-family:inherit;max-width:480px;margin:0 auto;border-bottom:1px solid var(--line);">';
+  let h = '<div id="globalSearchModal" style="position:fixed;left:0;right:0;top:0;bottom:calc(60px + env(safe-area-inset-bottom));z-index:1400;background:var(--bg);background-image:linear-gradient(rgba(143,201,171,0.18) 1px,transparent 1px),linear-gradient(90deg,rgba(143,201,171,0.18) 1px,transparent 1px);background-size:32px 32px;display:flex;flex-direction:column;font-family:inherit;max-width:480px;margin:0 auto;border-bottom:1px solid var(--line);">';
   
   // ヘッダー
-  h += '<div style="padding:10px 14px 0;border-bottom:1px solid var(--line);background:var(--surface);box-sizing:border-box;">';
+  h += '<div style="padding:10px 14px 0;border-bottom:1px solid var(--line);background:rgba(232,244,237,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-sizing:border-box;">';
   h += '<div style="display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;margin-bottom:10px;">';
   h += '<button onclick="closeGlobalSearch()" style="background:none;border:none;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--ink-dark);flex-shrink:0;padding:0;"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
   h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">検索</div>';
@@ -12993,7 +12983,7 @@ function openGlobalSearch() {
   h += '</div>';
   
   // 結果エリア
-  h += '<div id="globalSearchResults" style="flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch;">';
+  h += '<div id="globalSearchResults" style="flex:1;overflow-y:auto;padding:12px 14px;-webkit-overflow-scrolling:touch;">';
   if (window._searchTab === 'quick') {
     h += _renderQuickJumpContent();
   } else {
@@ -13036,7 +13026,7 @@ function _renderQuickJumpContent() {
   
   // 共通：72px □カード生成ヘルパー（スタンプサイズ）
   function _qCard(onclick, photo, iconHtml, bgColor, name) {
-    let s = '<button onclick="'+onclick+'" style="flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;background:white;border:1px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
+    let s = '<button onclick="'+onclick+'" style="flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;background:linear-gradient(135deg,rgba(255,255,255,0.55),rgba(255,255,255,0.35));border:1.5px solid var(--card-border);border-radius:12px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,0.85);backdrop-filter:blur(8px);">';
     if (photo) {
       s += '<span style="width:38px;height:38px;border-radius:50%;background:url('+photo+') center/cover;flex-shrink:0;border:1.5px solid white;box-shadow:0 1px 2px rgba(0,0,0,0.08);"></span>';
     } else {
@@ -13049,16 +13039,31 @@ function _renderQuickJumpContent() {
   
   // セクションヘッダー
   function _qHeader(icon, color, label) {
-    return '<div style="font-size:11px;font-weight:800;color:var(--ink-sub);letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:'+color+';">'+icon+'</span>'+label+'</div>';
+    return '<div style="font-size:11px;font-weight:800;color:var(--ink-sub);letter-spacing:1px;margin-bottom:5px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:'+color+';">'+icon+'</span>'+label+'</div>';
   }
   
   // 横スクロール2行グリッドラッパー
-  const gridStyle = 'display:grid;grid-auto-flow:column;grid-template-rows:1fr 1fr;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:6px;';
+  const gridStyle = 'display:grid;grid-auto-flow:column;grid-template-rows:1fr 1fr;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;';
   
-  // ── ME（自分のプロフィール）
-  h += '<div style="margin-bottom:14px;">';
+  // ── TOWN（マップ・路線・お気に入り）
+  h += '<div style="margin-bottom:8px;">';
+  h += _qHeader('location_city', '#5C9CD4', 'TOWN');
+  h += '<div style="display:flex;gap:5px;">';
+  h += _qCard("openTownQuick('search','search');closeGlobalSearch()", null,
+    '<span class="material-symbols-rounded" style="font-size:22px;color:#5C9CD4;">map</span>',
+    '#E0F0FA', '地図');
+  h += _qCard("openTownQuick('search','transit');closeGlobalSearch()", null,
+    '<span class="material-symbols-rounded" style="font-size:22px;color:#5CAE8A;">train</span>',
+    '#E0F5EA', '路線');
+  h += _qCard("openTownQuick('search','fav');closeGlobalSearch()", null,
+    '<span class="material-symbols-rounded" style="font-size:22px;color:#E88AA0;">favorite</span>',
+    '#FCE4EB', '保存');
+  h += '</div></div>';
+
+  // ── ME（1個固定・1行で詰める）
+  h += '<div style="margin-bottom:8px;">';
   h += _qHeader('eco', '#7BBE5C', 'ME');
-  h += '<div style="'+gridStyle+'">';
+  h += '<div style="display:flex;gap:5px;">';
   const _meName = (data.user && data.user.name) ? data.user.name : 'わたし';
   const _meAvatar = data.user && data.user.profilePhoto ? data.user.profilePhoto : null;
   h += _qCard(
@@ -13070,7 +13075,7 @@ function _renderQuickJumpContent() {
   
   // ── NEST（家グループ）
   if (data.houses && data.houses.length > 0) {
-    h += '<div style="margin-bottom:14px;">';
+    h += '<div style="margin-bottom:8px;">';
     h += _qHeader('cottage', '#5C9CD4', 'NEST');
     h += '<div style="'+gridStyle+'">';
     for (const house of data.houses) {
@@ -13086,7 +13091,7 @@ function _renderQuickJumpContent() {
   // ── PET
   const petList = (data.pets || []).filter(p => !p.archived && p.place !== 'rainbow' && !p.kidsGender);
   if (petList.length > 0) {
-    h += '<div style="margin-bottom:14px;">';
+    h += '<div style="margin-bottom:8px;">';
     h += _qHeader('pets', '#B87850', 'PET');
     h += '<div style="'+gridStyle+'">';
     for (const pet of petList) {
@@ -13104,7 +13109,7 @@ function _renderQuickJumpContent() {
   // ── KIDS
   const kidsList = (data.pets || []).filter(p => !p.archived && p.place !== 'rainbow' && p.kidsGender);
   if (kidsList.length > 0) {
-    h += '<div style="margin-bottom:14px;">';
+    h += '<div style="margin-bottom:8px;">';
     h += _qHeader('child_care', '#D88AB0', 'KIDS');
     h += '<div style="'+gridStyle+'">';
     for (const kid of kidsList) {
@@ -13122,7 +13127,7 @@ function _renderQuickJumpContent() {
   // ── My Shop
   const shopList = data.myShops || [];
   if (shopList.length > 0) {
-    h += '<div style="margin-bottom:14px;">';
+    h += '<div style="margin-bottom:8px;">';
     h += _qHeader('storefront', '#E8A040', 'My Shop');
     h += '<div style="'+gridStyle+'">';
     for (const shop of shopList) {
@@ -24004,6 +24009,32 @@ function renderNestMode() {
     html += '</button>';
     html += '</div></div>';
 
+  } else if (tab === 'schedule') {
+    // ===== Schedule（家のスケジュール） =====
+    // スケジュールカレンダーをそのまま表示（フィルタは'nest'固定）
+    const _activeNest = getActiveNest();
+    const _savedFilter = (typeof schedCalFilter !== 'undefined') ? schedCalFilter : 'all';
+    if (typeof schedCalFilter !== 'undefined') schedCalFilter = 'nest';
+    if (!schedCalMonth) {
+      const t = new Date();
+      schedCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+    }
+    if (!schedCalSelected) schedCalSelected = todayKey();
+    
+    html += '<div style="padding:8px 12px 16px;">';
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 4px 10px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:18px;color:#E8A040;">calendar_month</span>';
+    html += '<div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(_activeNest?_activeNest.name:'家')+'のスケジュール</div>';
+    html += '<button onclick="_openSchedAdd && _openSchedAdd()" style="padding:6px 12px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>予定</button>';
+    html += '</div>';
+    if (typeof _renderSchedMonthView === 'function') {
+      html += _renderSchedMonthView(_activeNest ? _activeNest.id : null);
+    } else {
+      html += '<div style="text-align:center;padding:20px;color:var(--ink-sub);font-size:12px;">スケジュール機能を読み込み中...</div>';
+    }
+    html += '</div>';
+    if (typeof schedCalFilter !== 'undefined') schedCalFilter = _savedFilter;
+
   } else {
     // カスタムタブ
     const tabs = getModeTabsForMode('nest');
@@ -24465,11 +24496,14 @@ function renderHouse() {
   html += '<div class="pet-tabs-bar pet-tabs-bar-slim" style="margin-top: 12px;">';
   html += '<button class="pet-tab-btn pet-tab-btn-slim '+(houseTab==='home'?'active':'')+'" onclick="setHouseTab(\'home\')"><span class="pet-tab-icon">🏠</span>ホーム</button>';
   html += '<button class="pet-tab-btn pet-tab-btn-slim '+(houseTab==='diary'?'active':'')+'" onclick="setHouseTab(\'diary\')"><span class="pet-tab-icon">📖</span>'+escapeHtml(houseName)+'家の日記</button>';
+  html += '<button class="pet-tab-btn pet-tab-btn-slim '+(houseTab==='schedule'?'active':'')+'" onclick="setHouseTab(\'schedule\')"><span class="pet-tab-icon"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span></span>スケジュール</button>';
   html += '</div>';
   html += '<div class="pet-tab-content">';
   
   if (houseTab === 'diary') {
     html += renderHouseDiaryTab(house);
+  } else if (houseTab === 'schedule') {
+    html += renderHouseScheduleTab(house);
   } else {
     html += renderHouseHomeTab(house);
   }
@@ -24544,6 +24578,32 @@ function renderHousesFav() {
   html += '<div style="height:80px;"></div>';
   app.innerHTML = html;
 }
+
+function renderHouseScheduleTab(house) {
+  // 家のスケジュール = NEST scopeKind の予定をスケジュールカレンダーで表示
+  const savedFilter = (typeof schedCalFilter !== 'undefined') ? schedCalFilter : 'all';
+  if (typeof schedCalFilter !== 'undefined') schedCalFilter = 'nest';
+  if (!schedCalMonth) {
+    const t = new Date();
+    schedCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+  }
+  if (!schedCalSelected) schedCalSelected = todayKey();
+  let h = '<div style="padding:0 4px 16px;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:10px 14px 8px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:#E8A040;">home</span>';
+  h += '<div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">家のスケジュール</div>';
+  h += '<button onclick="_openSchedAdd && _openSchedAdd()" style="padding:6px 12px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>予定</button>';
+  h += '</div>';
+  if (typeof _renderSchedMonthView === 'function') {
+    h += _renderSchedMonthView(house ? house.id : null);
+  } else {
+    h += '<div style="text-align:center;padding:20px;color:var(--ink-sub);font-size:12px;">スケジュール機能を読み込み中...</div>';
+  }
+  h += '</div>';
+  if (typeof schedCalFilter !== 'undefined') schedCalFilter = savedFilter;
+  return h;
+}
+window.renderHouseScheduleTab = renderHouseScheduleTab;
 
 function renderHouseHomeTab(house) {
   const pets = getHousePets(house.id);
@@ -28287,7 +28347,7 @@ function renderPetStampCalendarUI(pet) {
     histMap[k].push(r);
   }
   
-  let h = '<div style="padding:10px 14px 16px;">';
+  let h = '<div style="padding:4px 2px 16px;">';
   
   // クイック予定スタンプ（PET or KIDS判定）
   var _qsScope = pet.kidsGender ? 'kids' : 'pet';
@@ -28295,66 +28355,79 @@ function renderPetStampCalendarUI(pet) {
     h += _renderModeQuickStamps(_qsScope, pet.id, 'pet');
   }
   
-  // 月切替ヘッダー
-  h += '<div style="background:rgba(255,255,255,0.78);border:1px solid var(--line);border-radius:10px;padding:6px 8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">';
-  h += '<button onclick="switchPetCalMonth(-1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--ink-sub);font-size:10px;font-family:inherit;display:flex;align-items:center;"><span class="material-symbols-rounded" style="font-size:13px;">chevron_left</span></button>';
-  h += '<div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--ink-dark);letter-spacing:0.05em;">'+y+'.'+String(m+1).padStart(2,'0')+'</div>';
-  h += '<button onclick="switchPetCalMonth(1)" style="background:var(--surface-warm);border:1px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--ink-sub);font-size:10px;font-family:inherit;display:flex;align-items:center;"><span class="material-symbols-rounded" style="font-size:13px;">chevron_right</span></button>';
+  // 月切替ヘッダー（スケジュールと同じスタイル）
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 2px;">';
+  h += '<button onclick="switchPetCalMonth(-1)" style="width:30px;height:30px;border-radius:50%;background:var(--surface-warm);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_left</span></button>';
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<span style="font-size:16px;font-weight:800;color:var(--ink-dark);">'+y+'年 '+(m+1)+'月</span>';
+  if (!isCurrentMonth) h += '<button onclick="jumpPetCurrentMonth()" style="padding:3px 10px;background:var(--accent-bg);color:var(--accent-deep);border:1px solid var(--accent);border-radius:100px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;">今日</button>';
+  h += '</div>';
+  h += '<button onclick="switchPetCalMonth(1)" style="width:30px;height:30px;border-radius:50%;background:var(--surface-warm);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_right</span></button>';
   h += '</div>';
   
-  if (!isCurrentMonth) {
-    h += '<button onclick="jumpPetCurrentMonth()" style="width:100%;padding:5px;background:none;color:var(--ink-light);border:1px dashed var(--line);border-radius:6px;font-family:inherit;font-size:9px;font-weight:600;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">today</span>今月へ</button>';
-  }
-  
-  // 曜日ヘッダー（独立カード化）
-  var _accentC = pet.kidsGender ? '#E8729A' : '#9B7BC1';
-  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px;">';
+  // 曜日ヘッダー（スケジュールと同じ：独立白カード）
   const wks = ['日','月','火','水','木','金','土'];
-  for (let i = 0; i < 7; i++) {
-    let col = 'var(--ink-sub)';
-    if (i === 0) col = '#D89090';
-    else if (i === 6) col = '#90B0C8';
-    h += '<div style="text-align:center;font-size:10.5px;font-weight:700;color:'+col+';padding:6px 0;background:rgba(255,255,255,0.78);border-radius:8px;border:1px solid color-mix(in srgb,'+_accentC+' 25%,transparent);">'+wks[i]+'</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 0 3px;">';
+  for (let wi = 0; wi < 7; wi++) {
+    const wc = wi===0?'#D9534F':wi===6?'#4A90D9':'var(--ink-sub)';
+    h += '<div style="background:rgba(255,255,255,0.85);border-radius:8px;padding:5px 0;text-align:center;font-size:11px;font-weight:700;color:'+wc+';border:1px solid color-mix(in srgb, var(--accent) 20%, transparent);">'+wks[wi]+'</div>';
   }
   h += '</div>';
   
-  // 日付セル
-  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;">';
-  for (let i = 0; i < startWeekday; i++) {
-    h += '<div></div>';
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const k = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    const stamps = histMap[k] || [];
-    const isToday = k === todayK;
-    const sel = window._petCalSelectedDate === k;
-    const dow = new Date(y, m, d).getDay();
-    let bg = 'var(--surface-warm)';
-    let bd = '1.5px solid transparent';
-    if (sel) { bg = 'var(--accent-bg)'; bd = '1.5px solid var(--accent)'; }
-    else if (isToday) bd = '1.5px solid var(--accent)';
-    let dCol = 'var(--ink-dark)';
-    if (dow === 0) dCol = '#D89090';
-    else if (dow === 6) dCol = '#90B0C8';
-    
-    h += '<button onclick="selectPetCalDate(\''+k+'\')" style="aspect-ratio:1/1.3;border-radius:8px;background:'+bg+';border:'+bd+';padding:3px 2px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;overflow:hidden;">';
-    h += '<span style="font-size:11px;font-weight:'+(isToday?'800':'700')+';color:'+dCol+';line-height:1;">'+d+'</span>';
-    if (stamps.length > 0) {
-      // 最大4個アイコン表示
-      const show = Math.min(stamps.length, 4);
-      if (show === 1) {
-        h += '<div style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;"><span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">'+stamps[0].icon+'</span></div>';
-      } else {
-        h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;width:100%;justify-items:center;">';
-        for (let i = 0; i < show; i++) {
-          h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);line-height:1;">'+stamps[i].icon+'</span>';
+  // 日付セル（スケジュールと同じ：min-height:80px、独立した白カード、行ごと）
+  const totalCells = startWeekday + daysInMonth;
+  const totalRows = Math.ceil(totalCells / 7);
+  for (let row = 0; row < totalRows; row++) {
+    h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;">';
+    for (let col = 0; col < 7; col++) {
+      const cellIdx = row * 7 + col;
+      const d = cellIdx - startWeekday + 1;
+      if (cellIdx < startWeekday || d > daysInMonth) {
+        h += '<div style="min-height:80px;"></div>';
+        continue;
+      }
+      const k = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      const stamps = histMap[k] || [];
+      const isToday = k === todayK;
+      const sel = window._petCalSelectedDate === k;
+      const dow = col;
+      const holiday = (typeof _JP_HOLIDAYS !== 'undefined') ? (_JP_HOLIDAYS[k] || null) : null;
+      
+      const cellBg = sel ? 'var(--accent-bg)' : 'rgba(255,255,255,0.92)';
+      const cellColor = isToday ? 'var(--accent-deep)' : (dow===0||holiday) ? '#D9534F' : dow===6 ? '#4A90D9' : 'var(--ink-dark)';
+      const cellBorder = isToday ? '2px solid var(--accent)' : sel ? '2px solid var(--accent)' : '1px solid rgba(255,255,255,0.7)';
+      const cellShadow = sel ? '0 2px 6px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.06)';
+      const cellFontW = isToday || sel ? '800' : '600';
+      
+      h += '<button onclick="selectPetCalDate(\''+k+'\')" style="background:'+cellBg+';color:'+cellColor+';border:'+cellBorder+';border-radius:10px;box-shadow:'+cellShadow+';padding:5px 1px 4px;font-family:inherit;cursor:pointer;min-height:80px;display:flex;flex-direction:column;align-items:center;gap:2px;overflow:hidden;position:relative;">';
+      // 日付＋天気
+      const _wIco = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(k) : null;
+      h += '<span style="font-size:14px;font-weight:'+cellFontW+';line-height:1;display:inline-flex;align-items:center;gap:2px;">'+d;
+      if (_wIco) h += '<span style="opacity:0.55;display:inline-flex;align-items:center;">'+(typeof weatherIconHtml==='function' ? weatherIconHtml(_wIco,'font-size:9px;') : '')+'</span>';
+      h += '</span>';
+      // 祝日名
+      if (holiday) h += '<span style="font-size:6px;color:#D9534F;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+holiday+'</span>';
+      // スタンプ（アイコン+テキスト、最大4件、超過は+N件）
+      if (stamps.length > 0) {
+        const maxShow = 4;
+        const show = Math.min(stamps.length, maxShow);
+        const extra = stamps.length - show;
+        h += '<div style="width:100%;display:flex;flex-direction:column;gap:1px;margin-top:2px;padding:0 2px;align-items:stretch;">';
+        for (let ci = 0; ci < show; ci++) {
+          const it = stamps[ci];
+          const titleStr = (it.name || '').length > 4 ? (it.name || '').slice(0, 3) + '…' : (it.name || '');
+          h += '<div style="display:flex;align-items:center;gap:2px;font-size:9.5px;line-height:1.15;color:var(--ink-dark);font-weight:600;overflow:hidden;">';
+          h += '<span class="material-symbols-rounded" style="font-size:11px;color:var(--accent-deep);flex-shrink:0;line-height:1;">'+it.icon+'</span>';
+          h += '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:left;">'+escapeHtml(titleStr)+'</span>';
+          h += '</div>';
         }
+        if (extra > 0) h += '<div style="font-size:7.5px;color:var(--ink-light);font-weight:700;line-height:1.1;text-align:center;margin-top:1px;">+'+extra+'件</div>';
         h += '</div>';
       }
+      h += '</button>';
     }
-    h += '</button>';
+    h += '</div>';
   }
-  h += '</div>';
   
   // 選択日の詳細
   if (window._petCalSelectedDate) {
@@ -29159,6 +29232,7 @@ let townSearchQuery = '';
 let townCategoryFilter = 'all';
 let townMainTab = 'live';    // 'live' | 'town' | 'book' | 'board' | 'rainbow'(=アニマル)
 let townSubTab  = 'search'; // 'search' | 'transit' | 'fav' （「探す」タブ内のサブタブ）
+let townHideMainTabs = false; // ホームのクイックアクションから飛んだ時はタブ非表示
 let townAnimalSubTab = 'all'; // 'all' | 'birthday' | 'memorial' （アニマルタブ内のサブタブ）
 let placesSelCat = '';
 let placesText = '';
@@ -33407,21 +33481,31 @@ window._cropperConfirm = _cropperConfirm;
 function renderTown() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('town');
-  let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">🏙 にこわタウン</div><div class="topbar-spacer"></div></div>';
+  // タイトルをタブに合わせて変更
+  const _townTitles = {
+    live: '📡 Live', town: '🏙 Street', book: '📚 Books',
+    board: '📋 Board', rainbow: '🐾 Animals',
+    search_search: '🗺 Map', search_transit: '🚃 Transit', search_fav: '♡ Saved'
+  };
+  const _townTitleKey = townMainTab === 'search' ? 'search_'+townSubTab : townMainTab;
+  const _townTitle = _townTitles[_townTitleKey] || '🏙 Town';
+  let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">'+_townTitle+'</div><div class="topbar-spacer"></div></div>';
   html += infoBarHtml();
 
-  // ── メインタブ
-  html += '<div class="town-main-tabs">';
-  for (const t of TOWN_MAIN_TABS) {
-    html += '<button class="town-main-tab '+(townMainTab===t.id?'active':'')+'" onclick="setTownMainTab(\''+t.id+'\')">';
-    html += '<span class="town-main-tab-icon">'+t.icon+'</span>'+t.label+'</button>';
+  // ── メインタブ（ホームのクイックアクションから来た時は非表示）
+  if (!townHideMainTabs) {
+    html += '<div class="town-main-tabs">';
+    for (const t of TOWN_MAIN_TABS) {
+      html += '<button class="town-main-tab '+(townMainTab===t.id?'active':'')+'" onclick="setTownMainTab(\''+t.id+'\')">';
+      html += '<span class="town-main-tab-icon">'+t.icon+'</span>'+t.label+'</button>';
+    }
+    html += '</div>';
   }
-  html += '</div>';
 
   // ── サブタブ（「探す」タブの時だけ表示）
   if (townMainTab === 'search') {
     html += '<div class="town-sub-tabs">';
-    html += '<button class="town-sub-tab '+(townSubTab==='search'?'active':'')+'" onclick="setTownSubTab(\'search\')"><span class="material-symbols-rounded">search</span></button>';
+    html += '<button class="town-sub-tab '+(townSubTab==='search'?'active':'')+'" onclick="setTownSubTab(\'search\')"><span class="material-symbols-rounded">map</span></button>';
     html += '<button class="town-sub-tab '+(townSubTab==='transit'?'active':'')+'" onclick="setTownSubTab(\'transit\')"><span class="material-symbols-rounded">train</span></button>';
     html += '<button class="town-sub-tab '+(townSubTab==='fav'?'active':'')+'" onclick="setTownSubTab(\'fav\')"><span class="material-symbols-rounded">favorite</span></button>';
     html += '</div>';
@@ -36567,7 +36651,11 @@ function _renderModeQuickStamps(scopeKind, scopeId, idPrefix) {
   for (var si = 0; si < stamps.length; si++) {
     var s = stamps[si];
     var safeTitle = (s.title||'').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    h += '<button onclick="_quickAddSchedForMode(\''+scopeKind+'\',\''+(scopeId||'')+'\',\''+s.icon+'\',\''+safeTitle+'\',\''+(idPrefix||'')+'\')" style="flex-shrink:0;height:54px;min-width:54px;padding:4px;background:white;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;white-space:nowrap;overflow:hidden;">';
+    // PET/KIDSのカレンダーから呼ばれた場合は、お世話履歴に追加する
+    var clickHandler = (idPrefix === 'pet')
+      ? '_quickAddPetCareStamp(\''+s.icon+'\',\''+safeTitle+'\')'
+      : '_quickAddSchedForMode(\''+scopeKind+'\',\''+(scopeId||'')+'\',\''+s.icon+'\',\''+safeTitle+'\',\''+(idPrefix||'')+'\')';
+    h += '<button onclick="'+clickHandler+'" style="flex-shrink:0;height:54px;min-width:54px;padding:4px;background:white;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;white-space:nowrap;overflow:hidden;">';
     h += '<span style="width:30px;height:30px;border-radius:50%;background:'+accentColor+'1F;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;color:'+accentColor+';">'+s.icon+'</span></span>';
     h += '<span style="font-size:8.5px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50px;">'+escapeHtml(s.title||'')+'</span>';
     h += '</button>';
@@ -36617,6 +36705,32 @@ function _quickAddSchedForMode(scopeKind, scopeId, icon, title, idPrefix) {
   }
 }
 window._quickAddSchedForMode = _quickAddSchedForMode;
+
+// PET/KIDSカレンダーから：スタンプを押したらお世話履歴に追加
+function _quickAddPetCareStamp(icon, title) {
+  if (typeof _initPetCareData === 'function') _initPetCareData();
+  var store = (typeof _getCareStore === 'function') ? _getCareStore() : null;
+  if (!store) { showToast('追加できなかったよ'); return; }
+  if (!store.stampHistory) store.stampHistory = [];
+  // 選択された日付の現在時刻、または今の時刻
+  var ts = Date.now();
+  if (window._petCalSelectedDate) {
+    var d = new Date(window._petCalSelectedDate + 'T' + new Date().toTimeString().slice(0,8));
+    if (!isNaN(d.getTime())) ts = d.getTime();
+  }
+  store.stampHistory.push({
+    id: 'ps_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+    icon: icon,
+    name: title,
+    timestamp: ts,
+    source: 'quick'
+  });
+  if (typeof saveData === 'function') saveData();
+  if (typeof showToast === 'function') showToast(title + 'を記録したよ🌷');
+  _suppressScrollTop = true;
+  if (typeof render === 'function') render();
+}
+window._quickAddPetCareStamp = _quickAddPetCareStamp;
 
 function closeQuickStampEditor() {
   var m = document.getElementById('quickStampEditor');
@@ -36906,10 +37020,10 @@ function _renderSchedMonthView(houseId) {
 
   var h = '';
   // カレンダーカード（外側は透明、週ごとが白カードに）
-  h += '<div style="margin:0 4px;padding:6px 4px;">';
+  h += '<div style="margin:0;padding:4px 2px;">';
 
   // 月ナビ
-  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 4px;">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 2px;">';
   h += '<button onclick="changeCalMonth(\'sched\',-1)" style="width:30px;height:30px;border-radius:50%;background:var(--surface-warm);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_left</span></button>';
   h += '<div style="display:flex;align-items:center;gap:8px;">';
   h += '<span style="font-size:16px;font-weight:800;color:var(--ink-dark);">'+year+'年 '+(month+1)+'月</span>';
@@ -36969,10 +37083,10 @@ function _renderSchedMonthView(houseId) {
 
   // 曜日ヘッダー（日付と同じ独立カード型）
   var wds = ['日','月','火','水','木','金','土'];
-  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:0 4px 5px;">';
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 0 3px;">';
   for (var wi = 0; wi < 7; wi++) {
     var wc = wi===0?'#D9534F':wi===6?'#4A90D9':'var(--ink-sub)';
-    h += '<div style="background:rgba(255,255,255,0.85);border-radius:8px;padding:5px 0;text-align:center;font-size:10px;font-weight:700;color:'+wc+';border:1px solid color-mix(in srgb, var(--accent) 20%, transparent);">'+wds[wi]+'</div>';
+    h += '<div style="background:rgba(255,255,255,0.85);border-radius:8px;padding:5px 0;text-align:center;font-size:11px;font-weight:700;color:'+wc+';border:1px solid color-mix(in srgb, var(--accent) 20%, transparent);">'+wds[wi]+'</div>';
   }
   h += '</div>';
 
@@ -36983,7 +37097,7 @@ function _renderSchedMonthView(houseId) {
   var lastDayResidentPos = totalCells; // 月末の翌セル位置
 
   for (var row = 0; row < totalRows; row++) {
-    h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px;">';
+    h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;">';
     
     for (var col = 0; col < 7; col++) {
       var cellIdx = row * 7 + col;
@@ -37016,10 +37130,10 @@ function _renderSchedMonthView(houseId) {
       var cellShadow = isSel ? '0 2px 6px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.06)';
       var cellFontW = isToday || isSel ? '800' : '600';
 
-      h += '<button onclick="selectCalDate(\'sched\',\''+key+'\')" style="background:'+cellBg+';color:'+cellColor+';border:'+cellBorder+';border-radius:10px;box-shadow:'+cellShadow+';padding:5px 2px 4px;font-family:inherit;cursor:pointer;min-height:80px;display:flex;flex-direction:column;align-items:center;gap:2px;overflow:hidden;position:relative;">';
+      h += '<button onclick="selectCalDate(\'sched\',\''+key+'\')" style="background:'+cellBg+';color:'+cellColor+';border:'+cellBorder+';border-radius:10px;box-shadow:'+cellShadow+';padding:5px 1px 4px;font-family:inherit;cursor:pointer;min-height:80px;display:flex;flex-direction:column;align-items:center;gap:2px;overflow:hidden;position:relative;">';
       // 日付＋天気
       var _wIco = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(key) : null;
-      h += '<span style="font-size:13px;font-weight:'+cellFontW+';line-height:1;display:inline-flex;align-items:center;gap:2px;">'+d;
+      h += '<span style="font-size:14px;font-weight:'+cellFontW+';line-height:1;display:inline-flex;align-items:center;gap:2px;">'+d;
       if (_wIco) {
         h += '<span style="opacity:0.55;display:inline-flex;align-items:center;">'+(typeof weatherIconHtml==='function' ? weatherIconHtml(_wIco,'font-size:9px;') : '')+'</span>';
       }
@@ -37054,8 +37168,8 @@ function _renderSchedMonthView(houseId) {
           var it = cellItems[ci];
           // 文字は4字でカット、超えたら…
           var titleStr = (it.title || '').length > 4 ? (it.title || '').slice(0, 3) + '…' : (it.title || '');
-          h += '<div style="display:flex;align-items:center;gap:2px;font-size:8.5px;line-height:1.15;color:var(--ink-dark);font-weight:600;overflow:hidden;">';
-          h += '<span class="material-symbols-rounded" style="font-size:10px;color:'+it.color+';flex-shrink:0;line-height:1;">'+it.icon+'</span>';
+          h += '<div style="display:flex;align-items:center;gap:2px;font-size:9.5px;line-height:1.15;color:var(--ink-dark);font-weight:600;overflow:hidden;">';
+          h += '<span class="material-symbols-rounded" style="font-size:11px;color:'+it.color+';flex-shrink:0;line-height:1;">'+it.icon+'</span>';
           h += '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:left;">'+escapeHtml(titleStr)+'</span>';
           h += '</div>';
         }
@@ -37720,6 +37834,8 @@ document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
         if (currentView === 'town') return;
         _pushNav();
         currentView = 'town';
+        townHideMainTabs = false; // 通常アクセスはタブ表示
+        townMainTab = 'live';     // デフォルトタブにリセット
         needsRender = true;
       }
       else if (view === 'settings') {
@@ -37768,7 +37884,8 @@ const DEFAULT_MODE_TABS = {
     { id: 'routine',    label: 'Routine' },
     { id: 'rules',      label: 'Rules' },
     { id: 'diary',      label: 'Diary' },
-    { id: 'collection', label: 'Collection' }
+    { id: 'collection', label: 'Collection' },
+    { id: 'schedule',   label: 'Schedule' }
   ]
 };
 let currentModeTab = { me: 'stamp', pet: 'home', kids: 'home', nest: 'memo' };
@@ -37833,6 +37950,11 @@ function getModeTabsForMode(mode) {
         tabs.splice(insertAt, 0, { id: 'goods', label: 'Goods' });
         try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
       }
+      // NEST: Scheduleタブが無ければ末尾に追加（上4下3レイアウト用）
+      if (mode === 'nest' && !tabs.find(t => t.id === 'schedule')) {
+        tabs.push({ id: 'schedule', label: 'Schedule' });
+        try { localStorage.setItem(MODE_TABS_KEY[mode], JSON.stringify(tabs)); } catch(e) {}
+      }
       return tabs;
     }
   } catch(e) {}
@@ -37848,7 +37970,7 @@ const TAB_ICONS = {
   memo: 'sticky_note_2', goods: 'shopping_cart', rules: 'gavel',
   home: 'home', care: 'pets', health: 'health_and_safety',
   town: 'location_city', growth: 'trending_up', school: 'school',
-  money: 'payments', office: 'business_center'
+  money: 'payments', office: 'business_center', schedule: 'calendar_month'
 };
 function renderModePageTabs(mode) {
   const tabs = getModeTabsForMode(mode);
@@ -41183,6 +41305,7 @@ function renderSidePanel() {
 // ===== Places API 連携 =====
 function setTownMainTab(tab) {
   townMainTab = tab;
+  townHideMainTabs = false; // タブを直接タップしたらフラグリセット
   placesSelCat = '';
   placesResults = [];
   placesError = '';
@@ -41205,6 +41328,7 @@ function openTownQuick(mainTab, subTab) {
   currentView = 'town';
   townMainTab = mainTab || 'search';
   if (subTab) townSubTab = subTab;
+  townHideMainTabs = true; // 上タブを非表示
   render();
 }
 window.openTownQuick = openTownQuick;
