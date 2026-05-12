@@ -8385,8 +8385,8 @@ function openMyShopList() {
     for (const shop of shops) {
       const _cd = shop.cardDesign || { color:'#E8A040', pattern:'solid' };
       const _isPublic = shop.isPublic !== false;
-      const _typeIcon = shop.type === 'bookshelf' ? 'menu_book' : 'storefront';
-      const _typeLabel = shop.type === 'bookshelf' ? '本棚' : 'ショップ';
+      const _typeIcon = shop.type === 'shelter' ? 'volunteer_activism' : (shop.type === 'bookshelf' ? 'menu_book' : 'storefront');
+      const _typeLabel = shop.type === 'shelter' ? 'シェルター' : (shop.type === 'bookshelf' ? '本棚' : 'ショップ');
       const _bgStyle = _getCardPatternBg(_cd.color, _cd.pattern, 60);
       
       h += '<button onclick="closeMyShopList();openShopManager(\''+shop.id+'\')" style="width:100%;margin-bottom:10px;padding:14px;border:1.5px solid '+_cd.color+'66;border-radius:16px;cursor:pointer;font-family:inherit;'+_bgStyle+'display:flex;align-items:center;gap:12px;text-align:left;">';
@@ -13028,7 +13028,7 @@ function _renderQuickJumpContent() {
     h += '<div style="'+gridStyle+'">';
     for (const shop of shopList) {
       const _cd = shop.cardDesign || { color:'#E8A040', pattern:'solid' };
-      const _typeIcon = shop.type === 'bookshelf' ? 'menu_book' : 'storefront';
+      const _typeIcon = shop.type === 'shelter' ? 'volunteer_activism' : (shop.type === 'bookshelf' ? 'menu_book' : 'storefront');
       h += _qCard(
         'quickJumpTo(\'shop\',\''+shop.id+'\')', shop.iconImage || null,
         '<span class="material-symbols-rounded" style="font-size:22px;color:'+_cd.color+';">'+_typeIcon+'</span>',
@@ -14432,6 +14432,305 @@ function _doInjectSampleData() {
       { id:'ng_3', name:'シャンプー', category:'バスルーム', brand:'BOTANIST', icon:'🛁', note:'もうすぐなくなる', createdAt:todayMs, updatedAt:todayMs },
       { id:'ng_4', name:'アリエール', category:'洗濯', brand:'P&G', icon:'🧺', note:'詰替でストック1つあり', createdAt:todayMs, updatedAt:todayMs }
     ];
+  }
+
+  // ===== ★ 追加：MEプランナー =====
+  if (!data.planner) data.planner = { items: [] };
+  if (!data.planner.items || data.planner.items.length === 0) {
+    data.planner.items = [
+      { id:'pl_1', category:'morning', icon:'pets',         task:'こむぎの散歩',         time:'07:00', notify:false, notifyMinutesBefore:[10] },
+      { id:'pl_2', category:'morning', icon:'coffee',       task:'コーヒーを飲む',       time:'07:30', notify:false, notifyMinutesBefore:[10] },
+      { id:'pl_3', category:'morning', icon:'face',         task:'スキンケア',           time:'08:00', notify:false, notifyMinutesBefore:[10] },
+      { id:'pl_4', category:'noon',    icon:'lunch_dining', task:'お昼ご飯の準備',       time:'12:00', notify:false, notifyMinutesBefore:[10] },
+      { id:'pl_5', category:'evening', icon:'directions_run', task:'夕方ランニング',     time:'17:30', notify:false, notifyMinutesBefore:[10] },
+      { id:'pl_6', category:'night',   icon:'bathtub',      task:'お風呂',               time:'21:00', notify:false, notifyMinutesBefore:[10] },
+      { id:'pl_7', category:'night',   icon:'face',         task:'ナイトスキンケア',     time:'22:00', notify:false, notifyMinutesBefore:[10] },
+      { id:'pl_8', category:'night',   icon:'book_2',       task:'読書タイム',           time:'22:30', notify:false, notifyMinutesBefore:[10] },
+      { id:'pl_9', category:'midnight',icon:'bedtime',      task:'就寝',                 time:'23:30', notify:false, notifyMinutesBefore:[10] }
+    ];
+  }
+
+  // ===== ★ 追加：ME Study（学習ログ）=====
+  if (!data.meStudy) data.meStudy = { records: [] };
+  if (!data.meStudy.records || data.meStudy.records.length === 0) {
+    const _yy = today.getFullYear();
+    const _mm = String(today.getMonth()+1).padStart(2,'0');
+    const _dd = (d, offset) => {
+      const dt = new Date(todayMs - offset * dayMs);
+      return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+    };
+    data.meStudy.records = [
+      { id:'st_1', type:'book',    title:'「嫌われる勇気」アドラー心理学',    date:_dd(today,2),  category:'心理学', score:'', memo:'課題の分離という概念が印象的。人間関係が少し楽になった気がする' },
+      { id:'st_2', type:'book',    title:'「サピエンス全史」ユヴァル・ノア',  date:_dd(today,8),  category:'歴史・教養', score:'', memo:'人類の歴史を壮大なスケールで読んだ。虚構を信じる力が文明を作ったという視点が新鮮' },
+      { id:'st_3', type:'course',  title:'Udemy：Figmaでデザイン入門',        date:_dd(today,15), category:'デザイン', score:'完了', memo:'UI設計に使えそう。にこわのアプリデザインの参考にする' },
+      { id:'st_4', type:'lang',    title:'英語：DMM英会話 月次レッスン',       date:_dd(today,20), category:'英語', score:'4回', memo:'今月4回受講。ビジネス英語フレーズを中心に練習' },
+      { id:'st_5', type:'cert',    title:'簿記3級　受験',                      date:_dd(today,30), category:'資格', score:'合格', memo:'得点：85点。経理の基礎が身についた。2級も目指す' },
+      { id:'st_6', type:'lecture', title:'経営セミナー：小さな会社の資金繰り',  date:_dd(today,45), category:'経営', score:'参加', memo:'銀行との付き合い方や融資の引き出し方を学んだ' },
+      { id:'st_7', type:'test',    title:'英検2級 模試',                        date:_dd(today,60), category:'英語', score:'72%', memo:'リスニングがまだ弱い。毎朝15分のシャドーイングを追加' }
+    ];
+  }
+
+  // ===== ★ 追加：ME Goods（日用品 / __me__）=====
+  if (!data.nestGoods) data.nestGoods = {};
+  if (!data.nestGoods['__me__'] || data.nestGoods['__me__'].length === 0) {
+    data.nestGoods['__me__'] = [
+      { id:'meg_1', name:'BOTANIST ボタニカルシャンプー', category:'バスルーム', brand:'BOTANIST', icon:'🧴', note:'モイスト。詰替えストックあと1個', createdAt:todayMs, updatedAt:todayMs },
+      { id:'meg_2', name:'資生堂 マキアージュ ファンデ', category:'美容', brand:'資生堂', icon:'💄', note:'#30 オークル。もうすぐなくなる', createdAt:todayMs, updatedAt:todayMs },
+      { id:'meg_3', name:'サンスター 薬用ハミガキ', category:'バスルーム', brand:'サンスター', icon:'🪥', note:'ストック2本あり', createdAt:todayMs, updatedAt:todayMs },
+      { id:'meg_4', name:'無印良品 脚付きマットレス', category:'ベッドルーム', brand:'無印良品', icon:'🛏', note:'シングル。2021年購入', createdAt:todayMs, updatedAt:todayMs },
+      { id:'meg_5', name:'Panasonic イオニティ ドライヤー', category:'美容', brand:'Panasonic', icon:'💨', note:'EH-NE73。2023年購入', createdAt:todayMs, updatedAt:todayMs },
+      { id:'meg_6', name:'アタック ZERO 洗濯洗剤', category:'洗濯', brand:'花王', icon:'🧺', note:'詰替えタイプ。ドラッグストアで定期購入', createdAt:todayMs, updatedAt:todayMs },
+      { id:'meg_7', name:'クックパッド まな板（大）', category:'キッチン', brand:'', icon:'🔪', note:'青色。年1回交換予定', createdAt:todayMs, updatedAt:todayMs },
+      { id:'meg_8', name:'ボックスティッシュ（大量買い）', category:'その他', brand:'エリエール', icon:'🧻', note:'12箱でストック。今残8箱', createdAt:todayMs, updatedAt:todayMs }
+    ];
+  }
+
+  // ===== ★ 追加：ME Diary（日記を追加。既存2件に加え7件追加）=====
+  if (!data.posts) data.posts = [];
+  const _meDiaryExtra = [
+    { id:'post_me_3', petId:'me_diary', text:'朝ランを再開した。最初は2kmが精いっぱいだったけど、だんだん体が慣れてきた気がする。風が気持ちいい。', mood:'😊', weather:'☀️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-3*dayMs },
+    { id:'post_me_4', petId:'me_diary', text:'こむぎとももが珍しく仲良く昼寝してた。写真に撮りたかったけど動いちゃった…でもその瞬間が愛しすぎる。', mood:'😍', weather:'☁️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-6*dayMs },
+    { id:'post_me_5', petId:'me_diary', text:'スキンケアを見直した。美容液を追加してみたら、翌朝の肌の調子が明らかに違う。続けてみよう。', mood:'✨', weather:'☀️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-9*dayMs },
+    { id:'post_me_6', petId:'me_diary', text:'仕事で部品の精度が出ずにヒヤッとした。でも検査で止められてよかった。検査の大切さを改めて感じた日。', mood:'😮‍💨', weather:'☁️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-14*dayMs },
+    { id:'post_me_7', petId:'me_diary', text:'長男と一緒に料理した。唐揚げを作ったら「うまい！」って言ってくれた。一緒に作るとなんでも美味しくなる。', mood:'😄', weather:'☀️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-18*dayMs },
+    { id:'post_me_8', petId:'me_diary', text:'久しぶりにカラオケひとり練習。2時間ずっと歌ってた。高音の伸びが良くなってきた気がする。次はライブに行きたい。', mood:'🎤', weather:'🌧️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-25*dayMs },
+    { id:'post_me_9', petId:'me_diary', text:'今月の体重−1.2kg。ゆっくりでも確実に落ちてきてる。焦らずマイペースで続けよう。', mood:'💪', weather:'☀️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-30*dayMs }
+  ];
+  for (const _p of _meDiaryExtra) { if (!data.posts.find(x => x.id === _p.id)) data.posts.push(_p); }
+
+  // ===== ★ 追加：ME メモ =====
+  if (!data.memos) data.memos = { folders: [], items: [] };
+  if (!data.memos.items) data.memos.items = [];
+  if (data.memos.items.length === 0) {
+    const _memoNow = todayMs;
+    data.memos.items = [
+      { id:'memo_s1', title:'買い物リスト', body:'・牛乳（1L×2本）\n・卵（10個）\n・ブロッコリー\n・鶏むね肉（600g）\n・ヨーグルト', photo:'', createdAt:_memoNow - 1*dayMs, updatedAt:_memoNow - 1*dayMs },
+      { id:'memo_s2', title:'美容室メモ', body:'オーダー内容：\n・グレージュカラー（明度8）\n・毛先3cmカット\n・トリートメント仕上げ\n\n次回予約：2ヶ月後', photo:'', createdAt:_memoNow - 3*dayMs, updatedAt:_memoNow - 3*dayMs },
+      { id:'memo_s3', title:'読みたい本リスト', body:'1. ゼロ秒思考（赤羽雄二）\n2. 夜と霧（フランクル）\n3. 限りある時間の使い方\n4. 大富豪アニキの教え', photo:'', createdAt:_memoNow - 7*dayMs, updatedAt:_memoNow - 7*dayMs },
+      { id:'memo_s4', title:'年間目標メモ', body:'【2025年の目標】\n■ 健康：60kgを目指す\n■ 仕事：売上120%達成\n■ 学習：簿記2級取得\n■ 趣味：カラオケ月2回以上\n■ 美容：スキンケア習慣化', photo:'', createdAt:_memoNow - 15*dayMs, updatedAt:_memoNow - 15*dayMs }
+    ];
+  }
+
+  // ===== ★ 追加：Office スタンプ履歴 =====
+  if (!data.officeStampHistory || data.officeStampHistory.length === 0) {
+    data.officeStampHistory = [];
+    const officeStamps = [
+      {n:'出社', i:'login'},{n:'退社', i:'logout'},
+      {n:'電話対応', i:'call'},{n:'納品', i:'inventory'},
+      {n:'打合せ', i:'groups'},{n:'検査', i:'fact_check'},
+      {n:'残業', i:'work_history'},{n:'外出', i:'directions_car'}
+    ];
+    for (let d = 14; d >= 0; d--) {
+      const dayStart = todayMs - d * dayMs;
+      // 土日はスキップ
+      const dow = new Date(dayStart).getDay();
+      if (dow === 0 || dow === 6) continue;
+      // 出社・退社は毎日
+      data.officeStampHistory.push({ id:'os_in_'+d,  icon:'login',  name:'出社', category:'勤怠', timestamp:dayStart + 8.5*60*60*1000, source:'office' });
+      data.officeStampHistory.push({ id:'os_out_'+d, icon:'logout', name:'退社', category:'勤怠', timestamp:dayStart + 18*60*60*1000, source:'office' });
+      // その他ランダム
+      if (d % 3 === 0) data.officeStampHistory.push({ id:'os_s_'+d, icon:'fact_check', name:'検査', category:'製造', timestamp:dayStart + 13*60*60*1000, source:'office' });
+      if (d % 4 === 0) data.officeStampHistory.push({ id:'os_m_'+d, icon:'groups',    name:'打合せ', category:'営業', timestamp:dayStart + 15*60*60*1000, source:'office' });
+      if (d % 5 === 0) data.officeStampHistory.push({ id:'os_d_'+d, icon:'inventory', name:'納品', category:'物流', timestamp:dayStart + 16*60*60*1000, source:'office' });
+    }
+  }
+
+  // ===== ★ 追加：Office マニュアル =====
+  if (!data.officeManuals) data.officeManuals = { checklists: [], howtos: [] };
+  if (data.officeManuals.checklists.length === 0) {
+    data.officeManuals.checklists = [
+      { id:'ocl_1', title:'朝の開業チェック', items:[
+        {id:'i1', text:'機械の電源オン（フライス・ロボドリル）', done:false},
+        {id:'i2', text:'油面確認（クーラント液）', done:false},
+        {id:'i3', text:'清掃（切粉の除去）', done:false},
+        {id:'i4', text:'段取り確認（今日の加工図面を確認）', done:false},
+        {id:'i5', text:'安全確認（保護メガネ・軍手の準備）', done:false}
+      ], createdAt:todayMs-30*dayMs, updatedAt:todayMs },
+      { id:'ocl_2', title:'納品前の最終確認', items:[
+        {id:'j1', text:'寸法検査（ノギス・マイクロ）', done:false},
+        {id:'j2', text:'表面粗さ確認', done:false},
+        {id:'j3', text:'個数カウント', done:false},
+        {id:'j4', text:'梱包・緩衝材', done:false},
+        {id:'j5', text:'納品書の同封', done:false}
+      ], createdAt:todayMs-20*dayMs, updatedAt:todayMs }
+    ];
+  }
+  if (data.officeManuals.howtos.length === 0) {
+    data.officeManuals.howtos = [
+      { id:'oht_1', title:'フライス加工の手順（基本）', steps:[
+        {id:'s1', text:'図面確認：材料・公差・表面粗さを確認する'},
+        {id:'s2', text:'バイスセット：加工物をしっかり固定する'},
+        {id:'s3', text:'工具選定：エンドミルの径・材質を選ぶ'},
+        {id:'s4', text:'プログラム確認：Gコードの空運転を実施'},
+        {id:'s5', text:'試切り：最初の1パスは浅めに試し切り'},
+        {id:'s6', text:'測定：ノギス・ハイトゲージで中間確認'},
+        {id:'s7', text:'仕上げ切り：送り・回転数を最適化して完了'}
+      ], createdAt:todayMs-15*dayMs, updatedAt:todayMs }
+    ];
+  }
+
+  // ===== ★ 追加：Office メモ =====
+  if (!data.officeMemos) data.officeMemos = [];
+  if (data.officeMemos.length === 0) {
+    data.officeMemos = [
+      { id:'om_1', title:'', body:'東京エレクトロン 月次納品：毎月25日。担当：田中様（080-xxxx-xxxx）', createdAt:todayMs-2*dayMs, updatedAt:todayMs-2*dayMs },
+      { id:'om_2', title:'', body:'OKKのスピンドル速度：材質SS400は3000rpm、A5052は2000rpmが安定', createdAt:todayMs-5*dayMs, updatedAt:todayMs-5*dayMs },
+      { id:'om_3', title:'', body:'来月の有給：10日(月)〜12日(水) 申請済み', createdAt:todayMs-8*dayMs, updatedAt:todayMs-8*dayMs },
+      { id:'om_4', title:'', body:'新工具の見積依頼：OSGエンドミル Φ8×3枚刃×10本 → 工具屋へ確認', createdAt:todayMs-12*dayMs, updatedAt:todayMs-12*dayMs }
+    ];
+  }
+
+  // ===== ★ 追加：NEST メモ（伝言）=====
+  if (!data.nestMemos) data.nestMemos = {};
+  const _nhId = 'sample_house';
+  if (!data.nestMemos[_nhId] || data.nestMemos[_nhId].length === 0) {
+    data.nestMemos[_nhId] = [
+      { id:'nm_1', title:'今日の夕食', body:'冷蔵庫に鶏むね肉があるので唐揚げにする予定。ごはんは炊いといて！', createdAt:todayMs-1*dayMs, updatedAt:todayMs-1*dayMs },
+      { id:'nm_2', title:'洗濯物について', body:'今日は雨予報。室内干しにしてね🌷 柔軟剤は青いボトルを使って。', createdAt:todayMs-2*dayMs, updatedAt:todayMs-2*dayMs },
+      { id:'nm_3', title:'こむぎのごはん', body:'17時に乾燥フード70g＋水をあげてね。おやつはもうあげ済みだよ！', createdAt:todayMs-3*dayMs, updatedAt:todayMs-3*dayMs }
+    ];
+  }
+
+  // ===== ★ 追加：PETプランナー（こむぎ＆もも）=====
+  if (!data.petCare) data.petCare = {};
+  if (!data.petCare.planner) data.petCare.planner = { items: [] };
+  if (!data.petCare.planner.items || data.petCare.planner.items.length === 0) {
+    data.petCare.planner.items = [
+      { id:'pp_1', category:'morning', task:'ごはん（乾燥フード70g）', icon:'restaurant', notify:false, notifyMinutesBefore:[10] },
+      { id:'pp_2', category:'morning', task:'お散歩（30分）', icon:'pets', notify:false, notifyMinutesBefore:[10] },
+      { id:'pp_3', category:'morning', task:'おみず交換', icon:'water_drop', notify:false, notifyMinutesBefore:[10] },
+      { id:'pp_4', category:'noon',    task:'ももの昼ごはん（カリカリ30g）', icon:'restaurant', notify:false, notifyMinutesBefore:[10] },
+      { id:'pp_5', category:'evening', task:'夕ごはん（乾燥フード70g）', icon:'restaurant', notify:false, notifyMinutesBefore:[10] },
+      { id:'pp_6', category:'evening', task:'お散歩（夕方・15分）', icon:'pets', notify:false, notifyMinutesBefore:[10] },
+      { id:'pp_7', category:'night',   task:'ブラッシング（週3）', icon:'content_cut', notify:false, notifyMinutesBefore:[10] },
+      { id:'pp_8', category:'night',   task:'トイレ掃除', icon:'wc', notify:false, notifyMinutesBefore:[10] }
+    ];
+  }
+
+  // ===== ★ 追加：KIDS お世話スタンプ履歴（はるき＆ひより）=====
+  const _kid1 = data.pets.find(p => p.id === 'sample_kid1'); // はるき
+  const _kid2 = data.pets.find(p => p.id === 'sample_kid2'); // ひより
+  const _kidsStamps = [
+    {n:'ごはん', i:'restaurant', cat:'生活'}, {n:'おやつ', i:'cookie', cat:'生活'},
+    {n:'おふろ', i:'bathtub', cat:'生活'},    {n:'宿題', i:'edit_document', cat:'学習'},
+    {n:'読書', i:'menu_book', cat:'学習'},     {n:'外遊び', i:'directions_run', cat:'遊び'},
+    {n:'お絵かき', i:'brush', cat:'遊び'},     {n:'がんばった', i:'star', cat:'気持ち'},
+    {n:'たのしかった', i:'sentiment_satisfied', cat:'気持ち'}
+  ];
+  if (_kid1) {
+    if (!_kid1.kidsCare) _kid1.kidsCare = {};
+    if (!_kid1.kidsCare.stampHistory || _kid1.kidsCare.stampHistory.length === 0) {
+      _kid1.kidsCare.stampHistory = [];
+      for (let d = 10; d >= 0; d--) {
+        const _dayStart = todayMs - d * dayMs;
+        const _count = 3 + Math.floor(Math.random()*3);
+        for (let k = 0; k < _count; k++) {
+          const _s = _kidsStamps[Math.floor(Math.random()*_kidsStamps.length)];
+          _kid1.kidsCare.stampHistory.push({ id:'ks1_'+d+'_'+k, icon:_s.i, name:_s.n, category:_s.cat, timestamp:_dayStart+k*3*60*60*1000, by:{name:'あんず', avatar:'🌷'} });
+        }
+      }
+    }
+    if (!_kid1.kidsCare.planner) _kid1.kidsCare.planner = { items: [] };
+    if (_kid1.kidsCare.planner.items.length === 0) {
+      _kid1.kidsCare.planner.items = [
+        { id:'kp1_1', category:'morning', task:'朝ごはん', icon:'restaurant', notify:false, notifyMinutesBefore:[10] },
+        { id:'kp1_2', category:'morning', task:'学校の準備', icon:'backpack', notify:false, notifyMinutesBefore:[10] },
+        { id:'kp1_3', category:'evening', task:'宿題', icon:'edit_document', notify:false, notifyMinutesBefore:[10] },
+        { id:'kp1_4', category:'night',   task:'お風呂', icon:'bathtub', notify:false, notifyMinutesBefore:[10] },
+        { id:'kp1_5', category:'night',   task:'就寝', icon:'bedtime', notify:false, notifyMinutesBefore:[10] }
+      ];
+    }
+  }
+  if (_kid2) {
+    if (!_kid2.kidsCare) _kid2.kidsCare = {};
+    if (!_kid2.kidsCare.stampHistory || _kid2.kidsCare.stampHistory.length === 0) {
+      _kid2.kidsCare.stampHistory = [];
+      for (let d = 10; d >= 0; d--) {
+        const _dayStart = todayMs - d * dayMs;
+        const _count = 2 + Math.floor(Math.random()*3);
+        for (let k = 0; k < _count; k++) {
+          const _s = _kidsStamps[Math.floor(Math.random()*_kidsStamps.length)];
+          _kid2.kidsCare.stampHistory.push({ id:'ks2_'+d+'_'+k, icon:_s.i, name:_s.n, category:_s.cat, timestamp:_dayStart+k*3*60*60*1000, by:{name:'あんず', avatar:'🌷'} });
+        }
+      }
+    }
+    if (!_kid2.kidsCare.planner) _kid2.kidsCare.planner = { items: [] };
+    if (_kid2.kidsCare.planner.items.length === 0) {
+      _kid2.kidsCare.planner.items = [
+        { id:'kp2_1', category:'morning', task:'朝ごはん', icon:'restaurant', notify:false, notifyMinutesBefore:[10] },
+        { id:'kp2_2', category:'noon',    task:'昼寝', icon:'bedtime', notify:false, notifyMinutesBefore:[10] },
+        { id:'kp2_3', category:'evening', task:'外遊び', icon:'directions_run', notify:false, notifyMinutesBefore:[10] },
+        { id:'kp2_4', category:'night',   task:'お風呂', icon:'bathtub', notify:false, notifyMinutesBefore:[10] }
+      ];
+    }
+  }
+
+  // ===== ★ 追加：KIDS おもいで日記（共通 tweets → data.posts経由）=====
+  const _kidsDiaryPosts = [
+    { id:'post_kid1_1', petId:'sample_kid1', text:'サッカーの試合で初めてゴールを決めた！チームのみんなに褒めてもらえてうれしかった。', mood:'⚽', weather:'☀️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-4*dayMs, type:'note', photoIds:[], visibility:'house' },
+    { id:'post_kid1_2', petId:'sample_kid1', text:'テストで算数が90点！苦手だった割り算が少しわかってきた。一緒に練習した甲斐があった。', mood:'📝', weather:'☁️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-11*dayMs, type:'note', photoIds:[], visibility:'house' },
+    { id:'post_kid1_3', petId:'sample_kid1', text:'久しぶりに長男と映画を見た。帰り道で手を繋いでくれた。大きくなってもたまにはこういう時間があるといい。', mood:'🎬', weather:'🌧️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-21*dayMs, type:'note', photoIds:[], visibility:'house' },
+    { id:'post_kid2_1', petId:'sample_kid2', text:'長女が「ままだーいすき」って言いながら抱きついてきた。これだけで1日が幸せになる言葉。', mood:'💕', weather:'☀️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-2*dayMs, type:'note', photoIds:[], visibility:'house' },
+    { id:'post_kid2_2', petId:'sample_kid2', text:'ひよりが初めてひらがなを書けた！「ひ」と「よ」と「り」。ちょっと歪んでるのもかわいすぎる。', mood:'✏️', weather:'☀️', authorName:'あんず', authorAvatar:'🌷', createdAt:todayMs-15*dayMs, type:'note', photoIds:[], visibility:'house' }
+  ];
+  for (const _kp of _kidsDiaryPosts) { if (!data.posts.find(x => x.id === _kp.id)) data.posts.push(_kp); }
+
+  // ===== ★ 追加：KIDS 成績（はるき・小4）=====
+  if (_kid1 && (!_kid1.grades || !_kid1.grades.tests || _kid1.grades.tests.length === 0)) {
+    if (!_kid1.grades) _kid1.grades = {};
+    _kid1.grades.gradeLevel  = 'elem4';
+    _kid1.grades.subjects    = ['国語','算数','理科','社会','英語','音楽','図工','体育'];
+    _kid1.grades.scale       = '3';
+    _kid1.grades.termCount   = 3;
+    _kid1.grades.currentYear = today.getFullYear();
+    _kid1.grades.tests       = [
+      { id:'gtest_1', subject:'国語', date: today.getFullYear()+'-04-22', score:'78', maxScore:'100', memo:'漢字は満点だったけど読解が弱い' },
+      { id:'gtest_2', subject:'算数', date: today.getFullYear()+'-04-22', score:'90', maxScore:'100', memo:'割り算が少し間違えた。次は100点狙う！' },
+      { id:'gtest_3', subject:'理科', date: today.getFullYear()+'-05-01', score:'85', maxScore:'100', memo:'理科は好きで得意' },
+      { id:'gtest_4', subject:'社会', date: today.getFullYear()+'-05-01', score:'72', maxScore:'100', memo:'地理系は苦手。地図帳で復習する' }
+    ];
+    _kid1.grades.terms = {
+      [today.getFullYear()+'-1']: {
+        subjects: { '国語':3, '算数':3, '理科':3, '社会':2, '英語':3, '音楽':2, '図工':3, '体育':3 },
+        note: '1学期：全体的に良好。社会と音楽が課題。'
+      }
+    };
+  }
+
+  // ===== ★ 追加：My Shop shelter（保護団体サンプル）=====
+  if (!data.myShops.find(x => x.id === 'shop_sample_g')) {
+    const _shelterNow = todayMs;
+    data.myShops.push({
+      id: 'shop_sample_g',
+      nikowaId: 'S-POPOHS',
+      type: 'shelter',
+      template: 'G',
+      name: 'ポポハウス 保護犬猫の里親募集',
+      profile: '大阪を拠点に活動している保護団体です。保護した子たちに温かいご家族を探しています。ご縁があれば、ぜひ一度会いに来てね。',
+      tags: ['保護犬', '保護猫', '里親募集', '大阪'],
+      heroImage: '',
+      iconImage: '',
+      cardDesign: { color:'#3CB878', pattern:'solid' },
+      contact: { phone:'06-xxxx-xxxx', address:'大阪市北区' },
+      snsLinks: [],
+      isPublic: true,
+      plan: 'free',
+      activityStats: { rescuedCount: 127, adoptedCount: 98 },
+      adoptionPets: [
+        { id:'ap_1', name:'ましろ',  species:'猫', breed:'MIX',        age:'推定1歳',  gender:'メス', photo:'', description:'人懐こくて甘えん坊な女の子。膝の上が大好き。先住猫とも仲良くできます。', status:'open',    createdAt:_shelterNow-20*dayMs, updatedAt:_shelterNow },
+        { id:'ap_2', name:'くるみ',  species:'犬', breed:'チワワMIX',  age:'推定3歳',  gender:'メス', photo:'', description:'小さくておとなしい子。散歩は短めでOK。一人暮らしの方にもおすすめ。',       status:'open',    createdAt:_shelterNow-15*dayMs, updatedAt:_shelterNow },
+        { id:'ap_3', name:'そら',    species:'犬', breed:'雑種',        age:'推定5歳',  gender:'オス', photo:'', description:'落ち着いた性格で子供にも優しい。活発な家庭向き。運動好きの方に。',           status:'matched', createdAt:_shelterNow-30*dayMs, updatedAt:_shelterNow },
+        { id:'ap_4', name:'きなこ',  species:'猫', breed:'三毛',        age:'推定2歳',  gender:'メス', photo:'', description:'外見はクールだけど、慣れると甘えん坊。室内のみ飼育希望。',                   status:'open',    createdAt:_shelterNow-10*dayMs, updatedAt:_shelterNow },
+        { id:'ap_5', name:'むぎ',    species:'犬', breed:'ミニチュアダックス', age:'推定4歳', gender:'オス', photo:'', description:'甘えん坊で遊び好き。走り回るのが大好きなので広めのお家希望。',         status:'closed',  createdAt:_shelterNow-60*dayMs, updatedAt:_shelterNow-5*dayMs }
+      ],
+      posts: [
+        { id:'sp_g1', type:'news',   content:'今週末（5/18）に大阪市内の公園で里親マッチング会を開催します。お気軽にお越しください🌷', timestamp:_shelterNow-3*dayMs },
+        { id:'sp_g2', type:'news',   content:'新しい子（ましろ・きなこ）の里親募集を開始しました。詳細はプロフィールページをご覧ください', timestamp:_shelterNow-10*dayMs },
+        { id:'sp_g3', type:'column', title:'譲渡後の生活レポート：むぎくんの近況', content:'先月ご縁がつながったむぎくんから写真が届きました。新しいご家族にすっかり慣れて、毎日元気いっぱい走り回っているとのこと。こういう報告が届くたびに、この活動を続けてきて良かったと思います。\n\n保護活動は1頭1頭との向き合いです。施設に来たばかりの子は緊張や不安を抱えています。でも少しずつ心を開いてくれる瞬間が、何よりも嬉しい瞬間です。', tags:['譲渡報告','むぎ'], timestamp:_shelterNow-20*dayMs }
+      ],
+      createdAt: _shelterNow - 90*dayMs,
+      updatedAt: _shelterNow
+    });
   }
 
   saveData();
@@ -30193,7 +30492,8 @@ const SHOP_TEMPLATES = {
   'C': { type: 'shop',      label: '配信者型',   icon: 'campaign',    desc: 'プロフィール＋SNS連携（ライバー・YouTuber）' },
   'D': { type: 'shop',      label: 'シンプル型', icon: 'description', desc: '紹介文＋お知らせ（病院・教室など）' },
   'E': { type: 'bookshelf', label: '文字型',     icon: 'menu_book',   desc: '小説・詩（縦書き・続きを読む）' },
-  'F': { type: 'bookshelf', label: '写真型',     icon: 'photo_library', desc: '写真集・フォトギャラリー' }
+  'F': { type: 'bookshelf', label: '写真型',     icon: 'photo_library', desc: '写真集・フォトギャラリー' },
+  'G': { type: 'shelter',   label: 'シェルター型', icon: 'volunteer_activism', desc: '里親募集＋活動実績（動物保護団体・シェルター向け）' }
 };
 
 // ショップを作成
@@ -30225,6 +30525,11 @@ function createShop(type, template, name, profile, tags) {
     createdAt: Date.now(),
     updatedAt: Date.now()
   };
+  // shelterタイプ専用フィールドの初期化
+  if (type === 'shelter') {
+    shop.adoptionPets = [];
+    shop.activityStats = { rescuedCount: 0, adoptedCount: 0 };
+  }
   data.myShops.push(shop);
   saveData();
   return id;
@@ -30263,7 +30568,7 @@ function _renderShopCreateModal() {
   if (s.step === 1) {
     // タイプ選択
     h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">どんなページを作る？</div>';
-    h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:16px;line-height:1.6;">最初に大きく2つから選んでね</div>';
+    h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:16px;line-height:1.6;">最初に大きく3つから選んでね</div>';
     h += '<div style="display:flex;flex-direction:column;gap:10px;">';
     h += '<button onclick="shopCreateSetType(\'shop\')" style="display:flex;align-items:center;gap:12px;padding:14px;background:white;border:1.5px solid '+(s.type==='shop'?'var(--accent)':'var(--line)')+';border-radius:14px;cursor:pointer;font-family:inherit;text-align:left;">';
     h += '<div style="width:48px;height:48px;border-radius:12px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">storefront</span></div>';
@@ -30272,6 +30577,10 @@ function _renderShopCreateModal() {
     h += '<button onclick="shopCreateSetType(\'bookshelf\')" style="display:flex;align-items:center;gap:12px;padding:14px;background:white;border:1.5px solid '+(s.type==='bookshelf'?'var(--accent)':'var(--line)')+';border-radius:14px;cursor:pointer;font-family:inherit;text-align:left;">';
     h += '<div style="width:48px;height:48px;border-radius:12px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">menu_book</span></div>';
     h += '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--ink-dark);">📖 本棚型</div><div style="font-size:11px;color:var(--ink-sub);line-height:1.5;margin-top:2px;">小説・詩・写真集など<br>「アート作品を見せる人」向け</div></div>';
+    h += '</button>';
+    h += '<button onclick="shopCreateSetType(\'shelter\')" style="display:flex;align-items:center;gap:12px;padding:14px;background:white;border:1.5px solid '+(s.type==='shelter'?'var(--accent)':'var(--line)')+';border-radius:14px;cursor:pointer;font-family:inherit;text-align:left;">';
+    h += '<div style="width:48px;height:48px;border-radius:12px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">volunteer_activism</span></div>';
+    h += '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--ink-dark);">保護団体・シェルター</div><div style="font-size:11px;color:var(--ink-sub);line-height:1.5;margin-top:2px;">里親募集＋活動実績＋お知らせ<br>「動物保護団体・シェルター」向け</div></div>';
     h += '</button>';
     h += '</div>';
   } else if (s.step === 2) {
@@ -30311,7 +30620,7 @@ function _renderShopCreateModal() {
     h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">確認</div>';
     h += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:16px;line-height:1.6;">この内容で開設するよ</div>';
     h += '<div style="background:var(--surface-warm);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;">';
-    h += '<div style="display:flex;gap:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;width:80px;">タイプ</span><span style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+(s.type==='shop'?'🏪 ショップ型':'📖 本棚型')+'</span></div>';
+    h += '<div style="display:flex;gap:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;width:80px;">タイプ</span><span style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+(s.type==='shelter'?'保護団体・シェルター':(s.type==='shop'?'🏪 ショップ型':'📖 本棚型'))+'</span></div>';
     h += '<div style="display:flex;gap:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;width:80px;">テンプレ</span><span style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(tplLabel)+'</span></div>';
     h += '<div style="display:flex;gap:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;width:80px;">名前</span><span style="font-size:12px;color:var(--ink-dark);font-weight:700;flex:1;">'+escapeHtml(s.name||'')+'</span></div>';
     if (s.profile) h += '<div style="display:flex;gap:10px;"><span style="font-size:10px;color:var(--ink-sub);font-weight:700;width:80px;">紹介</span><span style="font-size:11px;color:var(--ink-dark);line-height:1.5;flex:1;">'+escapeHtml(s.profile)+'</span></div>';
@@ -30424,6 +30733,10 @@ function renderShopManager() {
     {id:'design',   label:'デザイン',   icon:'palette'},
     {id:'settings', label:'設定',       icon:'settings'}
   ];
+  // shelterタイプの場合は「里親募集」タブを投稿の後に挿入
+  if (shop.type === 'shelter') {
+    _tabs.splice(3, 0, {id:'adoption', label:'里親募集', icon:'volunteer_activism'});
+  }
   for (const t of _tabs) {
     const _act = tab === t.id;
     html += '<button onclick="setShopManagerTab(\''+t.id+'\')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">'+t.icon+'</span>'+t.label+'</button>';
@@ -30438,6 +30751,8 @@ function renderShopManager() {
     html += renderShopProfileEdit(shop);
   } else if (tab === 'posts') {
     html += renderShopPostsManager(shop);
+  } else if (tab === 'adoption') {
+    html += renderShopAdoptionManager(shop);
   } else if (tab === 'pages') {
     html += renderShopPagesManager(shop);
   } else if (tab === 'design') {
@@ -30958,6 +31273,306 @@ function deleteShop(shopId) {
 }
 window.deleteShop = deleteShop;
 
+// ===== 里親募集管理（shelterタイプ専用）=====
+function renderShopAdoptionManager(shop) {
+  // 安全な初期化（既存shopにフィールドがない場合のフォールバック）
+  if (!shop.adoptionPets) shop.adoptionPets = [];
+  if (!shop.activityStats) shop.activityStats = { rescuedCount: 0, adoptedCount: 0 };
+  
+  const stats = shop.activityStats;
+  const pets = shop.adoptionPets;
+  const openCount    = pets.filter(p => p.status === 'open').length;
+  const matchedCount = pets.filter(p => p.status === 'matched').length;
+  const closedCount  = pets.filter(p => p.status === 'closed').length;
+  
+  let h = '<div style="display:flex;flex-direction:column;gap:14px;">';
+  
+  // ===== 説明バナー =====
+  h += '<div style="padding:11px 13px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:11px;font-size:11px;color:var(--accent-deep);line-height:1.6;"><span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;">info</span> 里親募集中の子と、団体の活動実績を登録できるよ。公開ページにも表示されるからね</div>';
+  
+  // ===== 活動実績エリア =====
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:12px;padding:14px;">';
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);display:flex;align-items:center;gap:6px;margin-bottom:10px;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">insights</span>活動実績</div>';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  h += '<div><label style="font-size:10.5px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">これまでに保護した数</label>';
+  h += '<div style="display:flex;align-items:center;gap:4px;"><input type="number" id="adoptStatsRescued" value="'+(stats.rescuedCount||0)+'" min="0" style="flex:1;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);text-align:right;font-weight:800;"><span style="font-size:11px;color:var(--ink-sub);font-weight:700;">頭</span></div></div>';
+  h += '<div><label style="font-size:10.5px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">新しい家族へ譲渡した数</label>';
+  h += '<div style="display:flex;align-items:center;gap:4px;"><input type="number" id="adoptStatsAdopted" value="'+(stats.adoptedCount||0)+'" min="0" style="flex:1;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);text-align:right;font-weight:800;"><span style="font-size:11px;color:var(--ink-sub);font-weight:700;">頭</span></div></div>';
+  h += '</div>';
+  h += '<button onclick="saveAdoptionStats(\''+shop.id+'\')" style="width:100%;margin-top:10px;padding:9px;background:var(--accent);color:white;border:none;border-radius:9px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;">実績を保存</button>';
+  h += '</div>';
+  
+  // ===== ステータスサマリ =====
+  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
+  h += '<div style="background:white;border:1px solid var(--line);border-left:3px solid #3CB878;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9.5px;font-weight:700;color:var(--ink-sub);">募集中</div><div style="font-size:18px;font-weight:900;color:#3CB878;">'+openCount+'</div></div>';
+  h += '<div style="background:white;border:1px solid var(--line);border-left:3px solid #E8A040;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9.5px;font-weight:700;color:var(--ink-sub);">マッチング中</div><div style="font-size:18px;font-weight:900;color:#E8A040;">'+matchedCount+'</div></div>';
+  h += '<div style="background:white;border:1px solid var(--line);border-left:3px solid var(--ink-light);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9.5px;font-weight:700;color:var(--ink-sub);">終了</div><div style="font-size:18px;font-weight:900;color:var(--ink-light);">'+closedCount+'</div></div>';
+  h += '</div>';
+  
+  // ===== ペット一覧 =====
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">';
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">pets</span>里親募集中の子たち</div>';
+  h += '<button onclick="openAdoptionPetModal(\''+shop.id+'\')" style="padding:7px 12px;background:var(--accent);color:white;border:none;border-radius:9px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>新しい子を追加</button>';
+  h += '</div>';
+  
+  if (pets.length === 0) {
+    h += '<div style="padding:30px 16px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:12px;color:var(--ink-sub);">';
+    h += '<span class="material-symbols-rounded" style="font-size:36px;color:var(--ink-light);display:block;margin-bottom:6px;">pets</span>';
+    h += '<div style="font-size:12px;font-weight:700;color:var(--ink-sub);margin-bottom:3px;">まだ登録された子がいないよ</div>';
+    h += '<div style="font-size:10px;color:var(--ink-light);line-height:1.6;">右上の「新しい子を追加」から登録してね</div>';
+    h += '</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+    for (const pet of pets) {
+      const statusColor = pet.status === 'open' ? '#3CB878' : (pet.status === 'matched' ? '#E8A040' : 'var(--ink-light)');
+      const statusLabel = pet.status === 'open' ? '募集中' : (pet.status === 'matched' ? 'マッチング中' : '終了');
+      h += '<div style="background:white;border:1px solid var(--line);border-left:3px solid '+statusColor+';border-radius:11px;padding:10px;display:flex;gap:10px;">';
+      if (pet.photo) {
+        h += '<div style="width:64px;height:64px;border-radius:10px;background:url('+pet.photo+') center/cover;flex-shrink:0;"></div>';
+      } else {
+        h += '<div style="width:64px;height:64px;border-radius:10px;background:var(--surface-warm);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ink-light);"><span class="material-symbols-rounded" style="font-size:30px;">pets</span></div>';
+      }
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">';
+      h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(pet.name||'(名前なし)')+'</div>';
+      h += '<span style="font-size:9px;font-weight:800;color:'+statusColor+';background:'+statusColor+'1A;padding:1px 7px;border-radius:100px;">'+statusLabel+'</span>';
+      h += '</div>';
+      const meta = [pet.species, pet.breed, pet.age, pet.gender].filter(Boolean).join(' / ');
+      if (meta) h += '<div style="font-size:10.5px;color:var(--ink-sub);margin-bottom:3px;">'+escapeHtml(meta)+'</div>';
+      if (pet.description) h += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+escapeHtml(pet.description)+'</div>';
+      h += '<div style="display:flex;gap:6px;margin-top:6px;">';
+      h += '<button onclick="openAdoptionPetModal(\''+shop.id+'\',\''+pet.id+'\')" style="padding:4px 10px;background:var(--surface-warm);border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;color:var(--ink-dark);display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:12px;">edit</span>編集</button>';
+      h += '<button onclick="removeAdoptionPet(\''+shop.id+'\',\''+pet.id+'\')" style="padding:4px 10px;background:none;border:1px solid #D9534F;border-radius:7px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;color:#D9534F;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:12px;">delete</span>削除</button>';
+      h += '</div>';
+      h += '</div>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+
+// 活動実績を保存
+function saveAdoptionStats(shopId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  if (!shop.activityStats) shop.activityStats = { rescuedCount: 0, adoptedCount: 0 };
+  const r = parseInt(document.getElementById('adoptStatsRescued').value, 10);
+  const a = parseInt(document.getElementById('adoptStatsAdopted').value, 10);
+  shop.activityStats.rescuedCount = isNaN(r) ? 0 : Math.max(0, r);
+  shop.activityStats.adoptedCount = isNaN(a) ? 0 : Math.max(0, a);
+  shop.updatedAt = Date.now();
+  saveData();
+  showToast('🌷 実績を保存したよ');
+  renderShopManager();
+}
+window.saveAdoptionStats = saveAdoptionStats;
+
+// 里親ペット追加・編集モーダル
+function openAdoptionPetModal(shopId, petId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop) return;
+  if (!shop.adoptionPets) shop.adoptionPets = [];
+  const editing = petId ? shop.adoptionPets.find(p => p.id === petId) : null;
+  window._adoptionPetModalState = {
+    shopId: shopId,
+    petId: petId || '',
+    name: editing ? (editing.name||'') : '',
+    species: editing ? (editing.species||'') : '',
+    breed: editing ? (editing.breed||'') : '',
+    age: editing ? (editing.age||'') : '',
+    gender: editing ? (editing.gender||'') : '',
+    photo: editing ? (editing.photo||'') : '',
+    description: editing ? (editing.description||'') : '',
+    status: editing ? (editing.status||'open') : 'open'
+  };
+  _renderAdoptionPetModal();
+}
+window.openAdoptionPetModal = openAdoptionPetModal;
+
+function _renderAdoptionPetModal() {
+  const ex = document.getElementById('adoptionPetModal');
+  if (ex) ex.remove();
+  const s = window._adoptionPetModalState;
+  const ov = document.createElement('div');
+  ov.id = 'adoptionPetModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2200;background:rgba(45,74,60,0.55);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);padding-bottom:calc(80px + env(safe-area-inset-bottom));box-sizing:border-box;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  
+  let h = '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">';
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-soft);">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">pets</span>';
+  h += '<div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">'+(s.petId?'里親募集の子を編集':'新しい子を追加')+'</div>';
+  h += '<button onclick="document.getElementById(\'adoptionPetModal\').remove()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '</div>';
+  
+  h += '<div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">';
+  
+  // 写真
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">写真</label>';
+  h += '<button onclick="pickAdoptionPetPhoto()" style="width:100%;height:130px;border:1.5px dashed var(--line);border-radius:12px;background:'+(s.photo?'url('+s.photo+') center/cover':'var(--surface-warm)')+';cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);">';
+  if (!s.photo) h += '<div style="text-align:center;"><span class="material-symbols-rounded" style="font-size:28px;display:block;margin-bottom:4px;">add_photo_alternate</span><span style="font-size:11px;">タップして写真を選ぶ</span></div>';
+  h += '</button></div>';
+  
+  // 名前（必須）
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">名前 <span style="color:#D9534F;">*</span></label>';
+  h += '<input type="text" id="adoptPetName" value="'+escapeHtml(s.name)+'" placeholder="例：ちょこ" maxlength="20" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  
+  // 種類・品種（2カラム）
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">種類</label>';
+  h += '<input type="text" id="adoptPetSpecies" value="'+escapeHtml(s.species)+'" placeholder="犬／猫など" maxlength="20" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">品種</label>';
+  h += '<input type="text" id="adoptPetBreed" value="'+escapeHtml(s.breed)+'" placeholder="MIX、雑種など" maxlength="30" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '</div>';
+  
+  // 年齢・性別（2カラム）
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">年齢</label>';
+  h += '<input type="text" id="adoptPetAge" value="'+escapeHtml(s.age)+'" placeholder="推定2歳など" maxlength="20" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);"></div>';
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">性別</label>';
+  h += '<select id="adoptPetGender" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+  for (const g of ['', 'オス', 'メス', '不明']) {
+    h += '<option value="'+g+'"'+(s.gender===g?' selected':'')+'>'+(g||'選択してね')+'</option>';
+  }
+  h += '</select></div>';
+  h += '</div>';
+  
+  // 紹介文
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">紹介文</label>';
+  h += '<textarea id="adoptPetDescription" placeholder="性格、保護の経緯、好きなことなど" maxlength="500" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);min-height:100px;resize:vertical;">'+escapeHtml(s.description)+'</textarea></div>';
+  
+  // ステータス
+  h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">ステータス</label>';
+  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
+  const statusList = [
+    {id:'open',    label:'募集中',     color:'#3CB878'},
+    {id:'matched', label:'マッチング中', color:'#E8A040'},
+    {id:'closed',  label:'終了',       color:'var(--ink-light)'}
+  ];
+  for (const st of statusList) {
+    const _act = s.status === st.id;
+    h += '<button onclick="setAdoptionPetStatus(\''+st.id+'\')" style="padding:8px 4px;background:'+(_act?st.color+'1A':'white')+';border:1.5px solid '+(_act?st.color:'var(--line)')+';border-radius:9px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:800;color:'+(_act?st.color:'var(--ink-sub)')+';">'+st.label+'</button>';
+  }
+  h += '</div></div>';
+  
+  h += '</div>';
+  
+  // フッター
+  h += '<div style="padding:12px 16px;border-top:1px solid var(--line-soft);display:flex;gap:8px;">';
+  h += '<button onclick="document.getElementById(\'adoptionPetModal\').remove()" style="flex:1;padding:11px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveAdoptionPet()" style="flex:2;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">'+(s.petId?'保存':'追加')+'</button>';
+  h += '</div>';
+  h += '</div>';
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+  setTimeout(() => document.getElementById('adoptPetName')?.focus(), 100);
+}
+
+function setAdoptionPetStatus(st) {
+  // 入力欄を保持してから再描画
+  const s = window._adoptionPetModalState;
+  s.name = document.getElementById('adoptPetName').value;
+  s.species = document.getElementById('adoptPetSpecies').value;
+  s.breed = document.getElementById('adoptPetBreed').value;
+  s.age = document.getElementById('adoptPetAge').value;
+  s.gender = document.getElementById('adoptPetGender').value;
+  s.description = document.getElementById('adoptPetDescription').value;
+  s.status = st;
+  _renderAdoptionPetModal();
+}
+window.setAdoptionPetStatus = setAdoptionPetStatus;
+
+function pickAdoptionPetPhoto() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    // 入力欄の現在値を保持（モーダル再描画で消えないように）
+    const s = window._adoptionPetModalState;
+    s.name = document.getElementById('adoptPetName').value;
+    s.species = document.getElementById('adoptPetSpecies').value;
+    s.breed = document.getElementById('adoptPetBreed').value;
+    s.age = document.getElementById('adoptPetAge').value;
+    s.gender = document.getElementById('adoptPetGender').value;
+    s.description = document.getElementById('adoptPetDescription').value;
+    // 既存の共通クロッパーを使う（正方形カバー：公開ビューのグリッドが正方形なので）
+    openImageCropper(file, 'square', function(croppedDataUrl) {
+      s.photo = croppedDataUrl;
+      _renderAdoptionPetModal();
+    });
+  };
+  input.click();
+}
+window.pickAdoptionPetPhoto = pickAdoptionPetPhoto;
+
+function saveAdoptionPet() {
+  const s = window._adoptionPetModalState;
+  const shop = (data.myShops || []).find(x => x.id === s.shopId);
+  if (!shop) return;
+  if (!shop.adoptionPets) shop.adoptionPets = [];
+  
+  const name = document.getElementById('adoptPetName').value.trim();
+  if (!name) { showToast('名前を入れてね'); return; }
+  
+  const petData = {
+    name: name,
+    species: document.getElementById('adoptPetSpecies').value.trim(),
+    breed: document.getElementById('adoptPetBreed').value.trim(),
+    age: document.getElementById('adoptPetAge').value.trim(),
+    gender: document.getElementById('adoptPetGender').value,
+    photo: s.photo || '',
+    description: document.getElementById('adoptPetDescription').value.trim(),
+    status: s.status || 'open'
+  };
+  
+  if (s.petId) {
+    // 編集
+    const idx = shop.adoptionPets.findIndex(p => p.id === s.petId);
+    if (idx >= 0) {
+      shop.adoptionPets[idx] = Object.assign({}, shop.adoptionPets[idx], petData, { updatedAt: Date.now() });
+    }
+  } else {
+    // 新規追加
+    petData.id = 'adopt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    petData.createdAt = Date.now();
+    petData.updatedAt = Date.now();
+    shop.adoptionPets.push(petData);
+  }
+  
+  shop.updatedAt = Date.now();
+  saveData();
+  document.getElementById('adoptionPetModal').remove();
+  showToast(s.petId ? '🌷 保存したよ' : '🌷 追加したよ');
+  renderShopManager();
+}
+window.saveAdoptionPet = saveAdoptionPet;
+
+function removeAdoptionPet(shopId, petId) {
+  const shop = (data.myShops || []).find(s => s.id === shopId);
+  if (!shop || !shop.adoptionPets) return;
+  const pet = shop.adoptionPets.find(p => p.id === petId);
+  if (!pet) return;
+  if (!confirm('「'+(pet.name||'この子')+'」を削除しますか？')) return;
+  shop.adoptionPets = shop.adoptionPets.filter(p => p.id !== petId);
+  shop.updatedAt = Date.now();
+  saveData();
+  showToast('削除したよ');
+  renderShopManager();
+}
+window.removeAdoptionPet = removeAdoptionPet;
+
+// サポートボタン（ダミー：投げ銭は後回し）
+function openShelterSupport(shopId) {
+  showToast('準備中だよ。もう少し待っててね🌷');
+}
+window.openShelterSupport = openShelterSupport;
+
 // ===== 公開ビュー（テンプレに応じて表示）=====
 function renderShopPublicView(shop) {
   const tmpl = shop.template || 'A';
@@ -30975,7 +31590,7 @@ function renderShopPublicView(shop) {
   if (shop.heroImage) {
     h += '<div style="width:100%;height:160px;background:url('+shop.heroImage+') center/cover;border-bottom:3px solid '+c+';"></div>';
   } else {
-    const _typeIcon = shop.type === 'bookshelf' ? 'menu_book' : 'storefront';
+    const _typeIcon = shop.type === 'shelter' ? 'volunteer_activism' : (shop.type === 'bookshelf' ? 'menu_book' : 'storefront');
     h += '<div style="width:100%;height:130px;background:white;border-bottom:3px solid '+c+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;">';
     h += '<span class="material-symbols-rounded" style="font-size:48px;color:'+c+';">'+_typeIcon+'</span>';
     h += '<div style="font-size:10px;color:'+c+';font-weight:700;opacity:0.7;">写真を追加してね</div>';
@@ -31142,10 +31757,99 @@ function renderShopPublicView(shop) {
       h += '</div></div>';
     }
   }
+  else if (tmpl === 'G') {
+    // シェルター型：活動実績バナー＋里親募集中の子＋お知らせ＋コラム
+    const stats = shop.activityStats || { rescuedCount: 0, adoptedCount: 0 };
+    const adoptionPets = shop.adoptionPets || [];
+    const openPets = adoptionPets.filter(p => p.status === 'open');
+    const matchedPets = adoptionPets.filter(p => p.status === 'matched');
+    
+    // 連絡先（お店型と同じ大きなボタン）
+    h += _renderShopContactBig(shop, c);
+    
+    // 活動実績バナー
+    if (stats.rescuedCount > 0 || stats.adoptedCount > 0) {
+      h += '<div style="margin:0 16px 14px;padding:14px;background:linear-gradient(135deg,'+c+' 0%,'+c+'CC 100%);color:white;border-radius:14px;box-shadow:0 4px 12px '+c+'44;">';
+      h += '<div style="font-size:10px;font-weight:800;letter-spacing:1px;opacity:0.95;margin-bottom:6px;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">insights</span>活動実績</div>';
+      h += '<div style="font-size:13px;font-weight:700;line-height:1.7;">これまでに <span style="font-size:18px;font-weight:900;">'+stats.rescuedCount+'</span> 頭を保護、<br><span style="font-size:18px;font-weight:900;">'+stats.adoptedCount+'</span> 頭が新しい家族のもとへ</div>';
+      h += '</div>';
+    }
+    
+    // お知らせ（直近1件をバナー表示）
+    if (newsList.length > 0) {
+      const latest = newsList[0];
+      const t = new Date(latest.timestamp);
+      h += '<div style="margin:0 16px 12px;padding:10px 12px;background:'+cBg+';border-left:3px solid '+c+';border-radius:8px;">';
+      h += '<div style="font-size:9px;color:'+c+';font-weight:800;margin-bottom:2px;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">campaign</span>'+(t.getMonth()+1)+'/'+t.getDate()+' お知らせ</div>';
+      h += '<div style="font-size:12px;color:var(--ink-dark);font-weight:700;">'+escapeHtml(latest.content||'')+'</div>';
+      h += '</div>';
+    }
+    
+    // 里親募集中の子たち
+    if (openPets.length > 0) {
+      h += '<div style="padding:0 16px 14px;">';
+      h += '<div style="font-size:12px;font-weight:800;color:'+c+';margin-bottom:8px;display:flex;align-items:center;gap:5px;border-bottom:1.5px solid '+c+'33;padding-bottom:4px;"><span class="material-symbols-rounded" style="font-size:14px;">pets</span>里親募集中の子たち <span style="font-size:10px;color:var(--ink-sub);font-weight:700;">('+openPets.length+'頭)</span></div>';
+      h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">';
+      for (const pet of openPets) {
+        h += '<div style="background:white;border:1px solid '+c+'33;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;">';
+        if (pet.photo) {
+          h += '<div style="width:100%;aspect-ratio:1;background:url('+pet.photo+') center/cover;"></div>';
+        } else {
+          h += '<div style="width:100%;aspect-ratio:1;background:'+cBg+';display:flex;align-items:center;justify-content:center;color:'+c+';"><span class="material-symbols-rounded" style="font-size:48px;opacity:0.5;">pets</span></div>';
+        }
+        h += '<div style="padding:8px 10px;flex:1;display:flex;flex-direction:column;gap:3px;">';
+        h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(pet.name||'')+'</div>';
+        const meta = [pet.species, pet.age, pet.gender].filter(Boolean).join(' / ');
+        if (meta) h += '<div style="font-size:9.5px;color:var(--ink-sub);">'+escapeHtml(meta)+'</div>';
+        if (pet.description) {
+          const preview = pet.description.length > 50 ? pet.description.slice(0, 50)+'…' : pet.description;
+          h += '<div style="font-size:10px;color:var(--ink-sub);line-height:1.5;margin-top:2px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+escapeHtml(preview)+'</div>';
+        }
+        h += '<button onclick="openShelterSupport(\''+shop.id+'\')" style="margin-top:auto;padding:6px 8px;background:'+c+';color:white;border:none;border-radius:8px;font-family:inherit;font-size:10px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:12px;">favorite</span>サポートする</button>';
+        h += '</div>';
+        h += '</div>';
+      }
+      h += '</div></div>';
+    }
+    
+    // マッチング中の子（控えめに表示）
+    if (matchedPets.length > 0) {
+      h += '<div style="padding:0 16px 14px;">';
+      h += '<div style="font-size:11px;font-weight:800;color:#E8A040;margin-bottom:6px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">hourglass_top</span>マッチング中</div>';
+      h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+      for (const pet of matchedPets) {
+        h += '<div style="background:#E8A0401A;border:1px solid #E8A040;border-radius:100px;padding:4px 10px;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:#E8A040;font-weight:700;">';
+        if (pet.photo) h += '<span style="width:18px;height:18px;border-radius:50%;background:url('+pet.photo+') center/cover;display:inline-block;"></span>';
+        h += escapeHtml(pet.name||'');
+        h += '</div>';
+      }
+      h += '</div></div>';
+    }
+    
+    // 全体の支援ボタン（団体への一般サポート）
+    h += '<div style="margin:0 16px 14px;">';
+    h += '<button onclick="openShelterSupport(\''+shop.id+'\')" style="width:100%;padding:13px;background:white;color:'+c+';border:2px solid '+c+';border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;">volunteer_activism</span>団体をサポートする</button>';
+    h += '</div>';
+    
+    // 過去のお知らせ
+    if (newsList.length > 1) {
+      h += _renderShopSection(c, 'history', '過去のお知らせ', newsList.slice(1, 6).map(p => {
+        const t = new Date(p.timestamp);
+        return '<div style="background:white;border:1px solid '+c+'33;border-left:3px solid '+c+';border-radius:8px;padding:8px 10px;margin-bottom:5px;"><div style="font-size:9px;color:'+c+';font-weight:800;">'+(t.getMonth()+1)+'/'+(t.getDate())+'</div><div style="font-size:12px;color:var(--ink-dark);font-weight:700;margin-top:2px;">'+escapeHtml(p.content||'')+'</div></div>';
+      }).join(''));
+    }
+    
+    // 活動報告コラム
+    if (columnList.length > 0) {
+      h += _renderShopSection(c, 'article', '活動報告', columnList.slice(0, 8).map(p => _renderShopColumnCard(p, c)).join(''));
+    }
+  }
   
-  // 投稿が全くない場合
-  if (posts.length === 0) {
+  // 投稿が全くない場合（shelterは投稿0でも里親ペットがあれば表示するので除外）
+  if (posts.length === 0 && tmpl !== 'G') {
     h += '<div style="padding:24px 16px 32px;text-align:center;color:var(--ink-light);font-size:11px;">まだ投稿がないよ🌷</div>';
+  } else if (tmpl === 'G' && posts.length === 0 && (shop.adoptionPets||[]).length === 0 && (!shop.activityStats || (shop.activityStats.rescuedCount === 0 && shop.activityStats.adoptedCount === 0))) {
+    h += '<div style="padding:24px 16px 32px;text-align:center;color:var(--ink-light);font-size:11px;">まだ何も登録されてないよ🌷</div>';
   }
   
   h += '</div>'; // 白カード閉じ
@@ -31321,7 +32025,7 @@ function openPostReader(shopId, postId) {
   if (shop.iconImage) {
     h += '<img src="'+shop.iconImage+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;">';
   } else {
-    h += '<div style="width:38px;height:38px;border-radius:50%;background:'+c+';display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;"><span class="material-symbols-rounded" style="font-size:20px;">'+(shop.type==='bookshelf'?'menu_book':'storefront')+'</span></div>';
+    h += '<div style="width:38px;height:38px;border-radius:50%;background:'+c+';display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;"><span class="material-symbols-rounded" style="font-size:20px;">'+(shop.type==='shelter'?'volunteer_activism':(shop.type==='bookshelf'?'menu_book':'storefront'))+'</span></div>';
   }
   h += '<div style="flex:1;min-width:0;">';
   h += '<div style="font-size:12.5px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(shop.name||'')+'</div>';
@@ -31345,7 +32049,7 @@ function renderPublicShop() {
   
   let html = '<div class="topbar">'+topbarPetalHtml();
   html += '<div class="topbar-spacer"></div>';
-  html += '<div class="topbar-title"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:middle;">'+(shop.type==='bookshelf'?'menu_book':'storefront')+'</span> '+escapeHtml(shop.name||'')+'</div>';
+  html += '<div class="topbar-title"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:middle;">'+(shop.type==='shelter'?'volunteer_activism':(shop.type==='bookshelf'?'menu_book':'storefront'))+'</span> '+escapeHtml(shop.name||'')+'</div>';
   html += '<div class="topbar-spacer"></div></div>';
   
   // 戻るボタン
