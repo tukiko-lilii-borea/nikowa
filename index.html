@@ -496,20 +496,19 @@
   /* ── 新ホーム：To Dayカード（写真＋スケジュール） ── */
   .home-recent-card {
     margin: 8px 14px 14px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.38) 50%, rgba(255,255,255,0.52) 100%);
-    border: 1px solid rgba(255,255,255,0.75);
+    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
+    border: 1.5px solid var(--card-border);
     border-radius: 18px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
     overflow: hidden;
   }
   .home-recent-header {
-    padding: 10px 14px;
+    padding: 10px 14px 4px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--line-soft);
   }
   .home-recent-title {
     font-size: 12px;
@@ -529,15 +528,18 @@
   }
   .home-recent-body {
     display: grid;
-    grid-template-columns: 100px 1fr;
+    grid-template-columns: 72px 1fr;
     gap: 10px;
     padding: 10px;
     align-items: stretch;
   }
+  .home-recent-body.no-photo {
+    grid-template-columns: 1fr;
+  }
   .home-recent-photo {
-    width: 100px;
-    height: 100px;
-    border-radius: 14px;
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
     background: linear-gradient(135deg, var(--accent-bg) 0%, var(--surface-warm) 100%);
     display: flex;
     align-items: center;
@@ -592,16 +594,75 @@
     line-height: 1.6;
   }
 
+  /* ── 新ホーム：タウンクイックアクション（横長・4分割）── */
+  .home-quick-actions {
+    margin: 0 40px 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    padding: 4px 6px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
+    border: 1.5px solid var(--card-border);
+    border-radius: 100px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+  }
+  .home-quick-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 2px;
+    background: transparent;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.1s;
+  }
+  .home-quick-action:active {
+    background: rgba(255,255,255,0.5);
+  }
+  .home-quick-action .hqa-icon {
+    font-size: 14px;
+    line-height: 1;
+  }
+  .home-quick-action .hqa-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ink-dark);
+    letter-spacing: 0.2px;
+    line-height: 1;
+  }
+
   /* ── 新ホーム：今日のひとこと ── */
   .home-quick-card {
     margin: 8px 14px 18px;
     padding: 14px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.38) 50%, rgba(255,255,255,0.52) 100%);
-    border: 1px solid rgba(255,255,255,0.75);
-    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
+    border: 1.5px solid var(--card-border);
+    border-radius: 18px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+  }
+  /* Friendボタン（半透明白の膜のみ・光彩なし） */
+  .home-friend-btn {
+    width: 100%;
+    padding: 11px 14px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
+    border: 1.5px solid var(--card-border);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    position: relative;
   }
   .home-quick-title {
     display: flex;
@@ -624,7 +685,7 @@
     border-radius: 10px;
     font-family: inherit;
     font-size: 12px;
-    background: var(--surface-warm);
+    background: rgba(255,255,255,0.25);
     color: var(--ink-dark);
     resize: none;
     min-height: 44px;
@@ -5696,6 +5757,9 @@ function switchMode(targetMode) {
 function goToMeMode() {
   switchMode('me');
   currentView = 'me';
+  // MEに入るたびにRecordタブ＋スタンプをデフォルトで開く
+  currentModeTab['me'] = 'stamp';
+  if (!data.stampSubTab) data.stampSubTab = 'stamp';
   render();
 }
 
@@ -8245,6 +8309,14 @@ function renderTop() {
   }
   html += '</div>';
 
+  // ===== タウン クイックアクションバー（横長・4分割）=====
+  html += '<div class="home-quick-actions">';
+  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'search\')"><span class="hqa-icon">🗾</span><span class="hqa-label">マップ</span></button>';
+  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'transit\')"><span class="hqa-icon">🚃</span><span class="hqa-label">路線</span></button>';
+  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'fav\')"><span class="hqa-icon">♡</span><span class="hqa-label">お気に入り</span></button>';
+  html += '<button class="home-quick-action" onclick="openGlobalSearch()"><span class="hqa-icon">🔍</span><span class="hqa-label">検索</span></button>';
+  html += '</div>';
+
   // ===== To Day カード（写真＋スケジュール） =====
   if (!data.planner) data.planner = { items: [] };
   if (!data.homePhotoSettings) data.homePhotoSettings = { folderId: null, hidden: false };
@@ -8254,7 +8326,7 @@ function renderTop() {
     .filter(i => !i.completed || i.completedAt !== _todayStr)
     .filter(i => i.time)
     .sort((a, b) => (a.time||'').localeCompare(b.time||''))
-    .slice(0, 2);
+    .slice(0, 3);
 
   // 写真取得：選ばれたフォルダ優先、なければ全コレクションから最新
   let _recentPhoto = null;
@@ -8284,22 +8356,25 @@ function renderTop() {
     }
   }
 
+  // 写真がある時だけ表示（ない時はno-photoでフルwidth）
+  const _hasPhoto = !!_recentPhoto;
   html += '<div class="home-recent-card">';
   html += '<div class="home-recent-header">';
   html += '<div class="home-recent-title"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">auto_awesome</span>To Day</div>';
   html += '<button class="home-recent-more" onclick="document.querySelector(\'.nav-btn[data-view=&quot;schedule&quot;]\').click()">予定を見る ›</button>';
   html += '</div>';
-  html += '<div class="home-recent-body">';
-  // 左：写真（あれば）／なければアイコン → タップで設定モーダル
-  if (_recentPhoto) {
+  html += '<div class="home-recent-body'+(_hasPhoto ? '' : ' no-photo')+'">';
+  // 左：写真（あれば）→ なければ表示しない
+  if (_hasPhoto) {
     html += '<div class="home-recent-photo" onclick="openHomePhotoModal()" style="background-image:url('+_recentPhoto+');cursor:pointer;"></div>';
-  } else {
-    html += '<div class="home-recent-photo" onclick="openHomePhotoModal()" style="cursor:pointer;"><span class="material-symbols-rounded" style="font-size:38px;color:var(--accent-deep);opacity:0.5;">'+(_photoSettings.hidden?'visibility_off':'photo_library')+'</span></div>';
   }
-  // 右：スケジュール（最大2件）
+  // スケジュール（最大3件）
   if (_todayItems.length === 0) {
-    html += '<div class="home-recent-schedule" style="justify-content:center;">';
-    html += '<div style="font-size:11px;color:var(--ink-light);text-align:center;line-height:1.6;">No plan<br><span style="color:var(--accent-deep);font-weight:700;cursor:pointer;" onclick="document.querySelector(\'.nav-btn[data-view=&quot;schedule&quot;]\').click()">＋ 予定を追加</span></div>';
+    html += '<div class="home-recent-schedule" style="justify-content:center;align-items:center;">';
+    html += '<div style="text-align:center;padding:'+((_hasPhoto)?'4px 0':'8px 0')+';line-height:1;">';
+    html += '<div style="font-size:10px;color:var(--ink-light);font-weight:600;margin-bottom:8px;">No plan</div>';
+    html += '<button onclick="document.querySelector(\'.nav-btn[data-view=&quot;schedule&quot;]\').click()" style="padding:6px 16px;background:var(--accent-bg);border:1.5px solid var(--accent);color:var(--accent-deep);border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>予定を追加</button>';
+    html += '</div>';
     html += '</div>';
   } else {
     html += '<div class="home-recent-schedule">';
@@ -8320,7 +8395,7 @@ function renderTop() {
   const _friendCount = (data.friendships || []).filter(f => f.status === 'active').length;
   const _pendingCount = (data._pendingRequests || []).length;
   html += '<div style="padding:0 14px 12px;">';
-  html += '<button onclick="goToFriendView()" style="width:100%;padding:11px 14px;background:var(--surface);border:1px solid var(--card-border);border-radius:14px;display:flex;align-items:center;gap:10px;cursor:pointer;font-family:inherit;box-shadow:0 1px 4px rgba(0,0,0,0.03);position:relative;">';
+  html += '<button class="home-friend-btn" onclick="goToFriendView()">';
   html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="color:var(--accent-deep);font-size:18px;">group</span></div>';
   html += '<div style="flex:1;text-align:left;"><div style="font-size:13px;font-weight:800;color:var(--ink-dark);">Friend</div><div style="font-size:10px;color:var(--ink-sub);">'+_friendCount+'人とつながり中</div></div>';
   html += '<span class="material-symbols-rounded" style="color:var(--ink-light);font-size:18px;">chevron_right</span>';
@@ -10652,6 +10727,21 @@ function openValueInputModal(opts) {
   }
   
   // ボタン（スキップ・保存）
+  // 体重スタンプの時のみ「公開する」チェックを表示
+  if (opts.name === '体重') {
+    const _wPubDefault = !!data.weightPublic;
+    window._viWeightPublic = _wPubDefault;
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:linear-gradient(135deg,#F0FBF4,#FAFFFE);border:1px solid #A8D8B0;border-radius:10px;margin-bottom:10px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:18px;color:#7BB892;">public</span>';
+    h += '<div style="flex:1;">';
+    h += '<div style="font-size:12px;font-weight:800;color:#4A7A58;">世界に公開する</div>';
+    h += '<div style="font-size:9.5px;color:#7AA888;line-height:1.4;">体重・前日比を世界のにこわユーザーと共有</div>';
+    h += '</div>';
+    h += '<button id="viWeightPublicToggle" onclick="window._viWeightPublic=!window._viWeightPublic;this.style.background=window._viWeightPublic?\'#7BB892\':\'#ccc\';this.querySelector(\'span\').style.left=window._viWeightPublic?\'22px\':\'2px\';" style="background:'+(_wPubDefault?'#7BB892':'#ccc')+';border:none;width:46px;height:26px;border-radius:100px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;">';
+    h += '<span style="position:absolute;top:2px;left:'+(_wPubDefault?'22px':'2px')+';width:22px;height:22px;border-radius:50%;background:white;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>';
+    h += '</button>';
+    h += '</div>';
+  }
   h += '<div style="display:flex;gap:8px;">';
   if (!isEdit) {
     h += '<button onclick="skipValueInput('+JSON.stringify(opts).replace(/"/g,'&quot;')+')" style="flex:1;padding:12px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">スキップ<br><span style="font-size:9px;font-weight:500;">（あとで書く）</span></button>';
@@ -10752,6 +10842,15 @@ function saveValueInput(opts) {
   } else {
     // 新規追加
     addStampRecord(opts.icon, opts.name, 'stamp', null, { type: opts.type, value: value, unit: opts.unit, photo: photo });
+    // 体重の場合：公開フラグをレコードに付与して Firestore に同期
+    if (opts.name === '体重' && value) {
+      const _latestRec = (data.stampHistory || []).find(r => r.name === '体重' && r.value === value);
+      if (_latestRec) {
+        _latestRec.isPublic = !!window._viWeightPublic;
+        if (_latestRec.isPublic) _syncWeightRecordToFirestore(_latestRec);
+      }
+      window._viWeightPublic = false;
+    }
     closeValueInputModal();
     showToast(opts.name + (value?' '+value+(opts.unit||''):'') + ' きろく！🌷');
   }
@@ -15835,9 +15934,10 @@ function _renderDietSummaryCard() {
   const diffStr = diff === null ? '' : (diff > 0 ? '+'+diff.toFixed(1) : diff.toFixed(1));
   const diffColor = diff === null ? '#888' : (diff > 0 ? '#C68080' : (diff < 0 ? '#7A9F88' : '#888'));
   
-  // 目標までの距離
-  const goalMid = 60, goalMain = 55;
-  const toMid = latestW !== null ? Math.max(0, latestW - goalMid) : null;
+  // 目標までの距離（設定値優先、デフォルト55/60kg）
+  const goalMid  = (data.goalWeightMid  !== undefined) ? Number(data.goalWeightMid)  : 60;
+  const goalMain = (data.goalWeight     !== undefined) ? Number(data.goalWeight)      : 55;
+  const toMid  = latestW !== null ? Math.max(0, latestW - goalMid)  : null;
   const toMain = latestW !== null ? Math.max(0, latestW - goalMain) : null;
   
   // ===== カード本体 =====
@@ -15867,9 +15967,9 @@ function _renderDietSummaryCard() {
   // 目標までの距離（体重ある時のみ）
   if (latestW !== null) {
     h += '<div style="font-size:10px;color:#7A6B5E;margin-bottom:8px;line-height:1.6;">';
-    h += '中間目標(60kg)まで <span style="color:#C8A060;font-weight:800;font-variant-numeric:tabular-nums;">'+toMid.toFixed(1)+'kg</span>';
+    h += '中間目標('+goalMid+'kg)まで <span style="color:#C8A060;font-weight:800;font-variant-numeric:tabular-nums;">'+toMid.toFixed(1)+'kg</span>';
     h += ' <span style="color:#D5CCC4;margin:0 4px;">/</span> ';
-    h += '目標(55kg)まで <span style="color:#C8709A;font-weight:800;font-variant-numeric:tabular-nums;">'+toMain.toFixed(1)+'kg</span>';
+    h += '目標('+goalMain+'kg)まで <span style="color:#C8709A;font-weight:800;font-variant-numeric:tabular-nums;">'+toMain.toFixed(1)+'kg</span>';
     h += '</div>';
   }
   
@@ -15888,9 +15988,164 @@ function _renderDietSummaryCard() {
   h += '</div>';
   
   h += '</div>';
+  
+  // ===== 世界の体重ウィジェット（公開設定ONの時のみ表示）=====
+  if (data.weightPublic) {
+    h += renderWeightWorld(latestW, diff, goalMain);
+  }
+  
   return h;
 }
-window._renderDietSummaryCard = _renderDietSummaryCard;
+
+// ===== 体重設定保存 =====
+function saveWeightSettings() {
+  const gw  = parseFloat(document.getElementById('settingGoalWeight')?.value);
+  const gwm = parseFloat(document.getElementById('settingGoalWeightMid')?.value);
+  if (!isNaN(gw)  && gw  > 0) data.goalWeight    = gw;
+  if (!isNaN(gwm) && gwm > 0) data.goalWeightMid = gwm;
+  saveData();
+  showToast('目標体重を保存したよ🌷');
+}
+window.saveWeightSettings = saveWeightSettings;
+
+function saveWeightUnit(unit) {
+  data.weightUnit = unit;
+  saveData();
+  showToast('単位を ' + unit + ' に変更したよ🌷');
+  _suppressScrollTop = true;
+  render();
+}
+window.saveWeightUnit = saveWeightUnit;
+
+function toggleWeightPublic() {
+  data.weightPublic = !data.weightPublic;
+  saveData();
+  showToast(data.weightPublic ? '🌍 体重を公開するよ！' : '体重を非公開にしたよ');
+  _suppressScrollTop = true;
+  render();
+}
+window.toggleWeightPublic = toggleWeightPublic;
+
+// ===== 世界の体重ウィジェット =====
+function renderWeightWorld(myLatestW, myDiff, myGoal) {
+  const unit     = data.weightUnit || 'kg';
+  const userName = (data.user && data.user.name) || 'あんず';
+  const _toLbs   = kg => (kg * 2.20462).toFixed(1);
+  const _fmt     = kg => kg == null ? '-' : (unit === 'lbs' ? _toLbs(kg)+' lbs' : kg.toFixed(1)+' kg');
+  
+  let h = '<div style="margin-top:14px;">';
+  h += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:14px;color:#7BB892;">public</span>';
+  h += '<div style="font-size:11px;font-weight:800;color:#4A7A58;letter-spacing:0.5px;">世界のにこわダイエット</div>';
+  h += '<div style="flex:1;"></div>';
+  h += '<div style="font-size:9px;color:#9AB8A0;margin-right:2px;">タップで更新</div>';
+  h += '<button onclick="fetchWeightWorld(true)" style="background:none;border:none;cursor:pointer;padding:2px;"><span class="material-symbols-rounded" style="font-size:16px;color:#7BB892;">refresh</span></button>';
+  h += '</div>';
+  
+  // 自分のカード
+  if (myLatestW !== null) {
+    const myDiffStr = myDiff == null ? '' : (myDiff > 0 ? '▲'+myDiff.toFixed(1) : '▼'+Math.abs(myDiff).toFixed(1));
+    const myDiffCol = myDiff == null ? '#888' : (myDiff > 0 ? '#C68080' : '#7BB892');
+    const myToGoal  = myGoal && myLatestW ? Math.max(0, myLatestW - myGoal) : null;
+    h += '<div style="background:linear-gradient(135deg,#F0FBF4,#FAFFFE);border:1.5px solid #A8D8B0;border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">';
+    h += '<div style="width:32px;height:32px;border-radius:50%;background:#7BB892;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:12px;font-weight:900;color:white;">YOU</span></div>';
+    h += '<div style="flex:1;min-width:0;">';
+    h += '<div style="font-size:11px;font-weight:800;color:#3A6A48;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(userName)+'</div>';
+    h += '<div style="font-size:9px;color:#7AA888;">'+(myToGoal != null ? '目標まであと '+myToGoal.toFixed(1)+unit : '')+'</div>';
+    h += '</div>';
+    h += '<div style="text-align:right;flex-shrink:0;">';
+    h += '<div style="font-size:16px;font-weight:900;color:#3A6A48;font-variant-numeric:tabular-nums;">'+_fmt(myLatestW)+'</div>';
+    if (myDiffStr) h += '<div style="font-size:10px;font-weight:700;color:'+myDiffCol+';">前日比 '+myDiffStr+'</div>';
+    h += '</div>';
+    h += '</div>';
+  }
+  
+  // 世界のユーザー一覧
+  const worldList = data._weightWorldCache || [];
+  if (worldList.length === 0) {
+    h += '<div style="background:rgba(255,255,255,0.5);border:1px dashed #A8D8B0;border-radius:10px;padding:16px;text-align:center;">';
+    h += '<div style="font-size:11px;color:#9AB8A0;line-height:1.7;">まだ世界の記録がないよ🌱<br><span style="font-size:10px;">↑更新ボタンを押してみてね</span></div>';
+    h += '</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (const u of worldList.slice(0, 10)) {
+      const wKg    = parseFloat(u.weightKg);
+      const uDiff  = u.prevDayDiff != null ? parseFloat(u.prevDayDiff) : null;
+      const dStr   = uDiff == null ? '' : (uDiff > 0 ? '▲'+Math.abs(uDiff).toFixed(1) : '▼'+Math.abs(uDiff).toFixed(1));
+      const dColor = uDiff == null ? '#888' : (uDiff > 0 ? '#C68080' : '#7BB892');
+      const uToGoal = u.goalKg && wKg ? Math.max(0, wKg - parseFloat(u.goalKg)) : null;
+      h += '<div style="background:rgba(255,255,255,0.55);border:1px solid #C8DFD0;border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;">';
+      h += '<div style="width:28px;height:28px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:800;color:var(--accent-deep);">'+(u.ownerName||'?').slice(0,1)+'</div>';
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="font-size:11px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(u.ownerName||'??')+'</div>';
+      h += '<div style="font-size:9px;color:var(--ink-sub);">'+(uToGoal != null ? '目標まで '+uToGoal.toFixed(1)+unit : '')+'</div>';
+      h += '</div>';
+      h += '<div style="text-align:right;flex-shrink:0;">';
+      h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);font-variant-numeric:tabular-nums;">'+_fmt(wKg)+'</div>';
+      if (dStr) h += '<div style="font-size:9.5px;font-weight:700;color:'+dColor+';">'+dStr+'</div>';
+      h += '</div>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  
+  // 最終更新時刻
+  if (data._weightWorldCacheAt) {
+    const _ago = Math.round((Date.now() - data._weightWorldCacheAt) / 60000);
+    h += '<div style="text-align:right;font-size:9px;color:#9AB8A0;margin-top:4px;">'+(_ago < 1 ? 'たった今更新' : _ago+'分前に更新')+'</div>';
+  }
+  
+  h += '</div>';
+  return h;
+}
+window.renderWeightWorld = renderWeightWorld;
+
+// ===== Firestore 取得（クロがデプロイ後に有効化）=====
+async function fetchWeightWorld(force) {
+  const CACHE_MS = 60 * 1000;
+  if (!force && data._weightWorldCacheAt && (Date.now() - data._weightWorldCacheAt) < CACHE_MS) return;
+  if (!db) { showToast('ログイン後に利用できるよ🌷'); return; }
+  try {
+    // ▼ クロがデプロイ後にコメントアウトを外す ▼
+    // const { collection, getDocs, query, orderBy, limit } = firebase.firestore;
+    // const q = query(collection(db, 'weightPublic'), orderBy('updatedAt','desc'), limit(30));
+    // const snap = await getDocs(q);
+    // data._weightWorldCache = snap.docs.map(d => ({...d.data(), uid: d.id})).filter(u => u.ownerUid !== currentUser?.uid);
+    // data._weightWorldCacheAt = Date.now();
+    // saveData(); _suppressScrollTop = true; render();
+    // ▲ ここまで ▲
+    showToast('世界のデータ取得は準備中だよ🌷（クロ待ち）');
+  } catch(e) { console.error('fetchWeightWorld error:', e); }
+}
+window.fetchWeightWorld = fetchWeightWorld;
+
+// ===== Firestore 書き込み（クロがデプロイ後に有効化）=====
+async function _syncWeightRecordToFirestore(rec) {
+  if (!db || !currentUser) return;
+  try {
+    // 前日比を計算（直前の体重記録との差）
+    const _history = (data.stampHistory || [])
+      .filter(r => r.name === '体重' && r.value && r.id !== rec.id)
+      .sort((a,b) => b.timestamp - a.timestamp);
+    const _prevVal = _history.length > 0 ? parseFloat(_history[0].value) : null;
+    const _diff    = (_prevVal !== null && rec.value) ? (parseFloat(rec.value) - _prevVal) : null;
+    const _payload = {
+      ownerUid:    currentUser.uid,
+      ownerName:   (data.user && data.user.name) || currentUser.displayName || 'にこわユーザー',
+      weightKg:    parseFloat(rec.value),
+      prevDayDiff: _diff,
+      goalKg:      data.goalWeight || 55,
+      unit:        data.weightUnit || 'kg',
+      updatedAt:   Date.now()
+    };
+    // ▼ クロがデプロイ後にコメントアウトを外す ▼
+    // const { doc, setDoc } = firebase.firestore;
+    // await setDoc(doc(db, 'weightPublic', currentUser.uid), _payload);
+    // ▲ ここまで ▲
+    console.log('[にこわ] weightPublic 書き込み予定:', _payload);
+  } catch(e) { console.error('_syncWeightRecordToFirestore error:', e); }
+}
+window._syncWeightRecordToFirestore = _syncWeightRecordToFirestore;
 
 // ダイエットサマリ用グラフSVG
 function _renderDietChartSVG(dayWeights, dayFats, wKeys, fKeys) {
@@ -19648,7 +19903,7 @@ function renderMeMode() {
   } else if (tab === 'stamp') {
     // ===== Stamp（サブサブタブ：スタンプ / プランナー） =====
     html += '<div id="meStampWrap">';
-    const ssTab = data.stampSubTab;
+    const ssTab = data.stampSubTab || 'stamp';
     
     // サブサブタブ
     html += '<div style="padding:10px 14px 0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
@@ -28902,7 +29157,7 @@ let editingFacilityId = null;
 let selectedFacilityCategory = 'hospital';
 let townSearchQuery = '';
 let townCategoryFilter = 'all';
-let townMainTab = 'search';    // 'search' | 'town' | 'book' | 'board' | 'rainbow'(=アニマル)
+let townMainTab = 'live';    // 'live' | 'town' | 'book' | 'board' | 'rainbow'(=アニマル)
 let townSubTab  = 'search'; // 'search' | 'transit' | 'fav' （「探す」タブ内のサブタブ）
 let townAnimalSubTab = 'all'; // 'all' | 'birthday' | 'memorial' （アニマルタブ内のサブタブ）
 let placesSelCat = '';
@@ -30475,7 +30730,7 @@ function savePlaceMemoStubFromObj(placeId, p) {
 }
 
 const TOWN_MAIN_TABS = [
-  { id: 'search',  icon: '🔍', label: '探す' },
+  { id: 'live',    icon: '📡', label: 'ライブ' },
   { id: 'town',    icon: '🏙', label: '街歩き' },
   { id: 'book',    icon: '📚', label: '本屋' },
   { id: 'board',   icon: '📋', label: '掲示板' },
@@ -33176,8 +33431,12 @@ function renderTown() {
   html += '<div class="mode-content-wrap">';
   html += '<div id="townContentMarker" style="display:none;"></div>';
 
+  // ── ライブタブ
+  if (townMainTab === 'live') {
+    html += renderTownLive();
+
   // ── 街歩きタブ：旧 townSubTab === 'town' の内容
-  if (townMainTab === 'town') {
+  } else if (townMainTab === 'town') {
     const _combinedNews = getCombinedNews();
     if (_newsIndex >= _combinedNews.length) _newsIndex = 0;
     const _curNews = _combinedNews[_newsIndex];
@@ -33737,7 +33996,8 @@ function renderTown() {
       html += '</div>';
     }
   }
-  } // end if(false) 旧マイ場所
+  } // end else if(town)ブロック
+  // end 旧マイ場所ブロック
 
   // ── 本屋タブ
   if (townMainTab === 'book') {
@@ -37310,6 +37570,60 @@ function renderSettings() {
   html += '<button class="btn btn-secondary" style="flex:1; min-width: 110px;" onclick="importData()">📥 インポート</button>';
   html += '</div></div></div>';
   
+  // ===== ダイエット設定セクション =====
+  html += '<div class="section"><div class="section-head"><h2 class="section-title"><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;">monitor_weight</span> ダイエット設定</h2></div>';
+  html += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;">';
+  
+  // 目標体重
+  const _goalW    = data.goalWeight    !== undefined ? data.goalWeight    : 55;
+  const _goalWMid = data.goalWeightMid !== undefined ? data.goalWeightMid : 60;
+  const _wUnit    = data.weightUnit    || 'kg';
+  html += '<div style="display:flex;align-items:center;gap:10px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;color:#C8709A;flex-shrink:0;">flag</span>';
+  html += '<div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">目標体重</div><div style="font-size:10px;color:var(--ink-sub);">グラフの目標ラインに反映されるよ</div></div>';
+  html += '<input type="number" id="settingGoalWeight" value="'+_goalW+'" min="20" max="200" step="0.1" onchange="saveWeightSettings()" style="width:70px;padding:7px 10px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;font-weight:800;text-align:right;color:var(--ink-dark);background:var(--surface-warm);">';
+  html += '<span style="font-size:11px;font-weight:700;color:var(--ink-sub);">'+_wUnit+'</span>';
+  html += '</div>';
+  
+  // 中間目標体重
+  html += '<div style="display:flex;align-items:center;gap:10px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;color:#C8A060;flex-shrink:0;">outlined_flag</span>';
+  html += '<div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">中間目標体重</div><div style="font-size:10px;color:var(--ink-sub);">まず最初に目指す体重</div></div>';
+  html += '<input type="number" id="settingGoalWeightMid" value="'+_goalWMid+'" min="20" max="200" step="0.1" onchange="saveWeightSettings()" style="width:70px;padding:7px 10px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;font-weight:800;text-align:right;color:var(--ink-dark);background:var(--surface-warm);">';
+  html += '<span style="font-size:11px;font-weight:700;color:var(--ink-sub);">'+_wUnit+'</span>';
+  html += '</div>';
+  
+  // 単位切り替え
+  html += '<div style="display:flex;align-items:center;gap:10px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);flex-shrink:0;">scale</span>';
+  html += '<div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">体重の単位</div><div style="font-size:10px;color:var(--ink-sub);">kg / lbs（ポンド：アメリカ式）</div></div>';
+  html += '<div style="display:flex;background:var(--surface-warm);border:1px solid var(--line);border-radius:100px;padding:2px;gap:2px;">';
+  html += '<button onclick="saveWeightUnit(\'kg\')" style="padding:5px 12px;border-radius:100px;border:none;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;background:'+(_wUnit==='kg'?'var(--accent)':'transparent')+';color:'+(_wUnit==='kg'?'white':'var(--ink-sub)')+';">kg</button>';
+  html += '<button onclick="saveWeightUnit(\'lbs\')" style="padding:5px 12px;border-radius:100px;border:none;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;background:'+(_wUnit==='lbs'?'var(--accent)':'transparent')+';color:'+(_wUnit==='lbs'?'white':'var(--ink-sub)')+';">lbs</button>';
+  html += '</div></div>';
+  
+  // 体重公開設定
+  const _wPublic = !!data.weightPublic;
+  html += '<div style="display:flex;align-items:center;gap:10px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;color:#7BB892;flex-shrink:0;">public</span>';
+  html += '<div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">体重を世界に公開する</div><div style="font-size:10px;color:var(--ink-sub);line-height:1.5;">ニックネーム・体重・前日比をみんなで共有<br>ログイン中のみ有効</div></div>';
+  html += '<button onclick="toggleWeightPublic()" style="background:'+(_wPublic?'#7BB892':'#ccc')+';border:none;width:46px;height:26px;border-radius:100px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;">';
+  html += '<span style="position:absolute;top:2px;left:'+(_wPublic?'22px':'2px')+';width:22px;height:22px;border-radius:50%;background:white;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>';
+  html += '</button>';
+  html += '</div>';
+  
+  // 公開ニックネーム（公開ONの時のみ表示）
+  if (_wPublic) {
+    const _wnick = data.worldNickname || (data.user && data.user.name) || '';
+    html += '<div style="display:flex;align-items:center;gap:10px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:20px;color:#7BB892;flex-shrink:0;">badge</span>';
+    html += '<div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--ink-dark);">世界での表示名</div><div style="font-size:10px;color:var(--ink-sub);">ニックネームで公開されるよ</div></div>';
+    html += '<button onclick="openWorldNicknameModal()" style="padding:7px 14px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;color:var(--ink-dark);cursor:pointer;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(_wnick || '未設定')+'</button>';
+    html += '</div>';
+  }
+  
+  html += '</div></div>';
+  
   // 機能の表示設定
   html += '<div class="section"><div class="section-head"><h2 class="section-title">機能の表示</h2></div>';
   html += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;">';
@@ -40875,7 +41189,207 @@ function setTownMainTab(tab) {
   renderTown();
 }
 
-// 花束（または星）を贈る
+// ホームの地図アイコン → タウン探すタブを直接開く
+function openTownSearchShortcut() {
+  if (typeof switchModeFromTab === 'function') switchModeFromTab('pet');
+  currentView = 'town';
+  townMainTab = 'search';
+  if (!townSubTab) townSubTab = 'search';
+  render();
+}
+window.openTownSearchShortcut = openTownSearchShortcut;
+
+// ホームのクイックアクション → タウンの指定タブ＋サブタブを開く
+function openTownQuick(mainTab, subTab) {
+  if (typeof switchModeFromTab === 'function') switchModeFromTab('pet');
+  currentView = 'town';
+  townMainTab = mainTab || 'search';
+  if (subTab) townSubTab = subTab;
+  render();
+}
+window.openTownQuick = openTownQuick;
+
+// ===== タウン「ライブ」タブ =====
+function renderTownLive() {
+  const unit     = data.weightUnit || 'kg';
+  const toLbs    = kg => (kg * 2.20462).toFixed(1);
+  const fmtW     = kg => kg == null ? '-' : (unit === 'lbs' ? toLbs(kg)+' lbs' : parseFloat(kg).toFixed(1)+' kg');
+  const nickname = data.worldNickname || (data.user && data.user.name) || 'にこわユーザー';
+  const isPublic = !!data.weightPublic;
+
+  // 直近の自分の体重を取得
+  const _myWeights = (data.stampHistory || [])
+    .filter(r => r.name === '体重' && r.value)
+    .sort((a,b) => b.timestamp - a.timestamp);
+  const myLatestW = _myWeights.length > 0 ? parseFloat(_myWeights[0].value) : null;
+  const myPrevW   = _myWeights.length > 1 ? parseFloat(_myWeights[1].value) : null;
+  const myDiff    = (myLatestW !== null && myPrevW !== null) ? (myLatestW - myPrevW) : null;
+  const myGoalW   = data.goalWeight || 55;
+
+  // 参加者：自分 + 世界
+  const worldList = (data._weightWorldCache || []);
+  const totalCount = worldList.length + (isPublic ? 1 : 0);
+
+  let h = '<div style="padding:14px 16px 80px;display:flex;flex-direction:column;gap:14px;">';
+
+  // ===== ヘッダーバナー =====
+  h += '<div style="background:linear-gradient(135deg,#3CB878 0%,#5ABFA0 100%);border-radius:16px;padding:14px 16px;color:white;position:relative;overflow:hidden;">';
+  h += '<div style="font-size:9px;font-weight:800;letter-spacing:2px;opacity:0.85;margin-bottom:4px;">NIKOWA LIVE</div>';
+  h += '<div style="font-size:18px;font-weight:900;margin-bottom:2px;">🌍 世界とつながるダイエット</div>';
+  h += '<div style="font-size:11px;opacity:0.9;line-height:1.6;">みんなで一歩ずつ、記録を積み重ねよう</div>';
+  // 参加人数
+  h += '<div style="margin-top:10px;background:rgba(255,255,255,0.2);border-radius:100px;padding:6px 14px;display:inline-flex;align-items:center;gap:6px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:16px;">people</span>';
+  h += '<span style="font-size:12px;font-weight:800;">'+totalCount+'人が参加中</span>';
+  h += '</div>';
+  // 更新ボタン
+  h += '<button onclick="fetchWeightWorld(true);renderTown();" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:white;">refresh</span>';
+  h += '</button>';
+  h += '</div>';
+
+  // ===== 参加設定カード =====
+  if (!isPublic) {
+    h += '<div style="background:var(--surface);border:1.5px dashed #A8D8B0;border-radius:14px;padding:14px 16px;">';
+    h += '<div style="font-size:12px;font-weight:800;color:#4A7A58;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:16px;">add_circle</span>参加するには</div>';
+    h += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;margin-bottom:10px;">設定 → ダイエット設定 → 「体重を世界に公開する」をONにすると、体重を記録した時に世界のユーザーと共有できるよ</div>';
+    h += '<button onclick="currentView=\'settings\';render();" style="width:100%;padding:10px;background:#3CB878;color:white;border:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:16px;">settings</span>設定を開く';
+    h += '</button></div>';
+  } else {
+    // 自分のカード（参加中）
+    const _myGroup   = myLatestW === null ? null : (myLatestW <= myGoalW ? 'done' : (myDiff !== null && myDiff <= 0.1 ? 'maintain' : 'diet'));
+    const _groupInfo = { diet: { label:'減量中', color:'#C8709A', icon:'trending_down' }, maintain: { label:'維持中', color:'#7BB892', icon:'horizontal_rule' }, done: { label:'🏅目標達成', color:'#C8A060', icon:'emoji_events' } };
+    const _gi        = _myGroup ? _groupInfo[_myGroup] : null;
+    h += '<div style="background:linear-gradient(135deg,#F0FBF4,#FAFFFE);border:1.5px solid #A8D8B0;border-radius:14px;padding:12px 14px;">';
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
+    h += '<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#7AA888;">MY STATUS</div>';
+    if (_gi) h += '<span style="font-size:9px;font-weight:800;color:white;background:'+_gi.color+';padding:2px 8px;border-radius:100px;">'+_gi.label+'</span>';
+    h += '</div>';
+    h += '<div style="display:flex;align-items:center;gap:10px;">';
+    h += '<div style="width:40px;height:40px;border-radius:50%;background:#3CB878;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:900;color:white;">'+(nickname).slice(0,1)+'</div>';
+    h += '<div style="flex:1;min-width:0;">';
+    h += '<div style="font-size:13px;font-weight:800;color:#3A6A48;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(nickname)+' <span style="font-size:9px;font-weight:700;color:#9AB8A0;">(自分)</span></div>';
+    if (myLatestW !== null) {
+      const _toGoal = Math.max(0, myLatestW - myGoalW);
+      h += '<div style="font-size:9.5px;color:#7AA888;">目標まであと '+_toGoal.toFixed(1)+(unit)+' | 目標: '+fmtW(myGoalW)+'</div>';
+    }
+    h += '</div>';
+    if (myLatestW !== null) {
+      const _dStr  = myDiff == null ? '' : (myDiff > 0 ? '▲'+myDiff.toFixed(1) : '▼'+Math.abs(myDiff).toFixed(1));
+      const _dCol  = myDiff == null ? '#888' : (myDiff > 0 ? '#C68080' : '#7BB892');
+      h += '<div style="text-align:right;flex-shrink:0;">';
+      h += '<div style="font-size:18px;font-weight:900;color:#3A6A48;font-variant-numeric:tabular-nums;">'+fmtW(myLatestW)+'</div>';
+      if (_dStr) h += '<div style="font-size:10px;font-weight:700;color:'+_dCol+';">前日比 '+_dStr+'</div>';
+      h += '</div>';
+    } else {
+      h += '<div style="font-size:10px;color:#9AB8A0;text-align:right;">体重を記録してね</div>';
+    }
+    h += '</div>';
+    // ニックネーム変更リンク
+    h += '<div style="margin-top:8px;text-align:right;">';
+    h += '<button onclick="openWorldNicknameModal()" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:10px;color:#7AA888;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:12px;">edit</span>表示名を変更</button>';
+    h += '</div>';
+    h += '</div>';
+  }
+
+  // ===== 世界のユーザー一覧 =====
+  if (worldList.length === 0) {
+    h += '<div style="background:var(--surface-warm);border:1px dashed var(--line);border-radius:12px;padding:24px;text-align:center;">';
+    h += '<div style="font-size:24px;margin-bottom:6px;">🌱</div>';
+    h += '<div style="font-size:12px;font-weight:700;color:var(--ink-sub);">まだ世界のデータがないよ</div>';
+    h += '<div style="font-size:10px;color:var(--ink-light);line-height:1.6;margin-top:4px;">体重を公開して世界とつながると<br>ここに仲間が表示されるよ</div>';
+    h += '</div>';
+  } else {
+    // グループ分け
+    const groupedUsers = { done: [], maintain: [], diet: [] };
+    for (const u of worldList) {
+      const wKg  = parseFloat(u.weightKg);
+      const gKg  = parseFloat(u.goalKg || 55);
+      const diff = u.prevDayDiff != null ? parseFloat(u.prevDayDiff) : null;
+      if (wKg <= gKg) groupedUsers.done.push(u);
+      else if (diff !== null && diff <= 0.1) groupedUsers.maintain.push(u);
+      else groupedUsers.diet.push(u);
+    }
+    const groupDefs = [
+      { key: 'diet',     label: '減量中',     color: '#C8709A', icon: 'trending_down' },
+      { key: 'maintain', label: '維持中',      color: '#7BB892', icon: 'horizontal_rule' },
+      { key: 'done',     label: '🏅 目標達成', color: '#C8A060', icon: 'emoji_events' }
+    ];
+    for (const gd of groupDefs) {
+      const users = groupedUsers[gd.key];
+      if (users.length === 0) continue;
+      h += '<div>';
+      h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:14px;color:'+gd.color+';">'+gd.icon+'</span>';
+      h += '<div style="font-size:11px;font-weight:800;color:'+gd.color+';">'+gd.label+'</div>';
+      h += '<div style="font-size:10px;color:var(--ink-light);">'+users.length+'人</div>';
+      h += '</div>';
+      h += '<div style="display:flex;flex-direction:column;gap:6px;">';
+      for (const u of users.slice(0, 8)) {
+        const wKg    = parseFloat(u.weightKg);
+        const diff   = u.prevDayDiff != null ? parseFloat(u.prevDayDiff) : null;
+        const dStr   = diff == null ? '' : (diff > 0 ? '▲'+Math.abs(diff).toFixed(1) : '▼'+Math.abs(diff).toFixed(1));
+        const dColor = diff == null ? '#888' : (diff > 0 ? '#C68080' : '#7BB892');
+        const uToGoal = (u.goalKg && wKg) ? Math.max(0, wKg - parseFloat(u.goalKg)) : null;
+        h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:9px;">';
+        h += '<div style="width:30px;height:30px;border-radius:50%;background:'+gd.color+'22;border:1.5px solid '+gd.color+'44;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:900;color:'+gd.color+';">'+(u.ownerName||'?').slice(0,1)+'</div>';
+        h += '<div style="flex:1;min-width:0;">';
+        h += '<div style="font-size:11.5px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(u.ownerName||'??')+'</div>';
+        h += '<div style="font-size:9px;color:var(--ink-sub);">'+(uToGoal != null ? '目標まで '+uToGoal.toFixed(1)+(unit) : '')+'</div>';
+        h += '</div>';
+        h += '<div style="text-align:right;flex-shrink:0;">';
+        h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);font-variant-numeric:tabular-nums;">'+fmtW(wKg)+'</div>';
+        if (dStr) h += '<div style="font-size:9.5px;font-weight:700;color:'+dColor+';">前日比 '+dStr+'</div>';
+        h += '</div>';
+        h += '</div>';
+      }
+      h += '</div>';
+      h += '</div>';
+    }
+    // 最終更新
+    if (data._weightWorldCacheAt) {
+      const _ago = Math.round((Date.now() - data._weightWorldCacheAt) / 60000);
+      h += '<div style="text-align:right;font-size:9px;color:var(--ink-light);">'+(_ago < 1 ? 'たった今更新' : _ago+'分前')+'</div>';
+    }
+  }
+
+  h += '</div>';
+  return h;
+}
+window.renderTownLive = renderTownLive;
+
+// 公開ニックネーム変更モーダル
+function openWorldNicknameModal() {
+  const cur = data.worldNickname || (data.user && data.user.name) || '';
+  const ex = document.getElementById('worldNicknameModal');
+  if (ex) ex.remove();
+  let h = '<div id="worldNicknameModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">';
+  h += '<div style="width:100%;max-width:340px;background:var(--surface);border-radius:18px;padding:20px;">';
+  h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:4px;">世界での表示名</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);margin-bottom:12px;line-height:1.5;">本名と別に設定できるよ。ニックネームは公開されるから個人情報は入れないでね</div>';
+  h += '<input type="text" id="worldNicknameInput" value="'+escapeHtml(cur)+'" maxlength="20" placeholder="例：ダイエット中のさくら" style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);margin-bottom:12px;">';
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<button onclick="document.getElementById(\'worldNicknameModal\').remove()" style="flex:1;padding:11px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="saveWorldNickname()" style="flex:2;padding:11px;background:#3CB878;color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => document.getElementById('worldNicknameInput')?.focus(), 80);
+}
+window.openWorldNicknameModal = openWorldNicknameModal;
+
+function saveWorldNickname() {
+  const v = (document.getElementById('worldNicknameInput')?.value || '').trim();
+  if (!v) { showToast('名前を入れてね'); return; }
+  data.worldNickname = v;
+  saveData();
+  document.getElementById('worldNicknameModal')?.remove();
+  showToast('表示名を「'+v+'」に変更したよ🌷');
+  _suppressScrollTop = true;
+  renderTown();
+}
+window.saveWorldNickname = saveWorldNickname;
 function giveBouquet(petId, isStar) {
   const pet = (data.pets || []).find(p => p.id === petId);
   if (!pet) return;
