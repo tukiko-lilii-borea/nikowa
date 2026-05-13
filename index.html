@@ -449,6 +449,147 @@
     font-size: 9px;
   }
 
+  /* ===== ホーム：固定（ピン留め）激薄バー ===== */
+  .home-pinned {
+    margin: 0 14px 10px;
+    background: #FFFFFF;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 4px 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    position: relative;
+  }
+  .home-pinned-edit {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink-light);
+    padding: 2px;
+    z-index: 2;
+  }
+  .home-pinned-grid {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .home-pinned-grid::-webkit-scrollbar { display: none; }
+  .home-pinned-tile {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    transition: transform 0.1s ease;
+    min-width: 44px;
+  }
+  .home-pinned-tile:active { transform: scale(0.92); }
+  .home-pinned-tile-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .home-pinned-tile-icon .material-symbols-rounded {
+    font-size: 18px;
+    color: var(--accent-deep);
+  }
+  .home-pinned-tile-label {
+    font-size: 8.5px;
+    font-weight: 700;
+    color: var(--ink-dark);
+    line-height: 1.1;
+    white-space: nowrap;
+    margin-top: 1px;
+  }
+  .home-pinned-tile-add .home-pinned-tile-icon {
+    background: none;
+    border: 1.5px dashed var(--line);
+  }
+  .home-pinned-tile-add .material-symbols-rounded {
+    color: var(--ink-light);
+  }
+
+  /* ===== iPhoneアプリ風 アイコングリッド ===== */
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px 12px;
+    padding: 8px 18px 18px;
+  }
+  .app-tile {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.1s ease;
+  }
+  .app-tile:active { transform: scale(0.92); }
+  .app-tile-icon {
+    width: 70px;
+    height: 70px;
+    background: #FFFFFF;
+    border-radius: 18px;
+    border: 2px solid;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  /* カラー背景タイプ（中が白アイコン） */
+  .app-tile-icon.filled {
+    border: none;
+    color: white !important;
+  }
+  .app-tile-icon .material-symbols-rounded {
+    font-size: 38px;
+  }
+  .app-tile-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-dark);
+    text-shadow: 0 1px 2px rgba(255,255,255,0.7);
+    line-height: 1.2;
+  }
+  .app-tile-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    background: #FF3B30;
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border: 1.5px solid white;
+    z-index: 2;
+  }
+
   /* ── 新ホーム：天気pill（細長い1行） ── */
   .home-weather-pill {
     margin: 6px 40px 10px;
@@ -507,12 +648,10 @@
   /* ── 新ホーム：To Dayカード（写真＋スケジュール） ── */
   .home-recent-card {
     margin: 8px 14px 14px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.42) 100%);
-    border: 1.5px solid var(--card-border);
+    background: #FFFFFF;
+    border: 1.5px solid var(--line);
     border-radius: 18px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     overflow: hidden;
   }
   .home-recent-header {
@@ -539,7 +678,7 @@
   }
   .home-recent-body {
     display: grid;
-    grid-template-columns: 72px 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
     padding: 10px;
     align-items: stretch;
@@ -548,8 +687,8 @@
     grid-template-columns: 1fr;
   }
   .home-recent-photo {
-    width: 72px;
-    height: 72px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
     border-radius: 12px;
     background: linear-gradient(135deg, var(--accent-bg) 0%, var(--surface-warm) 100%);
     display: flex;
@@ -8273,79 +8412,7 @@ function renderTop() {
   if (!data.ateliers) data.ateliers = [];
   const _myShops = data.myShops || [];
 
-  html += '<div class="home-mode-grid">';
-  // テーマのcardShapeを取得
-  const _theme = THEMES[data.themeId || 'mint'] || THEMES.mint;
-  const _shape = _theme.cardShape || 'rounded';
-  const _shapeClass = _shape === 'circle' ? ' shape-circle' : _shape === 'square' ? ' shape-square' : _shape === 'diamond' ? ' shape-diamond' : '';
-
-  // テーマ別アイコン分岐
-  const _tid = data.themeId || 'mint';
-  const _sharpThemes = ['edamame','tofu','mitarashi','kurogoma','plain_gray','plain_white'];
-  const _goldThemes  = ['night_dress','dalmatian_b','dalmatian_w'];
-  const _neonTheme   = _tid === 'neon';
-  const _isGold      = _goldThemes.includes(_tid);
-  const _isSharp     = _sharpThemes.includes(_tid);
-  function _tileIcon(emoji, icon) {
-    if (_neonTheme) {
-      return '<div class="mode-card-icon"><span class="material-symbols-rounded" style="background:linear-gradient(135deg,#ff6ec7,#00f5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 6px #ff6ec7);font-size:26px;">'+icon+'</span></div>';
-    } else if (_isGold) {
-      return '<div class="mode-card-icon"><span class="material-symbols-rounded" style="color:#c9a84c;filter:drop-shadow(0 0 4px #f0d060);font-size:26px;">'+icon+'</span></div>';
-    } else if (_isSharp) {
-      return '<div class="mode-card-icon"><span class="material-symbols-rounded">'+icon+'</span></div>';
-    } else {
-      return '<div class="mode-card-icon">'+emoji+'</div>';
-    }
-  }
-
-  // MEはハンバーガーメニューから直接アクセス（ホームには表示しない）
-  if (!currentUserIsUnder15()) {
-    html += '<button class="mode-card mode-nest'+_shapeClass+'" onclick="goToNestMode()">';
-    html += _tileIcon('🪺','diversity_1')+'<div class="mode-card-label">Nest</div>';
-    html += '</button>';
-  }
-  html += '<button class="mode-card mode-pet'+_shapeClass+'" onclick="goToPetMode()">';
-  html += _tileIcon('🐾','pets')+'<div class="mode-card-label">PET</div>';
-  html += '</button>';
-  html += '<button class="mode-card mode-kids'+_shapeClass+'" onclick="goToKidsMode()">';
-  html += _tileIcon('🧸','child_care')+'<div class="mode-card-label">KIDS</div>';
-  html += '</button>';
-  html += '<button class="mode-card mode-atelier'+_shapeClass+'" onclick="goToAtelierView()">';
-  html += _tileIcon('🎨','palette')+'<div class="mode-card-label">Atelier</div>';
-  html += '</button>';
-  // My Shop（最初の1個 or 開設ボタン）→ 押すと一覧画面
-  if (_myShops.length > 0) {
-    const shop = _myShops[0];
-    const _cd = shop.cardDesign || { color:'#E8A040', pattern:'solid' };
-    const _bgStyle = _getCardPatternBg(_cd.color, _cd.pattern, 60);
-    html += '<button class="mode-card'+_shapeClass+'" onclick="openMyShopList()" style="'+_bgStyle+'border-color:'+_cd.color+'66;">';
-    if (shop.iconImage) {
-      html += '<div class="mode-card-icon" style="width:34px;height:34px;border-radius:50%;background:url('+shop.iconImage+') center/cover;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.15);"></div>';
-    } else {
-      html += '<div class="mode-card-icon"><span class="material-symbols-rounded" style="color:white;text-shadow:0 1px 2px rgba(0,0,0,0.2);font-size:24px;">storefront</span></div>';
-    }
-    html += '<div class="mode-card-label" style="color:var(--ink-dark);font-weight:800;text-shadow:0 1px 2px rgba(255,255,255,0.6);">My Shop</div>';
-    if (_myShops.length > 1) {
-      html += '<span style="position:absolute;top:4px;right:4px;background:var(--accent);color:white;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 4px;z-index:2;">'+_myShops.length+'</span>';
-    }
-    html += '</button>';
-  } else {
-    html += '<button class="mode-card'+_shapeClass+'" onclick="openMyShopList()">';
-    html += '<div class="mode-card-icon"><span class="material-symbols-rounded" style="color:var(--accent-deep);font-size:26px;">add_business</span></div>';
-    html += '<div class="mode-card-label" style="color:var(--accent-deep);">My Shop</div>';
-    html += '</button>';
-  }
-  html += '</div>';
-
-  // ===== タウン クイックアクションバー（横長・4分割）=====
-  html += '<div class="home-quick-actions">';
-  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'search\')"><span class="material-symbols-rounded" style="font-size:16px;">map</span><span class="hqa-label">地図</span></button>';
-  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'transit\')"><span class="material-symbols-rounded" style="font-size:16px;">train</span><span class="hqa-label">路線</span></button>';
-  html += '<button class="home-quick-action" onclick="openTownQuick(\'search\',\'fav\')"><span class="material-symbols-rounded" style="font-size:16px;">favorite</span><span class="hqa-label">保存</span></button>';
-  html += '<button class="home-quick-action" onclick="openGlobalSearch()"><span class="material-symbols-rounded" style="font-size:16px;">search</span><span class="hqa-label">検索</span></button>';
-  html += '</div>';
-
-  // ===== ホームクイックスタンプ =====
+  // ===== ① 固定（ピン留めスタンプ・大きいタイル）=====
   if (!data.homeQuickStamps) {
     data.homeQuickStamps = [
       { id:'hqs_1', icon:'water_drop', label:'水', stampIcon:'water_drop', stampTitle:'水' },
@@ -8354,28 +8421,24 @@ function renderTop() {
     ];
   }
   const _hqs = data.homeQuickStamps || [];
-  html += '<div style="margin:0 14px 10px;background:linear-gradient(135deg,rgba(255,255,255,0.45),rgba(255,255,255,0.28));border:1.5px solid var(--card-border);border-radius:16px;padding:10px 12px;backdrop-filter:blur(10px);box-shadow:0 2px 8px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.85);">';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
-  html += '<div style="font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">check_circle</span>クイックスタンプ</div>';
-  html += '<button onclick="openHomeQuickStampEdit()" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:2px;"><span class="material-symbols-rounded" style="font-size:16px;">edit</span></button>';
-  html += '</div>';
-  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+  html += '<div class="home-pinned">';
+  html += '<button class="home-pinned-edit" onclick="openHomeQuickStampEdit()"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button>';
+  html += '<div class="home-pinned-grid">';
   for (const qs of _hqs) {
-    html += '<button onclick="_tapHomeQuickStamp(\''+qs.id+'\')" style="flex:1;min-width:52px;padding:8px 4px;background:rgba(255,255,255,0.6);border:1.5px solid rgba(255,255,255,0.8);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;box-shadow:0 1px 4px rgba(0,0,0,0.04);transition:transform 0.1s;" onmousedown="this.style.transform=\'scale(0.93)\'" onmouseup="this.style.transform=\'\';" ontouchstart="this.style.transform=\'scale(0.93)\'" ontouchend="this.style.transform=\'\';">';
-    html += '<span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">'+qs.icon+'</span>';
-    html += '<span style="font-size:9.5px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(qs.label)+'</span>';
+    html += '<button class="home-pinned-tile" onclick="_tapHomeQuickStamp(\''+qs.id+'\')">';
+    html += '<div class="home-pinned-tile-icon"><span class="material-symbols-rounded">'+qs.icon+'</span></div>';
+    html += '<span class="home-pinned-tile-label">'+escapeHtml(qs.label)+'</span>';
     html += '</button>';
   }
-  // ＋追加ボタン（6個未満の時）
   if (_hqs.length < 6) {
-    html += '<button onclick="openHomeQuickStampEdit()" style="flex:1;min-width:52px;padding:8px 4px;background:none;border:1.5px dashed var(--line);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;">';
-    html += '<span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-light);">add</span>';
-    html += '<span style="font-size:9.5px;font-weight:700;color:var(--ink-light);">追加</span>';
+    html += '<button class="home-pinned-tile home-pinned-tile-add" onclick="openHomeQuickStampEdit()">';
+    html += '<div class="home-pinned-tile-icon"><span class="material-symbols-rounded">add</span></div>';
+    html += '<span class="home-pinned-tile-label" style="color:var(--ink-light);">追加</span>';
     html += '</button>';
   }
   html += '</div></div>';
 
-  // ===== To Day カード（写真＋スケジュール） =====
+  // ===== ② To Day カード（写真＋スケジュール） =====
   if (!data.planner) data.planner = { items: [] };
   if (!data.homePhotoSettings) data.homePhotoSettings = { folderId: null, hidden: false };
   const _photoSettings = data.homePhotoSettings;
@@ -8447,6 +8510,75 @@ function renderTop() {
     html += '</div>';
   }
   html += '</div>';
+  html += '</div>';
+
+  // ===== ③ iPhoneアプリ風 アプリグリッド（全部ベタ塗り）=====
+  html += '<div class="app-grid">';
+
+  // ME
+  html += '<button class="app-tile" onclick="goToMeMode()">';
+  html += '<div class="app-tile-icon filled" style="background:#5CAE8A;"><span class="material-symbols-rounded">eco</span></div>';
+  html += '<div class="app-tile-label">ME</div></button>';
+
+  // Nest（15歳未満は非表示）
+  if (!currentUserIsUnder15()) {
+    html += '<button class="app-tile" onclick="goToNestMode()">';
+    html += '<div class="app-tile-icon filled" style="background:#E89A4A;"><span class="material-symbols-rounded">home</span></div>';
+    html += '<div class="app-tile-label">Nest</div></button>';
+  }
+
+  // PET
+  html += '<button class="app-tile" onclick="goToPetMode()">';
+  html += '<div class="app-tile-icon filled" style="background:#A68262;"><span class="material-symbols-rounded">pets</span></div>';
+  html += '<div class="app-tile-label">PET</div></button>';
+
+  // KIDS
+  html += '<button class="app-tile" onclick="goToKidsMode()">';
+  html += '<div class="app-tile-icon filled" style="background:#E88AA0;"><span class="material-symbols-rounded">child_care</span></div>';
+  html += '<div class="app-tile-label">KIDS</div></button>';
+
+  // Health
+  html += '<button class="app-tile" onclick="goToMeMode();setTimeout(()=>setModePageTab(\'me\',\'stamp\'),100);">';
+  html += '<div class="app-tile-icon filled" style="background:#E57373;"><span class="material-symbols-rounded">favorite</span></div>';
+  html += '<div class="app-tile-label">Health</div></button>';
+
+  // Memo
+  html += '<button class="app-tile" onclick="goToMeMode();setTimeout(()=>setModePageTab(\'me\',\'secret\'),100);">';
+  html += '<div class="app-tile-icon filled" style="background:#F0C040;"><span class="material-symbols-rounded">sticky_note_2</span></div>';
+  html += '<div class="app-tile-label">Memo</div></button>';
+
+  // Work
+  html += '<button class="app-tile" onclick="goToMeMode();setTimeout(()=>setModePageTab(\'me\',\'office\'),100);">';
+  html += '<div class="app-tile-icon filled" style="background:#8B7355;"><span class="material-symbols-rounded">work</span></div>';
+  html += '<div class="app-tile-label">Work</div></button>';
+
+  // Atelier
+  html += '<button class="app-tile" onclick="goToAtelierView()">';
+  html += '<div class="app-tile-icon filled" style="background:#B89DD9;"><span class="material-symbols-rounded">palette</span></div>';
+  html += '<div class="app-tile-label">Atelier</div></button>';
+
+  // My Shop
+  html += '<button class="app-tile" onclick="openMyShopList()">';
+  html += '<div class="app-tile-icon filled" style="background:#C8986A;"><span class="material-symbols-rounded">storefront</span>';
+  if (_myShops.length > 1) html += '<span class="app-tile-badge">'+_myShops.length+'</span>';
+  html += '</div>';
+  html += '<div class="app-tile-label">My Shop</div></button>';
+
+  // Town
+  html += '<button class="app-tile" onclick="currentView=\'town\';render();">';
+  html += '<div class="app-tile-icon filled" style="background:#5C9CD4;"><span class="material-symbols-rounded">location_city</span></div>';
+  html += '<div class="app-tile-label">Town</div></button>';
+
+  // Guide（地図・路線・お気に入り）
+  html += '<button class="app-tile" onclick="openTownQuick(\'search\',\'search\')">';
+  html += '<div class="app-tile-icon filled" style="background:#4AADAF;"><span class="material-symbols-rounded">map</span></div>';
+  html += '<div class="app-tile-label">Guide</div></button>';
+
+  // Friend
+  html += '<button class="app-tile" onclick="goToFriendView()">';
+  html += '<div class="app-tile-icon filled" style="background:#7BAFC4;"><span class="material-symbols-rounded">group</span></div>';
+  html += '<div class="app-tile-label">Friend</div></button>';
+
   html += '</div>';
 
   // ===== Friend / Diary / ピン留め（折りたたみ）=====
@@ -8677,112 +8809,183 @@ window.closeHomeQuickStampEdit = closeHomeQuickStampEdit;
 // =============================================
 // ===== ハンバーガードロワーメニュー =====
 // =============================================
+// ===== ドロワーメニュー カテゴリー定義 =====
+const _DRW_CATS = [
+  { key:'today',   icon:'today',         label:'今日',     color:'#E5524A', desc:'きょうのきろく' },
+  { key:'kurashi', icon:'coffee',         label:'くらし',   color:'#F5A623', desc:'まいにちのくらし' },
+  { key:'health',  icon:'favorite',       label:'けんこう', color:'#4FB677', desc:'からだの記録' },
+  { key:'work',    icon:'work',           label:'仕事',     color:'#4A90E2', desc:'まなびとしごと' },
+  { key:'family',  icon:'diversity_3',    label:'家族',     color:'#E94B6F', desc:'たいせつなひと' },
+  { key:'pet',     icon:'pets',           label:'ペット',   color:'#A68262', desc:'いっしょのなかま' },
+  { key:'machi',   icon:'location_city',  label:'まち',     color:'#1FA8C9', desc:'まちでつながる' },
+  { key:'create',  icon:'palette',        label:'お店',     color:'#9B5DB8', desc:'クリエイティブ' },
+];
+
+function _getDrawerContent(key) {
+  let h = '';
+  const cat = _DRW_CATS.find(c => c.key === key);
+  const col = cat ? cat.color : '#888';
+
+  // カラー枠で囲う（カテゴリー色）
+  h += `<div style="border:2.5px solid ${col};border-radius:14px;padding:14px 12px;background:white;">`;
+
+  // ヘッダー
+  h += `<div style="padding:0 0 12px;border-bottom:1px solid ${col}22;margin-bottom:10px;">`;
+  h += `<div style="font-size:18px;font-weight:900;color:${col};">${cat ? cat.label : ''}</div>`;
+  if (cat) h += `<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;">${cat.desc}</div>`;
+  h += `</div>`;
+
+  const _itemBtn = (icon, label, desc, action) =>
+    `<button onclick="${action}" style="width:100%;padding:11px 10px;background:none;border:none;border-radius:10px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:10px;margin-bottom:2px;">` +
+    `<div style="width:34px;height:34px;border-radius:10px;background:${col}18;display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
+    `<span class="material-symbols-rounded" style="font-size:18px;color:${col};">${icon}</span></div>` +
+    `<div style="flex:1;text-align:left;"><div style="font-size:13px;font-weight:800;color:var(--ink-dark);">${label}</div>` +
+    (desc ? `<div style="font-size:10px;color:var(--ink-sub);">${desc}</div>` : '') +
+    `</div><span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);">chevron_right</span></button>`;
+
+  if (key === 'today') {
+    h += _itemBtn('home',           'ホーム',     '毎日のはじまり',   `closeDrawerMenu();currentView='top';render();`);
+    h += _itemBtn('wb_sunny',       '記録',       'スタンプ記録',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
+    h += _itemBtn('calendar_month', 'カレンダー', '予定を一覧で',     `closeDrawerMenu();currentView='schedule';render();`);
+    h += _itemBtn('edit_note',      '日記',       '気持ちを残す',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','diary'),100);`);
+
+  } else if (key === 'kurashi') {
+    h += _itemBtn('payments',      'Money',      'お金の管理',       `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','money'),100);`);
+    h += _itemBtn('sticky_note_2', 'Memo',       'ふつうのメモ',     `closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','secret');switchMemoSubTab('memo');},100);`);
+    h += _itemBtn('lock',          'Secret',     '鍵つきメモ',       `closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','secret');switchMemoSubTab('secret');},100);`);
+    h += _itemBtn('photo_library', 'Collection', '写真アルバム',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','collection'),100);`);
+    h += _itemBtn('person',        'My',         '自分のこと',       `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);`);
+    h += _itemBtn('shopping_cart', 'Goods',      '持ち物リスト',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','goods'),100);`);
+
+  } else if (key === 'health') {
+    h += _itemBtn('check_circle',        'Health',       'スタンプ記録',       `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
+    h += _itemBtn('monitor_weight',      '体重',         '体重を記録',         `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
+    h += _itemBtn('water_drop',          '生理',         'ホルモン管理',       `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
+    h += _itemBtn('medical_information', 'カルテ',       '医療・薬・病院',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);`);
+    h += _itemBtn('public',              'みんなのダイエット', '世界とつながる', `closeDrawerMenu();currentView='town';townMainTab='rainbow';render();`);
+
+  } else if (key === 'work') {
+    h += _itemBtn('work',   'Work',  '仕事メモ',   `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','office'),100);`);
+    h += _itemBtn('school', 'Study', '学習の記録', `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','study'),100);`);
+
+  } else if (key === 'family') {
+    // Nest
+    const _houses = data.houses || [];
+    if (_houses.length === 0) {
+      h += _itemBtn('home', 'Nest', 'わが家の情報', `closeDrawerMenu();goToNestMode();`);
+    } else {
+      for (const hh of _houses) {
+        h += _itemBtn('home', escapeHtml(hh.name||'家'), 'Nest', `closeDrawerMenu();goToNestMode();setTimeout(()=>selectHouse('${hh.id}'),100);`);
+      }
+    }
+    h += `<div style="height:1px;background:var(--line);margin:8px 0;"></div>`;
+    // KIDS
+    const _kids = (data.pets||[]).filter(p => !p.atRainbow && (p.kidsGender||p.kind==='kids'));
+    if (_kids.length === 0) {
+      h += _itemBtn('child_care', 'KIDS', '子どもの成長', `closeDrawerMenu();goToKidsMode();`);
+    } else {
+      for (const k of _kids) {
+        h += _itemBtn('child_care', escapeHtml(k.name||''), 'のおへや', `closeDrawerMenu();goToKidsMode();setTimeout(()=>{selectPet('${k.id}');setCurrentPetTab('care');},100);`);
+      }
+    }
+    h += _itemBtn('add', '子どもを追加', '', `closeDrawerMenu();goToKidsMode();setTimeout(()=>{if(typeof openAddPetModal==='function')openAddPetModal();},150);`);
+
+  } else if (key === 'pet') {
+    const _pets = (data.pets||[]).filter(p => !p.atRainbow && p.kind==='pet');
+    if (_pets.length === 0) {
+      h += _itemBtn('pets', 'PET', 'ペットを記録', `closeDrawerMenu();goToPetMode();`);
+    } else {
+      for (const p of _pets) {
+        h += _itemBtn('pets', escapeHtml(p.name||''), 'の部屋', `closeDrawerMenu();goToPetMode();setTimeout(()=>{selectPet('${p.id}');setCurrentPetTab('care');},100);`);
+      }
+    }
+    h += _itemBtn('add', 'ペットを追加', '', `closeDrawerMenu();goToPetMode();setTimeout(()=>{if(typeof openAddPetModal==='function')openAddPetModal();},150);`);
+    h += `<div style="height:1px;background:var(--line);margin:8px 0;"></div>`;
+    h += _itemBtn('cruelty_free', 'Animal', '世界のペット', `closeDrawerMenu();currentView='town';townMainTab='rainbow';render();`);
+
+  } else if (key === 'machi') {
+    h += _itemBtn('map',                'Guide',  '地図・路線・お気に入り', `closeDrawerMenu();openTownQuick('search','search');`);
+    h += _itemBtn('location_city',      'Town',   'にこわタウン',          `closeDrawerMenu();currentView='town';render();`);
+    h += _itemBtn('videocam',           'ライブ', 'ライブカメラ',          `closeDrawerMenu();currentView='town';townMainTab='live';townHideMainTabs=false;render();`);
+    h += _itemBtn('volunteer_activism', '保護団体','シェルター',           `closeDrawerMenu();currentView='town';townMainTab='rainbow';townAnimalSubTab='shelter';render();`);
+
+  } else if (key === 'create') {
+    h += _itemBtn('palette',    'Atelier', '作品づくり',  `closeDrawerMenu();goToAtelierView();`);
+    h += _itemBtn('storefront', 'My Shop', 'お店の管理',  `closeDrawerMenu();openMyShopList();`);
+  }
+
+  h += `</div>`;  // カラー枠閉じる
+
+  return h;
+}
+window._getDrawerContent = _getDrawerContent;
+
+window.selectDrawerTab = function(key) {
+  window._drawerActiveTab = key;
+  // 右コンテンツ更新
+  const panel = document.getElementById('drwContentPanel');
+  if (panel) {
+    const newCat = _DRW_CATS.find(c => c.key === key);
+    panel.style.background = newCat ? newCat.color+'18' : '#F8F8F8';
+    panel.innerHTML = _getDrawerContent(key);
+  }
+  // 左タブのアクティブ状態更新
+  _DRW_CATS.forEach(cat => {
+    const btn = document.getElementById('drwTab_'+cat.key);
+    if (!btn) return;
+    const isActive = cat.key === key;
+    btn.style.background = isActive ? '#FFFFFF' : 'transparent';
+    btn.style.boxShadow = isActive ? '-3px 0 0 '+cat.color+' inset' : 'none';
+    const label = btn.querySelector('.drwTabLabel');
+    if (label) label.style.color = isActive ? cat.color : 'var(--ink-light)';
+    const iconWrap = btn.querySelector('.drwTabIcon');
+    if (iconWrap) {
+      iconWrap.style.background = isActive ? cat.color : '#FFFFFF';
+      iconWrap.style.boxShadow = isActive ? `0 2px 6px ${cat.color}80` : 'none';
+      iconWrap.style.transform = isActive ? 'scale(1.05)' : 'scale(1)';
+      const iconSpan = iconWrap.querySelector('.material-symbols-rounded');
+      if (iconSpan) iconSpan.style.color = isActive ? 'white' : cat.color;
+    }
+  });
+};
+
 function openDrawerMenu() {
   const ex = document.getElementById('drawerMenu');
   if (ex) { ex.remove(); return; }
-  
-  // ドロワーのHTML生成
+
+  if (!window._drawerActiveTab) window._drawerActiveTab = 'today';
+  const activeKey = window._drawerActiveTab;
+
   let h = `<div id="drawerMenu" style="position:fixed;inset:0;z-index:2500;display:flex;">`;
-  // オーバーレイ
   h += `<div onclick="closeDrawerMenu()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);"></div>`;
-  // ドロワー本体
-  h += `<div id="drawerBody" style="position:relative;width:82%;max-width:300px;height:100%;background:var(--surface);display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,0.15);transform:translateX(-100%);transition:transform 0.28s cubic-bezier(.4,0,.2,1);overflow-y:auto;">`;
-  
-  // ヘッダー
-  h += `<div style="padding:48px 18px 14px;background:linear-gradient(135deg,var(--mint-deep),var(--accent-deep));color:white;flex-shrink:0;">`;
-  const _uname = (data.user && data.user.name) || 'にこわユーザー';
-  h += `<div style="font-size:18px;font-weight:900;margin-bottom:2px;">nikowa.</div>`;
-  h += `<div style="font-size:12px;opacity:0.85;">${escapeHtml(_uname)}</div>`;
+  // ドロワー本体（2カラム）
+  h += `<div id="drawerBody" style="position:relative;width:88%;max-width:320px;height:100%;background:var(--surface);display:flex;flex-direction:row;box-shadow:4px 0 20px rgba(0,0,0,0.15);transform:translateX(-100%);transition:transform 0.28s cubic-bezier(.4,0,.2,1);overflow:hidden;">`;
+
+  // ── 左カラム：タブ一覧 ──
+  h += `<div style="width:72px;flex-shrink:0;background:#F4F4F4;border-right:1px solid #E8E8E8;overflow-y:auto;display:flex;flex-direction:column;padding:52px 0 12px;">`;
+  // ユーザー名
+  const _uname = (data.user && data.user.name) || 'にこわ';
+  h += `<div style="position:absolute;top:0;left:0;width:72px;height:48px;background:linear-gradient(135deg,var(--mint-deep),var(--accent-deep));display:flex;align-items:center;justify-content:center;"><span style="font-size:10px;font-weight:900;color:white;letter-spacing:0.5px;">${escapeHtml(_uname.slice(0,4))}</span></div>`;
+
+  for (const cat of _DRW_CATS) {
+    const isActive = cat.key === activeKey;
+    h += `<button id="drwTab_${cat.key}" onclick="selectDrawerTab('${cat.key}')" style="width:100%;padding:10px 4px;background:${isActive?'#FFFFFF':'transparent'};border:none;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;transition:background 0.15s;box-shadow:${isActive?`-3px 0 0 ${cat.color} inset`:'none'};">`;
+    h += `<div class="drwTabIcon" style="width:36px;height:36px;border-radius:11px;background:${isActive?cat.color:'#FFFFFF'};border:2px solid ${cat.color};display:flex;align-items:center;justify-content:center;box-shadow:${isActive?`0 2px 6px ${cat.color}80`:'none'};transition:all 0.15s;transform:${isActive?'scale(1.05)':'scale(1)'};">`;
+    h += `<span class="material-symbols-rounded" style="font-size:20px;color:${isActive?'white':cat.color};transition:color 0.15s;">${cat.icon}</span>`;
+    h += `</div>`;
+    h += `<span class="drwTabLabel" style="font-size:8.5px;font-weight:800;color:${isActive?cat.color:'var(--ink-light)'};line-height:1.1;transition:color 0.15s;">${cat.label}</span>`;
+    h += `</button>`;
+  }
   h += `</div>`;
-  
-  // メニューリスト
-  h += `<div style="flex:1;overflow-y:auto;padding:8px 0;">`;
-  
-  // ── ME ──
-  h += _drawerSection('eco', 'var(--mint-deep)', 'ME', 'me', [
-    { icon:'wb_sunny', label:'Day', children: [
-      { icon:'check_circle',  label:'スタンプ',   action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','stamp');switchStampSubTab('stamp');},100);` },
-      { icon:'edit_calendar', label:'プランナー', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','stamp');switchStampSubTab('planner');},100);` },
-      { icon:'calendar_month',label:'カレンダー', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','stamp');switchStampSubTab('calendar');},100);` },
-      { icon:'photo_library', label:'ギャラリー', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','stamp');switchStampSubTab('gallery');},100);` },
-    ]},
-    { icon:'edit_note',    label:'Diary',      action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','diary'),100);` },
-    { icon:'shopping_cart',label:'Goods',      action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','goods'),100);` },
-    { icon:'school',       label:'Study',      action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','study'),100);` },
-    { icon:'payments',     label:'Money',      action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','money'),100);` },
-    { icon:'photo_library',label:'Collection', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','collection'),100);` },
-    { icon:'person',       label:'My（自分のこと）', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);` },
-    { icon:'work',         label:'Work',       action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','office'),100);` },
-    { icon:'sticky_note_2',label:'Memo', children: [
-      { icon:'edit_note', label:'Memo',   action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','secret');switchMemoSubTab('memo');},100);` },
-      { icon:'lock',      label:'Secret', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','secret');switchMemoSubTab('secret');},100);` },
-    ]},
-  ]);
-  
-  // ── Nest（家ごと）──
-  const _houses = data.houses || [];
-  const _nestItems = _houses.map(h2 => ({
-    icon: 'home', label: escapeHtml(h2.name||'家'),
-    action: `closeDrawerMenu();goToNestMode();setTimeout(()=>selectHouse('${h2.id}'),100);`
-  }));
-  _nestItems.push({ icon:'add', label:'家を追加', action:`closeDrawerMenu();goToNestMode();` });
-  h += _drawerSection('home', '#E8A040', 'Nest', 'nest', _nestItems);
-  
-  // ── PET（ペットごと）──
-  const _pets = (data.pets||[]).filter(p => !p.atRainbow && p.kind==='pet');
-  const _petItems = _pets.map(p => ({
-    icon:'pets', label: escapeHtml(p.name||''),
-    children: [
-      { icon:'favorite', label:'お世話', action:`closeDrawerMenu();goToPetMode();setTimeout(()=>{selectPet('${p.id}');setCurrentPetTab('care');},100);` },
-      { icon:'photo_library', label:'おもいで', action:`closeDrawerMenu();goToPetMode();setTimeout(()=>{selectPet('${p.id}');setCurrentPetTab('diary');},100);` },
-      { icon:'health_and_safety', label:'カルテ', action:`closeDrawerMenu();goToPetMode();setTimeout(()=>{selectPet('${p.id}');setCurrentPetTab('health');},100);` },
-    ]
-  }));
-  _petItems.push({ icon:'add', label:'ペットを追加', action:`closeDrawerMenu();goToPetMode();setTimeout(()=>{if(typeof openAddPetModal==='function')openAddPetModal();},150);` });
-  h += _drawerSection('pets', '#9B7BC1', 'PET', 'pet', _petItems);
-  
-  // ── KIDS（子どもごと）──
-  const _kids = (data.pets||[]).filter(p => !p.atRainbow && (p.kidsGender || p.kind==='kids'));
-  const _kidsItems = _kids.map(k => ({
-    icon:'child_care', label: escapeHtml(k.name||''),
-    children: [
-      { icon:'favorite', label:'お世話', action:`closeDrawerMenu();goToKidsMode();setTimeout(()=>{selectPet('${k.id}');setCurrentPetTab('care');},100);` },
-      { icon:'edit_note', label:'おもいで', action:`closeDrawerMenu();goToKidsMode();setTimeout(()=>{selectPet('${k.id}');setCurrentPetTab('diary');},100);` },
-      { icon:'health_and_safety', label:'カルテ', action:`closeDrawerMenu();goToKidsMode();setTimeout(()=>{selectPet('${k.id}');setCurrentPetTab('health');},100);` },
-    ]
-  }));
-  _kidsItems.push({ icon:'add', label:'子どもを追加', action:`closeDrawerMenu();goToKidsMode();setTimeout(()=>{if(typeof openAddPetModal==='function')openAddPetModal();},150);` });
-  h += _drawerSection('child_care', '#E88AA0', 'KIDS', 'kids', _kidsItems);
-  
-  // ── Atelier ──
-  h += _drawerSection('palette', '#A89478', 'Atelier', 'atelier', [
-    { icon:'auto_stories', label:'作品一覧', action:`closeDrawerMenu();goToAtelierView();` },
-  ]);
-  
-  // ── My Shop ──
-  h += _drawerSection('storefront', '#C8986A', 'My Shop', 'myshop', [
-    { icon:'storefront', label:'ショップ一覧', action:`closeDrawerMenu();openMyShopList();` },
-  ]);
-  
-  // ── Town ──
-  h += _drawerSection('location_city', '#5C9CD4', 'Town', 'town', [
-    { icon:'map', label:'地図', action:`closeDrawerMenu();openTownQuick('search','search');` },
-    { icon:'train', label:'路線', action:`closeDrawerMenu();openTownQuick('search','transit');` },
-    { icon:'videocam', label:'ライブ', action:`closeDrawerMenu();currentView='town';townMainTab='live';townHideMainTabs=false;render();` },
-    { icon:'volunteer_activism', label:'保護団体', action:`closeDrawerMenu();currentView='town';townMainTab='rainbow';townAnimalSubTab='shelter';render();` },
-  ]);
-  
-  // ── その他 ──
-  h += `<div style="border-top:1px solid var(--line);margin:8px 0;"></div>`;
-  h += _drawerItem('group', 'var(--ink-sub)', 'Friend', `closeDrawerMenu();goToFriendView();`);
-  h += _drawerItem('notifications', 'var(--ink-sub)', 'お知らせ', `closeDrawerMenu();openNotificationCenter();`);
-  h += _drawerItem('settings', 'var(--ink-sub)', '設定', `closeDrawerMenu();currentView='settings';render();`);
-  
+
+  // ── 右カラム：コンテンツ ──
+  h += `<div id="drwContentPanel" style="flex:1;overflow-y:auto;padding:14px 12px;background:${_DRW_CATS.find(c=>c.key===activeKey)?.color+'18' || '#F8F8F8'};">`;
+  h += _getDrawerContent(activeKey);
   h += `</div>`;
+
   h += `</div></div>`;
-  
+
   document.body.insertAdjacentHTML('beforeend', h);
-  // アニメーション
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       const body = document.getElementById('drawerBody');
@@ -8794,9 +8997,7 @@ function openDrawerMenu() {
   const _dbody = document.getElementById('drawerBody');
   if (_dbody) {
     _dbody.addEventListener('touchstart', e => { _dsx = e.touches[0].clientX; }, { passive:true });
-    _dbody.addEventListener('touchend', e => {
-      if (_dsx - e.changedTouches[0].clientX > 60) closeDrawerMenu();
-    }, { passive:true });
+    _dbody.addEventListener('touchend', e => { if (_dsx - e.changedTouches[0].clientX > 60) closeDrawerMenu(); }, { passive:true });
   }
 }
 window.openDrawerMenu = openDrawerMenu;
@@ -8862,42 +9063,72 @@ window.setCurrentPetTab = function(parentTabId) {
 };
 
 // ドロワー：セクション（アコーディオン）
-function _drawerSection(icon, color, label, key, items) {
+function _drawerSection(icon, color, label, key, items, sectionDesc) {
   const _openKey = '_drw_'+key;
   const _isOpen = window[_openKey] || false;
   let h = '';
-  h += `<div>`;
+  // セクション全体：左に太いカラータブ（ノートインデックス風）
+  h += `<div style="position:relative;margin:6px 8px;border-radius:12px;overflow:hidden;background:${_isOpen?color+'15':'rgba(255,255,255,0.5)'};border:1px solid ${_isOpen?color+'40':'rgba(0,0,0,0.05)'};transition:all 0.2s;">`;
+  // 左端のカラータブ
+  h += `<div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:${color};"></div>`;
   // セクションヘッダー
-  h += `<button onclick="window['${_openKey}']=!window['${_openKey}'];document.getElementById('drw_body_${key}').style.display=window['${_openKey}']?'block':'none';this.querySelector('.drw-chev').style.transform=window['${_openKey}']?'rotate(180deg)':'';" style="width:100%;padding:11px 18px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:10px;">`;
-  h += `<span class="material-symbols-rounded" style="font-size:18px;color:${color};">${icon}</span>`;
-  h += `<span style="flex:1;font-size:13.5px;font-weight:800;color:var(--ink-dark);text-align:left;">${label}</span>`;
-  h += `<span class="material-symbols-rounded drw-chev" style="font-size:16px;color:var(--ink-light);transition:transform 0.2s;">${_isOpen?'expand_less':'expand_more'}</span>`;
+  h += `<button onclick="window['${_openKey}']=!window['${_openKey}'];closeDrawerMenu();setTimeout(()=>openDrawerMenu(),20);" style="width:100%;padding:11px 12px 11px 18px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:10px;">`;
+  h += `<div style="width:32px;height:32px;border-radius:10px;background:${color};display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 1px 3px ${color}55;">`;
+  h += `<span class="material-symbols-rounded" style="font-size:18px;color:white;">${icon}</span>`;
+  h += `</div>`;
+  h += `<div style="flex:1;text-align:left;">`;
+  h += `<div style="font-size:14px;font-weight:900;color:var(--ink-dark);line-height:1.1;">${label}</div>`;
+  if (sectionDesc) h += `<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;">${sectionDesc}</div>`;
+  h += `</div>`;
+  h += `<span class="material-symbols-rounded drw-chev" style="font-size:18px;color:${color};transition:transform 0.2s;${_isOpen?'transform:rotate(180deg);':''}">expand_more</span>`;
   h += `</button>`;
   // サブメニュー
-  h += `<div id="drw_body_${key}" style="display:${_isOpen?'block':'none'};background:var(--surface-warm);">`;
+  h += `<div id="drw_body_${key}" style="display:${_isOpen?'block':'none'};background:rgba(255,255,255,0.7);padding:2px 0 6px;">`;
   for (const item of items) {
     if (item.children) {
-      // 孫メニューあり（PET/KIDSの各ペット）
-      const _childKey = '_drw_'+key+'_'+item.label.replace(/[^a-zA-Z0-9]/g,'');
+      const _childKey = '_drw_'+key+'_'+(item.label||'').replace(/[^a-zA-Z0-9]/g,'')+Math.floor(Math.random()*100);
       const _childOpen = window[_childKey] || false;
       h += `<div>`;
-      h += `<button onclick="window['${_childKey}']=!window['${_childKey}'];document.getElementById('drw_c_${_childKey}').style.display=window['${_childKey}']?'block':'none';" style="width:100%;padding:9px 18px 9px 42px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;">`;
-      h += `<span class="material-symbols-rounded" style="font-size:15px;color:${color};opacity:0.7;">${item.icon}</span>`;
-      h += `<span style="flex:1;font-size:12.5px;font-weight:700;color:var(--ink-dark);text-align:left;">${item.label}</span>`;
+      h += `<button onclick="window['${_childKey}']=!window['${_childKey}'];document.getElementById('drw_c_${_childKey}').style.display=window['${_childKey}']?'block':'none';" style="width:100%;padding:8px 14px 8px 28px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;">`;
+      h += `<span class="material-symbols-rounded" style="font-size:16px;color:${color};opacity:0.8;">${item.icon}</span>`;
+      h += `<span style="font-size:12.5px;font-weight:700;color:var(--ink-dark);">${item.label}</span>`;
+      if (item.desc) h += `<span style="font-size:10px;color:var(--ink-light);margin-left:4px;">${item.desc}</span>`;
+      h += `<span style="flex:1;"></span>`;
       h += `<span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);">chevron_right</span>`;
       h += `</button>`;
-      h += `<div id="drw_c_${_childKey}" style="display:${_childOpen?'block':'none'};background:rgba(0,0,0,0.03);">`;
+      h += `<div id="drw_c_${_childKey}" style="display:${_childOpen?'block':'none'};background:rgba(0,0,0,0.025);">`;
       for (const child of item.children) {
-        h += `<button onclick="${child.action}" style="width:100%;padding:8px 18px 8px 58px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;">`;
-        h += `<span class="material-symbols-rounded" style="font-size:14px;color:${color};opacity:0.6;">${child.icon}</span>`;
-        h += `<span style="font-size:12px;font-weight:600;color:var(--ink-sub);">${child.label}</span>`;
-        h += `</button>`;
+        if (child.children) {
+          // ひ孫（ペット名→お世話/おもいで/カルテ）
+          const _gcKey = _childKey+'_gc_'+(child.label||'').replace(/[^a-zA-Z0-9]/g,'')+Math.floor(Math.random()*100);
+          const _gcOpen = window[_gcKey] || false;
+          h += `<button onclick="window['${_gcKey}']=!window['${_gcKey}'];document.getElementById('drw_gc_${_gcKey}').style.display=window['${_gcKey}']?'block':'none';" style="width:100%;padding:7px 14px 7px 44px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;">`;
+          h += `<span class="material-symbols-rounded" style="font-size:14px;color:${color};opacity:0.65;">${child.icon}</span>`;
+          h += `<span style="flex:1;font-size:12px;font-weight:600;color:var(--ink-sub);text-align:left;">${child.label}</span>`;
+          h += `<span class="material-symbols-rounded" style="font-size:13px;color:var(--ink-light);">chevron_right</span>`;
+          h += `</button>`;
+          h += `<div id="drw_gc_${_gcKey}" style="display:${_gcOpen?'block':'none'};background:rgba(0,0,0,0.02);">`;
+          for (const gc of child.children) {
+            h += `<button onclick="${gc.action}" style="width:100%;padding:6px 14px 6px 60px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px;">`;
+            h += `<span class="material-symbols-rounded" style="font-size:13px;color:${color};opacity:0.55;">${gc.icon}</span>`;
+            h += `<span style="font-size:11.5px;font-weight:600;color:var(--ink-sub);">${gc.label}</span>`;
+            h += `</button>`;
+          }
+          h += `</div>`;
+        } else {
+          h += `<button onclick="${child.action}" style="width:100%;padding:7px 14px 7px 44px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px;">`;
+          h += `<span class="material-symbols-rounded" style="font-size:13px;color:${color};opacity:0.6;">${child.icon}</span>`;
+          h += `<span style="font-size:11.5px;font-weight:600;color:var(--ink-sub);">${child.label}</span>`;
+          if (child.desc) h += `<span style="font-size:9.5px;color:var(--ink-light);margin-left:3px;">${child.desc}</span>`;
+          h += `</button>`;
+        }
       }
       h += `</div></div>`;
     } else {
-      h += `<button onclick="${item.action}" style="width:100%;padding:9px 18px 9px 42px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;">`;
-      h += `<span class="material-symbols-rounded" style="font-size:15px;color:${color};opacity:0.7;">${item.icon}</span>`;
-      h += `<span style="flex:1;font-size:12.5px;font-weight:600;color:var(--ink-sub);text-align:left;">${item.label}</span>`;
+      h += `<button onclick="${item.action}" style="width:100%;padding:8px 14px 8px 28px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;">`;
+      h += `<span class="material-symbols-rounded" style="font-size:16px;color:${color};opacity:0.8;">${item.icon}</span>`;
+      h += `<span style="font-size:12.5px;font-weight:700;color:var(--ink-dark);">${item.label}</span>`;
+      if (item.desc) h += `<span style="font-size:10px;color:var(--ink-light);margin-left:4px;">${item.desc}</span>`;
       h += `</button>`;
     }
   }
@@ -20548,27 +20779,33 @@ function renderMeMode() {
   };
   const _ti = _tabInfo[tab] || _tabInfo.stamp;
   
-  // シンプルヘッダー（≡メニュー＋タイトル▼）
-  let html = '<div style="padding:14px 14px 8px;display:flex;align-items:center;gap:10px;background:transparent;position:relative;">';
+  // ヘッダー：天気pill ＋ ≡ボタン
+  const _now2 = new Date();
+  const _wks2 = ['日','月','火','水','木','金','土'];
+  const _yyyy2 = _now2.getFullYear();
+  const _mm2   = String(_now2.getMonth()+1).padStart(2,'0');
+  const _dd2   = String(_now2.getDate()).padStart(2,'0');
+  const _wk2   = _wks2[_now2.getDay()];
+  const _hh2   = String(_now2.getHours()).padStart(2,'0');
+  const _mi2   = String(_now2.getMinutes()).padStart(2,'0');
+  const _wc2   = window._weatherCache || null;
+  const _wIcon2 = _wc2 ? _wc2.icon : '☁️';
+  const _wTemp2 = _wc2 ? Math.round(_wc2.temp) : '--';
+  const _region2 = data.userRegion || '大阪';
+
+  let html = '<div style="padding:10px 14px 6px;display:flex;align-items:center;gap:8px;">';
   html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
-  html += '<button onclick="toggleMeTabDropdown()" style="flex:1;background:rgba(255,255,255,0.5);border:1.5px solid var(--card-border);border-radius:100px;padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;text-align:left;">';
-  html += '<span class="material-symbols-rounded" style="font-size:20px;color:'+_ti.color+';">'+_ti.icon+'</span>';
-  html += '<div style="flex:1;font-size:15px;font-weight:900;color:var(--ink-dark);">'+_ti.label+'</div>';
-  html += '<span class="material-symbols-rounded" id="meTabChevron" style="font-size:18px;color:var(--ink-light);transition:transform 0.2s;">expand_more</span>';
-  html += '</button>';
+  html += '<div class="home-weather-pill" onclick="showWeatherPopup()" style="flex:1;margin:0;">';
+  html += '<div class="home-weather-pill-left">';
+  html += '<span>'+_yyyy2+'/'+_mm2+'/'+_dd2+'('+_wk2+') '+_hh2+':'+_mi2+'</span>';
+  html += '<span style="color:var(--ink-light);">·</span>';
+  html += '<span class="home-weather-pill-region">'+escapeHtml(_region2)+'</span>';
   html += '</div>';
-  
-  // プルダウンメニュー（最初は非表示）
-  html += '<div id="meTabDropdown" style="display:none;margin:0 14px 8px 60px;background:white;border:1.5px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.1);padding:6px;animation:fadeInDown 0.2s ease;">';
-  for (const tabKey of validMeTabs) {
-    const ti = _tabInfo[tabKey] || _tabInfo.stamp;
-    const isActive = tabKey === tab;
-    html += '<button onclick="setModePageTab(\'me\',\''+tabKey+'\')" style="width:100%;padding:10px 12px;background:'+(isActive?'var(--accent-bg)':'none')+';border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;border-radius:8px;text-align:left;margin-bottom:2px;">';
-    html += '<span class="material-symbols-rounded" style="font-size:18px;color:'+ti.color+';">'+ti.icon+'</span>';
-    html += '<span style="flex:1;font-size:13px;font-weight:'+(isActive?'800':'600')+';color:var(--ink-dark);">'+ti.label+'</span>';
-    if (isActive) html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">check</span>';
-    html += '</button>';
-  }
+  html += '<div class="home-weather-pill-right">';
+  html += '<span class="home-weather-pill-icon">'+weatherIconHtml(_wIcon2,'font-size:18px;')+'</span>';
+  html += '<span class="home-weather-pill-temp">'+_wTemp2+'<span class="unit">℃</span></span>';
+  html += '</div>';
+  html += '</div>';
   html += '</div>';
   
   // コンテンツエリア（白い角丸背景）
@@ -20595,21 +20832,33 @@ function renderMeMode() {
     html += renderMyTab();
     
   } else if (tab === 'stamp') {
-    // ===== Stamp（サブサブタブ：スタンプ / プランナー） =====
+    // ===== Stamp（ノートインデックスタブ A案） =====
     html += '<div id="meStampWrap">';
     const ssTab = data.stampSubTab || 'stamp';
-    
-    // サブサブタブ
-    html += '<div style="padding:10px 14px 0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px;">';
     const _sActive = ssTab === 'stamp';
     const _pActive = ssTab === 'planner';
     const _cActive = ssTab === 'calendar';
     const _gActive = ssTab === 'gallery';
-    html += '<button onclick="switchStampSubTab(\'stamp\')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_sActive?'var(--accent)':'var(--line)')+';background:'+(_sActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_sActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">check_circle</span>スタンプ</button>';
-    html += '<button onclick="switchStampSubTab(\'planner\')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_pActive?'var(--accent)':'var(--line)')+';background:'+(_pActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_pActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">edit_calendar</span>プランナー</button>';
-    html += '<button onclick="switchStampSubTab(\'calendar\')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_cActive?'var(--accent)':'var(--line)')+';background:'+(_cActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_cActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span>カレンダー</button>';
-    html += '<button onclick="switchStampSubTab(\'gallery\')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:1.5px solid '+(_gActive?'var(--accent)':'var(--line)')+';background:'+(_gActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_gActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">photo_library</span>ギャラリー</button>';
+
+    // ── タブ行（出っ張りスタイル・均等割）──
+    html += '<div style="padding:12px 14px 0;display:flex;gap:4px;position:relative;z-index:1;">';
+
+    const _tabStyle = (isActive) =>
+      `flex:1;padding:8px 4px;border-radius:10px 10px 0 0;border:2px solid var(--accent);` +
+      `background:${isActive ? 'white' : 'var(--surface-warm)'};` +
+      `color:${isActive ? 'var(--accent-deep)' : 'var(--ink-light)'};` +
+      `font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;` +
+      `display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap;` +
+      `${isActive ? 'border-bottom:2px solid white;margin-bottom:-2px;z-index:2;position:relative;' : 'margin-top:4px;border-bottom:2px solid var(--accent);'}`;
+
+    html += `<button onclick="switchStampSubTab('stamp')" style="${_tabStyle(_sActive)}"><span class="material-symbols-rounded" style="font-size:14px;">check_circle</span>スタンプ</button>`;
+    html += `<button onclick="switchStampSubTab('planner')" style="${_tabStyle(_pActive)}"><span class="material-symbols-rounded" style="font-size:14px;">edit_calendar</span>プランナー</button>`;
+    html += `<button onclick="switchStampSubTab('calendar')" style="${_tabStyle(_cActive)}"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span>カレンダー</button>`;
+    html += `<button onclick="switchStampSubTab('gallery')" style="${_tabStyle(_gActive)}"><span class="material-symbols-rounded" style="font-size:14px;">photo_library</span>ギャラリー</button>`;
     html += '</div>';
+
+    // ── コンテンツエリア（var(--accent)で枠）──
+    html += '<div style="margin:0 14px 14px;border:2px solid var(--accent);border-radius:0 10px 10px 10px;background:white;padding:12px;position:relative;z-index:0;">';
     
     if (ssTab === 'gallery') {
       html += renderStampGallery();
@@ -21014,6 +21263,7 @@ function renderMeMode() {
       // ───── プランナー画面（新規）─────
       html += renderPlannerView();
     }
+    html += '</div>'; // コンテンツエリア枠 閉じ
     html += '</div>'; // meStampWrap end
     
   } else if (tab === 'diary') {
@@ -36957,15 +37207,15 @@ function renderSchedule() {
   html += '<div style="display:flex;align-items:center;padding:14px 16px 8px;gap:8px;">';
   html += '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">calendar_month</span>';
   html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);letter-spacing:0.5px;">Schedule</div>';
-  html += '<button onclick="_openSchedAdd()" style="padding:7px 14px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>予定</button>';
   html += '</div>';
 
-  // ── ビュー切替 ──
+  // ── ビュー切替 ＋ +予定 ──
   html += '<div style="display:flex;align-items:center;gap:5px;padding:0 16px 10px;flex-wrap:wrap;">';
   var _mA = vm==='month', _lA = vm==='list';
   html += '<button onclick="switchSchedView(\'month\')" style="padding:6px 14px;background:'+(_mA?'var(--accent-deep)':'var(--surface)')+';color:'+(_mA?'white':'var(--ink-sub)')+';border:1px solid '+(_mA?'var(--accent-deep)':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">grid_view</span>月</button>';
   html += '<button onclick="switchSchedView(\'list\')" style="padding:6px 14px;background:'+(_lA?'var(--accent-deep)':'var(--surface)')+';color:'+(_lA?'white':'var(--ink-sub)')+';border:1px solid '+(_lA?'var(--accent-deep)':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">view_list</span>リスト</button>';
   html += '<button onclick="openHealthLog()" style="padding:6px 12px;background:linear-gradient(135deg,#FFD6E0,#FFC1CC);color:#C2185B;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">favorite</span>Health</button>';
+  html += '<button onclick="_openSchedAdd()" style="margin-left:auto;padding:6px 14px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>予定</button>';
   html += '</div>';
 
   if (vm === 'month') {
@@ -38968,9 +39218,9 @@ function _renderSchedMonthView(houseId) {
     { src: 'assets/anzu.svg',   name: 'あんず' },
     { src: 'assets/yumeme.svg', name: 'ゆめめ' },
     { src: 'assets/kotatu.svg', name: 'こたつ' },
-    { src: 'assets/tukiko.svg', name: 'つきこ' },
-    { src: 'assets/beteli.svg', name: 'べてる' },
-    { src: 'assets/koito.svg',  name: 'こいと' }
+    { src: 'assets/beteli.svg', name: 'べてぃ' },
+    { src: 'assets/koito.svg',  name: 'こいと' },
+    { src: 'assets/beru.svg',   name: 'べる' },
   ];
   var monthResident = RESIDENTS[month % RESIDENTS.length];
 
@@ -38980,24 +39230,36 @@ function _renderSchedMonthView(houseId) {
 
   // 月ナビ
   h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 2px;">';
-  h += '<button onclick="changeCalMonth(\'sched\',-1)" style="width:30px;height:30px;border-radius:50%;background:var(--surface-warm);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_left</span></button>';
+  h += '<button onclick="changeCalMonth(\'sched\',-1)" style="width:32px;height:32px;border-radius:50%;background:var(--surface-warm);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_left</span></button>';
   h += '<div style="display:flex;align-items:center;gap:8px;">';
-  h += '<span style="font-size:16px;font-weight:800;color:var(--ink-dark);">'+year+'年 '+(month+1)+'月</span>';
+  h += '<span style="font-size:22px;font-weight:900;color:var(--ink-dark);">'+year+'年 </span><span style="font-size:28px;font-weight:900;color:var(--accent-deep);">'+(month+1)+'月</span>';
   if (!isCurrent) h += '<button onclick="goToToday(\'sched\')" style="padding:3px 10px;background:var(--accent-bg);color:var(--accent-deep);border:1px solid var(--accent);border-radius:100px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;">今日</button>';
   h += '</div>';
-  h += '<button onclick="changeCalMonth(\'sched\',1)" style="width:30px;height:30px;border-radius:50%;background:var(--surface-warm);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_right</span></button>';
+  h += '<button onclick="changeCalMonth(\'sched\',1)" style="width:32px;height:32px;border-radius:50%;background:var(--surface-warm);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">chevron_right</span></button>';
   h += '</div>';
 
-  // フィルタタブ（横スクロール）
+  // フィルタ＆クイックスタンプ トグルバー
   var filterTabs = [
-    { key:'all',  label:'全部',  icon:'apps',         color:'#5DADE2' },
-    { key:'me',   label:'ME',    icon:'person',       color:'#74C5A4' },
-    { key:'pet',  label:'PET',   icon:'pets',         color:'#9B7BC1' },
-    { key:'kids', label:'KIDS',  icon:'child_care',   color:'#F1C232' },
-    { key:'nest', label:'NEST',  icon:'home',         color:'#E8A040' },
-    { key:'work', label:'WORK',  icon:'work',         color:'#7CB9D9' }
+    { key:'all',  label:'全部',  icon:'apps',       color:'#5DADE2' },
+    { key:'me',   label:'ME',    icon:'person',     color:'#74C5A4' },
+    { key:'pet',  label:'PET',   icon:'pets',       color:'#9B7BC1' },
+    { key:'kids', label:'KIDS',  icon:'child_care', color:'#F1C232' },
+    { key:'nest', label:'NEST',  icon:'home',       color:'#E8A040' },
+    { key:'work', label:'WORK',  icon:'work',       color:'#7CB9D9' }
   ];
-  h += '<div style="display:flex;gap:5px;padding:2px 4px 6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;" class="hide-scrollbar">';
+  var _fOpen = window._schedFilterOpen || false;
+  var _sOpen = window._schedStampsOpen || false;
+  h += '<div style="display:flex;gap:5px;padding:2px 4px 6px;">';
+  h += '<button onclick="window._schedFilterOpen=!window._schedFilterOpen;document.getElementById(\'schedFilterRow\').style.display=window._schedFilterOpen?\'flex\':\'none\';this.querySelector(\'span.chev\').style.transform=window._schedFilterOpen?\'rotate(180deg)\':\'\'" style="flex:1;padding:5px 10px;border-radius:100px;background:'+(_fOpen?'var(--accent-bg)':'var(--surface)')+';border:1.5px solid '+(_fOpen?'var(--accent)':'var(--line)')+';font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;color:'+(_fOpen?'var(--accent-deep)':'var(--ink-sub)')+';display:flex;align-items:center;justify-content:center;gap:3px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:13px;">filter_list</span>フィルター';
+  h += '<span class="material-symbols-rounded chev" style="font-size:13px;transition:transform 0.2s;'+(_fOpen?'transform:rotate(180deg);':'')+'">expand_more</span></button>';
+  h += '<button onclick="window._schedStampsOpen=!window._schedStampsOpen;document.getElementById(\'schedStampsRow\').style.display=window._schedStampsOpen?\'block\':\'none\';this.querySelector(\'span.chev\').style.transform=window._schedStampsOpen?\'rotate(180deg)\':\'\'" style="flex:1;padding:5px 10px;border-radius:100px;background:'+(_sOpen?'var(--accent-bg)':'var(--surface)')+';border:1.5px solid '+(_sOpen?'var(--accent)':'var(--line)')+';font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;color:'+(_sOpen?'var(--accent-deep)':'var(--ink-sub)')+';display:flex;align-items:center;justify-content:center;gap:3px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:13px;">check_circle</span>クイック';
+  h += '<span class="material-symbols-rounded chev" style="font-size:13px;transition:transform 0.2s;'+(_sOpen?'transform:rotate(180deg);':'')+'">expand_more</span></button>';
+  h += '</div>';
+
+  // フィルタタブ（折りたたみ）
+  h += '<div id="schedFilterRow" style="display:'+(_fOpen?'flex':'none')+';gap:5px;padding:2px 4px 6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;" class="hide-scrollbar">';
   for (var fti = 0; fti < filterTabs.length; fti++) {
     var ft = filterTabs[fti];
     var ftActive = (schedCalFilter === ft.key);
@@ -39010,10 +39272,10 @@ function _renderSchedMonthView(houseId) {
   }
   h += '</div>';
 
-  // クイックスタンプ行（モード別／横スクロール／白カード背景）
+  // クイックスタンプ行（折りたたみ）
   _migrateQuickStamps();
   var qstamps = data.calQuickStamps[schedCalFilter] || [];
-  h += '<div style="margin:2px 4px 6px;background:rgba(255,255,255,0.85);border-radius:14px;padding:6px 8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);border:1px solid color-mix(in srgb, var(--accent) 25%, transparent);">';
+  h += '<div id="schedStampsRow" style="display:'+(_sOpen?'block':'none')+';margin:2px 4px 6px;background:rgba(255,255,255,0.85);border-radius:14px;padding:6px 8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);border:1px solid color-mix(in srgb, var(--accent) 25%, transparent);">';
   h += '<div style="display:flex;align-items:flex-start;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;" class="hide-scrollbar">';
   // 編集ボタン（左固定）：丸＋下に「編集」
   h += '<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;">';
@@ -39050,7 +39312,12 @@ function _renderSchedMonthView(houseId) {
   // 全セル数 = firstDow (空セル) + daysInMonth (実日) → 7で割り切れる行数
   var totalCells = firstDow + daysInMonth;
   var totalRows = Math.ceil(totalCells / 7);
-  var lastDayResidentPos = totalCells; // 月末の翌セル位置
+  // ランダム日（年・月をシードに固定、同じ月は同じ日）
+  var _seed = year * 100 + (month + 1) * 17;
+  var residentDay = (_seed % daysInMonth) + 1;
+  // 月末に空きセルがない（月末が土曜）→ 月初1日に配置
+  var hasTrailingEmpty = (totalCells % 7 !== 0);
+  if (!hasTrailingEmpty) residentDay = 1;
 
   for (var row = 0; row < totalRows; row++) {
     h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;">';
@@ -39061,14 +39328,7 @@ function _renderSchedMonthView(houseId) {
       
       // 空セル判定
       if (cellIdx < firstDow || d > daysInMonth) {
-        // 月末直後の最初の空セルに住人キャラを配置
-        if (cellIdx === lastDayResidentPos) {
-          h += '<div style="min-height:80px;display:flex;align-items:center;justify-content:center;padding:4px;">';
-          h += '<img src="'+monthResident.src+'" alt="'+monthResident.name+'" style="width:42px;height:42px;object-fit:contain;opacity:0.85;" title="'+monthResident.name+'">';
-          h += '</div>';
-        } else {
-          h += '<div style="min-height:80px;"></div>';
-        }
+        h += '<div style="min-height:80px;"></div>';
         continue;
       }
       
@@ -39133,6 +39393,10 @@ function _renderSchedMonthView(houseId) {
           h += '<div style="font-size:7.5px;color:var(--ink-light);font-weight:700;line-height:1.1;text-align:center;margin-top:1px;">+'+extra+'件</div>';
         }
         h += '</div>';
+      }
+      // ランダム日にイラスト表示
+      if (d === residentDay) {
+        h += '<img src="'+monthResident.src+'" alt="'+monthResident.name+'" style="position:absolute;bottom:2px;right:2px;width:30px;height:30px;object-fit:contain;opacity:0.75;pointer-events:none;" title="'+monthResident.name+'">';
       }
       h += '</button>';
     }
