@@ -14315,6 +14315,170 @@ function _doInjectSampleData() {
   ];
   for (const _s of _shopSamples) { if (!data.myShops.find(x => x.id === _s.id)) data.myShops.push(_s); }
   
+  // ===== ★ 既存shelterサンプルにブログ・卒業した子・ライブカメラを追加 =====
+  const _shelter = data.myShops.find(s => s.id === 'shop_sample_g');
+  if (_shelter && !_shelter.liveUrl) {
+    _shelter.liveUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+    _shelter.albumPhotos = _shelter.albumPhotos || [];
+    _shelter.graduatedPets = _shelter.graduatedPets || [];
+    if (_shelter.graduatedPets.length === 0) {
+      _shelter.graduatedPets = [
+        { id:'grad_1', name:'モカ', message:'山田さんちで元気に暮らしてます🌷 毎日お散歩楽しんでるよ', photo:null, date: todayMs - 90*dayMs },
+        { id:'grad_2', name:'こてつ', message:'2匹目として迎えてもらいました！先住猫のお兄ちゃんと仲良し🐱', photo:null, date: todayMs - 180*dayMs },
+        { id:'grad_3', name:'ぱん', message:'子供たちの妹分として可愛がられてます💕', photo:null, date: todayMs - 270*dayMs }
+      ];
+    }
+    _shelter.blogPosts = _shelter.blogPosts || [];
+    if (_shelter.blogPosts.length === 0) {
+      _shelter.blogPosts = [
+        { id:'blog_sh1', title:'5月の譲渡会のお知らせ', body:'5月18日(土)13時〜16時、にこわ町コミュニティセンターで譲渡会を開催します🌷\n\n今回参加予定の子は8匹。\n犬5匹、猫3匹です。\n\n事前のお申し込みは不要ですが、譲渡を希望される方は身分証明書をお持ちください。\n\n当日はスタッフ一同、皆さまのお越しをお待ちしております。', photo:null, date: todayMs - 2*dayMs },
+        { id:'blog_sh2', title:'保護したばかりのこたちの様子', body:'先週末、3匹の子犬を保護しました。\nまだ生後2ヶ月くらいの兄弟です。\n\nミルクをよく飲み、すくすく育っています🌷\n人慣れも順調で、スタッフの膝の上で寝るのが大好き。\n\n譲渡できるようになるまでまだ少し時間がかかりますが、温かく見守ってください。', photo:null, date: todayMs - 7*dayMs },
+        { id:'blog_sh3', title:'ボランティアさん募集中', body:'毎週末、お散歩ボランティアさんを募集しています。\n\n犬たちにとって、施設の外に出る時間はとても貴重。\n優しいお散歩仲間を増やしたいです🐾\n\n初めての方には先輩ボランティアがついて教えます。\nお気軽にお問い合わせください。', photo:null, date: todayMs - 14*dayMs }
+      ];
+    }
+  }
+  
+  // ===== ★ 既存お店サンプルにブログを追加 =====
+  const _shopA = data.myShops.find(s => s.id === 'shop_sample_a');
+  if (_shopA && !_shopA.blogPosts) {
+    _shopA.blogPosts = [
+      { id:'blog_a1', title:'今日のお客様：プードルのモコちゃん🐩', body:'今日はモコちゃんのトリミングデーでした🌷\n\nふわふわのチャームポイントを残しつつ、夏に向けて少しすっきりカット。\n\nモコちゃんは初めての来店でしたが、最後までとってもお利口さんでした。\nまたのご来店お待ちしています！', photo:null, date: todayMs - 1*dayMs },
+      { id:'blog_a2', title:'梅雨の時期のケアについて', body:'もうすぐ梅雨ですね☔️\n\n湿気が多い時期は皮膚トラブルが起きやすいので、こまめなブラッシングがおすすめです。\n\nうちのサロンでも、梅雨前トリミングのご予約が増えています。お早めにご検討くださいね🌷', photo:null, date: todayMs - 5*dayMs }
+    ];
+  }
+  
+  // ===== ★ 追加ショップ：4店舗 =====
+  const _moreShops = [
+    {
+      id: 'shop_sample_h', type:'shop', template:'A',
+      name:'おうちカフェ にじいろ',
+      profile:'住宅街にひっそり佇む隠れ家カフェ🌷\n手作りスイーツと丁寧に淹れたコーヒーが自慢です。\n犬同伴OK、テラス席もあります。',
+      tags:['カフェ','犬同伴','スイーツ','大阪','隠れ家'],
+      heroImage:'', iconImage:'',
+      cardDesign:{ color:'#C9A4D4', pattern:'dots' },
+      contact:{ phone:'06-9876-5432', address:'大阪府大阪市にこわ町5-6-7' },
+      snsLinks:[{ platform:'instagram', value:'nijiiro_cafe' }],
+      posts:[
+        { id:'p_h1', type:'news', title:'', content:'今週のケーキは「いちごのミルフィーユ」です🍓', tags:['今週'], timestamp: todayMs - 12*60*60*1000 },
+        { id:'p_h2', type:'column', title:'コーヒー豆のこだわり', content:'うちで使ってる豆は、和歌山の小さな焙煎所から直送してもらってます。\n\n中深煎りで、苦味と酸味のバランスが絶妙。\nぜひ味わいに来てください🌷', tags:['コーヒー'], timestamp: todayMs - 6*dayMs },
+        { id:'p_h3', type:'work', title:'季節のケーキセット', content:'ケーキ＋ドリンクのセット', price:'¥1,200', url:'', tags:[], timestamp: todayMs - 10*dayMs }
+      ],
+      blogPosts:[
+        { id:'blog_h1', title:'5月の新メニュー', body:'5月から新しいメニュー始めました🌷\n\n・抹茶のロールケーキ\n・初夏のフルーツタルト\n・自家製ジンジャーエール\n\nテイクアウトも可能なので、お気軽にどうぞ。', photo:null, date: todayMs - 3*dayMs }
+      ],
+      isPublic:true, plan:'free', createdAt: todayMs - 60*dayMs, updatedAt: todayMs - 12*60*60*1000
+    },
+    {
+      id: 'shop_sample_i', type:'shop', template:'B',
+      name:'まめしばアトリエ',
+      profile:'柴犬モチーフのイラスト・グッズを作っています🐕\n豆柴・柴犬・赤柴・黒柴・白柴、全部大好き！\nオーダーメイドの似顔絵も受付中です。',
+      tags:['イラスト','柴犬','作家','オーダーメイド','グッズ'],
+      heroImage:'', iconImage:'',
+      cardDesign:{ color:'#D4A574', pattern:'gingham' },
+      contact:{ phone:'', address:'' },
+      snsLinks:[
+        { platform:'twitter', value:'mameshiba_atl' },
+        { platform:'instagram', value:'mameshiba_atelier' }
+      ],
+      posts:[
+        { id:'p_i1', type:'news', title:'', content:'新作ステッカー入荷しました🐕', tags:['新作'], timestamp: todayMs - 1*dayMs },
+        { id:'p_i2', type:'work', title:'柴犬似顔絵オーダー', content:'写真からあなたの柴犬を描きます', price:'¥3,500〜', url:'https://example.com/order', tags:['オーダー'], timestamp: todayMs - 8*dayMs }
+      ],
+      blogPosts:[
+        { id:'blog_i1', title:'創作のきっかけ', body:'うちで飼ってる豆柴の「もち」がきっかけで、柴犬の絵を描き始めました🌷\n\n最初は自分用の落書きだったのが、SNSに上げたら反応をもらえて、グッズ作りまで発展。\n\n今は全国の柴犬好きさんとつながれて、本当に嬉しいです🐕', photo:null, date: todayMs - 10*dayMs }
+      ],
+      isPublic:true, plan:'free', createdAt: todayMs - 100*dayMs, updatedAt: todayMs - 1*dayMs
+    },
+    {
+      id: 'shop_sample_j', type:'shop', template:'A',
+      name:'にこわ町動物病院',
+      profile:'地域に根ざした動物病院です🏥\n犬・猫・うさぎ・小鳥など、各種診療しています。\n夜間も電話相談OK。',
+      tags:['動物病院','大阪','犬','猫','うさぎ'],
+      heroImage:'', iconImage:'',
+      cardDesign:{ color:'#A4C8E1', pattern:'grid' },
+      contact:{ phone:'06-1111-2222', address:'大阪府大阪市にこわ町2-3-4' },
+      snsLinks:[],
+      posts:[
+        { id:'p_j1', type:'news', title:'', content:'GW中の診療スケジュールを掲載しました🌷', tags:['お知らせ'], timestamp: todayMs - 4*dayMs },
+        { id:'p_j2', type:'column', title:'フィラリア予防の時期です', content:'5月〜11月までは月1回のフィラリア予防が必要です。\nまだの方はお早めに🐾', tags:['予防','犬'], timestamp: todayMs - 8*dayMs }
+      ],
+      blogPosts:[
+        { id:'blog_j1', title:'院長コラム：シニア犬の介護について', body:'最近、シニア犬の介護に関するご相談が増えています。\n\n足腰が弱くなってきた、食欲が落ちた、夜鳴きが増えた…\n\nこういった変化は加齢のサインです。\n少しのケアで、わんちゃんも飼い主さんもずっと楽になります。\nお気軽にご相談ください🌷', photo:null, date: todayMs - 6*dayMs }
+      ],
+      fixedPages:[
+        { id:'fp_j1', icon:'schedule', title:'診療時間', content:'平日 9:00〜12:00 / 16:00〜19:00\n土曜 9:00〜13:00\n日祝 休診\n\n※救急の場合はお電話ください', isVisible:true }
+      ],
+      isPublic:true, plan:'free', createdAt: todayMs - 200*dayMs, updatedAt: todayMs - 4*dayMs
+    },
+    {
+      id: 'shop_sample_k', type:'shelter', template:'G',
+      name:'ねこの楽園シェルター',
+      profile:'大阪・奈良エリアで猫の保護活動をしています🐱\n野良猫のTNR、保護、譲渡まで一貫してサポート。\nふらっと遊びに来てくれるだけでも大歓迎です。',
+      tags:['保護猫','シェルター','大阪','奈良','TNR'],
+      heroImage:'', iconImage:'',
+      cardDesign:{ color:'#A8C8A0', pattern:'gingham' },
+      contact:{ phone:'06-3333-4444', address:'大阪府大阪市にこわ町8-9-10' },
+      snsLinks:[
+        { platform:'twitter', value:'neko_rakuen' },
+        { platform:'instagram', value:'neko_rakuen_shelter' }
+      ],
+      liveUrl:'https://www.youtube.com/watch?v=jNQXAC9IVRw',
+      adoptionPets:[
+        { id:'ap_k1', name:'みかん', type:'三毛猫', age:'2歳', photo:null, gender:'メス', description:'人懐っこく、すぐ膝に乗ってきます🌷' },
+        { id:'ap_k2', name:'しお', type:'白猫', age:'1歳', photo:null, gender:'オス', description:'やんちゃで遊び好き！' },
+        { id:'ap_k3', name:'こしょう', type:'黒猫', age:'3歳', photo:null, gender:'オス', description:'クールに見えて実は甘えん坊🐾' },
+        { id:'ap_k4', name:'あずき', type:'キジトラ', age:'5歳', photo:null, gender:'メス', description:'落ち着いた性格でシニア家庭にも◎' },
+        { id:'ap_k5', name:'まめ', type:'茶トラ', age:'4ヶ月', photo:null, gender:'オス', description:'元気いっぱいの子猫です🐱' },
+        { id:'ap_k6', name:'のあ', type:'サバトラ', age:'2歳', photo:null, gender:'メス', description:'静かで穏やか、お留守番もできます' }
+      ],
+      graduatedPets:[
+        { id:'grad_k1', name:'マロン', message:'高槻のご家族に迎えてもらいました🌷 先住猫さんと相思相愛です', photo:null, date: todayMs - 60*dayMs },
+        { id:'grad_k2', name:'ゆず', message:'おばあちゃんの家族として、毎日窓辺で日向ぼっこしてます☀️', photo:null, date: todayMs - 150*dayMs }
+      ],
+      albumPhotos:[],
+      posts:[
+        { id:'p_k1', type:'news', title:'', content:'今週末、譲渡会を開催します🌷', tags:['譲渡会'], timestamp: todayMs - 2*dayMs }
+      ],
+      blogPosts:[
+        { id:'blog_k1', title:'TNR活動のご報告', body:'4月は10匹の野良猫のTNR（捕獲・不妊手術・元の場所に戻す）を実施しました。\n\n地域猫として、これからも温かく見守っていきたいです🐱', photo:null, date: todayMs - 5*dayMs },
+        { id:'blog_k2', title:'子猫シーズン到来', body:'毎年この時期になると、子猫の保護依頼が一気に増えます。\n\nもし野良の子猫を見つけたら、すぐに保護せず、まず母猫がいないか様子を見てください。\n\nお困りの方はお気軽にご連絡くださいね🌷', photo:null, date: todayMs - 12*dayMs }
+      ],
+      isPublic:true, plan:'free', createdAt: todayMs - 365*dayMs, updatedAt: todayMs - 2*dayMs
+    }
+  ];
+  for (const _s of _moreShops) { if (!data.myShops.find(x => x.id === _s.id)) data.myShops.push(_s); }
+  
+  // ===== ★ 追加ペット =====
+  const _morePets = [
+    {
+      id:'sample_pet_3', name:'はな', type:'cat', breed:'マンチカン',
+      birthday:'2022-09-15', gender:'メス', personality:'マイペース・甘えん坊',
+      houseId:'me_house', kind:'pet', photo:null,
+      memo:'毎朝7時にごはんを催促してくる🐱'
+    },
+    {
+      id:'sample_pet_4', name:'みかん', type:'small_animal', breed:'ネザーランドドワーフ',
+      birthday:'2023-03-20', gender:'オス', personality:'好奇心旺盛',
+      houseId:'me_house', kind:'pet', photo:null,
+      memo:'にんじん大好き🥕'
+    },
+    {
+      id:'sample_pet_5', name:'ぴーちゃん', type:'bird', breed:'セキセイインコ',
+      birthday:'2024-01-10', gender:'オス', personality:'おしゃべり上手',
+      houseId:'me_house', kind:'pet', photo:null,
+      memo:'「おはよう」が言えるようになった🐦'
+    }
+  ];
+  for (const _p of _morePets) { if (!data.pets.find(x => x.id === _p.id)) data.pets.push(_p); }
+  
+  // ===== ★ 既存ペットにmemoが空ならサンプル追加 =====
+  for (const _p of data.pets) {
+    if (_p.kind === 'pet' && !_p.memo && !_p.atRainbow) {
+      if (_p.name === 'もも') _p.memo = '雑種・推定5歳。臆病だけど一度懐くとずっと一緒🌷';
+      else if (_p.name === 'こむぎ') _p.memo = 'アメリカンコッカー・1歳。元気いっぱいで人懐っこい🐶';
+    }
+  }
+  
   // ===== ★ 追加：虹の橋の子（あんず）=====
   if (!data.pets.find(p => p.id === 'sample_rainbow')) {
     data.pets.push({
@@ -31619,13 +31783,15 @@ function renderShopManager() {
     {id:'overview', label:'プレビュー', icon:'visibility'},
     {id:'profile',  label:'基本情報',   icon:'edit'},
     {id:'posts',    label:'投稿',       icon:'edit_note'},
+    {id:'blog',     label:'ブログ',     icon:'rss_feed'},
     {id:'pages',    label:'固定ページ', icon:'article'},
     {id:'design',   label:'デザイン',   icon:'palette'},
     {id:'settings', label:'設定',       icon:'settings'}
   ];
-  // shelterタイプの場合は「里親募集」タブを投稿の後に挿入
+  // shelterタイプの場合は「里親募集」「メディア」タブを追加
   if (shop.type === 'shelter') {
     _tabs.splice(3, 0, {id:'adoption', label:'里親募集', icon:'volunteer_activism'});
+    _tabs.splice(4, 0, {id:'media',    label:'メディア', icon:'perm_media'});
   }
   for (const t of _tabs) {
     const _act = tab === t.id;
@@ -31641,7 +31807,10 @@ function renderShopManager() {
     html += renderShopProfileEdit(shop);
   } else if (tab === 'posts') {
     html += renderShopPostsManager(shop);
-  } else if (tab === 'adoption') {
+  } else if (tab === 'blog') {
+    html += renderShopBlogManager(shop);
+  } else if (tab === 'media') {
+    html += renderShopMediaManager(shop);
     html += renderShopAdoptionManager(shop);
   } else if (tab === 'pages') {
     html += renderShopPagesManager(shop);
@@ -31655,6 +31824,321 @@ function renderShopManager() {
   document.getElementById('app').innerHTML = html;
 }
 window.renderShopManager = renderShopManager;
+
+// ===== ブログ管理（全ショップ共通）=====
+function renderShopBlogManager(shop) {
+  const posts = ((shop.blogPosts || []).slice().sort((a,b) => (b.date||0)-(a.date||0)));
+  const c = (shop.cardDesign||{}).color || '#E8A040';
+  let h = '<div style="display:flex;flex-direction:column;gap:12px;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:'+c+';">rss_feed</span>';
+  h += '<div style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">ブログ <span style="font-size:10px;color:var(--ink-sub);font-weight:600;">公開ページ専用・活動日記・近況報告</span></div>';
+  h += '<button onclick="openShopBlogEdit(\''+shop.id+'\',null)" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:6px 12px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>書く</button>';
+  h += '</div>';
+  if (posts.length === 0) {
+    h += '<div style="padding:36px 20px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:44px;color:var(--ink-light);">edit_note</span>';
+    h += '<div style="font-size:12px;color:var(--ink-sub);margin-top:8px;line-height:1.7;">まだブログがないよ🌷<br>活動報告・日記・近況など自由に書いてね</div>';
+    h += '</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+    for (const p of posts) {
+      const d = p.date ? new Date(p.date) : null;
+      const dateStr = d ? (d.getMonth()+1)+'/'+d.getDate() : '';
+      h += '<div style="background:white;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;">';
+      if (p.photo) h += '<div style="width:72px;height:72px;background:url('+p.photo+') center/cover;flex-shrink:0;"></div>';
+      h += '<div style="flex:1;padding:10px 12px;min-width:0;">';
+      h += '<div style="font-size:12.5px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.title||'(タイトルなし)')+'</div>';
+      h += '<div style="font-size:10.5px;color:var(--ink-sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml((p.body||'').slice(0,40))+'</div>';
+      h += '<div style="font-size:9.5px;color:var(--ink-light);margin-top:4px;">'+dateStr+'</div>';
+      h += '</div>';
+      h += '<button onclick="openShopBlogEdit(\''+shop.id+'\',\''+p.id+'\')" style="background:none;border:none;border-left:1px solid var(--line);padding:0 12px;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">edit</span></button>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+window.renderShopBlogManager = renderShopBlogManager;
+
+function openShopBlogEdit(shopId, postId) {
+  const shop = (data.myShops||[]).find(s=>s.id===shopId);
+  if (!shop) return;
+  if (!shop.blogPosts) shop.blogPosts = [];
+  const post = postId ? shop.blogPosts.find(p=>p.id===postId) : null;
+  const c = (shop.cardDesign||{}).color || '#E8A040';
+  let h = '<div id="shopBlogEdit" onclick="if(event.target===this)closeShopBlogEdit()" style="position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;max-height:92vh;display:flex;flex-direction:column;">';
+  h += '<div style="padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+(post?'ブログを編集':'ブログを書く')+'</div>';
+  h += '<button onclick="closeShopBlogEdit()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  h += '<div style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;">';
+  h += '<input id="blogTitle" type="text" placeholder="タイトル" value="'+escapeHtml(post?post.title||'':'')+'" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:700;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;">';
+  h += '<textarea id="blogBody" placeholder="内容を書いてね🌷" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12.5px;color:var(--ink-dark);background:var(--surface-warm);min-height:180px;resize:vertical;box-sizing:border-box;line-height:1.8;">'+escapeHtml(post?post.body||'':'')+'</textarea>';
+  if (post && post.photo) {
+    h += '<div style="position:relative;width:100%;aspect-ratio:16/9;background:url('+post.photo+') center/cover;border-radius:10px;border:1px solid var(--line);">';
+    h += '<button onclick="_clearBlogPhoto()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;">close</span></button>';
+    h += '</div>';
+  } else {
+    h += '<button onclick="document.getElementById(\'blogPhotoInput\').click()" style="padding:10px;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:10px;font-family:inherit;font-size:11.5px;color:var(--ink-sub);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;">add_photo_alternate</span>写真を追加（任意）</button>';
+  }
+  h += '<input type="file" id="blogPhotoInput" accept="image/*" style="display:none" onchange="_handleBlogPhoto(event)">';
+  if (post) h += '<button onclick="_deleteShopBlog(\''+shopId+'\',\''+postId+'\')" style="padding:9px;background:none;border:1px solid var(--line);color:#C04060;border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;">削除する</button>';
+  h += '</div>';
+  h += '<div style="padding:10px 14px 18px;border-top:1px solid var(--line);display:flex;gap:8px;">';
+  h += '<button onclick="closeShopBlogEdit()" style="flex:1;padding:11px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:11px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="_saveShopBlog(\''+shopId+'\','+(post?'\''+postId+'\'':'null')+')" style="flex:2;padding:11px;background:var(--accent);color:white;border:none;border-radius:11px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openShopBlogEdit = openShopBlogEdit;
+
+window._blogPhotoData = null;
+function _handleBlogPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { window._blogPhotoData = ev.target.result; };
+  reader.readAsDataURL(file);
+}
+window._handleBlogPhoto = _handleBlogPhoto;
+function _clearBlogPhoto() { window._blogPhotoData = ''; }
+window._clearBlogPhoto = _clearBlogPhoto;
+
+function _saveShopBlog(shopId, postId) {
+  const shop = (data.myShops||[]).find(s=>s.id===shopId);
+  if (!shop) return;
+  if (!shop.blogPosts) shop.blogPosts = [];
+  const title = (document.getElementById('blogTitle')||{}).value || '';
+  const body  = (document.getElementById('blogBody') ||{}).value || '';
+  if (!title.trim() && !body.trim()) { showToast('内容を入力してね'); return; }
+  if (postId) {
+    const p = shop.blogPosts.find(x=>x.id===postId);
+    if (p) { p.title = title; p.body = body; if (window._blogPhotoData !== null) p.photo = window._blogPhotoData || null; }
+  } else {
+    shop.blogPosts.push({ id:'blog_'+Date.now(), title, body, photo: window._blogPhotoData || null, date: Date.now() });
+  }
+  window._blogPhotoData = null;
+  saveData();
+  closeShopBlogEdit();
+  showToast('ブログを保存したよ🌷');
+  _suppressScrollTop = true;
+  render();
+}
+window._saveShopBlog = _saveShopBlog;
+function _deleteShopBlog(shopId, postId) {
+  if (!confirm('このブログを削除する？')) return;
+  const shop = (data.myShops||[]).find(s=>s.id===shopId);
+  if (!shop) return;
+  shop.blogPosts = (shop.blogPosts||[]).filter(p=>p.id!==postId);
+  saveData(); closeShopBlogEdit(); showToast('削除したよ');
+  _suppressScrollTop = true; render();
+}
+window._deleteShopBlog = _deleteShopBlog;
+function closeShopBlogEdit() { const m=document.getElementById('shopBlogEdit'); if(m) m.remove(); }
+window.closeShopBlogEdit = closeShopBlogEdit;
+
+// ===== メディア管理（shelter専用：ライブカメラ・アルバム・卒業した子）=====
+function renderShopMediaManager(shop) {
+  const c = (shop.cardDesign||{}).color || '#5CAE8A';
+  let h = '<div style="display:flex;flex-direction:column;gap:14px;">';
+  
+  // ライブカメラ
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:14px;">';
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;color:'+c+';">videocam</span>ライブカメラ</div>';
+  h += '<div style="font-size:10.5px;color:var(--ink-sub);margin-bottom:8px;">YouTubeのライブ配信URLを貼るとサムネイルで表示されるよ</div>';
+  h += '<input id="liveUrlInput" type="url" placeholder="https://www.youtube.com/watch?v=..." value="'+escapeHtml(shop.liveUrl||'')+'" onchange="_saveShopField(\''+shop.id+'\',\'liveUrl\',this.value)" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:12px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;">';
+  if (shop.liveUrl) {
+    const ytId = _extractYouTubeId(shop.liveUrl);
+    if (ytId) h += '<div style="margin-top:8px;border-radius:10px;overflow:hidden;position:relative;"><img src="https://img.youtube.com/vi/'+ytId+'/mqdefault.jpg" style="width:100%;display:block;" /><div style="position:absolute;inset:0;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:44px;color:white;opacity:0.9;">play_circle</span></div></div>';
+  }
+  h += '</div>';
+  
+  // 活動アルバム
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:14px;">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;color:'+c+';">photo_library</span>活動アルバム（'+(shop.albumPhotos||[]).length+'枚）</div>';
+  h += '<button onclick="document.getElementById(\'albumPhotoInput\').click()" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:5px 11px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>追加</button>';
+  h += '</div>';
+  h += '<input type="file" id="albumPhotoInput" accept="image/*" style="display:none" onchange="_addAlbumPhoto(\''+shop.id+'\',event)">';
+  if ((shop.albumPhotos||[]).length === 0) {
+    h += '<div style="padding:20px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:10px;font-size:11px;color:var(--ink-sub);">まだ写真がないよ📷</div>';
+  } else {
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">';
+    for (const ph of shop.albumPhotos) {
+      h += '<div style="position:relative;aspect-ratio:1;">';
+      h += '<div style="width:100%;height:100%;background:url('+ph.photo+') center/cover;border-radius:8px;border:1px solid var(--line);"></div>';
+      h += '<button onclick="_removeAlbumPhoto(\''+shop.id+'\',\''+ph.id+'\')" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.5);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:14px;">close</span></button>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  
+  // 卒業した子
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:14px;">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;color:'+c+';">home_heart</span>卒業した子（'+(shop.graduatedPets||[]).length+'匹）</div>';
+  h += '<button onclick="openShopGraduateEdit(\''+shop.id+'\',null)" style="background:var(--accent);color:white;border:none;border-radius:100px;padding:5px 11px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>追加</button>';
+  h += '</div>';
+  if ((shop.graduatedPets||[]).length === 0) {
+    h += '<div style="padding:20px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:10px;font-size:11px;color:var(--ink-sub);">まだいないよ🌷</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:7px;">';
+    for (const g of shop.graduatedPets) {
+      h += '<button onclick="openShopGraduateEdit(\''+shop.id+'\',\''+g.id+'\')" style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">';
+      if (g.photo) h += '<div style="width:42px;height:42px;border-radius:50%;background:url('+g.photo+') center/cover;flex-shrink:0;"></div>';
+      else h += '<div style="width:42px;height:42px;border-radius:50%;background:'+c+'22;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:22px;color:'+c+';">pets</span></div>';
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="font-size:12.5px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(g.name||'')+'</div>';
+      if (g.message) h += '<div style="font-size:10.5px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(g.message)+'</div>';
+      h += '</div>';
+      h += '<span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-light);">chevron_right</span>';
+      h += '</button>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  
+  h += '</div>';
+  return h;
+}
+window.renderShopMediaManager = renderShopMediaManager;
+
+function _extractYouTubeId(url) {
+  try {
+    const m = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : null;
+  } catch(e) { return null; }
+}
+window._extractYouTubeId = _extractYouTubeId;
+
+function _openBlogPost(shopId, postId) {
+  const shop = (data.myShops||[]).find(s=>s.id===shopId);
+  if (!shop) return;
+  const p = (shop.blogPosts||[]).find(x=>x.id===postId);
+  if (!p) return;
+  const c = (shop.cardDesign||{}).color || '#E8A040';
+  const d = p.date ? new Date(p.date) : null;
+  const dateStr = d ? (d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()) : '';
+  let h = '<div id="blogPostModal" onclick="if(event.target===this)closeBlogPost()" style="position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;max-height:92vh;display:flex;flex-direction:column;">';
+  h += '<div style="padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.title||'')+'</div>';
+  h += '<button onclick="closeBlogPost()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  h += '<div style="flex:1;overflow-y:auto;">';
+  if (p.photo) h += '<div style="width:100%;aspect-ratio:16/9;background:url('+p.photo+') center/cover;"></div>';
+  h += '<div style="padding:16px;">';
+  if (dateStr) h += '<div style="font-size:10px;color:var(--ink-light);margin-bottom:10px;">'+dateStr+'</div>';
+  h += '<div style="font-size:13.5px;color:var(--ink-dark);line-height:2;white-space:pre-wrap;">'+escapeHtml(p.body||'')+'</div>';
+  h += '</div>';
+  h += '</div>';
+  h += '<div style="padding:10px 14px 18px;border-top:1px solid var(--line);">';
+  h += '<button onclick="closeBlogPost()" style="width:100%;padding:11px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:11px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">閉じる</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window._openBlogPost = _openBlogPost;
+function closeBlogPost() { const m=document.getElementById('blogPostModal'); if(m) m.remove(); }
+window.closeBlogPost = closeBlogPost;
+
+function _saveShopField(shopId, field, value) {
+  const shop = (data.myShops||[]).find(s=>s.id===shopId);
+  if (!shop) return;
+  shop[field] = value;
+  saveData();
+  showToast('保存したよ🌷');
+}
+window._saveShopField = _saveShopField;
+
+function _addAlbumPhoto(shopId, e) {
+  const shop = (data.myShops||[]).find(s=>s.id===shopId);
+  if (!shop) return;
+  if (!shop.albumPhotos) shop.albumPhotos = [];
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    shop.albumPhotos.push({ id:'alb_'+Date.now(), photo: ev.target.result });
+    saveData(); showToast('追加したよ📷'); _suppressScrollTop = true; render();
+  };
+  reader.readAsDataURL(file);
+}
+window._addAlbumPhoto = _addAlbumPhoto;
+
+function _removeAlbumPhoto(shopId, photoId) {
+  const shop = (data.myShops||[]).find(s=>s.id===shopId);
+  if (!shop) return;
+  shop.albumPhotos = (shop.albumPhotos||[]).filter(p=>p.id!==photoId);
+  saveData(); _suppressScrollTop = true; render();
+}
+window._removeAlbumPhoto = _removeAlbumPhoto;
+
+function openShopGraduateEdit(shopId, gradId) {
+  const shop = (data.myShops||[]).find(s=>s.id===shopId);
+  if (!shop) return;
+  if (!shop.graduatedPets) shop.graduatedPets = [];
+  const g = gradId ? shop.graduatedPets.find(x=>x.id===gradId) : null;
+  let h = '<div id="shopGradEdit" onclick="if(event.target===this)closeShopGradEdit()" style="position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;max-height:88vh;display:flex;flex-direction:column;">';
+  h += '<div style="padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">'+(g?'卒業した子を編集':'卒業した子を追加')+'</div>';
+  h += '<button onclick="closeShopGradEdit()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  h += '<div style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;">';
+  h += '<input id="gradName" type="text" placeholder="名前" value="'+escapeHtml(g?g.name||'':'')+'" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink-dark);background:var(--surface-warm);box-sizing:border-box;">';
+  h += '<textarea id="gradMessage" placeholder="近況・ひとことメッセージ（例：〇〇さんちで元気に暮らしてます🌷）" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12.5px;color:var(--ink-dark);background:var(--surface-warm);min-height:80px;resize:vertical;box-sizing:border-box;">'+escapeHtml(g?g.message||'':'')+'</textarea>';
+  h += '<button onclick="document.getElementById(\'gradPhotoInput\').click()" style="padding:10px;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:10px;font-family:inherit;font-size:11.5px;color:var(--ink-sub);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;">add_photo_alternate</span>写真を追加（任意）</button>';
+  h += '<input type="file" id="gradPhotoInput" accept="image/*" style="display:none" onchange="_handleGradPhoto(event)">';
+  if (g) h += '<button onclick="_deleteShopGrad(\''+shopId+'\',\''+gradId+'\')" style="padding:9px;background:none;border:1px solid var(--line);color:#C04060;border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;">削除する</button>';
+  h += '</div>';
+  h += '<div style="padding:10px 14px 18px;border-top:1px solid var(--line);display:flex;gap:8px;">';
+  h += '<button onclick="closeShopGradEdit()" style="flex:1;padding:11px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:11px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="_saveShopGrad(\''+shopId+'\','+(g?'\''+gradId+'\'':'null')+')" style="flex:2;padding:11px;background:var(--accent);color:white;border:none;border-radius:11px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openShopGraduateEdit = openShopGraduateEdit;
+
+window._gradPhotoData = null;
+function _handleGradPhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { window._gradPhotoData = ev.target.result; };
+  reader.readAsDataURL(file);
+}
+window._handleGradPhoto = _handleGradPhoto;
+
+function _saveShopGrad(shopId, gradId) {
+  const shop = (data.myShops||[]).find(s=>s.id===shopId); if (!shop) return;
+  if (!shop.graduatedPets) shop.graduatedPets = [];
+  const name = (document.getElementById('gradName')||{}).value||'';
+  const message = (document.getElementById('gradMessage')||{}).value||'';
+  if (gradId) {
+    const g = shop.graduatedPets.find(x=>x.id===gradId);
+    if (g) { g.name=name; g.message=message; if(window._gradPhotoData) g.photo=window._gradPhotoData; }
+  } else {
+    shop.graduatedPets.push({ id:'grad_'+Date.now(), name, message, photo: window._gradPhotoData||null, date: Date.now() });
+  }
+  window._gradPhotoData = null;
+  saveData(); closeShopGradEdit(); showToast('保存したよ🌷'); _suppressScrollTop=true; render();
+}
+window._saveShopGrad = _saveShopGrad;
+function _deleteShopGrad(shopId, gradId) {
+  if (!confirm('削除する？')) return;
+  const shop = (data.myShops||[]).find(s=>s.id===shopId); if (!shop) return;
+  shop.graduatedPets = (shop.graduatedPets||[]).filter(g=>g.id!==gradId);
+  saveData(); closeShopGradEdit(); _suppressScrollTop=true; render();
+}
+window._deleteShopGrad = _deleteShopGrad;
+function closeShopGradEdit() { const m=document.getElementById('shopGradEdit'); if(m) m.remove(); }
+window.closeShopGradEdit = closeShopGradEdit;
 
 function setShopManagerTab(t) {
   data._shopManagerTab = t;
@@ -32524,7 +33008,89 @@ function renderShopPublicView(shop) {
     h += '</div></div>';
   }
   
-  // 投稿一覧の準備
+  // ===== 保護団体（shelter）専用セクション =====
+  if (shop.type === 'shelter') {
+    // ライブカメラ
+    if (shop.liveUrl) {
+      const ytId = _extractYouTubeId(shop.liveUrl);
+      if (ytId) {
+        h += '<div style="padding:0 16px 14px;">';
+        h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:15px;color:'+c+';">videocam</span>ライブカメラ</div>';
+        h += '<a href="'+escapeHtml(shop.liveUrl)+'" target="_blank" style="display:block;border-radius:12px;overflow:hidden;position:relative;text-decoration:none;">';
+        h += '<img src="https://img.youtube.com/vi/'+ytId+'/mqdefault.jpg" style="width:100%;display:block;" />';
+        h += '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:52px;color:white;opacity:0.9;">play_circle</span></div>';
+        h += '<div style="position:absolute;top:8px;left:8px;background:#FF0000;color:white;font-size:9px;font-weight:900;padding:2px 7px;border-radius:4px;letter-spacing:0.5px;">● LIVE</div>';
+        h += '</a>';
+        h += '</div>';
+      }
+    }
+    // 保護中の子（2列横スクロール）
+    const adoptPets = (shop.adoptionPets || []).filter(p => !p.adopted);
+    if (adoptPets.length > 0) {
+      h += '<div style="padding:0 16px 14px;">';
+      h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:15px;color:'+c+';">pets</span>保護中の子（'+adoptPets.length+'匹）</div>';
+      h += '<div style="display:grid;grid-auto-flow:column;grid-template-rows:1fr 1fr;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;">';
+      for (const p of adoptPets) {
+        h += '<div style="width:130px;background:'+c+'08;border:1.5px solid '+c+'33;border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;">';
+        if (p.photo) h += '<div style="width:70px;height:70px;border-radius:10px;background:url('+p.photo+') center/cover;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.1);"></div>';
+        else h += '<div style="width:70px;height:70px;border-radius:10px;background:'+c+'22;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:34px;color:'+c+';">pets</span></div>';
+        h += '<div style="font-size:12.5px;font-weight:800;color:var(--ink-dark);text-align:center;">'+escapeHtml(p.name||'')+'</div>';
+        if (p.type) h += '<div style="font-size:9.5px;color:var(--ink-sub);text-align:center;">'+escapeHtml(p.type)+'</div>';
+        if (p.age) h += '<div style="font-size:9.5px;color:'+c+';font-weight:700;">'+escapeHtml(p.age)+'</div>';
+        h += '</div>';
+      }
+      h += '</div></div>';
+    }
+    // 卒業した子
+    if ((shop.graduatedPets||[]).length > 0) {
+      h += '<div style="padding:0 16px 14px;">';
+      h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:15px;color:'+c+';">home_heart</span>卒業した子たち</div>';
+      h += '<div style="display:flex;flex-direction:column;gap:7px;">';
+      for (const g of shop.graduatedPets) {
+        h += '<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:'+c+'06;border:1px solid '+c+'22;border-radius:10px;">';
+        if (g.photo) h += '<div style="width:46px;height:46px;border-radius:50%;background:url('+g.photo+') center/cover;flex-shrink:0;border:2px solid white;"></div>';
+        else h += '<div style="width:46px;height:46px;border-radius:50%;background:'+c+'22;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:24px;color:'+c+';">pets</span></div>';
+        h += '<div style="flex:1;min-width:0;">';
+        h += '<div style="font-size:12.5px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(g.name||'')+'</div>';
+        if (g.message) h += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.5;">'+escapeHtml(g.message)+'</div>';
+        h += '</div>';
+        h += '</div>';
+      }
+      h += '</div></div>';
+    }
+    // 活動アルバム
+    if ((shop.albumPhotos||[]).length > 0) {
+      h += '<div style="padding:0 16px 14px;">';
+      h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:15px;color:'+c+';">photo_library</span>活動アルバム</div>';
+      h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">';
+      for (const ph of shop.albumPhotos) {
+        h += '<div style="aspect-ratio:1;background:url('+ph.photo+') center/cover;border-radius:8px;border:1px solid var(--line);"></div>';
+      }
+      h += '</div></div>';
+    }
+  }
+  
+  // ===== ブログ（全ショップ共通・公開ページ専用）=====
+  const blogPosts = ((shop.blogPosts||[]).slice().sort((a,b)=>(b.date||0)-(a.date||0))).slice(0,10);
+  if (blogPosts.length > 0) {
+    h += '<div style="padding:0 16px 14px;">';
+    h += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:15px;color:'+c+';">rss_feed</span>ブログ</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:9px;">';
+    for (const p of blogPosts) {
+      const d = p.date ? new Date(p.date) : null;
+      const dateStr = d ? (d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()) : '';
+      h += '<button onclick="_openBlogPost(\''+shop.id+'\',\''+p.id+'\')" style="background:white;border:1px solid '+c+'22;border-radius:12px;overflow:hidden;text-align:left;font-family:inherit;cursor:pointer;width:100%;display:flex;gap:0;">';
+      if (p.photo) h += '<div style="width:80px;height:80px;background:url('+p.photo+') center/cover;flex-shrink:0;"></div>';
+      h += '<div style="flex:1;padding:10px 12px;min-width:0;">';
+      h += '<div style="font-size:12.5px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px;">'+escapeHtml(p.title||'(タイトルなし)')+'</div>';
+      h += '<div style="font-size:10.5px;color:var(--ink-sub);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;">'+escapeHtml((p.body||'').slice(0,60))+'...</div>';
+      if (dateStr) h += '<div style="font-size:9.5px;color:var(--ink-light);margin-top:4px;">'+dateStr+'</div>';
+      h += '</div></button>';
+    }
+    h += '</div></div>';
+  }
+  
+  // ===== 投稿一覧の準備
   const posts = (shop.posts || []).slice().sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
   const newsList = posts.filter(p => p.type === 'news');
   const columnList = posts.filter(p => p.type === 'column');
