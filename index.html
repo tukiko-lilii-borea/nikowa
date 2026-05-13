@@ -3861,6 +3861,12 @@
 <script>
 (function(){var s=document.createElement('script');s.src='https://maps.googleapis.com/maps/api/js?key='+PLACES_API_KEY+'&libraries=places&loading=async&callback=Function.prototype';document.head.appendChild(s);})();
 </script>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="nikowa.">
+  <link rel="apple-touch-icon" href="/icon-180.png">
+  <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');</script>
 </head>
 <body>
 
@@ -34325,94 +34331,206 @@ function renderPublicAtelierSeries() {
   const t = ATELIER_TYPES[a.type] || ATELIER_TYPES.photo;
   const cd = a.cardDesign || { color:'#7BB8E0', pattern:'solid' };
   const c = cd.color;
+  
+  // 前後ナビ用インデックス
+  const sortedSeries = (a.series || []).slice().sort((x,y) => {
+    if (a.type === 'diary') return (y.createdAt||y.order||0) - (x.createdAt||x.order||0);
+    return (x.order||0) - (y.order||0);
+  });
+  const curIdx = sortedSeries.findIndex(x => x.id === s.id);
+  const prevS = curIdx > 0 ? sortedSeries[curIdx-1] : null;
+  const nextS = curIdx < sortedSeries.length-1 ? sortedSeries[curIdx+1] : null;
+  const totalCount = sortedSeries.length;
+  
   let html = '<div class="topbar">'+topbarPetalHtml();
   html += '<div class="topbar-spacer"></div>';
   html += '<div class="topbar-title" style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title||'')+'</div>';
   html += '<div class="topbar-spacer"></div></div>';
-  html += '<div style="padding:10px 14px 0;">';
-  html += '<button onclick="currentView=\'public_atelier\';render();" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">';
+  
+  // ナビゲーションバー（戻る + 話数カウンター）
+  html += '<div style="padding:8px 14px;display:flex;align-items:center;gap:8px;">';
+  html += '<button onclick="currentView=\'public_atelier\';render();" style="background:var(--surface-warm);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;flex-shrink:0;">';
   html += '<span class="material-symbols-rounded" style="font-size:13px;">arrow_back</span>'+escapeHtml(a.name||'')+'</button>';
+  html += '<div style="flex:1;text-align:right;font-size:11px;color:var(--ink-sub);font-weight:700;">'+(curIdx+1)+' / '+totalCount+' '+t.unitName+'</div>';
   html += '</div>';
-  html += '<div style="padding:14px;">';
-  // タイトルカード
-  html += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">';
-  html += '<div style="font-size:11px;font-weight:700;color:'+c+';margin-bottom:4px;">'+t.label+'</div>';
-  html += '<div style="font-size:19px;font-weight:900;color:var(--ink-dark);line-height:1.4;">'+escapeHtml(s.title||'')+'</div>';
-  if (s.description) html += '<div style="font-size:11.5px;color:var(--ink-sub);margin-top:6px;line-height:1.6;">'+escapeHtml(s.description)+'</div>';
-  if (s.ageRating === 'r15') html += '<div style="margin-top:6px;"><span style="font-size:10px;color:#C04060;font-weight:800;background:#FFE0E8;padding:2px 8px;border-radius:100px;">R15</span></div>';
-  html += '</div>';
-  // コンテンツ
-  if (a.type === 'mix') {
-    // mix：写真→本文の順で両方表示
+  
+  // ===== 写真集・アート → ペラペラスライダー =====
+  if (a.type === 'photo' || a.type === 'art' || (a.type === 'mix' && (s.photos||[]).length > 0)) {
     const photos = s.photos || [];
-    if (photos.length > 0) {
-      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:14px;">';
-      for (const ph of photos) {
-        html += '<div style="aspect-ratio:1;background:url('+ph+') center/cover;cursor:pointer;" onclick="_openAtelierPhoto(\''+ph+'\')"></div>';
-      }
-      html += '</div>';
-    }
-    if (s.text) {
-      html += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:20px 18px;line-height:2.1;font-size:14px;color:var(--ink-dark);white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 4px rgba(0,0,0,0.04);">'+escapeHtml(s.text)+'</div>';
-      html += '<div style="text-align:right;font-size:10px;color:var(--ink-light);margin-top:6px;">'+photos.length+'枚 ・ '+(s.text.length).toLocaleString()+'文字</div>';
-    } else if (photos.length === 0) {
-      html += '<div style="padding:32px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);font-size:11px;">まだ内容がないよ</div>';
-    }
-  } else if (a.type === 'photo' || a.type === 'art') {
-    const photos = s.photos || [];
+    html += '<div id="atelierSliderWrap" style="padding:0 14px 14px;">';
+    // タイトル
+    html += '<div style="font-size:16px;font-weight:900;color:var(--ink-dark);margin-bottom:8px;line-height:1.3;">'+escapeHtml(s.title||'')+'</div>';
+    if (s.description) html += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:10px;line-height:1.6;">'+escapeHtml(s.description)+'</div>';
+    
     if (photos.length === 0) {
-      html += '<div style="padding:32px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);font-size:11px;">写真がないよ</div>';
+      html += '<div style="padding:60px 20px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);">写真がないよ</div>';
     } else {
-      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">';
+      // スライダー本体
+      html += '<div style="position:relative;border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.1);background:black;aspect-ratio:1;" id="atelierSlider">';
+      html += '<div id="atelierTrack" style="display:flex;transition:transform 0.32s cubic-bezier(.4,0,.2,1);width:100%;height:100%;">';
       for (const ph of photos) {
-        html += '<div style="aspect-ratio:1;background:url('+ph+') center/cover;cursor:pointer;" onclick="_openAtelierPhoto(\''+ph+'\')"></div>';
+        html += '<div style="min-width:100%;height:100%;background:url('+ph+') center/contain no-repeat;cursor:pointer;" onclick="if(_atelierSwipeMoved){return;}_openAtelierPhotoFull(this.style.backgroundImage)"></div>';
       }
       html += '</div>';
-      html += '<div style="text-align:right;font-size:10px;color:var(--ink-light);margin-top:6px;">'+photos.length+'枚</div>';
+      // 左右矢印
+      if (photos.length > 1) {
+        html += '<button id="atelierPrev" onclick="_atelierSlide(-1)" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.85);border:none;border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2);z-index:10;"><span class="material-symbols-rounded" style="font-size:20px;color:#333;">chevron_left</span></button>';
+        html += '<button id="atelierNext" onclick="_atelierSlide(1)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.85);border:none;border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2);z-index:10;"><span class="material-symbols-rounded" style="font-size:20px;color:#333;">chevron_right</span></button>';
+      }
+      // ページカウンター
+      html += '<div id="atelierPhotoCount" style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;">1 / '+photos.length+'</div>';
+      html += '</div>';
+      // ドットインジケーター（6枚以下の時のみ）
+      if (photos.length <= 6) {
+        html += '<div style="display:flex;justify-content:center;gap:5px;margin-top:10px;" id="atelierDots">';
+        for (let di = 0; di < photos.length; di++) {
+          html += '<div id="atelierDot_'+di+'" style="width:'+(di===0?'16':'6')+'px;height:6px;border-radius:3px;background:'+(di===0?c:'rgba(0,0,0,0.2)')+';transition:all 0.2s;"></div>';
+        }
+        html += '</div>';
+      }
     }
+    
+    // mix型は下にテキストも
+    if (a.type === 'mix' && s.text) {
+      html += '<div style="margin-top:14px;background:white;border:1px solid var(--line);border-radius:14px;padding:20px 18px;line-height:2.1;font-size:14px;color:var(--ink-dark);white-space:pre-wrap;word-break:break-all;">'+escapeHtml(s.text)+'</div>';
+    }
+    html += '</div>';
+    
   } else {
+    // ===== 小説・日記・詩 → テキスト表示＋スワイプで前後話 =====
+    html += '<div id="atelierTextWrap" style="position:relative;">';
+    // 左右タップゾーン（透明オーバーレイ）
+    if (prevS) html += '<div onclick="_atelierSwipeNav(-1)" style="position:fixed;left:0;top:60px;bottom:80px;width:25%;z-index:5;cursor:w-resize;" title="前の'+t.unitName+'"></div>';
+    if (nextS) html += '<div onclick="_atelierSwipeNav(1)" style="position:fixed;right:0;top:60px;bottom:80px;width:25%;z-index:5;cursor:e-resize;" title="次の'+t.unitName+'"></div>';
+    
+    html += '<div id="atelierTextContent" style="padding:0 14px 14px;">';
+    // タイトルカード
+    html += '<div style="background:linear-gradient(135deg,'+c+'18,'+c+'08);border:1.5px solid '+c+'40;border-radius:14px;padding:16px;margin-bottom:16px;">';
+    html += '<div style="font-size:10px;font-weight:700;color:'+c+';margin-bottom:4px;letter-spacing:1px;">'+t.label+' '+(curIdx+1)+'/'+totalCount+'</div>';
+    html += '<div style="font-size:20px;font-weight:900;color:var(--ink-dark);line-height:1.4;margin-bottom:4px;">'+escapeHtml(s.title||'')+'</div>';
+    if (s.description) html += '<div style="font-size:11.5px;color:var(--ink-sub);line-height:1.6;">'+escapeHtml(s.description)+'</div>';
+    if (s.ageRating === 'r15') html += '<div style="margin-top:6px;"><span style="font-size:10px;color:#C04060;font-weight:800;background:#FFE0E8;padding:2px 8px;border-radius:100px;">R15</span></div>';
+    html += '</div>';
+    
+    // 本文
     if (!s.text) {
-      html += '<div style="padding:32px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);font-size:11px;">まだ内容がないよ</div>';
+      html += '<div style="padding:40px 20px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;color:var(--ink-light);font-size:11px;">まだ内容がないよ🌷</div>';
     } else {
-      html += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:20px 18px;line-height:2.1;font-size:14px;color:var(--ink-dark);white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 4px rgba(0,0,0,0.04);">'+escapeHtml(s.text)+'</div>';
+      html += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:22px 18px;line-height:2.2;font-size:15px;color:var(--ink-dark);white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 6px rgba(0,0,0,0.04);font-family:\'Zen Maru Gothic\',serif;">'+escapeHtml(s.text)+'</div>';
       html += '<div style="text-align:right;font-size:10px;color:var(--ink-light);margin-top:6px;">'+(s.text.length).toLocaleString()+'文字</div>';
     }
+    html += '</div>';
+    html += '</div>';
   }
-  // 前後ナビ
-  const allSeries = (a.series || []).slice().sort((x,y) => (x.order||0) - (y.order||0));
-  const curIdx = allSeries.findIndex(x => x.id === s.id);
-  const prevS = curIdx > 0 ? allSeries[curIdx-1] : null;
-  const nextS = curIdx < allSeries.length-1 ? allSeries[curIdx+1] : null;
+  
+  // ===== 前後ナビボタン（大きめ・目立つ）=====
   if (prevS || nextS) {
-    html += '<div style="display:flex;gap:8px;margin-top:16px;">';
+    html += '<div style="display:flex;gap:8px;padding:0 14px 24px;">';
     if (prevS) {
-      html += '<button onclick="openPublicAtelierSeries(\''+a.id+'\',\''+prevS.id+'\')" style="flex:1;padding:11px;background:white;border:1px solid var(--line);border-radius:11px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;color:var(--ink-sub);display:flex;align-items:center;gap:4px;justify-content:center;">';
-      html += '<span class="material-symbols-rounded" style="font-size:15px;flex-shrink:0;">chevron_left</span>';
-      html += '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(prevS.title||'')+'</span></button>';
+      html += '<button onclick="_atelierSwipeNav(-1)" style="flex:1;padding:13px 10px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:14px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;">';
+      html += '<span style="font-size:9.5px;color:var(--ink-sub);font-weight:700;display:flex;align-items:center;gap:2px;"><span class="material-symbols-rounded" style="font-size:13px;">chevron_left</span>前の'+t.unitName+'</span>';
+      html += '<span style="font-size:12px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(prevS.title||'')+'</span>';
+      html += '</button>';
+    } else {
+      html += '<div style="flex:1;"></div>';
     }
     if (nextS) {
-      html += '<button onclick="openPublicAtelierSeries(\''+a.id+'\',\''+nextS.id+'\')" style="flex:1;padding:11px;background:var(--accent);border:none;border-radius:11px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;color:white;display:flex;align-items:center;gap:4px;justify-content:center;">';
-      html += '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(nextS.title||'')+'</span>';
-      html += '<span class="material-symbols-rounded" style="font-size:15px;flex-shrink:0;">chevron_right</span></button>';
+      html += '<button onclick="_atelierSwipeNav(1)" style="flex:1;padding:13px 10px;background:'+c+';border:none;border-radius:14px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right;box-shadow:0 2px 8px '+c+'55;">';
+      html += '<span style="font-size:9.5px;color:rgba(255,255,255,0.85);font-weight:700;display:flex;align-items:center;gap:2px;">次の'+t.unitName+'<span class="material-symbols-rounded" style="font-size:13px;">chevron_right</span></span>';
+      html += '<span style="font-size:12px;font-weight:800;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(nextS.title||'')+'</span>';
+      html += '</button>';
     }
     html += '</div>';
   }
-  html += '</div>';
+  
   document.getElementById('app').innerHTML = html;
+  
+  // ===== スライダーのJS初期化 =====
+  if (a.type === 'photo' || a.type === 'art' || a.type === 'mix') {
+    const slider = document.getElementById('atelierSlider');
+    const track = document.getElementById('atelierTrack');
+    if (!slider || !track) return;
+    const photoCount = (s.photos||[]).length;
+    if (photoCount <= 1) return;
+    let currentPhoto = 0;
+    window._atelierSwipeMoved = false;
+    
+    window._atelierSlide = function(dir) {
+      currentPhoto = Math.max(0, Math.min(photoCount-1, currentPhoto + dir));
+      track.style.transform = 'translateX(-'+currentPhoto+'00%)';
+      // カウンター更新
+      const cnt = document.getElementById('atelierPhotoCount');
+      if (cnt) cnt.textContent = (currentPhoto+1)+' / '+photoCount;
+      // ドット更新
+      for (let di=0;di<photoCount;di++) {
+        const dot = document.getElementById('atelierDot_'+di);
+        if (dot) {
+          dot.style.width = di===currentPhoto?'16px':'6px';
+          dot.style.background = di===currentPhoto?c:'rgba(0,0,0,0.2)';
+        }
+      }
+      // 矢印表示制御
+      const prev = document.getElementById('atelierPrev');
+      const next = document.getElementById('atelierNext');
+      if (prev) prev.style.opacity = currentPhoto===0?'0.3':'1';
+      if (next) next.style.opacity = currentPhoto===photoCount-1?'0.3':'1';
+    };
+    
+    // スワイプ対応
+    let touchStartX=0, touchStartY=0;
+    slider.addEventListener('touchstart', e=>{
+      touchStartX=e.touches[0].clientX;
+      touchStartY=e.touches[0].clientY;
+      window._atelierSwipeMoved=false;
+    },{passive:true});
+    slider.addEventListener('touchend', e=>{
+      const dx=e.changedTouches[0].clientX-touchStartX;
+      const dy=e.changedTouches[0].clientY-touchStartY;
+      if (Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>30) {
+        window._atelierSwipeMoved=true;
+        window._atelierSlide(dx<0?1:-1);
+      }
+    },{passive:true});
+  }
+  
+  // ===== テキスト読書モードのスワイプ =====
+  const textWrap = document.getElementById('atelierTextWrap');
+  if (textWrap) {
+    let txStartX=0, txStartY=0;
+    textWrap.addEventListener('touchstart', e=>{
+      txStartX=e.touches[0].clientX;
+      txStartY=e.touches[0].clientY;
+    },{passive:true});
+    textWrap.addEventListener('touchend', e=>{
+      const dx=e.changedTouches[0].clientX-txStartX;
+      const dy=e.changedTouches[0].clientY-txStartY;
+      if (Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>50) {
+        window._atelierSwipeNav(dx<0?1:-1);
+      }
+    },{passive:true});
+  }
+  
+  // スワイプナビ関数
+  window._atelierSwipeNav = function(dir) {
+    const target = dir<0 ? prevS : nextS;
+    if (!target) return;
+    openPublicAtelierSeries(a.id, target.id);
+  };
 }
 window.renderPublicAtelierSeries = renderPublicAtelierSeries;
 
-function _openAtelierPhoto(url) {
+function _openAtelierPhotoFull(bgImg) {
   const ex = document.getElementById('atelierPhotoViewer');
   if (ex) ex.remove();
+  const url = bgImg.replace(/^url\(["']?/,'').replace(/["']?\)$/,'');
   const ov = document.createElement('div');
   ov.id = 'atelierPhotoViewer';
-  ov.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;cursor:pointer;';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.96);display:flex;align-items:center;justify-content:center;cursor:pointer;';
   ov.onclick = () => ov.remove();
   ov.innerHTML = '<img src="'+url+'" style="max-width:100%;max-height:100vh;object-fit:contain;pointer-events:none;">';
   document.body.appendChild(ov);
 }
-window._openAtelierPhoto = _openAtelierPhoto;
+window._openAtelierPhotoFull = _openAtelierPhotoFull;
 
 // =============================================
 // ===== 画像トリミング機能（共通） =====
