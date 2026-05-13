@@ -2,14 +2,14 @@
   "name": "nikowa.",
   "short_name": "nikowa.",
   "description": "家族・ペット・自分の毎日をかわいく記録するアプリ",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FFF8E8",
   "theme_color": "#C8986A",
   "icons": [
-    {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"},
-    {"src": "/icon-180.png", "sizes": "180x180", "type": "image/png"}
+    {"src": "./icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "./icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "./icon-180.png", "sizes": "180x180", "type": "image/png"}
   ]
 }
