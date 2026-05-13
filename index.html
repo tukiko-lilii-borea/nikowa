@@ -8798,6 +8798,48 @@ function closeDrawerMenu() {
 }
 window.closeDrawerMenu = closeDrawerMenu;
 
+// ───────────────────────────────
+// ペット/NESTドロップダウン
+// ───────────────────────────────
+function toggleNestDropdown() {
+  const dd = document.getElementById('nestDropdown');
+  const chev = document.getElementById('nestTabChevron');
+  if (!dd) return;
+  const isOpen = dd.style.display === 'block';
+  dd.style.display = isOpen ? 'none' : 'block';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+window.toggleNestDropdown = toggleNestDropdown;
+
+function togglePetDropdown() {
+  const dd = document.getElementById('petDropdown');
+  const chev = document.getElementById('petTabChevron');
+  if (!dd) return;
+  const isOpen = dd.style.display === 'block';
+  dd.style.display = isOpen ? 'none' : 'block';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+window.togglePetDropdown = togglePetDropdown;
+
+// drawerからPET/KIDSへ直接ジャンプ（selectPet / setCurrentPetTab）
+window.selectPet = function(petId) {
+  if (!petId) return;
+  data.activePetId = petId;
+  currentView = 'pet';
+  saveData();
+  render();
+};
+window.setCurrentPetTab = function(parentTabId) {
+  const _tabMap = {
+    'care': 'care', 'diary': 'diary', 'memory': 'diary',
+    'health': 'chart', 'calendar': 'calendar',
+    'goods': 'goods', 'grades': 'grades', 'town': 'town'
+  };
+  data.petTab = _tabMap[parentTabId] || parentTabId;
+  saveData();
+  if (currentView === 'pet') renderPet();
+};
+
 // ドロワー：セクション（アコーディオン）
 function _drawerSection(icon, color, label, key, items) {
   const _openKey = '_drw_'+key;
@@ -24430,8 +24472,33 @@ function renderNestMode() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('pet');
   const app = document.getElementById('app');
-  let html = renderModeIndexTabs();
-  html += renderNestTabs();
+  // ≡ ハンバーガー + [Nest名▼] ヘッダー（ME方式）
+  const _activeNestH = getActiveNest();
+  const _nestNameH = _activeNestH ? _activeNestH.name : 'Nest';
+  const _nestIconH = _activeNestH ? (_activeNestH.icon || '🪺') : '🪺';
+  let html = '<div style="padding:14px 14px 8px;display:flex;align-items:center;gap:10px;background:transparent;position:relative;">';
+  html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="メニュー"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+  html += '<button onclick="toggleNestDropdown()" style="flex:1;background:rgba(255,255,255,0.5);border:1.5px solid var(--card-border);border-radius:100px;padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;text-align:left;">';
+  html += '<span style="font-size:20px;">'+_nestIconH+'</span>';
+  html += '<div style="flex:1;font-size:15px;font-weight:900;color:var(--ink-dark);">'+escapeHtml(_nestNameH)+'</div>';
+  html += '<span class="material-symbols-rounded" id="nestTabChevron" style="font-size:18px;color:var(--ink-light);transition:transform 0.2s;">expand_more</span>';
+  html += '</button>';
+  html += '</div>';
+  // Nest切替ドロップダウン（初期非表示）
+  html += '<div id="nestDropdown" style="display:none;margin:0 14px 8px 60px;background:white;border:1.5px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.1);padding:6px;animation:fadeInDown 0.2s ease;">';
+  for (const _dn of (data.nests || [])) {
+    const _dnActive = _dn.id === data.activeNestId;
+    html += '<button onclick="switchNestFromTab(\''+_dn.id+'\');document.getElementById(\'nestDropdown\').style.display=\'none\';" style="width:100%;padding:10px 12px;background:'+(_dnActive?'var(--accent-bg)':'none')+';border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;border-radius:8px;text-align:left;margin-bottom:2px;">';
+    html += '<span style="font-size:18px;">'+(_dn.icon||'🪺')+'</span>';
+    html += '<span style="flex:1;font-size:13px;font-weight:'+(_dnActive?'800':'600')+';color:var(--ink-dark);">'+escapeHtml(_dn.name)+'</span>';
+    if (_dnActive) html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">check</span>';
+    html += '</button>';
+  }
+  html += '<button onclick="openAddNestModal();document.getElementById(\'nestDropdown\').style.display=\'none\';" style="width:100%;padding:10px 12px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;border-radius:8px;border-top:1px solid var(--line-soft);margin-top:4px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);">add</span>';
+  html += '<span style="font-size:13px;font-weight:600;color:var(--ink-sub);">Nestを追加</span>';
+  html += '</button>';
+  html += '</div>';
 
   // ★新UI：写真+□タイルタブ（ペット部屋風）
   html += renderNestPhotoTabs();
@@ -25579,15 +25646,38 @@ function renderPet() {
   if (data.petTab === 'photo' || data.petTab === 'outing') data.petTab = 'diary';
   if (data.petTab === 'routine') data.petTab = 'care';
   const tab = data.petTab || 'care';
-  const todayD = new Date();
-  const todayDateStr = todayD.getFullYear()+'/'+String(todayD.getMonth()+1).padStart(2,'0')+'/'+String(todayD.getDate()).padStart(2,'0');
-  const todayWd = ['日','月','火','水','木','金','土'][todayD.getDay()];
-  let html = '<div class="topbar">'+topbarPetalHtml();
-  html += '<div class="topbar-spacer"></div>';
   const _roomLabel = (currentMode === 'kids') ? 'のおへや' : 'の部屋';
-  html += '<div class="topbar-title">'+petIconHtml(pet.type, 'font-size:18px;vertical-align:middle;')+' '+escapeHtml(pet.name)+_roomLabel+'</div>';
-  html += '<button class="topbar-btn" onclick="openEditPetModal(\''+pet.id+'\')" title="設定" style="background:transparent;border:none;cursor:pointer;padding:4px 10px;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">settings</span></button></div>';
-  html += (function(){var d=new Date();return '<div style="text-align:right;padding:2px 16px 0;font-size:9px;color:var(--ink-sub);font-weight:900;letter-spacing:0.3px;">'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' ('+['日','月','火','水','木','金','土'][d.getDay()]+')</div>'})();
+
+  // ≡ ハンバーガー + [ペット名▼] ヘッダー（ME方式）
+  let html = '<div style="padding:14px 14px 8px;display:flex;align-items:center;gap:10px;background:transparent;position:relative;">';
+  html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="メニュー"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+  html += '<button onclick="togglePetDropdown()" style="flex:1;background:rgba(255,255,255,0.5);border:1.5px solid var(--card-border);border-radius:100px;padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;text-align:left;">';
+  html += petIconHtml(pet.type, 'font-size:20px;vertical-align:middle;flex-shrink:0;');
+  html += '<div style="flex:1;font-size:15px;font-weight:900;color:var(--ink-dark);">'+escapeHtml(pet.name)+_roomLabel+'</div>';
+  html += '<span class="material-symbols-rounded" id="petTabChevron" style="font-size:18px;color:var(--ink-light);transition:transform 0.2s;">expand_more</span>';
+  html += '</button>';
+  html += '<button onclick="openEditPetModal(\''+pet.id+'\')" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);color:var(--ink-sub);" title="設定"><span class="material-symbols-rounded" style="font-size:18px;">settings</span></button>';
+  html += '</div>';
+
+  // ペット切替ドロップダウン（初期非表示）
+  const _petMode = currentMode;
+  const _sameModeP = (data.pets || []).filter(function(p){
+    const _isK = !!p.kidsGender || p.kind === 'kids' || p.kind === 'kid';
+    return _petMode === 'kids' ? _isK : !_isK;
+  });
+  if (_sameModeP.length > 1) {
+    html += '<div id="petDropdown" style="display:none;margin:0 14px 8px 60px;background:white;border:1.5px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.1);padding:6px;animation:fadeInDown 0.2s ease;">';
+    for (const _dp of _sameModeP) {
+      const _dpActive = _dp.id === data.activePetId;
+      const _dpRoom = (_dp.kidsGender||_dp.kind==='kids'||_dp.kind==='kid') ? 'のおへや' : 'の部屋';
+      html += '<button onclick="data.activePetId=\''+_dp.id+'\';data.petTab=\'care\';saveData();renderPet();document.getElementById(\'petDropdown\').style.display=\'none\';" style="width:100%;padding:10px 12px;background:'+(_dpActive?'var(--accent-bg)':'none')+';border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;border-radius:8px;text-align:left;margin-bottom:2px;">';
+      html += petIconHtml(_dp.type, 'font-size:18px;');
+      html += '<span style="flex:1;font-size:13px;font-weight:'+(_dpActive?'800':'600')+';color:var(--ink-dark);">'+escapeHtml(_dp.name)+_dpRoom+'</span>';
+      if (_dpActive) html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">check</span>';
+      html += '</button>';
+    }
+    html += '</div>';
+  }
   // 親タブ（写真の右に□タイル2行×横スクロール表示用）を先に組み立てる
   let _petParentTabsHtml = '';
   let _currentParent = 'care';
