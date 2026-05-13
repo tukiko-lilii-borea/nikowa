@@ -8205,12 +8205,9 @@ function renderTop() {
   const _notifCount = (data._notifications || []).filter(n => !n.read).length;
   const _msgCount = (data._pendingRequests || []).length;
   html += '<div class="hero-top" style="justify-content:space-between;">';
-  // 左：お知らせベル
-  html += '<button onclick="openNotificationCenter()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;position:relative;" title="お知らせ">';
-  html += '<span class="material-symbols-rounded" style="font-size:20px;">notifications</span>';
-  if (_notifCount > 0) {
-    html += '<span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#e57373;border-radius:50%;border:1.5px solid white;"></span>';
-  }
+  // 左：ハンバーガーメニュー＋お知らせ
+  html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;" title="メニュー">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;">menu</span>';
   html += '</button>';
   // 右：メール
   html += '<button onclick="goToFriendView()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;position:relative;" title="メッセージ">';
@@ -8301,9 +8298,7 @@ function renderTop() {
     }
   }
 
-  html += '<button class="mode-card mode-me'+_shapeClass+'" onclick="goToMeMode()">';
-  html += _tileIcon('🌱','energy_savings_leaf')+'<div class="mode-card-label">ME</div>';
-  html += '</button>';
+  // MEはハンバーガーメニューから直接アクセス（ホームには表示しない）
   if (!currentUserIsUnder15()) {
     html += '<button class="mode-card mode-nest'+_shapeClass+'" onclick="goToNestMode()">';
     html += _tileIcon('🪺','diversity_1')+'<div class="mode-card-label">Nest</div>';
@@ -8454,36 +8449,42 @@ function renderTop() {
   html += '</div>';
   html += '</div>';
 
-  // ===== Friend ボタン（小さめ・横長） =====
-  const _friendCount = (data.friendships || []).filter(f => f.status === 'active').length;
-  const _pendingCount = (data._pendingRequests || []).length;
-  html += '<div style="padding:0 14px 12px;">';
-  html += '<button class="home-friend-btn" onclick="goToFriendView()">';
-  html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="color:var(--accent-deep);font-size:18px;">group</span></div>';
-  html += '<div style="flex:1;text-align:left;"><div style="font-size:13px;font-weight:800;color:var(--ink-dark);">Friend</div><div style="font-size:10px;color:var(--ink-sub);">'+_friendCount+'人とつながり中</div></div>';
-  html += '<span class="material-symbols-rounded" style="color:var(--ink-light);font-size:18px;">chevron_right</span>';
-  if (_pendingCount > 0) {
-    html += '<span style="position:absolute;top:6px;right:38px;background:var(--accent);color:white;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 5px;">'+_pendingCount+'</span>';
-  }
-  html += '</button>';
-  html += '</div>';
+  // ===== Friend / Diary / ピン留め（折りたたみ）=====
+  const _homeExpanded = data._homeExpanded || false;
+  html += '<div style="padding:0 14px 8px;text-align:center;">';
+  html += '<button onclick="data._homeExpanded='+(!_homeExpanded)+';saveData();render();" style="background:rgba(255,255,255,0.5);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:6px 18px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:14px;">'+(_homeExpanded?'expand_less':'expand_more')+'</span>';
+  html += _homeExpanded ? 'まとめる' : 'Friend・Diary・ピン留め';
+  html += '</button></div>';
 
-  // ===== Diary カード（最後） =====
-  const _todayKey = 'thought_'+_yyyy+_mm+_dd;
-  const _todayThought = (data.todayThoughts && data.todayThoughts[_todayKey]) || '';
-  html += '<div class="home-quick-card">';
-  html += '<div class="home-quick-title"><span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">edit_note</span>Diary</div>';
-  html += '<div class="home-quick-row">';
-  html += '<textarea id="homeQuickInput" class="home-quick-input" placeholder="">'+escapeHtml(_todayThought)+'</textarea>';
-  html += '<button class="home-quick-btn" onclick="saveHomeQuickThought()">記録</button>';
-  html += '</div>';
-  html += '</div>';
+  if (_homeExpanded) {
+    // ===== Friend ボタン =====
+    const _friendCount = (data.friendships || []).filter(f => f.status === 'active').length;
+    const _pendingCount = (data._pendingRequests || []).length;
+    html += '<div style="padding:0 14px 12px;">';
+    html += '<button class="home-friend-btn" onclick="goToFriendView()">';
+    html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="color:var(--accent-deep);font-size:18px;">group</span></div>';
+    html += '<div style="flex:1;text-align:left;"><div style="font-size:13px;font-weight:800;color:var(--ink-dark);">Friend</div><div style="font-size:10px;color:var(--ink-sub);">'+_friendCount+'人とつながり中</div></div>';
+    html += '<span class="material-symbols-rounded" style="color:var(--ink-light);font-size:18px;">chevron_right</span>';
+    if (_pendingCount > 0) html += '<span style="position:absolute;top:6px;right:38px;background:var(--accent);color:white;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 5px;">'+_pendingCount+'</span>';
+    html += '</button></div>';
 
-  // ===== ピン留めスタンプ（Meのスタンプから）=====
-  if (typeof renderPinnedStampsRow === 'function') {
-    html += '<div style="margin:10px 0 0;">';
-    html += renderPinnedStampsRow('me');
-    html += '</div>';
+    // ===== Diary カード =====
+    const _todayKey = 'thought_'+_yyyy+_mm+_dd;
+    const _todayThought = (data.todayThoughts && data.todayThoughts[_todayKey]) || '';
+    html += '<div class="home-quick-card">';
+    html += '<div class="home-quick-title"><span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">edit_note</span>Diary</div>';
+    html += '<div class="home-quick-row">';
+    html += '<textarea id="homeQuickInput" class="home-quick-input" placeholder="">'+escapeHtml(_todayThought)+'</textarea>';
+    html += '<button class="home-quick-btn" onclick="saveHomeQuickThought()">記録</button>';
+    html += '</div></div>';
+
+    // ===== ピン留め =====
+    if (typeof renderPinnedStampsRow === 'function') {
+      html += '<div style="margin:10px 0 0;">';
+      html += renderPinnedStampsRow('me');
+      html += '</div>';
+    }
   }
 
   html += '<div style="height: 24px;"></div>';
@@ -8672,6 +8673,178 @@ function closeHomeQuickStampEdit() {
   render();
 }
 window.closeHomeQuickStampEdit = closeHomeQuickStampEdit;
+
+// =============================================
+// ===== ハンバーガードロワーメニュー =====
+// =============================================
+function openDrawerMenu() {
+  const ex = document.getElementById('drawerMenu');
+  if (ex) { ex.remove(); return; }
+  
+  // ドロワーのHTML生成
+  let h = `<div id="drawerMenu" style="position:fixed;inset:0;z-index:2500;display:flex;">`;
+  // オーバーレイ
+  h += `<div onclick="closeDrawerMenu()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);"></div>`;
+  // ドロワー本体
+  h += `<div id="drawerBody" style="position:relative;width:82%;max-width:300px;height:100%;background:var(--surface);display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,0.15);transform:translateX(-100%);transition:transform 0.28s cubic-bezier(.4,0,.2,1);overflow-y:auto;">`;
+  
+  // ヘッダー
+  h += `<div style="padding:48px 18px 14px;background:linear-gradient(135deg,var(--mint-deep),var(--accent-deep));color:white;flex-shrink:0;">`;
+  const _uname = (data.user && data.user.name) || 'にこわユーザー';
+  h += `<div style="font-size:18px;font-weight:900;margin-bottom:2px;">nikowa.</div>`;
+  h += `<div style="font-size:12px;opacity:0.85;">${escapeHtml(_uname)}</div>`;
+  h += `</div>`;
+  
+  // メニューリスト
+  h += `<div style="flex:1;overflow-y:auto;padding:8px 0;">`;
+  
+  // ── ME ──
+  h += _drawerSection('eco', 'var(--mint-deep)', 'ME', 'me', [
+    { icon:'check_circle', label:'スタンプ', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
+    { icon:'event_note', label:'プランナー', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
+    { icon:'calendar_month', label:'カレンダー', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
+    { icon:'edit_note', label:'Diary', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','diary'),100);` },
+    { icon:'shopping_cart', label:'Goods', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','goods'),100);` },
+    { icon:'school', label:'Study', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','study'),100);` },
+    { icon:'payments', label:'Money', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','money'),100);` },
+  ]);
+  
+  // ── Nest（家ごと）──
+  const _houses = data.houses || [];
+  const _nestItems = _houses.map(h2 => ({
+    icon: 'home', label: escapeHtml(h2.name||'家'),
+    action: `closeDrawerMenu();goToNestMode();setTimeout(()=>selectHouse('${h2.id}'),100);`
+  }));
+  _nestItems.push({ icon:'add', label:'家を追加', action:`closeDrawerMenu();goToNestMode();` });
+  h += _drawerSection('home', '#E8A040', 'Nest', 'nest', _nestItems);
+  
+  // ── PET（ペットごと）──
+  const _pets = (data.pets||[]).filter(p => !p.atRainbow && p.kind==='pet');
+  const _petItems = _pets.map(p => ({
+    icon:'pets', label: escapeHtml(p.name||''),
+    children: [
+      { icon:'favorite', label:'お世話', action:`closeDrawerMenu();goToPetMode();setTimeout(()=>{selectPet('${p.id}');setCurrentPetTab('care');},100);` },
+      { icon:'photo_library', label:'おもいで', action:`closeDrawerMenu();goToPetMode();setTimeout(()=>{selectPet('${p.id}');setCurrentPetTab('diary');},100);` },
+      { icon:'health_and_safety', label:'カルテ', action:`closeDrawerMenu();goToPetMode();setTimeout(()=>{selectPet('${p.id}');setCurrentPetTab('health');},100);` },
+    ]
+  }));
+  h += _drawerSection('pets', '#9B7BC1', 'PET', 'pet', _petItems);
+  
+  // ── KIDS（子どもごと）──
+  const _kids = (data.pets||[]).filter(p => !p.atRainbow && (p.kidsGender || p.kind==='kids'));
+  const _kidsItems = _kids.map(k => ({
+    icon:'child_care', label: escapeHtml(k.name||''),
+    children: [
+      { icon:'favorite', label:'お世話', action:`closeDrawerMenu();goToKidsMode();setTimeout(()=>{selectPet('${k.id}');setCurrentPetTab('care');},100);` },
+      { icon:'edit_note', label:'おもいで', action:`closeDrawerMenu();goToKidsMode();setTimeout(()=>{selectPet('${k.id}');setCurrentPetTab('diary');},100);` },
+      { icon:'health_and_safety', label:'カルテ', action:`closeDrawerMenu();goToKidsMode();setTimeout(()=>{selectPet('${k.id}');setCurrentPetTab('health');},100);` },
+    ]
+  }));
+  h += _drawerSection('child_care', '#E88AA0', 'KIDS', 'kids', _kidsItems);
+  
+  // ── Atelier ──
+  h += _drawerSection('palette', '#A89478', 'Atelier', 'atelier', [
+    { icon:'auto_stories', label:'作品一覧', action:`closeDrawerMenu();goToAtelierView();` },
+  ]);
+  
+  // ── My Shop ──
+  h += _drawerSection('storefront', '#C8986A', 'My Shop', 'myshop', [
+    { icon:'storefront', label:'ショップ一覧', action:`closeDrawerMenu();openMyShopList();` },
+  ]);
+  
+  // ── Town ──
+  h += _drawerSection('location_city', '#5C9CD4', 'Town', 'town', [
+    { icon:'map', label:'地図', action:`closeDrawerMenu();openTownQuick('search','search');` },
+    { icon:'train', label:'路線', action:`closeDrawerMenu();openTownQuick('search','transit');` },
+    { icon:'videocam', label:'ライブ', action:`closeDrawerMenu();currentView='town';townMainTab='live';townHideMainTabs=false;render();` },
+    { icon:'volunteer_activism', label:'保護団体', action:`closeDrawerMenu();currentView='town';townMainTab='rainbow';townAnimalSubTab='shelter';render();` },
+  ]);
+  
+  // ── その他 ──
+  h += `<div style="border-top:1px solid var(--line);margin:8px 0;"></div>`;
+  h += _drawerItem('group', 'var(--ink-sub)', 'Friend', `closeDrawerMenu();goToFriendView();`);
+  h += _drawerItem('notifications', 'var(--ink-sub)', 'お知らせ', `closeDrawerMenu();openNotificationCenter();`);
+  h += _drawerItem('settings', 'var(--ink-sub)', '設定', `closeDrawerMenu();currentView='settings';render();`);
+  
+  h += `</div>`;
+  h += `</div></div>`;
+  
+  document.body.insertAdjacentHTML('beforeend', h);
+  // アニメーション
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const body = document.getElementById('drawerBody');
+      if (body) body.style.transform = 'translateX(0)';
+    });
+  });
+  // スワイプで閉じる
+  let _dsx = 0;
+  const _dbody = document.getElementById('drawerBody');
+  if (_dbody) {
+    _dbody.addEventListener('touchstart', e => { _dsx = e.touches[0].clientX; }, { passive:true });
+    _dbody.addEventListener('touchend', e => {
+      if (_dsx - e.changedTouches[0].clientX > 60) closeDrawerMenu();
+    }, { passive:true });
+  }
+}
+window.openDrawerMenu = openDrawerMenu;
+
+function closeDrawerMenu() {
+  const body = document.getElementById('drawerBody');
+  const menu = document.getElementById('drawerMenu');
+  if (body) body.style.transform = 'translateX(-100%)';
+  setTimeout(() => { if (menu) menu.remove(); }, 260);
+}
+window.closeDrawerMenu = closeDrawerMenu;
+
+// ドロワー：セクション（アコーディオン）
+function _drawerSection(icon, color, label, key, items) {
+  const _openKey = '_drw_'+key;
+  const _isOpen = window[_openKey] || false;
+  let h = '';
+  h += `<div>`;
+  // セクションヘッダー
+  h += `<button onclick="window['${_openKey}']=!window['${_openKey}'];document.getElementById('drw_body_${key}').style.display=window['${_openKey}']?'block':'none';this.querySelector('.drw-chev').style.transform=window['${_openKey}']?'rotate(180deg)':'';" style="width:100%;padding:11px 18px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:10px;">`;
+  h += `<span class="material-symbols-rounded" style="font-size:18px;color:${color};">${icon}</span>`;
+  h += `<span style="flex:1;font-size:13.5px;font-weight:800;color:var(--ink-dark);text-align:left;">${label}</span>`;
+  h += `<span class="material-symbols-rounded drw-chev" style="font-size:16px;color:var(--ink-light);transition:transform 0.2s;">${_isOpen?'expand_less':'expand_more'}</span>`;
+  h += `</button>`;
+  // サブメニュー
+  h += `<div id="drw_body_${key}" style="display:${_isOpen?'block':'none'};background:var(--surface-warm);">`;
+  for (const item of items) {
+    if (item.children) {
+      // 孫メニューあり（PET/KIDSの各ペット）
+      const _childKey = '_drw_'+key+'_'+item.label.replace(/[^a-zA-Z0-9]/g,'');
+      const _childOpen = window[_childKey] || false;
+      h += `<div>`;
+      h += `<button onclick="window['${_childKey}']=!window['${_childKey}'];document.getElementById('drw_c_${_childKey}').style.display=window['${_childKey}']?'block':'none';" style="width:100%;padding:9px 18px 9px 42px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;">`;
+      h += `<span class="material-symbols-rounded" style="font-size:15px;color:${color};opacity:0.7;">${item.icon}</span>`;
+      h += `<span style="flex:1;font-size:12.5px;font-weight:700;color:var(--ink-dark);text-align:left;">${item.label}</span>`;
+      h += `<span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);">chevron_right</span>`;
+      h += `</button>`;
+      h += `<div id="drw_c_${_childKey}" style="display:${_childOpen?'block':'none'};background:rgba(0,0,0,0.03);">`;
+      for (const child of item.children) {
+        h += `<button onclick="${child.action}" style="width:100%;padding:8px 18px 8px 58px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;">`;
+        h += `<span class="material-symbols-rounded" style="font-size:14px;color:${color};opacity:0.6;">${child.icon}</span>`;
+        h += `<span style="font-size:12px;font-weight:600;color:var(--ink-sub);">${child.label}</span>`;
+        h += `</button>`;
+      }
+      h += `</div></div>`;
+    } else {
+      h += `<button onclick="${item.action}" style="width:100%;padding:9px 18px 9px 42px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;">`;
+      h += `<span class="material-symbols-rounded" style="font-size:15px;color:${color};opacity:0.7;">${item.icon}</span>`;
+      h += `<span style="flex:1;font-size:12.5px;font-weight:600;color:var(--ink-sub);text-align:left;">${item.label}</span>`;
+      h += `</button>`;
+    }
+  }
+  h += `</div></div>`;
+  return h;
+}
+
+// ドロワー：シンプル1行アイテム
+function _drawerItem(icon, color, label, action) {
+  return `<button onclick="${action}" style="width:100%;padding:11px 18px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:10px;"><span class="material-symbols-rounded" style="font-size:18px;color:${color};">${icon}</span><span style="font-size:13px;font-weight:700;color:var(--ink-dark);">${label}</span></button>`;
+}
 
 function closeMyShopList() {
   const m = document.getElementById('myShopListModal');
@@ -20289,14 +20462,6 @@ function renderMeMode() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('pet');
   const app = document.getElementById('app');
-  let html = renderModeIndexTabs();
-  
-  // ★新UI：写真+□タイルタブ（ペット部屋風）
-  html += renderMePhotoTabs();
-  html += '<div style="height:2px;background:linear-gradient(90deg,transparent,var(--mint),var(--accent),var(--mint),transparent);margin:0 0 0;opacity:0.6;"></div>';
-  
-  // コンテンツエリア（白い角丸背景）
-  html += '<div class="mode-content-wrap">';
   
   const validMeTabs = ['stamp','diary','study','money','goods','collection','resume','office','secret'];
   let tab = currentModeTab['me'] || 'stamp';
@@ -20304,6 +20469,46 @@ function renderMeMode() {
     tab = 'stamp';
     currentModeTab['me'] = 'stamp';
   }
+  
+  // タブのラベル・アイコン
+  const _tabInfo = {
+    stamp:      { label:'スタンプ', icon:'check_circle', color:'var(--accent-deep)' },
+    diary:      { label:'Diary',    icon:'edit_note',    color:'var(--accent-deep)' },
+    study:      { label:'Study',    icon:'school',       color:'#5C9CD4' },
+    money:      { label:'Money',    icon:'payments',     color:'#5CAE8A' },
+    goods:      { label:'Goods',    icon:'shopping_cart',color:'#E89A4A' },
+    collection: { label:'Collection',icon:'photo_library',color:'#C8A4D4' },
+    resume:     { label:'My',       icon:'person',       color:'#9B7BC1' },
+    office:     { label:'Work',     icon:'work',         color:'#8B7355' },
+    secret:     { label:'Secret',   icon:'lock',         color:'#A89478' }
+  };
+  const _ti = _tabInfo[tab] || _tabInfo.stamp;
+  
+  // シンプルヘッダー（≡メニュー＋タイトル▼）
+  let html = '<div style="padding:14px 14px 8px;display:flex;align-items:center;gap:10px;background:transparent;position:relative;">';
+  html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+  html += '<button onclick="toggleMeTabDropdown()" style="flex:1;background:rgba(255,255,255,0.5);border:1.5px solid var(--card-border);border-radius:100px;padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;text-align:left;">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;color:'+_ti.color+';">'+_ti.icon+'</span>';
+  html += '<div style="flex:1;font-size:15px;font-weight:900;color:var(--ink-dark);">'+_ti.label+'</div>';
+  html += '<span class="material-symbols-rounded" id="meTabChevron" style="font-size:18px;color:var(--ink-light);transition:transform 0.2s;">expand_more</span>';
+  html += '</button>';
+  html += '</div>';
+  
+  // プルダウンメニュー（最初は非表示）
+  html += '<div id="meTabDropdown" style="display:none;margin:0 14px 8px 60px;background:white;border:1.5px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.1);padding:6px;animation:fadeInDown 0.2s ease;">';
+  for (const tabKey of validMeTabs) {
+    const ti = _tabInfo[tabKey] || _tabInfo.stamp;
+    const isActive = tabKey === tab;
+    html += '<button onclick="setModePageTab(\'me\',\''+tabKey+'\')" style="width:100%;padding:10px 12px;background:'+(isActive?'var(--accent-bg)':'none')+';border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;border-radius:8px;text-align:left;margin-bottom:2px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:18px;color:'+ti.color+';">'+ti.icon+'</span>';
+    html += '<span style="flex:1;font-size:13px;font-weight:'+(isActive?'800':'600')+';color:var(--ink-dark);">'+ti.label+'</span>';
+    if (isActive) html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">check</span>';
+    html += '</button>';
+  }
+  html += '</div>';
+  
+  // コンテンツエリア（白い角丸背景）
+  html += '<div class="mode-content-wrap">';
   
   if (tab === 'today') {
     // ===== ToDay =====
@@ -39610,6 +39815,17 @@ function setModePageTab(mode, tabId) {
   _suppressScrollTop = true;
   render();
 }
+
+// MEタブのプルダウンメニュー切り替え
+function toggleMeTabDropdown() {
+  const dd = document.getElementById('meTabDropdown');
+  const chev = document.getElementById('meTabChevron');
+  if (!dd) return;
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+window.toggleMeTabDropdown = toggleMeTabDropdown;
 function modeTabMoveUp(mode, idx) {
   const tabs = getModeTabsForMode(mode);
   if (idx === 0) return;
