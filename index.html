@@ -8700,13 +8700,14 @@ function openDrawerMenu() {
   
   // ── ME ──
   h += _drawerSection('eco', 'var(--mint-deep)', 'ME', 'me', [
-    { icon:'check_circle', label:'スタンプ', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
-    { icon:'event_note', label:'プランナー', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
-    { icon:'calendar_month', label:'カレンダー', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
+    { icon:'wb_sunny', label:'Day（スタンプ/プランナー/カレンダー）', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
     { icon:'edit_note', label:'Diary', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','diary'),100);` },
     { icon:'shopping_cart', label:'Goods', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','goods'),100);` },
     { icon:'school', label:'Study', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','study'),100);` },
     { icon:'payments', label:'Money', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','money'),100);` },
+    { icon:'photo_library', label:'Collection', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','collection'),100);` },
+    { icon:'person', label:'My（自分のこと）', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);` },
+    { icon:'work', label:'Work', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','office'),100);` },
   ]);
   
   // ── Nest（家ごと）──
@@ -20472,7 +20473,7 @@ function renderMeMode() {
   
   // タブのラベル・アイコン
   const _tabInfo = {
-    stamp:      { label:'スタンプ', icon:'check_circle', color:'var(--accent-deep)' },
+    stamp:      { label:'Day',      icon:'wb_sunny',     color:'var(--accent-deep)' },
     diary:      { label:'Diary',    icon:'edit_note',    color:'var(--accent-deep)' },
     study:      { label:'Study',    icon:'school',       color:'#5C9CD4' },
     money:      { label:'Money',    icon:'payments',     color:'#5CAE8A' },
