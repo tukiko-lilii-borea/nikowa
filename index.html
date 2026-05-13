@@ -8700,14 +8700,23 @@ function openDrawerMenu() {
   
   // ── ME ──
   h += _drawerSection('eco', 'var(--mint-deep)', 'ME', 'me', [
-    { icon:'wb_sunny', label:'Day（スタンプ/プランナー/カレンダー）', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
-    { icon:'edit_note', label:'Diary', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','diary'),100);` },
-    { icon:'shopping_cart', label:'Goods', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','goods'),100);` },
-    { icon:'school', label:'Study', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','study'),100);` },
-    { icon:'payments', label:'Money', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','money'),100);` },
-    { icon:'photo_library', label:'Collection', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','collection'),100);` },
-    { icon:'person', label:'My（自分のこと）', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);` },
-    { icon:'work', label:'Work', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','office'),100);` },
+    { icon:'wb_sunny', label:'Day', children: [
+      { icon:'check_circle',  label:'スタンプ',   action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','stamp');switchStampSubTab('stamp');},100);` },
+      { icon:'edit_calendar', label:'プランナー', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','stamp');switchStampSubTab('planner');},100);` },
+      { icon:'calendar_month',label:'カレンダー', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','stamp');switchStampSubTab('calendar');},100);` },
+      { icon:'photo_library', label:'ギャラリー', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','stamp');switchStampSubTab('gallery');},100);` },
+    ]},
+    { icon:'edit_note',    label:'Diary',      action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','diary'),100);` },
+    { icon:'shopping_cart',label:'Goods',      action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','goods'),100);` },
+    { icon:'school',       label:'Study',      action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','study'),100);` },
+    { icon:'payments',     label:'Money',      action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','money'),100);` },
+    { icon:'photo_library',label:'Collection', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','collection'),100);` },
+    { icon:'person',       label:'My（自分のこと）', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);` },
+    { icon:'work',         label:'Work',       action:`closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','office'),100);` },
+    { icon:'sticky_note_2',label:'Memo', children: [
+      { icon:'edit_note', label:'Memo',   action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','secret');switchMemoSubTab('memo');},100);` },
+      { icon:'lock',      label:'Secret', action:`closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','secret');switchMemoSubTab('secret');},100);` },
+    ]},
   ]);
   
   // ── Nest（家ごと）──
@@ -8729,6 +8738,7 @@ function openDrawerMenu() {
       { icon:'health_and_safety', label:'カルテ', action:`closeDrawerMenu();goToPetMode();setTimeout(()=>{selectPet('${p.id}');setCurrentPetTab('health');},100);` },
     ]
   }));
+  _petItems.push({ icon:'add', label:'ペットを追加', action:`closeDrawerMenu();goToPetMode();setTimeout(()=>{if(typeof openAddPetModal==='function')openAddPetModal();},150);` });
   h += _drawerSection('pets', '#9B7BC1', 'PET', 'pet', _petItems);
   
   // ── KIDS（子どもごと）──
@@ -8741,6 +8751,7 @@ function openDrawerMenu() {
       { icon:'health_and_safety', label:'カルテ', action:`closeDrawerMenu();goToKidsMode();setTimeout(()=>{selectPet('${k.id}');setCurrentPetTab('health');},100);` },
     ]
   }));
+  _kidsItems.push({ icon:'add', label:'子どもを追加', action:`closeDrawerMenu();goToKidsMode();setTimeout(()=>{if(typeof openAddPetModal==='function')openAddPetModal();},150);` });
   h += _drawerSection('child_care', '#E88AA0', 'KIDS', 'kids', _kidsItems);
   
   // ── Atelier ──
@@ -8820,6 +8831,16 @@ function togglePetDropdown() {
   if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 window.togglePetDropdown = togglePetDropdown;
+
+function toggleHouseDropdown() {
+  const dd = document.getElementById('houseDropdown');
+  const chev = document.getElementById('houseTabChevron');
+  if (!dd) return;
+  const isOpen = dd.style.display === 'block';
+  dd.style.display = isOpen ? 'none' : 'block';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+window.toggleHouseDropdown = toggleHouseDropdown;
 
 // drawerからPET/KIDSへ直接ジャンプ（selectPet / setCurrentPetTab）
 window.selectPet = function(petId) {
@@ -24849,9 +24870,17 @@ function renderHouses() {
   const greeting = getTimeGreeting();
   
   let html = '';
-  // PET/KIDSモード時はインデックスタブを表示
+  // PET/KIDSモード時はハンバーガーヘッダー（ME方式）
   if (currentMode === 'pet' || currentMode === 'kids') {
-    html += renderModeIndexTabs();
+    const _modeLabel = currentMode === 'kids' ? 'KIDS' : 'PET';
+    const _modeIcon = currentMode === 'kids' ? '🧸' : '🐾';
+    html += '<div style="padding:14px 14px 8px;display:flex;align-items:center;gap:10px;background:transparent;position:relative;">';
+    html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="メニュー"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+    html += '<div style="flex:1;background:rgba(255,255,255,0.5);border:1.5px solid var(--card-border);border-radius:100px;padding:7px 14px;display:flex;align-items:center;gap:6px;font-family:inherit;">';
+    html += '<span style="font-size:20px;">'+_modeIcon+'</span>';
+    html += '<div style="flex:1;font-size:15px;font-weight:900;color:var(--ink-dark);">'+_modeLabel+'</div>';
+    html += '</div>';
+    html += '</div>';
   }
   html += '<div class="hero-section">';
   // 上部チップ（PET/KIDSモード時は非表示）
@@ -25163,18 +25192,49 @@ function renderHouse() {
   let html = '';
   // モード切替インデックスタブ（PET/KIDS時のみ・MEには家概念がない）
   if (currentMode === 'pet' || currentMode === 'kids') {
-    html += renderModeIndexTabs();
-    html += renderHouseTabs(house);
+    // ≡ ハンバーガー + [家名▼] ヘッダー（ME方式）
+    html += '<div style="padding:14px 14px 8px;display:flex;align-items:center;gap:10px;background:transparent;position:relative;">';
+    html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="メニュー"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+    html += '<button onclick="toggleHouseDropdown()" style="flex:1;background:rgba(255,255,255,0.5);border:1.5px solid var(--card-border);border-radius:100px;padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;text-align:left;">';
+    html += '<span style="font-size:20px;">'+(house.icon||'🏡')+'</span>';
+    html += '<div style="flex:1;font-size:15px;font-weight:900;color:var(--ink-dark);">'+escapeHtml(house.name)+'</div>';
+    html += '<span class="material-symbols-rounded" id="houseTabChevron" style="font-size:18px;color:var(--ink-light);transition:transform 0.2s;">expand_more</span>';
+    html += '</button>';
+    html += '<button onclick="openEditHouseModal(\''+house.id+'\')" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);color:var(--ink-sub);" title="家の設定"><span class="material-symbols-rounded" style="font-size:18px;">settings</span></button>';
+    html += '</div>';
+    // 家切替ドロップダウン
+    const _allHouses = data.houses || [];
+    if (_allHouses.length > 1 || currentMode === 'pet') {
+      html += '<div id="houseDropdown" style="display:none;margin:0 14px 8px 60px;background:white;border:1.5px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.1);padding:6px;animation:fadeInDown 0.2s ease;">';
+      for (const _dh of _allHouses) {
+        const _dhActive = _dh.id === house.id;
+        html += '<button onclick="switchHouseFromTab(\''+_dh.id+'\');document.getElementById(\'houseDropdown\').style.display=\'none\';" style="width:100%;padding:10px 12px;background:'+(_dhActive?'var(--accent-bg)':'none')+';border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;border-radius:8px;text-align:left;margin-bottom:2px;">';
+        html += '<span style="font-size:18px;">'+(_dh.icon||'🏡')+'</span>';
+        html += '<span style="flex:1;font-size:13px;font-weight:'+(_dhActive?'800':'600')+';color:var(--ink-dark);">'+escapeHtml(_dh.name)+'</span>';
+        if (_dhActive) html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">check</span>';
+        html += '</button>';
+      }
+      if (currentMode === 'pet') {
+        html += '<button onclick="switchHouseFromTab(\'__fav\');document.getElementById(\'houseDropdown\').style.display=\'none\';" style="width:100%;padding:10px 12px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;border-radius:8px;text-align:left;margin-bottom:2px;">';
+        html += '<span style="font-size:18px;">☆</span>';
+        html += '<span style="flex:1;font-size:13px;font-weight:600;color:var(--ink-sub);">友達</span>';
+        html += '</button>';
+      }
+      html += '<button onclick="openAddHouseModal();document.getElementById(\'houseDropdown\').style.display=\'none\';" style="width:100%;padding:10px 12px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;border-radius:8px;border-top:1px solid var(--line-soft);margin-top:4px;">';
+      html += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);">add</span>';
+      html += '<span style="font-size:13px;font-weight:600;color:var(--ink-sub);">家を追加</span>';
+      html += '</button>';
+      html += '</div>';
+    }
   } else {
     html += '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">'+(house.icon || '🏡')+' '+escapeHtml(house.name)+'</div><button class="topbar-btn" onclick="openEditHouseModal(\''+house.id+'\')">⚙️</button></div>';
   }
   
-  // 日付ライン＋家設定ボタン（コンパクト1行に統合）
+  // 日付ライン（PET/KIDS時もシンプル化・設定ボタンはハンバーガーヘッダーに移動済み）
   if (currentMode === 'pet' || currentMode === 'kids') {
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 16px 0;">';
+    html += '<div style="text-align:right;padding:2px 16px 0;font-size:9px;color:var(--ink-sub);font-weight:700;letter-spacing:0.3px;">';
     var _d = new Date();
-    html += '<div style="font-size:9px;color:var(--ink-sub);font-weight:700;letter-spacing:0.3px;">'+_d.getFullYear()+'/'+(_d.getMonth()+1)+'/'+_d.getDate()+' ('+['日','月','火','水','木','金','土'][_d.getDay()]+')</div>';
-    html += '<button class="topbar-btn" style="background:transparent;border:none;font-size:16px;cursor:pointer;padding:2px;" onclick="openEditHouseModal(\''+house.id+'\')" title="家の設定">⚙️</button>';
+    html += _d.getFullYear()+'/'+(_d.getMonth()+1)+'/'+_d.getDate()+' ('+['日','月','火','水','木','金','土'][_d.getDay()]+')';
     html += '</div>';
   } else {
     // ME系：日付のみ
@@ -25247,18 +25307,33 @@ function renderHousesFav() {
   setActiveNav('house');
   const app = document.getElementById('app');
   
-  let html = renderModeIndexTabs();
-  // 家タブ（自分の家＋♡友達）
-  const houses = data.houses || [];
-  html += '<div class="house-idx-tabs">';
-  for (const h of houses) {
-    const label = h.name.length > 6 ? h.name.substring(0, 5) + '…' : h.name;
-    html += '<button class="house-idx-tab" onclick="switchHouseFromTab(\''+h.id+'\')">';
-    html += '<span class="house-idx-tab-icon">'+(h.icon || '🏡')+'</span>'+escapeHtml(label)+'</button>';
+  // ≡ ハンバーガー + [☆ 友達 ▼] ヘッダー（ME方式）
+  let html = '<div style="padding:14px 14px 8px;display:flex;align-items:center;gap:10px;background:transparent;position:relative;">';
+  html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="メニュー"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+  html += '<button onclick="toggleHouseDropdown()" style="flex:1;background:rgba(255,255,255,0.5);border:1.5px solid var(--card-border);border-radius:100px;padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;text-align:left;">';
+  html += '<span style="font-size:20px;">☆</span>';
+  html += '<div style="flex:1;font-size:15px;font-weight:900;color:var(--ink-dark);">友達</div>';
+  html += '<span class="material-symbols-rounded" id="houseTabChevron" style="font-size:18px;color:var(--ink-light);transition:transform 0.2s;">expand_more</span>';
+  html += '</button>';
+  html += '</div>';
+  // 家切替ドロップダウン
+  const _favHouses = data.houses || [];
+  html += '<div id="houseDropdown" style="display:none;margin:0 14px 8px 60px;background:white;border:1.5px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.1);padding:6px;animation:fadeInDown 0.2s ease;">';
+  for (const _dh of _favHouses) {
+    html += '<button onclick="switchHouseFromTab(\''+_dh.id+'\');document.getElementById(\'houseDropdown\').style.display=\'none\';" style="width:100%;padding:10px 12px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;border-radius:8px;text-align:left;margin-bottom:2px;">';
+    html += '<span style="font-size:18px;">'+(_dh.icon||'🏡')+'</span>';
+    html += '<span style="flex:1;font-size:13px;font-weight:600;color:var(--ink-dark);">'+escapeHtml(_dh.name)+'</span>';
+    html += '</button>';
   }
-  html += '<button class="house-idx-tab active" onclick="switchHouseFromTab(\'__fav\')">';
-  html += '<span class="house-idx-tab-icon">☆</span>友達</button>';
-  html += '<button class="house-idx-tab-add" onclick="openAddHouseModal()" title="家を追加">＋</button>';
+  html += '<button style="width:100%;padding:10px 12px;background:var(--accent-bg);border:none;cursor:default;font-family:inherit;display:flex;align-items:center;gap:8px;border-radius:8px;text-align:left;margin-bottom:2px;">';
+  html += '<span style="font-size:18px;">☆</span>';
+  html += '<span style="flex:1;font-size:13px;font-weight:800;color:var(--ink-dark);">友達</span>';
+  html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">check</span>';
+  html += '</button>';
+  html += '<button onclick="openAddHouseModal();document.getElementById(\'houseDropdown\').style.display=\'none\';" style="width:100%;padding:10px 12px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;border-radius:8px;border-top:1px solid var(--line-soft);margin-top:4px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);">add</span>';
+  html += '<span style="font-size:13px;font-weight:600;color:var(--ink-sub);">家を追加</span>';
+  html += '</button>';
   html += '</div>';
   
   // お気に入りの家一覧（将来用・今は準備中）
