@@ -428,14 +428,25 @@
 
   /* ── 新ホーム：3列モードグリッド（正方形） ── */
   .home-mode-grid {
-    padding: 0 14px 14px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    padding: 0 14px 12px;
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  .home-mode-grid::-webkit-scrollbar { display: none; }
   .home-mode-grid .mode-card {
-    aspect-ratio: 1 / 1;
-    min-height: 0;
+    width: 62px;
+    min-width: 62px;
+    flex-shrink: 0;
+    aspect-ratio: 1 / 1.15;
+  }
+  .home-mode-grid .mode-card .mode-card-icon {
+    font-size: 22px;
+  }
+  .home-mode-grid .mode-card .mode-card-label {
+    font-size: 9px;
   }
 
   /* ── 新ホーム：天気pill（細長い1行） ── */
@@ -3865,9 +3876,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="nikowa.">
-  <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
-  <link rel="apple-touch-icon" href="./icon-180.png">
+  <link rel="apple-touch-icon" href="/icon-180.png">
   <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');</script>
 </head>
 <body>
@@ -8341,6 +8350,36 @@ function renderTop() {
   html += '<button class="home-quick-action" onclick="openGlobalSearch()"><span class="material-symbols-rounded" style="font-size:16px;">search</span><span class="hqa-label">検索</span></button>';
   html += '</div>';
 
+  // ===== ホームクイックスタンプ =====
+  if (!data.homeQuickStamps) {
+    data.homeQuickStamps = [
+      { id:'hqs_1', icon:'water_drop', label:'水', stampIcon:'water_drop', stampTitle:'水' },
+      { id:'hqs_2', icon:'directions_walk', label:'運動', stampIcon:'directions_walk', stampTitle:'運動' },
+      { id:'hqs_3', icon:'bedtime', label:'睡眠', stampIcon:'bedtime', stampTitle:'睡眠' }
+    ];
+  }
+  const _hqs = data.homeQuickStamps || [];
+  html += '<div style="margin:0 14px 10px;background:linear-gradient(135deg,rgba(255,255,255,0.45),rgba(255,255,255,0.28));border:1.5px solid var(--card-border);border-radius:16px;padding:10px 12px;backdrop-filter:blur(10px);box-shadow:0 2px 8px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.85);">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+  html += '<div style="font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">check_circle</span>クイックスタンプ</div>';
+  html += '<button onclick="openHomeQuickStampEdit()" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:2px;"><span class="material-symbols-rounded" style="font-size:16px;">edit</span></button>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+  for (const qs of _hqs) {
+    html += '<button onclick="_tapHomeQuickStamp(\''+qs.id+'\')" style="flex:1;min-width:52px;padding:8px 4px;background:rgba(255,255,255,0.6);border:1.5px solid rgba(255,255,255,0.8);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;box-shadow:0 1px 4px rgba(0,0,0,0.04);transition:transform 0.1s;" onmousedown="this.style.transform=\'scale(0.93)\'" onmouseup="this.style.transform=\'\';" ontouchstart="this.style.transform=\'scale(0.93)\'" ontouchend="this.style.transform=\'\';">';
+    html += '<span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">'+qs.icon+'</span>';
+    html += '<span style="font-size:9.5px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(qs.label)+'</span>';
+    html += '</button>';
+  }
+  // ＋追加ボタン（6個未満の時）
+  if (_hqs.length < 6) {
+    html += '<button onclick="openHomeQuickStampEdit()" style="flex:1;min-width:52px;padding:8px 4px;background:none;border:1.5px dashed var(--line);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-light);">add</span>';
+    html += '<span style="font-size:9.5px;font-weight:700;color:var(--ink-light);">追加</span>';
+    html += '</button>';
+  }
+  html += '</div></div>';
+
   // ===== To Day カード（写真＋スケジュール） =====
   if (!data.planner) data.planner = { items: [] };
   if (!data.homePhotoSettings) data.homePhotoSettings = { folderId: null, hidden: false };
@@ -8527,6 +8566,112 @@ function openMyShopList() {
   document.body.insertAdjacentHTML('beforeend', h);
 }
 window.openMyShopList = openMyShopList;
+
+// ===== ホームクイックスタンプ機能 =====
+function _tapHomeQuickStamp(qsId) {
+  if (!data.homeQuickStamps) return;
+  const qs = data.homeQuickStamps.find(x => x.id === qsId);
+  if (!qs) return;
+  // MEのスタンプ履歴に記録
+  if (!data.stampHistory) data.stampHistory = [];
+  data.stampHistory.push({
+    id: 'hqs_' + Date.now(),
+    icon: qs.stampIcon || qs.icon,
+    name: qs.stampTitle || qs.label,
+    timestamp: Date.now(),
+    source: 'home_quick'
+  });
+  saveData();
+  showToast('✅ ' + qs.label + 'を記録したよ🌷');
+}
+window._tapHomeQuickStamp = _tapHomeQuickStamp;
+
+function openHomeQuickStampEdit() {
+  if (!data.homeQuickStamps) data.homeQuickStamps = [];
+  // MEのスタンプライブラリから選べるようにする
+  const _allStamps = [];
+  if (data.stampLib) {
+    for (const cat of Object.values(data.stampLib)) {
+      if (Array.isArray(cat)) for (const s of cat) _allStamps.push(s);
+    }
+  }
+  // デフォルトスタンプも候補に
+  const _defaults = [
+    {icon:'water_drop', label:'水'}, {icon:'directions_walk', label:'運動'},
+    {icon:'bedtime', label:'睡眠'}, {icon:'restaurant', label:'食事'},
+    {icon:'self_improvement', label:'瞑想'}, {icon:'favorite', label:'薬'},
+    {icon:'fitness_center', label:'筋トレ'}, {icon:'spa', label:'入浴'},
+    {icon:'local_cafe', label:'カフェ'}, {icon:'book', label:'読書'},
+    {icon:'music_note', label:'音楽'}, {icon:'pets', label:'ペット'}
+  ];
+  
+  let h = '<div id="hqsEditModal" onclick="if(event.target===this)closeHomeQuickStampEdit()" style="position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 0 0;max-height:85vh;display:flex;flex-direction:column;">';
+  h += '<div style="padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;">';
+  h += '<div style="flex:1;font-size:14px;font-weight:800;color:var(--ink-dark);">クイックスタンプを編集</div>';
+  h += '<button onclick="closeHomeQuickStampEdit()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  h += '<div style="flex:1;overflow-y:auto;padding:14px;">';
+  
+  // 現在の設定
+  h += '<div style="font-size:11px;font-weight:800;color:var(--ink-sub);margin-bottom:8px;">現在のスタンプ（タップで削除）</div>';
+  h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">';
+  for (const qs of data.homeQuickStamps) {
+    h += '<button onclick="_removeHomeQuickStamp(\''+qs.id+'\')" style="padding:8px 12px;background:var(--accent-bg);border:1.5px solid var(--accent);border-radius:100px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;">';
+    h += '<span class="material-symbols-rounded" style="font-size:15px;color:var(--accent-deep);">'+qs.icon+'</span>';
+    h += '<span style="font-size:11px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(qs.label)+'</span>';
+    h += '<span class="material-symbols-rounded" style="font-size:13px;color:#C04060;">close</span>';
+    h += '</button>';
+  }
+  if (data.homeQuickStamps.length === 0) h += '<div style="font-size:11px;color:var(--ink-light);">まだ設定されてないよ</div>';
+  h += '</div>';
+  
+  // 候補から選ぶ
+  h += '<div style="font-size:11px;font-weight:800;color:var(--ink-sub);margin-bottom:8px;">追加する（最大6個）</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+  for (const s of _defaults) {
+    const already = data.homeQuickStamps.find(x => x.icon === s.icon);
+    h += '<button onclick="_addHomeQuickStamp(\''+s.icon+'\',\''+s.label+'\')" style="padding:10px 4px;background:'+(already?'var(--surface-warm)':'white')+';border:1.5px solid '+(already?'var(--line)':'var(--line)')+';border-radius:12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:'+(already?'0.4':'1')+';">';
+    h += '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+s.icon+'</span>';
+    h += '<span style="font-size:9.5px;font-weight:700;color:var(--ink-dark);">'+s.label+'</span>';
+    h += '</button>';
+  }
+  h += '</div>';
+  h += '</div>';
+  h += '<div style="padding:10px 14px 18px;border-top:1px solid var(--line);">';
+  h += '<button onclick="closeHomeQuickStampEdit()" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">完了</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openHomeQuickStampEdit = openHomeQuickStampEdit;
+
+function _addHomeQuickStamp(icon, label) {
+  if (!data.homeQuickStamps) data.homeQuickStamps = [];
+  if (data.homeQuickStamps.length >= 6) { showToast('最大6個まで'); return; }
+  if (data.homeQuickStamps.find(x => x.icon === icon)) { showToast('もう追加されてるよ'); return; }
+  data.homeQuickStamps.push({ id:'hqs_'+Date.now(), icon, label, stampIcon:icon, stampTitle:label });
+  saveData();
+  closeHomeQuickStampEdit();
+  openHomeQuickStampEdit();
+}
+window._addHomeQuickStamp = _addHomeQuickStamp;
+
+function _removeHomeQuickStamp(id) {
+  data.homeQuickStamps = (data.homeQuickStamps||[]).filter(x => x.id !== id);
+  saveData();
+  closeHomeQuickStampEdit();
+  openHomeQuickStampEdit();
+}
+window._removeHomeQuickStamp = _removeHomeQuickStamp;
+
+function closeHomeQuickStampEdit() {
+  const m = document.getElementById('hqsEditModal');
+  if (m) m.remove();
+  _suppressScrollTop = true;
+  render();
+}
+window.closeHomeQuickStampEdit = closeHomeQuickStampEdit;
 
 function closeMyShopList() {
   const m = document.getElementById('myShopListModal');
