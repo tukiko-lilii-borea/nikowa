@@ -27322,58 +27322,10 @@ window.renderOtherWorksByAuthor = renderOtherWorksByAuthor;
 
 // ===== Atelier 開設フロー =====
 // ===== PCホームレイアウト構築 =====
+// 現状: PCでもモバイルレイアウトをそのまま表示（サイドバーのみ追加）
+// 将来: 3カラムグリッド化（regex分解が壊れたので一旦シンプルに）
 function _buildPCHomeLayout(mobileHtml) {
-  const _isTablet = window.innerWidth >= 600 && window.innerWidth < 900;
-  // hero + weather pill はフル幅
-  const _heroMatch = mobileHtml.match(/<div class="hero-section">[\s\S]*?<\/div>\s*<!-- hero end/);
-  // 各セクションをID/クラスで抽出するヘルパー
-  const _extract = (pattern) => { const m = mobileHtml.match(pattern); return m ? m[0] : ''; };
-
-  // weatherpill行
-  const _weatherRow = _extract(/<div style="padding:10px 14px 6px;display:flex[\s\S]*?<\/div>\s*<\/div>/);
-  // ピン留め
-  const _pinned = _extract(/data-pinned-stamps[^>]*>[\s\S]*?<\/div>\s*<\/div>/);
-  // ToDay card
-  const _today = _extract(/class="home-recent-card"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/);
-  // Friend
-  const _friend = _extract(/class="home-friend-btn"[\s\S]*?<\/button>\s*<\/div>/);
-  // Diary
-  const _diary = _extract(/class="home-quick-card"[\s\S]*?<\/div>\s*<\/div>/);
-  // 地図・路線・お気に入り
-  const _mapBtns = _extract(/<div style="padding:0 14px 12px;display:flex[\s\S]*?<\/div>/);
-
-  let h = '';
-  // hero全体（ロゴ・天気pill含む）はフル幅
-  h += '<div class="hero-section">' + mobileHtml.replace(/<div class="hero-section">/, '').split('</div>')[0] + '</div>';
-  // 実際はhero-sectionを丸ごと入れる
-  h = mobileHtml.split('<div style="margin:0 14px 10px;background:#FFFFFF')[0]; // hero+weatherまで
-  h += '</div>'; // hero-section close
-
-  // PC グリッド
-  h += `<div class="${_isTablet ? 'home-pc-grid' : 'home-pc-grid'}" style="padding:14px;">`;
-
-  // Col 1: ピン留め + ToDay
-  h += '<div class="home-pc-col">';
-  h += mobileHtml.includes('data-pinned-stamps') ?
-    mobileHtml.substring(mobileHtml.indexOf('data-pinned-stamps') - 50, mobileHtml.indexOf('class="home-recent-card"') + 200) : '';
-  h += '</div>';
-
-  // Col 2: Friend + Diary
-  h += '<div class="home-pc-col">';
-  if (_friend) h += '<div style="padding:0 0 10px;">' + _friend + '</div>';
-  if (_diary) h += _diary;
-  h += '</div>';
-
-  // Col 3: 地図・路線・お気に入り
-  h += '<div class="home-pc-col">';
-  if (_mapBtns) h += _mapBtns;
-  h += '</div>';
-
-  h += '</div>'; // grid end
-
-  // フォールバック：regex抽出が失敗したらモバイルそのまま
-  if (!_friend && !_diary) return mobileHtml;
-  return h;
+  return mobileHtml;
 }
 window._buildPCHomeLayout = _buildPCHomeLayout;
 // ===== PCホームレイアウト END =====
@@ -27401,7 +27353,7 @@ function renderPCSidebar() {
   // ロゴ
   h += '<div style="padding:18px 16px 12px;border-bottom:1px solid var(--line);">';
   h += '<div style="display:flex;align-items:center;gap:10px;">';
-  h += nikowaLogoHtml ? nikowaLogoHtml(28) : '<span style="font-size:18px;font-weight:900;color:var(--accent-deep);">nikowa.</span>';
+  h += '<img src="assets/logo-dark.svg" alt="nikowa" style="height:24px;width:auto;filter:var(--logo-filter,none);" onerror="this.outerHTML=\'<span style=&quot;font-size:18px;font-weight:900;color:var(--accent-deep);&quot;>nikowa.</span>\'">';
   h += '</div>';
   h += '<div style="font-size:11px;color:var(--ink-sub);margin-top:6px;font-weight:700;">'+escapeHtml(_uname)+'</div>';
   h += '</div>';
