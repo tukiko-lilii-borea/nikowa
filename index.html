@@ -46077,7 +46077,7 @@ function searchTransitNow() {
   window.open(url, '_blank', 'noopener');
 }
 
-// 現在地ボタン → Google Places APIで最寄り駅を自動入力
+// 現在地ボタン → Nominatim逆ジオコーディングで最寄り地名を取得
 function useCurrentLocationForTransit() {
   if (!navigator.geolocation) {
     showToast('位置情報が使えない端末です');
@@ -46085,40 +46085,40 @@ function useCurrentLocationForTransit() {
   }
   const btn = document.getElementById('transitLocationBtn');
   if (btn) { btn.textContent = '取得中...'; btn.disabled = true; }
-  showAnzuToast('最寄り駅を探してるよ...');
 
   navigator.geolocation.getCurrentPosition(
-    function(pos) {
+    async function(pos) {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-      // Google Places API で最寄り駅検索
-      if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
-        // Google Maps未ロードの場合は座標をそのまま（フォールバック）
-        document.getElementById('transitFromInput').value = lat.toFixed(5)+','+lng.toFixed(5);
-        if (btn) { btn.textContent = '現在地'; btn.disabled = false; }
-        showToast('現在地を設定したよ📍');
-        return;
-      }
-      const service = new google.maps.places.PlacesService(document.createElement('div'));
-      service.nearbySearch({
-        location: { lat, lng },
-        rankBy: google.maps.places.RankBy.DISTANCE,
-        keyword: '駅',
-        type: ['transit_station', 'train_station', 'subway_station']
-      }, function(results, status) {
-        if (btn) { btn.textContent = '現在地'; btn.disabled = false; }
-        if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-          // 最も近い駅名を取得（「駅」を除いた名前）
-          let name = results[0].name || '';
-          name = name.replace(/駅$/, '');
-          document.getElementById('transitFromInput').value = name;
-          showAnzuToast('最寄り駅：' + name + ' を入れたよ');
+      try {
+        // Nominatim逆ジオコーディング（無料・キー不要）
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ja`,
+          { headers: { 'Accept-Language': 'ja' } }
+        );
+        const json = await res.json();
+        const addr = json.address || {};
+        // 駅名 > 町名 > 丁目 > 区 の優先順位で取得
+        const place = addr.station || addr.railway || addr.neighbourhood
+          || addr.suburb || addr.quarter || addr.town
+          || addr.city_district || addr.city || addr.county
+          || json.display_name?.split(',')[0] || '';
+        const inp = document.getElementById('transitFromInput');
+        if (inp && place) {
+          inp.value = place;
+          if (btn) { btn.textContent = '現在地'; btn.disabled = false; }
+          showAnzuToast(place + ' を入れたよ');
         } else {
-          // 駅が見つからなければ住所で代替
-          document.getElementById('transitFromInput').value = lat.toFixed(4)+','+lng.toFixed(4);
-          showToast('最寄り駅が見つからなかったよ🥲');
+          // フォールバック：緯度経度をそのまま
+          if (inp) inp.value = lat.toFixed(4) + ',' + lng.toFixed(4);
+          if (btn) { btn.textContent = '現在地'; btn.disabled = false; }
+          showToast('現在地を設定したよ📍');
         }
-      });
+      } catch (e) {
+        // ネットワークエラー時も必ずボタンを戻す
+        if (btn) { btn.textContent = '現在地'; btn.disabled = false; }
+        showToast('現在地の取得に失敗したよ🥲');
+      }
     },
     function(err) {
       if (btn) { btn.textContent = '現在地'; btn.disabled = false; }
