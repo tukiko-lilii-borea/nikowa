@@ -10042,18 +10042,20 @@ function saveHomeQuickThought() {
   if (!inp) return;
   const text = (inp.value || '').trim();
   if (!text) return;
-  // Diary（日記）に記録
-  if (!data.diary) data.diary = [];
-  data.diary.unshift({
-    id: 'diary_' + Date.now(),
-    text: text,
-    timestamp: Date.now()
-  });
-  if (data.diary.length > 500) data.diary = data.diary.slice(0, 500);
-  // 今日のthoughtsもクリア
+  // data.tweets（Diary画面と同じ場所）に保存
+  if (!data.tweets) data.tweets = [];
   const now = new Date();
-  const key = 'thought_'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');
-  if (data.todayThoughts) delete data.todayThoughts[key];
+  const todayKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const weather = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(todayKey) : null;
+  const tweet = {
+    id: 'tw_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    body: text,
+    photos: [],
+    tags: [],
+    timestamp: Date.now()
+  };
+  if (weather) tweet.weather = weather;
+  data.tweets.push(tweet);
   saveData();
   inp.value = '';
   showAnzuToast('Diaryに記録したよ');
