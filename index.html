@@ -8851,8 +8851,7 @@ function _getDrawerContent(key) {
 
   } else if (key === 'kurashi') {
     h += _itemBtn('payments',      'Money',      'お金の管理',       `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','money'),100);`);
-    h += _itemBtn('sticky_note_2', 'Memo',       'ふつうのメモ',     `closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','secret');switchMemoSubTab('memo');},100);`);
-    h += _itemBtn('lock',          'Secret',     '鍵つきメモ',       `closeDrawerMenu();goToMeMode();setTimeout(()=>{setModePageTab('me','secret');switchMemoSubTab('secret');},100);`);
+    h += _itemBtn('sticky_note_2', 'Memo',       'メモ・リスト',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','secret'),100);`);
     h += _itemBtn('photo_library', 'Collection', '写真アルバム',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','collection'),100);`);
     h += _itemBtn('person',        'My',         '自分のこと',       `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);`);
     h += _itemBtn('shopping_cart', 'Goods',      '持ち物リスト',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','goods'),100);`);
@@ -11763,6 +11762,280 @@ function _getMemoCurrentFolder() {
   return node;
 }
 
+// ===== メモ：リンクリスト機能 =====
+function renderMemoLinkLists() {
+  if (!data.memoLinkLists) data.memoLinkLists = [];
+  const lists = data.memoLinkLists;
+  let h = '';
+
+  // リスト一覧
+  if (lists.length === 0) {
+    h += '<div style="text-align:center;padding:32px 0;color:var(--ink-light);">';
+    h += '<span class="material-symbols-rounded" style="font-size:40px;display:block;margin-bottom:8px;">format_list_bulleted</span>';
+    h += '<div style="font-size:13px;font-weight:700;">リストがまだないよ</div>';
+    h += '<div style="font-size:11px;margin-top:4px;">カラオケリスト・レシピなど自由に作れるよ</div>';
+    h += '</div>';
+  } else {
+    for (const lst of lists) {
+      h += `<button onclick="openMemoLinkList('${lst.id}')" style="width:100%;padding:12px 14px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:10px;margin-bottom:8px;">`;
+      h += `<span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">format_list_bulleted</span>`;
+      h += `<div style="flex:1;text-align:left;">`;
+      h += `<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">${escapeHtml(lst.title)}</div>`;
+      h += `<div style="font-size:10px;color:var(--ink-light);">${(lst.items||[]).length}件</div>`;
+      h += `</div>`;
+      h += `<span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-light);">chevron_right</span>`;
+      h += `</button>`;
+    }
+  }
+
+  // ＋リスト追加ボタン
+  h += `<button onclick="openAddMemoLinkList()" style="width:100%;padding:12px;background:none;border:2px dashed var(--line);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--ink-sub);font-size:12px;font-weight:700;margin-top:4px;">`;
+  h += `<span class="material-symbols-rounded" style="font-size:16px;">add</span>リストを追加`;
+  h += `</button>`;
+
+  return h;
+}
+window.renderMemoLinkLists = renderMemoLinkLists;
+
+// リスト詳細画面
+function openMemoLinkList(listId) {
+  const lst = (data.memoLinkLists||[]).find(l => l.id === listId);
+  if (!lst) return;
+  const ex = document.getElementById('memoLinkListModal');
+  if (ex) ex.remove();
+
+  let h = `<div id="memoLinkListModal" style="position:fixed;inset:0;z-index:2200;background:var(--bg);overflow-y:auto;padding-bottom:100px;">`;
+  // ヘッダー
+  h += `<div style="padding:14px 16px 10px;display:flex;align-items:center;gap:8px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1;">`;
+  h += `<button onclick="document.getElementById('memoLinkListModal').remove()" style="background:none;border:none;cursor:pointer;color:var(--ink-sub);padding:4px;"><span class="material-symbols-rounded" style="font-size:22px;">arrow_back</span></button>`;
+  h += `<div style="flex:1;font-size:15px;font-weight:900;color:var(--ink-dark);">${escapeHtml(lst.title)}</div>`;
+  h += `<button onclick="editMemoLinkListTitle('${lst.id}')" style="background:none;border:none;cursor:pointer;color:var(--accent-deep);padding:4px;"><span class="material-symbols-rounded" style="font-size:20px;">edit</span></button>`;
+  h += `<button onclick="deleteMemoLinkList('${lst.id}')" style="background:none;border:none;cursor:pointer;color:#D9534F;padding:4px;"><span class="material-symbols-rounded" style="font-size:20px;">delete</span></button>`;
+  h += `</div>`;
+
+  // アイテム一覧
+  h += `<div style="padding:12px 16px;">`;
+  const items = lst.items || [];
+  if (items.length === 0) {
+    h += `<div style="text-align:center;padding:24px;color:var(--ink-light);font-size:12px;">まだアイテムがないよ</div>`;
+  } else {
+    for (const item of items) {
+      h += `<div style="background:white;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px;">`;
+      // 写真サムネイル
+      if (item.photo) {
+        h += `<img src="${item.photo}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--line);">`;
+      } else {
+        h += `<div style="width:44px;height:44px;border-radius:8px;background:var(--surface-warm);border:1.5px dashed var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);">image</span></div>`;
+      }
+      h += `<div style="flex:1;min-width:0;">`;
+      h += `<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">${escapeHtml(item.title)}</div>`;
+      if (item.comment) h += `<div style="font-size:11px;color:var(--ink-sub);margin-top:2px;">${escapeHtml(item.comment)}</div>`;
+      h += `</div>`;
+      if (item.url) {
+        h += `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" style="width:36px;height:36px;background:var(--accent-bg);border:1.5px solid var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none;">`;
+        h += `<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">play_circle</span>`;
+        h += `</a>`;
+      }
+      h += `<button onclick="editMemoLinkItem('${lst.id}','${item.id}')" style="background:none;border:none;cursor:pointer;color:var(--accent-deep);padding:4px;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">edit</span></button>`;
+      h += `<button onclick="deleteMemoLinkItem('${lst.id}','${item.id}')" style="background:none;border:none;cursor:pointer;color:var(--ink-light);padding:4px;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">close</span></button>`;
+      h += `</div>`;
+    }
+  }
+
+  // ＋アイテム追加
+  h += `<button onclick="openAddMemoLinkItem('${lst.id}')" style="width:100%;padding:12px;background:none;border:2px dashed var(--line);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--ink-sub);font-size:12px;font-weight:700;margin-top:4px;">`;
+  h += `<span class="material-symbols-rounded" style="font-size:16px;">add</span>追加`;
+  h += `</button>`;
+  h += `</div></div>`;
+
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openMemoLinkList = openMemoLinkList;
+
+// リスト新規作成モーダル
+function openAddMemoLinkList() {
+  const ex = document.getElementById('addMemoLinkListModal');
+  if (ex) ex.remove();
+  let h = `<div id="addMemoLinkListModal" style="position:fixed;inset:0;z-index:2300;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;">`;
+  h += `<div style="width:100%;max-width:520px;background:white;border-radius:20px 20px 0 0;padding:20px 20px 40px;">`;
+  h += `<div style="font-size:15px;font-weight:900;color:var(--ink-dark);margin-bottom:14px;">リストを作成</div>`;
+  h += `<input id="newListTitle" type="text" placeholder="リスト名（例：カラオケリスト）" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:12px;box-sizing:border-box;">`;
+  h += `<button onclick="confirmAddMemoLinkList()" style="width:100%;padding:13px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">作成</button>`;
+  h += `<button onclick="document.getElementById('addMemoLinkListModal').remove()" style="width:100%;padding:10px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;color:var(--ink-light);margin-top:4px;">キャンセル</button>`;
+  h += `</div></div>`;
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => document.getElementById('newListTitle')?.focus(), 100);
+}
+window.openAddMemoLinkList = openAddMemoLinkList;
+
+function confirmAddMemoLinkList() {
+  const title = document.getElementById('newListTitle')?.value?.trim();
+  if (!title) return;
+  if (!data.memoLinkLists) data.memoLinkLists = [];
+  data.memoLinkLists.push({ id: 'mll_'+Date.now(), title, items: [] });
+  saveData();
+  document.getElementById('addMemoLinkListModal')?.remove();
+  goToMeMode(); setTimeout(() => { setModePageTab('me','secret'); switchMemoSubTab('list'); }, 100);
+}
+window.confirmAddMemoLinkList = confirmAddMemoLinkList;
+
+// アイテム追加モーダル
+function openAddMemoLinkItem(listId) {
+  const ex = document.getElementById('addMemoLinkItemModal');
+  if (ex) ex.remove();
+  let h = `<div id="addMemoLinkItemModal" style="position:fixed;inset:0;z-index:2400;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;">`;
+  h += `<div style="width:100%;max-width:520px;background:white;border-radius:20px 20px 0 0;padding:20px 20px 40px;">`;
+  h += `<div style="font-size:15px;font-weight:900;color:var(--ink-dark);margin-bottom:14px;">追加</div>`;
+  h += `<input id="newItemTitle" type="text" placeholder="タイトル（例：あんずのワルツ）" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;box-sizing:border-box;">`;
+  h += `<input id="newItemUrl" type="url" placeholder="URL（任意）" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;box-sizing:border-box;">`;
+  h += `<input id="newItemComment" type="text" placeholder="一言コメント（任意）" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;box-sizing:border-box;">`;
+  // 写真
+  h += `<div style="margin-bottom:12px;">`;
+  h += `<div id="newItemPhotoPreview" style="display:none;margin-bottom:6px;"><img id="newItemPhotoImg" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:1.5px solid var(--line);"></div>`;
+  h += `<label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px dashed var(--line);border-radius:10px;cursor:pointer;font-size:12px;color:var(--ink-sub);font-family:inherit;">`;
+  h += `<span class="material-symbols-rounded" style="font-size:16px;">add_photo_alternate</span>写真を追加（任意）`;
+  h += `<input type="file" accept="image/*" style="display:none;" onchange="previewMemoItemPhoto(this,'newItemPhotoImg','newItemPhotoPreview')">`;
+  h += `</label></div>`;
+  h += `<button onclick="confirmAddMemoLinkItem('${listId}')" style="width:100%;padding:13px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">追加</button>`;
+  h += `<button onclick="document.getElementById('addMemoLinkItemModal').remove()" style="width:100%;padding:10px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;color:var(--ink-light);margin-top:4px;">キャンセル</button>`;
+  h += `</div></div>`;
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => document.getElementById('newItemTitle')?.focus(), 100);
+}
+window.openAddMemoLinkItem = openAddMemoLinkItem;
+
+function confirmAddMemoLinkItem(listId) {
+  const title = document.getElementById('newItemTitle')?.value?.trim();
+  if (!title) return;
+  const url = document.getElementById('newItemUrl')?.value?.trim() || '';
+  const comment = document.getElementById('newItemComment')?.value?.trim() || '';
+  const photo = document.getElementById('newItemPhotoImg')?.src?.startsWith('data:') ? document.getElementById('newItemPhotoImg').src : '';
+  const lst = (data.memoLinkLists||[]).find(l => l.id === listId);
+  if (!lst) return;
+  if (!lst.items) lst.items = [];
+  lst.items.push({ id: 'mli_'+Date.now(), title, url, comment, photo });
+  saveData();
+  document.getElementById('addMemoLinkItemModal')?.remove();
+  openMemoLinkList(listId);
+}
+window.confirmAddMemoLinkItem = confirmAddMemoLinkItem;
+
+// タイトル編集
+function editMemoLinkListTitle(listId) {
+  const lst = (data.memoLinkLists||[]).find(l => l.id === listId);
+  if (!lst) return;
+  const ex = document.getElementById('editMemoLinkListTitleModal');
+  if (ex) ex.remove();
+  let h = `<div id="editMemoLinkListTitleModal" style="position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;">`;
+  h += `<div style="width:100%;max-width:520px;background:white;border-radius:20px 20px 0 0;padding:20px 20px 40px;">`;
+  h += `<div style="font-size:15px;font-weight:900;color:var(--ink-dark);margin-bottom:14px;">リスト名を編集</div>`;
+  h += `<input id="editListTitle" type="text" value="${escapeHtml(lst.title)}" style="width:100%;padding:10px 14px;border:1.5px solid var(--accent);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:12px;box-sizing:border-box;">`;
+  h += `<button onclick="confirmEditMemoLinkListTitle('${listId}')" style="width:100%;padding:13px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">保存</button>`;
+  h += `<button onclick="document.getElementById('editMemoLinkListTitleModal').remove()" style="width:100%;padding:10px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;color:var(--ink-light);margin-top:4px;">キャンセル</button>`;
+  h += `</div></div>`;
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const el = document.getElementById('editListTitle'); if(el){el.focus();el.select();} }, 100);
+}
+window.editMemoLinkListTitle = editMemoLinkListTitle;
+
+function confirmEditMemoLinkListTitle(listId) {
+  const lst = (data.memoLinkLists||[]).find(l => l.id === listId);
+  const title = document.getElementById('editListTitle')?.value?.trim();
+  if (!lst || !title) return;
+  lst.title = title;
+  saveData();
+  document.getElementById('editMemoLinkListTitleModal')?.remove();
+  openMemoLinkList(listId);
+}
+window.confirmEditMemoLinkListTitle = confirmEditMemoLinkListTitle;
+
+// アイテム編集
+function editMemoLinkItem(listId, itemId) {
+  const lst = (data.memoLinkLists||[]).find(l => l.id === listId);
+  const item = (lst?.items||[]).find(i => i.id === itemId);
+  if (!item) return;
+  const ex = document.getElementById('editMemoLinkItemModal');
+  if (ex) ex.remove();
+  let h = `<div id="editMemoLinkItemModal" style="position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;">`;
+  h += `<div style="width:100%;max-width:520px;background:white;border-radius:20px 20px 0 0;padding:20px 20px 40px;">`;
+  h += `<div style="font-size:15px;font-weight:900;color:var(--ink-dark);margin-bottom:14px;">編集</div>`;
+  h += `<input id="editItemTitle" type="text" value="${escapeHtml(item.title)}" style="width:100%;padding:10px 14px;border:1.5px solid var(--accent);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;box-sizing:border-box;">`;
+  h += `<input id="editItemUrl" type="url" value="${escapeHtml(item.url||'')}" placeholder="URL（任意）" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;box-sizing:border-box;">`;
+  h += `<input id="editItemComment" type="text" value="${escapeHtml(item.comment||'')}" placeholder="一言コメント（任意）" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;box-sizing:border-box;">`;
+  // 写真
+  h += `<div style="margin-bottom:12px;">`;
+  h += `<div id="editItemPhotoPreview" style="margin-bottom:6px;display:${item.photo?'flex':'none'};align-items:center;gap:8px;">`;
+  h += `<img id="editItemPhotoImg" src="${item.photo||''}" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:1.5px solid var(--line);">`;
+  h += `<button onclick="window._editItemDeletePhoto=true;document.getElementById('editItemPhotoPreview').style.display='none';" style="background:none;border:none;cursor:pointer;color:#D9534F;font-size:11px;font-family:inherit;">削除</button>`;
+  h += `</div>`;
+  h += `<label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px dashed var(--line);border-radius:10px;cursor:pointer;font-size:12px;color:var(--ink-sub);font-family:inherit;">`;
+  h += `<span class="material-symbols-rounded" style="font-size:16px;">add_photo_alternate</span>${item.photo?'写真を変更':'写真を追加（任意）'}`;
+  h += `<input type="file" accept="image/*" style="display:none;" onchange="previewMemoItemPhoto(this,'editItemPhotoImg','editItemPhotoPreview')">`;
+  h += `</label></div>`;
+  h += `<button onclick="confirmEditMemoLinkItem('${listId}','${itemId}')" style="width:100%;padding:13px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">保存</button>`;
+  h += `<button onclick="document.getElementById('editMemoLinkItemModal').remove()" style="width:100%;padding:10px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;color:var(--ink-light);margin-top:4px;">キャンセル</button>`;
+  h += `</div></div>`;
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const el = document.getElementById('editItemTitle'); if(el){el.focus();el.select();} }, 100);
+}
+window.editMemoLinkItem = editMemoLinkItem;
+
+function confirmEditMemoLinkItem(listId, itemId) {
+  const lst = (data.memoLinkLists||[]).find(l => l.id === listId);
+  const item = (lst?.items||[]).find(i => i.id === itemId);
+  const title = document.getElementById('editItemTitle')?.value?.trim();
+  if (!item || !title) return;
+  item.title = title;
+  item.url = document.getElementById('editItemUrl')?.value?.trim() || '';
+  item.comment = document.getElementById('editItemComment')?.value?.trim() || '';
+  const photoImg = document.getElementById('editItemPhotoImg');
+  if (window._editItemDeletePhoto) {
+    item.photo = '';
+    window._editItemDeletePhoto = false;
+  } else if (photoImg?.src?.startsWith('data:')) {
+    item.photo = photoImg.src;
+  }
+  saveData();
+  document.getElementById('editMemoLinkItemModal')?.remove();
+  openMemoLinkList(listId);
+}
+window.confirmEditMemoLinkItem = confirmEditMemoLinkItem;
+
+// 写真プレビューヘルパー
+function previewMemoItemPhoto(input, imgId, previewId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = document.getElementById(imgId);
+    const preview = document.getElementById(previewId);
+    if (img) img.src = e.target.result;
+    if (preview) preview.style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+window.previewMemoItemPhoto = previewMemoItemPhoto;
+
+function deleteMemoLinkItem(listId, itemId) {
+  const lst = (data.memoLinkLists||[]).find(l => l.id === listId);
+  if (!lst) return;
+  lst.items = (lst.items||[]).filter(i => i.id !== itemId);
+  saveData();
+  openMemoLinkList(listId);
+}
+window.deleteMemoLinkItem = deleteMemoLinkItem;
+
+function deleteMemoLinkList(listId) {
+  if (!confirm('このリストを削除してもいい？')) return;
+  data.memoLinkLists = (data.memoLinkLists||[]).filter(l => l.id !== listId);
+  saveData();
+  document.getElementById('memoLinkListModal')?.remove();
+  goToMeMode(); setTimeout(() => { setModePageTab('me','secret'); switchMemoSubTab('list'); }, 100);
+}
+window.deleteMemoLinkList = deleteMemoLinkList;
+
+// ===== メモ：リンクリスト機能 END =====
+
 function switchMemoSubTab(sub) {
   const scrollY = window.scrollY;
   data.memoSubTab = sub;
@@ -11885,8 +12158,8 @@ function renderMemoList() {
   
   // ＋ボタン（フォルダ追加・メモ追加）
   h += '<div style="display:flex;gap:8px;margin-top:12px;">';
-  h += '<button onclick="memoAddFolder()" style="flex:1;padding:12px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent-deep);border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">📁 フォルダ追加</button>';
-  h += '<button onclick="openMemoEditModal(null)" style="flex:1;padding:12px;border:none;background:var(--accent);color:white;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);">📝 メモ追加</button>';
+  h += '<button onclick="memoAddFolder()" style="flex:1;padding:12px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent-deep);border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;">create_new_folder</span>フォルダ追加</button>';
+  h += '<button onclick="openMemoEditModal(null)" style="flex:1;padding:12px;border:none;background:var(--accent);color:white;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;">edit_note</span>メモ追加</button>';
   h += '</div>';
   
   h += '</div>';
@@ -11908,7 +12181,7 @@ function _renderMemoListContent() {
     const itemCount = (f.items || []).length + (f.folders || []).length;
     h += '<div style="display:flex;align-items:center;gap:8px;padding:0;border-bottom:1px solid var(--line-soft);">';
     h += '<button onclick="memoEnterFolder('+f._idx+')" style="flex:1;display:flex;align-items:center;gap:12px;padding:14px 8px;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">';
-    h += '<span style="font-size:24px;">📁</span>';
+    h += '<span style="flex-shrink:0;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:var(--accent-bg);border-radius:8px;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">folder</span></span>';
     h += '<span style="flex:1;font-size:14px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(f.name || 'フォルダ')+'</span>';
     h += '<span style="font-size:11px;color:var(--ink-sub);flex-shrink:0;">（'+itemCount+'）</span>';
     h += '</button>';
@@ -11931,7 +12204,7 @@ function _renderMemoListContent() {
     if (m.photo) {
       h += '<img src="'+m.photo+'" style="flex-shrink:0;width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--line);" />';
     } else {
-      h += '<span style="flex-shrink:0;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:var(--surface-warm);border-radius:8px;font-size:20px;">📝</span>';
+      h += '<span style="flex-shrink:0;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:var(--surface-warm);border-radius:8px;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">edit_note</span></span>';
     }
     h += '<div style="flex:1;min-width:0;">';
     if (m.title) {
@@ -11950,7 +12223,7 @@ function _renderMemoListContent() {
     if (query) {
       h += '<div style="background:var(--surface-warm);border:1px dashed var(--line);border-radius:12px;padding:24px 16px;text-align:center;color:var(--accent-deep);font-size:12px;line-height:1.7;font-weight:600;">「'+escapeHtml(query)+'」に該当なし<br><span style="font-size:11px;color:#666;font-weight:500;">別の言葉で試してみて</span></div>';
     } else {
-      h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65) 0%,rgba(255,255,255,0.45) 100%);border:1.5px solid var(--accent);border-radius:16px;padding:30px 16px;backdrop-filter:blur(8px);text-align:center;color:var(--accent-deep);font-size:14px;line-height:1.7;font-weight:700;">メモはまだないよ🌷<br><span style="font-size:11px;color:#666;font-weight:500;">下の📝メモ追加から始めよう</span></div>';
+      h += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.65) 0%,rgba(255,255,255,0.45) 100%);border:1.5px solid var(--accent);border-radius:16px;padding:30px 16px;backdrop-filter:blur(8px);text-align:center;color:var(--accent-deep);font-size:14px;line-height:1.7;font-weight:700;">メモはまだないよ🌷<br><span style="font-size:11px;color:#666;font-weight:500;">下の<span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;">edit_note</span>メモ追加から始めよう</span></div>';
     }
   } else {
     h += '<div style="font-size:10px;color:var(--ink-light);text-align:center;margin-top:8px;">フォルダ '+filteredFolders.length+' / メモ '+filteredItems.length+'</div>';
@@ -21348,25 +21621,37 @@ function renderMeMode() {
     if (!data.memoSubTab) data.memoSubTab = 'memo';
     const mTab = data.memoSubTab;
     
-    // サブサブタブ
-    html += '<div style="padding:10px 14px 8px;display:flex;gap:6px;">';
+    // サブタブ（ノートインデックスA案）
     const _mActive = mTab === 'memo';
+    const _lActive = mTab === 'list';
     const _sActive = mTab === 'secret';
-    html += '<button onclick="switchMemoSubTab(\'memo\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_mActive?'var(--accent)':'var(--line)')+';background:'+(_mActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_mActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">edit_note</span>Memo</button>';
-    html += '<button onclick="switchMemoSubTab(\'secret\')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(_sActive?'var(--accent)':'var(--line)')+';background:'+(_sActive?'var(--accent-bg)':'var(--surface-warm)')+';color:'+(_sActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">lock</span>Secret</button>';
+    const _memoTabStyle = (isActive) =>
+      `flex:1;padding:8px 4px;border-radius:10px 10px 0 0;border:2px solid var(--accent);` +
+      `background:${isActive?'white':'var(--surface-warm)'};` +
+      `color:${isActive?'var(--accent-deep)':'var(--ink-light)'};` +
+      `font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;` +
+      `display:flex;align-items:center;justify-content:center;gap:3px;` +
+      (isActive ? `border-bottom:2px solid white;margin-bottom:-2px;z-index:2;position:relative;` : `margin-top:4px;border-bottom:2px solid var(--accent);`);
+
+    html += '<div style="padding:10px 14px 0;display:flex;gap:4px;position:relative;z-index:1;">';
+    html += `<button onclick="switchMemoSubTab('memo')" style="${_memoTabStyle(_mActive)}"><span class="material-symbols-rounded" style="font-size:14px;">edit_note</span>メモ</button>`;
+    html += `<button onclick="switchMemoSubTab('list')" style="${_memoTabStyle(_lActive)}"><span class="material-symbols-rounded" style="font-size:14px;">format_list_bulleted</span>リスト</button>`;
+    html += `<button onclick="switchMemoSubTab('secret')" style="${_memoTabStyle(_sActive)}"><span class="material-symbols-rounded" style="font-size:14px;">lock</span>シークレット</button>`;
     html += '</div>';
-    
+    html += `<div style="margin:0 14px 14px;border:2px solid var(--accent);border-radius:0 10px 10px 10px;background:white;padding:12px;position:relative;z-index:0;">`;
+
     if (mTab === 'memo') {
       html += renderMemoList();
+    } else if (mTab === 'list') {
+      html += renderMemoLinkLists();
     } else {
-      // Secret サブサブタブ：既存のひみつメモボタン
-      html += '<div style="padding:8px 16px 16px;">';
-      html += '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.42) 100%);border:1.5px solid var(--card-border);border-radius:14px;padding:14px;backdrop-filter:blur(8px);margin-bottom:12px;">';
-      html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;text-align:center;">🔒 鍵つきの安全な保管庫<br>パスワード保護・フォルダ管理対応</div>';
-      html += '</div>';
+      // Secret
+      html += '<div style="padding:4px 2px 8px;">';
+      html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;text-align:center;padding:10px 0 12px;">🔒 鍵つきの安全な保管庫<br>パスワード保護・フォルダ管理対応</div>';
       html += '<button onclick="goSecretMemo()" style="width:100%;padding:20px;border:1.5px solid var(--accent);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.3) 100%);backdrop-filter:blur(8px);cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;color:var(--accent-deep);"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:middle;">lock</span> ひみつメモを開く</button>';
       html += '</div>';
     }
+    html += '</div>'; // accent枠閉じ
     
   } else {
     // カスタムタブ
@@ -35651,38 +35936,63 @@ window._cropperConfirm = _cropperConfirm;
 function renderTown() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('town');
-  // タイトルをタブに合わせて変更
-  const _townTitles = {
-    live: '📡 Live', town: '🏙 Street', book: '📚 Books',
-    board: '📋 Board', rainbow: '🐾 Animals',
-    search_search: '🗺 Map', search_transit: '🚃 Transit', search_fav: '♡ Saved'
-  };
-  const _townTitleKey = townMainTab === 'search' ? 'search_'+townSubTab : townMainTab;
-  const _townTitle = _townTitles[_townTitleKey] || '🏙 Town';
-  let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">'+_townTitle+'</div><div class="topbar-spacer"></div></div>';
-  html += infoBarHtml();
 
-  // ── メインタブ（ホームのクイックアクションから来た時は非表示）
+  // タブカラー定義（全部 var(--accent) で統一）
+  const _townTabColors = {
+    live: 'var(--accent)', town: 'var(--accent)', book: 'var(--accent)',
+    board: 'var(--accent)', rainbow: 'var(--accent)'
+  };
+  const _activeColor = 'var(--accent)';
+
+  // 天気pill
+  const _now3 = new Date();
+  const _wks3 = ['日','月','火','水','木','金','土'];
+  const _y3 = _now3.getFullYear(), _m3 = String(_now3.getMonth()+1).padStart(2,'0');
+  const _d3 = String(_now3.getDate()).padStart(2,'0'), _wk3 = _wks3[_now3.getDay()];
+  const _hh3 = String(_now3.getHours()).padStart(2,'0'), _mi3 = String(_now3.getMinutes()).padStart(2,'0');
+  const _wc3 = window._weatherCache || null;
+  const _wIcon3 = _wc3 ? _wc3.icon : '☁️';
+  const _wTemp3 = _wc3 ? Math.round(_wc3.temp) : '--';
+  const _region3 = data.userRegion || '大阪';
+
+  let html = '<div style="padding:10px 14px 6px;display:flex;align-items:center;gap:8px;">';
+  html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+  html += '<div class="home-weather-pill" onclick="showWeatherPopup()" style="flex:1;margin:0;">';
+  html += '<div class="home-weather-pill-left">';
+  html += '<span>'+_y3+'/'+_m3+'/'+_d3+'('+_wk3+') '+_hh3+':'+_mi3+'</span>';
+  html += '<span style="color:var(--ink-light);">·</span>';
+  html += '<span class="home-weather-pill-region">'+escapeHtml(_region3)+'</span>';
+  html += '</div>';
+  html += '<div class="home-weather-pill-right">';
+  html += '<span class="home-weather-pill-icon">'+weatherIconHtml(_wIcon3,'font-size:18px;')+'</span>';
+  html += '<span class="home-weather-pill-temp">'+_wTemp3+'<span class="unit">℃</span></span>';
+  html += '</div>';
+  html += '</div>';
+  html += '</div>';
+
+  // ノートインデックスタブ（A案・均等割）
   if (!townHideMainTabs) {
-    html += '<div class="town-main-tabs">';
+    const _tabStyle3 = (t) => {
+      const isActive = townMainTab === t.id;
+      const col = _townTabColors[t.id] || '#888';
+      return `flex:1;padding:8px 2px;border-radius:10px 10px 0 0;border:2px solid ${col};` +
+        `background:${isActive?'white':'var(--surface-warm)'};` +
+        `color:${isActive?col:'var(--ink-light)'};` +
+        `font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;` +
+        `display:flex;align-items:center;justify-content:center;gap:2px;white-space:nowrap;` +
+        (isActive ? `border-bottom:2px solid white;margin-bottom:-2px;z-index:2;position:relative;` : `margin-top:4px;border-bottom:2px solid ${col};`);
+    };
+    html += '<div style="padding:6px 14px 0;display:flex;gap:3px;position:relative;z-index:1;">';
     for (const t of TOWN_MAIN_TABS) {
-      html += '<button class="town-main-tab '+(townMainTab===t.id?'active':'')+'" onclick="setTownMainTab(\''+t.id+'\')">';
-      html += '<span class="town-main-tab-icon">'+t.icon+'</span>'+t.label+'</button>';
+      html += `<button onclick="setTownMainTab('${t.id}')" style="${_tabStyle3(t)}">`;
+      html += `<span style="font-size:13px;">${t.icon}</span>${t.label}`;
+      html += '</button>';
     }
     html += '</div>';
   }
 
-  // ── サブタブ（「探す」タブの時だけ表示）
-  if (townMainTab === 'search') {
-    html += '<div class="town-sub-tabs">';
-    html += '<button class="town-sub-tab '+(townSubTab==='search'?'active':'')+'" onclick="setTownSubTab(\'search\')"><span class="material-symbols-rounded">map</span></button>';
-    html += '<button class="town-sub-tab '+(townSubTab==='transit'?'active':'')+'" onclick="setTownSubTab(\'transit\')"><span class="material-symbols-rounded">train</span></button>';
-    html += '<button class="town-sub-tab '+(townSubTab==='fav'?'active':'')+'" onclick="setTownSubTab(\'fav\')"><span class="material-symbols-rounded">favorite</span></button>';
-    html += '</div>';
-  }
-
-  // コンテンツエリア（白い角丸背景）
-  html += '<div class="mode-content-wrap">';
+  // コンテンツエリア（アクティブカラーで枠）
+  html += `<div style="margin:0 14px 14px;border:2px solid ${_activeColor};border-radius:${townHideMainTabs?'10px':'0 10px 10px 10px'};background:white;padding:0;overflow:hidden;position:relative;z-index:0;">`;
   html += '<div id="townContentMarker" style="display:none;"></div>';
 
   // ── ライブタブ
@@ -37205,17 +37515,18 @@ function renderSchedule() {
   let html = '';
   // ── ヘッダー ──
   html += '<div style="display:flex;align-items:center;padding:14px 16px 8px;gap:8px;">';
+  html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
   html += '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">calendar_month</span>';
   html += '<div style="flex:1;font-size:16px;font-weight:800;color:var(--ink-dark);letter-spacing:0.5px;">Schedule</div>';
   html += '</div>';
 
-  // ── ビュー切替 ＋ +予定 ──
+  // ── ビュー切替（+予定ボタン削除・ダブルタップで追加）──
   html += '<div style="display:flex;align-items:center;gap:5px;padding:0 16px 10px;flex-wrap:wrap;">';
   var _mA = vm==='month', _lA = vm==='list';
   html += '<button onclick="switchSchedView(\'month\')" style="padding:6px 14px;background:'+(_mA?'var(--accent-deep)':'var(--surface)')+';color:'+(_mA?'white':'var(--ink-sub)')+';border:1px solid '+(_mA?'var(--accent-deep)':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">grid_view</span>月</button>';
   html += '<button onclick="switchSchedView(\'list\')" style="padding:6px 14px;background:'+(_lA?'var(--accent-deep)':'var(--surface)')+';color:'+(_lA?'white':'var(--ink-sub)')+';border:1px solid '+(_lA?'var(--accent-deep)':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">view_list</span>リスト</button>';
   html += '<button onclick="openHealthLog()" style="padding:6px 12px;background:linear-gradient(135deg,#FFD6E0,#FFC1CC);color:#C2185B;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">favorite</span>Health</button>';
-  html += '<button onclick="_openSchedAdd()" style="margin-left:auto;padding:6px 14px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>予定</button>';
+  html += '<span style="font-size:10px;color:var(--ink-light);margin-left:auto;">日付をダブルタップで予定追加</span>';
   html += '</div>';
 
   if (vm === 'month') {
@@ -37227,6 +37538,18 @@ function renderSchedule() {
   html += '<div style="height:100px;"></div>';
   document.getElementById('app').innerHTML = html;
 }
+
+// ダブルタップ検出（モバイル）
+window._schedDblTap = function(el, dateKey, event) {
+  const now = Date.now();
+  if (el._lastTap && now - el._lastTap < 350) {
+    event.preventDefault();
+    _openSchedAdd(dateKey);
+    el._lastTap = 0;
+  } else {
+    el._lastTap = now;
+  }
+};
 
 function switchSchedView(mode) {
   data._schedView = mode;
@@ -39312,12 +39635,9 @@ function _renderSchedMonthView(houseId) {
   // 全セル数 = firstDow (空セル) + daysInMonth (実日) → 7で割り切れる行数
   var totalCells = firstDow + daysInMonth;
   var totalRows = Math.ceil(totalCells / 7);
-  // ランダム日（年・月をシードに固定、同じ月は同じ日）
-  var _seed = year * 100 + (month + 1) * 17;
-  var residentDay = (_seed % daysInMonth) + 1;
-  // 月末に空きセルがない（月末が土曜）→ 月初1日に配置
+  // 月末の翌セル（空きあれば）、なければ月初の最初の空きセル
   var hasTrailingEmpty = (totalCells % 7 !== 0);
-  if (!hasTrailingEmpty) residentDay = 1;
+  var residentCellIdx = hasTrailingEmpty ? totalCells : 0; // 0 = 月初の1個目の空きセル
 
   for (var row = 0; row < totalRows; row++) {
     h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;">';
@@ -39328,7 +39648,13 @@ function _renderSchedMonthView(houseId) {
       
       // 空セル判定
       if (cellIdx < firstDow || d > daysInMonth) {
-        h += '<div style="min-height:80px;"></div>';
+        if (cellIdx === residentCellIdx) {
+          h += '<div style="min-height:80px;display:flex;align-items:center;justify-content:center;padding:4px;">';
+          h += '<img src="'+monthResident.src+'" alt="'+monthResident.name+'" style="width:42px;height:42px;object-fit:contain;opacity:0.85;" title="'+monthResident.name+'">';
+          h += '</div>';
+        } else {
+          h += '<div style="min-height:80px;"></div>';
+        }
         continue;
       }
       
@@ -39346,7 +39672,7 @@ function _renderSchedMonthView(houseId) {
       var cellShadow = isSel ? '0 2px 6px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.06)';
       var cellFontW = isToday || isSel ? '800' : '600';
 
-      h += '<button onclick="selectCalDate(\'sched\',\''+key+'\')" style="background:'+cellBg+';color:'+cellColor+';border:'+cellBorder+';border-radius:10px;box-shadow:'+cellShadow+';padding:5px 1px 4px;font-family:inherit;cursor:pointer;min-height:80px;display:flex;flex-direction:column;align-items:center;gap:2px;overflow:hidden;position:relative;">';
+      h += '<button onclick="selectCalDate(\'sched\',\''+key+'\')" ondblclick="_openSchedAdd(\''+key+'\')" ontouchend="_schedDblTap(this,\''+key+'\',event)" style="background:'+cellBg+';color:'+cellColor+';border:'+cellBorder+';border-radius:10px;box-shadow:'+cellShadow+';padding:5px 1px 4px;font-family:inherit;cursor:pointer;min-height:80px;display:flex;flex-direction:column;align-items:center;gap:2px;overflow:hidden;position:relative;">';
       // 日付＋天気
       var _wIco = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(key) : null;
       h += '<span style="font-size:14px;font-weight:'+cellFontW+';line-height:1;display:inline-flex;align-items:center;gap:2px;">'+d;
@@ -39393,10 +39719,6 @@ function _renderSchedMonthView(houseId) {
           h += '<div style="font-size:7.5px;color:var(--ink-light);font-weight:700;line-height:1.1;text-align:center;margin-top:1px;">+'+extra+'件</div>';
         }
         h += '</div>';
-      }
-      // ランダム日にイラスト表示
-      if (d === residentDay) {
-        h += '<img src="'+monthResident.src+'" alt="'+monthResident.name+'" style="position:absolute;bottom:2px;right:2px;width:30px;height:30px;object-fit:contain;opacity:0.75;pointer-events:none;" title="'+monthResident.name+'">';
       }
       h += '</button>';
     }
@@ -39730,6 +40052,267 @@ function _renderSchedListView(houseId) {
 }
 
 
+// ===== サンプルデータ一括投入 =====
+function loadSampleData() {
+  const today = new Date();
+  const yyyymmdd = (d) => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const daysAgo = (n) => { const d = new Date(today); d.setDate(d.getDate()-n); return d; };
+  const t0 = today.getTime();
+  const DAY = 86400000;
+
+  // ── ペット（こむぎ・猫・子どもたち）──
+  if (!data.pets) data.pets = [];
+  if (!data.pets.find(p => p.id === 'pet_komugi')) {
+    data.pets.push({ id:'pet_komugi', name:'こむぎ', kind:'pet', type:'dog', breed:'アメリカンコッカースパニエル', birthDate:'2024-06-21', gender:'female', color:'#C8956A', houseId:'house_main', instagram:'komugi_momo_diary' });
+  }
+  if (!data.pets.find(p => p.id === 'pet_neko')) {
+    data.pets.push({ id:'pet_neko', name:'もも', kind:'pet', type:'cat', breed:'雑種', birthDate:'2020-03-15', gender:'female', color:'#E88AA0', houseId:'house_main' });
+  }
+  if (!data.pets.find(p => p.id === 'kid_taro')) {
+    data.pets.push({ id:'kid_taro', name:'たろう', kind:'kids', kidsGender:'boy', birthDate:'2012-08-18', houseId:'house_main' });
+  }
+  if (!data.pets.find(p => p.id === 'kid_hana')) {
+    data.pets.push({ id:'kid_hana', name:'はな', kind:'kids', kidsGender:'girl', birthDate:'2017-02-06', houseId:'house_main' });
+  }
+
+  // ── NEST ──
+  if (!data.houses) data.houses = [];
+  if (!data.houses.find(h => h.id === 'house_main')) {
+    data.houses.push({ id:'house_main', name:'しほのおうち', icon:'home', color:'#E89A4A', members:['しほ','パートナー'] });
+  }
+
+  // ── スタンプ履歴 ──
+  if (!data.stampHistory) data.stampHistory = [];
+  const _stamps = [
+    { icon:'water_drop', title:'水', cat:'生活' },
+    { icon:'coffee', title:'コーヒー', cat:'生活' },
+    { icon:'self_care', title:'スキンケア', cat:'美容' },
+    { icon:'directions_walk', title:'散歩', cat:'生活' },
+    { icon:'bedtime', title:'睡眠', cat:'生活' },
+    { icon:'restaurant', title:'朝ごはん', cat:'生活' },
+    { icon:'fitness_center', title:'運動', cat:'生活' },
+  ];
+  for (let i = 0; i < 14; i++) {
+    const st = _stamps[i % _stamps.length];
+    const id = 'smp_stamp_'+i;
+    if (!data.stampHistory.find(s => s.id === id)) {
+      data.stampHistory.unshift({ id, icon:st.icon, title:st.title, category:st.cat, timestamp: t0 - i*3*3600*1000, source:'stamp' });
+    }
+  }
+
+  // ── プランナー ──
+  if (!data.planner) data.planner = { items:[] };
+  const _plans = [
+    { id:'smp_plan_1', title:'犬の散歩', time:'07:00', period:'朝', emoji:'🐾' },
+    { id:'smp_plan_2', title:'スキンケア', time:'07:30', period:'朝', emoji:'✨' },
+    { id:'smp_plan_3', title:'コーヒータイム', time:'08:00', period:'朝', emoji:'☕' },
+    { id:'smp_plan_4', title:'お昼ごはん', time:'12:00', period:'昼', emoji:'🍱' },
+    { id:'smp_plan_5', title:'工場チェック', time:'14:00', period:'昼', emoji:'🏭' },
+    { id:'smp_plan_6', title:'夕食準備', time:'18:00', period:'夕', emoji:'🍳' },
+    { id:'smp_plan_7', title:'お風呂', time:'21:00', period:'夜', emoji:'🛁' },
+  ];
+  for (const p of _plans) {
+    if (!data.planner.items.find(x => x.id === p.id)) data.planner.items.push(p);
+  }
+
+  // ── 日記（posts）──
+  if (!data.posts) data.posts = [];
+  if (!data.pets.find(p => p.id === 'me_diary')) {
+    data.pets.push({ id:'me_diary', name:'わたし', kind:'me', houseId:'house_main' });
+  }
+  const _diary = [
+    { id:'smp_diary_1', petId:'me_diary', text:'今日は朝から犬の散歩。こむぎが桜の花びらに興味津々やった🐾 清々しい朝。', mood:'😊', weather:'🌸', createdAt: t0 - 1*DAY },
+    { id:'smp_diary_2', petId:'me_diary', text:'工場で新しい部品の試作完成！東京エレクトロンさんへの納期も余裕あり。よし！', mood:'💪', weather:'☀️', createdAt: t0 - 3*DAY },
+    { id:'smp_diary_3', petId:'me_diary', text:'たろうが学校でバスケの大会に出た。負けたけど最後まで走り切ってた。成長してるなあ。', mood:'😌', weather:'⛅', createdAt: t0 - 5*DAY },
+    { id:'smp_diary_4', petId:'me_diary', text:'はなが「ねえ聞いて！」って学校の話をいっぱいしてくれた。今日は何かいいことあったのかな。', mood:'🥰', weather:'☀️', createdAt: t0 - 7*DAY },
+    { id:'smp_diary_5', petId:'me_diary', text:'もものご機嫌が悪い日。爪研ぎしまくり。何かあったのかな🐱', mood:'😅', weather:'☁️', createdAt: t0 - 10*DAY },
+  ];
+  for (const d of _diary) { if (!data.posts.find(p => p.id === d.id)) data.posts.push(d); }
+
+  // ── スケジュール ──
+  if (!data.schedules) data.schedules = [];
+  const _scheds = [
+    { id:'smp_sch_1', title:'こむぎワクチン', date:yyyymmdd(daysAgo(-7)), icon:'vaccines', color:'#A68262', scopeKind:'pet' },
+    { id:'smp_sch_2', title:'たろう バスケ大会', date:yyyymmdd(daysAgo(-3)), icon:'sports_basketball', color:'#4A90E2', scopeKind:'kids' },
+    { id:'smp_sch_3', title:'東京エレクトロン 打ち合わせ', date:yyyymmdd(daysAgo(-1)), icon:'work', color:'#8B7355', scopeKind:'work' },
+    { id:'smp_sch_4', title:'美容院', date:yyyymmdd(daysAgo(3)), icon:'content_cut', color:'#E88AA0', scopeKind:'me' },
+    { id:'smp_sch_5', title:'はな 参観日', date:yyyymmdd(daysAgo(5)), icon:'school', color:'#E94B6F', scopeKind:'kids' },
+    { id:'smp_sch_6', title:'工場設備点検', date:yyyymmdd(daysAgo(10)), icon:'precision_manufacturing', color:'#8B7355', scopeKind:'work' },
+    { id:'smp_sch_7', title:'家族でBBQ', date:yyyymmdd(daysAgo(14)), icon:'outdoor_grill', color:'#F5A623', scopeKind:'nest' },
+  ];
+  for (const s of _scheds) { if (!data.schedules.find(x => x.id === s.id)) data.schedules.push(s); }
+
+  // ── Money ──
+  if (!data.money) data.money = {};
+  if (!data.money.expenses) data.money.expenses = [];
+  const _exps = [
+    { id:'smp_exp_1', title:'スーパー', amount:3800, category:'食費', date:yyyymmdd(daysAgo(1)) },
+    { id:'smp_exp_2', title:'ガソリン代', amount:6500, category:'交通費', date:yyyymmdd(daysAgo(2)) },
+    { id:'smp_exp_3', title:'こむぎフード', amount:4200, category:'ペット', date:yyyymmdd(daysAgo(4)) },
+    { id:'smp_exp_4', title:'スキンケア用品', amount:8900, category:'美容', date:yyyymmdd(daysAgo(6)) },
+    { id:'smp_exp_5', title:'たろう塾代', amount:25000, category:'教育', date:yyyymmdd(daysAgo(8)) },
+  ];
+  for (const e of _exps) { if (!data.money.expenses.find(x => x.id === e.id)) data.money.expenses.push(e); }
+  if (!data.money.subscriptions) data.money.subscriptions = [];
+  const _subs = [
+    { id:'smp_sub_1', title:'Netflix', amount:1490, cycle:'monthly', category:'エンタメ' },
+    { id:'smp_sub_2', title:'Spotify', amount:980, cycle:'monthly', category:'音楽' },
+    { id:'smp_sub_3', title:'Claude Max', amount:5400, cycle:'monthly', category:'仕事' },
+  ];
+  for (const s of _subs) { if (!data.money.subscriptions.find(x => x.id === s.id)) data.money.subscriptions.push(s); }
+
+  // ── Goods（日用品）──
+  if (!data.nestGoods) data.nestGoods = {};
+  const _meId = data.activePetId || 'me_diary';
+  if (!data.nestGoods[_meId]) data.nestGoods[_meId] = [];
+  const _goods = [
+    { id:'smp_g_1', name:'シャンプー', brand:'ボタニスト', category:'バスルーム', stock:1, memo:'ダメージケア', updatedAt: t0 },
+    { id:'smp_g_2', name:'洗剤（柔軟剤）', brand:'ランドリン', category:'洗濯', stock:2, updatedAt: t0 },
+    { id:'smp_g_3', name:'食器用洗剤', brand:'チャーミー', category:'キッチン', stock:1, updatedAt: t0 },
+    { id:'smp_g_4', name:'こむぎシャンプー', brand:'アースペット', category:'その他', stock:1, memo:'月1回', updatedAt: t0 },
+  ];
+  for (const g of _goods) { if (!data.nestGoods[_meId].find(x => x.id === g.id)) data.nestGoods[_meId].push(g); }
+
+  // ── Memo ──
+  if (!data.memos) data.memos = { folders:[], items:[] };
+  const _memos = [
+    { id:'smp_memo_1', title:'犬の散歩ルート', body:'朝コース：公園→川沿い→自宅（約30分）\n夕コース：住宅街ぐるっと（約20分）', folderId:null, updatedAt: t0 - 1*DAY },
+    { id:'smp_memo_2', title:'スキンケアルーティン', body:'朝：洗顔→化粧水→乳液→日焼け止め\n夜：クレンジング→洗顔→化粧水→美容液→クリーム', folderId:null, updatedAt: t0 - 3*DAY },
+    { id:'smp_memo_3', title:'工場 発注メモ', body:'切削油：月末までに5L×2缶\nエンドミル：3mm×10本', folderId:null, updatedAt: t0 - 5*DAY },
+  ];
+  for (const m of _memos) { if (!data.memos.items.find(x => x.id === m.id)) data.memos.items.push(m); }
+
+  // ── リスト（memoLinkLists）──
+  if (!data.memoLinkLists) data.memoLinkLists = [];
+  if (!data.memoLinkLists.find(l => l.id === 'smp_list_karaoke')) {
+    data.memoLinkLists.push({
+      id: 'smp_list_karaoke', title: 'カラオケリスト',
+      items: [
+        { id:'smp_ki_1', title:'夜に駆ける', url:'https://www.youtube.com/watch?v=TQ8WlA2GXbk', comment:'YOASOBI / 鉄板！' },
+        { id:'smp_ki_2', title:'シルエット', url:'https://www.youtube.com/watch?v=g5WbmHLcTdY', comment:'KANA-BOON' },
+        { id:'smp_ki_3', title:'ロキ', url:'', comment:'難しいけど挑戦したい' },
+        { id:'smp_ki_4', title:'あんずのワルツ', url:'', comment:'にこわテーマソング🌷' },
+      ]
+    });
+  }
+  if (!data.memoLinkLists.find(l => l.id === 'smp_list_recipe')) {
+    data.memoLinkLists.push({
+      id: 'smp_list_recipe', title: 'レシピ動画',
+      items: [
+        { id:'smp_ri_1', title:'唐揚げ（下味冷凍）', url:'https://www.youtube.com/watch?v=example1', comment:'子どもたちの大好物' },
+        { id:'smp_ri_2', title:'カルボナーラ', url:'https://www.youtube.com/watch?v=example2', comment:'卵2個で本格的に' },
+        { id:'smp_ri_3', title:'豚汁', url:'', comment:'寒い日の定番' },
+      ]
+    });
+  }
+
+  // ── Study ──
+  if (!data.meStudy) data.meStudy = { records:[] };
+  const _studyRecs = [
+    { id:'smp_st_1', title:'Claude Codeの使い方', type:'tech', category:'AI/プログラミング', date:yyyymmdd(daysAgo(2)), score:4, memo:'CLAUDE.md の書き方が重要' },
+    { id:'smp_st_2', title:'決算書の読み方', type:'book', category:'経営', date:yyyymmdd(daysAgo(10)), score:3, memo:'貸借対照表をもっと勉強したい' },
+    { id:'smp_st_3', title:'Instagram運用', type:'online', category:'マーケティング', date:yyyymmdd(daysAgo(20)), score:5, memo:'リールが伸びやすい' },
+  ];
+  for (const r of _studyRecs) { if (!data.meStudy.records.find(x => x.id === r.id)) data.meStudy.records.push(r); }
+
+  // ── Work（仕事メモ）──
+  if (!data.officeMemos) data.officeMemos = [];
+  const _workMemos = [
+    { id:'smp_wm_1', title:'東京エレクトロン 仕様変更', body:'φ8→φ6への変更依頼あり。図面確認中。', date:yyyymmdd(daysAgo(1)), color:'#E57373' },
+    { id:'smp_wm_2', title:'ロボドリル 定期点検', body:'6月20日に三菱さんが来社。オイル交換も依頼済み。', date:yyyymmdd(daysAgo(5)), color:'#4A90E2' },
+    { id:'smp_wm_3', title:'新人・田中さんへの指示', body:'・治具の確認方法を再度教える\n・5S活動の担当エリア：ライン2', date:yyyymmdd(daysAgo(8)), color:'#4FB677' },
+  ];
+  for (const m of _workMemos) { if (!data.officeMemos.find(x => x.id === m.id)) data.officeMemos.push(m); }
+
+  // ── ペットケア（こむぎ）──
+  if (!data.petCare) data.petCare = { stampHistory:[], planner:{ items:[] } };
+  if (!data.petCare.stampHistory) data.petCare.stampHistory = [];
+  const _petStamps = [
+    { id:'smp_ps_1', icon:'directions_walk', title:'散歩', category:'お世話', timestamp: t0 - 1*3600*1000 },
+    { id:'smp_ps_2', icon:'local_dining', title:'ごはん', category:'お世話', timestamp: t0 - 7*3600*1000 },
+    { id:'smp_ps_3', icon:'water_drop', title:'お水', category:'お世話', timestamp: t0 - 10*3600*1000 },
+    { id:'smp_ps_4', icon:'favorite', title:'あそび', category:'気持ち', timestamp: t0 - 1*DAY },
+    { id:'smp_ps_5', icon:'shower', title:'シャンプー', category:'お世話', timestamp: t0 - 3*DAY },
+  ];
+  for (const s of _petStamps) { if (!data.petCare.stampHistory.find(x => x.id === s.id)) data.petCare.stampHistory.unshift(s); }
+  if (!data.petCare.planner) data.petCare.planner = { items:[] };
+  const _petPlans = [
+    { id:'smp_pp_1', title:'朝ごはん', time:'07:30', period:'朝' },
+    { id:'smp_pp_2', title:'散歩', time:'08:00', period:'朝' },
+    { id:'smp_pp_3', title:'夕ごはん', time:'18:00', period:'夕' },
+    { id:'smp_pp_4', title:'夜の散歩', time:'20:00', period:'夜' },
+  ];
+  for (const p of _petPlans) { if (!data.petCare.planner.items.find(x => x.id === p.id)) data.petCare.planner.items.push(p); }
+
+  // ── My（プロフィール）──
+  if (!data.myProfile) data.myProfile = {};
+  if (!data.myProfile.name) data.myProfile.name = 'しほ';
+  if (!data.myProfile.birthdate) data.myProfile.birthdate = '1989-01-01';
+  if (!data.myProfile.bloodType) data.myProfile.bloodType = 'O';
+  if (!data.myProfile.nickname) data.myProfile.nickname = 'しほ';
+  if (!data.myProfile.job) data.myProfile.job = '精密部品加工会社 経営';
+  if (!data.myProfile.memo) data.myProfile.memo = '大阪在住。ものづくりが好き。犬と猫と暮らしてる。';
+
+  // ── ピン留め（固定）──
+  if (!data.homeQuickStamps || data.homeQuickStamps.length === 0) {
+    data.homeQuickStamps = [
+      { id:'hqs_1', icon:'water_drop', label:'水', stampIcon:'water_drop', stampTitle:'水' },
+      { id:'hqs_2', icon:'directions_walk', label:'散歩', stampIcon:'directions_walk', stampTitle:'散歩' },
+      { id:'hqs_3', icon:'self_care', label:'スキン', stampIcon:'self_care', stampTitle:'スキンケア' },
+      { id:'hqs_4', icon:'coffee', label:'コーヒー', stampIcon:'coffee', stampTitle:'コーヒー' },
+    ];
+  }
+
+  // ── カレンダークイックスタンプ ──
+  if (!data.calQuickStamps) data.calQuickStamps = {};
+  if (!data.calQuickStamps.all || data.calQuickStamps.all.length === 0) {
+    data.calQuickStamps.all = [
+      { id:'cqs_1', icon:'local_hospital', title:'病院', color:'#E57373' },
+      { id:'cqs_2', icon:'shopping_bag', title:'買い物', color:'#F5A623' },
+      { id:'cqs_3', icon:'restaurant', title:'ランチ', color:'#4FB677' },
+      { id:'cqs_4', icon:'cake', title:'誕生日', color:'#E88AA0' },
+      { id:'cqs_5', icon:'local_pharmacy', title:'くすり', color:'#9B5DB8' },
+      { id:'cqs_6', icon:'payments', title:'支払い', color:'#4A90E2' },
+      { id:'cqs_7', icon:'directions_car', title:'ドライブ', color:'#1FA8C9' },
+      { id:'cqs_8', icon:'celebration', title:'お祝い', color:'#E5524A' },
+    ];
+  }
+
+  // ── Town / ライブ（世界とつながるダイエット）──
+  if (!data.weightPublic) data.weightPublic = true;
+  if (!data.goalWeight) data.goalWeight = 55;
+  if (!data.worldNickname) data.worldNickname = 'しほ';
+  if (!data.weightUnit) data.weightUnit = 'kg';
+  const _weightLogs = [
+    { id:'smp_wt_1', icon:'monitor_weight', title:'体重', name:'体重', value:'74.2', category:'生活', timestamp: t0 - 0*DAY },
+    { id:'smp_wt_2', icon:'monitor_weight', title:'体重', name:'体重', value:'74.5', category:'生活', timestamp: t0 - 2*DAY },
+    { id:'smp_wt_3', icon:'monitor_weight', title:'体重', name:'体重', value:'74.8', category:'生活', timestamp: t0 - 5*DAY },
+    { id:'smp_wt_4', icon:'monitor_weight', title:'体重', name:'体重', value:'75.1', category:'生活', timestamp: t0 - 8*DAY },
+  ];
+  for (const w of _weightLogs) { if (!data.stampHistory.find(x => x.id === w.id)) data.stampHistory.unshift(w); }
+
+  // ── My Shop サンプル ──
+  if (!data.myShops) data.myShops = [];
+  if (!data.myShops.find(s => s.id === 'smp_shop_1')) {
+    data.myShops.push({
+      id: 'smp_shop_1', name: 'しほの精密部品工房', type: 'shop', isPublic: true,
+      tags: ['製造','精密加工','大阪'],
+      desc: '精密部品加工の会社です。半導体装置部品・船舶部品など多品種加工対応。',
+      region: '大阪',
+      posts: [
+        { id:'smp_sp_1', type:'news', content:'新しいフライス盤を導入しました！精度が格段にアップ。', tags:['製造'], timestamp: t0 - 1*DAY },
+        { id:'smp_sp_2', type:'news', content:'東京エレクトロンさんの案件、無事に納品完了しました🎉', tags:['精密加工'], timestamp: t0 - 5*DAY },
+      ]
+    });
+  }
+
+  saveData();
+  showToast('サンプルデータを入れたよ🌷 各タブを確認してみてね！');
+  currentView = 'top';
+  render();
+}
+window.loadSampleData = loadSampleData;
+// ===== サンプルデータ一括投入 END =====
 function renderSettings() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('settings');
@@ -39741,6 +40324,13 @@ function renderSettings() {
   const mb = (bytes / 1024 / 1024).toFixed(2);
   const photoCount = Object.keys(photos).length;
   let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">⚙️ せってい</div><div class="topbar-spacer"></div></div>';
+
+  // ── サンプルデータ ──
+  html += '<div class="section"><div class="section-head"><h2 class="section-title">🌷 サンプルデータ</h2></div>';
+  html += '<div style="padding:12px 16px 16px;">';
+  html += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:10px;line-height:1.6;">全タブにサンプルデータを一括で入れるよ。既存のデータには上書きせず追加するよ。</div>';
+  html += '<button onclick="loadSampleData()" style="width:100%;padding:13px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:16px;">dataset</span>サンプルデータを入れる</button>';
+  html += '</div></div>';
 
   // ── テーマセクション ──
   html += '<div class="section"><div class="section-head"><h2 class="section-title">🎨 いろのテーマ</h2></div>';
