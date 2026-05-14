@@ -526,6 +526,7 @@
 
   /* ===== PC / iPad レスポンシブ ===== */
   @media (min-width: 900px) {
+    html, body { overflow-x: hidden !important; }
     body {
       display: flex;
       flex-direction: row;
@@ -536,7 +537,7 @@
     #pcSidebar {
       display: flex !important;
       flex-direction: column;
-      width: 220px;
+      width: 260px;
       flex-shrink: 0;
       height: 100vh;
       background: var(--surface);
@@ -548,33 +549,161 @@
       box-shadow: 2px 0 12px rgba(0,0,0,0.06);
     }
     .app-frame {
-      margin-left: 220px;
+      margin-left: 260px;
       flex: 1;
       height: 100vh;
       overflow-y: auto;
+      overflow-x: hidden;
+      max-width: calc(100vw - 260px);
+      box-sizing: border-box;
+    }
+    .app {
       max-width: 900px;
-    }
-    .bottom-nav { display: none !important; }
-    .app { padding-bottom: 20px !important; }
-    /* PCホームグリッド */
-    .home-pc-grid {
+      margin: 0 auto;
+      padding: 32px 48px 80px !important;
+      box-sizing: border-box;
+      overflow-x: hidden;
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 14px;
-      padding: 14px;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 24px;
+      align-content: start;
     }
-    .home-pc-col { display: flex; flex-direction: column; gap: 12px; }
-    /* PC用サイドバーナビ */
+    /* フル幅セクション */
+    .app > .hero-section,
+    .app > div[style*="margin:0 14px 10px"][style*="background:#FFFFFF"],
+    .app > [data-pinned-stamps],
+    .app > .home-pc-friend-wrap,
+    .app > .home-pc-map-row,
+    .app > div[style*="height: 24px"] {
+      grid-column: 1 / -1;
+    }
+    /* 左：ToDay / 右：Diary を並べる */
+    .app > .home-recent-card { grid-column: 1; margin: 0 !important; }
+    .app > .home-quick-card { grid-column: 2; margin: 0 !important; }
+    .bottom-nav { display: none !important; }
+
+    /* ===== ロゴ＆天気 ===== */
+    .hero-section { padding: 24px 0 !important; }
+    .home-logo-pill { padding: 18px 28px !important; }
+    .home-logo-pill img,
+    .home-logo-pill svg { height: 64px !important; }
+    .home-weather-pill {
+      font-size: 18px !important;
+      padding: 18px 26px !important;
+      border-radius: 100px !important;
+    }
+    .home-weather-pill * { font-size: 18px !important; }
+
+    /* ===== カード共通 ===== */
+    .home-recent-card,
+    .home-quick-card,
+    .home-friend-btn,
+    [data-pinned-stamps] {
+      padding: 24px 28px !important;
+      border-radius: 24px !important;
+      margin: 0 0 18px !important;
+      box-sizing: border-box;
+    }
+
+    /* ピン留めバー */
+    [data-pinned-stamps] > div:first-child * {
+      font-size: 14px !important;
+    }
+    [data-pinned-stamps] button {
+      width: 80px !important;
+      padding: 12px 8px !important;
+      gap: 4px !important;
+    }
+    [data-pinned-stamps] button .material-symbols-rounded,
+    [data-pinned-stamps] button span:first-child {
+      font-size: 28px !important;
+    }
+    [data-pinned-stamps] button span:last-child {
+      font-size: 12px !important;
+    }
+
+    /* ToDay */
+    .home-recent-title { font-size: 18px !important; gap: 8px !important; }
+    .home-recent-title .material-symbols-rounded { font-size: 22px !important; }
+    .home-recent-more { font-size: 14px !important; }
+    .home-recent-photo {
+      width: 200px !important;
+      height: 200px !important;
+      border-radius: 20px !important;
+    }
+    .home-recent-photo img { width: 80px !important; height: 80px !important; }
+    .home-recent-photo span:last-child { font-size: 13px !important; }
+    .home-recent-body { gap: 20px !important; }
+
+    /* Friend */
+    .home-friend-btn { font-size: 16px !important; gap: 16px !important; }
+    .home-friend-btn > div:first-child {
+      width: 56px !important;
+      height: 56px !important;
+    }
+    .home-friend-btn > div:first-child .material-symbols-rounded {
+      font-size: 30px !important;
+    }
+    .home-friend-btn > div:nth-child(2) > div:first-child {
+      font-size: 17px !important;
+    }
+    .home-friend-btn > div:nth-child(2) > div:last-child {
+      font-size: 13px !important;
+    }
+
+    /* Diary */
+    .home-quick-title { font-size: 17px !important; gap: 8px !important; }
+    .home-quick-title .material-symbols-rounded { font-size: 22px !important; }
+    .home-quick-input {
+      font-size: 16px !important;
+      min-height: 56px !important;
+      max-height: 56px !important;
+      padding: 16px 20px !important;
+      border-radius: 14px !important;
+    }
+    .home-quick-btn {
+      font-size: 16px !important;
+      padding: 0 28px !important;
+      border-radius: 14px !important;
+    }
+
+    /* 地図・路線・お気に入りボタン */
+    .app > div[style*="padding:0 14px 12px"] {
+      padding: 0 0 12px !important;
+      gap: 14px !important;
+    }
+    .app > div[style*="padding:0 14px 12px"] button {
+      padding: 18px 12px !important;
+      gap: 10px !important;
+      border-radius: 16px !important;
+      font-size: 16px !important;
+    }
+    .app > div[style*="padding:0 14px 12px"] button .material-symbols-rounded {
+      font-size: 26px !important;
+    }
+    .app > div[style*="padding:0 14px 12px"] button span:last-child {
+      font-size: 16px !important;
+    }
+
+    /* ===== PCサイドバー ===== */
+    #pcSidebar img { height: 48px !important; }
+    #pcSidebar > div:first-child {
+      padding: 28px 24px 20px !important;
+    }
+    #pcSidebar > div:first-child > div:last-child {
+      font-size: 14px !important;
+      margin-top: 8px !important;
+    }
     .pc-nav-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 16px;
+      gap: 14px;
+      padding: 16px 24px;
       border: none;
       background: none;
       cursor: pointer;
       font-family: inherit;
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 700;
       color: var(--ink-sub);
       width: 100%;
@@ -588,17 +717,21 @@
       color: var(--accent-deep);
       border-right: 3px solid var(--accent);
     }
-    .pc-nav-item .material-symbols-rounded { font-size: 20px; }
+    .pc-nav-item .material-symbols-rounded { font-size: 24px; }
+
+    /* ===== 汎用：他の画面でも文字大きく ===== */
+    .section-title { font-size: 17px !important; }
+    .day-card { padding: 18px 22px !important; border-radius: 18px !important; margin-bottom: 14px !important; }
+    .day-card-title { font-size: 15px !important; }
+
+    /* 中身の入れ子要素の最大幅制限 */
+    .app > * { max-width: 100% !important; box-sizing: border-box !important; }
   }
   @media (min-width: 600px) and (max-width: 899px) {
-    /* iPad縦: コンパクト2カラム */
-    .home-pc-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      padding: 12px;
-    }
-    .home-pc-col { display: flex; flex-direction: column; gap: 10px; }
+    /* iPad縦 */
+    .app { max-width: 680px; margin: 0 auto; padding: 24px !important; }
+    .home-recent-photo { width: 140px !important; height: 140px !important; }
+    .home-quick-input { min-height: 48px !important; max-height: 48px !important; font-size: 14px !important; }
   }
   .app-grid {
     display: grid;
@@ -4087,7 +4220,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="config.js"></script>
 <script>
-(function(){var s=document.createElement('script');s.src='https://maps.googleapis.com/maps/api/js?key='+PLACES_API_KEY+'&libraries=places&loading=async&callback=Function.prototype';document.head.appendChild(s);})();
+(function(){
+  if(typeof PLACES_API_KEY === 'undefined') return; // config.js未読み込み時はスキップ
+  var s=document.createElement('script');s.src='https://maps.googleapis.com/maps/api/js?key='+PLACES_API_KEY+'&libraries=places&loading=async&callback=Function.prototype';document.head.appendChild(s);
+})();
 </script>
   <link rel="manifest" href="/manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -8421,6 +8557,7 @@ function renderTop() {
   const _isPC = window.innerWidth >= 900;
   const _isTablet = window.innerWidth >= 600 && window.innerWidth < 900;
   const app = document.getElementById('app');
+  if (!data.user) data.user = { name: '', birthday: '' };
   const userName = data.user.name || '';
   
   let html = '<div class="hero-section">';
@@ -8508,14 +8645,13 @@ function renderTop() {
   if (!data.homePhotoSettings) data.homePhotoSettings = { folderId: null, hidden: false };
   const _photoSettings = data.homePhotoSettings;
   const _todayStr = _now.toDateString();
-  const _todayItems = (data.planner.items || [])
-    .filter(i => !i.completed || i.completedAt !== _todayStr)
-    .filter(i => i.time)
-    .sort((a, b) => (a.time||'').localeCompare(b.time||''))
-    .slice(0, 3);
 
-  // 写真取得：選ばれたフォルダ優先、なければ全コレクションから最新
-  let _recentPhoto = null;
+  // ToDay：今日のカレンダー予定
+  const _todayDateKey = _yyyy+'-'+_mm+'-'+_dd;
+  const _todayItems = (data.schedules || [])
+    .filter(s => s.date === _todayDateKey)
+    .sort((a,b) => (a.time||'99:99').localeCompare(b.time||'99:99'))
+    .slice(0, 3);
   if (!_photoSettings.hidden && data.collections && data.collections.length > 0) {
     let _searchFolders = data.collections;
     if (_photoSettings.folderId) {
@@ -8569,10 +8705,9 @@ function renderTop() {
   } else {
     html += '<div class="home-recent-schedule">';
     for (const item of _todayItems) {
-      const cat = PLANNER_CATEGORIES.find(c => c.id === item.category) || PLANNER_CATEGORIES[0];
       html += '<div class="home-recent-sched-item">';
-      html += '<div class="home-recent-sched-icon">'+cat.icon+'</div>';
-      html += '<div class="home-recent-sched-task">'+escapeHtml(item.task||'')+'</div>';
+      html += '<div class="home-recent-sched-icon" style="background:var(--accent-bg);border-radius:8px;padding:3px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">'+(item.icon||'event')+'</span></div>';
+      html += '<div class="home-recent-sched-task">'+escapeHtml(item.title||'')+'</div>';
       html += '<div class="home-recent-sched-time">'+escapeHtml(item.time||'')+'</div>';
       html += '</div>';
     }
@@ -8585,7 +8720,7 @@ function renderTop() {
   // Friend ボタン
   const _friendCount = (data.friendships || []).filter(f => f.status === 'active').length;
   const _pendingCount = (data._pendingRequests || []).length;
-  html += '<div style="padding:0 14px 10px;">';
+  html += '<div class="home-pc-friend-wrap" style="padding:0 14px 10px;">';
   html += '<button class="home-friend-btn" onclick="goToFriendView()">';
   html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="color:var(--accent-deep);font-size:18px;">group</span></div>';
   html += '<div style="flex:1;text-align:left;"><div style="font-size:13px;font-weight:800;color:var(--ink-dark);">Friend</div><div style="font-size:10px;color:var(--ink-sub);">'+_friendCount+'人とつながり中</div></div>';
@@ -8603,8 +8738,62 @@ function renderTop() {
   html += '<button class="home-quick-btn" onclick="saveHomeQuickThought()">記録</button>';
   html += '</div></div>';
 
+  // ===== TODO + メモ =====
+  if (!data.homeTodos) data.homeTodos = [];
+  const _incompleteTodos = data.homeTodos.filter(t => !t.done).slice(0, 5);
+  const _completedCount = data.homeTodos.filter(t => t.done).length;
+
+  // メモ最新2件
+  const _recentMemos = ((data.memos && data.memos.items) || [])
+    .sort((a,b) => (b.updatedAt||0)-(a.updatedAt||0))
+    .slice(0, 2);
+
+  html += '<div style="padding:0 14px 10px;display:flex;gap:10px;align-items:flex-start;">';
+
+  // TODO カード
+  html += '<div style="flex:1;background:white;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;min-height:80px;">';
+  html += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">checklist</span>';
+  html += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);">TODO</span>';
+  html += '<button onclick="openHomeTodoAdd()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--accent-deep);padding:0;"><span class="material-symbols-rounded" style="font-size:16px;">add</span></button>';
+  html += '</div>';
+  if (_incompleteTodos.length === 0) {
+    html += '<div style="font-size:10px;color:var(--ink-light);text-align:center;padding:6px 0;">タスクなし</div>';
+  } else {
+    for (const todo of _incompleteTodos) {
+      html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">';
+      html += '<button onclick="toggleHomeTodo(\''+todo.id+'\')" style="width:16px;height:16px;border-radius:4px;border:1.5px solid var(--accent);background:white;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></button>';
+      html += '<span style="font-size:11px;color:var(--ink-dark);line-height:1.3;flex:1;">'+escapeHtml(todo.text)+'</span>';
+      html += '</div>';
+    }
+  }
+  if (_completedCount > 0) {
+    html += '<div style="font-size:9px;color:var(--ink-light);margin-top:4px;">完了済み '+_completedCount+'件</div>';
+  }
+  html += '</div>';
+
+  // メモ カード
+  html += '<div style="flex:1;background:white;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;min-height:80px;cursor:pointer;" onclick="goToMeMode();setTimeout(()=>setModePageTab(\'me\',\'secret\'),100);">';
+  html += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">edit_note</span>';
+  html += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);">メモ</span>';
+  html += '<span class="material-symbols-rounded" style="margin-left:auto;font-size:14px;color:var(--ink-light);">chevron_right</span>';
+  html += '</div>';
+  if (_recentMemos.length === 0) {
+    html += '<div style="font-size:10px;color:var(--ink-light);text-align:center;padding:6px 0;">メモなし</div>';
+  } else {
+    for (const memo of _recentMemos) {
+      html += '<div style="margin-bottom:5px;">';
+      html += '<div style="font-size:11px;font-weight:700;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escapeHtml(memo.title||'')+'</div>';
+      if (memo.body) html += '<div style="font-size:9.5px;color:var(--ink-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escapeHtml((memo.body||'').slice(0,30))+'</div>';
+      html += '</div>';
+    }
+  }
+  html += '</div>';
+  html += '</div>';
+
   // ===== 地図・路線・お気に入り =====
-  html += '<div style="padding:0 14px 12px;display:flex;gap:6px;">';
+  html += '<div class="home-pc-map-row" style="padding:0 14px 12px;display:flex;gap:6px;">';
   html += '<button onclick="openTownQuick(\'search\',\'search\')" style="flex:1;padding:7px 4px;background:#FFFFFF;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   html += '<span class="material-symbols-rounded" style="font-size:16px;color:#1FA8C9;">map</span>';
   html += '<span style="font-size:11px;font-weight:700;color:var(--ink-sub);">地図</span>';
@@ -9315,8 +9504,44 @@ function openNotificationCenter() {
 }
 window.openNotificationCenter = openNotificationCenter;
 
+// ===== ホームTODO =====
+function openHomeTodoAdd() {
+  const ex = document.getElementById('homeTodoAddModal');
+  if (ex) ex.remove();
+  let h = '<div id="homeTodoAddModal" style="position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.4);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="width:100%;max-width:520px;background:white;border-radius:20px 20px 0 0;padding:18px 18px 40px;">';
+  h += '<div style="font-size:14px;font-weight:900;margin-bottom:12px;">TODOを追加</div>';
+  h += '<input id="homeTodoInput" type="text" placeholder="やること..." style="width:100%;padding:10px 14px;border:1.5px solid var(--accent);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:12px;box-sizing:border-box;">';
+  h += '<button onclick="confirmHomeTodoAdd()" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">追加</button>';
+  h += '<button onclick="document.getElementById(\'homeTodoAddModal\').remove()" style="width:100%;padding:8px;background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-light);margin-top:4px;font-family:inherit;">キャンセル</button>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => document.getElementById('homeTodoInput')?.focus(), 100);
+}
+window.openHomeTodoAdd = openHomeTodoAdd;
+
+function confirmHomeTodoAdd() {
+  const text = document.getElementById('homeTodoInput')?.value?.trim();
+  if (!text) return;
+  if (!data.homeTodos) data.homeTodos = [];
+  data.homeTodos.unshift({ id:'todo_'+Date.now(), text, done:false, createdAt:Date.now() });
+  saveData();
+  document.getElementById('homeTodoAddModal')?.remove();
+  render();
+}
+window.confirmHomeTodoAdd = confirmHomeTodoAdd;
+
+function toggleHomeTodo(id) {
+  const todo = (data.homeTodos||[]).find(t => t.id === id);
+  if (!todo) return;
+  todo.done = !todo.done;
+  saveData();
+  render();
+}
+window.toggleHomeTodo = toggleHomeTodo;
+// ===== ホームTODO END =====
+
 function saveHomeQuickThought() {
-  const inp = document.getElementById('homeQuickInput');
   if (!inp) return;
   const text = (inp.value || '').trim();
   const now = new Date();
@@ -27333,6 +27558,7 @@ function renderPCSidebar() {
   const sb = document.getElementById('pcSidebar');
   if (!sb) return;
   if (window.innerWidth < 900) { sb.style.display = 'none'; return; }
+  sb.style.display = 'flex'; // PC: 必ず表示
 
   const _uname = (data.user && data.user.name) || (data.myProfile && data.myProfile.name) || 'にこわ';
   const _cv = currentView;
@@ -27378,6 +27604,11 @@ function renderPCSidebar() {
   sb.innerHTML = h;
 }
 window.renderPCSidebar = renderPCSidebar;
+
+// リサイズ時にサイドバーを再描画
+window.addEventListener('resize', () => {
+  if (typeof renderPCSidebar === 'function') renderPCSidebar();
+});
 // ===== PC/iPadサイドバー END =====
 const NIKOWA_TAGS = [
   { cat:'小説・文学', tags:[['ハイファンタジー','high_fantasy'],['ローファンタジー','low_fantasy'],['異世界転生','isekai'],['現代ファンタジー','urban_fantasy'],['学園物語','school_life'],['青春小説','youth_novel'],['ミステリー','mystery'],['ホラー・怪談','horror'],['恋愛小説','romance'],['SF・近未来','sci_fi'],['歴史・時代小説','historical'],['ヒューマンドラマ','human_drama'],['ショートショート','short_story'],['童話・絵本','fairy_tale'],['ライトノベル','light_novel'],['ダークファンタジー','dark_fantasy'],['和風ファンタジー','japanese_fantasy'],['サスペンス','suspense'],['百合・GL','yuri'],['ボーイズラブ','bl'],['ディストピア','dystopia'],['タイムトラベル','time_travel'],['ハードボイルド','hard_boiled']] },
@@ -43197,7 +43428,8 @@ function renderOnbAvatarGrid() {
 }
 
 function needsOnboarding() {
-  return !data.user || !data.user.name || !data.user.birthday;
+  return false; // TODO: 最後につける
+  // return !data.user || !data.user.name || !data.user.birthday;
 }
 
 function isUnder15(birthday) {
@@ -48161,6 +48393,8 @@ let _isNavigatingBack = false;
 
 function render() {
   const _t0 = performance.now();
+  // PC/iPadサイドバー（全ビュー共通）
+  if (typeof renderPCSidebar === 'function') renderPCSidebar();
   
   // ===== 自動履歴管理 =====
   // 前回 render と違うビュー/モード/タブに切り替わってる → 前回の状態を履歴に push
