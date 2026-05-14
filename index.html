@@ -821,7 +821,7 @@
   }
   .home-quick-input {
     flex: 1;
-    padding: 10px 12px;
+    padding: 8px 12px;
     border: 1px solid var(--card-border);
     border-radius: 10px;
     font-family: inherit;
@@ -829,8 +829,11 @@
     background: rgba(255,255,255,0.25);
     color: var(--ink-dark);
     resize: none;
-    min-height: 44px;
+    min-height: 36px;
+    max-height: 36px;
+    line-height: 1.4;
     box-sizing: border-box;
+    overflow: hidden;
   }
   .home-quick-input::placeholder { color: var(--ink-light); font-size: 11px; }
   .home-quick-btn {
@@ -8412,31 +8415,12 @@ function renderTop() {
   if (!data.ateliers) data.ateliers = [];
   const _myShops = data.myShops || [];
 
-  // ===== ① 固定（ピン留めスタンプ・大きいタイル）=====
-  if (!data.homeQuickStamps) {
-    data.homeQuickStamps = [
-      { id:'hqs_1', icon:'water_drop', label:'水', stampIcon:'water_drop', stampTitle:'水' },
-      { id:'hqs_2', icon:'directions_walk', label:'運動', stampIcon:'directions_walk', stampTitle:'運動' },
-      { id:'hqs_3', icon:'bedtime', label:'睡眠', stampIcon:'bedtime', stampTitle:'睡眠' }
-    ];
+  // ===== ① ピン留め（スタンプ履歴の上位）=====
+  if (typeof renderPinnedStampsRow === 'function') {
+    html += '<div style="margin:0 0 10px;">';
+    html += renderPinnedStampsRow('me');
+    html += '</div>';
   }
-  const _hqs = data.homeQuickStamps || [];
-  html += '<div class="home-pinned">';
-  html += '<button class="home-pinned-edit" onclick="openHomeQuickStampEdit()"><span class="material-symbols-rounded" style="font-size:14px;">edit</span></button>';
-  html += '<div class="home-pinned-grid">';
-  for (const qs of _hqs) {
-    html += '<button class="home-pinned-tile" onclick="_tapHomeQuickStamp(\''+qs.id+'\')">';
-    html += '<div class="home-pinned-tile-icon"><span class="material-symbols-rounded">'+qs.icon+'</span></div>';
-    html += '<span class="home-pinned-tile-label">'+escapeHtml(qs.label)+'</span>';
-    html += '</button>';
-  }
-  if (_hqs.length < 6) {
-    html += '<button class="home-pinned-tile home-pinned-tile-add" onclick="openHomeQuickStampEdit()">';
-    html += '<div class="home-pinned-tile-icon"><span class="material-symbols-rounded">add</span></div>';
-    html += '<span class="home-pinned-tile-label" style="color:var(--ink-light);">追加</span>';
-    html += '</button>';
-  }
-  html += '</div></div>';
 
   // ===== ② To Day カード（写真＋スケジュール） =====
   if (!data.planner) data.planner = { items: [] };
@@ -8466,7 +8450,6 @@ function renderTop() {
       }
       if (_recentPhoto) break;
     }
-    // カバーから取る（フォールバック）
     if (!_recentPhoto) {
       for (const col of _searchFolders) {
         if (col.cover && col.cover.startsWith('photo:')) {
@@ -8477,17 +8460,22 @@ function renderTop() {
     }
   }
 
-  // 写真がある時だけ表示（ない時はno-photoでフルwidth）
+  // 写真エリア：ある→表示、ない→あんずのプレースホルダー
   const _hasPhoto = !!_recentPhoto;
   html += '<div class="home-recent-card">';
   html += '<div class="home-recent-header">';
   html += '<div class="home-recent-title"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">auto_awesome</span>To Day</div>';
   html += '<button class="home-recent-more" onclick="document.querySelector(\'.nav-btn[data-view=&quot;schedule&quot;]\').click()">予定を見る ›</button>';
   html += '</div>';
-  html += '<div class="home-recent-body'+(_hasPhoto ? '' : ' no-photo')+'">';
-  // 左：写真（あれば）→ なければ表示しない
+  html += '<div class="home-recent-body">';
+  // 左：写真 or あんずプレースホルダー
   if (_hasPhoto) {
-    html += '<div class="home-recent-photo" onclick="openHomePhotoModal()" style="background-image:url('+_recentPhoto+');cursor:pointer;"></div>';
+    html += '<div class="home-recent-photo" onclick="openHomePhotoModal()" style="background-image:url('+_recentPhoto+');cursor:pointer;width:80px;height:80px;border-radius:10px;flex-shrink:0;background-size:cover;background-position:center;"></div>';
+  } else {
+    html += '<div class="home-recent-photo" onclick="openHomePhotoModal()" style="cursor:pointer;background:var(--surface-warm);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:80px;height:80px;border-radius:10px;flex-shrink:0;">';
+    html += '<img src="assets/anzu.svg" style="width:32px;height:32px;opacity:0.6;object-fit:contain;">';
+    html += '<span style="font-size:8px;color:var(--ink-light);font-weight:700;text-align:center;line-height:1.3;">写真を<br>飾れるよ</span>';
+    html += '</div>';
   }
   // スケジュール（最大3件）
   if (_todayItems.length === 0) {
@@ -8512,112 +8500,45 @@ function renderTop() {
   html += '</div>';
   html += '</div>';
 
-  // ===== ③ iPhoneアプリ風 アプリグリッド（全部ベタ塗り）=====
-  html += '<div class="app-grid">';
-
-  // ME
-  html += '<button class="app-tile" onclick="goToMeMode()">';
-  html += '<div class="app-tile-icon filled" style="background:#5CAE8A;"><span class="material-symbols-rounded">eco</span></div>';
-  html += '<div class="app-tile-label">ME</div></button>';
-
-  // Nest（15歳未満は非表示）
-  if (!currentUserIsUnder15()) {
-    html += '<button class="app-tile" onclick="goToNestMode()">';
-    html += '<div class="app-tile-icon filled" style="background:#E89A4A;"><span class="material-symbols-rounded">home</span></div>';
-    html += '<div class="app-tile-label">Nest</div></button>';
-  }
-
-  // PET
-  html += '<button class="app-tile" onclick="goToPetMode()">';
-  html += '<div class="app-tile-icon filled" style="background:#A68262;"><span class="material-symbols-rounded">pets</span></div>';
-  html += '<div class="app-tile-label">PET</div></button>';
-
-  // KIDS
-  html += '<button class="app-tile" onclick="goToKidsMode()">';
-  html += '<div class="app-tile-icon filled" style="background:#E88AA0;"><span class="material-symbols-rounded">child_care</span></div>';
-  html += '<div class="app-tile-label">KIDS</div></button>';
-
-  // Health
-  html += '<button class="app-tile" onclick="goToMeMode();setTimeout(()=>setModePageTab(\'me\',\'stamp\'),100);">';
-  html += '<div class="app-tile-icon filled" style="background:#E57373;"><span class="material-symbols-rounded">favorite</span></div>';
-  html += '<div class="app-tile-label">Health</div></button>';
-
-  // Memo
-  html += '<button class="app-tile" onclick="goToMeMode();setTimeout(()=>setModePageTab(\'me\',\'secret\'),100);">';
-  html += '<div class="app-tile-icon filled" style="background:#F0C040;"><span class="material-symbols-rounded">sticky_note_2</span></div>';
-  html += '<div class="app-tile-label">Memo</div></button>';
-
-  // Work
-  html += '<button class="app-tile" onclick="goToMeMode();setTimeout(()=>setModePageTab(\'me\',\'office\'),100);">';
-  html += '<div class="app-tile-icon filled" style="background:#8B7355;"><span class="material-symbols-rounded">work</span></div>';
-  html += '<div class="app-tile-label">Work</div></button>';
-
-  // Atelier
-  html += '<button class="app-tile" onclick="goToAtelierView()">';
-  html += '<div class="app-tile-icon filled" style="background:#B89DD9;"><span class="material-symbols-rounded">palette</span></div>';
-  html += '<div class="app-tile-label">Atelier</div></button>';
-
-  // My Shop
-  html += '<button class="app-tile" onclick="openMyShopList()">';
-  html += '<div class="app-tile-icon filled" style="background:#C8986A;"><span class="material-symbols-rounded">storefront</span>';
-  if (_myShops.length > 1) html += '<span class="app-tile-badge">'+_myShops.length+'</span>';
-  html += '</div>';
-  html += '<div class="app-tile-label">My Shop</div></button>';
-
-  // Town
-  html += '<button class="app-tile" onclick="currentView=\'town\';render();">';
-  html += '<div class="app-tile-icon filled" style="background:#5C9CD4;"><span class="material-symbols-rounded">location_city</span></div>';
-  html += '<div class="app-tile-label">Town</div></button>';
-
-  // Guide（地図・路線・お気に入り）
-  html += '<button class="app-tile" onclick="openTownQuick(\'search\',\'search\')">';
-  html += '<div class="app-tile-icon filled" style="background:#4AADAF;"><span class="material-symbols-rounded">map</span></div>';
-  html += '<div class="app-tile-label">Guide</div></button>';
-
-  // Friend
-  html += '<button class="app-tile" onclick="goToFriendView()">';
-  html += '<div class="app-tile-icon filled" style="background:#7BAFC4;"><span class="material-symbols-rounded">group</span></div>';
-  html += '<div class="app-tile-label">Friend</div></button>';
-
-  html += '</div>';
-
-  // ===== Friend / Diary / ピン留め（折りたたみ）=====
-  const _homeExpanded = data._homeExpanded || false;
-  html += '<div style="padding:0 14px 8px;text-align:center;">';
-  html += '<button onclick="data._homeExpanded='+(!_homeExpanded)+';saveData();render();" style="background:rgba(255,255,255,0.5);border:1px solid var(--line);color:var(--ink-sub);border-radius:100px;padding:6px 18px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">';
-  html += '<span class="material-symbols-rounded" style="font-size:14px;">'+(_homeExpanded?'expand_less':'expand_more')+'</span>';
-  html += _homeExpanded ? 'まとめる' : 'Friend・Diary・ピン留め';
+  // ===== Friend / Diary / ピン留め =====
+  // Friend ボタン
+  const _friendCount = (data.friendships || []).filter(f => f.status === 'active').length;
+  const _pendingCount = (data._pendingRequests || []).length;
+  html += '<div style="padding:0 14px 10px;">';
+  html += '<button class="home-friend-btn" onclick="goToFriendView()">';
+  html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="color:var(--accent-deep);font-size:18px;">group</span></div>';
+  html += '<div style="flex:1;text-align:left;"><div style="font-size:13px;font-weight:800;color:var(--ink-dark);">Friend</div><div style="font-size:10px;color:var(--ink-sub);">'+_friendCount+'人とつながり中</div></div>';
+  html += '<span class="material-symbols-rounded" style="color:var(--ink-light);font-size:18px;">chevron_right</span>';
+  if (_pendingCount > 0) html += '<span style="position:absolute;top:6px;right:38px;background:var(--accent);color:white;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 5px;">'+_pendingCount+'</span>';
   html += '</button></div>';
 
-  if (_homeExpanded) {
-    // ===== Friend ボタン =====
-    const _friendCount = (data.friendships || []).filter(f => f.status === 'active').length;
-    const _pendingCount = (data._pendingRequests || []).length;
-    html += '<div style="padding:0 14px 12px;">';
-    html += '<button class="home-friend-btn" onclick="goToFriendView()">';
-    html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="color:var(--accent-deep);font-size:18px;">group</span></div>';
-    html += '<div style="flex:1;text-align:left;"><div style="font-size:13px;font-weight:800;color:var(--ink-dark);">Friend</div><div style="font-size:10px;color:var(--ink-sub);">'+_friendCount+'人とつながり中</div></div>';
-    html += '<span class="material-symbols-rounded" style="color:var(--ink-light);font-size:18px;">chevron_right</span>';
-    if (_pendingCount > 0) html += '<span style="position:absolute;top:6px;right:38px;background:var(--accent);color:white;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 5px;">'+_pendingCount+'</span>';
-    html += '</button></div>';
+  // Diary カード
+  const _todayKey = 'thought_'+_yyyy+_mm+_dd;
+  const _todayThought = (data.todayThoughts && data.todayThoughts[_todayKey]) || '';
+  html += '<div class="home-quick-card">';
+  html += '<div class="home-quick-title"><span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">edit_note</span>Diary</div>';
+  html += '<div class="home-quick-row">';
+  html += '<textarea id="homeQuickInput" class="home-quick-input" placeholder="">'+escapeHtml(_todayThought)+'</textarea>';
+  html += '<button class="home-quick-btn" onclick="saveHomeQuickThought()">記録</button>';
+  html += '</div></div>';
 
-    // ===== Diary カード =====
-    const _todayKey = 'thought_'+_yyyy+_mm+_dd;
-    const _todayThought = (data.todayThoughts && data.todayThoughts[_todayKey]) || '';
-    html += '<div class="home-quick-card">';
-    html += '<div class="home-quick-title"><span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">edit_note</span>Diary</div>';
-    html += '<div class="home-quick-row">';
-    html += '<textarea id="homeQuickInput" class="home-quick-input" placeholder="">'+escapeHtml(_todayThought)+'</textarea>';
-    html += '<button class="home-quick-btn" onclick="saveHomeQuickThought()">記録</button>';
-    html += '</div></div>';
+  // ===== 地図・路線・お気に入り =====
+  html += '<div style="padding:0 14px 12px;display:flex;gap:6px;">';
+  html += '<button onclick="openTownQuick(\'search\',\'search\')" style="flex:1;padding:7px 4px;background:#FFFFFF;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  html += '<span class="material-symbols-rounded" style="font-size:16px;color:#1FA8C9;">map</span>';
+  html += '<span style="font-size:11px;font-weight:700;color:var(--ink-sub);">地図</span>';
+  html += '</button>';
+  html += '<button onclick="openTownQuick(\'search\',\'transit\')" style="flex:1;padding:7px 4px;background:#FFFFFF;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  html += '<span class="material-symbols-rounded" style="font-size:16px;color:#4A90E2;">train</span>';
+  html += '<span style="font-size:11px;font-weight:700;color:var(--ink-sub);">路線</span>';
+  html += '</button>';
+  html += '<button onclick="openTownQuick(\'search\',\'fav\')" style="flex:1;padding:7px 4px;background:#FFFFFF;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  html += '<span class="material-symbols-rounded" style="font-size:16px;color:#E94B6F;">favorite</span>';
+  html += '<span style="font-size:11px;font-weight:700;color:var(--ink-sub);">お気に入り</span>';
+  html += '</button>';
+  html += '</div>';
 
-    // ===== ピン留め =====
-    if (typeof renderPinnedStampsRow === 'function') {
-      html += '<div style="margin:10px 0 0;">';
-      html += renderPinnedStampsRow('me');
-      html += '</div>';
-    }
-  }
+  // ピン留めは上部に移動済み
 
   html += '<div style="height: 24px;"></div>';
   app.innerHTML = html;
@@ -10514,7 +10435,7 @@ function togglePinnedStamp(source, icon, name) {
     data[key].splice(idx, 1);
     showToast('ピン留め解除');
   } else {
-    if (data[key].length >= 10) { showToast('ピン留めは最大10個までやで'); return; }
+    if (data[key].length >= 999) { showToast('ピン留めは最大10個までやで'); return; }
     data[key].push({icon, name});
     showToast('📌 ピン留めしたよ');
   }
@@ -10547,7 +10468,7 @@ function toggleStampPin(icon, name, ev) {
   if (idx >= 0) {
     data.pinnedStamps.splice(idx, 1);
   } else {
-    if (data.pinnedStamps.length >= 10) { showToast('ピン留めは10個までやで'); return; }
+    if (data.pinnedStamps.length >= 999) { showToast('ピン留めは10個までやで'); return; }
     data.pinnedStamps.unshift({ icon, name });
   }
   saveData();
@@ -10560,17 +10481,17 @@ function renderPinnedStampsRow(source) {
   const pinned = source === 'office' ? (data.pinnedOfficeStamps||[]) : (data.pinnedStamps||[]);
   const tapFn = source === 'office' ? 'tapOfficeStamp' : 'tapStamp';
   const dataAttr = source === 'office' ? 'data-office-pinned-stamps' : 'data-pinned-stamps';
-  let h = '<div '+dataAttr+' style="margin:0 12px 10px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
-  h += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;"><span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);">push_pin</span><span style="font-size:10px;font-weight:800;color:var(--accent-deep);letter-spacing:0.5px;">ピン留め</span><span style="font-size:9px;color:var(--ink-sub);">('+pinned.length+'/10)</span></div>';
+  let h = '<div '+dataAttr+' style="margin:0 12px 10px;background:white;border:1px solid var(--line);border-radius:12px;padding:6px 10px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  h += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;"><span class="material-symbols-rounded" style="font-size:12px;color:var(--accent-deep);">push_pin</span><span style="font-size:9.5px;font-weight:800;color:var(--accent-deep);">ピン留め</span><span style="font-size:8.5px;color:var(--ink-sub);">'+pinned.length+'個</span></div>';
   if (pinned.length === 0) {
-    h += '<div style="text-align:center;color:var(--ink-light);font-size:9.5px;line-height:1.6;padding:6px 4px;">スタンプの📌ボタンでピン留めできるよ</div>';
+    h += '<div style="text-align:center;color:var(--ink-light);font-size:9px;padding:2px 4px 3px;">スタンプの📌ボタンでピン留めできるよ</div>';
   } else {
-    h += '<div style="display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px;">';
+    h += '<div style="display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1px;">';
     for (const s of pinned) {
       const safeName = escapeHtml(s.name).replace(/'/g,"\\'");
-      h += '<button onclick="'+tapFn+'(\''+s.icon+'\',\''+safeName+'\',event)" style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;width:54px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;cursor:pointer;font-family:inherit;">';
-      h += '<span style="font-size:18px;line-height:1;color:var(--accent-deep);">'+renderStampIcon(s.icon,'font-size:18px;line-height:1;color:var(--accent-deep);')+'</span>';
-      h += '<span style="font-size:8.5px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.1;">'+escapeHtml(s.name)+'</span>';
+      h += '<button onclick="'+tapFn+'(\''+s.icon+'\',\''+safeName+'\',event)" style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 3px;width:44px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:8px;cursor:pointer;font-family:inherit;">';
+      h += '<span style="font-size:16px;line-height:1;color:var(--accent-deep);">'+renderStampIcon(s.icon,'font-size:16px;line-height:1;color:var(--accent-deep);')+'</span>';
+      h += '<span style="font-size:8px;font-weight:700;color:var(--accent-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.1;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
     }
     h += '</div>';
@@ -23391,7 +23312,7 @@ function toggleOfficeStampPin(icon, name, ev) {
   if (idx >= 0) {
     data.pinnedOfficeStamps.splice(idx, 1);
   } else {
-    if (data.pinnedOfficeStamps.length >= 10) { showToast('ピン留めは10個までやで'); return; }
+    if (data.pinnedOfficeStamps.length >= 999) { showToast('ピン留めは10個までやで'); return; }
     data.pinnedOfficeStamps.unshift({ icon, name });
   }
   saveData();
@@ -29788,7 +29709,7 @@ function togglePetStampPin(icon, name, ev) {
   if (idx >= 0) {
     _getCareStore().pinned.splice(idx, 1);
   } else {
-    if (_getCareStore().pinned.length >= 10) { showToast('ピン留めは10個までやで'); return; }
+    if (_getCareStore().pinned.length >= 999) { showToast('ピン留めは10個までやで'); return; }
     _getCareStore().pinned.unshift({ icon, name });
   }
   saveData();
@@ -36592,14 +36513,81 @@ function renderTown() {
       html += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.7;">まだ作品が置かれていません🌷<br>AtelierかマイショップのE/F型から投稿してみよう</div>';
       html += '</div>';
     } else {
-      html += '<div style="padding:14px 16px 8px;display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">auto_stories</span><span style="font-size:13px;font-weight:800;color:var(--ink-dark);">まちの本棚</span><span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 8px;border-radius:100px;font-weight:700;">'+_allItems.length+'作品</span></div>';
+      // ── フィルター状態 ──
+      if (!data.townBookFilter) data.townBookFilter = { showPhoto:true, showText:true, tags:[], keyword:'' };
+      const _bf = data.townBookFilter;
 
-      // 写真・アート系 → グリッド
-      const _photoItems = _allItems.filter(x => (x.source==='atelier' && (x.type==='photo'||x.type==='art'||x.type==='mix')) || (x.source==='shop' && x.shop.template==='F'));
-      if (_photoItems.length > 0) {
+      // 全ハッシュタグ収集
+      const _allTags = new Set();
+      for (const x of _allItems) {
+        const _tags = x.source==='atelier' ? (x.atelier.tags||[]) : (x.shop.tags||[]);
+        for (const t of _tags) if (t) _allTags.add(t);
+      }
+      const _tagList = [..._allTags];
+
+      // ── コンパクトヘッダーバー ──
+      html += '<div style="padding:8px 12px 6px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">';
+      // タイトル＋件数
+      html += '<div style="display:flex;align-items:center;gap:4px;margin-right:2px;">';
+      html += '<span class="material-symbols-rounded" style="font-size:15px;color:var(--accent-deep);">auto_stories</span>';
+      html += '<span style="font-size:12px;font-weight:900;color:var(--ink-dark);">まちの本棚</span>';
+      html += '<span style="font-size:10px;color:var(--ink-sub);background:var(--surface-warm);padding:1px 7px;border-radius:100px;font-weight:700;">'+_allItems.length+'作品</span>';
+      html += '</div>';
+      // 写真チェック
+      html += '<button onclick="_toggleBookFilter(\'photo\')" style="padding:4px 9px;border-radius:100px;border:1.5px solid '+(_bf.showPhoto?'var(--accent)':'var(--line)')+';background:'+(_bf.showPhoto?'var(--accent-bg)':'white')+';color:'+(_bf.showPhoto?'var(--accent-deep)':'var(--ink-light)')+';font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;">';
+      html += '<span class="material-symbols-rounded" style="font-size:12px;">'+ (_bf.showPhoto?'check_box':'check_box_outline_blank') +'</span>写真</button>';
+      // 読み物チェック
+      html += '<button onclick="_toggleBookFilter(\'text\')" style="padding:4px 9px;border-radius:100px;border:1.5px solid '+(_bf.showText?'var(--accent)':'var(--line)')+';background:'+(_bf.showText?'var(--accent-bg)':'white')+';color:'+(_bf.showText?'var(--accent-deep)':'var(--ink-light)')+';font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;">';
+      html += '<span class="material-symbols-rounded" style="font-size:12px;">'+ (_bf.showText?'check_box':'check_box_outline_blank') +'</span>読み物</button>';
+      // # タグ
+      const _activeTagCount = _bf.tags.length;
+      html += '<button onclick="_openBookTagFilter('+JSON.stringify(_tagList)+')" style="padding:4px 9px;border-radius:100px;border:1.5px solid '+(_activeTagCount>0?'var(--accent)':'var(--line)')+';background:'+(_activeTagCount>0?'var(--accent-bg)':'white')+';color:'+(_activeTagCount>0?'var(--accent-deep)':'var(--ink-light)')+';font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;">';
+      html += '#' + (_activeTagCount>0?' '+_activeTagCount:'') +'</button>';
+      // 🔍 キーワード検索
+      if (window._bookSearchOpen) {
+        html += '<input id="bookKeywordInput" type="text" value="'+escapeHtml(_bf.keyword||'')+'" placeholder="キーワード" oninput="_updateBookKeyword(this.value)" style="flex:1;min-width:80px;padding:4px 8px;border:1.5px solid var(--accent);border-radius:100px;font-family:inherit;font-size:11px;background:white;">';
+        html += '<button onclick="window._bookSearchOpen=false;data.townBookFilter.keyword=\'\';saveData();renderTown();" style="padding:4px;background:none;border:none;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-light);">close</span></button>';
+      } else {
+        html += '<button onclick="window._bookSearchOpen=true;renderTown();" style="padding:4px 8px;border-radius:100px;border:1.5px solid var(--line);background:white;cursor:pointer;display:flex;align-items:center;gap:3px;color:var(--ink-sub);font-family:inherit;font-size:10.5px;font-weight:700;">';
+        html += '<span class="material-symbols-rounded" style="font-size:14px;">search</span></button>';
+      }
+      html += '</div>';
+
+      // アクティブタグ表示
+      if (_activeTagCount > 0) {
+        html += '<div style="padding:0 12px 6px;display:flex;gap:5px;flex-wrap:wrap;">';
+        for (const tg of _bf.tags) {
+          html += '<span style="background:var(--accent-bg);border:1px solid var(--accent);border-radius:100px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--accent-deep);">#'+escapeHtml(tg)+'</span>';
+        }
+        html += '</div>';
+      }
+
+      // フィルター適用
+      const _kw = (_bf.keyword||'').toLowerCase();
+      const _filteredPhoto = _photoItems.filter(x => {
+        if (!_bf.showPhoto) return false;
+        const _tags2 = x.source==='atelier' ? (x.atelier.tags||[]) : (x.shop.tags||[]);
+        if (_bf.tags.length > 0 && !_bf.tags.some(t => _tags2.includes(t))) return false;
+        if (_kw) {
+          const _title = (x.source==='atelier' ? x.series.title : x.post.title)||'';
+          if (!_title.toLowerCase().includes(_kw)) return false;
+        }
+        return true;
+      });
+      const _filteredText = _textItems.filter(x => {
+        if (!_bf.showText) return false;
+        const _tags2 = x.source==='atelier' ? (x.atelier.tags||[]) : (x.shop.tags||[]);
+        if (_bf.tags.length > 0 && !_bf.tags.some(t => _tags2.includes(t))) return false;
+        if (_kw) {
+          const _title = (x.source==='atelier' ? x.series.title : x.post.title)||'';
+          if (!_title.toLowerCase().includes(_kw)) return false;
+        }
+        return true;
+      });
+      if (_filteredPhoto.length > 0) {
         html += '<div style="padding:10px 16px 6px;font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">photo_library</span>写真の窓</div>';
         html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:0 16px 14px;">';
-        for (const x of _photoItems.slice(0, 6)) {
+        for (const x of _filteredPhoto.slice(0, 6)) {
           if (x.source === 'atelier') {
             const a = x.atelier; const s = x.series;
             const cd = a.cardDesign || {color:'#7BB8E0',pattern:'solid'};
@@ -36625,12 +36613,10 @@ function renderTown() {
         html += '</div>';
       }
 
-      // 小説・日記・テキスト系 → リスト
-      const _textItems = _allItems.filter(x => (x.source==='atelier' && (x.type==='novel'||x.type==='diary')) || (x.source==='shop' && x.shop.template==='E'));
-      if (_textItems.length > 0) {
+      if (_filteredText.length > 0) {
         html += '<div style="padding:10px 16px 6px;font-size:11px;font-weight:800;color:var(--ink-sub);display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:13px;">menu_book</span>新しく置かれた本</div>';
         html += '<div style="padding:0 16px 14px;display:flex;flex-direction:column;gap:8px;">';
-        for (const x of _textItems.slice(0, 8)) {
+        for (const x of _filteredText.slice(0, 8)) {
           if (x.source === 'atelier') {
             const a = x.atelier; const s = x.series;
             const cd = a.cardDesign || {color:'#7BB8E0',pattern:'solid'};
@@ -36689,6 +36675,56 @@ function renderTown() {
     document.getElementById('app').innerHTML = html;
     return;
   }
+
+  // ===== 本屋フィルター関数 =====
+  window._toggleBookFilter = window._toggleBookFilter || function(type) {
+    if (!data.townBookFilter) data.townBookFilter = { showPhoto:true, showText:true, tags:[], keyword:'' };
+    if (type === 'photo') data.townBookFilter.showPhoto = !data.townBookFilter.showPhoto;
+    if (type === 'text') data.townBookFilter.showText = !data.townBookFilter.showText;
+    saveData(); renderTown();
+  };
+  window._updateBookKeyword = window._updateBookKeyword || function(val) {
+    if (!data.townBookFilter) data.townBookFilter = { showPhoto:true, showText:true, tags:[], keyword:'' };
+    data.townBookFilter.keyword = val;
+    saveData(); renderTown();
+  };
+  window._openBookTagFilter = window._openBookTagFilter || function(tagList) {
+    const ex = document.getElementById('bookTagModal');
+    if (ex) { ex.remove(); return; }
+    if (!data.townBookFilter) data.townBookFilter = { showPhoto:true, showText:true, tags:[], keyword:'' };
+    const selected = new Set(data.townBookFilter.tags);
+    let h = '<div id="bookTagModal" style="position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.4);display:flex;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)document.getElementById(\'bookTagModal\').remove();">';
+    h += '<div style="width:100%;max-width:520px;background:white;border-radius:20px 20px 0 0;padding:16px 16px 40px;">';
+    h += '<div style="font-size:14px;font-weight:900;color:var(--ink-dark);margin-bottom:12px;">#ハッシュタグで絞り込む</div>';
+    if (tagList.length === 0) {
+      h += '<div style="text-align:center;color:var(--ink-light);font-size:12px;padding:16px;">タグがまだないよ</div>';
+    } else {
+      h += '<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;">';
+      for (const tg of tagList) {
+        const isActive = selected.has(tg);
+        h += '<button onclick="_toggleBookTag(\''+escapeHtml(tg)+'\')" style="padding:5px 12px;border-radius:100px;border:1.5px solid '+(isActive?'var(--accent)':'var(--line)')+';background:'+(isActive?'var(--accent-bg)':'white')+';color:'+(isActive?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">#'+escapeHtml(tg)+'</button>';
+      }
+      h += '</div>';
+    }
+    h += '<button onclick="data.townBookFilter.tags=[];saveData();document.getElementById(\'bookTagModal\').remove();renderTown();" style="width:100%;padding:10px;background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink-sub);">タグをリセット</button>';
+    h += '</div></div>';
+    document.body.insertAdjacentHTML('beforeend', h);
+  };
+  window._toggleBookTag = window._toggleBookTag || function(tag) {
+    if (!data.townBookFilter) data.townBookFilter = { showPhoto:true, showText:true, tags:[], keyword:'' };
+    const idx = data.townBookFilter.tags.indexOf(tag);
+    if (idx >= 0) data.townBookFilter.tags.splice(idx, 1);
+    else data.townBookFilter.tags.push(tag);
+    saveData();
+    const btn = [...document.querySelectorAll('#bookTagModal button')].find(b => b.textContent === '#'+tag);
+    if (btn) {
+      const active = data.townBookFilter.tags.includes(tag);
+      btn.style.borderColor = active ? 'var(--accent)' : 'var(--line)';
+      btn.style.background = active ? 'var(--accent-bg)' : 'white';
+      btn.style.color = active ? 'var(--accent-deep)' : 'var(--ink-sub)';
+    }
+    renderTown();
+  };
 
   // ── 掲示板タブ
   if (townMainTab === 'board') {
