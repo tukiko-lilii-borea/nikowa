@@ -8652,6 +8652,9 @@ function renderTop() {
     .filter(s => s.date === _todayDateKey)
     .sort((a,b) => (a.time||'99:99').localeCompare(b.time||'99:99'))
     .slice(0, 3);
+
+  // 写真取得：選ばれたフォルダ優先、なければ全コレクションから最新
+  let _recentPhoto = null;
   if (!_photoSettings.hidden && data.collections && data.collections.length > 0) {
     let _searchFolders = data.collections;
     if (_photoSettings.folderId) {
