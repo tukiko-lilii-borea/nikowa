@@ -8671,12 +8671,8 @@ function renderTop() {
     .slice(0, 4);
 
   // ===== ① 今日の気分（5択） =====
-  // 今日のmoodスタンプを取得
-  const _todayMs = new Date(_yyyy+'-'+_mm+'-'+_dd+'T00:00:00').getTime();
-  const _tomorrowMs = _todayMs + 24*60*60*1000;
-  const _todayMood = (data.stampHistory || []).find(s =>
-    s.category === 'mood' && s.timestamp >= _todayMs && s.timestamp < _tomorrowMs
-  );
+  // 直近の気分（最新1件）
+  const _todayMood = (data.stampHistory || []).find(s => s.category === 'mood');
   const _moods = [
     { id:'very_good', icon:'sentiment_very_satisfied', label:'とても良い', color:'#F5A29B' },
     { id:'good',      icon:'sentiment_satisfied',      label:'良い',       color:'#F5C76B' },
@@ -8687,7 +8683,7 @@ function renderTop() {
   html += '<div style="margin:0 14px 12px;background:white;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;">';
   html += '<div style="display:flex;align-items:center;gap:8px;">';
   html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);flex-shrink:0;">mood</span>';
-  html += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);flex-shrink:0;">今日の気分</span>';
+  html += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);flex-shrink:0;">今の気分</span>';
   html += '<div style="flex:1;display:flex;justify-content:space-around;">';
   for (const m of _moods) {
     const isActive = _todayMood && _todayMood.moodId === m.id;
@@ -8696,68 +8692,48 @@ function renderTop() {
     html += '</button>';
   }
   html += '</div>';
-  if (_todayMood) html += '<span style="font-size:10px;color:var(--ink-light);flex-shrink:0;">🌷</span>';
   html += '</div>';
   html += '</div>';
 
-  // 写真取得（今日のセクション左側に表示）
+  // 写真取得
   let _recentPhoto = null;
   const _photoSettings = data.homePhotoSettings || {};
   if (!_photoSettings.hidden && data.collections && data.collections.length > 0) {
-    let _searchFolders = data.collections;
-    if (_photoSettings.folderId) {
-      const _sel = data.collections.find(c => c.id === _photoSettings.folderId);
-      if (_sel) _searchFolders = [_sel];
-    }
-    for (const col of _searchFolders) {
-      const items = col.items || [];
-      for (let i = items.length - 1; i >= 0; i--) {
-        const it = items[i];
-        if (it && it.photo) { _recentPhoto = it.photo; break; }
-        if (it && it.image) { _recentPhoto = it.image; break; }
-      }
-      if (_recentPhoto) break;
-    }
-    if (!_recentPhoto) {
-      for (const col of _searchFolders) {
-        if (col.cover && col.cover.startsWith('photo:')) {
-          _recentPhoto = 'data:image/jpeg;base64,' + col.cover.slice(6);
-          break;
-        }
-      }
-    }
+    let _sf = data.collections;
+    if (_photoSettings.folderId) { const _s = data.collections.find(c=>c.id===_photoSettings.folderId); if (_s) _sf=[_s]; }
+    for (const col of _sf) { const items=col.items||[]; for (let i=items.length-1;i>=0;i--) { const it=items[i]; if(it&&it.photo){_recentPhoto=it.photo;break;} if(it&&it.image){_recentPhoto=it.image;break;} } if(_recentPhoto)break; }
+    if (!_recentPhoto) { for (const col of _sf) { if(col.cover&&col.cover.startsWith('photo:')){_recentPhoto='data:image/jpeg;base64,'+col.cover.slice(6);break;} } }
   }
 
-  // ===== ② 今日の予定（カレンダー） =====
-  html += '<div style="margin:0 14px 12px;background:white;border:1.5px solid var(--line);border-radius:16px;padding:14px;">';
-  html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">';
-  html += '<span class="material-symbols-rounded" style="font-size:16px;color:var(--accent-deep);">calendar_month</span>';
-  html += '<span style="font-size:12px;font-weight:800;color:var(--ink-dark);">今日の予定</span>';
-  html += '<button onclick="currentView=\'schedule\';render();" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--accent-deep);font-size:11px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:3px;">予定を見る <span class="material-symbols-rounded" style="font-size:14px;">chevron_right</span></button>';
-  html += '</div>';
-  // 写真＋スケジュール横並び
-  html += '<div style="display:flex;gap:12px;align-items:flex-start;">';
-  // 左：写真
+  // ===== ② 今日の予定（写真｜縦線｜予定） =====
+  html += '<div style="margin:0 14px 12px;background:white;border:1.5px solid var(--line);border-radius:16px;overflow:hidden;">';
+  html += '<div style="display:flex;align-items:stretch;">';
+  // 左：写真（タップで変更）
   if (_recentPhoto) {
-    html += '<div onclick="openHomePhotoModal()" style="width:72px;height:72px;border-radius:12px;flex-shrink:0;cursor:pointer;background-image:url('+_recentPhoto+');background-size:cover;background-position:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);"></div>';
+    html += '<div onclick="openHomePhotoModal()" style="width:80px;flex-shrink:0;cursor:pointer;background-image:url('+_recentPhoto+');background-size:cover;background-position:center;"></div>';
   } else {
-    html += '<div onclick="openHomePhotoModal()" style="width:72px;height:72px;border-radius:12px;flex-shrink:0;cursor:pointer;background:var(--surface-warm);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">';
-    html += '<img src="assets/anzu.svg" style="width:28px;height:28px;opacity:0.5;object-fit:contain;">';
-    html += '<span style="font-size:8px;color:var(--ink-light);font-weight:700;text-align:center;line-height:1.3;">写真を<br>飾れるよ</span>';
+    html += '<div onclick="openHomePhotoModal()" style="width:80px;flex-shrink:0;cursor:pointer;background:var(--surface-warm);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;">';
+    html += '<span style="font-size:8px;color:var(--accent-deep);font-weight:700;letter-spacing:0.3px;">タップで変更</span>';
+    html += '<img src="assets/anzu.svg" style="width:48px;height:48px;opacity:0.7;object-fit:contain;">';
     html += '</div>';
   }
-  // 右：スケジュール
-  html += '<div style="flex:1;">';
+  // 縦ライン
+  html += '<div style="width:1px;background:var(--line);flex-shrink:0;"></div>';
+  // 右：今日の予定
+  html += '<div style="flex:1;padding:10px 12px;min-height:80px;">';
+  html += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:7px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);">calendar_month</span>';
+  html += '<span style="font-size:10px;font-weight:800;color:var(--ink-sub);">今日の予定</span>';
+  html += '<button onclick="currentView=\'schedule\';render();" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--accent-deep);font-size:10px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:2px;">見る <span class="material-symbols-rounded" style="font-size:12px;">chevron_right</span></button>';
+  html += '</div>';
   if (_todayItems.length === 0) {
-    html += '<div style="text-align:center;padding:8px 0;">';
-    html += '<div style="font-size:11px;color:var(--ink-light);margin-bottom:8px;">今日の予定はないよ</div>';
-    html += '<button onclick="currentView=\'schedule\';render();" style="padding:7px 14px;background:var(--accent-bg);border:1.5px solid var(--accent);color:var(--accent-deep);border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>予定を追加</button>';
-    html += '</div>';
+    html += '<div style="font-size:10px;color:var(--ink-light);margin-bottom:7px;">今日の予定はないよ</div>';
+    html += '<button onclick="currentView=\'schedule\';render();" style="padding:5px 12px;background:var(--accent-bg);border:1.5px solid var(--accent);color:var(--accent-deep);border-radius:100px;font-family:inherit;font-size:10px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:12px;">add</span>追加</button>';
   } else {
-    html += '<div style="display:flex;flex-direction:column;gap:5px;">';
+    html += '<div style="display:flex;flex-direction:column;gap:4px;">';
     for (const item of _todayItems) {
-      html += '<div style="display:flex;align-items:center;gap:8px;">';
-      html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">'+(item.icon||'event')+'</span>';
+      html += '<div style="display:flex;align-items:center;gap:6px;">';
+      html += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);">'+(item.icon||'event')+'</span>';
       html += '<span style="font-size:11px;font-weight:700;color:var(--ink-dark);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(item.title||'')+'</span>';
       if (item.time) html += '<span style="font-size:10px;color:var(--ink-sub);flex-shrink:0;">'+escapeHtml(item.time)+'</span>';
       html += '</div>';
@@ -8844,6 +8820,11 @@ function renderTop() {
   html += '<button onclick="openTownQuick(\'search\',\'fav\')" style="padding:10px 4px;background:#FFFFFF;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   html += '<span class="material-symbols-rounded" style="font-size:20px;color:#E94B6F;">favorite</span>';
   html += '<span style="font-size:10px;font-weight:700;color:var(--ink-sub);">お気に入り</span>';
+  html += '</button>';
+  // Memo（2列目1つ目）
+  html += '<button onclick="_goToMemoTab()" style="padding:10px 4px;background:#FFFFFF;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;color:#E89A4A;">sticky_note_2</span>';
+  html += '<span style="font-size:10px;font-weight:700;color:var(--ink-sub);">メモ</span>';
   html += '</button>';
   html += '</div>';
 
@@ -9622,32 +9603,18 @@ window._goToMemoTab = function() {
 // ホームの気分記録
 window.recordHomeMood = function(moodId, icon, label, color) {
   if (!data.stampHistory) data.stampHistory = [];
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth()+1).padStart(2,'0');
-  const d = String(now.getDate()).padStart(2,'0');
-  const todayMs = new Date(y+'-'+m+'-'+d+'T00:00:00').getTime();
-  const tomorrowMs = todayMs + 24*60*60*1000;
-  // 今日の既存moodを削除（上書き）
-  data.stampHistory = data.stampHistory.filter(s =>
-    !(s.category === 'mood' && s.timestamp >= todayMs && s.timestamp < tomorrowMs)
-  );
-  // 新しいmoodを記録
+  // 今の気分：何度でも記録OK（上書きしない）
   data.stampHistory.unshift({
     id: 'st_mood_' + Date.now(),
-    icon: icon,
-    name: label,
-    moodId: moodId,
-    color: color,
-    category: 'mood',
-    timestamp: Date.now(),
+    icon: icon, name: label, moodId: moodId, color: color,
+    category: 'mood', timestamp: Date.now(),
     source: 'home_mood',
     by: typeof _getCurrentUserBy === 'function' ? _getCurrentUserBy() : null
   });
   if (data.stampHistory.length > 100) data.stampHistory = data.stampHistory.slice(0, 100);
   saveData();
-  if (typeof showToast === 'function') showToast(label+' を記録したよ 🌷');
   render();
+  setTimeout(() => { if (typeof showToast === 'function') showToast(label+' を記録したよ 🌷'); }, 50);
 };
 
 function openHomeTodoAdd() {
