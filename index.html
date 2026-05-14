@@ -524,7 +524,82 @@
     color: var(--ink-light);
   }
 
-  /* ===== iPhoneアプリ風 アイコングリッド ===== */
+  /* ===== PC / iPad レスポンシブ ===== */
+  @media (min-width: 900px) {
+    body {
+      display: flex;
+      flex-direction: row;
+      background: var(--bg);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    #pcSidebar {
+      display: flex !important;
+      flex-direction: column;
+      width: 220px;
+      flex-shrink: 0;
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1.5px solid var(--line);
+      overflow-y: auto;
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      z-index: 100;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.06);
+    }
+    .app-frame {
+      margin-left: 220px;
+      flex: 1;
+      height: 100vh;
+      overflow-y: auto;
+      max-width: 900px;
+    }
+    .bottom-nav { display: none !important; }
+    .app { padding-bottom: 20px !important; }
+    /* PCホームグリッド */
+    .home-pc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      padding: 14px;
+    }
+    .home-pc-col { display: flex; flex-direction: column; gap: 12px; }
+    /* PC用サイドバーナビ */
+    .pc-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-sub);
+      width: 100%;
+      border-radius: 0;
+      transition: background 0.15s;
+      text-align: left;
+    }
+    .pc-nav-item:hover { background: var(--surface-warm); }
+    .pc-nav-item.active {
+      background: var(--accent-bg);
+      color: var(--accent-deep);
+      border-right: 3px solid var(--accent);
+    }
+    .pc-nav-item .material-symbols-rounded { font-size: 20px; }
+  }
+  @media (min-width: 600px) and (max-width: 899px) {
+    /* iPad縦: コンパクト2カラム */
+    .home-pc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 12px;
+    }
+    .home-pc-col { display: flex; flex-direction: column; gap: 10px; }
+  }
   .app-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -4022,6 +4097,9 @@
   <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');</script>
 </head>
 <body>
+
+<!-- PC/iPad用サイドバー -->
+<div id="pcSidebar" style="display:none;"></div>
 
 <div class="app-frame">
 <div class="app" id="app"></div>
@@ -8338,7 +8416,10 @@ function infoBarHtml() {
 
 function renderTop() {
   document.getElementById('bottomNav').style.display = 'flex';
-  setActiveNav('houses'); // ボトムナビは「ホーム」をアクティブに
+  setActiveNav('houses');
+  renderPCSidebar(); // PC/iPad サイドバー更新
+  const _isPC = window.innerWidth >= 900;
+  const _isTablet = window.innerWidth >= 600 && window.innerWidth < 900;
   const app = document.getElementById('app');
   const userName = data.user.name || '';
   
@@ -8541,7 +8622,13 @@ function renderTop() {
   // ピン留めは上部に移動済み
 
   html += '<div style="height: 24px;"></div>';
-  app.innerHTML = html;
+
+  // PC/タブレット: サイドバー + グリッドレイアウト
+  if (_isPC || _isTablet) {
+    app.innerHTML = _buildPCHomeLayout(html);
+  } else {
+    app.innerHTML = html;
+  }
 }
 
 function openMyShopList() {
@@ -27234,7 +27321,112 @@ window.renderOtherWorksByAuthor = renderOtherWorksByAuthor;
 // ===== 他の作品セクション ここまで =====
 
 // ===== Atelier 開設フロー =====
-// ===== にこわ公式タグ =====
+// ===== PCホームレイアウト構築 =====
+function _buildPCHomeLayout(mobileHtml) {
+  const _isTablet = window.innerWidth >= 600 && window.innerWidth < 900;
+  // hero + weather pill はフル幅
+  const _heroMatch = mobileHtml.match(/<div class="hero-section">[\s\S]*?<\/div>\s*<!-- hero end/);
+  // 各セクションをID/クラスで抽出するヘルパー
+  const _extract = (pattern) => { const m = mobileHtml.match(pattern); return m ? m[0] : ''; };
+
+  // weatherpill行
+  const _weatherRow = _extract(/<div style="padding:10px 14px 6px;display:flex[\s\S]*?<\/div>\s*<\/div>/);
+  // ピン留め
+  const _pinned = _extract(/data-pinned-stamps[^>]*>[\s\S]*?<\/div>\s*<\/div>/);
+  // ToDay card
+  const _today = _extract(/class="home-recent-card"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/);
+  // Friend
+  const _friend = _extract(/class="home-friend-btn"[\s\S]*?<\/button>\s*<\/div>/);
+  // Diary
+  const _diary = _extract(/class="home-quick-card"[\s\S]*?<\/div>\s*<\/div>/);
+  // 地図・路線・お気に入り
+  const _mapBtns = _extract(/<div style="padding:0 14px 12px;display:flex[\s\S]*?<\/div>/);
+
+  let h = '';
+  // hero全体（ロゴ・天気pill含む）はフル幅
+  h += '<div class="hero-section">' + mobileHtml.replace(/<div class="hero-section">/, '').split('</div>')[0] + '</div>';
+  // 実際はhero-sectionを丸ごと入れる
+  h = mobileHtml.split('<div style="margin:0 14px 10px;background:#FFFFFF')[0]; // hero+weatherまで
+  h += '</div>'; // hero-section close
+
+  // PC グリッド
+  h += `<div class="${_isTablet ? 'home-pc-grid' : 'home-pc-grid'}" style="padding:14px;">`;
+
+  // Col 1: ピン留め + ToDay
+  h += '<div class="home-pc-col">';
+  h += mobileHtml.includes('data-pinned-stamps') ?
+    mobileHtml.substring(mobileHtml.indexOf('data-pinned-stamps') - 50, mobileHtml.indexOf('class="home-recent-card"') + 200) : '';
+  h += '</div>';
+
+  // Col 2: Friend + Diary
+  h += '<div class="home-pc-col">';
+  if (_friend) h += '<div style="padding:0 0 10px;">' + _friend + '</div>';
+  if (_diary) h += _diary;
+  h += '</div>';
+
+  // Col 3: 地図・路線・お気に入り
+  h += '<div class="home-pc-col">';
+  if (_mapBtns) h += _mapBtns;
+  h += '</div>';
+
+  h += '</div>'; // grid end
+
+  // フォールバック：regex抽出が失敗したらモバイルそのまま
+  if (!_friend && !_diary) return mobileHtml;
+  return h;
+}
+window._buildPCHomeLayout = _buildPCHomeLayout;
+// ===== PCホームレイアウト END =====
+function renderPCSidebar() {
+  const sb = document.getElementById('pcSidebar');
+  if (!sb) return;
+  if (window.innerWidth < 900) { sb.style.display = 'none'; return; }
+
+  const _uname = (data.user && data.user.name) || (data.myProfile && data.myProfile.name) || 'にこわ';
+  const _cv = currentView;
+
+  const _navItems = [
+    { key:'top',      icon:'home',         label:'ホーム',    action:`currentView='top';render();` },
+    { key:'me_stamp', icon:'wb_sunny',      label:'今日の記録', action:`goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
+    { key:'schedule', icon:'calendar_month',label:'カレンダー', action:`currentView='schedule';render();` },
+    { key:'nest',     icon:'home',          label:'家族',      action:`goToNestMode();` },
+    { key:'pet',      icon:'pets',          label:'ペット',    action:`goToPetMode();` },
+    { key:'health',   icon:'favorite',      label:'けんこう',  action:`goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
+    { key:'memo',     icon:'sticky_note_2', label:'メモ',      action:`goToMeMode();setTimeout(()=>setModePageTab('me','secret'),100);` },
+    { key:'town',     icon:'location_city', label:'まち',      action:`currentView='town';render();` },
+    { key:'atelier',  icon:'palette',       label:'お店・制作', action:`goToAtelierView();` },
+  ];
+
+  let h = '';
+  // ロゴ
+  h += '<div style="padding:18px 16px 12px;border-bottom:1px solid var(--line);">';
+  h += '<div style="display:flex;align-items:center;gap:10px;">';
+  h += nikowaLogoHtml ? nikowaLogoHtml(28) : '<span style="font-size:18px;font-weight:900;color:var(--accent-deep);">nikowa.</span>';
+  h += '</div>';
+  h += '<div style="font-size:11px;color:var(--ink-sub);margin-top:6px;font-weight:700;">'+escapeHtml(_uname)+'</div>';
+  h += '</div>';
+
+  // ナビ
+  h += '<div style="padding:8px 0;flex:1;">';
+  for (const item of _navItems) {
+    const isActive = _cv === item.key || (_cv === 'me' && item.key.startsWith('me'));
+    h += `<button class="pc-nav-item ${isActive?'active':''}" onclick="${item.action}">`;
+    h += `<span class="material-symbols-rounded" style="color:${isActive?'var(--accent-deep)':'var(--ink-light)'};">${item.icon}</span>`;
+    h += `<span>${item.label}</span>`;
+    h += '</button>';
+  }
+  h += '</div>';
+
+  // 下部：設定
+  h += '<div style="border-top:1px solid var(--line);padding:8px 0;">';
+  h += `<button class="pc-nav-item ${_cv==='settings'?'active':''}" onclick="currentView='settings';render();">`;
+  h += '<span class="material-symbols-rounded">settings</span><span>設定</span></button>';
+  h += '</div>';
+
+  sb.innerHTML = h;
+}
+window.renderPCSidebar = renderPCSidebar;
+// ===== PC/iPadサイドバー END =====
 const NIKOWA_TAGS = [
   { cat:'小説・文学', tags:[['ハイファンタジー','high_fantasy'],['ローファンタジー','low_fantasy'],['異世界転生','isekai'],['現代ファンタジー','urban_fantasy'],['学園物語','school_life'],['青春小説','youth_novel'],['ミステリー','mystery'],['ホラー・怪談','horror'],['恋愛小説','romance'],['SF・近未来','sci_fi'],['歴史・時代小説','historical'],['ヒューマンドラマ','human_drama'],['ショートショート','short_story'],['童話・絵本','fairy_tale'],['ライトノベル','light_novel'],['ダークファンタジー','dark_fantasy'],['和風ファンタジー','japanese_fantasy'],['サスペンス','suspense'],['百合・GL','yuri'],['ボーイズラブ','bl'],['ディストピア','dystopia'],['タイムトラベル','time_travel'],['ハードボイルド','hard_boiled']] },
   { cat:'執筆・形式', tags:[['完結済み','completed'],['連載中','ongoing'],['短編集','short_collection'],['書き下ろし','newly_written'],['スピンオフ','spin_off'],['同人誌','fanzine'],['アンソロジー','anthology'],['朗読用台本','reading_script'],['シナリオ','scenario'],['私小説','autobiographical'],['掌編小説','palm_fiction']] },
@@ -32884,8 +33076,12 @@ function _renderShopCreateModal() {
     h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">紹介文</label>';
     h += '<textarea id="shopCreateProfile" placeholder="どんなお店・作品を発信するか書いてね" maxlength="200" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);min-height:80px;resize:vertical;">'+escapeHtml(s.profile||'')+'</textarea>';
     h += '</div>';
-    h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">タグ <span style="font-weight:500;color:var(--ink-light);">(カンマ区切り、最大5つ)</span></label>';
-    h += '<input type="text" id="shopCreateTags" value="'+escapeHtml((s.tags||[]).join(', '))+'" placeholder="例：トリミング, 大阪, 犬" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface-warm);box-sizing:border-box;color:var(--ink-dark);">';
+    h += '<div><label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">タグ（任意・最大5個）</label>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;">';
+    for (const tg of (s.tags||[])) h += '<span style="background:var(--accent-bg);border:1px solid var(--accent);border-radius:100px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--accent-deep);">#'+escapeHtml(tg)+'</span>';
+    if (!(s.tags||[]).length) h += '<span style="font-size:11px;color:var(--ink-light);">タグなし</span>';
+    h += '</div>';
+    h += '<button onclick="openNikowaTagSelector(window._shopCreateState.tags||[],5,function(tags){window._shopCreateState.tags=tags;_renderShopCreateModal();})" style="padding:8px 14px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:100px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--ink-sub);display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">tag</span>タグを選ぶ</button>';
     h += '<div style="font-size:9.5px;color:var(--ink-light);margin-top:4px;">タグから検索されやすくなるよ🌷</div>';
     h += '</div>';
     h += '</div>';
@@ -32943,8 +33139,7 @@ function shopCreateNext() {
   if (s.step === 3) {
     s.name = document.getElementById('shopCreateName').value.trim();
     s.profile = document.getElementById('shopCreateProfile').value.trim();
-    const tagsStr = document.getElementById('shopCreateTags').value.trim();
-    s.tags = tagsStr ? tagsStr.split(/[,、]\s*/).map(t => t.trim()).filter(Boolean).slice(0, 5) : [];
+    // タグはセレクターで直接s.tagsに入ってるのでそのまま使う
     if (!s.name) { showToast('名前を入れてね'); return; }
   }
   s.step++;
@@ -32955,11 +33150,9 @@ window.shopCreateNext = shopCreateNext;
 function shopCreateBack() {
   const s = window._shopCreateState;
   if (s.step === 3) {
-    // 入力欄から取得して保持
     s.name = document.getElementById('shopCreateName').value.trim();
     s.profile = document.getElementById('shopCreateProfile').value.trim();
-    const tagsStr = document.getElementById('shopCreateTags').value.trim();
-    s.tags = tagsStr ? tagsStr.split(/[,、]\s*/).map(t => t.trim()).filter(Boolean).slice(0, 5) : [];
+    // タグはセレクターで直接s.tagsに入ってる
   }
   s.step--;
   _renderShopCreateModal();
