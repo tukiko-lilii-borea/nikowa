@@ -10042,8 +10042,18 @@ function saveHomeQuickThought() {
   if (!inp) return;
   const text = (inp.value || '').trim();
   if (!text) return;
-  // data.tweets（Diary画面と同じ場所）に保存
-  if (!data.tweets) data.tweets = [];
+
+  // Diary画面はMEモードのデータを読むので、MEモードのlocalStorageに直接書く
+  const ME_KEY = 'nikowa_me_data_v3';
+  let meData;
+  try {
+    const stored = localStorage.getItem(ME_KEY);
+    meData = stored ? JSON.parse(stored) : {};
+  } catch (e) {
+    meData = {};
+  }
+  if (!meData.tweets) meData.tweets = [];
+
   const now = new Date();
   const todayKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   const weather = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(todayKey) : null;
@@ -10055,8 +10065,22 @@ function saveHomeQuickThought() {
     timestamp: Date.now()
   };
   if (weather) tweet.weather = weather;
-  data.tweets.push(tweet);
-  saveData();
+  meData.tweets.push(tweet);
+
+  try {
+    localStorage.setItem(ME_KEY, JSON.stringify(meData));
+  } catch (e) {
+    showToast('保存失敗😭 容量いっぱいかも');
+    return;
+  }
+
+  // 今currentModeがmeなら、メモリ上のdata.tweetsも更新（即時反映用）
+  if (currentMode === 'me') {
+    if (!data.tweets) data.tweets = [];
+    data.tweets.push(tweet);
+    saveData();
+  }
+
   inp.value = '';
   showAnzuToast('Diaryに記録したよ');
 }
