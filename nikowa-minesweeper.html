@@ -8,14 +8,16 @@
   @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
 
   :root {
-    --mint: #B2E4D8;
-    --accent: #A67C52;
-    --accent-light: #C49A6C;
-    --pink: #E94B6F;
-    --bg: #E8F8F3;
-    --surface: rgba(255,255,255,0.88);
-    --ink: #3D2B1F;
-    --ink-sub: #8B7355;
+    --mauve: #7C6C77;
+    --beige: #DAD2BC;
+    --tomato: #E94F37;
+    --bg: #DAD2BC;
+    --surface: rgba(255,255,255,0.72);
+    --ink: #2C2329;
+    --ink-sub: #7C6C77;
+    --accent: #E94F37;
+    --accent-light: #F07055;
+    --border: rgba(124,108,119,0.25);
   }
 
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -24,8 +26,8 @@
     font-family: 'Zen Maru Gothic', sans-serif;
     background-color: var(--bg);
     background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px),
-      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px);
+      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(124,108,119,0.18) 29px, rgba(124,108,119,0.18) 30px),
+      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(124,108,119,0.18) 29px, rgba(124,108,119,0.18) 30px);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -43,8 +45,8 @@
     justify-content: space-between;
     margin-bottom: 14px;
   }
-  .logo { font-size: 22px; font-weight: 900; color: var(--accent); }
-  .logo span { color: var(--mint); }
+  .logo { font-size: 22px; font-weight: 900; color: var(--mauve); }
+  .logo span { color: var(--tomato); }
   .back-btn {
     background: var(--surface);
     border: 1.5px solid rgba(166,124,82,0.2);
@@ -64,7 +66,7 @@
     border-radius: 24px;
     padding: 14px;
     box-shadow: 0 4px 20px rgba(166,124,82,0.12);
-    border: 1.5px solid rgba(178,228,216,0.6);
+    border: 1.5px solid var(--border);
   }
 
   .stats {
@@ -78,10 +80,10 @@
     border-radius: 12px;
     padding: 6px;
     text-align: center;
-    border: 1.5px solid rgba(178,228,216,0.6);
+    border: 1.5px solid var(--border);
   }
   .stat-label { font-size: 9px; font-weight: 700; color: var(--ink-sub); text-transform: uppercase; }
-  .stat-val { font-size: 18px; font-weight: 900; color: var(--accent); }
+  .stat-val { font-size: 18px; font-weight: 900; color: var(--tomato); }
 
   .diff-row {
     display: flex;
@@ -91,7 +93,7 @@
   .diff-btn {
     flex: 1;
     background: white;
-    border: 1.5px solid rgba(178,228,216,0.6);
+    border: 1.5px solid var(--border);
     border-radius: 10px;
     padding: 8px 4px;
     font-family: inherit;
@@ -121,7 +123,7 @@
   .mode-btn {
     flex: 1;
     background: white;
-    border: 1.5px solid rgba(178,228,216,0.6);
+    border: 1.5px solid var(--border);
     border-radius: 10px;
     padding: 8px;
     font-family: inherit;
@@ -147,7 +149,7 @@
     background: var(--bg);
     border-radius: 12px;
     padding: 6px;
-    border: 1.5px solid rgba(178,228,216,0.6);
+    border: 1.5px solid var(--border);
     overflow: auto;
   }
   .grid {
@@ -212,7 +214,7 @@
   }
   .start-btn {
     flex: 1;
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    background: linear-gradient(135deg, #E94F37, #F07055);
     color: white;
     border: none;
     border-radius: 14px;
@@ -264,7 +266,7 @@
   .end-score { font-size: 16px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
   .end-best { font-size: 12px; color: var(--pink); font-weight: 800; margin-bottom: 16px; }
   .end-btn {
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    background: linear-gradient(135deg, #E94F37, #F07055);
     color: white;
     border: none;
     border-radius: 14px;
@@ -274,13 +276,83 @@
     font-weight: 900;
     cursor: pointer;
   }
+
+  /* 遊び方モーダル */
+  #howtoModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #howtoModal.show { display: flex; }
+  .howto-box {
+    background: white;
+    border-radius: 20px;
+    padding: 22px 20px;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .howto-title {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--accent);
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .howto-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .howto-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    width: 28px;
+    text-align: center;
+  }
+  .howto-close {
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px;
+    background: var(--tomato);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .help-btn {
+    background: var(--surface);
+    border: 1.5px solid rgba(166,124,82,0.25);
+    border-radius: 100px;
+    padding: 5px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="logo">niko<span>wa.</span> マイン</div>
-  <button class="back-btn" onclick="history.back()">← もどる</button>
+  <div style="display:flex;gap:8px;">
+    <button class="help-btn" onclick="document.getElementById('howtoModal').classList.add('show')">？ 遊び方</button>
+    <button class="back-btn" onclick="history.back()">← もどる</button>
+  </div>
 </div>
 
 <div class="wrap">
@@ -318,6 +390,35 @@
 
   <div class="btn-row">
     <button class="start-btn" onclick="startGame()">🔄 はじめから</button>
+  </div>
+</div>
+
+
+<!-- 遊び方モーダル -->
+<div id="howtoModal">
+  <div class="howto-box">
+    <div class="howto-title">💣 マインスイーパーの遊び方</div>
+    <div class="howto-item">
+      <div class="howto-icon">🔓</div>
+      <div><b>ひらくモード</b>でマスをタップすると開くよ。爆弾がなければ数字が出るか、空白になる。</div>
+    </div>
+    <div class="howto-item">
+      <div class="howto-icon">🔢</div>
+      <div><b>数字</b>はそのマスのまわり8マスにある爆弾の数を表してるよ。ヒントにして考えよう！</div>
+    </div>
+    <div class="howto-item">
+      <div class="howto-icon">🚩</div>
+      <div><b>はたモード</b>に切り替えてタップすると、爆弾と思うマスに旗を立てられるよ。</div>
+    </div>
+    <div class="howto-item">
+      <div class="howto-icon">💥</div>
+      <div>爆弾のマスを開いたら<b>ゲームオーバー！</b>旗を使って爆弾の場所を予測してね。</div>
+    </div>
+    <div class="howto-item">
+      <div class="howto-icon">🏆</div>
+      <div>爆弾以外の<b>全マスを開けたらクリア！</b>タイムを縮めるのを目指してみてね。</div>
+    </div>
+    <button class="howto-close" onclick="document.getElementById('howtoModal').classList.remove('show')">わかった！</button>
   </div>
 </div>
 
