@@ -17,7 +17,7 @@
     --gold:         #F7DC6F;
     --koi-white:    #FBF7F4;
     --kingyo-red:   #E8502A;
-    --surface:      rgba(255,255,255,0.85);
+    --surface:      rgba(255,255,255,0.10);
     --border:       rgba(91,163,208,0.3);
     --ink:          #2C4A66;
     --ink-sub:      #6B8AA6;
@@ -54,10 +54,10 @@
   .logo-fish { display:flex; gap:2px; align-items:center; }
   .logo-fish img { width:22px; height:22px; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(46,125,176,0.2)); }
   .back-btn { background:var(--surface); border:1px solid var(--border); border-radius:100px; padding:5px 12px; font-family:inherit; font-size:11px; font-weight:700; color:var(--ink-sub); cursor:pointer; }
-  .wrap { width:100%; max-width:420px; background:var(--surface); border-radius:24px; padding:14px; border:1px solid var(--border); box-shadow:0 0 40px rgba(91,163,208,0.15),0 4px 20px rgba(91,163,208,0.2); backdrop-filter: blur(8px); }
+  .wrap { width:100%; max-width:420px; background:var(--surface); border-radius:24px; padding:14px; border:1px solid rgba(91,163,208,0.2); box-shadow:0 0 40px rgba(91,163,208,0.1); }
   .score-row { display:flex; gap:8px; margin-bottom:12px; }
-  .player-card { flex:1; background:rgba(255,255,255,0.7); border-radius:14px; padding:8px; text-align:center; border:1px solid var(--border); transition:transform 0.2s,box-shadow 0.2s; }
-  .player-card.active { transform:scale(1.02); box-shadow:0 0 16px rgba(46,125,176,0.3); border-color:var(--accent); background:rgba(255,255,255,0.95); }
+  .player-card { flex:1; background:rgba(255,255,255,0.62); border-radius:14px; padding:8px; text-align:center; border:1px solid var(--border); transition:transform 0.2s,box-shadow 0.2s; }
+  .player-card.active { transform:scale(1.02); box-shadow:0 0 16px rgba(46,125,176,0.3); border-color:var(--accent); background:rgba(255,255,255,0.85); }
   .player-info { display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:4px; }
   .stone-mini { width:18px; height:18px; border-radius:50%; flex-shrink:0; }
   .stone-mini.black { background:radial-gradient(circle at 35% 35%,#FF7A55,var(--kingyo-red)); box-shadow:inset -2px -2px 4px rgba(0,0,0,0.4),0 0 6px rgba(232,80,42,0.4); }
@@ -80,15 +80,15 @@
   .cell.player-last { background:rgba(232,80,42,0.3); animation:playerGlow 1.5s ease-in-out 4; }
   @keyframes cpuGlow { 0%,100%{box-shadow:0 0 0 2px rgba(247,220,111,0.5)} 50%{box-shadow:0 0 0 3px rgba(247,220,111,0.9)} }
   @keyframes playerGlow { 0%,100%{box-shadow:0 0 0 2px rgba(232,80,42,0.5)} 50%{box-shadow:0 0 0 3px rgba(232,80,42,0.9)} }
-  .settings { margin-top:12px; background:rgba(255,255,255,0.6); border-radius:14px; padding:10px 12px; border:1px solid var(--border); }
+  .settings { margin-top:12px; background:rgba(255,255,255,0.55); border-radius:14px; padding:10px 12px; border:1px solid var(--border); }
   .settings-label { font-size:10px; font-weight:800; color:var(--ink-sub); margin-bottom:6px; }
   .settings.locked { opacity:0.6; pointer-events:none; }
   .settings.locked::after { content:'🔒 ゲーム中はあいてを変えられないよ'; display:block; font-size:9px; color:var(--ink-sub); text-align:center; margin-top:6px; font-weight:700; }
   .diff-row { display:flex; gap:6px; }
-  .diff-btn { flex:1; background:rgba(255,255,255,0.7); border:1px solid var(--border); border-radius:10px; padding:8px 4px; font-family:inherit; font-size:12px; font-weight:800; color:var(--ink-sub); cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .diff-btn { flex:1; background:rgba(255,255,255,0.5); border:1px solid var(--border); border-radius:10px; padding:8px 4px; font-family:inherit; font-size:12px; font-weight:800; color:var(--ink-sub); cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; align-items:center; gap:4px; }
   .diff-btn .diff-label { font-size:9px; opacity:0.7; }
-  .diff-btn.active { background:linear-gradient(135deg,#5BA3D0,#2E7DB0); color:white; border-color:var(--accent); box-shadow:0 4px 12px rgba(46,125,176,0.4); }
-  .diff-btn.active img { filter:brightness(0) invert(1); }
+  .diff-btn.active { background:rgba(255,255,255,0.92); color:var(--accent); border:2.5px solid var(--accent); box-shadow:0 4px 12px rgba(46,125,176,0.3); }
+  .diff-btn.active img { filter:none; }
   .btn-row { display:flex; gap:8px; margin-top:12px; }
   .start-btn { flex:1; background:linear-gradient(135deg,#5BA3D0,#2E7DB0); color:white; border:none; border-radius:14px; padding:13px; font-family:inherit; font-size:13px; font-weight:900; cursor:pointer; box-shadow:0 4px 14px rgba(46,125,176,0.4); transition:transform 0.1s, opacity 0.2s; letter-spacing:1px; }
   .start-btn:active { transform:scale(0.97); }
@@ -99,7 +99,7 @@
   .status.your-turn { color:#D63A1A; }
   .status.cpu-turn { color:var(--accent); }
   .status img { width:18px; height:18px; vertical-align:middle; object-fit:contain; }
-  #overlay { display:none; position:absolute; inset:0; background:rgba(232,244,251,0.95); border-radius:12px; flex-direction:column; align-items:center; justify-content:center; gap:8px; z-index:10; padding:16px; text-align:center; backdrop-filter: blur(4px); }
+  #overlay { display:none; position:absolute; inset:0; background:rgba(232,244,251,0.82); border-radius:12px; flex-direction:column; align-items:center; justify-content:center; gap:8px; z-index:10; padding:16px; text-align:center; backdrop-filter: blur(2px); }
   #overlay.show { display:flex; }
   .overlay-title { font-size:22px; font-weight:900; color:var(--accent); }
   .overlay-msg { font-size:13px; color:var(--ink-sub); font-weight:700; }
@@ -111,12 +111,7 @@
 
 <div class="header">
   <div class="logo">
-    <span>水槽のオセロ</span>
-    <span class="logo-fish">
-      <img src="assets/beteli.svg" alt="ベティ">
-      <img src="assets/beru.svg" alt="ベル">
-      <img src="assets/koito.svg" alt="こいと">
-    </span>
+    <span>🫧 水槽のオセロ</span>
   </div>
   <button class="back-btn" onclick="history.back()">← もどる</button>
 </div>
@@ -144,7 +139,7 @@
   <div style="position:relative;">
     <div class="board" id="board"></div>
     <div id="overlay" class="show">
-      <div class="overlay-title" id="overlayTitle">🐟 水槽のオセロ</div>
+      <div class="overlay-title" id="overlayTitle">🫧 水槽のオセロ</div>
       <div class="overlay-msg" id="overlayMsg">あいてを えらんで「START」をタップしてね</div>
       <div class="overlay-result" id="overlayResult" style="display:none;"></div>
     </div>
@@ -573,17 +568,17 @@ function animateBubbles() {
     b.x += dx;
     if (b.y < -30) { b.y = bc.height + 20; b.x = Math.random() * bc.width; }
 
-    // 1. 泡の本体（白っぽい半透明の塗り）
-    bctx.globalAlpha = b.opacity * 0.45;
-    bctx.fillStyle = '#FFFFFF';
+    // 1. 泡の本体（水色みがかった半透明）
+    bctx.globalAlpha = b.opacity * 0.35;
+    bctx.fillStyle = 'rgba(180,220,245,0.8)';
     bctx.beginPath();
     bctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
     bctx.fill();
 
-    // 2. 泡の輪郭（青で目立たせる）
+    // 2. 泡の輪郭（濃い青でくっきり）
     bctx.globalAlpha = b.opacity;
-    bctx.strokeStyle = 'rgba(46,125,176,0.75)';
-    bctx.lineWidth = b.r > 10 ? 1.8 : 1.3;
+    bctx.strokeStyle = 'rgba(30,90,160,0.85)';
+    bctx.lineWidth = b.r > 10 ? 2.2 : 1.6;
     bctx.stroke();
 
     // 3. 光のハイライト（左上のキラリ）
