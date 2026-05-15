@@ -21,7 +21,9 @@
   }
 
   .header { width:100%; max-width:420px; display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-  .logo { font-size:16px; font-weight:900; color:#E94B8A; }
+  .logo { display:flex; align-items:center; gap:6px; height:30px; }
+  .logo img { height:100%; width:auto; object-fit:contain; }
+  .logo span { font-size:15px; font-weight:900; color:#E94B8A; }
   .back-btn { background:rgba(255,255,255,0.8); border:1px solid rgba(200,150,180,0.3); border-radius:100px; padding:5px 12px; font-family:inherit; font-size:11px; font-weight:700; color:#8B6A85; cursor:pointer; }
 
   .score-wrap { width:100%; max-width:420px; display:flex; gap:8px; margin-bottom:16px; }
@@ -41,7 +43,7 @@
     gap:6px; position:relative; overflow:hidden;
     box-shadow:0 4px 12px rgba(0,0,0,0.1);
   }
-  .simon-btn .btn-icon { width:54px; height:54px; pointer-events:none; transition:transform 0.12s; object-fit:contain; }
+  .simon-btn .btn-icon { width:80%; aspect-ratio:1/1; max-height:60%; pointer-events:none; transition:transform 0.12s; object-fit:contain; }
   .simon-btn .btn-label { font-size:11px; font-weight:900; color:rgba(0,0,0,0.45); pointer-events:none; }
   .simon-btn.lit { transform:scale(1.06); }
   .simon-btn.disabled { cursor:not-allowed; pointer-events:none; opacity:0.85; }
@@ -59,7 +61,7 @@
   .start-btn { width:100%; max-width:340px; background:#E94B8A; color:white; border:none; border-radius:16px; padding:14px; font-family:inherit; font-size:14px; font-weight:900; cursor:pointer; box-shadow:0 4px 14px rgba(233,75,138,0.4); transition:transform 0.1s, opacity 0.2s; }
   .start-btn:active { transform:scale(0.97); }
 
-  .simon-btn .btn-symbol { font-size:38px; pointer-events:none; line-height:1; }
+  .simon-btn .btn-symbol { font-size:50px; pointer-events:none; line-height:1; }
 
   /* 難易度選択 */
   #difficultyOverlay {
@@ -104,7 +106,7 @@
 <body>
 
 <div class="header">
-  <div class="logo" id="gameLogo">🎨 サイモン</div>
+  <div class="logo" id="gameLogo"><img src="assets/logo-soft.svg" draggable="false"></div>
   <button class="back-btn" onclick="history.back()">← もどる</button>
 </div>
 
@@ -213,7 +215,7 @@ function saveBest(key, val) { localStorage.setItem('simon_best_' + key, val); }
 
 function initTheme() {
   document.body.style.background = `linear-gradient(180deg, ${THEME.bgStart} 0%, ${THEME.bgEnd} 100%)`;
-  document.getElementById('gameLogo').textContent = THEME.emoji + ' ' + THEME.name;
+  document.getElementById('gameLogo').innerHTML = '<img src="assets/logo-soft.svg" draggable="false">';
   document.querySelectorAll('.score-val').forEach(el => el.style.color = THEME.scoreColor);
   document.getElementById('startBtn').style.display = 'none';
   document.getElementById('difficultyOverlay').style.display = 'flex';
