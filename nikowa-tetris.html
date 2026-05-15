@@ -142,7 +142,7 @@
   .score-val { font-size: 12px; font-weight: 900; color: var(--gold); line-height: 1.2; }
 
   /* メインエリア */
-  .game-main { display: flex; gap: 10px; align-items: flex-start; }
+  .game-main { display: flex; gap: 10px; align-items: stretch; }
 
   canvas#board {
     border-radius: 12px;
@@ -153,7 +153,7 @@
     box-shadow: inset 0 0 30px rgba(100,80,180,0.2);
   }
 
-  .side-panel { display: flex; flex-direction: column; gap: 10px; min-width: 72px; }
+  .side-panel { display: flex; flex-direction: column; gap: 10px; min-width: 72px; justify-content: space-between; }
 
   .next-box, .level-box, .lines-box {
     background: rgba(11,11,42,0.7);
@@ -263,6 +263,29 @@
   .overlay-title { font-size: 13px; font-weight: 900; color: var(--gold); }
   .overlay-score { font-size: 10px; color: var(--ink-sub); font-weight: 700; }
   .overlay-best { font-size: 9px; color: var(--accent); font-weight: 800; }
+
+  .vol-row {
+    display: flex;
+    gap: 3px;
+  }
+  .vol-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    color: rgba(255,255,255,0.6);
+    font-size: 9px;
+    font-weight: 800;
+    padding: 4px 2px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .vol-btn.active {
+    background: rgba(180,160,255,0.35);
+    border-color: rgba(180,160,255,0.7);
+    color: white;
+  }
 </style>
 </head>
 <body>
@@ -273,7 +296,15 @@
     <img src="assets/yumeme.svg" class="logo-yumeme" alt="ゆめめ">
     <span class="logo-title">ゆめめのテトリス</span>
   </div>
-  <button class="back-btn" onclick="history.back()">← もどる</button>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <div class="vol-row" style="margin-top:0;">
+      <button class="vol-btn" onclick="setVol(0)" id="vOff">OFF</button>
+      <button class="vol-btn" onclick="setVol(0.4)" id="vLo">小</button>
+      <button class="vol-btn active" onclick="setVol(0.7)" id="vMd">中</button>
+      <button class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
+    </div>
+    <button class="back-btn" onclick="history.back()">← もどる</button>
+  </div>
 </div>
 
 <div class="game-wrap">
@@ -309,14 +340,16 @@
         <div class="lines-label">LINES</div>
         <div class="lines-val" id="linesVal">0</div>
       </div>
-      <div class="yumeme-art">
-        <img src="assets/yumeme.svg" alt="ゆめめ">
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto;">
+        <div class="yumeme-art">
+          <img src="assets/yumeme.svg" alt="ゆめめ">
+        </div>
+        <div class="next-box">
+          <div class="next-label">NEXT</div>
+          <canvas id="next" width="100" height="100"></canvas>
+        </div>
+        <button class="side-start" id="startBtn" onclick="initAudio();startGame()">START ★</button>
       </div>
-      <div class="next-box">
-        <div class="next-label">NEXT</div>
-        <canvas id="next" width="60" height="60"></canvas>
-      </div>
-      <button class="side-start" id="startBtn" onclick="initAudio();startGame()">START ★</button>
     </div>
   </div>
 
@@ -428,18 +461,18 @@ function drawGhost() {
 }
 
 function drawNext() {
-  nctx.clearRect(0, 0, 60, 60);
+  nctx.clearRect(0, 0, 100, 100);
   if (!nextPiece) return;
   const s = nextPiece.shape;
-  const bSize = 10;
-  const offX = Math.floor((6 - s[0].length) / 2);
-  const offY = Math.floor((6 - s.length) / 2);
+  const bSize = 18;
+  const offX = Math.floor((100/bSize - s[0].length) / 2);
+  const offY = Math.floor((100/bSize - s.length) / 2);
   s.forEach((row, dy) => {
     row.forEach((val, dx) => {
       if (val) {
         nctx.fillStyle = COLORS[nextPiece.id];
         nctx.beginPath();
-        nctx.roundRect((offX+dx)*bSize+1, (offY+dy)*bSize+1, bSize-2, bSize-2, 2);
+        nctx.roundRect((offX+dx)*bSize+2, (offY+dy)*bSize+2, bSize-4, bSize-4, 3);
         nctx.fill();
       }
     });
@@ -784,20 +817,40 @@ const BGM_BASS = [
   220.00,0,174.61,0, 196.00,0,196.00,0,
 ];
 
+let masterVol = 0.7; // デフォルト：中
+
+function setVol(v) {
+  masterVol = v;
+  ['vOff','vLo','vMd','vHi'].forEach(id => {
+    document.getElementById(id)?.classList.remove('active');
+  });
+  const map = { 0:'vOff', 0.4:'vLo', 0.7:'vMd', 1.0:'vHi' };
+  document.getElementById(map[v])?.classList.add('active');
+  // OFFにしたらBGM停止、ONにしたら再開
+  if (v === 0) stopBGM();
+  else if (gameRunning && !bgmRunning) startBGM();
+}
+
 function initAudio() {
-  if (audioCtx) return;
-  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+  if (audioCtx) {
+    audioCtx.resume(); // iOSのsuspended状態を解除
+    return;
+  }
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx.resume();
+  } catch(e){}
 }
 
 function playNote(freq, dur, vol, type) {
-  if (!audioCtx || !freq) return;
+  if (!audioCtx || !freq || masterVol === 0) return;
   const o = audioCtx.createOscillator();
   const g = audioCtx.createGain();
   o.connect(g); g.connect(audioCtx.destination);
   o.type = type || 'square';
   o.frequency.value = freq;
   const t = audioCtx.currentTime;
-  g.gain.setValueAtTime(vol, t);
+  g.gain.setValueAtTime(vol * masterVol, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
   o.start(t); o.stop(t + dur);
 }
