@@ -190,7 +190,7 @@
   }
   .start-btn:active { transform: scale(0.97); }
   .pause-btn {
-    flex: 0 0 90px;
+    flex: 1;
     background: var(--bg);
     color: var(--accent);
     border: 1.5px solid rgba(166,124,82,0.3);
@@ -374,13 +374,13 @@ function draw() {
     const pad = isHead ? 1 : 2;
 
     if (isHead) {
-      // 頭：少し大きめ、グラデーション
+      // 頭：グラデーション
       const grad = ctx.createLinearGradient(x, y, x + cellSize, y + cellSize);
       grad.addColorStop(0, '#C49A6C');
       grad.addColorStop(1, '#A67C52');
       ctx.fillStyle = grad;
     } else {
-      // 体：薄めの色、後ろほど薄く
+      // 体：後ろほど薄く
       const opacity = Math.max(0.5, 1 - i * 0.04);
       ctx.fillStyle = `rgba(166,124,82,${opacity})`;
     }
@@ -434,27 +434,27 @@ function step() {
 
   // 壁衝突
   if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
-    endGame();
+    endGame('壁に衝突');
     return;
   }
 
   const willEat = head.x === food.x && head.y === food.y;
 
-  // 「動いた後の蛇」を仮想的に作って衝突判定（最も堅牢な方式）
-  // 1. unshiftで新head追加  2. 食べないならpopで尻尾削除
-  // 3. 新蛇の中で head と同じ座標の他セグメントがあれば衝突
   const futureSnake = [head, ...snake];
   if (!willEat) futureSnake.pop();
 
-  // i=1から：i=0は新head自身なのでスキップ
   for (let i = 1; i < futureSnake.length; i++) {
     if (futureSnake[i].x === head.x && futureSnake[i].y === head.y) {
-      endGame();
+        // futureSnake[i] = snake[i-1] なので、本当の尻尾(snake.length-1)はpop済み
+      const origIndex = i - 1;
+      const isActualTail = origIndex === snake.length - 1; // 除外済みなので本来ここに来ない
+      const isSecondToLast = origIndex === snake.length - 2;
+      const label = isSecondToLast ? '尻尾の1個手前' : `${origIndex + 1}番目の体`;
+      endGame(`体に衝突: ${label}(全${snake.length}中)`);
       return;
     }
   }
 
-  // 衝突なし → 実際に状態更新
   snake = futureSnake;
 
   if (willEat) {
@@ -500,11 +500,10 @@ function startGame() {
   requestAnimationFrame(t => loop(t, myGen));
 }
 
-function endGame() {
+function endGame(reason) {
   gameRunning = false;
   paused = false;
   document.getElementById('pauseBtn').disabled = true;
-  // ベスト更新
   const key = 'nikowa_snake_best_' + difficulty;
   const prev = parseInt(localStorage.getItem(key) || '0');
   const isNew = score > prev;
