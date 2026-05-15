@@ -428,7 +428,7 @@
       <span class="diff-choice-pairs">6ペア</span>
     </button>
     <button class="diff-choice-btn" onclick="chooseDiff('normal')">
-      <span class="diff-choice-emoji">🌷</span>
+      <span class="diff-choice-emoji">🌸</span>
       <span class="diff-choice-name">ふつう</span>
       <span class="diff-choice-pairs">8ペア</span>
     </button>
@@ -484,17 +484,16 @@ const CHARS = [
   { id:'kotatu',  name:'こたつ',  src:'assets/kotatu.svg' },
   { id:'tukiko',  name:'つきこ',  src:'assets/tukiko.svg' },
   { id:'yumeme',  name:'ゆめめ',  src:'assets/yumeme.svg' },
-  { id:'logo',    name:'にこわ',  src:'assets/logo-soft.svg' },
-  { id:'logo2',   name:'にこわ🌙', src:'assets/logo-dark.svg' },
-  { id:'heart',   name:'ハート',  emoji:'♡' },
-  { id:'star',    name:'スター',  emoji:'★' },
-  { id:'tulip',   name:'チューリップ', emoji:'🌷' },
+  { id:'spade',   name:'スペード', emoji:'♤' },
+  { id:'heart',   name:'ハート',   emoji:'♡' },
+  { id:'diamond', name:'ダイヤ',   emoji:'♢' },
+  { id:'club',    name:'クラブ',   emoji:'♧' },
 ];
 
 const DIFF_CONFIG = {
   easy:   { pairs: 6,  cols: 3 },
   normal: { pairs: 8,  cols: 4 },
-  hard:   { pairs: 12, cols: 4 },
+  hard:   { pairs: 10, cols: 4 },
 };
 
 let difficulty = 'easy';
