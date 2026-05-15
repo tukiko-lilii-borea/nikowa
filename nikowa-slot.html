@@ -136,23 +136,14 @@
     border-radius:14px;padding:12px 32px;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;margin-top:8px;}
 
   .vol-row { display:flex; gap:3px; }
-  .vol-btn { flex:1; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); border-radius:6px; color:#C49A6C; font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
-  .vol-btn.active { background:#C49A6C; border-color:#C49A6C; color:white; }
+  .vol-btn { background:rgba(255,255,255,0.7); border:1.5px solid rgba(196,154,108,0.3); border-radius:6px; color:#8B6B47; font-size:9px; font-weight:800; padding:4px 7px; cursor:pointer; font-family:inherit; }
+  .vol-btn.active { background:#E8AA00; border-color:#E8AA00; color:white; }
 </style>
 </head>
 <body>
 <div class="header">
   <img class="logo" src="assets/logo-soft.svg" alt="nikowa">
-  <div style="display:flex;align-items:center;gap:6px;">
-    <div class="vol-row">
-      <button class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button>
-      <button class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button>
-      <button class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button>
-      <button class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
-    </div>
-    <button class="back-btn" onclick="location.href='./yuuenchi.html'">← もどる</button>
-</div>
-  </div>
+  <div style="display:flex;align-items:center;gap:6px;"><div class="vol-row"><button type="button" class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button><button type="button" class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button><button type="button" class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button><button type="button" class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button></div><button type="button" class="back-btn" onclick="location.href='./yuuenchi.html'">← もどる</button></div>
 </div>
 <div class="hud">
   <div class="hud-card"><div class="hud-label">SPIN</div><div class="hud-val" id="spinCount">0</div></div>
@@ -164,18 +155,18 @@
     <div class="payline" id="payline"></div>
     <div class="reel-col">
       <div class="reel-container"><div class="reel-strip" id="strip0"></div></div>
-      <button class="stop-btn" id="stop0" onclick="stopReel(0)"></button>
+      <button type="button" class="stop-btn" id="stop0" onclick="stopReel(0)"></button>
     </div>
     <div class="reel-col">
       <div class="reel-container"><div class="reel-strip" id="strip1"></div></div>
-      <button class="stop-btn" id="stop1" onclick="stopReel(1)"></button>
+      <button type="button" class="stop-btn" id="stop1" onclick="stopReel(1)"></button>
     </div>
     <div class="reel-col">
       <div class="reel-container"><div class="reel-strip" id="strip2"></div></div>
-      <button class="stop-btn" id="stop2" onclick="stopReel(2)"></button>
+      <button type="button" class="stop-btn" id="stop2" onclick="stopReel(2)"></button>
     </div>
   </div>
-  <button class="spin-btn" id="spinBtn" onclick="spin()">🎰 SPIN !</button>
+  <button type="button" class="spin-btn" id="spinBtn" onclick="spin()">🎰 SPIN !</button>
   <div class="win-msg" id="winMsg"></div>
 </div>
 
@@ -184,7 +175,7 @@
     <div class="jackpot-title">🎉 JACKPOT !!</div>
     <div class="jackpot-chars" id="jackpotChars"></div>
     <div style="font-size:14px;font-weight:800;color:#8B7355;margin-bottom:4px;" id="jackpotMsg"></div>
-    <button class="jackpot-ok" onclick="document.getElementById('jackpotOverlay').classList.remove('show')">やったー！</button>
+    <button type="button" class="jackpot-ok" onclick="document.getElementById('jackpotOverlay').classList.remove('show')">やったー！</button>
   </div>
 </div>
 
@@ -355,50 +346,87 @@ buildAll();
   }
 })();
 
-// ===== slot BGM & 効果音 =====
-let audioCtx = null;
-let bgmRunning = false;
-let bgmNoteIdx = 0;
-let bgmTimer = null;
-let masterVol = 0;
+// ===== ジャグラー風スロット BGM & 効果音 =====
+var audioCtx = null;
+var bgmRunning = false;
+var bgmNoteIdx = 0;
+var bgmTimer = null;
+var masterVol = 0;
 
-const EN_SLO = 260.87;
-const BGM_MEL_SLOT = [587.33,698.46,783.99,698.46,587.33,523.25,587.33,0,659.25,783.99,880.0,783.99,659.25,587.33,523.25,0,783.99,880.0,987.77,880.0,783.99,698.46,783.99,0,523.25,659.25,783.99,659.25,523.25,0,523.25,0];
-const BGM_BASS_SLOT = [195.99,0,195.99,0,195.99,0,195.99,0,195.99,0,195.99,0,195.99,0,195.99,0,174.61,0,174.61,0,174.61,0,174.61,0,174.61,0,174.61,0,174.61,0,174.61,0];
+// ジャグラー風：ビート効いた高速8bit
+var SLOT_MEL = [
+  659.25,0,783.99,0, 659.25,523.25,659.25,0,
+  880.00,0,783.99,0, 659.25,587.33,659.25,0,
+  698.46,0,880.00,0, 698.46,587.33,698.46,0,
+  783.99,659.25,587.33,659.25, 698.46,659.25,587.33,0,
+  880.00,0,1046.50,0, 880.00,783.99,880.00,0,
+  1046.50,0,880.00,0, 783.99,880.00,783.99,0,
+  659.25,587.33,523.25,587.33, 659.25,783.99,880.00,0,
+  1046.50,880.00,783.99,659.25, 523.25,0,0,0,
+];
+// キックドラム風の低音ベース（毎拍ドンッ）
+var SLOT_BASS = [
+  98.00,0,0,0, 98.00,0,0,0,
+  98.00,0,0,0, 98.00,0,0,0,
+  87.31,0,0,0, 87.31,0,0,0,
+  130.81,0,0,0, 98.00,0,0,0,
+  98.00,0,0,0, 98.00,0,0,0,
+  73.42,0,0,0, 98.00,0,0,0,
+  87.31,0,0,0, 110.00,0,0,0,
+  130.81,0,98.00,0, 130.81,0,0,0,
+];
+// ハイハット風の高音（8分音符の裏拍でチッチッ）
+var SLOT_HAT = [
+  0,1,0,1, 0,1,0,1,
+  0,1,0,1, 0,1,0,1,
+  0,1,0,1, 0,1,0,1,
+  0,1,0,1, 0,1,0,1,
+  0,1,0,1, 0,1,0,1,
+  0,1,0,1, 0,1,0,1,
+  0,1,0,1, 0,1,0,1,
+  0,1,0,1, 0,1,0,1,
+];
 
 function setVol(v) {
   masterVol = v;
-  ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
-  const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
-  document.getElementById(map[v])?.classList.add('active');
+  ['vOff','vLo','vMd','vHi'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  var map = {0:'vOff',0.3:'vLo',0.7:'vMd',1.0:'vHi'};
+  var act = document.getElementById(map[v]);
+  if (act) act.classList.add('active');
   if (v === 0) stopBGM();
-  else if (!bgmRunning) startBGM();
-}
-
-function initAudio() {
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+  else {
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+    }
+    if (audioCtx) {
+      audioCtx.resume().then(function(){
+        if (!bgmRunning) startBGM();
+      }).catch(function(){});
+    }
   }
-  return audioCtx.resume();
 }
 
 function playNote(freq, dur, vol, type) {
   if (!audioCtx || !freq || masterVol === 0) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.connect(g); g.connect(audioCtx.destination);
-  o.type = type || 'square';
-  o.frequency.value = freq;
-  const t = audioCtx.currentTime;
-  g.gain.setValueAtTime(vol * masterVol, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
-  o.start(t); o.stop(t + dur);
+  try {
+    var o = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = type || 'square';
+    o.frequency.value = freq;
+    var t = audioCtx.currentTime;
+    g.gain.setValueAtTime(vol * masterVol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
+    o.start(t); o.stop(t + dur);
+  } catch(e){}
 }
 
 function startBGM() {
   if (bgmRunning) return;
-  bgmRunning = true; bgmNoteIdx = 0;
-  tickBGM();
+  bgmRunning = true; bgmNoteIdx = 0; tickBGM();
 }
 function stopBGM() {
   bgmRunning = false;
@@ -406,17 +434,76 @@ function stopBGM() {
 }
 function tickBGM() {
   if (!bgmRunning) return;
-  const i = bgmNoteIdx % BGM_MEL_SLOT.length;
-  playNote(BGM_MEL_SLOT[i], EN_SLO/1000*0.82, 0.09, 'square');
-  playNote(BGM_BASS_SLOT[i], EN_SLO/1000*1.7, 0.06, 'triangle');
+  var i = bgmNoteIdx % SLOT_MEL.length;
+  playNote(SLOT_MEL[i], 0.13, 0.16, 'square');
+  // キックドラム風：短く強く
+  if (SLOT_BASS[i]) playNote(SLOT_BASS[i], 0.08, 0.32, 'square');
+  // ハイハット風（高音ノイズ）
+  if (SLOT_HAT[i]) playNote(8000, 0.02, 0.08, 'square');
   bgmNoteIdx++;
-  bgmTimer = setTimeout(tickBGM, EN_SLO);
+  bgmTimer = setTimeout(tickBGM, 160);
 }
 
-function sfxSpin(){ playNote(330,0.06,0.12,'square'); }
-function sfxStop(){ playNote(440,0.08,0.18,'sine'); }
-function sfxJackpot(){ stopBGM(); [523.25,659.25,783.99,1046.50,783.99,1046.50].forEach((f,i)=>setTimeout(()=>playNote(f,0.15,0.22,'sine'),i*80)); setTimeout(startBGM,600); }
-// ===== ここまで BGM =====
+// 効果音
+function sfxSpin() { playNote(660, 0.12, 0.22, 'sawtooth'); }
+function sfxStop(idx) { playNote(440 + idx * 110, 0.10, 0.26, 'sine'); }
+function sfxWin2() { 
+  [523.25, 659.25, 783.99].forEach(function(f,i){
+    setTimeout(function(){ playNote(f, 0.12, 0.24, 'sine'); }, i * 70);
+  });
+}
+function sfxJackpot() {
+  // ジャグラー風のGOGO音
+  stopBGM();
+  var notes = [523.25,659.25,783.99,1046.50, 783.99,1046.50,1318.51, 1046.50,1318.51,1567.98];
+  notes.forEach(function(f,i){
+    setTimeout(function(){ playNote(f, 0.18, 0.28, 'square'); }, i * 90);
+  });
+  // BGMは少し待ってから再開
+  setTimeout(function(){ if (masterVol > 0) startBGM(); }, 1500);
+}
+
+// spinをラップ
+if (typeof spin !== 'undefined') {
+  var _origSpin = spin;
+  spin = function() {
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+    }
+    if (audioCtx && masterVol > 0) {
+      audioCtx.resume().then(function(){
+        if (!bgmRunning) startBGM();
+      }).catch(function(){});
+    }
+    sfxSpin();
+    return _origSpin();
+  };
+}
+
+// stopReelをラップ
+if (typeof stopReel !== 'undefined') {
+  var _origStop = stopReel;
+  stopReel = function(r) {
+    sfxStop(r);
+    return _origStop(r);
+  };
+}
+
+// judgeWinをラップ
+if (typeof judgeWin !== 'undefined') {
+  var _origJudge = judgeWin;
+  judgeWin = function() {
+    _origJudge();
+    var s = reels.map(function(r){ return r.result; });
+    if (s[0]===s[1] && s[1]===s[2]) {
+      setTimeout(sfxJackpot, 350);
+    } else if (s[0]===s[1] || s[1]===s[2] || s[0]===s[2]) {
+      sfxWin2();
+    }
+  };
+}
+// ===== ここまで =====
+
 </script>
 </body>
 </html>
