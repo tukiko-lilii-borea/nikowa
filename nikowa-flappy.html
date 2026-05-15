@@ -230,13 +230,13 @@ var audioCtx=null, bgmRunning=false, bgmIdx=0, bgmTimer=null;
 var masterVol=(function(){ try{ return parseFloat(localStorage.getItem('nikowa_bgm_vol')||'0'); }catch(e){ return 0; } })();
 
 var FLP_MEL=[
-  523.25,0,659.25,0, 783.99,0,659.25,0,
-  523.25,0,440.00,0, 523.25,0,0,0,
-  587.33,0,698.46,0, 880.00,0,698.46,0,
-  587.33,0,523.25,0, 587.33,0,0,0,
-  659.25,0,783.99,0, 987.77,0,880.00,0,
-  783.99,0,659.25,0, 587.33,0,0,0,
-  523.25,0,659.25,0, 783.99,0,1046.50,0,
+  783.99,659.25,783.99,0, 880.00,0,1046.50,0,
+  880.00,783.99,659.25,0, 783.99,0,659.25,0,
+  698.46,0,783.99,0, 880.00,783.99,880.00,0,
+  1046.50,0,880.00,0, 783.99,698.46,783.99,0,
+  659.25,783.99,880.00,0, 1046.50,0,1318.51,0,
+  1046.50,880.00,783.99,0, 659.25,0,783.99,0,
+  880.00,0,1046.50,0, 1318.51,1046.50,880.00,0,
   783.99,0,659.25,0, 523.25,0,0,0,
 ];
 
@@ -269,9 +269,9 @@ function stopBGM(){ bgmRunning=false; if(bgmTimer){clearTimeout(bgmTimer);bgmTim
 function tickBGM(){
   if(!bgmRunning)return;
   var i=bgmIdx%FLP_MEL.length;
-  playNote(FLP_MEL[i],0.22,0.10,'sine');
+  playNote(FLP_MEL[i],0.15,0.12,'square');
   bgmIdx++;
-  bgmTimer=setTimeout(tickBGM,333);
+  bgmTimer=setTimeout(tickBGM,190);
 }
 
 // ポーリングで状態監視（既存関数は一切触らない）
