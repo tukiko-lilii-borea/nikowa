@@ -8,14 +8,14 @@
   @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
 
   :root {
-    --mint: #B2E4D8;
-    --accent: #A67C52;
-    --accent-light: #C49A6C;
+    --mint: #FFD700;
+    --accent: #C87800;
+    --accent-light: #FFA500;
     --pink: #E94B6F;
-    --bg: #E8F8F3;
-    --surface: rgba(255,255,255,0.88);
+    --bg: #FFFACD;
+    --surface: rgba(255,255,255,0.52);
     --ink: #3D2B1F;
-    --ink-sub: #8B7355;
+    --ink-sub: #9A6800;
   }
 
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -24,14 +24,34 @@
     font-family: 'Zen Maru Gothic', sans-serif;
     background-color: var(--bg);
     background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px),
-      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px);
-    min-height: 100vh;
+      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(255,215,0,0.25) 29px, rgba(255,215,0,0.25) 30px),
+      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(255,215,0,0.25) 29px, rgba(255,215,0,0.25) 30px);
+    height: 100dvh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 16px 12px 24px;
+    padding: 8px 10px 6px;
     color: var(--ink);
+  }
+
+
+  /* diffOverlay内の星 */
+  .overlay-star {
+    position:absolute; pointer-events:none;
+    clip-path:polygon(50% 0%,55% 45%,100% 50%,55% 55%,50% 100%,45% 55%,0% 50%,45% 45%);
+    animation:twinkle ease-in-out infinite;
+  }
+  /* ✦ きらきら背景星 */
+  @keyframes twinkle {
+    0%,100% { opacity:0; transform:scale(0.1) rotate(0deg); }
+    40%      { opacity:0.95; transform:scale(1) rotate(45deg); }
+    60%      { opacity:0.85; transform:scale(0.9) rotate(45deg); }
+  }
+  .bg-star {
+    position:fixed; pointer-events:none; z-index:0;
+    clip-path:polygon(50% 0%,55% 45%,100% 50%,55% 55%,50% 100%,45% 55%,0% 50%,45% 45%);
+    animation:twinkle ease-in-out infinite;
   }
 
   .header {
@@ -40,10 +60,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 14px;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
   }
   .logo { font-size: 22px; font-weight: 900; color: var(--accent); }
-  .logo span { color: #B2E4D8; }
+  .logo span { color: #FFA500; }
   .back-btn {
     background: var(--surface);
     border: 1.5px solid rgba(166,124,82,0.2);
@@ -59,42 +81,53 @@
   .wrap {
     width: 100%;
     max-width: 420px;
+    flex: 1 1 0;
+    min-height: 0;
     background: var(--surface);
-    border-radius: 24px;
-    padding: 16px;
-    box-shadow: 0 4px 20px rgba(166,124,82,0.12);
-    border: 1.5px solid rgba(178,228,216,0.6);
+    border-radius: 18px;
+    padding: 10px;
+    box-shadow: 0 4px 20px rgba(180,100,0,0.12);
+    border: 1.5px solid #FFD700;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   /* スコアバー */
   .stats {
+    flex: 0 0 auto;
     display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
+    gap: 6px;
+    margin-bottom: 6px;
   }
   .stat-card {
     flex: 1;
     background: var(--bg);
-    border-radius: 12px;
-    padding: 8px;
+    border-radius: 10px;
+    padding: 4px 2px;
     text-align: center;
-    border: 1.5px solid rgba(178,228,216,0.6);
+    border: 1.5px solid #FFD700;
   }
-  .stat-label { font-size: 9px; font-weight: 700; color: var(--ink-sub); text-transform: uppercase; }
-  .stat-val { font-size: 20px; font-weight: 900; color: var(--accent); }
+  .stat-label { font-size: 7px; font-weight: 700; color: var(--ink-sub); letter-spacing:0.3px; }
+  .stat-val { font-size: 14px; font-weight: 900; color: var(--accent); line-height:1.2; }
 
   /* カードグリッド */
   .grid {
+    flex: 1 1 0;
+    min-height: 0;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 14px;
+    gap: 4px;
+    margin-bottom: 6px;
+    grid-auto-rows: 1fr;
   }
 
   .card-wrap {
-    aspect-ratio: 3/4;
     perspective: 600px;
     cursor: pointer;
+    min-height: 0;
   }
   .card-inner {
     width: 100%;
@@ -124,19 +157,19 @@
     overflow: hidden;
   }
 
-  /* 裏面：ギンガムチェック風 */
+  /* 裏面：ゴールドギンガム */
   .card-back {
-    background: linear-gradient(135deg, #C5EEE4, #A8E0D0);
-    border: 2px solid rgba(178,228,216,0.8);
-    box-shadow: 0 2px 6px rgba(166,124,82,0.1);
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border: 2px solid rgba(255,160,0,0.6);
+    box-shadow: 0 2px 6px rgba(180,100,0,0.15);
   }
   .card-back::before {
     content: '';
     position: absolute;
     inset: 0;
     background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 6px, rgba(255,255,255,0.3) 6px, rgba(255,255,255,0.3) 7px),
-      repeating-linear-gradient(90deg, transparent, transparent 6px, rgba(255,255,255,0.3) 6px, rgba(255,255,255,0.3) 7px);
+      repeating-linear-gradient(0deg, transparent, transparent 6px, rgba(255,255,255,0.25) 6px, rgba(255,255,255,0.25) 7px),
+      repeating-linear-gradient(90deg, transparent, transparent 6px, rgba(255,255,255,0.25) 6px, rgba(255,255,255,0.25) 7px);
     border-radius: 12px;
   }
   .card-back-logo {
@@ -151,12 +184,12 @@
   /* 表面 */
   .card-front {
     background: white;
-    border: 2px solid rgba(178,228,216,0.6);
+    border: 2px solid rgba(255,165,0,0.3);
     transform: rotateY(180deg);
     -webkit-transform: rotateY(180deg);
     flex-direction: column;
     gap: 4px;
-    padding: 6px 4px;
+    padding: 3px 2px;
     box-shadow: 0 2px 8px rgba(166,124,82,0.08);
   }
   /* iOS Safari確実対策：めくれたときに裏面を完全に隠す */
@@ -177,7 +210,7 @@
     flex-shrink: 0;
   }
   .card-name {
-    font-size: 9px;
+    font-size: 7px;
     font-weight: 900;
     color: var(--ink-sub);
     text-align: center;
@@ -221,7 +254,7 @@
   .diff-btn {
     flex: 1;
     background: white;
-    border: 1.5px solid rgba(178,228,216,0.6);
+    border: 1.5px solid rgba(255,165,0,0.3);
     border-radius: 10px;
     padding: 8px 4px;
     font-family: inherit;
@@ -237,27 +270,27 @@
   }
   .diff-btn .diff-label { font-size: 9px; opacity: 0.7; }
   .diff-btn.active {
-    background: var(--accent);
+    background: #FFA500;
     color: white;
-    border-color: var(--accent);
+    border-color: #FFA500;
   }
   .start-btn {
     flex: 1;
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    background: linear-gradient(135deg, #FFD700, #FFA500);
     color: white;
     border: none;
     border-radius: 14px;
-    padding: 13px;
+    padding: 10px;
     font-family: inherit;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 900;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(166,124,82,0.3);
+    box-shadow: 0 4px 12px rgba(180,100,0,0.3);
     transition: transform 0.1s;
   }
   .start-btn:active { transform: scale(0.97); }
 
-  .btn-row { display: flex; gap: 8px; }
+  .btn-row { flex: 0 0 auto; display: flex; gap: 8px; }
   #finishModal {
     display: none;
     position: fixed;
@@ -294,7 +327,7 @@
   .finish-score { font-size: 14px; font-weight: 800; color: var(--ink-sub); margin-bottom: 4px; }
   .finish-best { font-size: 13px; font-weight: 800; color: var(--pink); margin-bottom: 16px; }
   .finish-btn {
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    background: linear-gradient(135deg, #FFD700, #FFA500);
     color: white;
     border: none;
     border-radius: 14px;
@@ -309,10 +342,10 @@
   #diffOverlay {
     position: fixed;
     inset: 0;
-    background: rgba(232,248,243,0.97);
+    background: #FFFACD;
     background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(178,228,216,0.35) 29px, rgba(178,228,216,0.35) 30px),
-      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(178,228,216,0.35) 29px, rgba(178,228,216,0.35) 30px);
+      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(255,215,0,0.25) 29px, rgba(255,215,0,0.25) 30px),
+      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(255,215,0,0.25) 29px, rgba(255,215,0,0.25) 30px);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -356,7 +389,7 @@
   }
   .diff-choice-btn {
     background: white;
-    border: 1.5px solid rgba(178,228,216,0.7);
+    border: 1.5px solid rgba(255,165,0,0.35);
     border-radius: 16px;
     padding: 14px 18px;
     min-height: 68px;
@@ -609,6 +642,39 @@ function chooseDiff(key) {
 // 起動時は難易度選択オーバーレイを表示
 startGame(); // グリッドだけ初期化
 document.getElementById('diffOverlay').style.display = 'flex';
+
+// きらきら星を生成
+(function(){
+  const colors = ['#FFD700','#FFA500','rgba(255,255,255,0.9)','#FFE55C','#FFC200'];
+  for (let i = 0; i < 50; i++) {
+    const s = document.createElement('div');
+    s.className = 'bg-star';
+    const size = 4 + Math.random() * 22;
+    s.style.cssText = `
+      left:${Math.random()*100}vw;
+      top:${Math.random()*100}vh;
+      width:${size}px;
+      height:${size}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${1.8 + Math.random()*3.5}s;
+      animation-delay:${-Math.random()*8}s;
+    `;
+    document.body.appendChild(s);
+  }
+})();
+
+// diffOverlay内に星を追加
+(function(){
+  const ov = document.getElementById('diffOverlay');
+  const colors = ['#FFD700','#FFA500','rgba(255,255,255,0.9)','#FFE55C'];
+  for(let i=0;i<28;i++){
+    const s=document.createElement('div');
+    s.className='overlay-star';
+    const sz=4+Math.random()*18;
+    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${2+Math.random()*3}s;animation-delay:${-Math.random()*6}s;z-index:0;`;
+    ov.appendChild(s);
+  }
+})();
 </script>
 </body>
 </html>
