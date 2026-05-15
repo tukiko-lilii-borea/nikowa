@@ -298,9 +298,9 @@
   </div>
   <div style="display:flex;align-items:center;gap:6px;">
     <div class="vol-row" style="margin-top:0;">
-      <button class="vol-btn" onclick="setVol(0)" id="vOff">OFF</button>
-      <button class="vol-btn" onclick="setVol(0.4)" id="vLo">小</button>
-      <button class="vol-btn active" onclick="setVol(0.7)" id="vMd">中</button>
+      <button class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button>
+      <button class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button>
+      <button class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button>
       <button class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
     </div>
     <button class="back-btn" onclick="history.back()">← もどる</button>
@@ -348,7 +348,7 @@
           <div class="next-label">NEXT</div>
           <canvas id="next" width="100" height="100"></canvas>
         </div>
-        <button class="side-start" id="startBtn" onclick="initAudio();startGame()">START ★</button>
+        <button class="side-start" id="startBtn" onclick="startGame()">START ★</button>
       </div>
     </div>
   </div>
@@ -557,8 +557,7 @@ function drop(now) {
 }
 
 function startGame() {
-  initAudio();
-  stopBGM(); startBGM();
+  initAudio().then(() => { stopBGM(); startBGM(); });
   grid = newGrid();
   score = 0; level = 1; lines = 0;
   piece = randomPiece();
@@ -817,14 +816,14 @@ const BGM_BASS = [
   220.00,0,174.61,0, 196.00,0,196.00,0,
 ];
 
-let masterVol = 0.7; // デフォルト：中
+let masterVol = 0; // デフォルト：OFF
 
 function setVol(v) {
   masterVol = v;
   ['vOff','vLo','vMd','vHi'].forEach(id => {
     document.getElementById(id)?.classList.remove('active');
   });
-  const map = { 0:'vOff', 0.4:'vLo', 0.7:'vMd', 1.0:'vHi' };
+  const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
   document.getElementById(map[v])?.classList.add('active');
   // OFFにしたらBGM停止、ONにしたら再開
   if (v === 0) stopBGM();
@@ -832,14 +831,10 @@ function setVol(v) {
 }
 
 function initAudio() {
-  if (audioCtx) {
-    audioCtx.resume(); // iOSのsuspended状態を解除
-    return;
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
   }
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    audioCtx.resume();
-  } catch(e){}
+  return audioCtx.resume(); // Promiseを返す（iOSはresume完了まで待つ必要あり）
 }
 
 function playNote(freq, dur, vol, type) {
@@ -880,7 +875,7 @@ function sfxLineClear(n) {
   );
 }
 function sfxLock() {
-  playNote(185, 0.07, 0.05, 'square');
+  playNote(220, 0.09, 0.18, 'square');
 }
 function sfxGameOver() {
   [440,349.23,293.66,220,174.61].forEach((f,i) =>
