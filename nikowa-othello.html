@@ -104,6 +104,10 @@
   .overlay-title { font-size:22px; font-weight:900; color:var(--accent); }
   .overlay-msg { font-size:13px; color:var(--ink-sub); font-weight:700; }
   .overlay-result { background:rgba(255,255,255,0.9); padding:10px 16px; border-radius:12px; font-size:14px; font-weight:800; margin-top:6px; border:1px solid var(--border); color:var(--ink); }
+
+  .vol-row { display:flex; gap:3px; }
+  .vol-btn { flex:1; background:rgba(255,255,255,0.08); border:1px solid var(--border); border-radius:6px; color:var(--ink-sub); font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .vol-btn.active { background:var(--accent); border-color:var(--accent); color:white; }
 </style>
 </head>
 <body>
@@ -113,7 +117,15 @@
   <div class="logo">
     <span>🫧 水槽のオセロ</span>
   </div>
-  <button class="back-btn" onclick="history.back()">← もどる</button>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <div class="vol-row">
+      <button class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button>
+      <button class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button>
+      <button class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button>
+      <button class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
+    </div>
+    <button class="back-btn" onclick="history.back()">← もどる</button>
+  </div>
 </div>
 
 <div class="wrap">
@@ -331,6 +343,7 @@ async function playerMove(r, c) {
   if (flips.length === 0) return;
   document.getElementById('passBtn').disabled = true;
 
+  sfxPlace();
   // アニメーション付きで石を置く
   await executeMove({r, c, flips}, BLACK, false);
 
@@ -376,6 +389,7 @@ async function cpuMove() {
   }
 
   // アニメーション付きで石を置く
+  sfxPlace();
   await executeMove(chosen, WHITE, true);
 
   turn = BLACK;
@@ -475,13 +489,17 @@ function endGame() {
   const msgEl = document.getElementById('overlayMsg');
   const resEl = document.getElementById('overlayResult');
 
+  stopBGM();
   if (count.black > count.white) {
+    sfxWin();
     titleEl.textContent = '🎉 あなたの勝ち！';
     msgEl.textContent = 'おめでとう🌷';
   } else if (count.white > count.black) {
+    sfxLose();
     titleEl.textContent = '😢 ' + cpuName + 'の勝ち';
     msgEl.textContent = 'もう一回ちょうせん！';
   } else {
+    sfxDraw();
     titleEl.textContent = '🤝 引き分け';
     msgEl.textContent = '惜しい！';
   }
@@ -495,7 +513,8 @@ function endGame() {
 }
 
 function startGame() {
-  if (!difficulty) return; // 難易度未選択ガード
+  if (!difficulty) return;
+  initAudio().then(()=>{ stopBGM(); startBGM(); }); // 難易度未選択ガード
   grid = newGrid();
   turn = BLACK;
   gameRunning = true;
@@ -599,6 +618,84 @@ turn = BLACK;
 difficulty = null;
 render();
 // オーバーレイは初期表示済みなので何もしない
+
+// ===== オセロ BGM & 効果音 =====
+let audioCtx = null;
+let bgmRunning = false;
+let bgmNoteIdx = 0;
+let bgmTimer = null;
+let masterVol = 0;
+
+const BPM_O = 88;
+const EN_O = 60000 / BPM_O / 2;
+
+// 和風ゆったりペンタトニック（C D F G A）
+const OTHELLO_MEL = [
+  523.25, 587.33, 698.46, 0,        783.99, 698.46, 587.33, 523.25,
+  440.00, 523.25, 587.33, 0,        698.46, 587.33, 523.25, 440.00,
+  392.00, 440.00, 523.25, 587.33,   523.25, 440.00, 392.00, 0,
+  349.23, 392.00, 440.00, 523.25,   440.00, 392.00, 349.23, 0,
+];
+const OTHELLO_BASS = [
+  261.63,0,0,0, 261.63,0,0,0,
+  220.00,0,0,0, 220.00,0,0,0,
+  196.00,0,0,0, 196.00,0,0,0,
+  174.61,0,0,0, 174.61,0,0,0,
+];
+
+function setVol(v) {
+  masterVol = v;
+  ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
+  document.getElementById(map[v])?.classList.add('active');
+  if (v === 0) stopBGM();
+  else if (gameRunning && !bgmRunning) startBGM();
+}
+
+function initAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+  }
+  return audioCtx.resume();
+}
+
+function playNote(freq, dur, vol, type) {
+  if (!audioCtx || !freq || masterVol === 0) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = type || 'sine';
+  o.frequency.value = freq;
+  const t = audioCtx.currentTime;
+  g.gain.setValueAtTime(vol * masterVol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
+  o.start(t); o.stop(t + dur);
+}
+
+function startBGM() {
+  if (bgmRunning) return;
+  bgmRunning = true; bgmNoteIdx = 0;
+  tickBGM();
+}
+function stopBGM() {
+  bgmRunning = false;
+  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+}
+function tickBGM() {
+  if (!bgmRunning) return;
+  const i = bgmNoteIdx % OTHELLO_MEL.length;
+  playNote(OTHELLO_MEL[i],  EN_O/1000*0.85, 0.10, 'sine');
+  playNote(OTHELLO_BASS[i], EN_O/1000*1.8,  0.07, 'triangle');
+  bgmNoteIdx++;
+  bgmTimer = setTimeout(tickBGM, EN_O);
+}
+
+function sfxPlace() { playNote(440, 0.12, 0.28, 'sine'); }
+function sfxFlip()  { playNote(523.25, 0.08, 0.12, 'sine'); }
+function sfxWin()   { [523.25,659.25,783.99,1046.50].forEach((f,i) => setTimeout(()=>playNote(f,0.2,0.22,'sine'),i*100)); }
+function sfxLose()  { [440,349.23,293.66,220].forEach((f,i) => setTimeout(()=>playNote(f,0.22,0.15,'triangle'),i*120)); }
+function sfxDraw()  { [523.25,523.25].forEach((f,i) => setTimeout(()=>playNote(f,0.15,0.12,'sine'),i*200)); }
+// ===== ここまで BGM =====
 </script>
 </body>
 </html>
