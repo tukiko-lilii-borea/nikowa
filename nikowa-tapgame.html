@@ -70,6 +70,9 @@
   }
   .mole.up { transform:translateY(10%); }
   .mole.hit { filter:brightness(1.5) saturate(0.3); transform:translateY(10%) scale(0.85); }
+  .mole.trap-hit { filter:brightness(0.7) sepia(1) hue-rotate(-50deg) saturate(8); transform:translateY(10%) scale(0.85); }
+  .hole.trap-flash { background:rgba(220,40,40,0.55); animation:trapFlash 0.35s ease-out; }
+  @keyframes trapFlash { 0%{background:rgba(220,40,40,0.85);} 100%{background:rgba(0,0,0,0.12);} }
 
   /* ======== バルーン ======== */
   #balloonArea { width:100%; height:100%; min-height:340px; position:relative; }
@@ -94,19 +97,6 @@
   @keyframes floatUp { from { bottom:-80px; } to { bottom:110%; } }
   @keyframes popAnim { 0%{transform:scale(1)} 50%{transform:scale(1.4);opacity:0.8} 100%{transform:scale(1.8);opacity:0} }
 
-  /* ======== 虫取り ======== */
-  #bugArea { width:100%; height:100%; min-height:340px; position:relative; overflow:hidden; }
-  .bug {
-    position:absolute; cursor:pointer;
-    font-size:36px; line-height:1;
-    transition:transform 0.08s;
-    user-select:none; display:flex; align-items:center; justify-content:center;
-    width:60px; height:60px;
-  }
-  .bug:active { transform:scale(0.7); }
-  .bug.caught { animation:bugCatch 0.2s ease-out forwards; pointer-events:none; }
-  @keyframes bugCatch { 0%{transform:scale(1)} 50%{transform:scale(1.5) rotate(30deg);opacity:0.7} 100%{transform:scale(0);opacity:0} }
-
   /* ======== スタート/終了画面 ======== */
   .overlay-screen {
     display:none; position:fixed; inset:0;
@@ -117,6 +107,7 @@
 
   /* テーマ選択 */
   #themeOverlay { background:rgba(240,255,248,0.97); }
+  #difficultyOverlay { background:rgba(255,243,224,0.97); }
   .theme-title { font-size:24px; font-weight:900; margin-bottom:4px; }
   .theme-sub { font-size:12px; color:#6B8A80; font-weight:700; margin-bottom:22px; }
   .theme-grid { display:flex; flex-direction:column; gap:10px; width:100%; max-width:320px; }
@@ -191,6 +182,42 @@
   </div>
 </div>
 
+<!-- 難易度選択 -->
+<div id="difficultyOverlay" class="overlay-screen">
+  <div class="theme-title" id="difficultyTitle">こたつを捕まえろ！</div>
+  <div class="theme-sub">むずかしさを えらんでね</div>
+  <div class="theme-grid">
+    <button class="theme-btn" onclick="selectDifficulty('easy')">
+      <span class="theme-icon">🌱</span>
+      <div class="theme-info">
+        <div class="theme-name">かんたん</div>
+        <div class="theme-desc" id="diffDesc_easy">3×3の穴・ゆっくり</div>
+      </div>
+    </button>
+    <button class="theme-btn" onclick="selectDifficulty('normal')">
+      <span class="theme-icon">🌷</span>
+      <div class="theme-info">
+        <div class="theme-name">ふつう</div>
+        <div class="theme-desc" id="diffDesc_normal">3×3の穴・標準スピード</div>
+      </div>
+    </button>
+    <button class="theme-btn" onclick="selectDifficulty('hard')">
+      <span class="theme-icon">🔥</span>
+      <div class="theme-info">
+        <div class="theme-name">むずい</div>
+        <div class="theme-desc" id="diffDesc_hard">4×4の穴・速い</div>
+      </div>
+    </button>
+    <button class="theme-btn" onclick="selectDifficulty('insane')">
+      <span class="theme-icon">💀</span>
+      <div class="theme-info">
+        <div class="theme-name">鬼ムズ</div>
+        <div class="theme-desc" id="diffDesc_insane">5×5・超高速・あんずタップで減点⚠️</div>
+      </div>
+    </button>
+  </div>
+</div>
+
 <!-- カウントダウン -->
 <div id="countdownOverlay" class="overlay-screen">
   <div class="countdown-num" id="countdownNum">3</div>
@@ -237,7 +264,26 @@ const THEMES = {
 };
 
 const GAME_TIME = 30;
+
+// ======== 難易度（こたつ&バルーン共通） ========
+const DIFFICULTIES = {
+  easy:   { name:'かんたん', emoji:'🌱', color:'#4FB677',
+            mole:    { gridSize:3, spawnInterval:800, upMin:1100, upMax:1500, anzuChance:0,    desc:'3×3の穴・ゆっくり' },
+            balloon: { spawnInterval:850, durMin:5,   durMax:7,   desc:'ゆっくり浮かんでくる' } },
+  normal: { name:'ふつう',   emoji:'🌷', color:'#FF8FAB',
+            mole:    { gridSize:3, spawnInterval:550, upMin:850,  upMax:1150, anzuChance:0,    desc:'3×3の穴・標準スピード' },
+            balloon: { spawnInterval:600, durMin:3.5, durMax:5.5, desc:'標準スピード' } },
+  hard:   { name:'むずい',   emoji:'🔥', color:'#FF7A3D',
+            mole:    { gridSize:4, spawnInterval:380, upMin:650,  upMax:900,  anzuChance:0,    desc:'4×4の穴・速い' },
+            balloon: { spawnInterval:420, durMin:2.5, durMax:4,   desc:'速いスピード' } },
+  insane: { name:'鬼ムズ',   emoji:'💀', color:'#C81E1E',
+            mole:    { gridSize:5, spawnInterval:230, upMin:400,  upMax:600,  anzuChance:0.30, desc:'5×5・超高速・あんずタップで減点⚠️' },
+            balloon: { spawnInterval:270, durMin:1.5, durMax:2.5, desc:'超高速で飛んでく！' } },
+};
+
 let currentThemeKey = null;
+let currentDifficulty = null;
+let currentDifficultyKey = null;
 let theme = null;
 let score = 0;
 let timeLeft = GAME_TIME;
@@ -255,8 +301,6 @@ function selectTheme(key) {
   document.getElementById('timerVal').style.color = theme.timerColor;
   document.getElementById('bestVal').style.color  = theme.scoreColor;
   document.getElementById('timerFill').style.background = theme.timerColor;
-  const best = getBest(key);
-  document.getElementById('bestVal').textContent = best || '—';
   document.getElementById('scoreVal').textContent = '0';
   document.getElementById('timerVal').textContent = GAME_TIME;
   document.getElementById('timerFill').style.width = '100%';
@@ -264,26 +308,71 @@ function selectTheme(key) {
   document.getElementById('resultTitle').style.color = theme.accent;
   document.getElementById('resultScore').style.color = theme.scoreColor;
   hideOverlay('themeOverlay');
+
+  if (key === 'mole' || key === 'balloon') {
+    // こたつ/バルーンは難易度選択へ
+    document.getElementById('bestVal').textContent = '—';
+    populateDifficultyOverlay(key);
+    showOverlay('difficultyOverlay');
+  } else {
+    // 他は直接ゲーム開始
+    currentDifficulty = null;
+    currentDifficultyKey = null;
+    const best = getBest(key);
+    document.getElementById('bestVal').textContent = best || '—';
+    buildGameArea();
+    startCountdown();
+  }
+}
+
+function populateDifficultyOverlay(themeKey) {
+  // タイトル更新
+  document.getElementById('difficultyTitle').textContent = THEMES[themeKey].name;
+  // 各ボタンの説明文を更新
+  ['easy','normal','hard','insane'].forEach(level => {
+    const settings = DIFFICULTIES[level][themeKey];
+    const descEl = document.getElementById('diffDesc_' + level);
+    if (descEl) descEl.textContent = settings.desc;
+  });
+}
+
+function selectDifficulty(level) {
+  currentDifficultyKey = level;
+  currentDifficulty = DIFFICULTIES[level];
+  // ベストスコアを難易度別で表示
+  const bestKey = getBestKey();
+  const best = getBest(bestKey);
+  document.getElementById('bestVal').textContent = best || '—';
+  // ロゴに難易度を追加
+  document.getElementById('gameLogo').textContent = theme.emoji + ' ' + theme.name + ' / ' + currentDifficulty.emoji + currentDifficulty.name;
+  hideOverlay('difficultyOverlay');
   buildGameArea();
   startCountdown();
+}
+
+function getBestKey() {
+  if (currentDifficultyKey) {
+    return currentThemeKey + '_' + currentDifficultyKey;
+  }
+  return currentThemeKey;
 }
 
 function buildGameArea() {
   const area = document.getElementById('gameArea');
   if (currentThemeKey === 'mole') {
-    area.innerHTML = `<div id="moleGrid">${
-      Array.from({length:9},(_,i)=>`<div class="hole" id="hole${i}"><div class="mole" id="mole${i}">${theme.targets[i]}</div></div>`).join('')
+    const size = (currentDifficulty && currentDifficulty.mole) ? currentDifficulty.mole.gridSize : 3;
+    const total = size * size;
+    const gap = size <= 3 ? 10 : size === 4 ? 8 : 6;
+    area.innerHTML = `<div id="moleGrid" style="grid-template-columns:repeat(${size},1fr);gap:${gap}px;">${
+      Array.from({length:total},(_,i)=>`<div class="hole" id="hole${i}"><div class="mole" id="mole${i}"></div></div>`).join('')
     }</div>`;
     // タップイベント
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < total; i++) {
       const hole = document.getElementById('hole'+i);
       hole.addEventListener('pointerdown', e => { e.preventDefault(); hitMole(i); });
     }
   } else if (currentThemeKey === 'balloon') {
     area.innerHTML = `<div id="balloonArea"></div>`;
-  } else if (currentThemeKey === 'bug') {
-    area.innerHTML = `<div id="bugArea"></div>`;
-    document.getElementById('bugArea').style.cssText = 'width:100%;height:100%;min-height:340px;position:relative;overflow:hidden;';
   }
 }
 
@@ -315,7 +404,6 @@ function beginGame() {
   gameActive = true;
   if (currentThemeKey === 'mole')    startMoleGame();
   else if (currentThemeKey === 'balloon') startBalloonGame();
-  else if (currentThemeKey === 'bug')    startBugGame();
   startTimer();
 }
 
@@ -347,25 +435,34 @@ function stopAllSpawns() {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
 }
 
-// ======== モグラたたき ========
+// ======== モグラたたき（こたつ版） ========
 let moleTimers = [];
 function startMoleGame() {
   moleTimers.forEach(t => clearTimeout(t));
   moleTimers = [];
+  const d = (currentDifficulty && currentDifficulty.mole) ? currentDifficulty.mole : DIFFICULTIES.normal.mole;
+  const total = d.gridSize * d.gridSize;
   const spawn = () => {
     if (!gameActive) return;
-    const idx = Math.floor(Math.random() * 9);
+    const idx = Math.floor(Math.random() * total);
     const mole = document.getElementById('mole'+idx);
     if (!mole || mole.classList.contains('up')) return;
+
+    // 鬼ムズだけあんずトラップ
+    const isTrap = Math.random() < d.anzuChance;
+    const imgSrc = isTrap ? 'assets/anzu.svg' : 'assets/kotatu.svg';
+    mole.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:contain;">`;
+    mole.dataset.trap = isTrap ? '1' : '0';
+
     mole.classList.add('up');
     const t = setTimeout(() => {
       if (mole.classList.contains('up') && !mole.classList.contains('hit')) {
         mole.classList.remove('up');
       }
-    }, 1000 + Math.random() * 400);
+    }, d.upMin + Math.random() * (d.upMax - d.upMin));
     moleTimers.push(t);
   };
-  const id = setInterval(() => { if (gameActive) spawn(); }, 500);
+  const id = setInterval(() => { if (gameActive) spawn(); }, d.spawnInterval);
   spawnIntervals.push(id);
 }
 
@@ -373,23 +470,33 @@ function hitMole(idx) {
   if (!gameActive) return;
   const mole = document.getElementById('mole'+idx);
   if (!mole || !mole.classList.contains('up') || mole.classList.contains('hit')) return;
+  const hole = document.getElementById('hole'+idx);
+  const isTrap = mole.dataset.trap === '1';
   mole.classList.add('hit');
-  addScore(10);
+  if (isTrap) {
+    mole.classList.add('trap-hit');
+    if (hole) hole.classList.add('trap-flash');
+    addScore(-10);
+    setTimeout(() => { if (hole) hole.classList.remove('trap-flash'); }, 350);
+  } else {
+    addScore(10);
+  }
   setTimeout(() => {
-    mole.classList.remove('up','hit');
+    mole.classList.remove('up','hit','trap-hit');
   }, 300);
 }
 
 // ======== バルーン ========
 let balloonId = 0;
 function startBalloonGame() {
+  const d = (currentDifficulty && currentDifficulty.balloon) ? currentDifficulty.balloon : DIFFICULTIES.normal.balloon;
   const spawn = () => {
     if (!gameActive) return;
     const area = document.getElementById('balloonArea');
     if (!area) return;
     const b = theme.balloons[Math.floor(Math.random() * theme.balloons.length)];
     const size = b.size + Math.floor(Math.random() * 20 - 10);
-    const dur = 3.5 + Math.random() * 2;
+    const dur = d.durMin + Math.random() * (d.durMax - d.durMin);
     const left = 8 + Math.random() * 75;
     const id = 'b' + (balloonId++);
 
@@ -418,101 +525,20 @@ function startBalloonGame() {
     setTimeout(() => { if (!tapped && el.parentNode) el.remove(); }, dur * 1000);
     area.appendChild(el);
   };
-  const id = setInterval(() => { if (gameActive) spawn(); }, 600);
+  const id = setInterval(() => { if (gameActive) spawn(); }, d.spawnInterval);
   spawnIntervals.push(id);
   // 最初は3個すぐ出す
   for (let i = 0; i < 3; i++) setTimeout(spawn, i * 200);
 }
-
-// ======== 虫取り ========
-const MAX_BUGS = 8;
-let bugs = {};
-let bugMoveInterval = null;
-let bugSpawnId = 0;
-
-function startBugGame() {
-  bugs = {};
-  bugMoveInterval = setInterval(moveBugs, 80);
-  spawnIntervals.push(bugMoveInterval);
-  spawnBug(); spawnBug(); spawnBug();
-  const id = setInterval(() => {
-    if (!gameActive) return;
-    if (Object.keys(bugs).length < MAX_BUGS) spawnBug();
-  }, 900);
-  spawnIntervals.push(id);
-}
-
-function spawnBug() {
-  const area = document.getElementById('bugArea');
-  if (!area) return;
-  const id = 'bug' + (bugSpawnId++);
-  const goodList = theme.goodBugs;
-  const badList  = theme.badBugs;
-  const isGood = Math.random() < 0.7;
-  const icon = isGood
-    ? goodList[Math.floor(Math.random()*goodList.length)]
-    : badList[Math.floor(Math.random()*badList.length)];
-  const areaW = area.offsetWidth  || 380;
-  const areaH = area.offsetHeight || 340;
-  const x = Math.random() * (areaW - 60);
-  const y = Math.random() * (areaH - 60);
-  const vx = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1);
-  const vy = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1);
-
-  const el = document.createElement('div');
-  el.className = 'bug';
-  el.id = id;
-  el.textContent = icon;
-  el.style.left = x + 'px';
-  el.style.top  = y + 'px';
-  bugs[id] = { el, x, y, vx, vy, isGood };
-
-  el.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    catchBug(id);
-  });
-  area.appendChild(el);
-}
-
-function moveBugs() {
-  if (!gameActive) return;
-  const area = document.getElementById('bugArea');
-  if (!area) return;
-  const W = area.offsetWidth - 60;
-  const H = area.offsetHeight - 60;
-  for (const id in bugs) {
-    const b = bugs[id];
-    b.x += b.vx; b.y += b.vy;
-    if (b.x < 0)  { b.x = 0;  b.vx = Math.abs(b.vx); }
-    if (b.x > W)  { b.x = W;  b.vx = -Math.abs(b.vx); }
-    if (b.y < 0)  { b.y = 0;  b.vy = Math.abs(b.vy); }
-    if (b.y > H)  { b.y = H;  b.vy = -Math.abs(b.vy); }
-    b.el.style.left = b.x + 'px';
-    b.el.style.top  = b.y + 'px';
-    // たまに方向チェンジ
-    if (Math.random() < 0.01) { b.vx *= -1; }
-    if (Math.random() < 0.01) { b.vy *= -1; }
-  }
-}
-
-function catchBug(id) {
-  if (!gameActive || !bugs[id]) return;
-  const b = bugs[id];
-  b.el.classList.add('caught');
-  const pts = b.isGood ? 15 : -5;
-  addScore(pts);
-  setTimeout(() => { b.el.remove(); delete bugs[id]; }, 220);
-}
-
 // ======== 終了 ========
 function endGame() {
   gameActive = false;
   stopAllSpawns();
-  if (bugMoveInterval) { clearInterval(bugMoveInterval); bugMoveInterval = null; }
 
-  const best = getBest(currentThemeKey);
+  const bestKey = getBestKey();
+  const best = getBest(bestKey);
   const isNew = score > best;
-  if (isNew) saveBest(currentThemeKey, score);
+  if (isNew) saveBest(bestKey, score);
   const newBest = isNew ? score : best;
   document.getElementById('bestVal').textContent = newBest;
 
@@ -542,8 +568,10 @@ function hideOverlay(id) { document.getElementById(id).classList.remove('show');
 function backToTheme() {
   gameActive = false;
   stopAllSpawns();
-  if (bugMoveInterval) { clearInterval(bugMoveInterval); bugMoveInterval = null; }
   hideOverlay('resultOverlay');
+  hideOverlay('difficultyOverlay');
+  currentDifficulty = null;
+  currentDifficultyKey = null;
   document.getElementById('gameArea').innerHTML = '<div class="area-placeholder">テーマを えらんでね</div>';
   showOverlay('themeOverlay');
 }
