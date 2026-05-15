@@ -196,7 +196,6 @@ let spinCount=0, winCount=0, jackCount=0;
 let reels = [{pos:0,interval:null,spinning:false,result:0,stopped:false},
              {pos:0,interval:null,spinning:false,result:0,stopped:false},
              {pos:0,interval:null,spinning:false,result:0,stopped:false}];
-let autoStopTimers = [];
 
 // ストリップ構築
 function buildStrip(r) {
@@ -211,32 +210,15 @@ function buildStrip(r) {
   }
 }
 
-// pos → 中央に表示されるシンボルインデックス
-// pos=0: strip top=0, center row starts at SH → symbol at SH/SH=1
-function centerSym(pos) {
-  return Math.floor((pos + SH) / SH) % N;
-}
-
-// シンボルsが中央に来るsnap位置（現在のpos以上で最近）
-function snapPos(currentPos, s) {
-  // center = floor((pos+SH)/SH) % N = s
-  // pos = (s*k - SH) where k is integer ≥ 1, pos≥0
-  // pos % (N*SH) = (((s-1+N)%N) * SH)
-  const targetMod = ((s - 1 + N) % N) * SH;
-  const base = Math.floor(currentPos / (N * SH)) * (N * SH);
-  let snap = base + targetMod;
-  if (snap <= currentPos) snap += N * SH;
-  return snap;
-}
-
 function setStripY(r, pos) {
-  document.getElementById('strip'+r).style.transform = `translateY(${-pos % STRIP_H}px)`;
+  const p = ((pos % STRIP_H) + STRIP_H) % STRIP_H;
+  document.getElementById('strip'+r).style.transform = `translateY(${-p}px)`;
 }
 
 function buildAll() {
   for (let r = 0; r < 3; r++) {
     buildStrip(r);
-    reels[r].pos = SH; // 初期位置: symbol 0 が中央
+    reels[r].pos = SH;
     setStripY(r, reels[r].pos);
   }
 }
@@ -262,8 +244,8 @@ function spin() {
     r.spinning = true;
     r.stopped = false;
     r.interval = setInterval(() => {
-      r.pos += SPIN_SPD;
-      if (r.pos >= STRIP_H) r.pos -= STRIP_H;
+      r.pos -= SPIN_SPD;
+      if (r.pos < 0) r.pos += STRIP_H;
       setStripY(i, r.pos);
     }, 16);
   });
@@ -273,12 +255,6 @@ function spin() {
     for (let i = 0; i < 3; i++) {
       document.getElementById('stop'+i).classList.add('active');
     }
-    // 自動STOP（3,4,5秒後）
-    autoStopTimers = [
-      setTimeout(() => stopReel(0), 3000),
-      setTimeout(() => stopReel(1), 4000),
-      setTimeout(() => stopReel(2), 5000),
-    ];
   }, 800);
 }
 
@@ -287,24 +263,32 @@ function stopReel(r) {
   if (!reel.spinning) return;
   reel.spinning = false;
   clearInterval(reel.interval);
-  clearTimeout(autoStopTimers[r]);
 
-  const btn = document.getElementById('stop'+r);
-  btn.classList.remove('active');
-  btn.classList.add('done');
+  document.getElementById('stop'+r).classList.remove('active');
+  document.getElementById('stop'+r).classList.add('done');
 
-  // スナップ
-  const target = snapPos(reel.pos, reel.result);
+  // 最寄りのスナップ位置に即ジャンプ
+  const cycleLen = N * SH;
+  const targetMod = ((reel.result - 1 + N) % N) * SH;
+  const curMod = ((reel.pos % cycleLen) + cycleLen) % cycleLen;
+  const downDiff = ((curMod - targetMod) + cycleLen) % cycleLen;
+  const upDiff = cycleLen - downDiff;
+
+  if (downDiff <= upDiff) {
+    reel.pos = ((reel.pos - downDiff + STRIP_H) % STRIP_H);
+  } else {
+    reel.pos = ((reel.pos + upDiff) % STRIP_H);
+  }
+
   const strip = document.getElementById('strip'+r);
-  strip.style.transition = 'transform 0.22s cubic-bezier(0.25,0.46,0.45,0.94)';
-  strip.style.transform = `translateY(${-(target % STRIP_H)}px)`;
-  reel.pos = target;
+  strip.style.transition = 'transform 0.07s ease-out';
+  setStripY(r, reel.pos);
   reel.stopped = true;
 
   setTimeout(() => {
     strip.style.transition = '';
-    if (reels.every(r => r.stopped)) judgeWin();
-  }, 260);
+    if (reels.every(re => re.stopped)) judgeWin();
+  }, 100);
 }
 
 function judgeWin() {
