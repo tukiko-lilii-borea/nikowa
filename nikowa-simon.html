@@ -41,7 +41,7 @@
     gap:6px; position:relative; overflow:hidden;
     box-shadow:0 4px 12px rgba(0,0,0,0.1);
   }
-  .simon-btn .btn-icon { font-size:36px; pointer-events:none; transition:transform 0.12s; }
+  .simon-btn .btn-icon { width:54px; height:54px; pointer-events:none; transition:transform 0.12s; object-fit:contain; }
   .simon-btn .btn-label { font-size:11px; font-weight:900; color:rgba(0,0,0,0.45); pointer-events:none; }
   .simon-btn.lit { transform:scale(1.06); }
   .simon-btn.disabled { cursor:not-allowed; pointer-events:none; opacity:0.85; }
@@ -59,27 +59,30 @@
   .start-btn { width:100%; max-width:340px; background:#E94B8A; color:white; border:none; border-radius:16px; padding:14px; font-family:inherit; font-size:14px; font-weight:900; cursor:pointer; box-shadow:0 4px 14px rgba(233,75,138,0.4); transition:transform 0.1s, opacity 0.2s; }
   .start-btn:active { transform:scale(0.97); }
 
-  /* テーマ選択 */
-  #themeOverlay {
+  .simon-btn .btn-symbol { font-size:38px; pointer-events:none; line-height:1; }
+
+  /* 難易度選択 */
+  #difficultyOverlay {
     position:fixed; inset:0; background:rgba(254,240,245,0.97);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    z-index:100; padding:24px; gap:0;
+    z-index:100; padding:24px;
   }
-  .theme-title { font-size:24px; font-weight:900; color:#E94B8A; margin-bottom:4px; }
-  .theme-sub { font-size:12px; color:#8B6A85; font-weight:700; margin-bottom:22px; }
-  .theme-grid { display:flex; flex-direction:column; gap:10px; width:100%; max-width:320px; }
-  .theme-btn {
-    background:white; border:2px solid rgba(200,150,180,0.3);
-    border-radius:18px; padding:14px 16px;
+  .diff-title { font-size:22px; font-weight:900; color:#E94B8A; margin-bottom:6px; }
+  .diff-sub { font-size:12px; color:#8B6A85; font-weight:700; margin-bottom:24px; }
+  .diff-grid { display:flex; flex-direction:column; gap:10px; width:100%; max-width:300px; }
+  .diff-btn {
+    background:white; border:2px solid rgba(200,150,180,0.25);
+    border-radius:18px; padding:14px 18px; min-height:70px;
     display:flex; align-items:center; gap:14px;
-    cursor:pointer; font-family:inherit; transition:all 0.15s;
+    cursor:pointer; font-family:inherit;
     box-shadow:0 3px 10px rgba(0,0,0,0.06);
+    transition:all 0.15s;
   }
-  .theme-btn:active { transform:scale(0.98); box-shadow:none; }
-  .theme-icon { font-size:30px; flex-shrink:0; }
-  .theme-info { text-align:left; }
-  .theme-name { font-size:15px; font-weight:900; color:#3D2B3E; }
-  .theme-desc { font-size:10px; color:#8B6A85; font-weight:700; margin-top:2px; }
+  .diff-btn:active { transform:scale(0.98); }
+  .diff-emoji { font-size:28px; flex-shrink:0; }
+  .diff-info { text-align:left; }
+  .diff-name { font-size:16px; font-weight:900; color:#3D2B3E; }
+  .diff-desc { font-size:10px; color:#8B6A85; font-weight:700; margin-top:2px; }
 
   /* ゲームオーバー */
   #gameOverOverlay {
@@ -117,45 +120,41 @@
 </div>
 
 <div class="btn-grid" id="btnGrid">
-  <button class="simon-btn disabled" data-idx="0"><span class="btn-icon">？</span></button>
-  <button class="simon-btn disabled" data-idx="1"><span class="btn-icon">？</span></button>
-  <button class="simon-btn disabled" data-idx="2"><span class="btn-icon">？</span></button>
-  <button class="simon-btn disabled" data-idx="3"><span class="btn-icon">？</span></button>
 </div>
 
 <div class="status-wrap">
-  <div class="status-main" id="statusMain">テーマを えらんでね</div>
+  <div class="status-main" id="statusMain">START を おしてね 🌷</div>
   <div class="progress-bar" id="progressBar" style="display:none;">
     <div class="progress-fill" id="progressFill" style="width:0%"></div>
   </div>
 </div>
 
-<button class="start-btn" id="startBtn" onclick="startGame()" style="display:none;">START ★</button>
+<button class="start-btn" id="startBtn" onclick="startGame()">START ★</button>
 
-<!-- テーマ選択 -->
-<div id="themeOverlay">
-  <div class="theme-title">🎨 サイモン</div>
-  <div class="theme-sub">テーマを えらんでね</div>
-  <div class="theme-grid">
-    <button class="theme-btn" onclick="selectTheme('sweets')">
-      <span class="theme-icon">🍬</span>
-      <div class="theme-info">
-        <div class="theme-name">おかしの国</div>
-        <div class="theme-desc">いちご・ミント・レモン・ぶどうの4色マカロン</div>
+<!-- 難易度選択 -->
+<div id="difficultyOverlay">
+  <div class="diff-title">🎮 サイモン</div>
+  <div class="diff-sub">むずかしさを えらんでね</div>
+  <div class="diff-grid">
+    <button class="diff-btn" onclick="selectDifficulty('easy')">
+      <span class="diff-emoji">🌱</span>
+      <div class="diff-info">
+        <div class="diff-name">かんたん</div>
+        <div class="diff-desc">4まい・にこわの4人</div>
       </div>
     </button>
-    <button class="theme-btn" onclick="selectTheme('flower')">
-      <span class="theme-icon">🌸</span>
-      <div class="theme-info">
-        <div class="theme-name">花びら</div>
-        <div class="theme-desc">さくら・たんぽぽ・コスモス・あじさいの4色</div>
+    <button class="diff-btn" onclick="selectDifficulty('normal')">
+      <span class="diff-emoji">🌷</span>
+      <div class="diff-info">
+        <div class="diff-name">ふつう</div>
+        <div class="diff-desc">6まい・こたつ・ゆめめも登場</div>
       </div>
     </button>
-    <button class="theme-btn" onclick="selectTheme('nikowa')">
-      <span class="theme-icon">🌷</span>
-      <div class="theme-info">
-        <div class="theme-name">にこわの4人</div>
-        <div class="theme-desc">あんず・ベティ・ベル・こいとのカラー</div>
+    <button class="diff-btn" onclick="selectDifficulty('hard')">
+      <span class="diff-emoji">🔥</span>
+      <div class="diff-info">
+        <div class="diff-name">むずい</div>
+        <div class="diff-desc">8まい・つきこ・♡も追加</div>
       </div>
     </button>
   </div>
@@ -173,47 +172,32 @@
 </div>
 
 <script>
-const THEMES = {
-  sweets: {
-    name: 'おかしの国', emoji: '🍬',
-    accent: '#E94B8A',
-    bgStart: '#FFF0F7', bgEnd: '#F5E5FF',
-    scoreColor: '#E94B8A',
-    buttons: [
-      { color:'#FFB3CA', activeColor:'#FF3D7A', glow:'rgba(255,61,122,0.55)',  icon:'🍓', label:'' },
-      { color:'#AAE8CC', activeColor:'#1DC990', glow:'rgba(29,201,144,0.55)', icon:'🍈', label:'' },
-      { color:'#FFE699', activeColor:'#FFA500', glow:'rgba(255,165,0,0.55)',   icon:'🍋', label:'' },
-      { color:'#CCAAF0', activeColor:'#8833DD', glow:'rgba(136,51,221,0.55)', icon:'🍇', label:'' },
-    ]
-  },
-  flower: {
-    name: '花びら', emoji: '🌸',
-    accent: '#E94B6F',
-    bgStart: '#FFF0F5', bgEnd: '#FFEAF7',
-    scoreColor: '#E94B6F',
-    buttons: [
-      { color:'#FFBBD8', activeColor:'#FF5090', glow:'rgba(255,80,144,0.55)',  icon:'🌸', label:'' },
-      { color:'#FFFAAA', activeColor:'#FFCC00', glow:'rgba(255,204,0,0.55)',   icon:'🌼', label:'' },
-      { color:'#FFBFB8', activeColor:'#FF4A3A', glow:'rgba(255,74,58,0.55)',   icon:'🌺', label:'' },
-      { color:'#C2C2FF', activeColor:'#6655EE', glow:'rgba(102,85,238,0.55)', icon:'🪻', label:'' },
-    ]
-  },
-  nikowa: {
-    name: 'にこわの4人', emoji: '🌷',
-    accent: '#E94B6F',
-    bgStart: '#FFF0F3', bgEnd: '#EEF0FF',
-    scoreColor: '#E94B6F',
-    buttons: [
-      { color:'#FFD0D8', activeColor:'#E94B6F', glow:'rgba(233,75,111,0.55)', icon:'🌷', label:'あんず' },
-      { color:'#BEEFD6', activeColor:'#2EB875', glow:'rgba(46,184,117,0.55)', icon:'🌿', label:'ベティ' },
-      { color:'#C0D8FF', activeColor:'#3D7FCC', glow:'rgba(61,127,204,0.55)', icon:'✦',  label:'ベル' },
-      { color:'#E8C8FF', activeColor:'#9940CC', glow:'rgba(153,64,204,0.55)', icon:'🔮', label:'こいと' },
-    ]
-  }
+const THEME = {
+  name: 'にこわの4人', emoji: '🌷',
+  accent: '#E94B6F',
+  bgStart: '#FFF0F3', bgEnd: '#EEF0FF',
+  scoreColor: '#E94B6F',
 };
 
-let currentThemeKey = null;
-let theme = null;
+const ALL_BUTTONS = [
+  { color:'#FFD0D8', activeColor:'#E94B6F', glow:'rgba(233,75,111,0.55)', img:'assets/anzu.svg',   label:'あんず' },
+  { color:'#BEEFD6', activeColor:'#2EB875', glow:'rgba(46,184,117,0.55)', img:'assets/beteli.svg', label:'ベティ' },
+  { color:'#C0D8FF', activeColor:'#3D7FCC', glow:'rgba(61,127,204,0.55)', img:'assets/beru.svg',   label:'ベル' },
+  { color:'#E8C8FF', activeColor:'#9940CC', glow:'rgba(153,64,204,0.55)', img:'assets/koito.svg',  label:'こいと' },
+  { color:'#FFE0C0', activeColor:'#E06000', glow:'rgba(224,96,0,0.55)',   img:'assets/kotatu.svg', label:'こたつ' },
+  { color:'#ECC8FF', activeColor:'#BB44CC', glow:'rgba(187,68,204,0.55)', img:'assets/yumeme.svg', label:'ゆめめ' },
+  { color:'#B0E8F8', activeColor:'#0099BB', glow:'rgba(0,153,187,0.55)',  img:'assets/tukiko.svg', label:'つきこ' },
+  { color:'#FFB8D0', activeColor:'#FF3366', glow:'rgba(255,51,102,0.55)', symbol:'♡', label:'' },
+];
+
+const DIFFICULTIES = {
+  easy:   { count:4, cols:2 },
+  normal: { count:6, cols:2 },
+  hard:   { count:8, cols:4 },
+};
+
+let currentDifficultyKey = null;
+let buttons = [];
 let sequence = [];
 let userInput = [];
 let level = 0;
@@ -227,35 +211,57 @@ function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 function getBest(key) { return parseInt(localStorage.getItem('simon_best_' + key) || '0'); }
 function saveBest(key, val) { localStorage.setItem('simon_best_' + key, val); }
 
-function selectTheme(key) {
-  currentThemeKey = key;
-  theme = THEMES[key];
-  const best = getBest(key);
+function initTheme() {
+  document.body.style.background = `linear-gradient(180deg, ${THEME.bgStart} 0%, ${THEME.bgEnd} 100%)`;
+  document.getElementById('gameLogo').textContent = THEME.emoji + ' ' + THEME.name;
+  document.querySelectorAll('.score-val').forEach(el => el.style.color = THEME.scoreColor);
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('difficultyOverlay').style.display = 'flex';
+}
 
-  // 背景
-  document.body.style.background = `linear-gradient(180deg, ${theme.bgStart} 0%, ${theme.bgEnd} 100%)`;
-  document.getElementById('gameLogo').textContent = theme.emoji + ' ' + theme.name;
+function selectDifficulty(level) {
+  currentDifficultyKey = level;
+  const d = DIFFICULTIES[level];
+  buttons = ALL_BUTTONS.slice(0, d.count);
 
-  // スコア色
-  document.querySelectorAll('.score-val').forEach(el => el.style.color = theme.scoreColor);
+  document.getElementById('difficultyOverlay').style.display = 'none';
+  buildGrid(d.count, d.cols);
 
-  // ボタン設定
-  const btns = document.querySelectorAll('.simon-btn');
-  btns.forEach((btn, i) => {
-    const b = theme.buttons[i];
-    btn.style.background = b.color;
-    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-    btn.innerHTML = `<span class="btn-icon">${b.icon}</span>` +
-      (b.label ? `<span class="btn-label">${b.label}</span>` : '');
-  });
-
+  const best = getBest(level);
   document.getElementById('bestVal').textContent = best || '—';
   document.getElementById('levelVal').textContent = '—';
-  document.getElementById('themeOverlay').style.display = 'none';
   document.getElementById('startBtn').style.display = 'block';
   document.getElementById('statusMain').textContent = 'START を おしてね 🌷';
   document.getElementById('statusMain').className = 'status-main';
 }
+
+function buildGrid(count, cols) {
+  const grid = document.getElementById('btnGrid');
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const b = buttons[i];
+    const btn = document.createElement('button');
+    btn.className = 'simon-btn disabled';
+    btn.dataset.idx = i;
+    btn.style.background = b.color;
+    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+    btn.innerHTML = b.img
+      ? `<img class="btn-icon" src="${b.img}" draggable="false">${b.label ? `<span class="btn-label">${b.label}</span>` : ''}`
+      : `<span class="btn-symbol">${b.symbol}</span>`;
+    // タップ（2重発火防止）
+    let fired = false;
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (fired) return;
+      fired = true;
+      onBtnTap(parseInt(btn.dataset.idx));
+      setTimeout(() => { fired = false; }, 220);
+    });
+    grid.appendChild(btn);
+  }
+}
+
 
 function startGame() {
   sequence = [];
@@ -277,7 +283,7 @@ async function nextRound() {
   level++;
   document.getElementById('levelVal').textContent = level;
 
-  sequence.push(Math.floor(Math.random() * 4));
+  sequence.push(Math.floor(Math.random() * buttons.length));
 
   await wait(500);
   setStatus('みてて！', 'watching');
@@ -303,7 +309,7 @@ async function nextRound() {
 
 async function flashButton(idx, dur) {
   const btn = document.querySelector(`[data-idx="${idx}"]`);
-  const b = theme.buttons[idx];
+  const b = buttons[idx];
   btn.style.background = b.activeColor;
   btn.style.boxShadow = `0 0 0 4px white, 0 0 28px ${b.glow}, 0 0 56px ${b.glow}`;
   btn.classList.add('lit');
@@ -315,7 +321,7 @@ async function flashButton(idx, dur) {
 
 function tapFlash(idx) {
   const btn = document.querySelector(`[data-idx="${idx}"]`);
-  const b = theme.buttons[idx];
+  const b = buttons[idx];
   btn.style.background = b.activeColor;
   btn.style.boxShadow = `0 0 0 3px white, 0 0 20px ${b.glow}`;
   btn.classList.add('lit');
@@ -371,7 +377,7 @@ function updateProgress(remaining, total) {
   const pct = total === 0 ? 0 : ((total - remaining) / total * 100);
   const fill = document.getElementById('progressFill');
   fill.style.width = pct + '%';
-  fill.style.background = theme ? theme.accent : '#E94B8A';
+  fill.style.background = THEME.accent;
 }
 
 function clearProgressTimer() {
@@ -385,9 +391,9 @@ function gameOver() {
   clearProgressTimer();
 
   const reached = level;
-  const prev = getBest(currentThemeKey);
+  const prev = getBest(currentDifficultyKey);
   const isNew = reached > prev;
-  if (isNew) saveBest(currentThemeKey, reached);
+  if (isNew) saveBest(currentDifficultyKey, reached);
   const best = isNew ? reached : prev;
 
   document.getElementById('bestVal').textContent = best;
@@ -404,24 +410,16 @@ function restartGame() { startGame(); }
 function backToTheme() {
   gameActive = false;
   document.getElementById('gameOverOverlay').classList.remove('show');
-  document.getElementById('startBtn').style.display = 'none';
   document.getElementById('progressBar').style.display = 'none';
-  document.getElementById('themeOverlay').style.display = 'flex';
-  setStatus('テーマを えらんでね', '');
+  document.getElementById('startBtn').style.display = 'none';
   document.getElementById('levelVal').textContent = '—';
+  document.getElementById('statusMain').textContent = 'START を おしてね 🌷';
+  document.getElementById('statusMain').className = 'status-main';
+  document.getElementById('difficultyOverlay').style.display = 'flex';
 }
 
-// pointerdownで2重発火防止
-document.querySelectorAll('.simon-btn').forEach(btn => {
-  let fired = false;
-  btn.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    if (fired) return;
-    fired = true;
-    onBtnTap(parseInt(btn.dataset.idx));
-    setTimeout(() => { fired = false; }, 220);
-  });
-});
+// ページ起動時に初期化
+initTheme();
 </script>
 </body>
 </html>
