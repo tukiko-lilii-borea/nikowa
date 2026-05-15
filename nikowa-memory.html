@@ -153,10 +153,17 @@
     background: white;
     border: 2px solid rgba(178,228,216,0.6);
     transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
     flex-direction: column;
     gap: 4px;
     padding: 6px 4px;
     box-shadow: 0 2px 8px rgba(166,124,82,0.08);
+  }
+  /* iOS Safari確実対策：めくれたときに裏面を完全に隠す */
+  .card-wrap.flipped .card-back,
+  .card-wrap.matched .card-back {
+    opacity: 0;
+    pointer-events: none;
   }
   .card-front img {
     width: 65%;
