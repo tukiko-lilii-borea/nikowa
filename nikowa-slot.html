@@ -7,17 +7,36 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
   :root{
-    --bg:#FFF8F0;--accent:#C49A6C;--accent2:#E8C49C;
-    --pink:#E94B6F;--surface:rgba(255,255,255,0.95);
+    --bg:#FFC200;--accent:#C49A6C;--accent2:#E8C49C;
+    --pink:#E94B6F;--surface:rgba(255,255,255,0.97);
     --ink:#3D2B1F;--ink-sub:#8B7355;
     --gold:#F5C518;--gold2:#D4A000;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   body{font-family:'Zen Maru Gothic',sans-serif;
-    background:var(--bg);
-    background-image:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(196,154,108,0.1) 29px,rgba(196,154,108,0.1) 30px),
-    repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(196,154,108,0.1) 29px,rgba(196,154,108,0.1) 30px);
-    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 12px 24px;color:var(--ink);}
+    background:
+      repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(160,100,0,0.13) 29px,rgba(160,100,0,0.13) 30px),
+      repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(160,100,0,0.13) 29px,rgba(160,100,0,0.13) 30px),
+      linear-gradient(160deg,#FFD050 0%,#FFBB00 50%,#FFA800 100%);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 12px 24px;color:var(--ink);
+    overflow-x:hidden;position:relative;}
+
+  /* 落ちてくる◆ */
+  @keyframes fall{
+    0%  {transform:translateY(-30px) rotate(0deg); opacity:0;}
+    8%  {opacity:1;}
+    90% {opacity:0.7;}
+    100%{transform:translateY(105vh) rotate(180deg); opacity:0;}
+  }
+  .diamond{
+    position:fixed;top:0;pointer-events:none;z-index:0;
+    color:rgba(255,255,255,0.55);
+    animation:fall linear infinite;
+    user-select:none;text-shadow:0 0 6px rgba(255,220,80,0.8);
+  }
+
+  /* コンテンツはダイヤの前面に */
+  .header,.hud,.machine{position:relative;z-index:1;}
 
   .header{width:100%;max-width:400px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .logo{height:26px;width:auto;object-fit:contain;}
@@ -39,10 +58,10 @@
     position:relative;
     box-shadow:inset 0 4px 16px rgba(0,0,0,0.4);
   }
-  /* ペイライン */
+  /* ペイライン: padding(12px) + 1行目(72px) = top:84px、高さ72px */
   .payline{
     position:absolute;left:10px;right:10px;
-    top:calc(50% - 38px);height:76px;
+    top:84px;height:72px;
     border-top:2.5px solid rgba(245,197,24,0.9);
     border-bottom:2.5px solid rgba(245,197,24,0.9);
     background:rgba(245,197,24,0.07);
@@ -319,6 +338,25 @@ function judgeWin() {
 function rnd() { return Math.floor(Math.random() * N); }
 
 buildAll();
+
+// 降ってくる◆を生成
+(function(){
+  const symbols = ['◆','◇','✦','✧','★','✨'];
+  for (let i = 0; i < 22; i++) {
+    const d = document.createElement('div');
+    d.className = 'diamond';
+    d.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    const size = 10 + Math.random() * 18;
+    d.style.cssText = `
+      left:${Math.random()*100}vw;
+      font-size:${size}px;
+      animation-duration:${5 + Math.random()*9}s;
+      animation-delay:${-Math.random()*14}s;
+      opacity:${0.3 + Math.random()*0.5};
+    `;
+    document.body.appendChild(d);
+  }
+})();
 </script>
 </body>
 </html>
