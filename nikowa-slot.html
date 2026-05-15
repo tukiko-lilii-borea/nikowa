@@ -1,189 +1,118 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>にこわ スロット</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
-  :root{
-    --bg:#FFC200;--accent:#C49A6C;--accent2:#E8C49C;
-    --pink:#E94B6F;--surface:rgba(255,255,255,0.97);
-    --ink:#3D2B1F;--ink-sub:#8B7355;
-    --gold:#F5C518;--gold2:#D4A000;
-  }
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  body{font-family:'Zen Maru Gothic',sans-serif;
-    background:
-      repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(160,100,0,0.13) 29px,rgba(160,100,0,0.13) 30px),
-      repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(160,100,0,0.13) 29px,rgba(160,100,0,0.13) 30px),
-      linear-gradient(160deg,#FFD050 0%,#FFBB00 50%,#FFA800 100%);
-    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 12px 24px;color:var(--ink);
-    overflow-x:hidden;position:relative;}
-
-  /* 落ちてくる◆ */
-  @keyframes fall{
-    0%  {transform:translateY(-30px) rotate(0deg); opacity:0;}
-    8%  {opacity:1;}
-    90% {opacity:0.7;}
-    100%{transform:translateY(105vh) rotate(180deg); opacity:0;}
-  }
-  .diamond{
-    position:fixed;top:0;pointer-events:none;z-index:0;
-    color:rgba(255,255,255,0.55);
-    animation:fall linear infinite;
-    user-select:none;text-shadow:0 0 6px rgba(255,220,80,0.8);
-  }
-
-  /* コンテンツはダイヤの前面に */
-  .header,.hud,.machine{position:relative;z-index:1;}
-
-  .header{width:100%;max-width:400px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-  .logo{height:26px;width:auto;object-fit:contain;}
-  .back-btn{background:var(--surface);border:1.5px solid rgba(196,154,108,0.3);border-radius:100px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;color:var(--ink-sub);cursor:pointer;}
-
-  .hud{width:100%;max-width:400px;display:flex;gap:8px;margin-bottom:12px;}
-  .hud-card{flex:1;background:var(--surface);border-radius:12px;padding:7px;text-align:center;border:1.5px solid rgba(196,154,108,0.2);}
-  .hud-label{font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1px;}
-  .hud-val{font-size:20px;font-weight:900;color:var(--accent);}
-
-  .machine{width:100%;max-width:400px;background:var(--surface);border-radius:28px;padding:18px 14px 16px;
-    box-shadow:0 6px 28px rgba(196,154,108,0.18);border:2px solid rgba(196,154,108,0.25);}
-
-  /* リールフレーム */
-  .reels-frame{
-    background:linear-gradient(160deg,#2A1A0A,#3D2A10);
-    border-radius:18px;padding:12px 10px;
-    display:flex;gap:8px;margin-bottom:12px;
-    position:relative;
-    box-shadow:inset 0 4px 16px rgba(0,0,0,0.4);
-  }
-  /* ペイライン: padding(12px) + 1行目(72px) = top:84px、高さ72px */
-  .payline{
-    position:absolute;left:10px;right:10px;
-    top:84px;height:72px;
-    border-top:2.5px solid rgba(245,197,24,0.9);
-    border-bottom:2.5px solid rgba(245,197,24,0.9);
-    background:rgba(245,197,24,0.07);
-    pointer-events:none;z-index:3;border-radius:4px;
-  }
-  .payline.win{
-    background:rgba(245,197,24,0.22);
-    border-color:var(--gold);
-    box-shadow:0 0 18px rgba(245,197,24,0.6);
-    animation:paylineFlash .4s ease-out 3;
-  }
-  @keyframes paylineFlash{0%,100%{background:rgba(245,197,24,0.22)}50%{background:rgba(245,197,24,0.5)}}
-
-  /* リール列 */
-  .reel-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;}
-  .reel-container{
-    width:100%;height:216px;overflow:hidden;
-    border-radius:10px;background:#1A0A00;
-    border:2px solid rgba(255,255,255,0.08);
-    position:relative;z-index:1;
-    /* 上下フェードアウト */
-    -webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 20%,black 80%,transparent 100%);
-    mask-image:linear-gradient(to bottom,transparent 0%,black 20%,black 80%,transparent 100%);
-  }
-  .reel-strip{will-change:transform;}
-  .reel-item{
-    height:72px;display:flex;align-items:center;justify-content:center;
-  }
-  .reel-item img{width:54px;height:54px;object-fit:contain;}
-
-  /* STOPボタン */
-  .stop-btn{
-    width:54px;height:54px;border-radius:50%;
-    border:4px solid #8B0000;
-    background:radial-gradient(circle at 35% 35%,#FF4444,#CC0000);
-    box-shadow:0 4px 10px rgba(180,0,0,0.45),inset 0 2px 4px rgba(255,180,180,0.3);
-    cursor:pointer;transition:all .12s;
-    pointer-events:none;opacity:.4;
-    flex-shrink:0;
-  }
-  .stop-btn.active{opacity:1;pointer-events:auto;}
-  .stop-btn.active:active{transform:scale(0.9);box-shadow:0 2px 6px rgba(180,0,0,0.4);}
-  .stop-btn.done{
-    background:radial-gradient(circle at 35% 35%,#888,#555);
-    border-color:#444;box-shadow:none;opacity:.35;pointer-events:none;
-  }
-
-  /* SPINボタン */
-  .spin-btn{
-    width:100%;padding:15px;font-family:inherit;font-size:17px;font-weight:900;
-    border:none;border-radius:16px;cursor:pointer;
-    background:linear-gradient(135deg,var(--gold),var(--gold2));color:#2A1A00;
-    box-shadow:0 5px 16px rgba(212,160,0,0.45);transition:all .12s;letter-spacing:.5px;
-  }
-  .spin-btn:disabled{background:linear-gradient(135deg,#bbb,#999);color:#666;box-shadow:none;cursor:not-allowed;}
-  .spin-btn:not(:disabled):active{transform:scale(0.97);}
-
-  /* メッセージ */
-  .win-msg{text-align:center;min-height:32px;margin-top:10px;font-size:18px;font-weight:900;color:var(--pink);}
-  @keyframes bounce{0%,100%{transform:scale(1)}40%{transform:scale(1.15)}70%{transform:scale(0.95)}}
-  .win-msg.show{animation:bounce .5s ease-out;}
-
-  /* JACKPOT演出 */
-  .jackpot-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center;}
-  .jackpot-overlay.show{display:flex;}
-  .jackpot-box{background:white;border-radius:24px;padding:26px 22px;text-align:center;width:88%;max-width:320px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.25);animation:bounce .4s ease-out;}
-  .jackpot-title{font-size:32px;font-weight:900;color:var(--gold2);}
-  .jackpot-chars{display:flex;justify-content:center;gap:8px;margin:12px 0;}
-  .jackpot-chars img{width:52px;height:52px;object-fit:contain;}
-  .jackpot-ok{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#2A1A00;border:none;
-    border-radius:14px;padding:12px 32px;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;margin-top:8px;}
-</style>
-</head>
-<body>
-<div class="header">
-  <img class="logo" src="assets/logo-soft.svg" alt="nikowa">
-  <button class="back-btn" onclick="location.href='./yuuenchi.html'">← もどる</button>
-</div>
-<div class="hud">
-  <div class="hud-card"><div class="hud-label">SPIN</div><div class="hud-val" id="spinCount">0</div></div>
-  <div class="hud-card"><div class="hud-label">WIN</div><div class="hud-val" id="winCount">0</div></div>
-  <div class="hud-card"><div class="hud-label">JACKPOT</div><div class="hud-val" id="jackpotCount">0</div></div>
-</div>
-<div class="machine">
-  <div class="reels-frame" id="reelsFrame">
-    <div class="payline" id="payline"></div>
-    <div class="reel-col">
-      <div class="reel-container"><div class="reel-strip" id="strip0"></div></div>
-      <button class="stop-btn" id="stop0" onclick="stopReel(0)"></button>
-    </div>
-    <div class="reel-col">
-      <div class="reel-container"><div class="reel-strip" id="strip1"></div></div>
-      <button class="stop-btn" id="stop1" onclick="stopReel(1)"></button>
-    </div>
-    <div class="reel-col">
-      <div class="reel-container"><div class="reel-strip" id="strip2"></div></div>
-      <button class="stop-btn" id="stop2" onclick="stopReel(2)"></button>
-    </div>
-  </div>
-  <button class="spin-btn" id="spinBtn" onclick="spin()">🎰 SPIN !</button>
-  <div class="win-msg" id="winMsg"></div>
-</div>
-
-<div class="jackpot-overlay" id="jackpotOverlay">
-  <div class="jackpot-box">
-    <div class="jackpot-title">🎉 JACKPOT !!</div>
-    <div class="jackpot-chars" id="jackpotChars"></div>
-    <div style="font-size:14px;font-weight:800;color:#8B7355;margin-bottom:4px;" id="jackpotMsg"></div>
-    <button class="jackpot-ok" onclick="document.getElementById('jackpotOverlay').classList.remove('show')">やったー！</button>
-  </div>
-</div>
-
-<script>
-const SYMS = [
-  {img:'assets/anzu.svg',   name:'あんず'},
-  {img:'assets/beru.svg',   name:'ベル'},
-  {img:'assets/beteli.svg', name:'ベティ'},
-  {img:'assets/koito.svg',  name:'こいと'},
-  {img:'assets/kotatu.svg', name:'こたつ'},
-  {img:'assets/tukiko.svg', name:'つきこ'},
-  {img:'assets/yumeme.svg', name:'ゆめめ'},
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>にこわ スロット</title> <style>@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
+:root{
+--bg:#FFC200;--accent:#C49A6C;--accent2:#E8C49C;
+--pink:#E94B6F;--surface:rgba(255,255,255,0.97);
+--ink:#3D2B1F;--ink-sub:#8B7355;
+--gold:#F5C518;--gold2:#D4A000;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Zen Maru Gothic',sans-serif;
+background:
+repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(160,100,0,0.13) 29px,rgba(160,100,0,0.13) 30px),
+repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(160,100,0,0.13) 29px,rgba(160,100,0,0.13) 30px),
+linear-gradient(160deg,#FFD050 0%,#FFBB00 50%,#FFA800 100%);
+min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 12px 24px;color:var(--ink);
+overflow-x:hidden;position:relative;}
+@keyframes fall{
+0% {transform:translateY(-30px) rotate(0deg); opacity:0;}
+8% {opacity:1;}
+90% {opacity:0.7;}
+100%{transform:translateY(105vh) rotate(180deg); opacity:0;}
+}
+.diamond{
+position:fixed;top:0;pointer-events:none;z-index:0;
+color:rgba(255,255,255,0.55);
+animation:fall linear infinite;
+user-select:none;text-shadow:0 0 6px rgba(255,220,80,0.8);
+}
+.header,.hud,.machine{position:relative;z-index:1;}
+.header{width:100%;max-width:400px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.logo{height:26px;width:auto;object-fit:contain;}
+.back-btn{background:var(--surface);border:1.5px solid rgba(196,154,108,0.3);border-radius:100px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;color:var(--ink-sub);cursor:pointer;}
+.hud{width:100%;max-width:400px;display:flex;gap:8px;margin-bottom:12px;}
+.hud-card{flex:1;background:var(--surface);border-radius:12px;padding:7px;text-align:center;border:1.5px solid rgba(196,154,108,0.2);}
+.hud-label{font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1px;}
+.hud-val{font-size:20px;font-weight:900;color:var(--accent);}
+.machine{width:100%;max-width:400px;background:var(--surface);border-radius:28px;padding:18px 14px 16px;
+box-shadow:0 6px 28px rgba(196,154,108,0.18);border:2px solid rgba(196,154,108,0.25);}
+.reels-frame{
+background:linear-gradient(160deg,#2A1A0A,#3D2A10);
+border-radius:18px;padding:12px 10px;
+display:flex;gap:8px;margin-bottom:12px;
+position:relative;
+box-shadow:inset 0 4px 16px rgba(0,0,0,0.4);
+}
+.payline{
+position:absolute;left:10px;right:10px;
+top:84px;height:72px;
+border-top:2.5px solid rgba(245,197,24,0.9);
+border-bottom:2.5px solid rgba(245,197,24,0.9);
+background:rgba(245,197,24,0.07);
+pointer-events:none;z-index:3;border-radius:4px;
+}
+.payline.win{
+background:rgba(245,197,24,0.22);
+border-color:var(--gold);
+box-shadow:0 0 18px rgba(245,197,24,0.6);
+animation:paylineFlash .4s ease-out 3;
+}
+@keyframes paylineFlash{0%,100%{background:rgba(245,197,24,0.22)}50%{background:rgba(245,197,24,0.5)}}
+.reel-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.reel-container{
+width:100%;height:216px;overflow:hidden;
+border-radius:10px;background:#1A0A00;
+border:2px solid rgba(255,255,255,0.08);
+position:relative;z-index:1;
+-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 20%,black 80%,transparent 100%);
+mask-image:linear-gradient(to bottom,transparent 0%,black 20%,black 80%,transparent 100%);
+}
+.reel-strip{will-change:transform;}
+.reel-item{
+height:72px;display:flex;align-items:center;justify-content:center;
+}
+.reel-item img{width:54px;height:54px;object-fit:contain;}
+.stop-btn{
+width:54px;height:54px;border-radius:50%;
+border:4px solid #8B0000;
+background:radial-gradient(circle at 35% 35%,#FF4444,#CC0000);
+box-shadow:0 4px 10px rgba(180,0,0,0.45),inset 0 2px 4px rgba(255,180,180,0.3);
+cursor:pointer;transition:all .12s;
+pointer-events:none;opacity:.4;
+flex-shrink:0;
+}
+.stop-btn.active{opacity:1;pointer-events:auto;}
+.stop-btn.active:active{transform:scale(0.9);box-shadow:0 2px 6px rgba(180,0,0,0.4);}
+.stop-btn.done{
+background:radial-gradient(circle at 35% 35%,#888,#555);
+border-color:#444;box-shadow:none;opacity:.35;pointer-events:none;
+}
+.spin-btn{
+width:100%;padding:15px;font-family:inherit;font-size:17px;font-weight:900;
+border:none;border-radius:16px;cursor:pointer;
+background:linear-gradient(135deg,var(--gold),var(--gold2));color:#2A1A00;
+box-shadow:0 5px 16px rgba(212,160,0,0.45);transition:all .12s;letter-spacing:.5px;
+}
+.spin-btn:disabled{background:linear-gradient(135deg,#bbb,#999);color:#666;box-shadow:none;cursor:not-allowed;}
+.spin-btn:not(:disabled):active{transform:scale(0.97);}
+.win-msg{text-align:center;min-height:32px;margin-top:10px;font-size:18px;font-weight:900;color:var(--pink);}
+@keyframes bounce{0%,100%{transform:scale(1)}40%{transform:scale(1.15)}70%{transform:scale(0.95)}}
+.win-msg.show{animation:bounce .5s ease-out;}
+.jackpot-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center;}
+.jackpot-overlay.show{display:flex;}
+.jackpot-box{background:white;border-radius:24px;padding:26px 22px;text-align:center;width:88%;max-width:320px;
+box-shadow:0 8px 32px rgba(0,0,0,0.25);animation:bounce .4s ease-out;}
+.jackpot-title{font-size:32px;font-weight:900;color:var(--gold2);}
+.jackpot-chars{display:flex;justify-content:center;gap:8px;margin:12px 0;}
+.jackpot-chars img{width:52px;height:52px;object-fit:contain;}
+.jackpot-ok{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#2A1A00;border:none;
+border-radius:14px;padding:12px 32px;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;margin-top:8px;}</style> </head><body><div class="header"><img class="logo" src="assets/logo-soft.svg" alt="nikowa"><button class="back-btn" onclick="location.href='./yuuenchi.html'">← もどる</button></div><div class="hud"><div class="hud-card"><div class="hud-label">SPIN</div><div class="hud-val" id="spinCount">0</div></div><div class="hud-card"><div class="hud-label">WIN</div><div class="hud-val" id="winCount">0</div></div><div class="hud-card"><div class="hud-label">JACKPOT</div><div class="hud-val" id="jackpotCount">0</div></div></div><div class="machine"><div class="reels-frame" id="reelsFrame"><div class="payline" id="payline"></div><div class="reel-col"><div class="reel-container"><div class="reel-strip" id="strip0"></div></div><button class="stop-btn" id="stop0" onclick="stopReel(0)"></button></div><div class="reel-col"><div class="reel-container"><div class="reel-strip" id="strip1"></div></div><button class="stop-btn" id="stop1" onclick="stopReel(1)"></button></div><div class="reel-col"><div class="reel-container"><div class="reel-strip" id="strip2"></div></div><button class="stop-btn" id="stop2" onclick="stopReel(2)"></button></div></div><button class="spin-btn" id="spinBtn" onclick="spin()">🎰 SPIN !</button><div class="win-msg" id="winMsg"></div></div><div class="jackpot-overlay" id="jackpotOverlay"><div class="jackpot-box"><div class="jackpot-title">🎉 JACKPOT !!</div><div class="jackpot-chars" id="jackpotChars"></div><div style="font-size:14px;font-weight:800;color:#8B7355;margin-bottom:4px;" id="jackpotMsg"></div><button class="jackpot-ok" onclick="document.getElementById('jackpotOverlay').classList.remove('show')">やったー！</button></div></div> <script>const SYMS = [
+{img:'assets/anzu.svg', name:'あんず'},
+{img:'assets/beru.svg', name:'ベル'},
+{img:'assets/beteli.svg', name:'ベティ'},
+{img:'assets/koito.svg', name:'こいと'},
+{img:'assets/kotatu.svg', name:'こたつ'},
+{img:'assets/tukiko.svg', name:'つきこ'},
+{img:'assets/yumeme.svg', name:'ゆめめ'},
 ];
 const SH = 72; // symbol height
 const N = SYMS.length; // 7
@@ -191,156 +120,135 @@ const REPEAT = 10; // loop count
 const TOTAL = N * REPEAT; // 70 items
 const STRIP_H = SH * TOTAL; // 5040px
 const SPIN_SPD = 12; // px/frame
-
 let spinCount=0, winCount=0, jackCount=0;
 let reels = [{pos:0,interval:null,spinning:false,result:0,stopped:false},
-             {pos:0,interval:null,spinning:false,result:0,stopped:false},
-             {pos:0,interval:null,spinning:false,result:0,stopped:false}];
-
+{pos:0,interval:null,spinning:false,result:0,stopped:false},
+{pos:0,interval:null,spinning:false,result:0,stopped:false}];
 // ストリップ構築
 function buildStrip(r) {
-  const el = document.getElementById('strip'+r);
-  el.innerHTML = '';
-  for (let i = 0; i < TOTAL; i++) {
-    const s = SYMS[i % N];
-    const d = document.createElement('div');
-    d.className = 'reel-item';
-    d.innerHTML = `<img src="${s.img}" alt="${s.name}">`;
-    el.appendChild(d);
-  }
+const el = document.getElementById('strip'+r);
+el.innerHTML = '';
+for (let i = 0; i < TOTAL; i++) {
+const s = SYMS[i % N];
+const d = document.createElement('div');
+d.className = 'reel-item';
+d.innerHTML = `<img src="${s.img}" alt="${s.name}">`;
+el.appendChild(d);
 }
-
+}
 function setStripY(r, pos) {
-  const p = ((pos % STRIP_H) + STRIP_H) % STRIP_H;
-  document.getElementById('strip'+r).style.transform = `translateY(${-p}px)`;
+const p = ((pos % STRIP_H) + STRIP_H) % STRIP_H;
+document.getElementById('strip'+r).style.transform = `translateY(${-p}px)`;
 }
-
 function buildAll() {
-  for (let r = 0; r < 3; r++) {
-    buildStrip(r);
-    reels[r].pos = SH;
-    setStripY(r, reels[r].pos);
-  }
+for (let r = 0; r < 3; r++) {
+buildStrip(r);
+reels[r].pos = SH;
+setStripY(r, reels[r].pos);
 }
-
+}
 function spin() {
-  document.getElementById('spinBtn').disabled = true;
-  document.getElementById('winMsg').textContent = '';
-  document.getElementById('winMsg').classList.remove('show');
-  document.getElementById('payline').classList.remove('win');
-  spinCount++;
-  document.getElementById('spinCount').textContent = spinCount;
-
-  // 結果決定（15%でJACKPOT）
-  const res = [rnd(), rnd(), rnd()];
-  if (Math.random() < 0.15) { res[1] = res[2] = res[0]; }
-  else if (Math.random() < 0.20) { // 20%で2つ揃い
-    const pair = Math.floor(Math.random()*3);
-    if (pair===0) res[1]=res[0]; else if (pair===1) res[2]=res[0]; else res[2]=res[1];
-  }
-
-  reels.forEach((r, i) => {
-    r.result = res[i];
-    r.spinning = true;
-    r.stopped = false;
-    r.interval = setInterval(() => {
-      r.pos -= SPIN_SPD;
-      if (r.pos < 0) r.pos += STRIP_H;
-      setStripY(i, r.pos);
-    }, 16);
-  });
-
-  // STOPボタン有効化（0.8秒後）
-  setTimeout(() => {
-    for (let i = 0; i < 3; i++) {
-      document.getElementById('stop'+i).classList.add('active');
-    }
-  }, 800);
+document.getElementById('spinBtn').disabled = true;
+document.getElementById('winMsg').textContent = '';
+document.getElementById('winMsg').classList.remove('show');
+document.getElementById('payline').classList.remove('win');
+spinCount++;
+document.getElementById('spinCount').textContent = spinCount;
+// 結果決定（15%でJACKPOT）
+const res = [rnd(), rnd(), rnd()];
+if (Math.random() < 0.15) { res[1] = res[2] = res[0]; }
+else if (Math.random() < 0.20) { // 20%で2つ揃い
+const pair = Math.floor(Math.random()*3);
+if (pair===0) res[1]=res[0]; else if (pair===1) res[2]=res[0]; else res[2]=res[1];
 }
-
+reels.forEach((r, i) => {
+r.result = res[i];
+r.spinning = true;
+r.stopped = false;
+r.interval = setInterval(() => {
+r.pos -= SPIN_SPD;
+if (r.pos < 0) r.pos += STRIP_H;
+setStripY(i, r.pos);
+}, 16);
+});
+// STOPボタン有効化（0.8秒後）
+setTimeout(() => {
+for (let i = 0; i < 3; i++) {
+document.getElementById('stop'+i).classList.add('active');
+}
+}, 800);
+}
 function stopReel(r) {
-  const reel = reels[r];
-  if (!reel.spinning) return;
-  reel.spinning = false;
-  clearInterval(reel.interval);
-
-  document.getElementById('stop'+r).classList.remove('active');
-  document.getElementById('stop'+r).classList.add('done');
-
-  // 最寄りのスナップ位置に即ジャンプ
-  const cycleLen = N * SH;
-  const targetMod = ((reel.result - 1 + N) % N) * SH;
-  const curMod = ((reel.pos % cycleLen) + cycleLen) % cycleLen;
-  const downDiff = ((curMod - targetMod) + cycleLen) % cycleLen;
-  const upDiff = cycleLen - downDiff;
-
-  if (downDiff <= upDiff) {
-    reel.pos = ((reel.pos - downDiff + STRIP_H) % STRIP_H);
-  } else {
-    reel.pos = ((reel.pos + upDiff) % STRIP_H);
-  }
-
-  const strip = document.getElementById('strip'+r);
-  strip.style.transition = 'transform 0.07s ease-out';
-  setStripY(r, reel.pos);
-  reel.stopped = true;
-
-  setTimeout(() => {
-    strip.style.transition = '';
-    if (reels.every(re => re.stopped)) judgeWin();
-  }, 100);
+const reel = reels[r];
+if (!reel.spinning) return;
+reel.spinning = false;
+clearInterval(reel.interval);
+document.getElementById('stop'+r).classList.remove('active');
+document.getElementById('stop'+r).classList.add('done');
+// 最寄りのスナップ位置に即ジャンプ
+const cycleLen = N * SH;
+const targetMod = ((reel.result - 1 + N) % N) * SH;
+const curMod = ((reel.pos % cycleLen) + cycleLen) % cycleLen;
+const downDiff = ((curMod - targetMod) + cycleLen) % cycleLen;
+const upDiff = cycleLen - downDiff;
+if (downDiff <= upDiff) {
+reel.pos = ((reel.pos - downDiff + STRIP_H) % STRIP_H);
+} else {
+reel.pos = ((reel.pos + upDiff) % STRIP_H);
 }
-
+const strip = document.getElementById('strip'+r);
+strip.style.transition = 'transform 0.07s ease-out';
+setStripY(r, reel.pos);
+reel.stopped = true;
+setTimeout(() => {
+strip.style.transition = '';
+if (reels.every(re => re.stopped)) judgeWin();
+}, 100);
+}
 function judgeWin() {
-  document.getElementById('spinBtn').disabled = false;
-  for (let i = 0; i < 3; i++) {
-    document.getElementById('stop'+i).classList.remove('active','done');
-  }
-  const s = reels.map(r => r.result);
-  const msg = document.getElementById('winMsg');
-  if (s[0]===s[1] && s[1]===s[2]) {
-    jackCount++; winCount++;
-    document.getElementById('winCount').textContent = winCount;
-    document.getElementById('jackpotCount').textContent = jackCount;
-    document.getElementById('payline').classList.add('win');
-    setTimeout(() => {
-      const fc = document.getElementById('jackpotChars');
-      const sym = SYMS[s[0]];
-      fc.innerHTML = `<img src="${sym.img}"><img src="${sym.img}"><img src="${sym.img}">`;
-      document.getElementById('jackpotMsg').textContent = sym.name + ' 3つそろった！';
-      document.getElementById('jackpotOverlay').classList.add('show');
-    }, 400);
-  } else if (s[0]===s[1] || s[1]===s[2] || s[0]===s[2]) {
-    winCount++; document.getElementById('winCount').textContent = winCount;
-    document.getElementById('payline').classList.add('win');
-    msg.textContent = '✨ 2つそろった！'; msg.classList.add('show');
-  } else {
-    msg.textContent = 'はずれ… またね🌷'; msg.classList.add('show');
-  }
+document.getElementById('spinBtn').disabled = false;
+for (let i = 0; i < 3; i++) {
+document.getElementById('stop'+i).classList.remove('active','done');
 }
-
+const s = reels.map(r => r.result);
+const msg = document.getElementById('winMsg');
+if (s[0]===s[1] && s[1]===s[2]) {
+jackCount++; winCount++;
+document.getElementById('winCount').textContent = winCount;
+document.getElementById('jackpotCount').textContent = jackCount;
+document.getElementById('payline').classList.add('win');
+setTimeout(() => {
+const fc = document.getElementById('jackpotChars');
+const sym = SYMS[s[0]];
+fc.innerHTML = `<img src="${sym.img}"><img src="${sym.img}"><img src="${sym.img}">`;
+document.getElementById('jackpotMsg').textContent = sym.name + ' 3つそろった！';
+document.getElementById('jackpotOverlay').classList.add('show');
+}, 400);
+} else if (s[0]===s[1] || s[1]===s[2] || s[0]===s[2]) {
+winCount++; document.getElementById('winCount').textContent = winCount;
+document.getElementById('payline').classList.add('win');
+msg.textContent = '✨ 2つそろった！'; msg.classList.add('show');
+} else {
+msg.textContent = 'はずれ… またね🌷'; msg.classList.add('show');
+}
+}
 function rnd() { return Math.floor(Math.random() * N); }
-
 buildAll();
-
 // 降ってくる◆を生成
 (function(){
-  const symbols = ['◆','◇','✦','✧','★','✨'];
-  for (let i = 0; i < 22; i++) {
-    const d = document.createElement('div');
-    d.className = 'diamond';
-    d.textContent = symbols[Math.floor(Math.random() * symbols.length)];
-    const size = 10 + Math.random() * 18;
-    d.style.cssText = `
-      left:${Math.random()*100}vw;
-      font-size:${size}px;
-      animation-duration:${5 + Math.random()*9}s;
-      animation-delay:${-Math.random()*14}s;
-      opacity:${0.3 + Math.random()*0.5};
-    `;
-    document.body.appendChild(d);
-  }
-})();
-</script>
-</body>
-</html>
+const symbols = ['◆','◇','✦','✧','★','✨'];
+for (let i = 0; i < 22; i++) {
+const d = document.createElement('div');
+d.className = 'diamond';
+d.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+const size = 10 + Math.random() * 18;
+d.style.cssText = `
+left:${Math.random()*100}vw;
+font-size:${size}px;
+animation-duration:${5 + Math.random()*9}s;
+animation-delay:${-Math.random()*14}s;
+opacity:${0.3 + Math.random()*0.5};
+`;
+document.body.appendChild(d);
+}
+})();</script> </body></html>

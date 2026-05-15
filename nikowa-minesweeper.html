@@ -1,684 +1,539 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>にこわ マインスイーパー</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
-
-  :root {
-    --mauve: #7C6C77;
-    --beige: #DAD2BC;
-    --tomato: #E94F37;
-    --bg: #DAD2BC;
-    --surface: rgba(255,255,255,0.72);
-    --ink: #2C2329;
-    --ink-sub: #7C6C77;
-    --accent: #E94F37;
-    --accent-light: #F07055;
-    --border: rgba(124,108,119,0.25);
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
-  body {
-    font-family: 'Zen Maru Gothic', sans-serif;
-    background-color: var(--bg);
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(124,108,119,0.18) 29px, rgba(124,108,119,0.18) 30px),
-      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(124,108,119,0.18) 29px, rgba(124,108,119,0.18) 30px);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 16px 12px 24px;
-    color: var(--ink);
-    overflow-x: hidden;
-  }
-
-  .header {
-    width: 100%;
-    max-width: 460px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .logo { font-size: 22px; font-weight: 900; color: var(--mauve); }
-  .logo span { color: var(--tomato); }
-  .back-btn {
-    background: var(--surface);
-    border: 1.5px solid rgba(166,124,82,0.2);
-    border-radius: 100px;
-    padding: 6px 14px;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--ink-sub);
-    cursor: pointer;
-  }
-
-  .wrap {
-    width: 100%;
-    max-width: 460px;
-    background: var(--surface);
-    border-radius: 24px;
-    padding: 14px;
-    box-shadow: 0 4px 20px rgba(166,124,82,0.12);
-    border: 1.5px solid var(--border);
-  }
-
-  .stats {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .stat-card {
-    flex: 1;
-    background: var(--bg);
-    border-radius: 12px;
-    padding: 6px;
-    text-align: center;
-    border: 1.5px solid var(--border);
-  }
-  .stat-label { font-size: 9px; font-weight: 700; color: var(--ink-sub); text-transform: uppercase; }
-  .stat-val { font-size: 18px; font-weight: 900; color: var(--tomato); }
-
-  .diff-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 10px;
-  }
-  .diff-btn {
-    flex: 1;
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 8px 4px;
-    font-family: inherit;
-    font-size: 11px;
-    font-weight: 800;
-    color: var(--ink-sub);
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-  }
-  .diff-btn .diff-label { font-size: 9px; opacity: 0.7; }
-  .diff-btn.active {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
-  }
-
-  /* モード切替 */
-  .mode-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 10px;
-  }
-  .mode-btn {
-    flex: 1;
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 8px;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--ink-sub);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .mode-btn.active {
-    background: var(--pink);
-    color: white;
-    border-color: var(--pink);
-  }
-  .mode-btn[data-mode="reveal"].active {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-
-  /* グリッド */
-  .grid-wrap {
-    position: relative;
-    background: var(--bg);
-    border-radius: 12px;
-    padding: 6px;
-    border: 1.5px solid var(--border);
-    overflow: auto;
-  }
-  .grid {
-    display: grid;
-    gap: 2px;
-    margin: 0 auto;
-  }
-  .cell {
-    aspect-ratio: 1/1;
-    background: linear-gradient(135deg, #D6F2EB, #B2E4D8);
-    border: 1px solid rgba(255,255,255,0.6);
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    cursor: pointer;
-    user-select: none;
-    box-shadow: inset -1px -1px 2px rgba(0,0,0,0.08), inset 1px 1px 2px rgba(255,255,255,0.6);
-    transition: transform 0.05s;
-    font-size: 14px;
-  }
-  .cell:active { transform: scale(0.95); }
-  .cell.revealed {
-    background: rgba(255,255,255,0.6);
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
-    border-color: rgba(178,228,216,0.4);
-    cursor: default;
-  }
-  .cell.revealed:active { transform: scale(1); }
-  .cell.flagged {
-    background: linear-gradient(135deg, #FFD6E0, #FFB5C8);
-  }
-  .cell.mine {
-    background: linear-gradient(135deg, #FF8E9C, #E94B6F);
-    color: white;
-  }
-  .cell.mine.exploded {
-    background: linear-gradient(135deg, #FF5050, #C72424);
-    animation: explode 0.4s ease-out;
-  }
-  @keyframes explode {
-    0% { transform: scale(0.5); }
-    50% { transform: scale(1.15); }
-    100% { transform: scale(1); }
-  }
-
-  /* 数字色 */
-  .n1 { color: #4A90D9; }
-  .n2 { color: #4FB677; }
-  .n3 { color: #E94B6F; }
-  .n4 { color: #9B59B6; }
-  .n5 { color: #C2185B; }
-  .n6 { color: #1FA8C9; }
-  .n7 { color: #3D2B1F; }
-  .n8 { color: #6B4F35; }
-
-  .btn-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .start-btn {
-    flex: 1;
-    background: linear-gradient(135deg, #E94F37, #F07055);
-    color: white;
-    border: none;
-    border-radius: 14px;
-    padding: 13px;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 900;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(166,124,82,0.3);
-    transition: transform 0.1s;
-  }
-  .start-btn:active { transform: scale(0.97); }
-
-  .hint {
-    text-align: center;
-    font-size: 11px;
-    color: var(--ink-sub);
-    font-weight: 700;
-    margin-top: 8px;
-  }
-
-  /* 完成・終了モーダル */
-  #endModal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-  }
-  #endModal.show { display: flex; }
-  .end-box {
-    background: white;
-    border-radius: 24px;
-    padding: 28px 24px;
-    text-align: center;
-    max-width: 320px;
-    width: 90%;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    animation: popIn 0.4s ease-out;
-  }
-  @keyframes popIn {
-    0% { transform: scale(0.7); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  .end-title { font-size: 28px; font-weight: 900; color: var(--accent); margin-bottom: 8px; }
-  .end-msg { font-size: 13px; color: var(--ink-sub); margin-bottom: 12px; }
-  .end-score { font-size: 16px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
-  .end-best { font-size: 12px; color: var(--pink); font-weight: 800; margin-bottom: 16px; }
-  .end-btn {
-    background: linear-gradient(135deg, #E94F37, #F07055);
-    color: white;
-    border: none;
-    border-radius: 14px;
-    padding: 12px 32px;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 900;
-    cursor: pointer;
-  }
-
-  /* 遊び方モーダル */
-  #howtoModal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-  #howtoModal.show { display: flex; }
-  .howto-box {
-    background: white;
-    border-radius: 20px;
-    padding: 22px 20px;
-    max-width: 360px;
-    width: 100%;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-  }
-  .howto-title {
-    font-size: 18px;
-    font-weight: 900;
-    color: var(--accent);
-    text-align: center;
-    margin-bottom: 14px;
-  }
-  .howto-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 12px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--ink);
-  }
-  .howto-icon {
-    font-size: 22px;
-    flex-shrink: 0;
-    width: 28px;
-    text-align: center;
-  }
-  .howto-close {
-    width: 100%;
-    margin-top: 16px;
-    padding: 10px;
-    background: var(--tomato);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 800;
-    cursor: pointer;
-  }
-  .help-btn {
-    background: var(--surface);
-    border: 1.5px solid rgba(166,124,82,0.25);
-    border-radius: 100px;
-    padding: 5px 12px;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--accent);
-    cursor: pointer;
-  }
-</style>
-</head>
-<body>
-
-<div class="header">
-  <div class="logo">niko<span>wa.</span> マイン</div>
-  <div style="display:flex;gap:8px;">
-    <button class="help-btn" onclick="document.getElementById('howtoModal').classList.add('show')">？ 遊び方</button>
-    <button class="back-btn" onclick="history.back()">← もどる</button>
-  </div>
-</div>
-
-<div class="wrap">
-  <div class="stats">
-    <div class="stat-card">
-      <div class="stat-label">🚩 のこり</div>
-      <div class="stat-val" id="flagsVal">10</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">⏱ じかん</div>
-      <div class="stat-val" id="timeVal">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">ベスト</div>
-      <div class="stat-val" id="bestVal">--</div>
-    </div>
-  </div>
-
-  <div class="diff-row">
-    <button class="diff-btn active" data-diff="easy">🌱<span>かんたん</span><span class="diff-label">9×9</span></button>
-    <button class="diff-btn" data-diff="normal">🌷<span>ふつう</span><span class="diff-label">10×12</span></button>
-    <button class="diff-btn" data-diff="hard">🔥<span>むずかしい</span><span class="diff-label">10×16</span></button>
-  </div>
-
-  <div class="mode-row">
-    <button class="mode-btn active" data-mode="reveal">🔓 ひらく</button>
-    <button class="mode-btn" data-mode="flag">🚩 はた</button>
-  </div>
-
-  <div class="grid-wrap">
-    <div class="grid" id="grid"></div>
-  </div>
-
-  <div class="hint">こわい爆弾はちかくに 数字が出るよ</div>
-
-  <div class="btn-row">
-    <button class="start-btn" onclick="startGame()">🔄 はじめから</button>
-  </div>
-</div>
-
-
-<!-- 遊び方モーダル -->
-<div id="howtoModal">
-  <div class="howto-box">
-    <div class="howto-title">💣 マインスイーパーの遊び方</div>
-    <div class="howto-item">
-      <div class="howto-icon">🔓</div>
-      <div><b>ひらくモード</b>でマスをタップすると開くよ。爆弾がなければ数字が出るか、空白になる。</div>
-    </div>
-    <div class="howto-item">
-      <div class="howto-icon">🔢</div>
-      <div><b>数字</b>はそのマスのまわり8マスにある爆弾の数を表してるよ。ヒントにして考えよう！</div>
-    </div>
-    <div class="howto-item">
-      <div class="howto-icon">🚩</div>
-      <div><b>はたモード</b>に切り替えてタップすると、爆弾と思うマスに旗を立てられるよ。</div>
-    </div>
-    <div class="howto-item">
-      <div class="howto-icon">💥</div>
-      <div>爆弾のマスを開いたら<b>ゲームオーバー！</b>旗を使って爆弾の場所を予測してね。</div>
-    </div>
-    <div class="howto-item">
-      <div class="howto-icon">🏆</div>
-      <div>爆弾以外の<b>全マスを開けたらクリア！</b>タイムを縮めるのを目指してみてね。</div>
-    </div>
-    <button class="howto-close" onclick="document.getElementById('howtoModal').classList.remove('show')">わかった！</button>
-  </div>
-</div>
-
-<!-- 終了モーダル -->
-<div id="endModal">
-  <div class="end-box">
-    <div class="end-title" id="endTitle">🎉 クリア！</div>
-    <div class="end-msg" id="endMsg"></div>
-    <div class="end-score" id="endScore"></div>
-    <div class="end-best" id="endBest"></div>
-    <button class="end-btn" onclick="document.getElementById('endModal').classList.remove('show');startGame()">もう一回！</button>
-  </div>
-</div>
-
-<script>
-const DIFF = {
-  easy:   { cols: 9,  rows: 9,  mines: 10 },
-  normal: { cols: 10, rows: 12, mines: 20 },
-  hard:   { cols: 10, rows: 16, mines: 35 },
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>にこわ マインスイーパー</title> <style>@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
+:root {
+--mauve: #7C6C77;
+--beige: #DAD2BC;
+--tomato: #E94F37;
+--bg: #DAD2BC;
+--surface: rgba(255,255,255,0.72);
+--ink: #2C2329;
+--ink-sub: #7C6C77;
+--accent: #E94F37;
+--accent-light: #F07055;
+--border: rgba(124,108,119,0.25);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+font-family: 'Zen Maru Gothic', sans-serif;
+background-color: var(--bg);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(124,108,119,0.18) 29px, rgba(124,108,119,0.18) 30px),
+repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(124,108,119,0.18) 29px, rgba(124,108,119,0.18) 30px);
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 16px 12px 24px;
+color: var(--ink);
+overflow-x: hidden;
+}
+.header {
+width: 100%;
+max-width: 460px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 14px;
+}
+.logo { font-size: 22px; font-weight: 900; color: var(--mauve); }
+.logo span { color: var(--tomato); }
+.back-btn {
+background: var(--surface);
+border: 1.5px solid rgba(166,124,82,0.2);
+border-radius: 100px;
+padding: 6px 14px;
+font-family: inherit;
+font-size: 12px;
+font-weight: 700;
+color: var(--ink-sub);
+cursor: pointer;
+}
+.wrap {
+width: 100%;
+max-width: 460px;
+background: var(--surface);
+border-radius: 24px;
+padding: 14px;
+box-shadow: 0 4px 20px rgba(166,124,82,0.12);
+border: 1.5px solid var(--border);
+}
+.stats {
+display: flex;
+gap: 8px;
+margin-bottom: 12px;
+}
+.stat-card {
+flex: 1;
+background: var(--bg);
+border-radius: 12px;
+padding: 6px;
+text-align: center;
+border: 1.5px solid var(--border);
+}
+.stat-label { font-size: 9px; font-weight: 700; color: var(--ink-sub); text-transform: uppercase; }
+.stat-val { font-size: 18px; font-weight: 900; color: var(--tomato); }
+.diff-row {
+display: flex;
+gap: 6px;
+margin-bottom: 10px;
+}
+.diff-btn {
+flex: 1;
+background: white;
+border: 1.5px solid var(--border);
+border-radius: 10px;
+padding: 8px 4px;
+font-family: inherit;
+font-size: 11px;
+font-weight: 800;
+color: var(--ink-sub);
+cursor: pointer;
+transition: all 0.15s;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 2px;
+}
+.diff-btn .diff-label { font-size: 9px; opacity: 0.7; }
+.diff-btn.active {
+background: var(--accent);
+color: white;
+border-color: var(--accent);
+}
+.mode-row {
+display: flex;
+gap: 6px;
+margin-bottom: 10px;
+}
+.mode-btn {
+flex: 1;
+background: white;
+border: 1.5px solid var(--border);
+border-radius: 10px;
+padding: 8px;
+font-family: inherit;
+font-size: 12px;
+font-weight: 800;
+color: var(--ink-sub);
+cursor: pointer;
+transition: all 0.15s;
+}
+.mode-btn.active {
+background: var(--pink);
+color: white;
+border-color: var(--pink);
+}
+.mode-btn[data-mode="reveal"].active {
+background: var(--accent);
+border-color: var(--accent);
+}
+.grid-wrap {
+position: relative;
+background: var(--bg);
+border-radius: 12px;
+padding: 6px;
+border: 1.5px solid var(--border);
+overflow: auto;
+}
+.grid {
+display: grid;
+gap: 2px;
+margin: 0 auto;
+}
+.cell {
+aspect-ratio: 1/1;
+background: linear-gradient(135deg, #D6F2EB, #B2E4D8);
+border: 1px solid rgba(255,255,255,0.6);
+border-radius: 5px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: 900;
+cursor: pointer;
+user-select: none;
+box-shadow: inset -1px -1px 2px rgba(0,0,0,0.08), inset 1px 1px 2px rgba(255,255,255,0.6);
+transition: transform 0.05s;
+font-size: 14px;
+}
+.cell:active { transform: scale(0.95); }
+.cell.revealed {
+background: rgba(255,255,255,0.6);
+box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+border-color: rgba(178,228,216,0.4);
+cursor: default;
+}
+.cell.revealed:active { transform: scale(1); }
+.cell.flagged {
+background: linear-gradient(135deg, #FFD6E0, #FFB5C8);
+}
+.cell.mine {
+background: linear-gradient(135deg, #FF8E9C, #E94B6F);
+color: white;
+}
+.cell.mine.exploded {
+background: linear-gradient(135deg, #FF5050, #C72424);
+animation: explode 0.4s ease-out;
+}
+@keyframes explode {
+0% { transform: scale(0.5); }
+50% { transform: scale(1.15); }
+100% { transform: scale(1); }
+}
+.n1 { color: #4A90D9; }
+.n2 { color: #4FB677; }
+.n3 { color: #E94B6F; }
+.n4 { color: #9B59B6; }
+.n5 { color: #C2185B; }
+.n6 { color: #1FA8C9; }
+.n7 { color: #3D2B1F; }
+.n8 { color: #6B4F35; }
+.btn-row {
+display: flex;
+gap: 8px;
+margin-top: 12px;
+}
+.start-btn {
+flex: 1;
+background: linear-gradient(135deg, #E94F37, #F07055);
+color: white;
+border: none;
+border-radius: 14px;
+padding: 13px;
+font-family: inherit;
+font-size: 14px;
+font-weight: 900;
+cursor: pointer;
+box-shadow: 0 4px 12px rgba(166,124,82,0.3);
+transition: transform 0.1s;
+}
+.start-btn:active { transform: scale(0.97); }
+.hint {
+text-align: center;
+font-size: 11px;
+color: var(--ink-sub);
+font-weight: 700;
+margin-top: 8px;
+}
+#endModal {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.5);
+z-index: 100;
+align-items: center;
+justify-content: center;
+}
+#endModal.show { display: flex; }
+.end-box {
+background: white;
+border-radius: 24px;
+padding: 28px 24px;
+text-align: center;
+max-width: 320px;
+width: 90%;
+box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+animation: popIn 0.4s ease-out;
+}
+@keyframes popIn {
+0% { transform: scale(0.7); opacity: 0; }
+100% { transform: scale(1); opacity: 1; }
+}
+.end-title { font-size: 28px; font-weight: 900; color: var(--accent); margin-bottom: 8px; }
+.end-msg { font-size: 13px; color: var(--ink-sub); margin-bottom: 12px; }
+.end-score { font-size: 16px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
+.end-best { font-size: 12px; color: var(--pink); font-weight: 800; margin-bottom: 16px; }
+.end-btn {
+background: linear-gradient(135deg, #E94F37, #F07055);
+color: white;
+border: none;
+border-radius: 14px;
+padding: 12px 32px;
+font-family: inherit;
+font-size: 14px;
+font-weight: 900;
+cursor: pointer;
+}
+#howtoModal {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.5);
+z-index: 200;
+align-items: center;
+justify-content: center;
+padding: 20px;
+}
+#howtoModal.show { display: flex; }
+.howto-box {
+background: white;
+border-radius: 20px;
+padding: 22px 20px;
+max-width: 360px;
+width: 100%;
+box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.howto-title {
+font-size: 18px;
+font-weight: 900;
+color: var(--accent);
+text-align: center;
+margin-bottom: 14px;
+}
+.howto-item {
+display: flex;
+align-items: flex-start;
+gap: 10px;
+margin-bottom: 12px;
+font-size: 13px;
+line-height: 1.5;
+color: var(--ink);
+}
+.howto-icon {
+font-size: 22px;
+flex-shrink: 0;
+width: 28px;
+text-align: center;
+}
+.howto-close {
+width: 100%;
+margin-top: 16px;
+padding: 10px;
+background: var(--tomato);
+color: white;
+border: none;
+border-radius: 12px;
+font-family: inherit;
+font-size: 14px;
+font-weight: 800;
+cursor: pointer;
+}
+.help-btn {
+background: var(--surface);
+border: 1.5px solid rgba(166,124,82,0.25);
+border-radius: 100px;
+padding: 5px 12px;
+font-family: inherit;
+font-size: 13px;
+font-weight: 700;
+color: var(--accent);
+cursor: pointer;
+}</style> </head><body><div class="header"><div class="logo">niko<span>wa.</span> マイン</div><div style="display:flex;gap:8px;"><button class="help-btn" onclick="document.getElementById('howtoModal').classList.add('show')">？ 遊び方</button><button class="back-btn" onclick="history.back()">← もどる</button></div></div><div class="wrap"><div class="stats"><div class="stat-card"><div class="stat-label">🚩 のこり</div><div class="stat-val" id="flagsVal">10</div></div><div class="stat-card"><div class="stat-label">⏱ じかん</div><div class="stat-val" id="timeVal">0</div></div><div class="stat-card"><div class="stat-label">ベスト</div><div class="stat-val" id="bestVal">--</div></div></div><div class="diff-row"><button class="diff-btn active" data-diff="easy">🌱<span>かんたん</span><span class="diff-label">9×9</span></button><button class="diff-btn" data-diff="normal">🌷<span>ふつう</span><span class="diff-label">10×12</span></button><button class="diff-btn" data-diff="hard">🔥<span>むずかしい</span><span class="diff-label">10×16</span></button></div><div class="mode-row"><button class="mode-btn active" data-mode="reveal">🔓 ひらく</button><button class="mode-btn" data-mode="flag">🚩 はた</button></div><div class="grid-wrap"><div class="grid" id="grid"></div></div><div class="hint">こわい爆弾はちかくに 数字が出るよ</div><div class="btn-row"><button class="start-btn" onclick="startGame()">🔄 はじめから</button></div></div><div id="howtoModal"><div class="howto-box"><div class="howto-title">💣 マインスイーパーの遊び方</div><div class="howto-item"><div class="howto-icon">🔓</div><div><b>ひらくモード</b>でマスをタップすると開くよ。爆弾がなければ数字が出るか、空白になる。</div></div><div class="howto-item"><div class="howto-icon">🔢</div><div><b>数字</b>はそのマスのまわり8マスにある爆弾の数を表してるよ。ヒントにして考えよう！</div></div><div class="howto-item"><div class="howto-icon">🚩</div><div><b>はたモード</b>に切り替えてタップすると、爆弾と思うマスに旗を立てられるよ。</div></div><div class="howto-item"><div class="howto-icon">💥</div><div>爆弾のマスを開いたら<b>ゲームオーバー！</b>旗を使って爆弾の場所を予測してね。</div></div><div class="howto-item"><div class="howto-icon">🏆</div><div>爆弾以外の<b>全マスを開けたらクリア！</b>タイムを縮めるのを目指してみてね。</div></div><button class="howto-close" onclick="document.getElementById('howtoModal').classList.remove('show')">わかった！</button></div></div><div id="endModal"><div class="end-box"><div class="end-title" id="endTitle">🎉 クリア！</div><div class="end-msg" id="endMsg"></div><div class="end-score" id="endScore"></div><div class="end-best" id="endBest"></div><button class="end-btn" onclick="document.getElementById('endModal').classList.remove('show');startGame()">もう一回！</button></div></div> <script>const DIFF = {
+easy: { cols: 9, rows: 9, mines: 10 },
+normal: { cols: 10, rows: 12, mines: 20 },
+hard: { cols: 10, rows: 16, mines: 35 },
 };
-
 let cells, cols, rows, mines, flagCount, revealedCount, firstClick, gameRunning, startTime, timerId;
 let difficulty = 'easy';
 let mode = 'reveal'; // 'reveal' or 'flag'
-
 function makeCells() {
-  cells = [];
-  for (let r = 0; r < rows; r++) {
-    const row = [];
-    for (let c = 0; c < cols; c++) {
-      row.push({ mine: false, revealed: false, flagged: false, num: 0 });
-    }
-    cells.push(row);
-  }
+cells = [];
+for (let r = 0; r < rows; r++) {
+const row = [];
+for (let c = 0; c < cols; c++) {
+row.push({ mine: false, revealed: false, flagged: false, num: 0 });
 }
-
+cells.push(row);
+}
+}
 function placeMines(safeR, safeC) {
-  // 最初に押したマスとその周辺は地雷から除外
-  const safe = new Set();
-  for (let dr = -1; dr <= 1; dr++)
-    for (let dc = -1; dc <= 1; dc++) {
-      const r = safeR + dr, c = safeC + dc;
-      if (r >= 0 && r < rows && c >= 0 && c < cols) safe.add(r + ',' + c);
-    }
-
-  let placed = 0;
-  while (placed < mines) {
-    const r = Math.floor(Math.random() * rows);
-    const c = Math.floor(Math.random() * cols);
-    if (cells[r][c].mine) continue;
-    if (safe.has(r + ',' + c)) continue;
-    cells[r][c].mine = true;
-    placed++;
-  }
-  // 数字計算
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (cells[r][c].mine) continue;
-      let n = 0;
-      for (let dr = -1; dr <= 1; dr++)
-        for (let dc = -1; dc <= 1; dc++) {
-          if (dr === 0 && dc === 0) continue;
-          const nr = r + dr, nc = c + dc;
-          if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
-          if (cells[nr][nc].mine) n++;
-        }
-      cells[r][c].num = n;
-    }
-  }
+// 最初に押したマスとその周辺は地雷から除外
+const safe = new Set();
+for (let dr = -1; dr <= 1; dr++)
+for (let dc = -1; dc <= 1; dc++) {
+const r = safeR + dr, c = safeC + dc;
+if (r >= 0 && r < rows && c >= 0 && c < cols) safe.add(r + ',' + c);
 }
-
+let placed = 0;
+while (placed < mines) {
+const r = Math.floor(Math.random() * rows);
+const c = Math.floor(Math.random() * cols);
+if (cells[r][c].mine) continue;
+if (safe.has(r + ',' + c)) continue;
+cells[r][c].mine = true;
+placed++;
+}
+// 数字計算
+for (let r = 0; r < rows; r++) {
+for (let c = 0; c < cols; c++) {
+if (cells[r][c].mine) continue;
+let n = 0;
+for (let dr = -1; dr <= 1; dr++)
+for (let dc = -1; dc <= 1; dc++) {
+if (dr === 0 && dc === 0) continue;
+const nr = r + dr, nc = c + dc;
+if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+if (cells[nr][nc].mine) n++;
+}
+cells[r][c].num = n;
+}
+}
+}
 function renderGrid() {
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
-  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  // 横幅に合わせてセルサイズ調整
-  const wrapW = document.querySelector('.grid-wrap').clientWidth - 12;
-  const gap = 2;
-  const cellW = Math.floor((wrapW - gap * (cols - 1)) / cols);
-  const fontSize = Math.max(10, cellW * 0.55);
-
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const cell = cells[r][c];
-      const el = document.createElement('div');
-      el.className = 'cell';
-      el.style.fontSize = fontSize + 'px';
-      el.dataset.r = r; el.dataset.c = c;
-      if (cell.revealed) {
-        el.classList.add('revealed');
-        if (cell.mine) {
-          el.classList.add('mine');
-          if (cell.exploded) el.classList.add('exploded');
-          el.textContent = '💣';
-        } else if (cell.num > 0) {
-          el.textContent = cell.num;
-          el.classList.add('n' + cell.num);
-        }
-      } else if (cell.flagged) {
-        el.classList.add('flagged');
-        el.textContent = '🚩';
-      }
-      el.addEventListener('click', e => { e.preventDefault(); tap(r, c); });
-      grid.appendChild(el);
-    }
-  }
-  document.getElementById('flagsVal').textContent = mines - flagCount;
+const grid = document.getElementById('grid');
+grid.innerHTML = '';
+grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+// 横幅に合わせてセルサイズ調整
+const wrapW = document.querySelector('.grid-wrap').clientWidth - 12;
+const gap = 2;
+const cellW = Math.floor((wrapW - gap * (cols - 1)) / cols);
+const fontSize = Math.max(10, cellW * 0.55);
+for (let r = 0; r < rows; r++) {
+for (let c = 0; c < cols; c++) {
+const cell = cells[r][c];
+const el = document.createElement('div');
+el.className = 'cell';
+el.style.fontSize = fontSize + 'px';
+el.dataset.r = r; el.dataset.c = c;
+if (cell.revealed) {
+el.classList.add('revealed');
+if (cell.mine) {
+el.classList.add('mine');
+if (cell.exploded) el.classList.add('exploded');
+el.textContent = '💣';
+} else if (cell.num > 0) {
+el.textContent = cell.num;
+el.classList.add('n' + cell.num);
 }
-
+} else if (cell.flagged) {
+el.classList.add('flagged');
+el.textContent = '🚩';
+}
+el.addEventListener('click', e => { e.preventDefault(); tap(r, c); });
+grid.appendChild(el);
+}
+}
+document.getElementById('flagsVal').textContent = mines - flagCount;
+}
 function tap(r, c) {
-  if (!gameRunning) return;
-  const cell = cells[r][c];
-  if (cell.revealed) return;
-
-  if (mode === 'flag') {
-    cell.flagged = !cell.flagged;
-    flagCount += cell.flagged ? 1 : -1;
-    renderGrid();
-    checkWin();
-    return;
-  }
-
-  // reveal mode
-  if (cell.flagged) return; // 旗が立ってる時は誤タップ防止
-
-  if (firstClick) {
-    firstClick = false;
-    placeMines(r, c);
-    startTimer();
-  }
-
-  if (cell.mine) {
-    cell.revealed = true;
-    cell.exploded = true;
-    revealAllMines();
-    endGame(false);
-    return;
-  }
-
-  floodReveal(r, c);
-  renderGrid();
-  checkWin();
+if (!gameRunning) return;
+const cell = cells[r][c];
+if (cell.revealed) return;
+if (mode === 'flag') {
+cell.flagged = !cell.flagged;
+flagCount += cell.flagged ? 1 : -1;
+renderGrid();
+checkWin();
+return;
 }
-
+// reveal mode
+if (cell.flagged) return; // 旗が立ってる時は誤タップ防止
+if (firstClick) {
+firstClick = false;
+placeMines(r, c);
+startTimer();
+}
+if (cell.mine) {
+cell.revealed = true;
+cell.exploded = true;
+revealAllMines();
+endGame(false);
+return;
+}
+floodReveal(r, c);
+renderGrid();
+checkWin();
+}
 function floodReveal(r, c) {
-  const queue = [[r, c]];
-  while (queue.length) {
-    const [cr, cc] = queue.shift();
-    const cell = cells[cr][cc];
-    if (cell.revealed || cell.flagged || cell.mine) continue;
-    cell.revealed = true;
-    revealedCount++;
-    if (cell.num === 0) {
-      for (let dr = -1; dr <= 1; dr++)
-        for (let dc = -1; dc <= 1; dc++) {
-          if (dr === 0 && dc === 0) continue;
-          const nr = cr + dr, nc = cc + dc;
-          if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
-          queue.push([nr, nc]);
-        }
-    }
-  }
+const queue = [[r, c]];
+while (queue.length) {
+const [cr, cc] = queue.shift();
+const cell = cells[cr][cc];
+if (cell.revealed || cell.flagged || cell.mine) continue;
+cell.revealed = true;
+revealedCount++;
+if (cell.num === 0) {
+for (let dr = -1; dr <= 1; dr++)
+for (let dc = -1; dc <= 1; dc++) {
+if (dr === 0 && dc === 0) continue;
+const nr = cr + dr, nc = cc + dc;
+if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+queue.push([nr, nc]);
 }
-
+}
+}
+}
 function revealAllMines() {
-  for (let r = 0; r < rows; r++)
-    for (let c = 0; c < cols; c++)
-      if (cells[r][c].mine) cells[r][c].revealed = true;
-  renderGrid();
+for (let r = 0; r < rows; r++)
+for (let c = 0; c < cols; c++)
+if (cells[r][c].mine) cells[r][c].revealed = true;
+renderGrid();
 }
-
 function checkWin() {
-  if (revealedCount === rows * cols - mines) {
-    endGame(true);
-  }
+if (revealedCount === rows * cols - mines) {
+endGame(true);
 }
-
+}
 function startTimer() {
-  startTime = Date.now();
-  timerId = setInterval(() => {
-    const sec = Math.floor((Date.now() - startTime) / 1000);
-    document.getElementById('timeVal').textContent = sec;
-  }, 250);
+startTime = Date.now();
+timerId = setInterval(() => {
+const sec = Math.floor((Date.now() - startTime) / 1000);
+document.getElementById('timeVal').textContent = sec;
+}, 250);
 }
-
 function stopTimer() {
-  if (timerId) { clearInterval(timerId); timerId = null; }
+if (timerId) { clearInterval(timerId); timerId = null; }
 }
-
 function startGame() {
-  const cfg = DIFF[difficulty];
-  cols = cfg.cols; rows = cfg.rows; mines = cfg.mines;
-  makeCells();
-  flagCount = 0;
-  revealedCount = 0;
-  firstClick = true;
-  gameRunning = true;
-  stopTimer();
-  document.getElementById('timeVal').textContent = '0';
-  document.getElementById('flagsVal').textContent = mines;
-  document.getElementById('endModal').classList.remove('show');
-  renderGrid();
+const cfg = DIFF[difficulty];
+cols = cfg.cols; rows = cfg.rows; mines = cfg.mines;
+makeCells();
+flagCount = 0;
+revealedCount = 0;
+firstClick = true;
+gameRunning = true;
+stopTimer();
+document.getElementById('timeVal').textContent = '0';
+document.getElementById('flagsVal').textContent = mines;
+document.getElementById('endModal').classList.remove('show');
+renderGrid();
 }
-
 function endGame(won) {
-  gameRunning = false;
-  stopTimer();
-  const sec = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
-  document.getElementById('timeVal').textContent = sec;
-
-  const labels = { easy:'かんたん', normal:'ふつう', hard:'むずかしい' };
-  if (won) {
-    document.getElementById('endTitle').textContent = '🎉 クリア！';
-    document.getElementById('endMsg').textContent = labels[difficulty] + ' を かいけつ！';
-    document.getElementById('endScore').textContent = '⏱ ' + sec + ' びょう';
-    // ベスト更新
-    const key = 'nikowa_mine_best_' + difficulty;
-    const prev = parseInt(localStorage.getItem(key) || '9999');
-    const isNew = sec < prev;
-    if (isNew) localStorage.setItem(key, sec);
-    const best = Math.min(prev, sec);
-    document.getElementById('bestVal').textContent = best;
-    document.getElementById('endBest').textContent = isNew ? '🏆 さいそく きろく！' : 'ベストタイム: ' + best + ' びょう';
-  } else {
-    document.getElementById('endTitle').textContent = '💣 ボム！';
-    document.getElementById('endMsg').textContent = 'ばくはつしちゃった😢';
-    document.getElementById('endScore').textContent = '⏱ ' + sec + ' びょう';
-    document.getElementById('endBest').textContent = 'もう一回 ちょうせん！';
-  }
-  setTimeout(() => document.getElementById('endModal').classList.add('show'), 600);
+gameRunning = false;
+stopTimer();
+const sec = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
+document.getElementById('timeVal').textContent = sec;
+const labels = { easy:'かんたん', normal:'ふつう', hard:'むずかしい' };
+if (won) {
+document.getElementById('endTitle').textContent = '🎉 クリア！';
+document.getElementById('endMsg').textContent = labels[difficulty] + ' を かいけつ！';
+document.getElementById('endScore').textContent = '⏱ ' + sec + ' びょう';
+// ベスト更新
+const key = 'nikowa_mine_best_' + difficulty;
+const prev = parseInt(localStorage.getItem(key) || '9999');
+const isNew = sec < prev;
+if (isNew) localStorage.setItem(key, sec);
+const best = Math.min(prev, sec);
+document.getElementById('bestVal').textContent = best;
+document.getElementById('endBest').textContent = isNew ? '🏆 さいそく きろく！' : 'ベストタイム: ' + best + ' びょう';
+} else {
+document.getElementById('endTitle').textContent = '💣 ボム！';
+document.getElementById('endMsg').textContent = 'ばくはつしちゃった😢';
+document.getElementById('endScore').textContent = '⏱ ' + sec + ' びょう';
+document.getElementById('endBest').textContent = 'もう一回 ちょうせん！';
 }
-
+setTimeout(() => document.getElementById('endModal').classList.add('show'), 600);
+}
 // 難易度切替
 document.querySelectorAll('.diff-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    difficulty = btn.dataset.diff;
-    const b = localStorage.getItem('nikowa_mine_best_' + difficulty);
-    document.getElementById('bestVal').textContent = b ? b : '--';
-    startGame();
-  });
+btn.addEventListener('click', () => {
+document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+btn.classList.add('active');
+difficulty = btn.dataset.diff;
+const b = localStorage.getItem('nikowa_mine_best_' + difficulty);
+document.getElementById('bestVal').textContent = b ? b : '--';
+startGame();
 });
-
+});
 // モード切替
 document.querySelectorAll('.mode-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    mode = btn.dataset.mode;
-  });
+btn.addEventListener('click', () => {
+document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+btn.classList.add('active');
+mode = btn.dataset.mode;
 });
-
+});
 // リサイズで再描画
 window.addEventListener('resize', () => { if (cells) renderGrid(); });
-
 // 初期化
 const b = localStorage.getItem('nikowa_mine_best_easy');
 document.getElementById('bestVal').textContent = b ? b : '--';
-startGame();
-</script>
-</body>
-</html>
+startGame();</script> </body></html>

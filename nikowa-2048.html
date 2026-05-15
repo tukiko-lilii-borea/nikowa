@@ -1,556 +1,453 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>にこわ 2048</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
-
-  :root {
-    --mint: #B2E4D8;
-    --mint-light: #D6F2EB;
-    --accent: #A67C52;
-    --accent-light: #C49A6C;
-    --pink: #E94B6F;
-    --bg: #E8F8F3;
-    --surface: rgba(255,255,255,0.88);
-    --ink: #3D2B1F;
-    --ink-sub: #8B7355;
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
-  body {
-    font-family: 'Nunito', sans-serif;
-    background-color: var(--bg);
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px),
-      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 16px 12px 24px;
-    color: var(--ink);
-    overflow-x: hidden;
-  }
-
-  .header {
-    width: 100%;
-    max-width: 420px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .logo {
-    font-size: 22px;
-    font-weight: 900;
-    color: var(--accent);
-    letter-spacing: -0.5px;
-  }
-  .logo span { color: var(--mint-light); filter: drop-shadow(0 1px 2px rgba(166,124,82,0.3)); }
-  .back-btn {
-    background: var(--surface);
-    border: 1.5px solid rgba(166,124,82,0.2);
-    border-radius: 100px;
-    padding: 6px 14px;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--ink-sub);
-    cursor: pointer;
-  }
-
-  .wrap {
-    width: 100%;
-    max-width: 420px;
-    background: var(--surface);
-    border-radius: 24px;
-    padding: 16px;
-    box-shadow: 0 4px 20px rgba(166,124,82,0.12);
-    border: 1.5px solid rgba(178,228,216,0.6);
-  }
-
-  .score-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  .score-card {
-    flex: 1;
-    background: var(--bg);
-    border-radius: 14px;
-    padding: 8px 12px;
-    text-align: center;
-    border: 1.5px solid rgba(178,228,216,0.6);
-  }
-  .score-label { font-size: 9px; font-weight: 700; color: var(--ink-sub); text-transform: uppercase; letter-spacing: 0.5px; }
-  .score-val { font-size: 22px; font-weight: 900; color: var(--accent); line-height: 1.2; }
-
-  /* ボード */
-  .board {
-    position: relative;
-    background: var(--bg);
-    border-radius: 16px;
-    border: 2px solid rgba(178,228,216,0.8);
-    aspect-ratio: 1 / 1;
-    padding: 8px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    gap: 8px;
-    touch-action: none;
-    overflow: hidden;
-  }
-  .cell-bg {
-    background: rgba(255,255,255,0.5);
-    border-radius: 12px;
-    border: 1.5px dashed rgba(178,228,216,0.5);
-  }
-  .tile {
-    position: absolute;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 26px;
-    font-weight: 900;
-    color: white;
-    transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-  }
-  .tile.new { animation: pop 0.2s ease-out; }
-  .tile.merge { animation: merge 0.25s ease-out; }
-  @keyframes pop {
-    0% { transform: scale(0) rotate(-10deg); opacity: 0; }
-    100% { opacity: 1; }
-  }
-  @keyframes merge {
-    0% { transform: scale(1); }
-    40% { transform: scale(1.18); }
-    100% { transform: scale(1); }
-  }
-
-  /* タイル色（にこわパステル） */
-  .tile-2    { background: linear-gradient(135deg,#FFF5E1,#FFE5B4); color: #8B6F47; }
-  .tile-4    { background: linear-gradient(135deg,#FFDFCC,#FFC9A3); color: #7A4D2E; }
-  .tile-8    { background: linear-gradient(135deg,#FFB991,#FF9A6C); color: white; }
-  .tile-16   { background: linear-gradient(135deg,#FF8B6B,#F26849); color: white; }
-  .tile-32   { background: linear-gradient(135deg,#F26871,#E94B6F); color: white; }
-  .tile-64   { background: linear-gradient(135deg,#E94B6F,#C3315A); color: white; }
-  .tile-128  { background: linear-gradient(135deg,#FFE3A8,#FFD15C); color: white; font-size: 22px; }
-  .tile-256  { background: linear-gradient(135deg,#FFD568,#FFB833); color: white; font-size: 22px; }
-  .tile-512  { background: linear-gradient(135deg,#A5E8C1,#71CC97); color: white; font-size: 22px; }
-  .tile-1024 { background: linear-gradient(135deg,#7AD8E4,#3FBCD0); color: white; font-size: 18px; }
-  .tile-2048 { background: linear-gradient(135deg,#D8B4F8,#A67BE0); color: white; font-size: 18px; box-shadow: 0 4px 16px rgba(166,123,224,0.6); }
-  .tile-super { background: linear-gradient(135deg,#FFD700,#FF6B6B); color: white; font-size: 16px; }
-
-  .btn-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 14px;
-  }
-  .start-btn {
-    flex: 1;
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
-    color: white;
-    border: none;
-    border-radius: 14px;
-    padding: 13px;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 900;
-    cursor: pointer;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(166,124,82,0.3);
-    transition: transform 0.1s;
-  }
-  .start-btn:active { transform: scale(0.97); }
-  .undo-btn {
-    flex: 0 0 80px;
-    background: var(--bg);
-    color: var(--accent);
-    border: 1.5px solid rgba(166,124,82,0.3);
-    border-radius: 14px;
-    padding: 13px;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 800;
-    cursor: pointer;
-  }
-  .undo-btn:disabled { opacity: 0.4; }
-
-  .hint {
-    margin-top: 10px;
-    text-align: center;
-    font-size: 11px;
-    color: var(--ink-sub);
-    font-weight: 700;
-  }
-
-  /* 方向ボタン */
-  .dir-pad {
-    margin-top: 14px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 50px);
-    gap: 6px;
-    max-width: 260px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .dir-btn {
-    background: var(--bg);
-    border: 1.5px solid rgba(178,228,216,0.8);
-    border-radius: 14px;
-    font-size: 22px;
-    cursor: pointer;
-    font-family: inherit;
-    color: var(--accent);
-    font-weight: 700;
-    transition: transform 0.1s, background 0.1s;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .dir-btn:active { transform: scale(0.93); background: rgba(178,228,216,0.5); }
-  .dir-btn.empty { background: transparent; border: none; pointer-events: none; }
-  .dir-up    { grid-column: 2; grid-row: 1; }
-  .dir-left  { grid-column: 1; grid-row: 2; }
-  .dir-right { grid-column: 3; grid-row: 2; }
-  .dir-down  { grid-column: 2; grid-row: 3; }
-
-  #overlay {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: rgba(232,248,243,0.94);
-    border-radius: 16px;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    backdrop-filter: blur(4px);
-    z-index: 10;
-  }
-  #overlay.show { display: flex; }
-  .overlay-title { font-size: 24px; font-weight: 900; color: var(--accent); }
-  .overlay-msg { font-size: 13px; color: var(--ink-sub); font-weight: 700; }
-  .overlay-best { font-size: 12px; color: var(--pink); font-weight: 800; }
-</style>
-</head>
-<body>
-
-<div class="header">
-  <div class="logo">niko<span>wa.</span> 2048</div>
-  <button class="back-btn" onclick="history.back()">← もどる</button>
-</div>
-
-<div class="wrap">
-  <div class="score-row">
-    <div class="score-card">
-      <div class="score-label">SCORE</div>
-      <div class="score-val" id="scoreVal">0</div>
-    </div>
-    <div class="score-card">
-      <div class="score-label">BEST</div>
-      <div class="score-val" id="bestVal">0</div>
-    </div>
-  </div>
-
-  <div class="board" id="board">
-    <!-- 16個の背景セル -->
-    <div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div>
-    <div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div>
-    <div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div>
-    <div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div>
-    <div id="overlay">
-      <div class="overlay-title" id="overlayTitle">🌷 にこわ 2048</div>
-      <div class="overlay-msg" id="overlayMsg">スワイプでタイル合体！</div>
-      <div class="overlay-best" id="overlayBest"></div>
-    </div>
-  </div>
-
-  <div class="hint">スワイプ または ボタンで動かす</div>
-
-  <div class="dir-pad">
-    <button class="dir-btn dir-up"    id="dirUp">↑</button>
-    <button class="dir-btn dir-left"  id="dirLeft">←</button>
-    <button class="dir-btn dir-right" id="dirRight">→</button>
-    <button class="dir-btn dir-down"  id="dirDown">↓</button>
-  </div>
-
-  <div class="btn-row">
-    <button class="start-btn" onclick="startGame()">🌷 スタート</button>
-    <button class="undo-btn" id="undoBtn" onclick="undoMove()">↩ 戻す</button>
-  </div>
-</div>
-
-<script>
-const SIZE = 4;
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>にこわ 2048</title> <style>@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+:root {
+--mint: #B2E4D8;
+--mint-light: #D6F2EB;
+--accent: #A67C52;
+--accent-light: #C49A6C;
+--pink: #E94B6F;
+--bg: #E8F8F3;
+--surface: rgba(255,255,255,0.88);
+--ink: #3D2B1F;
+--ink-sub: #8B7355;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+font-family: 'Nunito', sans-serif;
+background-color: var(--bg);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px),
+repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px);
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 16px 12px 24px;
+color: var(--ink);
+overflow-x: hidden;
+}
+.header {
+width: 100%;
+max-width: 420px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 14px;
+}
+.logo {
+font-size: 22px;
+font-weight: 900;
+color: var(--accent);
+letter-spacing: -0.5px;
+}
+.logo span { color: var(--mint-light); filter: drop-shadow(0 1px 2px rgba(166,124,82,0.3)); }
+.back-btn {
+background: var(--surface);
+border: 1.5px solid rgba(166,124,82,0.2);
+border-radius: 100px;
+padding: 6px 14px;
+font-family: inherit;
+font-size: 12px;
+font-weight: 700;
+color: var(--ink-sub);
+cursor: pointer;
+}
+.wrap {
+width: 100%;
+max-width: 420px;
+background: var(--surface);
+border-radius: 24px;
+padding: 16px;
+box-shadow: 0 4px 20px rgba(166,124,82,0.12);
+border: 1.5px solid rgba(178,228,216,0.6);
+}
+.score-row {
+display: flex;
+gap: 8px;
+margin-bottom: 14px;
+}
+.score-card {
+flex: 1;
+background: var(--bg);
+border-radius: 14px;
+padding: 8px 12px;
+text-align: center;
+border: 1.5px solid rgba(178,228,216,0.6);
+}
+.score-label { font-size: 9px; font-weight: 700; color: var(--ink-sub); text-transform: uppercase; letter-spacing: 0.5px; }
+.score-val { font-size: 22px; font-weight: 900; color: var(--accent); line-height: 1.2; }
+.board {
+position: relative;
+background: var(--bg);
+border-radius: 16px;
+border: 2px solid rgba(178,228,216,0.8);
+aspect-ratio: 1 / 1;
+padding: 8px;
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+grid-template-rows: repeat(4, 1fr);
+gap: 8px;
+touch-action: none;
+overflow: hidden;
+}
+.cell-bg {
+background: rgba(255,255,255,0.5);
+border-radius: 12px;
+border: 1.5px dashed rgba(178,228,216,0.5);
+}
+.tile {
+position: absolute;
+border-radius: 12px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 26px;
+font-weight: 900;
+color: white;
+transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s;
+box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.tile.new { animation: pop 0.2s ease-out; }
+.tile.merge { animation: merge 0.25s ease-out; }
+@keyframes pop {
+0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+100% { opacity: 1; }
+}
+@keyframes merge {
+0% { transform: scale(1); }
+40% { transform: scale(1.18); }
+100% { transform: scale(1); }
+}
+.tile-2 { background: linear-gradient(135deg,#FFF5E1,#FFE5B4); color: #8B6F47; }
+.tile-4 { background: linear-gradient(135deg,#FFDFCC,#FFC9A3); color: #7A4D2E; }
+.tile-8 { background: linear-gradient(135deg,#FFB991,#FF9A6C); color: white; }
+.tile-16 { background: linear-gradient(135deg,#FF8B6B,#F26849); color: white; }
+.tile-32 { background: linear-gradient(135deg,#F26871,#E94B6F); color: white; }
+.tile-64 { background: linear-gradient(135deg,#E94B6F,#C3315A); color: white; }
+.tile-128 { background: linear-gradient(135deg,#FFE3A8,#FFD15C); color: white; font-size: 22px; }
+.tile-256 { background: linear-gradient(135deg,#FFD568,#FFB833); color: white; font-size: 22px; }
+.tile-512 { background: linear-gradient(135deg,#A5E8C1,#71CC97); color: white; font-size: 22px; }
+.tile-1024 { background: linear-gradient(135deg,#7AD8E4,#3FBCD0); color: white; font-size: 18px; }
+.tile-2048 { background: linear-gradient(135deg,#D8B4F8,#A67BE0); color: white; font-size: 18px; box-shadow: 0 4px 16px rgba(166,123,224,0.6); }
+.tile-super { background: linear-gradient(135deg,#FFD700,#FF6B6B); color: white; font-size: 16px; }
+.btn-row {
+display: flex;
+gap: 8px;
+margin-top: 14px;
+}
+.start-btn {
+flex: 1;
+background: linear-gradient(135deg, var(--accent), var(--accent-light));
+color: white;
+border: none;
+border-radius: 14px;
+padding: 13px;
+font-family: inherit;
+font-size: 14px;
+font-weight: 900;
+cursor: pointer;
+letter-spacing: 0.5px;
+box-shadow: 0 4px 12px rgba(166,124,82,0.3);
+transition: transform 0.1s;
+}
+.start-btn:active { transform: scale(0.97); }
+.undo-btn {
+flex: 0 0 80px;
+background: var(--bg);
+color: var(--accent);
+border: 1.5px solid rgba(166,124,82,0.3);
+border-radius: 14px;
+padding: 13px;
+font-family: inherit;
+font-size: 12px;
+font-weight: 800;
+cursor: pointer;
+}
+.undo-btn:disabled { opacity: 0.4; }
+.hint {
+margin-top: 10px;
+text-align: center;
+font-size: 11px;
+color: var(--ink-sub);
+font-weight: 700;
+}
+.dir-pad {
+margin-top: 14px;
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+grid-template-rows: repeat(3, 50px);
+gap: 6px;
+max-width: 260px;
+margin-left: auto;
+margin-right: auto;
+}
+.dir-btn {
+background: var(--bg);
+border: 1.5px solid rgba(178,228,216,0.8);
+border-radius: 14px;
+font-size: 22px;
+cursor: pointer;
+font-family: inherit;
+color: var(--accent);
+font-weight: 700;
+transition: transform 0.1s, background 0.1s;
+user-select: none;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.dir-btn:active { transform: scale(0.93); background: rgba(178,228,216,0.5); }
+.dir-btn.empty { background: transparent; border: none; pointer-events: none; }
+.dir-up { grid-column: 2; grid-row: 1; }
+.dir-left { grid-column: 1; grid-row: 2; }
+.dir-right { grid-column: 3; grid-row: 2; }
+.dir-down { grid-column: 2; grid-row: 3; }
+#overlay {
+display: none;
+position: absolute;
+inset: 0;
+background: rgba(232,248,243,0.94);
+border-radius: 16px;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 8px;
+backdrop-filter: blur(4px);
+z-index: 10;
+}
+#overlay.show { display: flex; }
+.overlay-title { font-size: 24px; font-weight: 900; color: var(--accent); }
+.overlay-msg { font-size: 13px; color: var(--ink-sub); font-weight: 700; }
+.overlay-best { font-size: 12px; color: var(--pink); font-weight: 800; }</style> </head><body><div class="header"><div class="logo">niko<span>wa.</span> 2048</div><button class="back-btn" onclick="history.back()">← もどる</button></div><div class="wrap"><div class="score-row"><div class="score-card"><div class="score-label">SCORE</div><div class="score-val" id="scoreVal">0</div></div><div class="score-card"><div class="score-label">BEST</div><div class="score-val" id="bestVal">0</div></div></div><div class="board" id="board"><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div id="overlay"><div class="overlay-title" id="overlayTitle">🌷 にこわ 2048</div><div class="overlay-msg" id="overlayMsg">スワイプでタイル合体！</div><div class="overlay-best" id="overlayBest"></div></div></div><div class="hint">スワイプ または ボタンで動かす</div><div class="dir-pad"><button class="dir-btn dir-up" id="dirUp">↑</button><button class="dir-btn dir-left" id="dirLeft">←</button><button class="dir-btn dir-right" id="dirRight">→</button><button class="dir-btn dir-down" id="dirDown">↓</button></div><div class="btn-row"><button class="start-btn" onclick="startGame()">🌷 スタート</button><button class="undo-btn" id="undoBtn" onclick="undoMove()">↩ 戻す</button></div></div> <script>const SIZE = 4;
 let grid, score, best, prevGrid, prevScore, gameRunning, won, isAnimating;
 const board = document.getElementById('board');
 let cellSize = 0; // 動的に計算
-
 function newGrid() {
-  return Array.from({length: SIZE}, () => Array(SIZE).fill(0));
+return Array.from({length: SIZE}, () => Array(SIZE).fill(0));
 }
-
 function emptyCells() {
-  const cells = [];
-  for (let r = 0; r < SIZE; r++)
-    for (let c = 0; c < SIZE; c++)
-      if (!grid[r][c]) cells.push({r, c});
-  return cells;
+const cells = [];
+for (let r = 0; r < SIZE; r++)
+for (let c = 0; c < SIZE; c++)
+if (!grid[r][c]) cells.push({r, c});
+return cells;
 }
-
 function addRandom(isNew = false) {
-  const empties = emptyCells();
-  if (empties.length === 0) return null;
-  const spot = empties[Math.floor(Math.random() * empties.length)];
-  grid[spot.r][spot.c] = Math.random() < 0.9 ? 2 : 4;
-  return { ...spot, isNew };
+const empties = emptyCells();
+if (empties.length === 0) return null;
+const spot = empties[Math.floor(Math.random() * empties.length)];
+grid[spot.r][spot.c] = Math.random() < 0.9 ? 2 : 4;
+return { ...spot, isNew };
 }
-
 function tileClass(v) {
-  if (v >= 4096) return 'tile-super';
-  return 'tile-' + v;
+if (v >= 4096) return 'tile-super';
+return 'tile-' + v;
 }
-
 function renderBoard(newTilePos = null, mergedPositions = []) {
-  // 既存のタイル要素を削除（背景は残す）
-  board.querySelectorAll('.tile').forEach(t => t.remove());
-
-  // ボード内のセルサイズを計算（gap=8px, padding=8px）
-  const boardSize = board.clientWidth - 16; // padding除く
-  const gap = 8;
-  cellSize = (boardSize - gap * 3) / 4;
-
-  for (let r = 0; r < SIZE; r++) {
-    for (let c = 0; c < SIZE; c++) {
-      const v = grid[r][c];
-      if (!v) continue;
-      const tile = document.createElement('div');
-      tile.className = 'tile ' + tileClass(v);
-      tile.textContent = v;
-      tile.style.width = cellSize + 'px';
-      tile.style.height = cellSize + 'px';
-      tile.style.transform = `translate(${c * (cellSize + gap) + 8}px, ${r * (cellSize + gap) + 8}px)`;
-      if (newTilePos && newTilePos.r === r && newTilePos.c === c) tile.classList.add('new');
-      if (mergedPositions.some(p => p.r === r && p.c === c)) tile.classList.add('merge');
-      board.appendChild(tile);
-    }
-  }
+// 既存のタイル要素を削除（背景は残す）
+board.querySelectorAll('.tile').forEach(t => t.remove());
+// ボード内のセルサイズを計算（gap=8px, padding=8px）
+const boardSize = board.clientWidth - 16; // padding除く
+const gap = 8;
+cellSize = (boardSize - gap * 3) / 4;
+for (let r = 0; r < SIZE; r++) {
+for (let c = 0; c < SIZE; c++) {
+const v = grid[r][c];
+if (!v) continue;
+const tile = document.createElement('div');
+tile.className = 'tile ' + tileClass(v);
+tile.textContent = v;
+tile.style.width = cellSize + 'px';
+tile.style.height = cellSize + 'px';
+tile.style.transform = `translate(${c * (cellSize + gap) + 8}px, ${r * (cellSize + gap) + 8}px)`;
+if (newTilePos && newTilePos.r === r && newTilePos.c === c) tile.classList.add('new');
+if (mergedPositions.some(p => p.r === r && p.c === c)) tile.classList.add('merge');
+board.appendChild(tile);
 }
-
+}
+}
 // 1行を左にスライド＆マージ
 function slideLeft(row) {
-  const filtered = row.filter(v => v);
-  const merged = [];
-  const mergedFlags = []; // この位置でマージ起きたか
-  for (let i = 0; i < filtered.length; i++) {
-    if (i+1 < filtered.length && filtered[i] === filtered[i+1]) {
-      merged.push(filtered[i] * 2);
-      mergedFlags.push(true);
-      score += filtered[i] * 2;
-      i++;
-    } else {
-      merged.push(filtered[i]);
-      mergedFlags.push(false);
-    }
-  }
-  while (merged.length < SIZE) { merged.push(0); mergedFlags.push(false); }
-  return { row: merged, mergedFlags };
+const filtered = row.filter(v => v);
+const merged = [];
+const mergedFlags = []; // この位置でマージ起きたか
+for (let i = 0; i < filtered.length; i++) {
+if (i+1 < filtered.length && filtered[i] === filtered[i+1]) {
+merged.push(filtered[i] * 2);
+mergedFlags.push(true);
+score += filtered[i] * 2;
+i++;
+} else {
+merged.push(filtered[i]);
+mergedFlags.push(false);
 }
-
+}
+while (merged.length < SIZE) { merged.push(0); mergedFlags.push(false); }
+return { row: merged, mergedFlags };
+}
 function move(dir) {
-  if (!gameRunning || isAnimating) return;
-
-  // バックアップ（undo用）
-  prevGrid = grid.map(r => [...r]);
-  prevScore = score;
-
-  let moved = false;
-  const mergedPositions = []; // マージが起きた位置（アニメーション用）
-
-  if (dir === 'left') {
-    for (let r = 0; r < SIZE; r++) {
-      const orig = [...grid[r]];
-      const { row, mergedFlags } = slideLeft(grid[r]);
-      grid[r] = row;
-      if (orig.some((v,i) => v !== row[i])) moved = true;
-      mergedFlags.forEach((f, i) => { if (f) mergedPositions.push({r, c: i}); });
-    }
-  } else if (dir === 'right') {
-    for (let r = 0; r < SIZE; r++) {
-      const orig = [...grid[r]];
-      const rev = grid[r].slice().reverse();
-      const { row, mergedFlags } = slideLeft(rev);
-      grid[r] = row.reverse();
-      if (orig.some((v,i) => v !== grid[r][i])) moved = true;
-      mergedFlags.forEach((f, i) => { if (f) mergedPositions.push({r, c: SIZE-1-i}); });
-    }
-  } else if (dir === 'up') {
-    for (let c = 0; c < SIZE; c++) {
-      const col = [grid[0][c], grid[1][c], grid[2][c], grid[3][c]];
-      const orig = [...col];
-      const { row, mergedFlags } = slideLeft(col);
-      let m = false;
-      for (let r = 0; r < SIZE; r++) {
-        if (grid[r][c] !== row[r]) m = true;
-        grid[r][c] = row[r];
-      }
-      if (m) moved = true;
-      mergedFlags.forEach((f, i) => { if (f) mergedPositions.push({r: i, c}); });
-    }
-  } else if (dir === 'down') {
-    for (let c = 0; c < SIZE; c++) {
-      const col = [grid[3][c], grid[2][c], grid[1][c], grid[0][c]];
-      const orig = [...col];
-      const { row, mergedFlags } = slideLeft(col);
-      let m = false;
-      for (let r = 0; r < SIZE; r++) {
-        if (grid[SIZE-1-r][c] !== row[r]) m = true;
-        grid[SIZE-1-r][c] = row[r];
-      }
-      if (m) moved = true;
-      mergedFlags.forEach((f, i) => { if (f) mergedPositions.push({r: SIZE-1-i, c}); });
-    }
-  }
-
-  if (!moved) return;
-
-  const newTile = addRandom(true);
-  document.getElementById('scoreVal').textContent = score.toLocaleString();
-  if (score > best) {
-    best = score;
-    localStorage.setItem('nikowa_2048_best', best);
-    document.getElementById('bestVal').textContent = best.toLocaleString();
-  }
-  renderBoard(newTile, mergedPositions);
-  document.getElementById('undoBtn').disabled = false;
-
-  // 2048達成チェック
-  if (!won) {
-    for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
-      if (grid[r][c] >= 2048) { won = true; showWin(); return; }
-    }
-  }
-
-  // ゲームオーバーチェック
-  if (isGameOver()) showGameOver();
+if (!gameRunning || isAnimating) return;
+// バックアップ（undo用）
+prevGrid = grid.map(r => [...r]);
+prevScore = score;
+let moved = false;
+const mergedPositions = []; // マージが起きた位置（アニメーション用）
+if (dir === 'left') {
+for (let r = 0; r < SIZE; r++) {
+const orig = [...grid[r]];
+const { row, mergedFlags } = slideLeft(grid[r]);
+grid[r] = row;
+if (orig.some((v,i) => v !== row[i])) moved = true;
+mergedFlags.forEach((f, i) => { if (f) mergedPositions.push({r, c: i}); });
 }
-
+} else if (dir === 'right') {
+for (let r = 0; r < SIZE; r++) {
+const orig = [...grid[r]];
+const rev = grid[r].slice().reverse();
+const { row, mergedFlags } = slideLeft(rev);
+grid[r] = row.reverse();
+if (orig.some((v,i) => v !== grid[r][i])) moved = true;
+mergedFlags.forEach((f, i) => { if (f) mergedPositions.push({r, c: SIZE-1-i}); });
+}
+} else if (dir === 'up') {
+for (let c = 0; c < SIZE; c++) {
+const col = [grid[0][c], grid[1][c], grid[2][c], grid[3][c]];
+const orig = [...col];
+const { row, mergedFlags } = slideLeft(col);
+let m = false;
+for (let r = 0; r < SIZE; r++) {
+if (grid[r][c] !== row[r]) m = true;
+grid[r][c] = row[r];
+}
+if (m) moved = true;
+mergedFlags.forEach((f, i) => { if (f) mergedPositions.push({r: i, c}); });
+}
+} else if (dir === 'down') {
+for (let c = 0; c < SIZE; c++) {
+const col = [grid[3][c], grid[2][c], grid[1][c], grid[0][c]];
+const orig = [...col];
+const { row, mergedFlags } = slideLeft(col);
+let m = false;
+for (let r = 0; r < SIZE; r++) {
+if (grid[SIZE-1-r][c] !== row[r]) m = true;
+grid[SIZE-1-r][c] = row[r];
+}
+if (m) moved = true;
+mergedFlags.forEach((f, i) => { if (f) mergedPositions.push({r: SIZE-1-i, c}); });
+}
+}
+if (!moved) return;
+const newTile = addRandom(true);
+document.getElementById('scoreVal').textContent = score.toLocaleString();
+if (score > best) {
+best = score;
+localStorage.setItem('nikowa_2048_best', best);
+document.getElementById('bestVal').textContent = best.toLocaleString();
+}
+renderBoard(newTile, mergedPositions);
+document.getElementById('undoBtn').disabled = false;
+// 2048達成チェック
+if (!won) {
+for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+if (grid[r][c] >= 2048) { won = true; showWin(); return; }
+}
+}
+// ゲームオーバーチェック
+if (isGameOver()) showGameOver();
+}
 function isGameOver() {
-  if (emptyCells().length > 0) return false;
-  for (let r = 0; r < SIZE; r++)
-    for (let c = 0; c < SIZE; c++) {
-      const v = grid[r][c];
-      if (c+1 < SIZE && grid[r][c+1] === v) return false;
-      if (r+1 < SIZE && grid[r+1][c] === v) return false;
-    }
-  return true;
+if (emptyCells().length > 0) return false;
+for (let r = 0; r < SIZE; r++)
+for (let c = 0; c < SIZE; c++) {
+const v = grid[r][c];
+if (c+1 < SIZE && grid[r][c+1] === v) return false;
+if (r+1 < SIZE && grid[r+1][c] === v) return false;
 }
-
+return true;
+}
 function showGameOver() {
-  gameRunning = false;
-  const o = document.getElementById('overlay');
-  document.getElementById('overlayTitle').textContent = 'ゲームオーバー 🌷';
-  document.getElementById('overlayMsg').textContent = 'スコア: ' + score.toLocaleString();
-  document.getElementById('overlayBest').textContent = score >= best ? '🏆 NEW BEST!' : 'ベスト: ' + best.toLocaleString();
-  o.classList.add('show');
+gameRunning = false;
+const o = document.getElementById('overlay');
+document.getElementById('overlayTitle').textContent = 'ゲームオーバー 🌷';
+document.getElementById('overlayMsg').textContent = 'スコア: ' + score.toLocaleString();
+document.getElementById('overlayBest').textContent = score >= best ? '🏆 NEW BEST!' : 'ベスト: ' + best.toLocaleString();
+o.classList.add('show');
 }
-
 function showWin() {
-  const o = document.getElementById('overlay');
-  document.getElementById('overlayTitle').textContent = '🎉 2048 達成！';
-  document.getElementById('overlayMsg').textContent = 'スコア: ' + score.toLocaleString() + ' / そのまま続行できるよ';
-  document.getElementById('overlayBest').textContent = 'タップで続ける';
-  o.classList.add('show');
-  o.onclick = () => { o.classList.remove('show'); o.onclick = null; };
+const o = document.getElementById('overlay');
+document.getElementById('overlayTitle').textContent = '🎉 2048 達成！';
+document.getElementById('overlayMsg').textContent = 'スコア: ' + score.toLocaleString() + ' / そのまま続行できるよ';
+document.getElementById('overlayBest').textContent = 'タップで続ける';
+o.classList.add('show');
+o.onclick = () => { o.classList.remove('show'); o.onclick = null; };
 }
-
 function undoMove() {
-  if (!prevGrid) return;
-  grid = prevGrid.map(r => [...r]);
-  score = prevScore;
-  prevGrid = null;
-  document.getElementById('scoreVal').textContent = score.toLocaleString();
-  document.getElementById('undoBtn').disabled = true;
-  document.getElementById('overlay').classList.remove('show');
-  gameRunning = true;
-  renderBoard();
+if (!prevGrid) return;
+grid = prevGrid.map(r => [...r]);
+score = prevScore;
+prevGrid = null;
+document.getElementById('scoreVal').textContent = score.toLocaleString();
+document.getElementById('undoBtn').disabled = true;
+document.getElementById('overlay').classList.remove('show');
+gameRunning = true;
+renderBoard();
 }
-
 function startGame() {
-  grid = newGrid();
-  score = 0;
-  prevGrid = null;
-  won = false;
-  gameRunning = true;
-  document.getElementById('scoreVal').textContent = '0';
-  document.getElementById('overlay').classList.remove('show');
-  document.getElementById('undoBtn').disabled = true;
-  addRandom();
-  addRandom();
-  renderBoard();
+grid = newGrid();
+score = 0;
+prevGrid = null;
+won = false;
+gameRunning = true;
+document.getElementById('scoreVal').textContent = '0';
+document.getElementById('overlay').classList.remove('show');
+document.getElementById('undoBtn').disabled = true;
+addRandom();
+addRandom();
+renderBoard();
 }
-
 // 方向ボタン操作（pointerdownで統一・二重発火防止）
 const dirMap = { dirLeft:'left', dirRight:'right', dirUp:'up', dirDown:'down' };
 Object.entries(dirMap).forEach(([id, dir]) => {
-  const btn = document.getElementById(id);
-  if (!btn) return;
-  let fired = false;
-  btn.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    if (fired) return;
-    fired = true;
-    move(dir);
-    setTimeout(() => { fired = false; }, 80);
-  });
-  btn.addEventListener('click', e => {
-    if (!fired) move(dir);
-  });
+const btn = document.getElementById(id);
+if (!btn) return;
+let fired = false;
+btn.addEventListener('pointerdown', e => {
+e.preventDefault();
+if (fired) return;
+fired = true;
+move(dir);
+setTimeout(() => { fired = false; }, 80);
 });
-
+btn.addEventListener('click', e => {
+if (!fired) move(dir);
+});
+});
 // スワイプ操作
 let touchStartX, touchStartY;
 board.addEventListener('touchstart', e => {
-  touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
+touchStartX = e.touches[0].clientX;
+touchStartY = e.touches[0].clientY;
 }, { passive: true });
-
 board.addEventListener('touchend', e => {
-  if (!gameRunning) return;
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  const dy = e.changedTouches[0].clientY - touchStartY;
-  if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return; // 小さすぎ
-  if (Math.abs(dx) > Math.abs(dy)) {
-    move(dx > 0 ? 'right' : 'left');
-  } else {
-    move(dy > 0 ? 'down' : 'up');
-  }
+if (!gameRunning) return;
+const dx = e.changedTouches[0].clientX - touchStartX;
+const dy = e.changedTouches[0].clientY - touchStartY;
+if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return; // 小さすぎ
+if (Math.abs(dx) > Math.abs(dy)) {
+move(dx > 0 ? 'right' : 'left');
+} else {
+move(dy > 0 ? 'down' : 'up');
+}
 });
-
 // キーボード
 document.addEventListener('keydown', e => {
-  const m = { ArrowLeft:'left', ArrowRight:'right', ArrowUp:'up', ArrowDown:'down',
-              a:'left', d:'right', w:'up', s:'down' };
-  if (m[e.key]) { e.preventDefault(); move(m[e.key]); }
+const m = { ArrowLeft:'left', ArrowRight:'right', ArrowUp:'up', ArrowDown:'down',
+a:'left', d:'right', w:'up', s:'down' };
+if (m[e.key]) { e.preventDefault(); move(m[e.key]); }
 });
-
 // ウィンドウリサイズ時に再描画
 window.addEventListener('resize', () => { if (grid) renderBoard(); });
-
 // 初期化
 best = parseInt(localStorage.getItem('nikowa_2048_best') || '0');
 document.getElementById('bestVal').textContent = best.toLocaleString();
 document.getElementById('overlay').classList.add('show');
-document.getElementById('undoBtn').disabled = true;
-</script>
-</body>
-</html>
+document.getElementById('undoBtn').disabled = true;</script> </body></html>

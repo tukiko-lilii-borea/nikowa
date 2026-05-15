@@ -1,179 +1,133 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>にこわ キャッチ</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
-  :root{--bg:#E8F8F3;--accent:#2EB875;--pink:#E94B6F;--surface:rgba(255,255,255,0.92);--ink:#1A3A2A;--ink-sub:#4A7A5A;}
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
-  body{font-family:'Zen Maru Gothic',sans-serif;background:var(--bg);
-    background-image:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(46,184,117,0.1) 29px,rgba(46,184,117,0.1) 30px),
-    repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(46,184,117,0.1) 29px,rgba(46,184,117,0.1) 30px);
-    height:100vh;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:10px 12px 0;color:var(--ink);}
-  .header{width:100%;max-width:420px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;}
-  .logo{height:24px;width:auto;object-fit:contain;}
-  .back-btn{background:var(--surface);border:1.5px solid rgba(46,184,117,0.3);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;}
-  .hud{width:100%;max-width:420px;display:flex;gap:8px;margin-bottom:8px;flex-shrink:0;}
-  .hud-card{flex:1;background:var(--surface);border-radius:12px;padding:6px 8px;text-align:center;border:1.5px solid rgba(46,184,117,0.2);}
-  .hud-label{font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1px;}
-  .hud-val{font-size:20px;font-weight:900;color:var(--accent);}
-  .lives{display:flex;justify-content:center;gap:2px;font-size:16px;}
-  #gameArea{position:relative;width:100%;max-width:420px;flex:1;overflow:hidden;background:var(--surface);border-radius:20px 20px 0 0;border:1.5px solid rgba(46,184,117,0.2);}
-  .falling-char{position:absolute;width:56px;height:56px;display:flex;align-items:center;justify-content:center;pointer-events:none;}
-  .falling-char img{width:100%;height:100%;object-fit:contain;}
-  .basket{position:absolute;bottom:8px;display:flex;flex-direction:column;align-items:center;transition:left .05s linear;}
-  .basket-body{width:80px;height:32px;background:linear-gradient(135deg,var(--accent),#1A9A55);border-radius:0 0 24px 24px;
-    box-shadow:0 4px 12px rgba(46,184,117,0.4);}
-  .basket-top{width:90px;height:10px;background:var(--accent);border-radius:6px;}
-  .overlay{display:none;position:absolute;inset:0;background:rgba(255,255,255,0.92);border-radius:20px 20px 0 0;
-    flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;}
-  .overlay.show{display:flex;}
-  .overlay-title{font-size:28px;font-weight:900;color:var(--accent);}
-  .overlay-sub{font-size:14px;color:var(--ink-sub);font-weight:700;}
-  .start-btn{background:linear-gradient(135deg,var(--accent),#1A9A55);color:white;border:none;border-radius:16px;
-    padding:14px 32px;font-family:inherit;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 4px 14px rgba(46,184,117,0.4);}
-</style>
-</head>
-<body>
-<div class="header">
-  <img class="logo" src="assets/logo-soft.svg" alt="nikowa">
-  <button class="back-btn" onclick="location.href='./yuuenchi.html'">← もどる</button>
-</div>
-<div class="hud">
-  <div class="hud-card"><div class="hud-label">SCORE</div><div class="hud-val" id="scoreVal">0</div></div>
-  <div class="hud-card"><div class="hud-label">BEST</div><div class="hud-val" id="bestVal">0</div></div>
-  <div class="hud-card"><div class="hud-label">LIFE</div><div class="hud-val lives" id="livesVal">🌷🌷🌷</div></div>
-</div>
-<div id="gameArea">
-  <div class="basket" id="basket">
-    <div class="basket-top"></div>
-    <div class="basket-body"></div>
-  </div>
-  <div class="overlay show" id="overlay">
-    <div style="font-size:52px;">🌷</div>
-    <div class="overlay-title">キャッチゲーム</div>
-    <div class="overlay-sub">おちてくるキャラをつかまえよう！<br>3かいのがしたらおわり</div>
-    <button class="start-btn" onclick="startGame()">はじめる ★</button>
-  </div>
-</div>
-<script>
-const CHARS = ['assets/anzu.svg','assets/beru.svg','assets/beteli.svg','assets/koito.svg','assets/kotatu.svg','assets/tukiko.svg','assets/yumeme.svg'];
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>にこわ キャッチ</title> <style>@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
+:root{--bg:#E8F8F3;--accent:#2EB875;--pink:#E94B6F;--surface:rgba(255,255,255,0.92);--ink:#1A3A2A;--ink-sub:#4A7A5A;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+body{font-family:'Zen Maru Gothic',sans-serif;background:var(--bg);
+background-image:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(46,184,117,0.1) 29px,rgba(46,184,117,0.1) 30px),
+repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(46,184,117,0.1) 29px,rgba(46,184,117,0.1) 30px);
+height:100vh;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:10px 12px 0;color:var(--ink);}
+.header{width:100%;max-width:420px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;}
+.logo{height:24px;width:auto;object-fit:contain;}
+.back-btn{background:var(--surface);border:1.5px solid rgba(46,184,117,0.3);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;}
+.hud{width:100%;max-width:420px;display:flex;gap:8px;margin-bottom:8px;flex-shrink:0;}
+.hud-card{flex:1;background:var(--surface);border-radius:12px;padding:6px 8px;text-align:center;border:1.5px solid rgba(46,184,117,0.2);}
+.hud-label{font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1px;}
+.hud-val{font-size:20px;font-weight:900;color:var(--accent);}
+.lives{display:flex;justify-content:center;gap:2px;font-size:16px;}
+#gameArea{position:relative;width:100%;max-width:420px;flex:1;overflow:hidden;background:var(--surface);border-radius:20px 20px 0 0;border:1.5px solid rgba(46,184,117,0.2);}
+.falling-char{position:absolute;width:56px;height:56px;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.falling-char img{width:100%;height:100%;object-fit:contain;}
+.basket{position:absolute;bottom:8px;display:flex;flex-direction:column;align-items:center;transition:left .05s linear;}
+.basket-body{width:80px;height:32px;background:linear-gradient(135deg,var(--accent),#1A9A55);border-radius:0 0 24px 24px;
+box-shadow:0 4px 12px rgba(46,184,117,0.4);}
+.basket-top{width:90px;height:10px;background:var(--accent);border-radius:6px;}
+.overlay{display:none;position:absolute;inset:0;background:rgba(255,255,255,0.92);border-radius:20px 20px 0 0;
+flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;}
+.overlay.show{display:flex;}
+.overlay-title{font-size:28px;font-weight:900;color:var(--accent);}
+.overlay-sub{font-size:14px;color:var(--ink-sub);font-weight:700;}
+.start-btn{background:linear-gradient(135deg,var(--accent),#1A9A55);color:white;border:none;border-radius:16px;
+padding:14px 32px;font-family:inherit;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 4px 14px rgba(46,184,117,0.4);}</style> </head><body><div class="header"><img class="logo" src="assets/logo-soft.svg" alt="nikowa"><button class="back-btn" onclick="location.href='./yuuenchi.html'">← もどる</button></div><div class="hud"><div class="hud-card"><div class="hud-label">SCORE</div><div class="hud-val" id="scoreVal">0</div></div><div class="hud-card"><div class="hud-label">BEST</div><div class="hud-val" id="bestVal">0</div></div><div class="hud-card"><div class="hud-label">LIFE</div><div class="hud-val lives" id="livesVal">🌷🌷🌷</div></div></div><div id="gameArea"><div class="basket" id="basket"><div class="basket-top"></div><div class="basket-body"></div></div><div class="overlay show" id="overlay"><div style="font-size:52px;">🌷</div><div class="overlay-title">キャッチゲーム</div><div class="overlay-sub">おちてくるキャラをつかまえよう！<br>3かいのがしたらおわり</div><button class="start-btn" onclick="startGame()">はじめる ★</button></div></div> <script>const CHARS = ['assets/anzu.svg','assets/beru.svg','assets/beteli.svg','assets/koito.svg','assets/kotatu.svg','assets/tukiko.svg','assets/yumeme.svg'];
 let score=0,lives=3,best=parseInt(localStorage.getItem('nikowa_catch_best')||'0'),gameActive=false;
 let basketX=50,areaW=0,areaH=0,animId=null,spawnTimer=null;
 let fallingChars=[],spawnInterval=1600,fallSpeed=2.2,charId=0;
 const BASKET_W=90,CHAR_W=56;
-
 document.getElementById('bestVal').textContent=best;
-
 function getArea(){
-  const a=document.getElementById('gameArea');
-  areaW=a.clientWidth; areaH=a.clientHeight;
+const a=document.getElementById('gameArea');
+areaW=a.clientWidth; areaH=a.clientHeight;
 }
-
 function startGame(){
-  getArea();
-  score=0;lives=3;fallingChars=[];spawnInterval=1600;fallSpeed=2.2;
-  document.getElementById('gameArea').querySelectorAll('.falling-char').forEach(e=>e.remove());
-  document.getElementById('scoreVal').textContent=0;
-  updateLives();
-  document.getElementById('overlay').classList.remove('show');
-  gameActive=true;
-  basketX=areaW/2-BASKET_W/2;
-  updateBasket();
-  scheduleSpawn();
-  loop();
+getArea();
+score=0;lives=3;fallingChars=[];spawnInterval=1600;fallSpeed=2.2;
+document.getElementById('gameArea').querySelectorAll('.falling-char').forEach(e=>e.remove());
+document.getElementById('scoreVal').textContent=0;
+updateLives();
+document.getElementById('overlay').classList.remove('show');
+gameActive=true;
+basketX=areaW/2-BASKET_W/2;
+updateBasket();
+scheduleSpawn();
+loop();
 }
-
 function scheduleSpawn(){
-  if(!gameActive)return;
-  spawnTimer=setTimeout(()=>{spawnChar();scheduleSpawn();},spawnInterval);
-  spawnInterval=Math.max(700,spawnInterval-40);
+if(!gameActive)return;
+spawnTimer=setTimeout(()=>{spawnChar();scheduleSpawn();},spawnInterval);
+spawnInterval=Math.max(700,spawnInterval-40);
 }
-
 function spawnChar(){
-  const area=document.getElementById('gameArea');
-  const x=Math.random()*(areaW-CHAR_W);
-  const img=CHARS[Math.floor(Math.random()*CHARS.length)];
-  const el=document.createElement('div');
-  el.className='falling-char';
-  el.id='fc'+charId;
-  el.style.left=x+'px';
-  el.style.top='-56px';
-  el.innerHTML=`<img src="${img}">`;
-  area.appendChild(el);
-  fallingChars.push({id:charId,el,x,y:-56});
-  charId++;
+const area=document.getElementById('gameArea');
+const x=Math.random()*(areaW-CHAR_W);
+const img=CHARS[Math.floor(Math.random()*CHARS.length)];
+const el=document.createElement('div');
+el.className='falling-char';
+el.id='fc'+charId;
+el.style.left=x+'px';
+el.style.top='-56px';
+el.innerHTML=`<img src="${img}">`;
+area.appendChild(el);
+fallingChars.push({id:charId,el,x,y:-56});
+charId++;
 }
-
 function loop(){
-  if(!gameActive)return;
-  fallSpeed=Math.min(6,fallSpeed+0.001);
-  const toRemove=[];
-  for(const c of fallingChars){
-    c.y+=fallSpeed;
-    c.el.style.top=c.y+'px';
-    const basketY=areaH-50;
-    if(c.y+CHAR_W>basketY && c.y<basketY+40 && c.x+CHAR_W>basketX && c.x<basketX+BASKET_W){
-      // キャッチ！
-      score++;
-      document.getElementById('scoreVal').textContent=score;
-      if(score>best){best=score;localStorage.setItem('nikowa_catch_best',best);document.getElementById('bestVal').textContent=best;}
-      popEffect(c.x+CHAR_W/2,basketY);
-      toRemove.push(c.id);
-    } else if(c.y>areaH+10){
-      lives--;updateLives();
-      toRemove.push(c.id);
-      if(lives<=0){gameOver();return;}
-    }
-  }
-  toRemove.forEach(id=>{
-    const idx=fallingChars.findIndex(c=>c.id===id);
-    if(idx>=0){fallingChars[idx].el.remove();fallingChars.splice(idx,1);}
-  });
-  animId=requestAnimationFrame(loop);
+if(!gameActive)return;
+fallSpeed=Math.min(6,fallSpeed+0.001);
+const toRemove=[];
+for(const c of fallingChars){
+c.y+=fallSpeed;
+c.el.style.top=c.y+'px';
+const basketY=areaH-50;
+if(c.y+CHAR_W>basketY && c.y<basketY+40 && c.x+CHAR_W>basketX && c.x<basketX+BASKET_W){
+// キャッチ！
+score++;
+document.getElementById('scoreVal').textContent=score;
+if(score>best){best=score;localStorage.setItem('nikowa_catch_best',best);document.getElementById('bestVal').textContent=best;}
+popEffect(c.x+CHAR_W/2,basketY);
+toRemove.push(c.id);
+} else if(c.y>areaH+10){
+lives--;updateLives();
+toRemove.push(c.id);
+if(lives<=0){gameOver();return;}
 }
-
+}
+toRemove.forEach(id=>{
+const idx=fallingChars.findIndex(c=>c.id===id);
+if(idx>=0){fallingChars[idx].el.remove();fallingChars.splice(idx,1);}
+});
+animId=requestAnimationFrame(loop);
+}
 function popEffect(x,y){
-  const area=document.getElementById('gameArea');
-  const p=document.createElement('div');
-  p.style.cssText=`position:absolute;left:${x-20}px;top:${y-20}px;width:40px;height:40px;border-radius:50%;
-    background:rgba(46,184,117,0.5);animation:pop .3s ease-out forwards;pointer-events:none;z-index:5;`;
-  area.appendChild(p);
-  const style=document.createElement('style');
-  style.textContent='@keyframes pop{0%{transform:scale(0);opacity:1}100%{transform:scale(2);opacity:0}}';
-  document.head.appendChild(style);
-  setTimeout(()=>{p.remove();},350);
+const area=document.getElementById('gameArea');
+const p=document.createElement('div');
+p.style.cssText=`position:absolute;left:${x-20}px;top:${y-20}px;width:40px;height:40px;border-radius:50%;
+background:rgba(46,184,117,0.5);animation:pop .3s ease-out forwards;pointer-events:none;z-index:5;`;
+area.appendChild(p);
+const style=document.createElement('style');
+style.textContent='@keyframes pop{0%{transform:scale(0);opacity:1}100%{transform:scale(2);opacity:0}}';
+document.head.appendChild(style);
+setTimeout(()=>{p.remove();},350);
 }
-
 function updateLives(){
-  const icons=['🌷','🌷','🌷'];
-  document.getElementById('livesVal').innerHTML=icons.slice(0,lives).join('')+'<span style="opacity:.25">'+icons.slice(lives).join('')+'</span>';
+const icons=['🌷','🌷','🌷'];
+document.getElementById('livesVal').innerHTML=icons.slice(0,lives).join('')+'<span style="opacity:.25">'+icons.slice(lives).join('')+'</span>';
 }
-
 function gameOver(){
-  gameActive=false;clearTimeout(spawnTimer);cancelAnimationFrame(animId);
-  const ov=document.getElementById('overlay');
-  ov.innerHTML=`<div style="font-size:48px;">💔</div>
-    <div class="overlay-title" style="color:var(--pink)">ゲームオーバー</div>
-    <div class="overlay-sub">スコア：${score}こ<br>ベスト：${best}こ</div>
-    <button class="start-btn" onclick="startGame()">もう一回！</button>`;
-  ov.classList.add('show');
+gameActive=false;clearTimeout(spawnTimer);cancelAnimationFrame(animId);
+const ov=document.getElementById('overlay');
+ov.innerHTML=`<div style="font-size:48px;">💔</div>
+<div class="overlay-title" style="color:var(--pink)">ゲームオーバー</div>
+<div class="overlay-sub">スコア：${score}こ<br>ベスト：${best}こ</div>
+<button class="start-btn" onclick="startGame()">もう一回！</button>`;
+ov.classList.add('show');
 }
-
 // タッチ・マウスで バスケット移動
 const area=document.getElementById('gameArea');
 function moveBasket(clientX){
-  const rect=area.getBoundingClientRect();
-  basketX=Math.min(areaW-BASKET_W,Math.max(0,clientX-rect.left-BASKET_W/2));
-  updateBasket();
+const rect=area.getBoundingClientRect();
+basketX=Math.min(areaW-BASKET_W,Math.max(0,clientX-rect.left-BASKET_W/2));
+updateBasket();
 }
 function updateBasket(){document.getElementById('basket').style.left=basketX+'px';}
 area.addEventListener('touchmove',e=>{e.preventDefault();moveBasket(e.touches[0].clientX);},{passive:false});
 area.addEventListener('mousemove',e=>moveBasket(e.clientX));
 window.addEventListener('resize',getArea);
-getArea();
-</script>
-</body>
-</html>
+getArea();</script> </body></html>
