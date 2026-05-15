@@ -345,8 +345,8 @@
   }
 
   .vol-row { display:flex; gap:3px; }
-  .vol-btn { flex:1; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); border-radius:6px; color:#E94F37; font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
-  .vol-btn.active { background:#E94F37; border-color:#E94F37; color:white; }
+  .vol-btn { flex:1; background:rgba(255,255,255,0.15); border:1px solid rgba(124,108,119,0.3); border-radius:6px; color:#7C6C77; font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .vol-btn.active { background:#7C6C77; border-color:#7C6C77; color:white; }
 </style>
 </head>
 <body>
@@ -355,7 +355,7 @@
   <div class="logo">niko<span>wa.</span> マイン</div>
   <div style="display:flex;gap:8px;">
     <button class="help-btn" onclick="document.getElementById('howtoModal').classList.add('show')">？ 遊び方</button>
-    <button class="back-btn" onclick="history.back()">← もどる</button>
+    <div style="display:flex;align-items:center;gap:6px;"><div class="vol-row"><button class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button><button class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button><button class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button><button class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button></div><button class="back-btn" onclick="history.back()">← もどる</button></div>
   </div>
 </div>
 
@@ -538,6 +538,7 @@ function tap(r, c) {
   if (cell.revealed) return;
 
   if (mode === 'flag') {
+    sfxFlag();
     cell.flagged = !cell.flagged;
     flagCount += cell.flagged ? 1 : -1;
     renderGrid();
@@ -562,6 +563,7 @@ function tap(r, c) {
     return;
   }
 
+  sfxOpen();
   floodReveal(r, c);
   renderGrid();
   checkWin();
@@ -613,7 +615,7 @@ function stopTimer() {
 }
 
 function startGame() {
-  initAudio().then(()=>{ stopBGM(); startBGM(); });
+  try { initAudio().then(()=>{ stopBGM(); startBGM(); }).catch(()=>{}); } catch(e){}
   const cfg = DIFF[difficulty];
   cols = cfg.cols; rows = cfg.rows; mines = cfg.mines;
   makeCells();
@@ -629,7 +631,7 @@ function startGame() {
 }
 
 function endGame(won) {
-  stopBGM();
+  if (won) sfxClear(); else sfxBoom();
   gameRunning = false;
   stopTimer();
   const sec = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
@@ -686,69 +688,71 @@ const b = localStorage.getItem('nikowa_mine_best_easy');
 document.getElementById('bestVal').textContent = b ? b : '--';
 startGame();
 
-// ===== minesweeper BGM & 効果音 =====
-let audioCtx = null;
-let bgmRunning = false;
-let bgmNoteIdx = 0;
-let bgmTimer = null;
-let masterVol = 0;
+// ===== 緊張感マインスイーパー BGM & 効果音 =====
+let audioCtx=null, bgmRunning=false, bgmNoteIdx=0, bgmTimer=null, masterVol=0;
+const EN_MS = 400; // 75BPM・ゆっくり不気味
 
-const EN_MIN = 428.57;
-const BGM_MEL_MINE = [349.23,0,329.63,0,311.13,0,293.66,0,261.63,0,293.66,0,311.13,0,329.63,0,349.23,0,349.23,0,293.66,0,293.66,0,261.63,0,0,0,261.63,0,0,0];
-const BGM_BASS_MINE = [87.31,0,0,0,98.0,0,0,0,87.31,0,0,0,98.0,0,0,0,87.31,0,0,0,98.0,0,0,0,87.31,0,0,0,87.31,0,0,0];
+// マイナーペンタトニック・低音・不気味（他と全然違うキー＆雰囲気）
+const MS_MEL = [
+  233.08,0,220.00,0, 246.94,0,233.08,0,
+  261.63,233.08,0,0, 220.00,0,0,0,
+  233.08,0,261.63,0, 293.66,261.63,0,0,
+  246.94,0,233.08,0, 220.00,0,0,0,
+];
+const MS_BASS = [
+  110.00,0,0,0, 116.54,0,0,0,
+  123.47,0,0,0, 110.00,0,0,0,
+  116.54,0,0,0, 130.81,0,0,0,
+  123.47,0,0,0, 110.00,0,0,0,
+];
 
 function setVol(v) {
   masterVol = v;
   ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
-  const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
+  const map = {0:'vOff',0.3:'vLo',0.7:'vMd',1.0:'vHi'};
   document.getElementById(map[v])?.classList.add('active');
-  if (v === 0) stopBGM();
-  else if (!bgmRunning) startBGM();
+  if (v===0) stopBGM();
+  else if (gameRunning && !bgmRunning) startBGM();
 }
-
 function initAudio() {
   if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+    try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
   }
-  return audioCtx.resume();
+  try { return audioCtx.resume(); } catch(e){ return Promise.resolve(); }
 }
-
-function playNote(freq, dur, vol, type) {
-  if (!audioCtx || !freq || masterVol === 0) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.connect(g); g.connect(audioCtx.destination);
-  o.type = type || 'triangle';
-  o.frequency.value = freq;
-  const t = audioCtx.currentTime;
-  g.gain.setValueAtTime(vol * masterVol, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
-  o.start(t); o.stop(t + dur);
+function playNote(freq,dur,vol,type) {
+  if (!audioCtx||!freq||masterVol===0) return;
+  try {
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type=type||'sine'; o.frequency.value=freq;
+    const t=audioCtx.currentTime;
+    g.gain.setValueAtTime(vol*masterVol,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur*0.92);
+    o.start(t); o.stop(t+dur);
+  } catch(e){}
 }
-
 function startBGM() {
   if (bgmRunning) return;
-  bgmRunning = true; bgmNoteIdx = 0;
-  tickBGM();
+  bgmRunning=true; bgmNoteIdx=0; tickBGM();
 }
 function stopBGM() {
-  bgmRunning = false;
-  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+  bgmRunning=false;
+  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer=null; }
 }
 function tickBGM() {
   if (!bgmRunning) return;
-  const i = bgmNoteIdx % BGM_MEL_MINE.length;
-  playNote(BGM_MEL_MINE[i], EN_MIN/1000*0.82, 0.09, 'triangle');
-  playNote(BGM_BASS_MINE[i], EN_MIN/1000*1.7, 0.06, 'triangle');
+  const i=bgmNoteIdx%MS_MEL.length;
+  playNote(MS_MEL[i], EN_MS/1000*0.75, 0.08, 'triangle');
+  playNote(MS_BASS[i], EN_MS/1000*1.8, 0.10, 'sine');
   bgmNoteIdx++;
-  bgmTimer = setTimeout(tickBGM, EN_MIN);
+  bgmTimer=setTimeout(tickBGM, EN_MS);
 }
-
-function sfxOpen(){ playNote(440,0.06,0.12,'sine'); }
-function sfxFlag(){ playNote(220,0.08,0.15,'square'); }
-function sfxBoom(){ stopBGM(); [330,261.63,196,130.81].forEach((f,i)=>setTimeout(()=>playNote(f,0.25,0.20,'sawtooth'),i*80)); }
-function sfxClear(){ stopBGM(); [523.25,659.25,783.99,1046.50].forEach((f,i)=>setTimeout(()=>playNote(f,0.18,0.22,'sine'),i*100)); }
-// ===== ここまで BGM =====
+function sfxOpen()  { playNote(523.25, 0.06, 0.12, 'sine'); }
+function sfxFlag()  { playNote(330, 0.08, 0.15, 'square'); }
+function sfxBoom()  { stopBGM(); [330,261.63,196,130.81].forEach((f,i)=>setTimeout(()=>playNote(f,0.25,0.20,'sawtooth'),i*70)); }
+function sfxClear() { stopBGM(); [523.25,659.25,783.99,1046.50].forEach((f,i)=>setTimeout(()=>playNote(f,0.18,0.22,'sine'),i*100)); }
+// ===== ここまで =====
 </script>
 </body>
 </html>

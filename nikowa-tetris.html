@@ -832,9 +832,9 @@ function setVol(v) {
 
 function initAudio() {
   if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+    try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
   }
-  return audioCtx.resume(); // Promiseを返す（iOSはresume完了まで待つ必要あり）
+  try { return audioCtx.resume(); } catch(e){ return Promise.resolve(); }
 }
 
 function playNote(freq, dur, vol, type) {

@@ -641,7 +641,7 @@ function chooseDiff(key) {
   document.getElementById('diffOverlay').style.display = 'none';
   const b = localStorage.getItem('nikowa_memory_best_' + key);
   document.getElementById('bestVal').textContent = b ? b : '--';
-  initAudio().then(()=>{ stopBGM(); startBGM(); });
+  try { initAudio().then(()=>{ stopBGM(); startBGM(); }).catch(()=>{}); } catch(e){}
   startGame();
 }
 
@@ -713,9 +713,12 @@ function setVol(v) {
   else if (bgmRunning === false && typeof cards !== 'undefined' && cards.length > 0) startBGM();
 }
 function initAudio() {
-  if (!audioCtx) try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
-  return audioCtx.resume();
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+  }
+  try { return audioCtx.resume(); } catch(e){ return Promise.resolve(); }
 }
+
 function playNote(freq, dur, vol, type) {
   if (!audioCtx || !freq || masterVol === 0) return;
   const o = audioCtx.createOscillator(), g = audioCtx.createGain();

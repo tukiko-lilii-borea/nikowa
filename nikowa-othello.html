@@ -514,7 +514,7 @@ function endGame() {
 
 function startGame() {
   if (!difficulty) return;
-  initAudio().then(()=>{ stopBGM(); startBGM(); }); // 難易度未選択ガード
+  try { initAudio().then(()=>{ stopBGM(); startBGM(); }).catch(()=>{}); } catch(e){} // 難易度未選択ガード
   grid = newGrid();
   turn = BLACK;
   gameRunning = true;
@@ -654,9 +654,9 @@ function setVol(v) {
 
 function initAudio() {
   if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+    try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
   }
-  return audioCtx.resume();
+  try { return audioCtx.resume(); } catch(e){ return Promise.resolve(); }
 }
 
 function playNote(freq, dur, vol, type) {

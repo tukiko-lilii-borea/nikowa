@@ -387,7 +387,7 @@ function returnToStart() {
 }
 
 function startGame() {
-  initAudio().then(()=>{ stopBGM(); startBGM(); });
+  try { initAudio().then(()=>{ stopBGM(); startBGM(); }).catch(()=>{}); } catch(e){}
   resizeCanvas();
   score = 0;
   lives = 3;
@@ -821,9 +821,9 @@ function setVol(v) {
 
 function initAudio() {
   if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+    try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
   }
-  return audioCtx.resume();
+  try { return audioCtx.resume(); } catch(e){ return Promise.resolve(); }
 }
 
 function playNote(freq, dur, vol, type) {

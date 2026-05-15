@@ -505,7 +505,7 @@ function returnToStart() {
 }
 
 function startGame() {
-  initAudio().then(()=>{ stopBGM(); startBGM(); });
+  try { initAudio().then(()=>{ stopBGM(); startBGM(); }).catch(()=>{}); } catch(e){}
   newGame();
   gameRunning = true;
   paused = false;
@@ -662,9 +662,12 @@ function setVol(v) {
   else if (gameRunning && !bgmRunning) startBGM();
 }
 function initAudio() {
-  if (!audioCtx) try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
-  return audioCtx.resume();
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+  }
+  try { return audioCtx.resume(); } catch(e){ return Promise.resolve(); }
 }
+
 function playNote(freq,dur,vol,type) {
   if (!audioCtx||!freq||masterVol===0) return;
   const o=audioCtx.createOscillator(), g=audioCtx.createGain();
