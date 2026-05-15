@@ -79,13 +79,15 @@
   /* ======== バルーン ======== */
   #balloonArea { width:100%; height:100%; min-height:340px; position:relative; }
   .balloon {
-    position:absolute; bottom:-80px;
+    position:absolute; top:100%;
     display:flex; flex-direction:column; align-items:center;
-    cursor:pointer; transition:transform 0.1s;
+    cursor:pointer;
     animation:floatUp linear forwards;
     user-select:none;
+    will-change:transform;
+    touch-action:none;
   }
-  .balloon:active { transform:scale(0.85); }
+  .balloon:active { opacity:0.75; }
   .balloon-body {
     border-radius:50%; display:flex; align-items:center; justify-content:center;
     box-shadow:inset -6px -6px 12px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.15);
@@ -96,7 +98,7 @@
     pointer-events:none;
   }
   .balloon.pop .balloon-body { animation:popAnim 0.22s ease-out forwards; }
-  @keyframes floatUp { from { bottom:-80px; } to { bottom:110%; } }
+  @keyframes floatUp { from { transform:translateY(0); } to { transform:translateY(-140vh); } }
   @keyframes popAnim { 0%{transform:scale(1)} 50%{transform:scale(1.4);opacity:0.8} 100%{transform:scale(1.8);opacity:0} }
 
   /* ======== スタート/終了画面 ======== */
@@ -516,7 +518,7 @@ function startBalloonGame() {
     el.style.left = left + '%';
     el.style.animationDuration = dur + 's';
     el.innerHTML = `
-      <div class="balloon-body" style="width:${size}px;height:${size}px;background:${b.color};"><img src="${b.img}" style="width:78%;height:78%;object-fit:contain;"></div>
+      <div class="balloon-body" style="width:${size}px;height:${size}px;background:${b.color};"><img src="${b.img}" draggable="false" style="width:78%;height:78%;object-fit:contain;pointer-events:none;"></div>
       <div class="balloon-string" style="height:${20+Math.random()*12}px;"></div>
     `;
 
