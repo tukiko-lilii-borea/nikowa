@@ -16,23 +16,14 @@
   #canvas{border-radius:20px 20px 0 0;touch-action:none;cursor:pointer;display:block;max-width:420px;width:100%;}
 
   .vol-row { display:flex; gap:3px; }
-  .vol-btn { flex:1; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); border-radius:6px; color:#5BA4CF; font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
-  .vol-btn.active { background:#5BA4CF; border-color:#5BA4CF; color:white; }
+  .vol-btn { background:rgba(255,255,255,0.7); border:1px solid rgba(91,164,207,0.3); border-radius:6px; color:#3A8FCC; font-size:9px; font-weight:800; padding:4px 7px; cursor:pointer; font-family:inherit; }
+  .vol-btn.active { background:#3A8FCC; border-color:#3A8FCC; color:white; }
 </style>
 </head>
 <body>
 <div class="header">
   <img class="logo" src="assets/logo-soft.svg" alt="nikowa">
-  <div style="display:flex;align-items:center;gap:6px;">
-    <div class="vol-row">
-      <button class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button>
-      <button class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button>
-      <button class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button>
-      <button class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
-    </div>
-    <button class="back-btn" onclick="location.href='./yuuenchi.html'">← もどる</button>
-</div>
-  </div>
+  <div style='display:flex;align-items:center;gap:6px;'><div class='vol-row'><button type='button' class='vol-btn active' onclick='setVol(0)' id='vOff'>OFF</button><button type='button' class='vol-btn' onclick='setVol(0.3)' id='vLo'>小</button><button type='button' class='vol-btn' onclick='setVol(0.7)' id='vMd'>中</button><button type='button' class='vol-btn' onclick='setVol(1.0)' id='vHi'>大</button></div><button type='button' class='back-btn' onclick="location.href='./yuuenchi.html'">← もどる</button></div>
 </div>
 <canvas id="canvas"></canvas>
 <script>
@@ -233,68 +224,87 @@ resetBird();
 frame();
 window.addEventListener('resize',()=>{resize();resetBird();});
 
-// ===== flappy BGM & 効果音 =====
-let audioCtx = null;
-let bgmRunning = false;
-let bgmNoteIdx = 0;
-let bgmTimer = null;
-let masterVol = 0;
 
-const EN_FLA = 315.79;
-const BGM_MEL_FLAP = [523.25,659.25,523.25,0,659.25,783.99,659.25,0,523.25,440.0,523.25,0,659.25,783.99,880.0,0,783.99,659.25,523.25,0,659.25,523.25,440.0,0,523.25,659.25,783.99,0,659.25,523.25,0,0];
-const BGM_BASS_FLAP = [130.81,0,0,0,130.81,0,0,0,130.81,0,0,0,130.81,0,0,0,110.0,0,0,0,110.0,0,0,0,110.0,0,0,0,110.0,0,0,0];
+// ===== フラッピー BGM & 効果音（安全版） =====
+var audioCtx=null, bgmRunning=false, bgmIdx=0, bgmTimer=null;
+var masterVol=(function(){ try{ return parseFloat(localStorage.getItem('nikowa_bgm_vol')||'0'); }catch(e){ return 0; } })();
 
-function setVol(v) {
-  masterVol = v;
-  ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
-  const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
-  document.getElementById(map[v])?.classList.add('active');
-  if (v === 0) stopBGM();
-  else if (!bgmRunning) startBGM();
+var FLP_MEL=[
+  523.25,0,659.25,0, 783.99,0,659.25,0,
+  523.25,0,440.00,0, 523.25,0,0,0,
+  587.33,0,698.46,0, 880.00,0,698.46,0,
+  587.33,0,523.25,0, 587.33,0,0,0,
+  659.25,0,783.99,0, 987.77,0,880.00,0,
+  783.99,0,659.25,0, 587.33,0,0,0,
+  523.25,0,659.25,0, 783.99,0,1046.50,0,
+  783.99,0,659.25,0, 523.25,0,0,0,
+];
+
+function setVol(v){
+  masterVol=v;
+  ['vOff','vLo','vMd','vHi'].forEach(function(id){ var e=document.getElementById(id); if(e) e.classList.remove('active'); });
+  var map={0:'vOff',0.3:'vLo',0.7:'vMd',1.0:'vHi'};
+  var el=document.getElementById(map[v]); if(el) el.classList.add('active');
+  try{localStorage.setItem('nikowa_bgm_vol',String(v));}catch(e){}
+  if(v===0) stopBGM();
+}
+function ensureAudio(){
+  if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return Promise.resolve();}
+  try{return audioCtx.resume();}catch(e){return Promise.resolve();}
+}
+function playNote(freq,dur,vol,type){
+  if(!audioCtx||!freq||masterVol===0)return;
+  try{
+    var o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.connect(g);g.connect(audioCtx.destination);
+    o.type=type||'sine';o.frequency.value=freq;
+    var t=audioCtx.currentTime;
+    g.gain.setValueAtTime(vol*masterVol,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur*0.92);
+    o.start(t);o.stop(t+dur);
+  }catch(e){}
+}
+function startBGM(){ if(bgmRunning)return; bgmRunning=true;bgmIdx=0;tickBGM(); }
+function stopBGM(){ bgmRunning=false; if(bgmTimer){clearTimeout(bgmTimer);bgmTimer=null;} }
+function tickBGM(){
+  if(!bgmRunning)return;
+  var i=bgmIdx%FLP_MEL.length;
+  playNote(FLP_MEL[i],0.22,0.10,'sine');
+  bgmIdx++;
+  bgmTimer=setTimeout(tickBGM,333);
 }
 
-function initAudio() {
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+// ポーリングで状態監視（既存関数は一切触らない）
+var _prevState=-1, _prevScore=0;
+setInterval(function(){
+  if(typeof state==='undefined'||typeof score==='undefined') return;
+  // READY→PLAYでBGM開始
+  if(_prevState!==1&&state===1&&masterVol>0){
+    ensureAudio().then(function(){ stopBGM(); startBGM(); }).catch(function(){});
   }
-  return audioCtx.resume();
-}
+  // PLAY→DEADでBGM停止
+  if(_prevState===1&&state===2){
+    stopBGM();
+    [440,293.66,196].forEach(function(f,i){ setTimeout(function(){ playNote(f,0.2,0.18,'sawtooth'); },i*80); });
+  }
+  // スコアアップ
+  if(state===1&&score>_prevScore){
+    playNote(1318.51,0.10,0.22,'sine');
+  }
+  // リセット
+  if(state===0) _prevScore=0;
+  _prevState=state;
+  _prevScore=score;
+},80);
 
-function playNote(freq, dur, vol, type) {
-  if (!audioCtx || !freq || masterVol === 0) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.connect(g); g.connect(audioCtx.destination);
-  o.type = type || 'sine';
-  o.frequency.value = freq;
-  const t = audioCtx.currentTime;
-  g.gain.setValueAtTime(vol * masterVol, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
-  o.start(t); o.stop(t + dur);
-}
-
-function startBGM() {
-  if (bgmRunning) return;
-  bgmRunning = true; bgmNoteIdx = 0;
-  tickBGM();
-}
-function stopBGM() {
-  bgmRunning = false;
-  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
-}
-function tickBGM() {
-  if (!bgmRunning) return;
-  const i = bgmNoteIdx % BGM_MEL_FLAP.length;
-  playNote(BGM_MEL_FLAP[i], EN_FLA/1000*0.82, 0.09, 'sine');
-  playNote(BGM_BASS_FLAP[i], EN_FLA/1000*1.7, 0.06, 'triangle');
-  bgmNoteIdx++;
-  bgmTimer = setTimeout(tickBGM, EN_FLA);
-}
-
-function sfxFlap(){ playNote(880,0.06,0.15,'sine'); }
-function sfxScore(){ playNote(1046.50,0.08,0.18,'sine'); }
-function sfxDie(){ stopBGM(); [440,293.66,196].forEach((f,i)=>setTimeout(()=>playNote(f,0.2,0.18,'sawtooth'),i*100)); }
-// ===== ここまで BGM =====
+// UI初期化
+(function(){
+  var v=masterVol;
+  var map={0:'vOff',0.3:'vLo',0.7:'vMd',1.0:'vHi'};
+  Object.values(map).forEach(function(id){ var e=document.getElementById(id); if(e) e.classList.remove('active'); });
+  var el=document.getElementById(map[v]); if(el) el.classList.add('active');
+})();
+// ===== ここまで =====
 </script>
 </body>
 </html>
