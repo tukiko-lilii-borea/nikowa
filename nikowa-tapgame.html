@@ -21,7 +21,9 @@
   }
 
   .header { width:100%; max-width:420px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-  .logo { font-size:16px; font-weight:900; color:#2E9A6A; }
+  .logo { display:flex; align-items:center; height:32px; }
+  .logo img { height:100%; width:auto; object-fit:contain; }
+  .logo-text { font-size:16px; font-weight:900; color:#2E9A6A; }
   .back-btn { background:rgba(255,255,255,0.8); border:1px solid rgba(0,0,0,0.1); border-radius:100px; padding:5px 12px; font-family:inherit; font-size:11px; font-weight:700; color:#6B8A80; cursor:pointer; }
 
   /* HUD */
@@ -113,13 +115,16 @@
   .theme-grid { display:flex; flex-direction:column; gap:10px; width:100%; max-width:320px; }
   .theme-btn {
     background:white; border:2px solid rgba(0,0,0,0.08);
-    border-radius:18px; padding:14px 16px;
+    border-radius:18px; padding:12px 16px;
     display:flex; align-items:center; gap:14px;
     cursor:pointer; font-family:inherit; transition:all 0.15s;
     box-shadow:0 3px 10px rgba(0,0,0,0.06);
+    min-height:78px;
   }
   .theme-btn:active { transform:scale(0.98); box-shadow:none; }
-  .theme-icon { font-size:30px; flex-shrink:0; }
+  .theme-icon { font-size:36px; flex-shrink:0; }
+  .theme-icon-img { height:54px; width:54px; object-fit:contain; flex-shrink:0; }
+  .overlay-back { position:absolute; top:16px; left:16px; background:rgba(255,255,255,0.85); border:1px solid rgba(0,0,0,0.1); border-radius:100px; padding:6px 14px; font-family:inherit; font-size:11px; font-weight:700; color:#6B8A80; cursor:pointer; }
   .theme-info { text-align:left; }
   .theme-name { font-size:15px; font-weight:900; color:#2C4A3E; }
   .theme-desc { font-size:10px; color:#6B8A80; font-weight:700; margin-top:2px; }
@@ -144,7 +149,7 @@
 <body>
 
 <div class="header">
-  <div class="logo" id="gameLogo">🎮 タップゲーム</div>
+  <div class="logo" id="gameLogo"><span class="logo-text">🎮 タップゲーム</span></div>
   <button class="back-btn" onclick="if(window.history.length>1){history.back()}else{location.href='./yuuenchi.html'}">← もどる</button>
 </div>
 
@@ -162,18 +167,19 @@
 
 <!-- テーマ選択 -->
 <div id="themeOverlay" class="overlay-screen show">
+  <button class="overlay-back" onclick="location.href='./yuuenchi.html'">← もどる</button>
   <div class="theme-title" id="themeTitle">🎮 タップゲーム</div>
   <div class="theme-sub">テーマを えらんでね</div>
   <div class="theme-grid">
     <button class="theme-btn" onclick="selectTheme('mole')">
-      <img src="assets/kotatu.svg" style="width:30px;height:30px;flex-shrink:0;object-fit:contain;">
+      <img class="theme-icon-img" src="assets/kotatu.svg">
       <div class="theme-info">
         <div class="theme-name">こたつを捕まえろ！</div>
         <div class="theme-desc">穴からひょっこり出てきたら タップ！</div>
       </div>
     </button>
     <button class="theme-btn" onclick="selectTheme('balloon')">
-      <img src="assets/anzu.svg" style="width:30px;height:30px;flex-shrink:0;object-fit:contain;">
+      <img class="theme-icon-img" src="assets/anzu.svg">
       <div class="theme-info">
         <div class="theme-name">バルーン割り</div>
         <div class="theme-desc">にこわのなかまが浮かんできたら タップ！</div>
@@ -184,6 +190,7 @@
 
 <!-- 難易度選択 -->
 <div id="difficultyOverlay" class="overlay-screen">
+  <button class="overlay-back" onclick="backToTheme()">← もどる</button>
   <div class="theme-title" id="difficultyTitle">こたつを捕まえろ！</div>
   <div class="theme-sub">むずかしさを えらんでね</div>
   <div class="theme-grid">
@@ -238,7 +245,7 @@
 <script>
 const THEMES = {
   mole: {
-    name:'こたつを捕まえろ！', emoji:'🔥',
+    name:'こたつを捕まえろ！', emoji:'🔥', logoImg:'assets/kotatu.svg',
     accent:'#C85A17',
     bg:'linear-gradient(180deg,#FFF3E0 0%,#FFE0B2 100%)',
     timerColor:'#C85A17',
@@ -247,7 +254,7 @@ const THEMES = {
     badTarget:'💣',
   },
   balloon: {
-    name:'バルーン割り', emoji:'🎈',
+    name:'バルーン割り', emoji:'🎈', logoImg:'assets/anzu.svg',
     accent:'#E94B6F',
     bg:'linear-gradient(180deg,#FFF0F5 0%,#FFE5F5 100%)',
     timerColor:'#E94B6F',
@@ -268,17 +275,17 @@ const GAME_TIME = 30;
 // ======== 難易度（こたつ&バルーン共通） ========
 const DIFFICULTIES = {
   easy:   { name:'かんたん', emoji:'🌱', color:'#4FB677',
-            mole:    { gridSize:3, spawnInterval:800, upMin:1100, upMax:1500, anzuChance:0,    desc:'3×3の穴・ゆっくり' },
-            balloon: { spawnInterval:850, durMin:5,   durMax:7,   desc:'ゆっくり浮かんでくる' } },
+            mole:    { gridSize:3, spawnInterval:650, upMin:900,  upMax:1200, anzuChance:0,    desc:'3×3の穴・ゆっくり' },
+            balloon: { spawnInterval:700, durMin:4.5, durMax:6,   desc:'ゆっくり浮かんでくる' } },
   normal: { name:'ふつう',   emoji:'🌷', color:'#FF8FAB',
-            mole:    { gridSize:3, spawnInterval:550, upMin:850,  upMax:1150, anzuChance:0,    desc:'3×3の穴・標準スピード' },
-            balloon: { spawnInterval:600, durMin:3.5, durMax:5.5, desc:'標準スピード' } },
+            mole:    { gridSize:3, spawnInterval:450, upMin:700,  upMax:950,  anzuChance:0,    desc:'3×3の穴・標準スピード' },
+            balloon: { spawnInterval:490, durMin:3,   durMax:4.5, desc:'標準スピード' } },
   hard:   { name:'むずい',   emoji:'🔥', color:'#FF7A3D',
-            mole:    { gridSize:4, spawnInterval:380, upMin:650,  upMax:900,  anzuChance:0,    desc:'4×4の穴・速い' },
-            balloon: { spawnInterval:420, durMin:2.5, durMax:4,   desc:'速いスピード' } },
+            mole:    { gridSize:4, spawnInterval:300, upMin:500,  upMax:750,  anzuChance:0,    desc:'4×4の穴・速い' },
+            balloon: { spawnInterval:340, durMin:2,   durMax:3.2, desc:'速いスピード' } },
   insane: { name:'鬼ムズ',   emoji:'💀', color:'#C81E1E',
-            mole:    { gridSize:5, spawnInterval:230, upMin:400,  upMax:600,  anzuChance:0.30, desc:'5×5・超高速・あんずタップで減点⚠️' },
-            balloon: { spawnInterval:270, durMin:1.5, durMax:2.5, desc:'超高速で飛んでく！' } },
+            mole:    { gridSize:5, spawnInterval:150, upMin:320,  upMax:500,  anzuChance:0.18, spawnsPerTick:2, desc:'5×5・超高速・あんずタップで減点⚠️' },
+            balloon: { spawnInterval:200, durMin:1.1, durMax:1.9, desc:'超高速で飛んでく！' } },
 };
 
 let currentThemeKey = null;
@@ -296,7 +303,9 @@ function selectTheme(key) {
   currentThemeKey = key;
   theme = THEMES[key];
   document.body.style.background = theme.bg;
-  document.getElementById('gameLogo').textContent = theme.emoji + ' ' + theme.name;
+  document.getElementById('gameLogo').innerHTML = theme.logoImg
+    ? `<img src="${theme.logoImg}" alt="${theme.name}">`
+    : `<span class="logo-text">${theme.emoji} ${theme.name}</span>`;
   document.getElementById('scoreVal').style.color = theme.scoreColor;
   document.getElementById('timerVal').style.color = theme.timerColor;
   document.getElementById('bestVal').style.color  = theme.scoreColor;
@@ -343,8 +352,7 @@ function selectDifficulty(level) {
   const bestKey = getBestKey();
   const best = getBest(bestKey);
   document.getElementById('bestVal').textContent = best || '—';
-  // ロゴに難易度を追加
-  document.getElementById('gameLogo').textContent = theme.emoji + ' ' + theme.name + ' / ' + currentDifficulty.emoji + currentDifficulty.name;
+  // ロゴはイラストのみ（textは変えない）
   hideOverlay('difficultyOverlay');
   buildGameArea();
   startCountdown();
@@ -442,25 +450,27 @@ function startMoleGame() {
   moleTimers = [];
   const d = (currentDifficulty && currentDifficulty.mole) ? currentDifficulty.mole : DIFFICULTIES.normal.mole;
   const total = d.gridSize * d.gridSize;
+  const spawnsPerTick = d.spawnsPerTick || 1;
   const spawn = () => {
     if (!gameActive) return;
-    const idx = Math.floor(Math.random() * total);
-    const mole = document.getElementById('mole'+idx);
-    if (!mole || mole.classList.contains('up')) return;
+    for (let s = 0; s < spawnsPerTick; s++) {
+      const idx = Math.floor(Math.random() * total);
+      const mole = document.getElementById('mole'+idx);
+      if (!mole || mole.classList.contains('up')) continue;
 
-    // 鬼ムズだけあんずトラップ
-    const isTrap = Math.random() < d.anzuChance;
-    const imgSrc = isTrap ? 'assets/anzu.svg' : 'assets/kotatu.svg';
-    mole.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:contain;">`;
-    mole.dataset.trap = isTrap ? '1' : '0';
+      const isTrap = Math.random() < d.anzuChance;
+      const imgSrc = isTrap ? 'assets/anzu.svg' : 'assets/kotatu.svg';
+      mole.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:contain;">`;
+      mole.dataset.trap = isTrap ? '1' : '0';
 
-    mole.classList.add('up');
-    const t = setTimeout(() => {
-      if (mole.classList.contains('up') && !mole.classList.contains('hit')) {
-        mole.classList.remove('up');
-      }
-    }, d.upMin + Math.random() * (d.upMax - d.upMin));
-    moleTimers.push(t);
+      mole.classList.add('up');
+      const t = setTimeout(() => {
+        if (mole.classList.contains('up') && !mole.classList.contains('hit')) {
+          mole.classList.remove('up');
+        }
+      }, d.upMin + Math.random() * (d.upMax - d.upMin));
+      moleTimers.push(t);
+    }
   };
   const id = setInterval(() => { if (gameActive) spawn(); }, d.spawnInterval);
   spawnIntervals.push(id);
