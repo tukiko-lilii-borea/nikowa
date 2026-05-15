@@ -67,24 +67,21 @@ const CHARS = ['assets/anzu.svg','assets/beru.svg','assets/beteli.svg','assets/k
 let score=0,lives=3,best=parseInt(localStorage.getItem('nikowa_catch_best')||'0'),gameActive=false;
 let basketX=50,areaW=0,areaH=0,animId=null,spawnTimer=null;
 let fallingChars=[],charId=0;
-let fallSpeed=3.0,spawnInterval=1400,spawnCount=1,lastFrameTime=null;
+let fallSpeed=3.0,spawnInterval=1400,lastFrameTime=null;
 
 // フェーズ設定（スコアベース）
 const PHASES=[
-  {score:0,  speed:3.0, interval:1400, count:1},
-  {score:10, speed:4.2, interval:1100, count:1},
-  {score:20, speed:5.5, interval:900,  count:2},
-  {score:35, speed:7.0, interval:700,  count:2},
-  {score:50, speed:9.0, interval:500,  count:3},
+  {score:0,  speed:3.0, interval:1400},
+  {score:10, speed:4.0, interval:1100},
+  {score:20, speed:5.2, interval:850},
+  {score:35, speed:6.5, interval:650},
+  {score:55, speed:8.0, interval:480},
 ];
 function updatePhase(){
   let phase=PHASES[0];
   for(const p of PHASES){ if(score>=p.score) phase=p; }
   fallSpeed=phase.speed;
-  if(spawnInterval!==phase.interval){
-    spawnInterval=phase.interval;
-    spawnCount=phase.count;
-  }
+  spawnInterval=phase.interval;
 }
 const BASKET_W=90,CHAR_W=56;
 
@@ -97,7 +94,7 @@ function getArea(){
 
 function startGame(){
   getArea();
-  score=0;lives=3;fallingChars=[];spawnInterval=1400;fallSpeed=3.0;spawnCount=1;lastFrameTime=null;
+  score=0;lives=3;fallingChars=[];spawnInterval=1400;fallSpeed=3.0;lastFrameTime=null;
   document.getElementById('gameArea').querySelectorAll('.falling-char').forEach(e=>e.remove());
   document.getElementById('scoreVal').textContent=0;
   updateLives();
@@ -111,23 +108,22 @@ function startGame(){
 
 function scheduleSpawn(){
   if(!gameActive)return;
-  spawnTimer=setTimeout(()=>{
-    for(let i=0;i<spawnCount;i++){
-      setTimeout(spawnChar, i*120);
-    }
-    scheduleSpawn();
-  },spawnInterval);
+  spawnTimer=setTimeout(()=>{ spawnChar(); scheduleSpawn(); },spawnInterval);
 }
 
 function spawnChar(){
   const area=document.getElementById('gameArea');
+  // 直近スポーン位置付近に別キャラがいたらスキップ（同じ高さ防止）
+  if(fallingChars.some(c=>c.y<80)) return;
   const x=Math.random()*(areaW-CHAR_W);
   const img=CHARS[Math.floor(Math.random()*CHARS.length)];
   const el=document.createElement('div');
   el.className='falling-char';
   el.id='fc'+charId;
   el.style.left=x+'px';
-  el.style.top='-56px';
+  el.style.top='0px';
+  el.style.transform='translateY(-56px)';
+  el.style.willChange='transform';
   el.innerHTML=`<img src="${img}">`;
   area.appendChild(el);
   fallingChars.push({id:charId,el,x,y:-56});
@@ -142,7 +138,7 @@ function loop(timestamp){
   const toRemove=[];
   for(const c of fallingChars){
     c.y+=fallSpeed*delta;
-    c.el.style.top=c.y+'px';
+    c.el.style.transform='translateY('+c.y+'px)';
     const basketY=areaH-50;
     if(c.y+CHAR_W>basketY && c.y<basketY+40 && c.x+CHAR_W>basketX && c.x<basketX+BASKET_W){
       // キャッチ！
