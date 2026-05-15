@@ -66,7 +66,26 @@
 const CHARS = ['assets/anzu.svg','assets/beru.svg','assets/beteli.svg','assets/koito.svg','assets/kotatu.svg','assets/tukiko.svg','assets/yumeme.svg'];
 let score=0,lives=3,best=parseInt(localStorage.getItem('nikowa_catch_best')||'0'),gameActive=false;
 let basketX=50,areaW=0,areaH=0,animId=null,spawnTimer=null;
-let fallingChars=[],spawnInterval=1600,fallSpeed=2.2,charId=0;
+let fallingChars=[],charId=0;
+let fallSpeed=3.0,spawnInterval=1400,spawnCount=1,lastFrameTime=null;
+
+// フェーズ設定（スコアベース）
+const PHASES=[
+  {score:0,  speed:3.0, interval:1400, count:1},
+  {score:10, speed:4.2, interval:1100, count:1},
+  {score:20, speed:5.5, interval:900,  count:2},
+  {score:35, speed:7.0, interval:700,  count:2},
+  {score:50, speed:9.0, interval:500,  count:3},
+];
+function updatePhase(){
+  let phase=PHASES[0];
+  for(const p of PHASES){ if(score>=p.score) phase=p; }
+  fallSpeed=phase.speed;
+  if(spawnInterval!==phase.interval){
+    spawnInterval=phase.interval;
+    spawnCount=phase.count;
+  }
+}
 const BASKET_W=90,CHAR_W=56;
 
 document.getElementById('bestVal').textContent=best;
@@ -78,7 +97,7 @@ function getArea(){
 
 function startGame(){
   getArea();
-  score=0;lives=3;fallingChars=[];spawnInterval=1600;fallSpeed=2.2;
+  score=0;lives=3;fallingChars=[];spawnInterval=1400;fallSpeed=3.0;spawnCount=1;lastFrameTime=null;
   document.getElementById('gameArea').querySelectorAll('.falling-char').forEach(e=>e.remove());
   document.getElementById('scoreVal').textContent=0;
   updateLives();
@@ -92,8 +111,12 @@ function startGame(){
 
 function scheduleSpawn(){
   if(!gameActive)return;
-  spawnTimer=setTimeout(()=>{spawnChar();scheduleSpawn();},spawnInterval);
-  spawnInterval=Math.max(700,spawnInterval-40);
+  spawnTimer=setTimeout(()=>{
+    for(let i=0;i<spawnCount;i++){
+      setTimeout(spawnChar, i*120);
+    }
+    scheduleSpawn();
+  },spawnInterval);
 }
 
 function spawnChar(){
@@ -111,12 +134,14 @@ function spawnChar(){
   charId++;
 }
 
-function loop(){
+function loop(timestamp){
   if(!gameActive)return;
-  fallSpeed=Math.min(6,fallSpeed+0.001);
+  const delta=lastFrameTime?Math.min((timestamp-lastFrameTime)/16.67,3):1;
+  lastFrameTime=timestamp;
+  updatePhase();
   const toRemove=[];
   for(const c of fallingChars){
-    c.y+=fallSpeed;
+    c.y+=fallSpeed*delta;
     c.el.style.top=c.y+'px';
     const basketY=areaH-50;
     if(c.y+CHAR_W>basketY && c.y<basketY+40 && c.x+CHAR_W>basketX && c.x<basketX+BASKET_W){
