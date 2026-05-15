@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>にこわ 神経衰弱</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+  :root {
+    --mint: #B2E4D8;
+    --accent: #A67C52;
+    --accent-light: #C49A6C;
+    --pink: #E94B6F;
+    --bg: #E8F8F3;
+    --surface: rgba(255,255,255,0.88);
+    --ink: #3D2B1F;
+    --ink-sub: #8B7355;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background-color: var(--bg);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px),
+      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 12px 24px;
+    color: var(--ink);
+  }
+
+  .header {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .logo { font-size: 22px; font-weight: 900; color: var(--accent); }
+  .logo span { color: #B2E4D8; }
+  .back-btn {
+    background: var(--surface);
+    border: 1.5px solid rgba(166,124,82,0.2);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-sub);
+    cursor: pointer;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 16px;
+    box-shadow: 0 4px 20px rgba(166,124,82,0.12);
+    border: 1.5px solid rgba(178,228,216,0.6);
+  }
+
+  /* スコアバー */
+  .stats {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .stat-card {
+    flex: 1;
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 8px;
+    text-align: center;
+    border: 1.5px solid rgba(178,228,216,0.6);
+  }
+  .stat-label { font-size: 9px; font-weight: 700; color: var(--ink-sub); text-transform: uppercase; }
+  .stat-val { font-size: 20px; font-weight: 900; color: var(--accent); }
+
+  /* カードグリッド */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .card-wrap {
+    aspect-ratio: 3/4;
+    perspective: 600px;
+    cursor: pointer;
+  }
+  .card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+  }
+  .card-wrap.flipped .card-inner { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* 裏面：ギンガムチェック風 */
+  .card-back {
+    background: linear-gradient(135deg, #C5EEE4, #A8E0D0);
+    border: 2px solid rgba(178,228,216,0.8);
+    box-shadow: 0 2px 6px rgba(166,124,82,0.1);
+  }
+  .card-back::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 6px, rgba(255,255,255,0.3) 6px, rgba(255,255,255,0.3) 7px),
+      repeating-linear-gradient(90deg, transparent, transparent 6px, rgba(255,255,255,0.3) 6px, rgba(255,255,255,0.3) 7px);
+    border-radius: 12px;
+  }
+  .card-back-logo {
+    width: 50%;
+    height: 50%;
+    object-fit: contain;
+    opacity: 0.6;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 表面 */
+  .card-front {
+    background: white;
+    border: 2px solid rgba(178,228,216,0.6);
+    transform: rotateY(180deg);
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 4px;
+    box-shadow: 0 2px 8px rgba(166,124,82,0.08);
+  }
+  .card-front img {
+    width: 65%;
+    height: 65%;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+  .card-name {
+    font-size: 9px;
+    font-weight: 900;
+    color: var(--ink-sub);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  /* マッチした時 */
+  .card-wrap.matched .card-front {
+    background: linear-gradient(135deg, #FFF0F5, #FFE5ED);
+    border-color: var(--pink);
+    box-shadow: 0 0 0 2px var(--pink), 0 4px 12px rgba(233,75,111,0.2);
+    animation: matchPop 0.5s ease-out;
+  }
+  @keyframes matchPop {
+    0% { transform: rotateY(180deg) scale(1); }
+    40% { transform: rotateY(180deg) scale(1.12); }
+    100% { transform: rotateY(180deg) scale(1); }
+  }
+
+  /* 不正解の時のシェイク */
+  .card-wrap.wrong .card-inner {
+    animation: shake 0.5s ease-out;
+  }
+  @keyframes shake {
+    0%, 100% { transform: rotateY(180deg) translateX(0); }
+    20% { transform: rotateY(180deg) translateX(-4px); }
+    60% { transform: rotateY(180deg) translateX(4px); }
+  }
+
+  /* 難易度ボタン */
+  .diff-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .diff-btn {
+    flex: 1;
+    background: white;
+    border: 1.5px solid rgba(178,228,216,0.6);
+    border-radius: 10px;
+    padding: 8px 4px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ink-sub);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .diff-btn .diff-label { font-size: 9px; opacity: 0.7; }
+  .diff-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .start-btn {
+    flex: 1;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 13px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(166,124,82,0.3);
+    transition: transform 0.1s;
+  }
+  .start-btn:active { transform: scale(0.97); }
+
+  .btn-row { display: flex; gap: 8px; }
+  #finishModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  #finishModal.show { display: flex; }
+  .finish-box {
+    background: white;
+    border-radius: 24px;
+    padding: 28px 24px;
+    text-align: center;
+    max-width: 320px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    animation: popIn 0.4s ease-out;
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .finish-title { font-size: 28px; font-weight: 900; color: var(--accent); margin-bottom: 6px; }
+  .finish-chars {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 12px 0;
+  }
+  .finish-chars img { width: 40px; height: 40px; object-fit: contain; }
+  .finish-score { font-size: 14px; font-weight: 800; color: var(--ink-sub); margin-bottom: 4px; }
+  .finish-best { font-size: 13px; font-weight: 800; color: var(--pink); margin-bottom: 16px; }
+  .finish-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 12px 32px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">niko<span>wa.</span> 神経衰弱</div>
+  <button class="back-btn" onclick="history.back()">← もどる</button>
+</div>
+
+<div class="wrap">
+  <div class="diff-row">
+    <button class="diff-btn active" data-diff="easy">
+      🌱<span>かんたん</span><span class="diff-label">6ペア</span>
+    </button>
+    <button class="diff-btn" data-diff="normal">
+      🌷<span>ふつう</span><span class="diff-label">8ペア</span>
+    </button>
+    <button class="diff-btn" data-diff="hard">
+      🔥<span>むずかしい</span><span class="diff-label">12ペア</span>
+    </button>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">てすう</div>
+      <div class="stat-val" id="movesVal">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">みつけた</div>
+      <div class="stat-val" id="matchedVal">0<span style="font-size:12px;" id="totalPairs"> / 6</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">さいしょうてすう</div>
+      <div class="stat-val" id="bestVal">--</div>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="btn-row">
+    <button class="start-btn" onclick="startGame()">🌷 はじめる</button>
+  </div>
+</div>
+
+<!-- 完成モーダル -->
+<div id="finishModal">
+  <div class="finish-box">
+    <div class="finish-title">🎉 ぜんぶみつけた！</div>
+    <div class="finish-chars" id="finishChars"></div>
+    <div class="finish-score" id="finishScore"></div>
+    <div class="finish-best" id="finishBest"></div>
+    <button class="finish-btn" onclick="document.getElementById('finishModal').classList.remove('show');startGame()">もう一回！</button>
+  </div>
+</div>
+
+<script>
+const CHARS = [
+  { id:'anzu',    name:'あんず',  src:'assets/anzu.svg' },
+  { id:'beru',    name:'ベル',    src:'assets/beru.svg' },
+  { id:'beteli',  name:'ベティ',  src:'assets/beteli.svg' },
+  { id:'koito',   name:'こいと',  src:'assets/koito.svg' },
+  { id:'kotatu',  name:'こたつ',  src:'assets/kotatu.svg' },
+  { id:'tukiko',  name:'つきこ',  src:'assets/tukiko.svg' },
+  { id:'yumeme',  name:'ゆめめ',  src:'assets/yumeme.svg' },
+  { id:'logo',    name:'にこわ',  src:'assets/logo-soft.svg' },
+  { id:'logo2',   name:'にこわ🌙', src:'assets/logo-dark.svg' },
+  { id:'heart',   name:'ハート',  emoji:'♡' },
+  { id:'star',    name:'スター',  emoji:'★' },
+  { id:'tulip',   name:'チューリップ', emoji:'🌷' },
+];
+
+const DIFF_CONFIG = {
+  easy:   { pairs: 6,  cols: 3 },
+  normal: { pairs: 8,  cols: 4 },
+  hard:   { pairs: 12, cols: 4 },
+};
+
+let difficulty = 'easy';
+let cards = [], flipped = [], matched = [], moves = 0, busy = false, best = {};
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildCards() {
+  const { pairs } = DIFF_CONFIG[difficulty];
+  const chars = CHARS.slice(0, pairs);
+  return shuffle([...chars, ...chars]).map((c, i) => ({ ...c, index: i }));
+}
+
+function startGame() {
+  const { pairs, cols } = DIFF_CONFIG[difficulty];
+  cards = buildCards();
+  flipped = [];
+  matched = [];
+  moves = 0;
+  busy = false;
+  document.getElementById('movesVal').textContent = '0';
+  document.getElementById('matchedVal').innerHTML = '0<span style="font-size:12px;" id="totalPairs"> / ' + pairs + '</span>';
+  // ベスト表示
+  const b = best[difficulty];
+  document.getElementById('bestVal').textContent = b ? b : '--';
+  // グリッド列数を動的に変更
+  document.getElementById('grid').style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  renderGrid();
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  cards.forEach((card, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'card-wrap' + (matched.includes(i) ? ' flipped matched' : (flipped.includes(i) ? ' flipped' : ''));
+    wrap.id = 'card-' + i;
+    const face = card.emoji
+      ? `<div style="font-size:38px;line-height:1;">${card.emoji}</div>`
+      : `<img src="${card.src}" alt="${card.name}">`;
+    wrap.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face card-back">
+          <img class="card-back-logo" src="assets/logo-soft.svg" alt="">
+        </div>
+        <div class="card-face card-front">
+          ${face}
+          <div class="card-name">${card.name}</div>
+        </div>
+      </div>`;
+    if (!matched.includes(i)) {
+      wrap.addEventListener('pointerdown', e => { e.preventDefault(); tapCard(i); });
+    }
+    grid.appendChild(wrap);
+  });
+}
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function tapCard(i) {
+  if (busy || flipped.includes(i) || matched.includes(i)) return;
+  if (flipped.length >= 2) return;
+
+  flipped.push(i);
+  document.getElementById('card-' + i).classList.add('flipped');
+
+  if (flipped.length < 2) return;
+
+  busy = true;
+  moves++;
+  document.getElementById('movesVal').textContent = moves;
+
+  await wait(700);
+
+  const [a, b] = flipped;
+  if (cards[a].id === cards[b].id) {
+    matched.push(a, b);
+    document.getElementById('card-' + a).classList.add('matched');
+    document.getElementById('card-' + b).classList.add('matched');
+    document.getElementById('matchedVal').innerHTML = (matched.length/2) + '<span style="font-size:12px;" id="totalPairs"> / ' + DIFF_CONFIG[difficulty].pairs + '</span>';
+    flipped = [];
+    busy = false;
+
+    if (matched.length === cards.length) {
+      await wait(600);
+      showFinish();
+    }
+  } else {
+    const elA = document.getElementById('card-' + a);
+    const elB = document.getElementById('card-' + b);
+    elA.classList.add('wrong');
+    elB.classList.add('wrong');
+    await wait(600);
+    elA.classList.remove('flipped', 'wrong');
+    elB.classList.remove('flipped', 'wrong');
+    flipped = [];
+    busy = false;
+  }
+}
+
+function showFinish() {
+  const key = 'nikowa_memory_best_' + difficulty;
+  const prev = parseInt(localStorage.getItem(key) || '9999');
+  const isNew = moves < prev;
+  if (isNew) localStorage.setItem(key, moves);
+  best[difficulty] = isNew ? moves : prev;
+
+  const labels = { easy:'かんたん', normal:'ふつう', hard:'むずかしい' };
+  document.getElementById('finishScore').textContent = labels[difficulty] + ' を ' + moves + ' てすうで クリア！🎉';
+  document.getElementById('finishBest').textContent = isNew ? '🏆 さいしょう きろく！' : 'さいしょうきろく：' + Math.min(prev, moves) + ' てすう';
+  const fc = document.getElementById('finishChars');
+  const { pairs } = DIFF_CONFIG[difficulty];
+  fc.innerHTML = CHARS.slice(0, pairs).map(c =>
+    c.emoji
+      ? `<span style="font-size:30px;line-height:1;display:inline-block;width:40px;text-align:center;" title="${c.name}">${c.emoji}</span>`
+      : `<img src="${c.src}" title="${c.name}">`
+  ).join('');
+  document.getElementById('finishModal').classList.add('show');
+}
+
+// 難易度切替
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    difficulty = btn.dataset.diff;
+    // ベスト読み込み
+    const b = localStorage.getItem('nikowa_memory_best_' + difficulty);
+    document.getElementById('bestVal').textContent = b ? b : '--';
+    startGame();
+  });
+});
+
+// 初期化
+['easy','normal','hard'].forEach(d => {
+  const v = localStorage.getItem('nikowa_memory_best_' + d);
+  if (v) best[d] = parseInt(v);
+});
+startGame();
+</script>
+</body>
+</html>

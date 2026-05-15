@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>にこわ ゆうえんち</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+  :root {
+    --mint: #B2E4D8;
+    --accent: #A67C52;
+    --accent-light: #C49A6C;
+    --pink: #E94B6F;
+    --bg: #E8F8F3;
+    --surface: rgba(255,255,255,0.88);
+    --ink: #3D2B1F;
+    --ink-sub: #8B7355;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background-color: var(--bg);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px),
+      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 12px 24px;
+    color: var(--ink);
+  }
+
+  .header {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .logo { font-size: 22px; font-weight: 900; color: var(--accent); }
+  .logo span { color: var(--mint); }
+  .back-btn {
+    background: var(--surface);
+    border: 1.5px solid rgba(166,124,82,0.2);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-sub);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .title-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 22px 18px;
+    text-align: center;
+    margin-bottom: 14px;
+    border: 1.5px solid rgba(178,228,216,0.6);
+    box-shadow: 0 4px 20px rgba(166,124,82,0.12);
+  }
+  .title-card h1 {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--accent);
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .title-card p {
+    font-size: 12px;
+    color: var(--ink-sub);
+    font-weight: 700;
+  }
+
+  .grid {
+    width: 100%;
+    max-width: 420px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .game-card {
+    background: white;
+    border-radius: 18px;
+    padding: 16px 10px;
+    text-align: center;
+    border: 1.5px solid rgba(178,228,216,0.8);
+    box-shadow: 0 3px 10px rgba(166,124,82,0.08);
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .game-card:active {
+    transform: scale(0.96);
+    box-shadow: 0 1px 4px rgba(166,124,82,0.1);
+  }
+  .game-icon {
+    font-size: 42px;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .game-name {
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--accent);
+  }
+  .game-desc {
+    font-size: 10px;
+    color: var(--ink-sub);
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  /* それぞれカードの個性 */
+  .game-card[data-game="tetris"]  { background: linear-gradient(135deg, #FFF, #FFF0F5); }
+  .game-card[data-game="othello"] { background: linear-gradient(135deg, #FFF, #F0FAEC); }
+  .game-card[data-game="memory"]  { background: linear-gradient(135deg, #FFF, #FFFBE8); }
+  .game-card[data-game="snake"]   { background: linear-gradient(135deg, #FFF, #E8F8F3); }
+  .game-card[data-game="breakout"]{ background: linear-gradient(135deg, #FFF, #F0E8FF); }
+  .game-card[data-game="mine"]    { background: linear-gradient(135deg, #FFF, #FFE8E8); }
+
+  .footer {
+    margin-top: 20px;
+    font-size: 11px;
+    color: var(--ink-sub);
+    font-weight: 700;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">niko<span>wa.</span> 🎡</div>
+  <a href="index.html" class="back-btn">← ホーム</a>
+</div>
+
+<div class="title-card">
+  <h1>🎡 ゆうえんち</h1>
+  <p>すきなゲームを えらんでね</p>
+</div>
+
+<div class="grid">
+  <a href="nikowa-tetris.html" class="game-card" data-game="tetris">
+    <div class="game-icon">🧱</div>
+    <div class="game-name">テトリス</div>
+    <div class="game-desc">ブロックを<br>ぴったり はめる</div>
+  </a>
+
+  <a href="nikowa-othello.html" class="game-card" data-game="othello">
+    <div class="game-icon">⚫️⚪️</div>
+    <div class="game-name">オセロ</div>
+    <div class="game-desc">魚と<br>たいせん</div>
+  </a>
+
+  <a href="nikowa-memory.html" class="game-card" data-game="memory">
+    <div class="game-icon">🃏</div>
+    <div class="game-name">神経衰弱</div>
+    <div class="game-desc">おなじカードを<br>みつけよう</div>
+  </a>
+
+  <a href="nikowa-snake.html" class="game-card" data-game="snake">
+    <div class="game-icon">🐍</div>
+    <div class="game-name">ヘビ</div>
+    <div class="game-desc">いちごを<br>たべて おおきく</div>
+  </a>
+
+  <a href="nikowa-breakout.html" class="game-card" data-game="breakout">
+    <div class="game-icon">🎯</div>
+    <div class="game-name">ブロック崩し</div>
+    <div class="game-desc">ボールを<br>はねかえそう</div>
+  </a>
+
+  <a href="nikowa-minesweeper.html" class="game-card" data-game="mine">
+    <div class="game-icon">💣</div>
+    <div class="game-name">マイン</div>
+    <div class="game-desc">爆弾を<br>よけよう</div>
+  </a>
+</div>
+
+<div class="footer">
+  🌷 もっとふえるかも 🌷
+</div>
+
+</body>
+</html>

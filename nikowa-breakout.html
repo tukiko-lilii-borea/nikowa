@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>にこわ ブロック崩し</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+  :root {
+    --mint: #B2E4D8;
+    --accent: #A67C52;
+    --accent-light: #C49A6C;
+    --pink: #E94B6F;
+    --bg: #E8F8F3;
+    --surface: rgba(255,255,255,0.88);
+    --ink: #3D2B1F;
+    --ink-sub: #8B7355;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background-color: var(--bg);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px),
+      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 12px 24px;
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  .header {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .logo { font-size: 22px; font-weight: 900; color: var(--accent); }
+  .logo span { color: var(--mint); }
+  .back-btn {
+    background: var(--surface);
+    border: 1.5px solid rgba(166,124,82,0.2);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-sub);
+    cursor: pointer;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 16px;
+    box-shadow: 0 4px 20px rgba(166,124,82,0.12);
+    border: 1.5px solid rgba(178,228,216,0.6);
+  }
+
+  .stats {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .stat-card {
+    flex: 1;
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 8px;
+    text-align: center;
+    border: 1.5px solid rgba(178,228,216,0.6);
+  }
+  .stat-label { font-size: 9px; font-weight: 700; color: var(--ink-sub); text-transform: uppercase; }
+  .stat-val { font-size: 22px; font-weight: 900; color: var(--accent); }
+
+  .diff-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .diff-btn {
+    flex: 1;
+    background: white;
+    border: 1.5px solid rgba(178,228,216,0.6);
+    border-radius: 10px;
+    padding: 8px 4px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--ink-sub);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .diff-btn .diff-label { font-size: 9px; opacity: 0.7; }
+  .diff-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .board-wrap {
+    position: relative;
+    aspect-ratio: 3/4;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  canvas#board {
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #C5EEE4 0%, #E8F8F3 100%);
+    border: 2px solid rgba(178,228,216,0.8);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);
+    touch-action: none;
+    display: block;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .start-btn {
+    flex: 1;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 13px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(166,124,82,0.3);
+    transition: transform 0.1s;
+  }
+  .start-btn:active { transform: scale(0.97); }
+
+  .hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-sub);
+    font-weight: 700;
+    margin-top: 4px;
+  }
+
+  #overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(232,248,243,0.94);
+    border-radius: 16px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    backdrop-filter: blur(4px);
+    padding: 20px;
+    text-align: center;
+  }
+  #overlay.show { display: flex; }
+  .overlay-title { font-size: 24px; font-weight: 900; color: var(--accent); }
+  .overlay-msg { font-size: 13px; color: var(--ink-sub); font-weight: 700; }
+  .overlay-result {
+    background: white;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">niko<span>wa.</span> ブロック</div>
+  <button class="back-btn" onclick="history.back()">← もどる</button>
+</div>
+
+<div class="wrap">
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">スコア</div>
+      <div class="stat-val" id="scoreVal">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ライフ</div>
+      <div class="stat-val" id="livesVal">3</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ベスト</div>
+      <div class="stat-val" id="bestVal">0</div>
+    </div>
+  </div>
+
+  <div class="diff-row">
+    <button class="diff-btn active" data-diff="easy">🌱<span>かんたん</span><span class="diff-label">大きいパドル</span></button>
+    <button class="diff-btn" data-diff="normal">🌷<span>ふつう</span><span class="diff-label">ふつう</span></button>
+    <button class="diff-btn" data-diff="hard">🔥<span>むずかしい</span><span class="diff-label">小さい&加速</span></button>
+  </div>
+
+  <div class="board-wrap">
+    <canvas id="board"></canvas>
+    <div id="overlay">
+      <div class="overlay-title" id="overlayTitle">🌷 ブロック崩し</div>
+      <div class="overlay-msg" id="overlayMsg">パドルを動かしてボールを跳ね返そう！</div>
+      <div class="overlay-result" id="overlayResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="hint">指でなぞって パドルを動かす</div>
+
+  <div class="btn-row">
+    <button class="start-btn" id="startBtn" onclick="startGame()">🌷 はじめる</button>
+  </div>
+</div>
+
+<script>
+const board = document.getElementById('board');
+const ctx = board.getContext('2d');
+
+// 解像度対応
+let W = 300, H = 400;
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = board.getBoundingClientRect();
+  W = rect.width;
+  H = rect.height;
+  board.width = W * dpr;
+  board.height = H * dpr;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr, dpr);
+}
+
+// 難易度設定
+const DIFF = {
+  easy:   { paddleW: 0.25, ballSpeed: 0.42, rows: 4 },
+  normal: { paddleW: 0.18, ballSpeed: 0.55, rows: 5 },
+  hard:   { paddleW: 0.10, ballSpeed: 0.95, rows: 7 },
+};
+const BLOCK_COLORS = [
+  '#E94B6F', // pink
+  '#F5A623', // orange
+  '#F5D742', // yellow
+  '#4FB677', // green
+  '#4A90D9', // blue
+  '#9B59B6', // purple
+];
+
+let difficulty = 'easy';
+let paddle, ball, bricks, score, lives, best, gameState; // 'idle','playing','paused','over'
+let lastTime = 0;
+
+function setup() {
+  const cfg = DIFF[difficulty];
+  paddle = {
+    w: W * cfg.paddleW,
+    h: 12,
+    x: W / 2 - (W * cfg.paddleW) / 2,
+    y: H - 30,
+  };
+  ball = {
+    x: W / 2,
+    y: H - 50,
+    r: 7,
+    vx: 0,
+    vy: 0,
+    speed: H * cfg.ballSpeed / 100, // ピクセル/フレーム相当（速度はDeltaで調整）
+    stuck: true, // パドルに乗ってる状態
+  };
+  bricks = [];
+  const cols = 7;
+  const rows = cfg.rows;
+  const padding = 4;
+  const offsetTop = 50;
+  const offsetSide = 12;
+  const bw = (W - offsetSide * 2 - padding * (cols - 1)) / cols;
+  const bh = 18;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      bricks.push({
+        x: offsetSide + c * (bw + padding),
+        y: offsetTop + r * (bh + padding),
+        w: bw,
+        h: bh,
+        color: BLOCK_COLORS[r % BLOCK_COLORS.length],
+        alive: true,
+      });
+    }
+  }
+}
+
+function startGame() {
+  resizeCanvas();
+  score = 0;
+  lives = 3;
+  difficulty = document.querySelector('.diff-btn.active').dataset.diff;
+  setup();
+  gameState = 'playing';
+  document.getElementById('scoreVal').textContent = '0';
+  document.getElementById('livesVal').textContent = '3';
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('startBtn').textContent = '🔄 リセット';
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
+}
+
+function launchBall() {
+  if (!ball.stuck) return;
+  ball.stuck = false;
+  // ランダムな角度（上方向）
+  const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI / 3;
+  ball.vx = Math.cos(angle);
+  ball.vy = Math.sin(angle);
+}
+
+function update(dt) {
+  if (gameState !== 'playing') return;
+  if (ball.stuck) {
+    ball.x = paddle.x + paddle.w / 2;
+    ball.y = paddle.y - ball.r - 1;
+    return;
+  }
+  // 速度（dt秒あたりの移動量）
+  const v = ball.speed * 60 * dt; // 60fps基準
+  ball.x += ball.vx * v;
+  ball.y += ball.vy * v;
+
+  // 壁衝突
+  if (ball.x - ball.r < 0) { ball.x = ball.r; ball.vx = Math.abs(ball.vx); }
+  if (ball.x + ball.r > W) { ball.x = W - ball.r; ball.vx = -Math.abs(ball.vx); }
+  if (ball.y - ball.r < 0) { ball.y = ball.r; ball.vy = Math.abs(ball.vy); }
+
+  // パドル衝突
+  if (
+    ball.y + ball.r >= paddle.y &&
+    ball.y - ball.r <= paddle.y + paddle.h &&
+    ball.x >= paddle.x && ball.x <= paddle.x + paddle.w &&
+    ball.vy > 0
+  ) {
+    ball.y = paddle.y - ball.r;
+    // パドル上の当たり位置で角度を変える
+    const hit = (ball.x - (paddle.x + paddle.w / 2)) / (paddle.w / 2); // -1 〜 +1
+    const angle = -Math.PI / 2 + hit * (Math.PI / 3); // -60度 〜 +60度
+    ball.vx = Math.cos(angle);
+    ball.vy = Math.sin(angle);
+  }
+
+  // ブロック衝突
+  for (const b of bricks) {
+    if (!b.alive) continue;
+    if (
+      ball.x + ball.r > b.x &&
+      ball.x - ball.r < b.x + b.w &&
+      ball.y + ball.r > b.y &&
+      ball.y - ball.r < b.y + b.h
+    ) {
+      b.alive = false;
+      score += 10;
+      // 難しいモードはブロックを壊すごとに少しずつ加速
+      if (difficulty === 'hard') {
+        ball.speed *= 1.012;
+      } else if (difficulty === 'normal') {
+        ball.speed *= 1.005;
+      }
+      document.getElementById('scoreVal').textContent = score;
+      // 当たった面を判定（簡易版）
+      const overlapX = Math.min(ball.x + ball.r - b.x, b.x + b.w - (ball.x - ball.r));
+      const overlapY = Math.min(ball.y + ball.r - b.y, b.y + b.h - (ball.y - ball.r));
+      if (overlapX < overlapY) ball.vx *= -1;
+      else ball.vy *= -1;
+      // 全クリ判定
+      if (bricks.every(br => !br.alive)) {
+        winLevel();
+        return;
+      }
+      break;
+    }
+  }
+
+  // 下に落ちた
+  if (ball.y - ball.r > H) {
+    lives--;
+    document.getElementById('livesVal').textContent = lives;
+    if (lives <= 0) {
+      endGame();
+    } else {
+      ball.stuck = true;
+      ball.vx = 0; ball.vy = 0;
+    }
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // ブロック
+  for (const b of bricks) {
+    if (!b.alive) continue;
+    // 影
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    roundRect(ctx, b.x + 1, b.y + 1, b.w, b.h, 4);
+    ctx.fill();
+    // 本体（グラデーション）
+    const grad = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
+    grad.addColorStop(0, b.color);
+    grad.addColorStop(1, shade(b.color, -15));
+    ctx.fillStyle = grad;
+    roundRect(ctx, b.x, b.y, b.w, b.h, 4);
+    ctx.fill();
+    // ハイライト
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    roundRect(ctx, b.x + 2, b.y + 2, b.w - 4, b.h * 0.35, 3);
+    ctx.fill();
+  }
+
+  // パドル
+  const pGrad = ctx.createLinearGradient(0, paddle.y, 0, paddle.y + paddle.h);
+  pGrad.addColorStop(0, '#C49A6C');
+  pGrad.addColorStop(1, '#A67C52');
+  ctx.fillStyle = pGrad;
+  roundRect(ctx, paddle.x, paddle.y, paddle.w, paddle.h, paddle.h / 2);
+  ctx.fill();
+  // パドルハイライト
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  roundRect(ctx, paddle.x + 4, paddle.y + 2, paddle.w - 8, paddle.h * 0.35, paddle.h / 4);
+  ctx.fill();
+
+  // ボール
+  const bGrad = ctx.createRadialGradient(ball.x - ball.r/3, ball.y - ball.r/3, 0, ball.x, ball.y, ball.r);
+  bGrad.addColorStop(0, '#FFF0F5');
+  bGrad.addColorStop(1, '#E94B6F');
+  ctx.fillStyle = bGrad;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) + amt;
+  let g = ((n >> 8) & 0xff) + amt;
+  let b = (n & 0xff) + amt;
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+}
+
+function roundRect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+
+function loop(now) {
+  const dt = Math.min(0.05, (now - lastTime) / 1000);
+  lastTime = now;
+  update(dt);
+  draw();
+  if (gameState === 'playing') requestAnimationFrame(loop);
+}
+
+function winLevel() {
+  gameState = 'won';
+  saveBest();
+  const overlay = document.getElementById('overlay');
+  document.getElementById('overlayTitle').textContent = '🎉 ぜんぶ崩した！';
+  document.getElementById('overlayMsg').textContent = 'おめでとう！';
+  const res = document.getElementById('overlayResult');
+  res.style.display = 'block';
+  res.textContent = 'スコア: ' + score + ' / ライフのこり: ' + lives;
+  overlay.classList.add('show');
+  document.getElementById('startBtn').textContent = '🌷 もう一回';
+}
+
+function endGame() {
+  gameState = 'over';
+  saveBest();
+  const overlay = document.getElementById('overlay');
+  document.getElementById('overlayTitle').textContent = '😢 おしまい';
+  document.getElementById('overlayMsg').textContent = 'ライフがなくなったよ';
+  const res = document.getElementById('overlayResult');
+  res.style.display = 'block';
+  res.textContent = 'スコア: ' + score;
+  overlay.classList.add('show');
+  document.getElementById('startBtn').textContent = '🌷 もう一回';
+}
+
+function saveBest() {
+  const key = 'nikowa_breakout_best_' + difficulty;
+  const prev = parseInt(localStorage.getItem(key) || '0');
+  if (score > prev) {
+    localStorage.setItem(key, score);
+    best = score;
+  } else {
+    best = prev;
+  }
+  document.getElementById('bestVal').textContent = best;
+}
+
+// パドル操作（タッチ・マウス）
+function setPaddleX(clientX) {
+  const rect = board.getBoundingClientRect();
+  const x = clientX - rect.left;
+  paddle.x = Math.max(0, Math.min(W - paddle.w, x - paddle.w / 2));
+}
+
+board.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (gameState === 'playing' && ball.stuck) launchBall();
+  setPaddleX(e.touches[0].clientX);
+}, { passive: false });
+board.addEventListener('touchmove', e => {
+  e.preventDefault();
+  setPaddleX(e.touches[0].clientX);
+}, { passive: false });
+board.addEventListener('mousemove', e => {
+  if (gameState === 'playing') setPaddleX(e.clientX);
+});
+board.addEventListener('click', e => {
+  if (gameState === 'playing' && ball.stuck) launchBall();
+});
+
+// キーボード（PC用）
+let leftDown = false, rightDown = false;
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') leftDown = true;
+  if (e.key === 'ArrowRight' || e.key === 'd') rightDown = true;
+  if (e.key === ' ' && gameState === 'playing' && ball.stuck) launchBall();
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') leftDown = false;
+  if (e.key === 'ArrowRight' || e.key === 'd') rightDown = false;
+});
+setInterval(() => {
+  if (gameState !== 'playing') return;
+  const step = 8;
+  if (leftDown) paddle.x = Math.max(0, paddle.x - step);
+  if (rightDown) paddle.x = Math.min(W - paddle.w, paddle.x + step);
+}, 16);
+
+// 難易度切替
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    difficulty = btn.dataset.diff;
+    const b = parseInt(localStorage.getItem('nikowa_breakout_best_' + difficulty) || '0');
+    best = b;
+    document.getElementById('bestVal').textContent = b;
+  });
+});
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  setup();
+  draw();
+});
+
+// 初期化
+resizeCanvas();
+best = parseInt(localStorage.getItem('nikowa_breakout_best_easy') || '0');
+document.getElementById('bestVal').textContent = best;
+setup();
+draw();
+document.getElementById('overlay').classList.add('show');
+</script>
+</body>
+</html>

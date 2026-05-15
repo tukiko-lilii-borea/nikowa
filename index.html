@@ -9033,8 +9033,7 @@ const _DRW_CATS = [
   { key:'kurashi', icon:'coffee',         label:'くらし',   color:'#F5A623', desc:'まいにちのくらし' },
   { key:'health',  icon:'favorite',       label:'けんこう', color:'#4FB677', desc:'からだの記録' },
   { key:'work',    icon:'work',           label:'仕事',     color:'#4A90E2', desc:'まなびとしごと' },
-  { key:'family',  icon:'diversity_3',    label:'家族',     color:'#E94B6F', desc:'たいせつなひと' },
-  { key:'pet',     icon:'pets',           label:'ペット',   color:'#A68262', desc:'いっしょのなかま' },
+  { key:'family',  icon:'diversity_3',    label:'輪',       color:'#E94B6F', desc:'たいせつなひと' },
   { key:'machi',   icon:'location_city',  label:'まち',     color:'#1FA8C9', desc:'まちでつながる' },
   { key:'create',  icon:'palette',        label:'お店',     color:'#9B5DB8', desc:'クリエイティブ' },
 ];
@@ -9087,26 +9086,65 @@ function _getDrawerContent(key) {
     h += _itemBtn('school', 'Study', '学習の記録', `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','study'),100);`);
 
   } else if (key === 'family') {
-    // Nest
-    const _houses = data.houses || [];
-    if (_houses.length === 0) {
-      h += _itemBtn('home', 'Nest', 'わが家の情報', `closeDrawerMenu();goToNestMode();`);
-    } else {
-      for (const hh of _houses) {
-        h += _itemBtn('home', escapeHtml(hh.name||'家'), 'Nest', `closeDrawerMenu();goToNestMode();setTimeout(()=>selectHouse('${hh.id}'),100);`);
+    if (!data._drawerFamilyOpen) data._drawerFamilyOpen = { group:true, kids:false, pet:false };
+    const _fo = data._drawerFamilyOpen;
+    const _section = (label, openKey, icon, contentFn) => {
+      const open = !!_fo[openKey];
+      let s = '';
+      s += `<button onclick="data._drawerFamilyOpen.${openKey}=!data._drawerFamilyOpen.${openKey};saveData();selectDrawerTab('family');" style="width:100%;padding:8px 4px;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;margin:6px 0 2px;">`;
+      s += `<span class="material-symbols-rounded" style="font-size:16px;color:${col};">${icon}</span>`;
+      s += `<span style="flex:1;text-align:left;font-size:13px;font-weight:800;color:var(--ink-dark);">${label}</span>`;
+      s += `<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);">${open?'expand_less':'expand_more'}</span>`;
+      s += `</button>`;
+      if (open) s += `<div style="padding-left:6px;">${contentFn()}</div>`;
+      s += `<div style="height:1px;background:${col}22;margin:2px 0;"></div>`;
+      return s;
+    };
+
+    // グループ（Nest）
+    h += _section('グループ', 'group', 'home', () => {
+      const _houses = data.houses || [];
+      let g = '';
+      if (_houses.length === 0) {
+        g += _itemBtn('home', 'Nest', 'わが家の情報', `closeDrawerMenu();goToNestMode();`);
+      } else {
+        for (const hh of _houses) {
+          g += _itemBtn('home', escapeHtml(hh.name||'家'), 'グループ', `closeDrawerMenu();goToNestMode();setTimeout(()=>selectHouse('${hh.id}'),100);`);
+        }
       }
-    }
-    h += `<div style="height:1px;background:var(--line);margin:8px 0;"></div>`;
-    // KIDS
-    const _kids = (data.pets||[]).filter(p => !p.atRainbow && (p.kidsGender||p.kind==='kids'));
-    if (_kids.length === 0) {
-      h += _itemBtn('child_care', 'KIDS', '子どもの成長', `closeDrawerMenu();goToKidsMode();`);
-    } else {
-      for (const k of _kids) {
-        h += _itemBtn('child_care', escapeHtml(k.name||''), 'のおへや', `closeDrawerMenu();goToKidsMode();setTimeout(()=>{selectPet('${k.id}');setCurrentPetTab('care');},100);`);
+      return g;
+    });
+
+    // こども（KIDS）
+    h += _section('こども', 'kids', 'child_care', () => {
+      const _kids = (data.pets||[]).filter(p => !p.atRainbow && (p.kidsGender||p.kind==='kids'));
+      let k = '';
+      if (_kids.length === 0) {
+        k += _itemBtn('child_care', 'KIDS', '子どもの成長', `closeDrawerMenu();goToKidsMode();`);
+      } else {
+        for (const kk of _kids) {
+          k += _itemBtn('child_care', escapeHtml(kk.name||''), 'のおへや', `closeDrawerMenu();goToKidsMode();setTimeout(()=>{selectPet('${kk.id}');setCurrentPetTab('care');},100);`);
+        }
       }
-    }
-    h += _itemBtn('add', '子どもを追加', '', `closeDrawerMenu();goToKidsMode();setTimeout(()=>{if(typeof openAddPetModal==='function')openAddPetModal();},150);`);
+      k += _itemBtn('add', '子どもを追加', '', `closeDrawerMenu();goToKidsMode();setTimeout(()=>{if(typeof openAddPetModal==='function')openAddPetModal();},150);`);
+      return k;
+    });
+
+    // ペット
+    h += _section('ペット', 'pet', 'pets', () => {
+      const _pets = (data.pets||[]).filter(p => !p.atRainbow && p.kind==='pet');
+      let p = '';
+      if (_pets.length === 0) {
+        p += _itemBtn('pets', 'PET', 'ペットを記録', `closeDrawerMenu();goToPetMode();`);
+      } else {
+        for (const pp of _pets) {
+          p += _itemBtn('pets', escapeHtml(pp.name||''), 'の部屋', `closeDrawerMenu();goToPetMode();setTimeout(()=>{selectPet('${pp.id}');setCurrentPetTab('care');},100);`);
+        }
+      }
+      p += _itemBtn('add', 'ペットを追加', '', `closeDrawerMenu();goToPetMode();setTimeout(()=>{if(typeof openAddPetModal==='function')openAddPetModal();},150);`);
+      p += _itemBtn('cruelty_free', 'Animal', '世界のペット', `closeDrawerMenu();currentView='town';townMainTab='rainbow';render();`);
+      return p;
+    });
 
   } else if (key === 'pet') {
     const _pets = (data.pets||[]).filter(p => !p.atRainbow && p.kind==='pet');
