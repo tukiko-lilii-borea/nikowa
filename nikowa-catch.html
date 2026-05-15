@@ -76,6 +76,10 @@ const PHASES=[
   {score:20, speed:5.2, interval:850},
   {score:35, speed:6.5, interval:650},
   {score:55, speed:8.0, interval:480},
+  {score:75, speed:10.5, interval:360},
+  {score:100,speed:13.0, interval:260},
+  {score:130,speed:16.0, interval:180},
+  {score:170,speed:22.0, interval:110},
 ];
 function updatePhase(){
   let phase=PHASES[0];
@@ -114,7 +118,7 @@ function scheduleSpawn(){
 function spawnChar(){
   const area=document.getElementById('gameArea');
   // 直近スポーン位置付近に別キャラがいたらスキップ（同じ高さ防止）
-  if(fallingChars.some(c=>c.y<80)) return;
+  if(fallingChars.some(c=>c.y<30)) return;
   const x=Math.random()*(areaW-CHAR_W);
   const img=CHARS[Math.floor(Math.random()*CHARS.length)];
   const el=document.createElement('div');
