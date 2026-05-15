@@ -146,6 +146,10 @@
   .result-btn { border:none; border-radius:14px; padding:13px 36px; font-family:inherit; font-size:14px; font-weight:900; cursor:pointer; margin-top:14px; }
   .result-btn.primary { color:white; box-shadow:0 4px 14px rgba(0,0,0,0.2); }
   .result-btn.secondary { background:white; color:#2C4A3E; border:2px solid rgba(0,0,0,0.1); }
+
+  .vol-row { display:flex; gap:3px; }
+  .vol-btn { flex:1; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); border-radius:6px; color:#4CAF50; font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .vol-btn.active { background:#4CAF50; border-color:#4CAF50; color:white; }
 </style>
 </head>
 <body>
@@ -544,6 +548,7 @@ function startBalloonGame() {
 }
 // ======== 終了 ========
 function endGame() {
+  stopBGM();
   gameActive = false;
   stopAllSpawns();
 
@@ -587,6 +592,68 @@ function backToTheme() {
   document.getElementById('gameArea').innerHTML = '<div class="area-placeholder">テーマを えらんでね</div>';
   showOverlay('themeOverlay');
 }
+
+// ===== tapgame BGM & 効果音 =====
+let audioCtx = null;
+let bgmRunning = false;
+let bgmNoteIdx = 0;
+let bgmTimer = null;
+let masterVol = 0;
+
+const EN_TAP = 217.39;
+const BGM_MEL_TAPG = [783.99,880.0,987.77,880.0,783.99,659.25,783.99,0,880.0,987.77,1046.5,987.77,880.0,783.99,659.25,0,659.25,783.99,880.0,783.99,659.25,523.25,659.25,0,783.99,659.25,523.25,659.25,783.99,0,659.25,0];
+const BGM_BASS_TAPG = [196.0,0,196.0,0,196.0,0,196.0,0,196.0,0,196.0,0,196.0,0,196.0,0,174.61,0,174.61,0,174.61,0,174.61,0,174.61,0,174.61,0,174.61,0,174.61,0];
+
+function setVol(v) {
+  masterVol = v;
+  ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
+  document.getElementById(map[v])?.classList.add('active');
+  if (v === 0) stopBGM();
+  else if (!bgmRunning) startBGM();
+}
+
+function initAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+  }
+  return audioCtx.resume();
+}
+
+function playNote(freq, dur, vol, type) {
+  if (!audioCtx || !freq || masterVol === 0) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = type || 'square';
+  o.frequency.value = freq;
+  const t = audioCtx.currentTime;
+  g.gain.setValueAtTime(vol * masterVol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
+  o.start(t); o.stop(t + dur);
+}
+
+function startBGM() {
+  if (bgmRunning) return;
+  bgmRunning = true; bgmNoteIdx = 0;
+  tickBGM();
+}
+function stopBGM() {
+  bgmRunning = false;
+  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+}
+function tickBGM() {
+  if (!bgmRunning) return;
+  const i = bgmNoteIdx % BGM_MEL_TAPG.length;
+  playNote(BGM_MEL_TAPG[i], EN_TAP/1000*0.82, 0.09, 'square');
+  playNote(BGM_BASS_TAPG[i], EN_TAP/1000*1.7, 0.06, 'triangle');
+  bgmNoteIdx++;
+  bgmTimer = setTimeout(tickBGM, EN_TAP);
+}
+
+function sfxTap(){ playNote(880,0.06,0.18,'square'); }
+function sfxFinish(){ stopBGM(); [523.25,659.25,783.99,1046.50].forEach((f,i)=>setTimeout(()=>playNote(f,0.15,0.20,'sine'),i*80)); }
+// ===== ここまで BGM =====
 </script>
 </body>
 </html>

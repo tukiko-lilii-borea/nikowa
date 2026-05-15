@@ -406,13 +406,26 @@
   .diff-choice-emoji { font-size: 28px; flex-shrink: 0; }
   .diff-choice-name { font-size: 16px; font-weight: 900; color: var(--ink); }
   .diff-choice-pairs { font-size: 11px; font-weight: 700; color: var(--ink-sub); margin-left: auto; }
+
+  .vol-row { display:flex; gap:3px; }
+  .vol-btn { flex:1; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); border-radius:6px; color:#D4A017; font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .vol-btn.active { background:#D4A017; border-color:#D4A017; color:white; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="logo">niko<span>wa.</span> 神経衰弱</div>
-  <button class="back-btn" onclick="history.back()">← もどる</button>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <div class="vol-row">
+      <button class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button>
+      <button class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button>
+      <button class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button>
+      <button class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
+    </div>
+    <button class="back-btn" onclick="history.back()">← もどる</button>
+</div>
+  </div>
 </div>
 
 <!-- 難易度選択オーバーレイ -->
@@ -515,6 +528,7 @@ function buildCards() {
 }
 
 function startGame() {
+  initAudio().then(()=>{ stopBGM(); startBGM(); });
   const { pairs, cols } = DIFF_CONFIG[difficulty];
   cards = buildCards();
   flipped = [];
@@ -674,6 +688,70 @@ document.getElementById('diffOverlay').style.display = 'flex';
     ov.appendChild(s);
   }
 })();
+
+// ===== memory BGM & 効果音 =====
+let audioCtx = null;
+let bgmRunning = false;
+let bgmNoteIdx = 0;
+let bgmTimer = null;
+let masterVol = 0;
+
+const EN_MEM = 352.94;
+const BGM_MEL_MEMO = [1046.5,880.0,783.99,0,880.0,1046.5,1174.66,0,1046.5,783.99,880.0,0,783.99,659.25,783.99,0,880.0,1046.5,880.0,0,783.99,659.25,783.99,0,523.25,659.25,783.99,880.0,783.99,659.25,523.25,0];
+const BGM_BASS_MEMO = [261.63,0,0,0,261.63,0,0,0,261.63,0,0,0,261.63,0,0,0,220.0,0,0,0,220.0,0,0,0,220.0,0,0,0,220.0,0,0,0];
+
+function setVol(v) {
+  masterVol = v;
+  ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
+  document.getElementById(map[v])?.classList.add('active');
+  if (v === 0) stopBGM();
+  else if (!bgmRunning) startBGM();
+}
+
+function initAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+  }
+  return audioCtx.resume();
+}
+
+function playNote(freq, dur, vol, type) {
+  if (!audioCtx || !freq || masterVol === 0) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = type || 'sine';
+  o.frequency.value = freq;
+  const t = audioCtx.currentTime;
+  g.gain.setValueAtTime(vol * masterVol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
+  o.start(t); o.stop(t + dur);
+}
+
+function startBGM() {
+  if (bgmRunning) return;
+  bgmRunning = true; bgmNoteIdx = 0;
+  tickBGM();
+}
+function stopBGM() {
+  bgmRunning = false;
+  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+}
+function tickBGM() {
+  if (!bgmRunning) return;
+  const i = bgmNoteIdx % BGM_MEL_MEMO.length;
+  playNote(BGM_MEL_MEMO[i], EN_MEM/1000*0.82, 0.09, 'sine');
+  playNote(BGM_BASS_MEMO[i], EN_MEM/1000*1.7, 0.06, 'triangle');
+  bgmNoteIdx++;
+  bgmTimer = setTimeout(tickBGM, EN_MEM);
+}
+
+function sfxFlip(){ playNote(880,0.08,0.18,'sine'); }
+function sfxMatch(){ [1046.50,1318.51].forEach((f,i)=>setTimeout(()=>playNote(f,0.12,0.22,'sine'),i*80)); }
+function sfxMiss(){ playNote(220,0.10,0.12,'triangle'); }
+function sfxWin(){ stopBGM(); [523.25,659.25,783.99,1046.50,1318.51].forEach((f,i)=>setTimeout(()=>playNote(f,0.15,0.20,'sine'),i*90)); }
+// ===== ここまで BGM =====
 </script>
 </body>
 </html>

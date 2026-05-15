@@ -343,6 +343,10 @@
     color: var(--accent);
     cursor: pointer;
   }
+
+  .vol-row { display:flex; gap:3px; }
+  .vol-btn { flex:1; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); border-radius:6px; color:#E94F37; font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .vol-btn.active { background:#E94F37; border-color:#E94F37; color:white; }
 </style>
 </head>
 <body>
@@ -609,6 +613,7 @@ function stopTimer() {
 }
 
 function startGame() {
+  initAudio().then(()=>{ stopBGM(); startBGM(); });
   const cfg = DIFF[difficulty];
   cols = cfg.cols; rows = cfg.rows; mines = cfg.mines;
   makeCells();
@@ -624,6 +629,7 @@ function startGame() {
 }
 
 function endGame(won) {
+  stopBGM();
   gameRunning = false;
   stopTimer();
   const sec = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
@@ -679,6 +685,70 @@ window.addEventListener('resize', () => { if (cells) renderGrid(); });
 const b = localStorage.getItem('nikowa_mine_best_easy');
 document.getElementById('bestVal').textContent = b ? b : '--';
 startGame();
+
+// ===== minesweeper BGM & 効果音 =====
+let audioCtx = null;
+let bgmRunning = false;
+let bgmNoteIdx = 0;
+let bgmTimer = null;
+let masterVol = 0;
+
+const EN_MIN = 428.57;
+const BGM_MEL_MINE = [349.23,0,329.63,0,311.13,0,293.66,0,261.63,0,293.66,0,311.13,0,329.63,0,349.23,0,349.23,0,293.66,0,293.66,0,261.63,0,0,0,261.63,0,0,0];
+const BGM_BASS_MINE = [87.31,0,0,0,98.0,0,0,0,87.31,0,0,0,98.0,0,0,0,87.31,0,0,0,98.0,0,0,0,87.31,0,0,0,87.31,0,0,0];
+
+function setVol(v) {
+  masterVol = v;
+  ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
+  document.getElementById(map[v])?.classList.add('active');
+  if (v === 0) stopBGM();
+  else if (!bgmRunning) startBGM();
+}
+
+function initAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+  }
+  return audioCtx.resume();
+}
+
+function playNote(freq, dur, vol, type) {
+  if (!audioCtx || !freq || masterVol === 0) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = type || 'triangle';
+  o.frequency.value = freq;
+  const t = audioCtx.currentTime;
+  g.gain.setValueAtTime(vol * masterVol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
+  o.start(t); o.stop(t + dur);
+}
+
+function startBGM() {
+  if (bgmRunning) return;
+  bgmRunning = true; bgmNoteIdx = 0;
+  tickBGM();
+}
+function stopBGM() {
+  bgmRunning = false;
+  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+}
+function tickBGM() {
+  if (!bgmRunning) return;
+  const i = bgmNoteIdx % BGM_MEL_MINE.length;
+  playNote(BGM_MEL_MINE[i], EN_MIN/1000*0.82, 0.09, 'triangle');
+  playNote(BGM_BASS_MINE[i], EN_MIN/1000*1.7, 0.06, 'triangle');
+  bgmNoteIdx++;
+  bgmTimer = setTimeout(tickBGM, EN_MIN);
+}
+
+function sfxOpen(){ playNote(440,0.06,0.12,'sine'); }
+function sfxFlag(){ playNote(220,0.08,0.15,'square'); }
+function sfxBoom(){ stopBGM(); [330,261.63,196,130.81].forEach((f,i)=>setTimeout(()=>playNote(f,0.25,0.20,'sawtooth'),i*80)); }
+function sfxClear(){ stopBGM(); [523.25,659.25,783.99,1046.50].forEach((f,i)=>setTimeout(()=>playNote(f,0.18,0.22,'sine'),i*100)); }
+// ===== ここまで BGM =====
 </script>
 </body>
 </html>
