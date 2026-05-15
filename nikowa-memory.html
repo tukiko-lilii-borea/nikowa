@@ -160,10 +160,15 @@
     box-shadow: 0 2px 8px rgba(166,124,82,0.08);
   }
   /* iOS Safari確実対策：めくれたときに裏面を完全に隠す */
+  /* transition delay 0.25s = 0.5sアニメの折り返し点（90°）に合わせて消える */
+  .card-back {
+    transition: opacity 0s 0.25s;
+  }
   .card-wrap.flipped .card-back,
   .card-wrap.matched .card-back {
     opacity: 0;
     pointer-events: none;
+    transition: opacity 0s 0.25s;
   }
   .card-front img {
     width: 65%;
