@@ -316,16 +316,16 @@
         <div class="next-label">NEXT</div>
         <canvas id="next" width="60" height="60"></canvas>
       </div>
-      <button class="side-start" id="startBtn" onclick="startGame()">START ★</button>
+      <button class="side-start" id="startBtn" onclick="initAudio();startGame()">START ★</button>
     </div>
   </div>
 
   <!-- タッチコントロール -->
   <div class="controls">
-    <button class="ctrl-btn" id="btnLeft">◀</button>
-    <button class="ctrl-btn rotate" id="btnUp">↻</button>
-    <button class="ctrl-btn" id="btnRight">▶</button>
-    <button class="ctrl-btn drop" id="btnDown">▼</button>
+    <button class="ctrl-btn" id="btnLeft">◀&#xFE0E;</button>
+    <button class="ctrl-btn rotate" id="btnUp">↻&#xFE0E;</button>
+    <button class="ctrl-btn" id="btnRight">▶&#xFE0E;</button>
+    <button class="ctrl-btn drop" id="btnDown">▼&#xFE0E;</button>
   </div>
 
   </div>
@@ -461,6 +461,7 @@ function rotate(shape) {
 }
 
 function lockPiece() {
+  sfxLock();
   piece.shape.forEach((row, dy) => {
     row.forEach((val, dx) => {
       if (val) {
@@ -487,6 +488,7 @@ function clearLines() {
     }
   }
   if (cleared) {
+    sfxLineClear(cleared);
     const pts = [0, 100, 300, 500, 800][cleared] * level;
     score += pts;
     lines += cleared;
@@ -522,6 +524,8 @@ function drop(now) {
 }
 
 function startGame() {
+  initAudio();
+  stopBGM(); startBGM();
   grid = newGrid();
   score = 0; level = 1; lines = 0;
   piece = randomPiece();
@@ -534,12 +538,13 @@ function startGame() {
   document.getElementById('levelVal').textContent = '1';
   document.getElementById('linesVal').textContent = '0';
   document.getElementById('overlay').classList.remove('show');
-  document.getElementById('startBtn').textContent = 'RESET ↻';
+  document.getElementById('startBtn').textContent = 'RESET ↻︎';
 
   requestAnimationFrame(drop);
 }
 
 function endGame() {
+  stopBGM(); sfxGameOver();
   gameRunning = false;
   gameOver = true;
   const overlay = document.getElementById('overlay');
@@ -755,6 +760,81 @@ setTimeout(shootingStar, 1200);
 best = parseInt(localStorage.getItem('nikowa_tetris_best') || '0');
 document.getElementById('bestVal').textContent = best.toLocaleString();
 document.getElementById('overlay').classList.add('show');
+
+// ===== ゆめめ テトリス BGM & 効果音 =====
+let audioCtx = null;
+let bgmRunning = false;
+let bgmNoteIdx = 0;
+let bgmTimer = null;
+
+const BPM_TETRIS = 148;
+const EN = 60000 / BPM_TETRIS / 2; // 8分音符(ms)
+
+// ゆめめ：幻想的でキラキラ速めオリジナルメロディ
+const BGM_MEL = [
+  523.25, 659.25, 783.99, 880.00,  783.99, 659.25, 587.33, 523.25,
+  659.25, 783.99, 880.00,1046.50,  880.00, 783.99, 659.25, 783.99,
+  880.00,1046.50, 880.00, 783.99,  659.25, 523.25, 659.25, 783.99,
+  523.25, 587.33, 659.25, 523.25,  587.33, 493.88, 523.25,       0,
+];
+const BGM_BASS = [
+  130.81,0,196.00,0, 130.81,0,196.00,0,
+  220.00,0,174.61,0, 130.81,0,196.00,0,
+  130.81,0,196.00,0, 130.81,0,196.00,0,
+  220.00,0,174.61,0, 196.00,0,196.00,0,
+];
+
+function initAudio() {
+  if (audioCtx) return;
+  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+}
+
+function playNote(freq, dur, vol, type) {
+  if (!audioCtx || !freq) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = type || 'square';
+  o.frequency.value = freq;
+  const t = audioCtx.currentTime;
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
+  o.start(t); o.stop(t + dur);
+}
+
+function startBGM() {
+  if (bgmRunning) return;
+  bgmRunning = true; bgmNoteIdx = 0;
+  tickBGM();
+}
+function stopBGM() {
+  bgmRunning = false;
+  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+}
+function tickBGM() {
+  if (!bgmRunning) return;
+  const i = bgmNoteIdx % BGM_MEL.length;
+  playNote(BGM_MEL[i],  EN/1000 * 0.82, 0.10, 'square');
+  playNote(BGM_BASS[i], EN/1000 * 1.6,  0.07, 'triangle');
+  bgmNoteIdx++;
+  bgmTimer = setTimeout(tickBGM, EN);
+}
+
+function sfxLineClear(n) {
+  const freqs = [523.25,659.25,783.99,1046.50];
+  freqs.slice(0, Math.min(n+1,4)).forEach((f,i) =>
+    setTimeout(() => playNote(f, 0.13, 0.22, 'sine'), i * 55)
+  );
+}
+function sfxLock() {
+  playNote(185, 0.07, 0.05, 'square');
+}
+function sfxGameOver() {
+  [440,349.23,293.66,220,174.61].forEach((f,i) =>
+    setTimeout(() => playNote(f, 0.22, 0.15, 'sawtooth'), i * 110)
+  );
+}
+// ===== ここまで BGM =====
 </script>
 </body>
 </html>
