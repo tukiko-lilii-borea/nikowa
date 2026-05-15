@@ -1,189 +1,224 @@
-<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>にこわ フラッピー</title> <style>@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
-:root{--bg:#D4F0FF;--accent:#5BA4CF;--pink:#E94B6F;--surface:rgba(255,255,255,0.92);--ink:#1A3050;--ink-sub:#4A7090;}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Zen Maru Gothic',sans-serif;background:var(--bg);height:100vh;overflow:hidden;
-display:flex;flex-direction:column;align-items:center;padding:10px 12px 0;color:var(--ink);}
-.header{width:100%;max-width:420px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;}
-.logo{height:24px;width:auto;object-fit:contain;}
-.back-btn{background:var(--surface);border:1.5px solid rgba(91,164,207,0.3);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;}
-#canvas{border-radius:20px 20px 0 0;touch-action:none;cursor:pointer;display:block;max-width:420px;width:100%;}</style> </head><body><div class="header"><img class="logo" src="assets/logo-soft.svg" alt="nikowa"><button class="back-btn" onclick="location.href='./yuuenchi.html'">← もどる</button></div><canvas id="canvas"></canvas> <script>const canvas=document.getElementById('canvas');
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>にこわ フラッピー</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
+  :root{--bg:#D4F0FF;--accent:#5BA4CF;--pink:#E94B6F;--surface:rgba(255,255,255,0.92);--ink:#1A3050;--ink-sub:#4A7090;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Zen Maru Gothic',sans-serif;background:var(--bg);height:100vh;overflow:hidden;
+    display:flex;flex-direction:column;align-items:center;padding:10px 12px 0;color:var(--ink);}
+  .header{width:100%;max-width:420px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;}
+  .logo{height:24px;width:auto;object-fit:contain;}
+  .back-btn{background:var(--surface);border:1.5px solid rgba(91,164,207,0.3);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;}
+  #canvas{border-radius:20px 20px 0 0;touch-action:none;cursor:pointer;display:block;max-width:420px;width:100%;}
+</style>
+</head>
+<body>
+<div class="header">
+  <img class="logo" src="assets/logo-soft.svg" alt="nikowa">
+  <button class="back-btn" onclick="location.href='./yuuenchi.html'">← もどる</button>
+</div>
+<canvas id="canvas"></canvas>
+<script>
+const canvas=document.getElementById('canvas');
 const ctx=canvas.getContext('2d');
 const best_key='nikowa_flappy_best';
+
 // サイズ
 function resize(){
-const maxW=Math.min(420,window.innerWidth-24);
-canvas.width=maxW;
-canvas.height=window.innerHeight-canvas.getBoundingClientRect().top-0;
+  const maxW=Math.min(420,window.innerWidth-24);
+  canvas.width=maxW;
+  canvas.height=window.innerHeight-canvas.getBoundingClientRect().top-0;
 }
 resize();
+
 // ゲーム状態
 const STATE={READY:0,PLAY:1,DEAD:2};
 let state=STATE.READY;
 let score=0,best=parseInt(localStorage.getItem(best_key)||'0');
+
 // あんず
 const anzu=new Image();anzu.src='assets/anzu.svg';
 const BIRD={x:0,y:0,vy:0,w:44,h:44,gravity:0.38,jumpV:-7.5};
 function resetBird(){BIRD.x=canvas.width*0.25;BIRD.y=canvas.height*0.45;BIRD.vy=0;}
+
 // パイプ
 const GAP=150,PIPE_W=54,PIPE_SPEED=2.5;
 let pipes=[];
 function spawnPipe(){
-const minH=60,maxH=canvas.height-GAP-80;
-const topH=minH+Math.random()*(maxH-minH);
-pipes.push({x:canvas.width,topH,passed:false});
+  const minH=60,maxH=canvas.height-GAP-80;
+  const topH=minH+Math.random()*(maxH-minH);
+  pipes.push({x:canvas.width,topH,passed:false});
 }
+
 // クラウド
 const clouds=[{x:100,y:60,s:1},{x:260,y:30,s:0.8},{x:380,y:80,s:1.2}];
+
 let frameCount=0,pipeTimer=0;
 const PIPE_INTERVAL=90;
+
 function tap(){
-if(state===STATE.DEAD)return;
-if(state===STATE.READY){state=STATE.PLAY;score=0;}
-BIRD.vy=BIRD.jumpV;
+  if(state===STATE.DEAD)return;
+  if(state===STATE.READY){state=STATE.PLAY;score=0;}
+  BIRD.vy=BIRD.jumpV;
 }
+
 function update(){
-if(state!==STATE.PLAY)return;
-frameCount++;
-// 雲スクロール
-clouds.forEach(c=>{c.x-=0.4*c.s;if(c.x<-80)c.x=canvas.width+80;});
-// バード
-BIRD.vy+=BIRD.gravity;
-BIRD.y+=BIRD.vy;
-// パイプ生成
-pipeTimer++;
-if(pipeTimer>=PIPE_INTERVAL){pipeTimer=0;spawnPipe();}
-// パイプ移動・当たり判定
-for(const p of pipes){
-p.x-=PIPE_SPEED;
-// スコア
-if(!p.passed && p.x+PIPE_W<BIRD.x){p.passed=true;score++;}
-// 衝突
-const bx=BIRD.x-BIRD.w/2,by=BIRD.y-BIRD.h/2;
-if(bx+BIRD.w>p.x && bx<p.x+PIPE_W){
-if(by<p.topH || by+BIRD.h>p.topH+GAP){die();return;}
+  if(state!==STATE.PLAY)return;
+  frameCount++;
+  // 雲スクロール
+  clouds.forEach(c=>{c.x-=0.4*c.s;if(c.x<-80)c.x=canvas.width+80;});
+  // バード
+  BIRD.vy+=BIRD.gravity;
+  BIRD.y+=BIRD.vy;
+  // パイプ生成
+  pipeTimer++;
+  if(pipeTimer>=PIPE_INTERVAL){pipeTimer=0;spawnPipe();}
+  // パイプ移動・当たり判定
+  for(const p of pipes){
+    p.x-=PIPE_SPEED;
+    // スコア
+    if(!p.passed && p.x+PIPE_W<BIRD.x){p.passed=true;score++;}
+    // 衝突
+    const bx=BIRD.x-BIRD.w/2,by=BIRD.y-BIRD.h/2;
+    if(bx+BIRD.w>p.x && bx<p.x+PIPE_W){
+      if(by<p.topH || by+BIRD.h>p.topH+GAP){die();return;}
+    }
+  }
+  pipes=pipes.filter(p=>p.x+PIPE_W>0);
+  // 上下境界
+  if(BIRD.y-BIRD.h/2<0){BIRD.y=BIRD.h/2;BIRD.vy=0;}
+  if(BIRD.y+BIRD.h/2>canvas.height){die();}
 }
-}
-pipes=pipes.filter(p=>p.x+PIPE_W>0);
-// 上下境界
-if(BIRD.y-BIRD.h/2<0){BIRD.y=BIRD.h/2;BIRD.vy=0;}
-if(BIRD.y+BIRD.h/2>canvas.height){die();}
-}
+
 function die(){
-state=STATE.DEAD;
-if(score>best){best=score;localStorage.setItem(best_key,best);}
+  state=STATE.DEAD;
+  if(score>best){best=score;localStorage.setItem(best_key,best);}
 }
+
 function drawCloud(x,y,s){
-ctx.fillStyle='rgba(255,255,255,0.85)';
-ctx.beginPath();
-ctx.ellipse(x,y,36*s,22*s,0,0,Math.PI*2);
-ctx.ellipse(x+22*s,y+4*s,28*s,18*s,0,0,Math.PI*2);
-ctx.ellipse(x-20*s,y+6*s,24*s,16*s,0,0,Math.PI*2);
-ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  ctx.beginPath();
+  ctx.ellipse(x,y,36*s,22*s,0,0,Math.PI*2);
+  ctx.ellipse(x+22*s,y+4*s,28*s,18*s,0,0,Math.PI*2);
+  ctx.ellipse(x-20*s,y+6*s,24*s,16*s,0,0,Math.PI*2);
+  ctx.fill();
 }
+
 function drawPipe(p){
-const r=14;
-// グリーン
-ctx.fillStyle='#88CC66';
-// 上パイプ
-ctx.beginPath();
-ctx.roundRect(p.x,0,PIPE_W,p.topH-12,r);
-ctx.fill();
-ctx.fillStyle='#66BB44';
-ctx.beginPath();
-ctx.roundRect(p.x-4,p.topH-20,PIPE_W+8,20,r);
-ctx.fill();
-// 下パイプ
-const botY=p.topH+GAP;
-ctx.fillStyle='#88CC66';
-ctx.beginPath();
-ctx.roundRect(p.x,botY+12,PIPE_W,canvas.height-botY-12,r);
-ctx.fill();
-ctx.fillStyle='#66BB44';
-ctx.beginPath();
-ctx.roundRect(p.x-4,botY,PIPE_W+8,20,r);
-ctx.fill();
+  const r=14;
+  // グリーン
+  ctx.fillStyle='#88CC66';
+  // 上パイプ
+  ctx.beginPath();
+  ctx.roundRect(p.x,0,PIPE_W,p.topH-12,r);
+  ctx.fill();
+  ctx.fillStyle='#66BB44';
+  ctx.beginPath();
+  ctx.roundRect(p.x-4,p.topH-20,PIPE_W+8,20,r);
+  ctx.fill();
+  // 下パイプ
+  const botY=p.topH+GAP;
+  ctx.fillStyle='#88CC66';
+  ctx.beginPath();
+  ctx.roundRect(p.x,botY+12,PIPE_W,canvas.height-botY-12,r);
+  ctx.fill();
+  ctx.fillStyle='#66BB44';
+  ctx.beginPath();
+  ctx.roundRect(p.x-4,botY,PIPE_W+8,20,r);
+  ctx.fill();
 }
+
 function draw(){
-// 空
-const grad=ctx.createLinearGradient(0,0,0,canvas.height);
-grad.addColorStop(0,'#B8E4FF');
-grad.addColorStop(1,'#D8F4FF');
-ctx.fillStyle=grad;
-ctx.fillRect(0,0,canvas.width,canvas.height);
-// 雲
-clouds.forEach(c=>drawCloud(c.x,c.y,c.s));
-// 地面
-ctx.fillStyle='#8BC34A';
-ctx.fillRect(0,canvas.height-18,canvas.width,18);
-ctx.fillStyle='#7CB342';
-ctx.fillRect(0,canvas.height-18,canvas.width,6);
-// パイプ
-pipes.forEach(drawPipe);
-// バード（あんず）
-const angle=Math.min(Math.PI/4,Math.max(-Math.PI/4,BIRD.vy*0.04));
-ctx.save();
-ctx.translate(BIRD.x,BIRD.y);
-ctx.rotate(angle);
-if(anzu.complete){
-ctx.drawImage(anzu,-BIRD.w/2,-BIRD.h/2,BIRD.w,BIRD.h);
-}else{
-ctx.fillStyle='#FFB3CA';
-ctx.beginPath();ctx.arc(0,0,BIRD.w/2,0,Math.PI*2);ctx.fill();
+  // 空
+  const grad=ctx.createLinearGradient(0,0,0,canvas.height);
+  grad.addColorStop(0,'#B8E4FF');
+  grad.addColorStop(1,'#D8F4FF');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  // 雲
+  clouds.forEach(c=>drawCloud(c.x,c.y,c.s));
+  // 地面
+  ctx.fillStyle='#8BC34A';
+  ctx.fillRect(0,canvas.height-18,canvas.width,18);
+  ctx.fillStyle='#7CB342';
+  ctx.fillRect(0,canvas.height-18,canvas.width,6);
+  // パイプ
+  pipes.forEach(drawPipe);
+  // バード（あんず）
+  const angle=Math.min(Math.PI/4,Math.max(-Math.PI/4,BIRD.vy*0.04));
+  ctx.save();
+  ctx.translate(BIRD.x,BIRD.y);
+  ctx.rotate(angle);
+  if(anzu.complete){
+    ctx.drawImage(anzu,-BIRD.w/2,-BIRD.h/2,BIRD.w,BIRD.h);
+  }else{
+    ctx.fillStyle='#FFB3CA';
+    ctx.beginPath();ctx.arc(0,0,BIRD.w/2,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
+  // スコア
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.beginPath();ctx.roundRect(canvas.width/2-50,12,100,44,14);ctx.fill();
+  ctx.fillStyle='#1A3050';
+  ctx.font='900 26px "Zen Maru Gothic",sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText(score,canvas.width/2,42);
+  // オーバーレイ
+  if(state===STATE.READY){
+    ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='white';
+    ctx.font='900 32px "Zen Maru Gothic",sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('フラッピーあんず',canvas.width/2,canvas.height/2-30);
+    ctx.font='700 17px "Zen Maru Gothic",sans-serif';
+    ctx.fillText('タップでとびあがる！',canvas.width/2,canvas.height/2+10);
+    ctx.font='700 14px "Zen Maru Gothic",sans-serif';
+    ctx.fillStyle='rgba(255,255,255,0.8)';
+    ctx.fillText('タップしてはじめる',canvas.width/2,canvas.height/2+46);
+  }
+  if(state===STATE.DEAD){
+    ctx.fillStyle='rgba(0,0,0,0.45)';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='white';ctx.font='900 28px "Zen Maru Gothic",sans-serif';ctx.textAlign='center';
+    ctx.fillText('💔 やられちゃった',canvas.width/2,canvas.height/2-50);
+    ctx.font='700 18px "Zen Maru Gothic",sans-serif';
+    ctx.fillText('スコア：'+score+'てん',canvas.width/2,canvas.height/2-10);
+    ctx.fillStyle='rgba(255,255,255,0.85)';
+    ctx.font='700 15px "Zen Maru Gothic",sans-serif';
+    ctx.fillText('ベスト：'+best+'てん',canvas.width/2,canvas.height/2+22);
+    // リトライボタン風
+    ctx.fillStyle='#E94B6F';
+    ctx.beginPath();ctx.roundRect(canvas.width/2-70,canvas.height/2+48,140,46,14);ctx.fill();
+    ctx.fillStyle='white';ctx.font='900 17px "Zen Maru Gothic",sans-serif';
+    ctx.fillText('もう一回！',canvas.width/2,canvas.height/2+76);
+  }
 }
-ctx.restore();
-// スコア
-ctx.fillStyle='rgba(255,255,255,0.9)';
-ctx.beginPath();ctx.roundRect(canvas.width/2-50,12,100,44,14);ctx.fill();
-ctx.fillStyle='#1A3050';
-ctx.font='900 26px "Zen Maru Gothic",sans-serif';
-ctx.textAlign='center';
-ctx.fillText(score,canvas.width/2,42);
-// オーバーレイ
-if(state===STATE.READY){
-ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(0,0,canvas.width,canvas.height);
-ctx.fillStyle='white';
-ctx.font='900 32px "Zen Maru Gothic",sans-serif';
-ctx.textAlign='center';
-ctx.fillText('フラッピーあんず',canvas.width/2,canvas.height/2-30);
-ctx.font='700 17px "Zen Maru Gothic",sans-serif';
-ctx.fillText('タップでとびあがる！',canvas.width/2,canvas.height/2+10);
-ctx.font='700 14px "Zen Maru Gothic",sans-serif';
-ctx.fillStyle='rgba(255,255,255,0.8)';
-ctx.fillText('タップしてはじめる',canvas.width/2,canvas.height/2+46);
-}
-if(state===STATE.DEAD){
-ctx.fillStyle='rgba(0,0,0,0.45)';ctx.fillRect(0,0,canvas.width,canvas.height);
-ctx.fillStyle='white';ctx.font='900 28px "Zen Maru Gothic",sans-serif';ctx.textAlign='center';
-ctx.fillText('💔 やられちゃった',canvas.width/2,canvas.height/2-50);
-ctx.font='700 18px "Zen Maru Gothic",sans-serif';
-ctx.fillText('スコア：'+score+'てん',canvas.width/2,canvas.height/2-10);
-ctx.fillStyle='rgba(255,255,255,0.85)';
-ctx.font='700 15px "Zen Maru Gothic",sans-serif';
-ctx.fillText('ベスト：'+best+'てん',canvas.width/2,canvas.height/2+22);
-// リトライボタン風
-ctx.fillStyle='#E94B6F';
-ctx.beginPath();ctx.roundRect(canvas.width/2-70,canvas.height/2+48,140,46,14);ctx.fill();
-ctx.fillStyle='white';ctx.font='900 17px "Zen Maru Gothic",sans-serif';
-ctx.fillText('もう一回！',canvas.width/2,canvas.height/2+76);
-}
-}
+
 function frame(){
-update();draw();
-requestAnimationFrame(frame);
+  update();draw();
+  requestAnimationFrame(frame);
 }
+
 canvas.addEventListener('pointerdown',e=>{
-e.preventDefault();
-if(state===STATE.DEAD){
-// リトライ領域チェック
-const rect=canvas.getBoundingClientRect();
-const cy=(e.clientY-rect.top)*(canvas.height/rect.height);
-if(cy>canvas.height/2+44 && cy<canvas.height/2+96){
-state=STATE.READY;pipes=[];resetBird();frameCount=0;pipeTimer=0;
-return;
-}
-}
-tap();
+  e.preventDefault();
+  if(state===STATE.DEAD){
+    // リトライ領域チェック
+    const rect=canvas.getBoundingClientRect();
+    const cy=(e.clientY-rect.top)*(canvas.height/rect.height);
+    if(cy>canvas.height/2+44 && cy<canvas.height/2+96){
+      state=STATE.READY;pipes=[];resetBird();frameCount=0;pipeTimer=0;
+      return;
+    }
+  }
+  tap();
 });
+
 resetBird();
 frame();
-window.addEventListener('resize',()=>{resize();resetBird();});</script> </body></html>
+window.addEventListener('resize',()=>{resize();resetBird();});
+</script>
+</body>
+</html>

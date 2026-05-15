@@ -1,108 +1,203 @@
-<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>にこわ サイモン</title> <style>@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html, body { height:100%; overscroll-behavior:none; }
-body {
-font-family: 'Zen Maru Gothic', sans-serif;
-min-height: 100vh;
-display: flex; flex-direction: column; align-items: center;
-padding: 4px 12px 24px;
-color: #3D2B3E;
-position: relative; overflow-x: hidden;
-background: linear-gradient(180deg, #FEF0F5 0%, #F5E5FF 100%);
-transition: background 0.5s;
-}
-.header { width:100%; max-width:420px; display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px; }
-.logo { display:flex; align-items:center; gap:6px; height:120px; }
-.logo img { height:100%; width:auto; object-fit:contain; object-position:top; }
-.logo span { font-size:15px; font-weight:900; color:#E94B8A; }
-.back-btn { background:rgba(255,255,255,0.8); border:1px solid rgba(200,150,180,0.3); border-radius:100px; padding:5px 12px; margin-top:8px; font-family:inherit; font-size:11px; font-weight:700; color:#8B6A85; cursor:pointer; }
-.score-wrap { width:100%; max-width:420px; display:flex; gap:8px; margin-bottom:16px; }
-.score-card { flex:1; background:rgba(255,255,255,0.75); border-radius:14px; padding:10px; text-align:center; border:1px solid rgba(200,150,180,0.25); }
-.score-label { font-size:9px; font-weight:800; color:#8B6A85; letter-spacing:1px; }
-.score-val { font-size:28px; font-weight:900; color:#E94B8A; line-height:1.1; transition:color 0.3s; }
-.btn-grid {
-width:100%; max-width:340px;
-display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr;
-gap:10px; aspect-ratio:1/1; margin-bottom:16px;
-}
-.simon-btn {
-border-radius:22px; border:none; cursor:pointer;
-transition:transform 0.12s, box-shadow 0.12s, background 0.12s;
-display:flex; flex-direction:column; align-items:center; justify-content:center;
-gap:6px; position:relative; overflow:hidden;
-box-shadow:0 4px 12px rgba(0,0,0,0.1);
-}
-.simon-btn .btn-icon { width:80%; aspect-ratio:1/1; max-height:60%; pointer-events:none; transition:transform 0.12s; object-fit:contain; }
-.simon-btn .btn-label { font-size:11px; font-weight:900; color:rgba(0,0,0,0.45); pointer-events:none; }
-.simon-btn.lit { transform:scale(1.06); }
-.simon-btn.disabled { cursor:not-allowed; pointer-events:none; opacity:0.85; }
-.simon-btn:not(.disabled):active { transform:scale(0.95); }
-.status-wrap { width:100%; max-width:420px; text-align:center; margin-bottom:14px; min-height:48px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
-.status-main { font-size:15px; font-weight:900; color:#8B6A85; transition:color 0.2s; }
-.status-main.watching { color:#E94B8A; }
-.status-main.your-turn { color:#4A90D9; }
-.status-main.correct { color:#4FB677; }
-.status-main.gameover { color:#E5524A; }
-.progress-bar { width:100%; max-width:340px; height:6px; background:rgba(0,0,0,0.08); border-radius:10px; overflow:hidden; }
-.progress-fill { height:100%; background:#E94B8A; border-radius:10px; transition:width 0.1s linear, background 0.3s; }
-.start-btn { width:100%; max-width:340px; background:#E94B8A; color:white; border:none; border-radius:16px; padding:14px; font-family:inherit; font-size:14px; font-weight:900; cursor:pointer; box-shadow:0 4px 14px rgba(233,75,138,0.4); transition:transform 0.1s, opacity 0.2s; }
-.start-btn:active { transform:scale(0.97); }
-.simon-btn .btn-symbol { font-size:50px; pointer-events:none; line-height:1; }
-#difficultyOverlay {
-position:fixed; inset:0; background:rgba(254,240,245,0.97);
-display:flex; flex-direction:column; align-items:center; justify-content:center;
-z-index:100; padding:24px;
-}
-.diff-title { font-size:22px; font-weight:900; color:#E94B8A; margin-bottom:6px; }
-.diff-sub { font-size:12px; color:#8B6A85; font-weight:700; margin-bottom:24px; }
-.diff-grid { display:flex; flex-direction:column; gap:10px; width:100%; max-width:300px; }
-.diff-btn {
-background:white; border:2px solid rgba(200,150,180,0.25);
-border-radius:18px; padding:14px 18px; min-height:70px;
-display:flex; align-items:center; gap:14px;
-cursor:pointer; font-family:inherit;
-box-shadow:0 3px 10px rgba(0,0,0,0.06);
-transition:all 0.15s;
-}
-.diff-btn:active { transform:scale(0.98); }
-.diff-emoji { font-size:28px; flex-shrink:0; }
-.diff-info { text-align:left; }
-.diff-name { font-size:16px; font-weight:900; color:#3D2B3E; }
-.diff-desc { font-size:10px; color:#8B6A85; font-weight:700; margin-top:2px; }
-#gameOverOverlay {
-display:none; position:fixed; inset:0;
-background:rgba(254,240,245,0.97);
-flex-direction:column; align-items:center; justify-content:center;
-z-index:50; gap:10px; padding:24px; text-align:center;
-}
-#gameOverOverlay.show { display:flex; }
-.go-emoji { font-size:52px; }
-.go-title { font-size:24px; font-weight:900; color:#E94B8A; }
-.go-score { font-size:15px; font-weight:800; color:#3D2B3E; }
-.go-best { font-size:12px; color:#8B6A85; font-weight:700; }
-.go-new-best { font-size:12px; color:#4FB677; font-weight:900; }
-.go-btn { background:#E94B8A; color:white; border:none; border-radius:14px; padding:13px 36px; font-family:inherit; font-size:14px; font-weight:900; cursor:pointer; margin-top:6px; box-shadow:0 4px 14px rgba(233,75,138,0.35); }
-.go-theme-btn { background:white; color:#3D2B3E; border:2px solid rgba(200,150,180,0.35); border-radius:14px; padding:11px 28px; font-family:inherit; font-size:13px; font-weight:800; cursor:pointer; }</style> </head><body><div class="header"><div class="logo" id="gameLogo"><img src="assets/logo-soft.svg" draggable="false"></div><button class="back-btn" onclick="history.back()">← もどる</button></div><div class="score-wrap"><div class="score-card"><div class="score-label">LEVEL</div><div class="score-val" id="levelVal">—</div></div><div class="score-card"><div class="score-label">BEST</div><div class="score-val" id="bestVal">—</div></div></div><div class="btn-grid" id="btnGrid"></div><div class="status-wrap"><div class="status-main" id="statusMain">START を おしてね 🌷</div><div class="progress-bar" id="progressBar" style="display:none;"><div class="progress-fill" id="progressFill" style="width:0%"></div></div></div><button class="start-btn" id="startBtn" onclick="startGame()">START ★</button><div id="difficultyOverlay"><div class="diff-title">🎮 サイモン</div><div class="diff-sub">むずかしさを えらんでね</div><div class="diff-grid"><button class="diff-btn" onclick="selectDifficulty('easy')"><span class="diff-emoji">🌱</span><div class="diff-info"><div class="diff-name">かんたん</div><div class="diff-desc">4まい</div></div></button><button class="diff-btn" onclick="selectDifficulty('normal')"><span class="diff-emoji">🌷</span><div class="diff-info"><div class="diff-name">ふつう</div><div class="diff-desc">6まい</div></div></button><button class="diff-btn" onclick="selectDifficulty('hard')"><span class="diff-emoji">🔥</span><div class="diff-info"><div class="diff-name">むずい</div><div class="diff-desc">8まい</div></div></button></div></div><div id="gameOverOverlay"><div class="go-emoji" id="goEmoji">💔</div><div class="go-title" id="goTitle">ミス！</div><div class="go-score" id="goScore"></div><div class="go-best" id="goBest"></div><div class="go-new-best" id="goNewBest" style="display:none;">🌟 ベスト更新！</div><button class="go-btn" onclick="restartGame()">もう一回 ★</button><button class="go-theme-btn" onclick="backToTheme()">テーマを変える</button></div> <script>const THEME = {
-name: 'にこわの4人', emoji: '🌷',
-accent: '#E94B6F',
-bgStart: '#FFF0F3', bgEnd: '#EEF0FF',
-scoreColor: '#E94B6F',
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>にこわ サイモン</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; overscroll-behavior:none; }
+  body {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 4px 12px 24px;
+    color: #3D2B3E;
+    position: relative; overflow-x: hidden;
+    background: linear-gradient(180deg, #FEF0F5 0%, #F5E5FF 100%);
+    transition: background 0.5s;
+  }
+
+  .header { width:100%; max-width:420px; display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px; }
+  .logo { display:flex; align-items:center; gap:6px; height:120px; }
+  .logo img { height:100%; width:auto; object-fit:contain; object-position:top; }
+  .logo span { font-size:15px; font-weight:900; color:#E94B8A; }
+  .back-btn { background:rgba(255,255,255,0.8); border:1px solid rgba(200,150,180,0.3); border-radius:100px; padding:5px 12px; margin-top:8px; font-family:inherit; font-size:11px; font-weight:700; color:#8B6A85; cursor:pointer; }
+
+  .score-wrap { width:100%; max-width:420px; display:flex; gap:8px; margin-bottom:16px; }
+  .score-card { flex:1; background:rgba(255,255,255,0.75); border-radius:14px; padding:10px; text-align:center; border:1px solid rgba(200,150,180,0.25); }
+  .score-label { font-size:9px; font-weight:800; color:#8B6A85; letter-spacing:1px; }
+  .score-val { font-size:28px; font-weight:900; color:#E94B8A; line-height:1.1; transition:color 0.3s; }
+
+  .btn-grid {
+    width:100%; max-width:340px;
+    display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr;
+    gap:10px; aspect-ratio:1/1; margin-bottom:16px;
+  }
+  .simon-btn {
+    border-radius:22px; border:none; cursor:pointer;
+    transition:transform 0.12s, box-shadow 0.12s, background 0.12s;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:6px; position:relative; overflow:hidden;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+  }
+  .simon-btn .btn-icon { width:80%; aspect-ratio:1/1; max-height:60%; pointer-events:none; transition:transform 0.12s; object-fit:contain; }
+  .simon-btn .btn-label { font-size:11px; font-weight:900; color:rgba(0,0,0,0.45); pointer-events:none; }
+  .simon-btn.lit { transform:scale(1.06); }
+  .simon-btn.disabled { cursor:not-allowed; pointer-events:none; opacity:0.85; }
+  .simon-btn:not(.disabled):active { transform:scale(0.95); }
+
+  .status-wrap { width:100%; max-width:420px; text-align:center; margin-bottom:14px; min-height:48px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
+  .status-main { font-size:15px; font-weight:900; color:#8B6A85; transition:color 0.2s; }
+  .status-main.watching { color:#E94B8A; }
+  .status-main.your-turn { color:#4A90D9; }
+  .status-main.correct { color:#4FB677; }
+  .status-main.gameover { color:#E5524A; }
+  .progress-bar { width:100%; max-width:340px; height:6px; background:rgba(0,0,0,0.08); border-radius:10px; overflow:hidden; }
+  .progress-fill { height:100%; background:#E94B8A; border-radius:10px; transition:width 0.1s linear, background 0.3s; }
+
+  .start-btn { width:100%; max-width:340px; background:#E94B8A; color:white; border:none; border-radius:16px; padding:14px; font-family:inherit; font-size:14px; font-weight:900; cursor:pointer; box-shadow:0 4px 14px rgba(233,75,138,0.4); transition:transform 0.1s, opacity 0.2s; }
+  .start-btn:active { transform:scale(0.97); }
+
+  .simon-btn .btn-symbol { font-size:50px; pointer-events:none; line-height:1; }
+
+  /* 難易度選択 */
+  #difficultyOverlay {
+    position:fixed; inset:0; background:rgba(254,240,245,0.97);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    z-index:100; padding:24px;
+  }
+  .diff-title { font-size:22px; font-weight:900; color:#E94B8A; margin-bottom:6px; }
+  .diff-sub { font-size:12px; color:#8B6A85; font-weight:700; margin-bottom:24px; }
+  .diff-grid { display:flex; flex-direction:column; gap:10px; width:100%; max-width:300px; }
+  .diff-btn {
+    background:white; border:2px solid rgba(200,150,180,0.25);
+    border-radius:18px; padding:14px 18px; min-height:70px;
+    display:flex; align-items:center; gap:14px;
+    cursor:pointer; font-family:inherit;
+    box-shadow:0 3px 10px rgba(0,0,0,0.06);
+    transition:all 0.15s;
+  }
+  .diff-btn:active { transform:scale(0.98); }
+  .diff-emoji { font-size:28px; flex-shrink:0; }
+  .diff-info { text-align:left; }
+  .diff-name { font-size:16px; font-weight:900; color:#3D2B3E; }
+  .diff-desc { font-size:10px; color:#8B6A85; font-weight:700; margin-top:2px; }
+
+  /* ゲームオーバー */
+  #gameOverOverlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(254,240,245,0.97);
+    flex-direction:column; align-items:center; justify-content:center;
+    z-index:50; gap:10px; padding:24px; text-align:center;
+  }
+  #gameOverOverlay.show { display:flex; }
+  .go-emoji { font-size:52px; }
+  .go-title { font-size:24px; font-weight:900; color:#E94B8A; }
+  .go-score { font-size:15px; font-weight:800; color:#3D2B3E; }
+  .go-best { font-size:12px; color:#8B6A85; font-weight:700; }
+  .go-new-best { font-size:12px; color:#4FB677; font-weight:900; }
+  .go-btn { background:#E94B8A; color:white; border:none; border-radius:14px; padding:13px 36px; font-family:inherit; font-size:14px; font-weight:900; cursor:pointer; margin-top:6px; box-shadow:0 4px 14px rgba(233,75,138,0.35); }
+  .go-theme-btn { background:white; color:#3D2B3E; border:2px solid rgba(200,150,180,0.35); border-radius:14px; padding:11px 28px; font-family:inherit; font-size:13px; font-weight:800; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo" id="gameLogo"><img src="assets/logo-soft.svg" draggable="false"></div>
+  <button class="back-btn" onclick="history.back()">← もどる</button>
+</div>
+
+<div class="score-wrap">
+  <div class="score-card">
+    <div class="score-label">LEVEL</div>
+    <div class="score-val" id="levelVal">—</div>
+  </div>
+  <div class="score-card">
+    <div class="score-label">BEST</div>
+    <div class="score-val" id="bestVal">—</div>
+  </div>
+</div>
+
+<div class="btn-grid" id="btnGrid">
+</div>
+
+<div class="status-wrap">
+  <div class="status-main" id="statusMain">START を おしてね 🌷</div>
+  <div class="progress-bar" id="progressBar" style="display:none;">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+</div>
+
+<button class="start-btn" id="startBtn" onclick="startGame()">START ★</button>
+
+<!-- 難易度選択 -->
+<div id="difficultyOverlay">
+  <div class="diff-title">🎮 サイモン</div>
+  <div class="diff-sub">むずかしさを えらんでね</div>
+  <div class="diff-grid">
+    <button class="diff-btn" onclick="selectDifficulty('easy')">
+      <span class="diff-emoji">🌱</span>
+      <div class="diff-info">
+        <div class="diff-name">かんたん</div>
+        <div class="diff-desc">4まい</div>
+      </div>
+    </button>
+    <button class="diff-btn" onclick="selectDifficulty('normal')">
+      <span class="diff-emoji">🌷</span>
+      <div class="diff-info">
+        <div class="diff-name">ふつう</div>
+        <div class="diff-desc">6まい</div>
+      </div>
+    </button>
+    <button class="diff-btn" onclick="selectDifficulty('hard')">
+      <span class="diff-emoji">🔥</span>
+      <div class="diff-info">
+        <div class="diff-name">むずい</div>
+        <div class="diff-desc">8まい</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- ゲームオーバー -->
+<div id="gameOverOverlay">
+  <div class="go-emoji" id="goEmoji">💔</div>
+  <div class="go-title" id="goTitle">ミス！</div>
+  <div class="go-score" id="goScore"></div>
+  <div class="go-best" id="goBest"></div>
+  <div class="go-new-best" id="goNewBest" style="display:none;">🌟 ベスト更新！</div>
+  <button class="go-btn" onclick="restartGame()">もう一回 ★</button>
+  <button class="go-theme-btn" onclick="backToTheme()">テーマを変える</button>
+</div>
+
+<script>
+const THEME = {
+  name: 'にこわの4人', emoji: '🌷',
+  accent: '#E94B6F',
+  bgStart: '#FFF0F3', bgEnd: '#EEF0FF',
+  scoreColor: '#E94B6F',
 };
+
 const ALL_BUTTONS = [
-{ color:'#FFD0D8', activeColor:'#E94B6F', glow:'rgba(233,75,111,0.55)', img:'assets/anzu.svg', label:'あんず' },
-{ color:'#BEEFD6', activeColor:'#2EB875', glow:'rgba(46,184,117,0.55)', img:'assets/beteli.svg', label:'ベティ' },
-{ color:'#C0D8FF', activeColor:'#3D7FCC', glow:'rgba(61,127,204,0.55)', img:'assets/beru.svg', label:'ベル' },
-{ color:'#E8C8FF', activeColor:'#9940CC', glow:'rgba(153,64,204,0.55)', img:'assets/koito.svg', label:'こいと' },
-{ color:'#FFE0C0', activeColor:'#E06000', glow:'rgba(224,96,0,0.55)', img:'assets/kotatu.svg', label:'こたつ' },
-{ color:'#ECC8FF', activeColor:'#BB44CC', glow:'rgba(187,68,204,0.55)', img:'assets/yumeme.svg', label:'ゆめめ' },
-{ color:'#B0E8F8', activeColor:'#0099BB', glow:'rgba(0,153,187,0.55)', img:'assets/tukiko.svg', label:'つきこ' },
-{ color:'#FFB8D0', activeColor:'#FF3366', glow:'rgba(255,51,102,0.55)', symbol:'♡', label:'' },
+  { color:'#FFD0D8', activeColor:'#E94B6F', glow:'rgba(233,75,111,0.55)', img:'assets/anzu.svg',   label:'あんず' },
+  { color:'#BEEFD6', activeColor:'#2EB875', glow:'rgba(46,184,117,0.55)', img:'assets/beteli.svg', label:'ベティ' },
+  { color:'#C0D8FF', activeColor:'#3D7FCC', glow:'rgba(61,127,204,0.55)', img:'assets/beru.svg',   label:'ベル' },
+  { color:'#E8C8FF', activeColor:'#9940CC', glow:'rgba(153,64,204,0.55)', img:'assets/koito.svg',  label:'こいと' },
+  { color:'#FFE0C0', activeColor:'#E06000', glow:'rgba(224,96,0,0.55)',   img:'assets/kotatu.svg', label:'こたつ' },
+  { color:'#ECC8FF', activeColor:'#BB44CC', glow:'rgba(187,68,204,0.55)', img:'assets/yumeme.svg', label:'ゆめめ' },
+  { color:'#B0E8F8', activeColor:'#0099BB', glow:'rgba(0,153,187,0.55)',  img:'assets/tukiko.svg', label:'つきこ' },
+  { color:'#FFB8D0', activeColor:'#FF3366', glow:'rgba(255,51,102,0.55)', symbol:'♡', label:'' },
 ];
+
 const DIFFICULTIES = {
-easy: { count:4, cols:2 },
-normal: { count:6, cols:2 },
-hard: { count:8, cols:4 },
+  easy:   { count:4, cols:2 },
+  normal: { count:6, cols:2 },
+  hard:   { count:8, cols:4 },
 };
+
 let currentDifficultyKey = null;
 let buttons = [];
 let sequence = [];
@@ -112,185 +207,221 @@ let isUserTurn = false;
 let gameActive = false;
 let inputCount = 0;
 let progressTimer = null;
+
 function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 function getBest(key) { return parseInt(localStorage.getItem('simon_best_' + key) || '0'); }
 function saveBest(key, val) { localStorage.setItem('simon_best_' + key, val); }
+
 function initTheme() {
-document.body.style.background = `linear-gradient(180deg, ${THEME.bgStart} 0%, ${THEME.bgEnd} 100%)`;
-document.getElementById('gameLogo').innerHTML = '<img src="assets/logo-soft.svg" draggable="false">';
-document.querySelectorAll('.score-val').forEach(el => el.style.color = THEME.scoreColor);
-document.getElementById('startBtn').style.display = 'none';
-document.getElementById('difficultyOverlay').style.display = 'flex';
+  document.body.style.background = `linear-gradient(180deg, ${THEME.bgStart} 0%, ${THEME.bgEnd} 100%)`;
+  document.getElementById('gameLogo').innerHTML = '<img src="assets/logo-soft.svg" draggable="false">';
+  document.querySelectorAll('.score-val').forEach(el => el.style.color = THEME.scoreColor);
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('difficultyOverlay').style.display = 'flex';
 }
+
 function selectDifficulty(level) {
-currentDifficultyKey = level;
-const d = DIFFICULTIES[level];
-buttons = ALL_BUTTONS.slice(0, d.count);
-document.getElementById('difficultyOverlay').style.display = 'none';
-buildGrid(d.count, d.cols);
-const best = getBest(level);
-document.getElementById('bestVal').textContent = best || '—';
-document.getElementById('levelVal').textContent = '—';
-document.getElementById('startBtn').style.display = 'block';
-document.getElementById('statusMain').textContent = 'START を おしてね 🌷';
-document.getElementById('statusMain').className = 'status-main';
+  currentDifficultyKey = level;
+  const d = DIFFICULTIES[level];
+  buttons = ALL_BUTTONS.slice(0, d.count);
+
+  document.getElementById('difficultyOverlay').style.display = 'none';
+  buildGrid(d.count, d.cols);
+
+  const best = getBest(level);
+  document.getElementById('bestVal').textContent = best || '—';
+  document.getElementById('levelVal').textContent = '—';
+  document.getElementById('startBtn').style.display = 'block';
+  document.getElementById('statusMain').textContent = 'START を おしてね 🌷';
+  document.getElementById('statusMain').className = 'status-main';
 }
+
 function buildGrid(count, cols) {
-const grid = document.getElementById('btnGrid');
-grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-grid.innerHTML = '';
-for (let i = 0; i < count; i++) {
-const b = buttons[i];
-const btn = document.createElement('button');
-btn.className = 'simon-btn disabled';
-btn.dataset.idx = i;
-btn.style.background = b.color;
-btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-btn.innerHTML = b.img
-? `<img class="btn-icon" src="${b.img}" draggable="false">${b.label ? `<span class="btn-label">${b.label}</span>` : ''}`
-: `<span class="btn-symbol">${b.symbol}</span>`;
-// タップ（2重発火防止）
-let fired = false;
-btn.addEventListener('pointerdown', e => {
-e.preventDefault();
-if (fired) return;
-fired = true;
-onBtnTap(parseInt(btn.dataset.idx));
-setTimeout(() => { fired = false; }, 220);
-});
-grid.appendChild(btn);
+  const grid = document.getElementById('btnGrid');
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const b = buttons[i];
+    const btn = document.createElement('button');
+    btn.className = 'simon-btn disabled';
+    btn.dataset.idx = i;
+    btn.style.background = b.color;
+    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+    btn.innerHTML = b.img
+      ? `<img class="btn-icon" src="${b.img}" draggable="false">${b.label ? `<span class="btn-label">${b.label}</span>` : ''}`
+      : `<span class="btn-symbol">${b.symbol}</span>`;
+    // タップ（2重発火防止）
+    let fired = false;
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (fired) return;
+      fired = true;
+      onBtnTap(parseInt(btn.dataset.idx));
+      setTimeout(() => { fired = false; }, 220);
+    });
+    grid.appendChild(btn);
+  }
 }
-}
+
+
 function startGame() {
-sequence = [];
-userInput = [];
-level = 0;
-gameActive = true;
-isUserTurn = false;
-document.getElementById('startBtn').style.display = 'none';
-document.getElementById('gameOverOverlay').classList.remove('show');
-document.getElementById('progressBar').style.display = 'none';
-setButtonsEnabled(false);
-nextRound();
+  sequence = [];
+  userInput = [];
+  level = 0;
+  gameActive = true;
+  isUserTurn = false;
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('gameOverOverlay').classList.remove('show');
+  document.getElementById('progressBar').style.display = 'none';
+  setButtonsEnabled(false);
+  nextRound();
 }
+
 async function nextRound() {
-if (!gameActive) return;
-isUserTurn = false;
-setButtonsEnabled(false);
-level++;
-document.getElementById('levelVal').textContent = level;
-sequence.push(Math.floor(Math.random() * buttons.length));
-await wait(500);
-setStatus('みてて！', 'watching');
-const speed = Math.max(280, 620 - (level - 1) * 22);
-const gap = Math.max(80, speed * 0.4);
-for (const idx of sequence) {
-await flashButton(idx, speed);
-await wait(gap);
+  if (!gameActive) return;
+  isUserTurn = false;
+  setButtonsEnabled(false);
+  level++;
+  document.getElementById('levelVal').textContent = level;
+
+  sequence.push(Math.floor(Math.random() * buttons.length));
+
+  await wait(500);
+  setStatus('みてて！', 'watching');
+
+  const speed = Math.max(280, 620 - (level - 1) * 22);
+  const gap   = Math.max(80, speed * 0.4);
+
+  for (const idx of sequence) {
+    await flashButton(idx, speed);
+    await wait(gap);
+  }
+
+  await wait(180);
+  setStatus('きみの番！ （' + level + '回）', 'your-turn');
+  userInput = [];
+  inputCount = 0;
+  isUserTurn = true;
+  setButtonsEnabled(true);
+
+  // プログレスバー表示
+  showProgress(level, level);
 }
-await wait(180);
-setStatus('きみの番！ （' + level + '回）', 'your-turn');
-userInput = [];
-inputCount = 0;
-isUserTurn = true;
-setButtonsEnabled(true);
-// プログレスバー表示
-showProgress(level, level);
-}
+
 async function flashButton(idx, dur) {
-const btn = document.querySelector(`[data-idx="${idx}"]`);
-const b = buttons[idx];
-btn.style.background = b.activeColor;
-btn.style.boxShadow = `0 0 0 4px white, 0 0 28px ${b.glow}, 0 0 56px ${b.glow}`;
-btn.classList.add('lit');
-await wait(dur);
-btn.style.background = b.color;
-btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-btn.classList.remove('lit');
+  const btn = document.querySelector(`[data-idx="${idx}"]`);
+  const b = buttons[idx];
+  btn.style.background = b.activeColor;
+  btn.style.boxShadow = `0 0 0 4px white, 0 0 28px ${b.glow}, 0 0 56px ${b.glow}`;
+  btn.classList.add('lit');
+  await wait(dur);
+  btn.style.background = b.color;
+  btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+  btn.classList.remove('lit');
 }
+
 function tapFlash(idx) {
-const btn = document.querySelector(`[data-idx="${idx}"]`);
-const b = buttons[idx];
-btn.style.background = b.activeColor;
-btn.style.boxShadow = `0 0 0 3px white, 0 0 20px ${b.glow}`;
-btn.classList.add('lit');
-setTimeout(() => {
-btn.style.background = b.color;
-btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-btn.classList.remove('lit');
-}, 160);
+  const btn = document.querySelector(`[data-idx="${idx}"]`);
+  const b = buttons[idx];
+  btn.style.background = b.activeColor;
+  btn.style.boxShadow = `0 0 0 3px white, 0 0 20px ${b.glow}`;
+  btn.classList.add('lit');
+  setTimeout(() => {
+    btn.style.background = b.color;
+    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+    btn.classList.remove('lit');
+  }, 160);
 }
+
 function onBtnTap(idx) {
-if (!isUserTurn || !gameActive) return;
-tapFlash(idx);
-userInput.push(idx);
-const pos = userInput.length - 1;
-if (userInput[pos] !== sequence[pos]) {
-gameOver();
-return;
+  if (!isUserTurn || !gameActive) return;
+  tapFlash(idx);
+  userInput.push(idx);
+  const pos = userInput.length - 1;
+
+  if (userInput[pos] !== sequence[pos]) {
+    gameOver();
+    return;
+  }
+
+  inputCount++;
+  updateProgress(level - inputCount, level);
+
+  if (userInput.length === sequence.length) {
+    isUserTurn = false;
+    setButtonsEnabled(false);
+    clearProgressTimer();
+    setStatus('✨ せいかい！', 'correct');
+    setTimeout(() => { if (gameActive) nextRound(); }, 650);
+  }
 }
-inputCount++;
-updateProgress(level - inputCount, level);
-if (userInput.length === sequence.length) {
-isUserTurn = false;
-setButtonsEnabled(false);
-clearProgressTimer();
-setStatus('✨ せいかい！', 'correct');
-setTimeout(() => { if (gameActive) nextRound(); }, 650);
-}
-}
+
 function setStatus(text, cls) {
-const el = document.getElementById('statusMain');
-el.textContent = text;
-el.className = 'status-main' + (cls ? ' ' + cls : '');
+  const el = document.getElementById('statusMain');
+  el.textContent = text;
+  el.className = 'status-main' + (cls ? ' ' + cls : '');
 }
+
 function setButtonsEnabled(on) {
-document.querySelectorAll('.simon-btn').forEach(btn => {
-if (on) btn.classList.remove('disabled');
-else btn.classList.add('disabled');
-});
+  document.querySelectorAll('.simon-btn').forEach(btn => {
+    if (on) btn.classList.remove('disabled');
+    else btn.classList.add('disabled');
+  });
 }
+
 function showProgress(remaining, total) {
-document.getElementById('progressBar').style.display = 'block';
-updateProgress(remaining, total);
+  document.getElementById('progressBar').style.display = 'block';
+  updateProgress(remaining, total);
 }
+
 function updateProgress(remaining, total) {
-const pct = total === 0 ? 0 : ((total - remaining) / total * 100);
-const fill = document.getElementById('progressFill');
-fill.style.width = pct + '%';
-fill.style.background = THEME.accent;
+  const pct = total === 0 ? 0 : ((total - remaining) / total * 100);
+  const fill = document.getElementById('progressFill');
+  fill.style.width = pct + '%';
+  fill.style.background = THEME.accent;
 }
+
 function clearProgressTimer() {
-if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+  if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
 }
+
 function gameOver() {
-gameActive = false;
-isUserTurn = false;
-setButtonsEnabled(false);
-clearProgressTimer();
-const reached = level;
-const prev = getBest(currentDifficultyKey);
-const isNew = reached > prev;
-if (isNew) saveBest(currentDifficultyKey, reached);
-const best = isNew ? reached : prev;
-document.getElementById('bestVal').textContent = best;
-document.getElementById('goEmoji').textContent = '💔';
-document.getElementById('goTitle').textContent = 'ミス！';
-document.getElementById('goScore').textContent = 'レベル ' + reached + ' まで到達！';
-document.getElementById('goBest').textContent = 'ベスト：レベル ' + best;
-document.getElementById('goNewBest').style.display = isNew ? 'block' : 'none';
-document.getElementById('gameOverOverlay').classList.add('show');
+  gameActive = false;
+  isUserTurn = false;
+  setButtonsEnabled(false);
+  clearProgressTimer();
+
+  const reached = level;
+  const prev = getBest(currentDifficultyKey);
+  const isNew = reached > prev;
+  if (isNew) saveBest(currentDifficultyKey, reached);
+  const best = isNew ? reached : prev;
+
+  document.getElementById('bestVal').textContent = best;
+
+  document.getElementById('goEmoji').textContent = '💔';
+  document.getElementById('goTitle').textContent = 'ミス！';
+  document.getElementById('goScore').textContent = 'レベル ' + reached + ' まで到達！';
+  document.getElementById('goBest').textContent = 'ベスト：レベル ' + best;
+  document.getElementById('goNewBest').style.display = isNew ? 'block' : 'none';
+  document.getElementById('gameOverOverlay').classList.add('show');
 }
+
 function restartGame() { startGame(); }
 function backToTheme() {
-gameActive = false;
-document.getElementById('gameOverOverlay').classList.remove('show');
-document.getElementById('progressBar').style.display = 'none';
-document.getElementById('startBtn').style.display = 'none';
-document.getElementById('levelVal').textContent = '—';
-document.getElementById('statusMain').textContent = 'START を おしてね 🌷';
-document.getElementById('statusMain').className = 'status-main';
-document.getElementById('difficultyOverlay').style.display = 'flex';
+  gameActive = false;
+  document.getElementById('gameOverOverlay').classList.remove('show');
+  document.getElementById('progressBar').style.display = 'none';
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('levelVal').textContent = '—';
+  document.getElementById('statusMain').textContent = 'START を おしてね 🌷';
+  document.getElementById('statusMain').className = 'status-main';
+  document.getElementById('difficultyOverlay').style.display = 'flex';
 }
+
 // ページ起動時に初期化
-initTheme();</script> </body></html>
+initTheme();
+</script>
+</body>
+</html>

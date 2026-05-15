@@ -1,164 +1,295 @@
-<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>にこわ タップゲーム</title> <style>@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html, body { height:100%; overscroll-behavior:none; }
-body {
-font-family: 'Zen Maru Gothic', sans-serif;
-min-height:100vh;
-display:flex; flex-direction:column; align-items:center;
-padding:16px 12px 24px;
-position:relative; overflow-x:hidden;
-background: linear-gradient(180deg, #E8F8F3 0%, #D0F2E8 100%);
-transition:background 0.5s;
-color:#2C4A3E;
-}
-.header { width:100%; max-width:420px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-.logo { display:flex; align-items:center; height:32px; }
-.logo img { height:100%; width:auto; object-fit:contain; }
-.logo-text { font-size:16px; font-weight:900; color:#2E9A6A; }
-.back-btn { background:rgba(255,255,255,0.8); border:1px solid rgba(0,0,0,0.1); border-radius:100px; padding:5px 12px; font-family:inherit; font-size:11px; font-weight:700; color:#6B8A80; cursor:pointer; }
-.hud { width:100%; max-width:420px; display:flex; gap:8px; margin-bottom:10px; }
-.hud-card { flex:1; background:rgba(255,255,255,0.75); border-radius:14px; padding:8px; text-align:center; border:1px solid rgba(0,0,0,0.08); }
-.hud-label { font-size:9px; font-weight:800; color:#6B8A80; letter-spacing:1px; }
-.hud-val { font-size:26px; font-weight:900; line-height:1.1; transition:color 0.3s; }
-#scoreVal { color:#2E9A6A; }
-#timerVal { color:#2E9A6A; }
-#bestVal { color:#2E9A6A; }
-.timer-bar { width:100%; max-width:420px; height:8px; background:rgba(0,0,0,0.08); border-radius:10px; overflow:hidden; margin-bottom:10px; }
-.timer-fill { height:100%; background:#2E9A6A; border-radius:10px; transition:width 0.1s linear, background 0.5s; }
-#gameArea {
-width:100%; max-width:420px;
-background:rgba(255,255,255,0.55);
-border-radius:22px; border:1px solid rgba(0,0,0,0.08);
-position:relative; overflow:hidden;
-min-height:340px;
-display:flex; align-items:center; justify-content:center;
-}
-.area-placeholder { text-align:center; color:rgba(0,0,0,0.3); font-size:14px; font-weight:800; }
-#moleGrid {
-display:grid; grid-template-columns:repeat(3,1fr);
-gap:10px; padding:16px; width:100%;
-}
-.hole {
-aspect-ratio:1/1; border-radius:50%;
-background:rgba(0,0,0,0.12);
-position:relative; overflow:hidden;
-cursor:pointer; display:flex; align-items:flex-end; justify-content:center;
-}
-.mole {
-width:80%; aspect-ratio:1/1;
-font-size:42px; line-height:1;
-display:flex; align-items:center; justify-content:center;
-transform:translateY(110%);
-transition:transform 0.18s cubic-bezier(.34,1.56,.64,1);
-pointer-events:none; user-select:none;
-}
-.mole.up { transform:translateY(10%); }
-.mole.hit { filter:brightness(1.5) saturate(0.3); transform:translateY(10%) scale(0.85); }
-.mole.trap-hit { filter:brightness(0.7) sepia(1) hue-rotate(-50deg) saturate(8); transform:translateY(10%) scale(0.85); }
-.hole.trap-flash { background:rgba(220,40,40,0.55); animation:trapFlash 0.35s ease-out; }
-@keyframes trapFlash { 0%{background:rgba(220,40,40,0.85);} 100%{background:rgba(0,0,0,0.12);} }
-#balloonArea { width:100%; height:100%; min-height:340px; position:relative; }
-.balloon {
-position:absolute; top:100%;
-display:flex; flex-direction:column; align-items:center;
-cursor:pointer;
-animation:floatUp linear forwards;
-user-select:none;
-will-change:transform;
-touch-action:none;
-}
-.balloon:active { opacity:0.75; }
-.balloon-body {
-border-radius:50%; display:flex; align-items:center; justify-content:center;
-box-shadow:inset -6px -6px 12px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.15);
-}
-.balloon-string { width:2px; background:rgba(0,0,0,0.2); border-radius:2px; }
-.balloon.pop {
-animation:none !important;
-pointer-events:none;
-}
-.balloon.pop .balloon-body { animation:popAnim 0.22s ease-out forwards; }
-@keyframes floatUp { from { transform:translateY(0); } to { transform:translateY(-140vh); } }
-@keyframes popAnim { 0%{transform:scale(1)} 50%{transform:scale(1.4);opacity:0.8} 100%{transform:scale(1.8);opacity:0} }
-.overlay-screen {
-display:none; position:fixed; inset:0;
-flex-direction:column; align-items:center; justify-content:center;
-z-index:100; padding:24px; gap:0;
-}
-.overlay-screen.show { display:flex; }
-#themeOverlay { background:rgba(240,255,248,0.97); }
-#difficultyOverlay { background:rgba(255,243,224,0.97); }
-.theme-title { font-size:24px; font-weight:900; margin-bottom:4px; }
-.theme-sub { font-size:12px; color:#6B8A80; font-weight:700; margin-bottom:22px; }
-.theme-grid { display:flex; flex-direction:column; gap:10px; width:100%; max-width:320px; }
-.theme-btn {
-background:white; border:2px solid rgba(0,0,0,0.08);
-border-radius:18px; padding:12px 16px;
-display:flex; align-items:center; gap:14px;
-cursor:pointer; font-family:inherit; transition:all 0.15s;
-box-shadow:0 3px 10px rgba(0,0,0,0.06);
-min-height:78px;
-}
-.theme-btn:active { transform:scale(0.98); box-shadow:none; }
-.theme-icon { font-size:36px; flex-shrink:0; }
-.theme-icon-img { height:54px; width:54px; object-fit:contain; flex-shrink:0; }
-.overlay-back { position:absolute; top:16px; left:16px; background:rgba(255,255,255,0.85); border:1px solid rgba(0,0,0,0.1); border-radius:100px; padding:6px 14px; font-family:inherit; font-size:11px; font-weight:700; color:#6B8A80; cursor:pointer; }
-.theme-info { text-align:left; }
-.theme-name { font-size:15px; font-weight:900; color:#2C4A3E; }
-.theme-desc { font-size:10px; color:#6B8A80; font-weight:700; margin-top:2px; }
-#countdownOverlay { background:rgba(240,255,248,0.97); }
-.countdown-num { font-size:88px; font-weight:900; line-height:1; }
-.countdown-text { font-size:14px; font-weight:800; color:#6B8A80; margin-top:6px; }
-#resultOverlay { background:rgba(240,255,248,0.97); }
-.result-emoji { font-size:52px; margin-bottom:6px; }
-.result-title { font-size:24px; font-weight:900; margin-bottom:4px; }
-.result-score { font-size:18px; font-weight:800; margin-bottom:2px; }
-.result-best { font-size:12px; color:#6B8A80; font-weight:700; }
-.result-new-best { font-size:13px; font-weight:900; color:#4FB677; }
-.result-btn { border:none; border-radius:14px; padding:13px 36px; font-family:inherit; font-size:14px; font-weight:900; cursor:pointer; margin-top:14px; }
-.result-btn.primary { color:white; box-shadow:0 4px 14px rgba(0,0,0,0.2); }
-.result-btn.secondary { background:white; color:#2C4A3E; border:2px solid rgba(0,0,0,0.1); }</style> </head><body><div class="header"><div class="logo" id="gameLogo"><span class="logo-text">🎮 タップゲーム</span></div><button class="back-btn" onclick="if(window.history.length>1){history.back()}else{location.href='./yuuenchi.html'}">← もどる</button></div><div class="hud"><div class="hud-card"><div class="hud-label">SCORE</div><div class="hud-val" id="scoreVal">0</div></div><div class="hud-card"><div class="hud-label">TIME</div><div class="hud-val" id="timerVal">30</div></div><div class="hud-card"><div class="hud-label">BEST</div><div class="hud-val" id="bestVal">—</div></div></div><div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div><div id="gameArea"><div class="area-placeholder">テーマを えらんでね</div></div><div id="themeOverlay" class="overlay-screen show"><button class="overlay-back" onclick="location.href='./yuuenchi.html'">← もどる</button><div class="theme-title" id="themeTitle">🎮 タップゲーム</div><div class="theme-sub">テーマを えらんでね</div><div class="theme-grid"><button class="theme-btn" onclick="selectTheme('mole')"><img class="theme-icon-img" src="assets/kotatu.svg"><div class="theme-info"><div class="theme-name">こたつを捕まえろ！</div><div class="theme-desc">穴からひょっこり出てきたら タップ！</div></div></button><button class="theme-btn" onclick="selectTheme('balloon')"><img class="theme-icon-img" src="assets/anzu.svg"><div class="theme-info"><div class="theme-name">バルーン割り</div><div class="theme-desc">にこわのなかまが浮かんできたら タップ！</div></div></button></div></div><div id="difficultyOverlay" class="overlay-screen"><button class="overlay-back" onclick="backToTheme()">← もどる</button><div class="theme-title" id="difficultyTitle">こたつを捕まえろ！</div><div class="theme-sub">むずかしさを えらんでね</div><div class="theme-grid"><button class="theme-btn" onclick="selectDifficulty('easy')"><span class="theme-icon">🌱</span><div class="theme-info"><div class="theme-name">かんたん</div><div class="theme-desc" id="diffDesc_easy">3×3の穴・ゆっくり</div></div></button><button class="theme-btn" onclick="selectDifficulty('normal')"><span class="theme-icon">🌷</span><div class="theme-info"><div class="theme-name">ふつう</div><div class="theme-desc" id="diffDesc_normal">3×3の穴・標準スピード</div></div></button><button class="theme-btn" onclick="selectDifficulty('hard')"><span class="theme-icon">🔥</span><div class="theme-info"><div class="theme-name">むずい</div><div class="theme-desc" id="diffDesc_hard">4×4の穴・速い</div></div></button><button class="theme-btn" onclick="selectDifficulty('insane')"><span class="theme-icon">💀</span><div class="theme-info"><div class="theme-name">鬼ムズ</div><div class="theme-desc" id="diffDesc_insane">5×5・超高速・あんずタップで減点⚠️</div></div></button></div></div><div id="countdownOverlay" class="overlay-screen"><div class="countdown-num" id="countdownNum">3</div><div class="countdown-text">よーい…</div></div><div id="resultOverlay" class="overlay-screen"><div class="result-emoji" id="resultEmoji">🎉</div><div class="result-title" id="resultTitle" style="color:#2E9A6A;">終了！</div><div class="result-score" id="resultScore"></div><div class="result-best" id="resultBest"></div><div class="result-new-best" id="resultNewBest" style="display:none;">🌟 ベスト更新！</div><button class="result-btn primary" id="retryBtn" onclick="startCountdown()" style="background:#2E9A6A;">もう一回 ★</button><button class="result-btn secondary" style="margin-top:8px;" onclick="backToTheme()">テーマを変える</button></div> <script>const THEMES = {
-mole: {
-name:'こたつを捕まえろ！', emoji:'🔥', logoImg:'assets/kotatu.svg',
-accent:'#C85A17',
-bg:'linear-gradient(180deg,#FFF3E0 0%,#FFE0B2 100%)',
-timerColor:'#C85A17',
-scoreColor:'#A04010',
-targets:Array.from({length:9},()=>'<img src="assets/kotatu.svg" style="width:100%;height:100%;object-fit:contain;">'),
-badTarget:'💣',
-},
-balloon: {
-name:'バルーン割り', emoji:'🎈', logoImg:'assets/anzu.svg',
-accent:'#E94B6F',
-bg:'linear-gradient(180deg,#FFF0F5 0%,#FFE5F5 100%)',
-timerColor:'#E94B6F',
-scoreColor:'#E94B6F',
-balloons:[
-{color:'#FFCDD2', size:58, img:'assets/anzu.svg'},
-{color:'#BBDEFB', size:60, img:'assets/beru.svg'},
-{color:'#C8E6C9', size:56, img:'assets/beteli.svg'},
-{color:'#FFF9C4', size:62, img:'assets/koito.svg'},
-{color:'#FFE0B2', size:54, img:'assets/kotatu.svg'},
-{color:'#E1BEE7', size:60, img:'assets/yumeme.svg'},
-],
-},
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>にこわ タップゲーム</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; overscroll-behavior:none; }
+  body {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    padding:16px 12px 24px;
+    position:relative; overflow-x:hidden;
+    background: linear-gradient(180deg, #E8F8F3 0%, #D0F2E8 100%);
+    transition:background 0.5s;
+    color:#2C4A3E;
+  }
+
+  .header { width:100%; max-width:420px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .logo { display:flex; align-items:center; height:32px; }
+  .logo img { height:100%; width:auto; object-fit:contain; }
+  .logo-text { font-size:16px; font-weight:900; color:#2E9A6A; }
+  .back-btn { background:rgba(255,255,255,0.8); border:1px solid rgba(0,0,0,0.1); border-radius:100px; padding:5px 12px; font-family:inherit; font-size:11px; font-weight:700; color:#6B8A80; cursor:pointer; }
+
+  /* HUD */
+  .hud { width:100%; max-width:420px; display:flex; gap:8px; margin-bottom:10px; }
+  .hud-card { flex:1; background:rgba(255,255,255,0.75); border-radius:14px; padding:8px; text-align:center; border:1px solid rgba(0,0,0,0.08); }
+  .hud-label { font-size:9px; font-weight:800; color:#6B8A80; letter-spacing:1px; }
+  .hud-val { font-size:26px; font-weight:900; line-height:1.1; transition:color 0.3s; }
+  #scoreVal { color:#2E9A6A; }
+  #timerVal { color:#2E9A6A; }
+  #bestVal  { color:#2E9A6A; }
+
+  /* タイマーバー */
+  .timer-bar { width:100%; max-width:420px; height:8px; background:rgba(0,0,0,0.08); border-radius:10px; overflow:hidden; margin-bottom:10px; }
+  .timer-fill { height:100%; background:#2E9A6A; border-radius:10px; transition:width 0.1s linear, background 0.5s; }
+
+  /* ゲームエリア */
+  #gameArea {
+    width:100%; max-width:420px;
+    background:rgba(255,255,255,0.55);
+    border-radius:22px; border:1px solid rgba(0,0,0,0.08);
+    position:relative; overflow:hidden;
+    min-height:340px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .area-placeholder { text-align:center; color:rgba(0,0,0,0.3); font-size:14px; font-weight:800; }
+
+  /* ======== モグラたたき ======== */
+  #moleGrid {
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:10px; padding:16px; width:100%;
+  }
+  .hole {
+    aspect-ratio:1/1; border-radius:50%;
+    background:rgba(0,0,0,0.12);
+    position:relative; overflow:hidden;
+    cursor:pointer; display:flex; align-items:flex-end; justify-content:center;
+  }
+  .mole {
+    width:80%; aspect-ratio:1/1;
+    font-size:42px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    transform:translateY(110%);
+    transition:transform 0.18s cubic-bezier(.34,1.56,.64,1);
+    pointer-events:none; user-select:none;
+  }
+  .mole.up { transform:translateY(10%); }
+  .mole.hit { filter:brightness(1.5) saturate(0.3); transform:translateY(10%) scale(0.85); }
+  .mole.trap-hit { filter:brightness(0.7) sepia(1) hue-rotate(-50deg) saturate(8); transform:translateY(10%) scale(0.85); }
+  .hole.trap-flash { background:rgba(220,40,40,0.55); animation:trapFlash 0.35s ease-out; }
+  @keyframes trapFlash { 0%{background:rgba(220,40,40,0.85);} 100%{background:rgba(0,0,0,0.12);} }
+
+  /* ======== バルーン ======== */
+  #balloonArea { width:100%; height:100%; min-height:340px; position:relative; }
+  .balloon {
+    position:absolute; top:100%;
+    display:flex; flex-direction:column; align-items:center;
+    cursor:pointer;
+    animation:floatUp linear forwards;
+    user-select:none;
+    will-change:transform;
+    touch-action:none;
+  }
+  .balloon:active { opacity:0.75; }
+  .balloon-body {
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    box-shadow:inset -6px -6px 12px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .balloon-string { width:2px; background:rgba(0,0,0,0.2); border-radius:2px; }
+  .balloon.pop {
+    animation:none !important;
+    pointer-events:none;
+  }
+  .balloon.pop .balloon-body { animation:popAnim 0.22s ease-out forwards; }
+  @keyframes floatUp { from { transform:translateY(0); } to { transform:translateY(-140vh); } }
+  @keyframes popAnim { 0%{transform:scale(1)} 50%{transform:scale(1.4);opacity:0.8} 100%{transform:scale(1.8);opacity:0} }
+
+  /* ======== スタート/終了画面 ======== */
+  .overlay-screen {
+    display:none; position:fixed; inset:0;
+    flex-direction:column; align-items:center; justify-content:center;
+    z-index:100; padding:24px; gap:0;
+  }
+  .overlay-screen.show { display:flex; }
+
+  /* テーマ選択 */
+  #themeOverlay { background:rgba(240,255,248,0.97); }
+  #difficultyOverlay { background:rgba(255,243,224,0.97); }
+  .theme-title { font-size:24px; font-weight:900; margin-bottom:4px; }
+  .theme-sub { font-size:12px; color:#6B8A80; font-weight:700; margin-bottom:22px; }
+  .theme-grid { display:flex; flex-direction:column; gap:10px; width:100%; max-width:320px; }
+  .theme-btn {
+    background:white; border:2px solid rgba(0,0,0,0.08);
+    border-radius:18px; padding:12px 16px;
+    display:flex; align-items:center; gap:14px;
+    cursor:pointer; font-family:inherit; transition:all 0.15s;
+    box-shadow:0 3px 10px rgba(0,0,0,0.06);
+    min-height:78px;
+  }
+  .theme-btn:active { transform:scale(0.98); box-shadow:none; }
+  .theme-icon { font-size:36px; flex-shrink:0; }
+  .theme-icon-img { height:54px; width:54px; object-fit:contain; flex-shrink:0; }
+  .overlay-back { position:absolute; top:16px; left:16px; background:rgba(255,255,255,0.85); border:1px solid rgba(0,0,0,0.1); border-radius:100px; padding:6px 14px; font-family:inherit; font-size:11px; font-weight:700; color:#6B8A80; cursor:pointer; }
+  .theme-info { text-align:left; }
+  .theme-name { font-size:15px; font-weight:900; color:#2C4A3E; }
+  .theme-desc { font-size:10px; color:#6B8A80; font-weight:700; margin-top:2px; }
+
+  /* 開始カウントダウン */
+  #countdownOverlay { background:rgba(240,255,248,0.97); }
+  .countdown-num { font-size:88px; font-weight:900; line-height:1; }
+  .countdown-text { font-size:14px; font-weight:800; color:#6B8A80; margin-top:6px; }
+
+  /* 結果 */
+  #resultOverlay { background:rgba(240,255,248,0.97); }
+  .result-emoji { font-size:52px; margin-bottom:6px; }
+  .result-title { font-size:24px; font-weight:900; margin-bottom:4px; }
+  .result-score { font-size:18px; font-weight:800; margin-bottom:2px; }
+  .result-best { font-size:12px; color:#6B8A80; font-weight:700; }
+  .result-new-best { font-size:13px; font-weight:900; color:#4FB677; }
+  .result-btn { border:none; border-radius:14px; padding:13px 36px; font-family:inherit; font-size:14px; font-weight:900; cursor:pointer; margin-top:14px; }
+  .result-btn.primary { color:white; box-shadow:0 4px 14px rgba(0,0,0,0.2); }
+  .result-btn.secondary { background:white; color:#2C4A3E; border:2px solid rgba(0,0,0,0.1); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo" id="gameLogo"><span class="logo-text">🎮 タップゲーム</span></div>
+  <button class="back-btn" onclick="if(window.history.length>1){history.back()}else{location.href='./yuuenchi.html'}">← もどる</button>
+</div>
+
+<div class="hud">
+  <div class="hud-card"><div class="hud-label">SCORE</div><div class="hud-val" id="scoreVal">0</div></div>
+  <div class="hud-card"><div class="hud-label">TIME</div><div class="hud-val" id="timerVal">30</div></div>
+  <div class="hud-card"><div class="hud-label">BEST</div><div class="hud-val" id="bestVal">—</div></div>
+</div>
+
+<div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+
+<div id="gameArea">
+  <div class="area-placeholder">テーマを えらんでね</div>
+</div>
+
+<!-- テーマ選択 -->
+<div id="themeOverlay" class="overlay-screen show">
+  <button class="overlay-back" onclick="location.href='./yuuenchi.html'">← もどる</button>
+  <div class="theme-title" id="themeTitle">🎮 タップゲーム</div>
+  <div class="theme-sub">テーマを えらんでね</div>
+  <div class="theme-grid">
+    <button class="theme-btn" onclick="selectTheme('mole')">
+      <img class="theme-icon-img" src="assets/kotatu.svg">
+      <div class="theme-info">
+        <div class="theme-name">こたつを捕まえろ！</div>
+        <div class="theme-desc">穴からひょっこり出てきたら タップ！</div>
+      </div>
+    </button>
+    <button class="theme-btn" onclick="selectTheme('balloon')">
+      <img class="theme-icon-img" src="assets/anzu.svg">
+      <div class="theme-info">
+        <div class="theme-name">バルーン割り</div>
+        <div class="theme-desc">にこわのなかまが浮かんできたら タップ！</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- 難易度選択 -->
+<div id="difficultyOverlay" class="overlay-screen">
+  <button class="overlay-back" onclick="backToTheme()">← もどる</button>
+  <div class="theme-title" id="difficultyTitle">こたつを捕まえろ！</div>
+  <div class="theme-sub">むずかしさを えらんでね</div>
+  <div class="theme-grid">
+    <button class="theme-btn" onclick="selectDifficulty('easy')">
+      <span class="theme-icon">🌱</span>
+      <div class="theme-info">
+        <div class="theme-name">かんたん</div>
+        <div class="theme-desc" id="diffDesc_easy">3×3の穴・ゆっくり</div>
+      </div>
+    </button>
+    <button class="theme-btn" onclick="selectDifficulty('normal')">
+      <span class="theme-icon">🌷</span>
+      <div class="theme-info">
+        <div class="theme-name">ふつう</div>
+        <div class="theme-desc" id="diffDesc_normal">3×3の穴・標準スピード</div>
+      </div>
+    </button>
+    <button class="theme-btn" onclick="selectDifficulty('hard')">
+      <span class="theme-icon">🔥</span>
+      <div class="theme-info">
+        <div class="theme-name">むずい</div>
+        <div class="theme-desc" id="diffDesc_hard">4×4の穴・速い</div>
+      </div>
+    </button>
+    <button class="theme-btn" onclick="selectDifficulty('insane')">
+      <span class="theme-icon">💀</span>
+      <div class="theme-info">
+        <div class="theme-name">鬼ムズ</div>
+        <div class="theme-desc" id="diffDesc_insane">5×5・超高速・あんずタップで減点⚠️</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- カウントダウン -->
+<div id="countdownOverlay" class="overlay-screen">
+  <div class="countdown-num" id="countdownNum">3</div>
+  <div class="countdown-text">よーい…</div>
+</div>
+
+<!-- 結果 -->
+<div id="resultOverlay" class="overlay-screen">
+  <div class="result-emoji" id="resultEmoji">🎉</div>
+  <div class="result-title" id="resultTitle" style="color:#2E9A6A;">終了！</div>
+  <div class="result-score" id="resultScore"></div>
+  <div class="result-best" id="resultBest"></div>
+  <div class="result-new-best" id="resultNewBest" style="display:none;">🌟 ベスト更新！</div>
+  <button class="result-btn primary" id="retryBtn" onclick="startCountdown()" style="background:#2E9A6A;">もう一回 ★</button>
+  <button class="result-btn secondary" style="margin-top:8px;" onclick="backToTheme()">テーマを変える</button>
+</div>
+
+<script>
+const THEMES = {
+  mole: {
+    name:'こたつを捕まえろ！', emoji:'🔥', logoImg:'assets/kotatu.svg',
+    accent:'#C85A17',
+    bg:'linear-gradient(180deg,#FFF3E0 0%,#FFE0B2 100%)',
+    timerColor:'#C85A17',
+    scoreColor:'#A04010',
+    targets:Array.from({length:9},()=>'<img src="assets/kotatu.svg" style="width:100%;height:100%;object-fit:contain;">'),
+    badTarget:'💣',
+  },
+  balloon: {
+    name:'バルーン割り', emoji:'🎈', logoImg:'assets/anzu.svg',
+    accent:'#E94B6F',
+    bg:'linear-gradient(180deg,#FFF0F5 0%,#FFE5F5 100%)',
+    timerColor:'#E94B6F',
+    scoreColor:'#E94B6F',
+    balloons:[
+      {color:'#FFCDD2', size:58, img:'assets/anzu.svg'},
+      {color:'#BBDEFB', size:60, img:'assets/beru.svg'},
+      {color:'#C8E6C9', size:56, img:'assets/beteli.svg'},
+      {color:'#FFF9C4', size:62, img:'assets/koito.svg'},
+      {color:'#FFE0B2', size:54, img:'assets/kotatu.svg'},
+      {color:'#E1BEE7', size:60, img:'assets/yumeme.svg'},
+    ],
+  },
 };
+
 const GAME_TIME = 30;
+
 // ======== 難易度（こたつ&バルーン共通） ========
 const DIFFICULTIES = {
-easy: { name:'かんたん', emoji:'🌱', color:'#4FB677',
-mole: { gridSize:3, spawnInterval:650, upMin:900, upMax:1200, anzuChance:0, desc:'3×3の穴・ゆっくり' },
-balloon: { spawnInterval:700, durMin:4.5, durMax:6, desc:'ゆっくり浮かんでくる' } },
-normal: { name:'ふつう', emoji:'🌷', color:'#FF8FAB',
-mole: { gridSize:3, spawnInterval:450, upMin:700, upMax:950, anzuChance:0, desc:'3×3の穴・標準スピード' },
-balloon: { spawnInterval:490, durMin:3, durMax:4.5, desc:'標準スピード' } },
-hard: { name:'むずい', emoji:'🔥', color:'#FF7A3D',
-mole: { gridSize:4, spawnInterval:300, upMin:500, upMax:750, anzuChance:0, desc:'4×4の穴・速い' },
-balloon: { spawnInterval:340, durMin:2, durMax:3.2, desc:'速いスピード' } },
-insane: { name:'鬼ムズ', emoji:'💀', color:'#C81E1E',
-mole: { gridSize:5, spawnInterval:150, upMin:320, upMax:500, anzuChance:0.18, spawnsPerTick:2, desc:'5×5・超高速・あんずタップで減点⚠️' },
-balloon: { spawnInterval:200, durMin:1.1, durMax:1.9, desc:'超高速で飛んでく！' } },
+  easy:   { name:'かんたん', emoji:'🌱', color:'#4FB677',
+            mole:    { gridSize:3, spawnInterval:650, upMin:900,  upMax:1200, anzuChance:0,    desc:'3×3の穴・ゆっくり' },
+            balloon: { spawnInterval:700, durMin:4.5, durMax:6,   desc:'ゆっくり浮かんでくる' } },
+  normal: { name:'ふつう',   emoji:'🌷', color:'#FF8FAB',
+            mole:    { gridSize:3, spawnInterval:450, upMin:700,  upMax:950,  anzuChance:0,    desc:'3×3の穴・標準スピード' },
+            balloon: { spawnInterval:490, durMin:3,   durMax:4.5, desc:'標準スピード' } },
+  hard:   { name:'むずい',   emoji:'🔥', color:'#FF7A3D',
+            mole:    { gridSize:4, spawnInterval:300, upMin:500,  upMax:750,  anzuChance:0,    desc:'4×4の穴・速い' },
+            balloon: { spawnInterval:340, durMin:2,   durMax:3.2, desc:'速いスピード' } },
+  insane: { name:'鬼ムズ',   emoji:'💀', color:'#C81E1E',
+            mole:    { gridSize:5, spawnInterval:150, upMin:320,  upMax:500,  anzuChance:0.18, spawnsPerTick:2, desc:'5×5・超高速・あんずタップで減点⚠️' },
+            balloon: { spawnInterval:200, durMin:1.1, durMax:1.9, desc:'超高速で飛んでく！' } },
 };
+
 let currentThemeKey = null;
 let currentDifficulty = null;
 let currentDifficultyKey = null;
@@ -168,254 +299,278 @@ let timeLeft = GAME_TIME;
 let gameActive = false;
 let timerInterval = null;
 let spawnIntervals = [];
+
 // ======== テーマ選択 ========
 function selectTheme(key) {
-currentThemeKey = key;
-theme = THEMES[key];
-document.body.style.background = theme.bg;
-document.getElementById('gameLogo').innerHTML = theme.logoImg
-? `<img src="${theme.logoImg}" alt="${theme.name}">`
-: `<span class="logo-text">${theme.emoji} ${theme.name}</span>`;
-document.getElementById('scoreVal').style.color = theme.scoreColor;
-document.getElementById('timerVal').style.color = theme.timerColor;
-document.getElementById('bestVal').style.color = theme.scoreColor;
-document.getElementById('timerFill').style.background = theme.timerColor;
-document.getElementById('scoreVal').textContent = '0';
-document.getElementById('timerVal').textContent = GAME_TIME;
-document.getElementById('timerFill').style.width = '100%';
-document.getElementById('retryBtn').style.background = theme.accent;
-document.getElementById('resultTitle').style.color = theme.accent;
-document.getElementById('resultScore').style.color = theme.scoreColor;
-hideOverlay('themeOverlay');
-if (key === 'mole' || key === 'balloon') {
-// こたつ/バルーンは難易度選択へ
-document.getElementById('bestVal').textContent = '—';
-populateDifficultyOverlay(key);
-showOverlay('difficultyOverlay');
-} else {
-// 他は直接ゲーム開始
-currentDifficulty = null;
-currentDifficultyKey = null;
-const best = getBest(key);
-document.getElementById('bestVal').textContent = best || '—';
-buildGameArea();
-startCountdown();
+  currentThemeKey = key;
+  theme = THEMES[key];
+  document.body.style.background = theme.bg;
+  document.getElementById('gameLogo').innerHTML = theme.logoImg
+    ? `<img src="${theme.logoImg}" alt="${theme.name}">`
+    : `<span class="logo-text">${theme.emoji} ${theme.name}</span>`;
+  document.getElementById('scoreVal').style.color = theme.scoreColor;
+  document.getElementById('timerVal').style.color = theme.timerColor;
+  document.getElementById('bestVal').style.color  = theme.scoreColor;
+  document.getElementById('timerFill').style.background = theme.timerColor;
+  document.getElementById('scoreVal').textContent = '0';
+  document.getElementById('timerVal').textContent = GAME_TIME;
+  document.getElementById('timerFill').style.width = '100%';
+  document.getElementById('retryBtn').style.background = theme.accent;
+  document.getElementById('resultTitle').style.color = theme.accent;
+  document.getElementById('resultScore').style.color = theme.scoreColor;
+  hideOverlay('themeOverlay');
+
+  if (key === 'mole' || key === 'balloon') {
+    // こたつ/バルーンは難易度選択へ
+    document.getElementById('bestVal').textContent = '—';
+    populateDifficultyOverlay(key);
+    showOverlay('difficultyOverlay');
+  } else {
+    // 他は直接ゲーム開始
+    currentDifficulty = null;
+    currentDifficultyKey = null;
+    const best = getBest(key);
+    document.getElementById('bestVal').textContent = best || '—';
+    buildGameArea();
+    startCountdown();
+  }
 }
-}
+
 function populateDifficultyOverlay(themeKey) {
-// タイトル更新
-document.getElementById('difficultyTitle').textContent = THEMES[themeKey].name;
-// 各ボタンの説明文を更新
-['easy','normal','hard','insane'].forEach(level => {
-const settings = DIFFICULTIES[level][themeKey];
-const descEl = document.getElementById('diffDesc_' + level);
-if (descEl) descEl.textContent = settings.desc;
-});
+  // タイトル更新
+  document.getElementById('difficultyTitle').textContent = THEMES[themeKey].name;
+  // 各ボタンの説明文を更新
+  ['easy','normal','hard','insane'].forEach(level => {
+    const settings = DIFFICULTIES[level][themeKey];
+    const descEl = document.getElementById('diffDesc_' + level);
+    if (descEl) descEl.textContent = settings.desc;
+  });
 }
+
 function selectDifficulty(level) {
-currentDifficultyKey = level;
-currentDifficulty = DIFFICULTIES[level];
-// ベストスコアを難易度別で表示
-const bestKey = getBestKey();
-const best = getBest(bestKey);
-document.getElementById('bestVal').textContent = best || '—';
-// ロゴはイラストのみ（textは変えない）
-hideOverlay('difficultyOverlay');
-buildGameArea();
-startCountdown();
+  currentDifficultyKey = level;
+  currentDifficulty = DIFFICULTIES[level];
+  // ベストスコアを難易度別で表示
+  const bestKey = getBestKey();
+  const best = getBest(bestKey);
+  document.getElementById('bestVal').textContent = best || '—';
+  // ロゴはイラストのみ（textは変えない）
+  hideOverlay('difficultyOverlay');
+  buildGameArea();
+  startCountdown();
 }
+
 function getBestKey() {
-if (currentDifficultyKey) {
-return currentThemeKey + '_' + currentDifficultyKey;
+  if (currentDifficultyKey) {
+    return currentThemeKey + '_' + currentDifficultyKey;
+  }
+  return currentThemeKey;
 }
-return currentThemeKey;
-}
+
 function buildGameArea() {
-const area = document.getElementById('gameArea');
-if (currentThemeKey === 'mole') {
-const size = (currentDifficulty && currentDifficulty.mole) ? currentDifficulty.mole.gridSize : 3;
-const total = size * size;
-const gap = size <= 3 ? 10 : size === 4 ? 8 : 6;
-area.innerHTML = `<div id="moleGrid" style="grid-template-columns:repeat(${size},1fr);gap:${gap}px;">${
-Array.from({length:total},(_,i)=>`<div class="hole" id="hole${i}"><div class="mole" id="mole${i}"></div></div>`).join('')
-}</div>`;
-// タップイベント
-for (let i = 0; i < total; i++) {
-const hole = document.getElementById('hole'+i);
-hole.addEventListener('pointerdown', e => { e.preventDefault(); hitMole(i); });
+  const area = document.getElementById('gameArea');
+  if (currentThemeKey === 'mole') {
+    const size = (currentDifficulty && currentDifficulty.mole) ? currentDifficulty.mole.gridSize : 3;
+    const total = size * size;
+    const gap = size <= 3 ? 10 : size === 4 ? 8 : 6;
+    area.innerHTML = `<div id="moleGrid" style="grid-template-columns:repeat(${size},1fr);gap:${gap}px;">${
+      Array.from({length:total},(_,i)=>`<div class="hole" id="hole${i}"><div class="mole" id="mole${i}"></div></div>`).join('')
+    }</div>`;
+    // タップイベント
+    for (let i = 0; i < total; i++) {
+      const hole = document.getElementById('hole'+i);
+      hole.addEventListener('pointerdown', e => { e.preventDefault(); hitMole(i); });
+    }
+  } else if (currentThemeKey === 'balloon') {
+    area.innerHTML = `<div id="balloonArea"></div>`;
+  }
 }
-} else if (currentThemeKey === 'balloon') {
-area.innerHTML = `<div id="balloonArea"></div>`;
-}
-}
+
 // ======== カウントダウン ========
 async function startCountdown() {
-gameActive = false;
-stopAllSpawns();
-score = 0;
-timeLeft = GAME_TIME;
-document.getElementById('scoreVal').textContent = '0';
-document.getElementById('timerVal').textContent = GAME_TIME;
-document.getElementById('timerFill').style.width = '100%';
-document.getElementById('timerFill').style.transition = 'none';
-hideOverlay('resultOverlay');
-buildGameArea();
-showOverlay('countdownOverlay');
-const nums = ['3','2','1','GO！'];
-for (const n of nums) {
-document.getElementById('countdownNum').textContent = n;
-await wait(700);
+  gameActive = false;
+  stopAllSpawns();
+  score = 0;
+  timeLeft = GAME_TIME;
+  document.getElementById('scoreVal').textContent = '0';
+  document.getElementById('timerVal').textContent = GAME_TIME;
+  document.getElementById('timerFill').style.width = '100%';
+  document.getElementById('timerFill').style.transition = 'none';
+  hideOverlay('resultOverlay');
+  buildGameArea();
+
+  showOverlay('countdownOverlay');
+  const nums = ['3','2','1','GO！'];
+  for (const n of nums) {
+    document.getElementById('countdownNum').textContent = n;
+    await wait(700);
+  }
+  hideOverlay('countdownOverlay');
+  beginGame();
 }
-hideOverlay('countdownOverlay');
-beginGame();
-}
+
 // ======== ゲーム開始 ========
 function beginGame() {
-gameActive = true;
-if (currentThemeKey === 'mole') startMoleGame();
-else if (currentThemeKey === 'balloon') startBalloonGame();
-startTimer();
+  gameActive = true;
+  if (currentThemeKey === 'mole')    startMoleGame();
+  else if (currentThemeKey === 'balloon') startBalloonGame();
+  startTimer();
 }
+
 function startTimer() {
-if (timerInterval) clearInterval(timerInterval);
-const startTime = Date.now();
-document.getElementById('timerFill').style.transition = `width ${GAME_TIME}s linear`;
-document.getElementById('timerFill').style.width = '0%';
-timerInterval = setInterval(() => {
-const elapsed = (Date.now() - startTime) / 1000;
-timeLeft = Math.max(0, GAME_TIME - elapsed);
-document.getElementById('timerVal').textContent = Math.ceil(timeLeft);
-if (timeLeft <= 0) endGame();
-}, 100);
+  if (timerInterval) clearInterval(timerInterval);
+  const startTime = Date.now();
+  document.getElementById('timerFill').style.transition = `width ${GAME_TIME}s linear`;
+  document.getElementById('timerFill').style.width = '0%';
+  timerInterval = setInterval(() => {
+    const elapsed = (Date.now() - startTime) / 1000;
+    timeLeft = Math.max(0, GAME_TIME - elapsed);
+    document.getElementById('timerVal').textContent = Math.ceil(timeLeft);
+    if (timeLeft <= 0) endGame();
+  }, 100);
 }
+
 function addScore(pts) {
-score += pts;
-document.getElementById('scoreVal').textContent = score;
-// ポップアニメ
-const el = document.getElementById('scoreVal');
-el.style.transform = 'scale(1.3)';
-setTimeout(() => el.style.transform = '', 160);
+  score += pts;
+  document.getElementById('scoreVal').textContent = score;
+  // ポップアニメ
+  const el = document.getElementById('scoreVal');
+  el.style.transform = 'scale(1.3)';
+  setTimeout(() => el.style.transform = '', 160);
 }
+
 function stopAllSpawns() {
-spawnIntervals.forEach(id => clearInterval(id));
-spawnIntervals = [];
-if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  spawnIntervals.forEach(id => clearInterval(id));
+  spawnIntervals = [];
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
 }
+
 // ======== モグラたたき（こたつ版） ========
 let moleTimers = [];
 function startMoleGame() {
-moleTimers.forEach(t => clearTimeout(t));
-moleTimers = [];
-const d = (currentDifficulty && currentDifficulty.mole) ? currentDifficulty.mole : DIFFICULTIES.normal.mole;
-const total = d.gridSize * d.gridSize;
-const spawnsPerTick = d.spawnsPerTick || 1;
-const spawn = () => {
-if (!gameActive) return;
-for (let s = 0; s < spawnsPerTick; s++) {
-const idx = Math.floor(Math.random() * total);
-const mole = document.getElementById('mole'+idx);
-if (!mole || mole.classList.contains('up')) continue;
-const isTrap = Math.random() < d.anzuChance;
-const imgSrc = isTrap ? 'assets/anzu.svg' : 'assets/kotatu.svg';
-mole.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:contain;">`;
-mole.dataset.trap = isTrap ? '1' : '0';
-mole.classList.add('up');
-const t = setTimeout(() => {
-if (mole.classList.contains('up') && !mole.classList.contains('hit')) {
-mole.classList.remove('up');
+  moleTimers.forEach(t => clearTimeout(t));
+  moleTimers = [];
+  const d = (currentDifficulty && currentDifficulty.mole) ? currentDifficulty.mole : DIFFICULTIES.normal.mole;
+  const total = d.gridSize * d.gridSize;
+  const spawnsPerTick = d.spawnsPerTick || 1;
+  const spawn = () => {
+    if (!gameActive) return;
+    for (let s = 0; s < spawnsPerTick; s++) {
+      const idx = Math.floor(Math.random() * total);
+      const mole = document.getElementById('mole'+idx);
+      if (!mole || mole.classList.contains('up')) continue;
+
+      const isTrap = Math.random() < d.anzuChance;
+      const imgSrc = isTrap ? 'assets/anzu.svg' : 'assets/kotatu.svg';
+      mole.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:contain;">`;
+      mole.dataset.trap = isTrap ? '1' : '0';
+
+      mole.classList.add('up');
+      const t = setTimeout(() => {
+        if (mole.classList.contains('up') && !mole.classList.contains('hit')) {
+          mole.classList.remove('up');
+        }
+      }, d.upMin + Math.random() * (d.upMax - d.upMin));
+      moleTimers.push(t);
+    }
+  };
+  const id = setInterval(() => { if (gameActive) spawn(); }, d.spawnInterval);
+  spawnIntervals.push(id);
 }
-}, d.upMin + Math.random() * (d.upMax - d.upMin));
-moleTimers.push(t);
-}
-};
-const id = setInterval(() => { if (gameActive) spawn(); }, d.spawnInterval);
-spawnIntervals.push(id);
-}
+
 function hitMole(idx) {
-if (!gameActive) return;
-const mole = document.getElementById('mole'+idx);
-if (!mole || !mole.classList.contains('up') || mole.classList.contains('hit')) return;
-const hole = document.getElementById('hole'+idx);
-const isTrap = mole.dataset.trap === '1';
-mole.classList.add('hit');
-if (isTrap) {
-mole.classList.add('trap-hit');
-if (hole) hole.classList.add('trap-flash');
-addScore(-10);
-setTimeout(() => { if (hole) hole.classList.remove('trap-flash'); }, 350);
-} else {
-addScore(10);
+  if (!gameActive) return;
+  const mole = document.getElementById('mole'+idx);
+  if (!mole || !mole.classList.contains('up') || mole.classList.contains('hit')) return;
+  const hole = document.getElementById('hole'+idx);
+  const isTrap = mole.dataset.trap === '1';
+  mole.classList.add('hit');
+  if (isTrap) {
+    mole.classList.add('trap-hit');
+    if (hole) hole.classList.add('trap-flash');
+    addScore(-10);
+    setTimeout(() => { if (hole) hole.classList.remove('trap-flash'); }, 350);
+  } else {
+    addScore(10);
+  }
+  setTimeout(() => {
+    mole.classList.remove('up','hit','trap-hit');
+  }, 300);
 }
-setTimeout(() => {
-mole.classList.remove('up','hit','trap-hit');
-}, 300);
-}
+
 // ======== バルーン ========
 let balloonId = 0;
 function startBalloonGame() {
-const d = (currentDifficulty && currentDifficulty.balloon) ? currentDifficulty.balloon : DIFFICULTIES.normal.balloon;
-const spawn = () => {
-if (!gameActive) return;
-const area = document.getElementById('balloonArea');
-if (!area) return;
-const b = theme.balloons[Math.floor(Math.random() * theme.balloons.length)];
-const size = b.size + Math.floor(Math.random() * 20 - 10);
-const dur = d.durMin + Math.random() * (d.durMax - d.durMin);
-const left = 8 + Math.random() * 75;
-const id = 'b' + (balloonId++);
-const el = document.createElement('div');
-el.className = 'balloon';
-el.id = id;
-el.style.left = left + '%';
-el.style.animationDuration = dur + 's';
-el.innerHTML = `
-<div class="balloon-body" style="width:${size}px;height:${size}px;background:${b.color};"><img src="${b.img}" draggable="false" style="width:78%;height:78%;object-fit:contain;pointer-events:none;"></div>
-<div class="balloon-string" style="height:${20+Math.random()*12}px;"></div>
-`;
-// タップ
-let tapped = false;
-el.addEventListener('pointerdown', e => {
-e.preventDefault();
-if (tapped) return;
-tapped = true;
-el.classList.add('pop');
-addScore(10);
-setTimeout(() => el.remove(), 250);
-});
-// 時間切れで消える
-setTimeout(() => { if (!tapped && el.parentNode) el.remove(); }, dur * 1000);
-area.appendChild(el);
-};
-const id = setInterval(() => { if (gameActive) spawn(); }, d.spawnInterval);
-spawnIntervals.push(id);
-// 最初は3個すぐ出す
-for (let i = 0; i < 3; i++) setTimeout(spawn, i * 200);
+  const d = (currentDifficulty && currentDifficulty.balloon) ? currentDifficulty.balloon : DIFFICULTIES.normal.balloon;
+  const spawn = () => {
+    if (!gameActive) return;
+    const area = document.getElementById('balloonArea');
+    if (!area) return;
+    const b = theme.balloons[Math.floor(Math.random() * theme.balloons.length)];
+    const size = b.size + Math.floor(Math.random() * 20 - 10);
+    const dur = d.durMin + Math.random() * (d.durMax - d.durMin);
+    const left = 8 + Math.random() * 75;
+    const id = 'b' + (balloonId++);
+
+    const el = document.createElement('div');
+    el.className = 'balloon';
+    el.id = id;
+    el.style.left = left + '%';
+    el.style.animationDuration = dur + 's';
+    el.innerHTML = `
+      <div class="balloon-body" style="width:${size}px;height:${size}px;background:${b.color};"><img src="${b.img}" draggable="false" style="width:78%;height:78%;object-fit:contain;pointer-events:none;"></div>
+      <div class="balloon-string" style="height:${20+Math.random()*12}px;"></div>
+    `;
+
+    // タップ
+    let tapped = false;
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (tapped) return;
+      tapped = true;
+      el.classList.add('pop');
+      addScore(10);
+      setTimeout(() => el.remove(), 250);
+    });
+
+    // 時間切れで消える
+    setTimeout(() => { if (!tapped && el.parentNode) el.remove(); }, dur * 1000);
+    area.appendChild(el);
+  };
+  const id = setInterval(() => { if (gameActive) spawn(); }, d.spawnInterval);
+  spawnIntervals.push(id);
+  // 最初は3個すぐ出す
+  for (let i = 0; i < 3; i++) setTimeout(spawn, i * 200);
 }
 // ======== 終了 ========
 function endGame() {
-gameActive = false;
-stopAllSpawns();
-const bestKey = getBestKey();
-const best = getBest(bestKey);
-const isNew = score > best;
-if (isNew) saveBest(bestKey, score);
-const newBest = isNew ? score : best;
-document.getElementById('bestVal').textContent = newBest;
-const ranks = [
-[0, '😢', 'もう一回！'],
-[50, '🙂', 'いい感じ！'],
-[100,'😊', 'じょうず！'],
-[150,'😄', 'すごい！！'],
-[200,'🤩', 'パーフェクト！！'],
-];
-const rank = [...ranks].reverse().find(r => score >= r[0]) || ranks[0];
-document.getElementById('resultEmoji').textContent = rank[0];
-document.getElementById('resultTitle').textContent = rank[1];
-document.getElementById('resultScore').textContent = 'スコア ' + score + ' 点！';
-document.getElementById('resultBest').textContent = 'ベスト：' + newBest + ' 点';
-document.getElementById('resultNewBest').style.display = isNew ? 'block' : 'none';
-showOverlay('resultOverlay');
+  gameActive = false;
+  stopAllSpawns();
+
+  const bestKey = getBestKey();
+  const best = getBest(bestKey);
+  const isNew = score > best;
+  if (isNew) saveBest(bestKey, score);
+  const newBest = isNew ? score : best;
+  document.getElementById('bestVal').textContent = newBest;
+
+  const ranks = [
+    [0,  '😢', 'もう一回！'],
+    [50, '🙂', 'いい感じ！'],
+    [100,'😊', 'じょうず！'],
+    [150,'😄', 'すごい！！'],
+    [200,'🤩', 'パーフェクト！！'],
+  ];
+  const rank = [...ranks].reverse().find(r => score >= r[0]) || ranks[0];
+
+  document.getElementById('resultEmoji').textContent  = rank[0];
+  document.getElementById('resultTitle').textContent  = rank[1];
+  document.getElementById('resultScore').textContent  = 'スコア ' + score + ' 点！';
+  document.getElementById('resultBest').textContent   = 'ベスト：' + newBest + ' 点';
+  document.getElementById('resultNewBest').style.display = isNew ? 'block' : 'none';
+  showOverlay('resultOverlay');
 }
+
 // ======== ユーティリティ ========
 function getBest(key) { return parseInt(localStorage.getItem('tap_best_'+key)||'0'); }
 function saveBest(key, val) { localStorage.setItem('tap_best_'+key, val); }
@@ -423,12 +578,15 @@ function wait(ms) { return new Promise(r=>setTimeout(r,ms)); }
 function showOverlay(id) { document.getElementById(id).classList.add('show'); }
 function hideOverlay(id) { document.getElementById(id).classList.remove('show'); }
 function backToTheme() {
-gameActive = false;
-stopAllSpawns();
-hideOverlay('resultOverlay');
-hideOverlay('difficultyOverlay');
-currentDifficulty = null;
-currentDifficultyKey = null;
-document.getElementById('gameArea').innerHTML = '<div class="area-placeholder">テーマを えらんでね</div>';
-showOverlay('themeOverlay');
-}</script> </body></html>
+  gameActive = false;
+  stopAllSpawns();
+  hideOverlay('resultOverlay');
+  hideOverlay('difficultyOverlay');
+  currentDifficulty = null;
+  currentDifficultyKey = null;
+  document.getElementById('gameArea').innerHTML = '<div class="area-placeholder">テーマを えらんでね</div>';
+  showOverlay('themeOverlay');
+}
+</script>
+</body>
+</html>

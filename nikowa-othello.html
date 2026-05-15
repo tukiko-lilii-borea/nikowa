@@ -1,476 +1,595 @@
-<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>水槽のオセロ</title> <style>@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
-:root {
---water-pale: #E8F4FB;
---water-light: #C8E4F5;
---water-mid: #A8D3EE;
---board-blue: #5BA3D0;
---board-cell: #6FB5DC;
---accent: #2E7DB0;
---gold: #F7DC6F;
---koi-white: #FBF7F4;
---kingyo-red: #E8502A;
---surface: rgba(255,255,255,0.10);
---border: rgba(91,163,208,0.3);
---ink: #2C4A66;
---ink-sub: #6B8AA6;
-}
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html, body { background-color: #E8F4FB; overscroll-behavior: none; }
-body {
-font-family: 'Zen Maru Gothic', sans-serif;
-min-height: 100vh;
-display: flex; flex-direction: column; align-items: center;
-padding: 16px 12px 24px;
-color: var(--ink);
-position: relative; overflow-x: hidden;
-background: linear-gradient(180deg, #E8F4FB 0%, #C8E4F5 60%, #A8D3EE 100%);
-}
-#bubbleCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-body::before {
-content: ''; position: fixed; top: -10%; left: 50%; transform: translateX(-50%);
-width: 200%; height: 50%;
-background: radial-gradient(ellipse at center top, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.2) 30%, transparent 70%);
-animation: lightWave 5s ease-in-out infinite;
-pointer-events: none; z-index: 0;
-mix-blend-mode: overlay;
-}
-@keyframes lightWave {
-0%,100% { transform: translateX(-50%) scaleX(1); opacity: 0.8; }
-50% { transform: translateX(-46%) scaleX(1.08); opacity: 1; }
-}
-.header, .wrap { position: relative; z-index: 2; }
-.header { width:100%; max-width:420px; display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-.logo { font-size:16px; font-weight:900; color:var(--accent); letter-spacing:0.5px; display:flex; align-items:center; gap:6px; }
-.logo-fish { display:flex; gap:2px; align-items:center; }
-.logo-fish img { width:22px; height:22px; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(46,125,176,0.2)); }
-.back-btn { background:var(--surface); border:1px solid var(--border); border-radius:100px; padding:5px 12px; font-family:inherit; font-size:11px; font-weight:700; color:var(--ink-sub); cursor:pointer; }
-.wrap { width:100%; max-width:420px; background:var(--surface); border-radius:24px; padding:14px; border:1px solid rgba(91,163,208,0.2); box-shadow:0 0 40px rgba(91,163,208,0.1); }
-.score-row { display:flex; gap:8px; margin-bottom:12px; }
-.player-card { flex:1; background:rgba(255,255,255,0.42); border-radius:14px; padding:8px; text-align:center; border:1px solid var(--border); transition:transform 0.2s,box-shadow 0.2s; }
-.player-card.active { transform:scale(1.02); box-shadow:0 0 16px rgba(46,125,176,0.3); border-color:var(--accent); background:rgba(255,255,255,0.60); }
-.player-info { display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:4px; }
-.stone-mini { width:18px; height:18px; border-radius:50%; flex-shrink:0; }
-.stone-mini.black { background:radial-gradient(circle at 35% 35%,#FF7A55,var(--kingyo-red)); box-shadow:inset -2px -2px 4px rgba(0,0,0,0.4),0 0 6px rgba(232,80,42,0.4); }
-.stone-mini.white { background:radial-gradient(circle at 35% 35%,#FFFFFF,var(--koi-white)); box-shadow:inset -2px -2px 4px rgba(0,0,0,0.15),0 0 6px rgba(245,240,238,0.5); border:1px solid rgba(200,200,210,0.5); }
-.player-label { font-size:10px; font-weight:800; color:var(--ink); }
-.player-count { font-size:24px; font-weight:900; color:var(--accent); line-height:1; }
-.board { background:var(--board-blue); border-radius:12px; padding:5px; aspect-ratio:1/1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); gap:2px; position:relative; box-shadow:inset 0 0 20px rgba(46,125,176,0.4),0 0 0 2px rgba(255,255,255,0.4),0 4px 12px rgba(46,125,176,0.3); }
-.cell { background:var(--board-cell); border-radius:3px; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative; transition:background 0.15s; }
-.cell.valid::after { content:''; width:30%; height:30%; border-radius:50%; background:rgba(255,255,255,0.7); animation:validPulse 1.5s infinite; }
-@keyframes validPulse { 0%,100%{transform:scale(1);opacity:0.5} 50%{transform:scale(1.2);opacity:1} }
-.cell.valid:active { background:rgba(255,255,255,0.2); }
-.stone { width:82%; height:82%; border-radius:50%; }
-.stone.black { background:radial-gradient(circle at 35% 35%,#FF7A55,var(--kingyo-red),#9A2A10); box-shadow:inset -3px -3px 6px rgba(0,0,0,0.4),0 2px 6px rgba(232,80,42,0.5); }
-.stone.white { background:radial-gradient(circle at 35% 35%,#FFFFFF,var(--koi-white),#D8D0D8); box-shadow:inset -3px -3px 6px rgba(0,0,0,0.15),0 2px 6px rgba(245,240,238,0.4); border:1px solid rgba(200,200,210,0.4); }
-.stone.placing { animation:placeStone 0.4s ease-out; }
-@keyframes placeStone { 0%{transform:scale(0) rotate(-20deg)} 60%{transform:scale(1.15)} 100%{transform:scale(1)} }
-.stone.flipped { animation:flipStone 0.7s ease-in-out; }
-@keyframes flipStone { 0%{transform:scale(1) rotateY(0deg)} 50%{transform:scale(1.2) rotateY(90deg)} 100%{transform:scale(1) rotateY(180deg)} }
-.cell.cpu-last { background:rgba(247,220,111,0.45); animation:cpuGlow 1.5s ease-in-out 4; }
-.cell.player-last { background:rgba(232,80,42,0.3); animation:playerGlow 1.5s ease-in-out 4; }
-@keyframes cpuGlow { 0%,100%{box-shadow:0 0 0 2px rgba(247,220,111,0.5)} 50%{box-shadow:0 0 0 3px rgba(247,220,111,0.9)} }
-@keyframes playerGlow { 0%,100%{box-shadow:0 0 0 2px rgba(232,80,42,0.5)} 50%{box-shadow:0 0 0 3px rgba(232,80,42,0.9)} }
-.settings { margin-top:12px; background:rgba(255,255,255,0.35); border-radius:14px; padding:10px 12px; border:1px solid var(--border); }
-.settings-label { font-size:10px; font-weight:800; color:var(--ink-sub); margin-bottom:6px; }
-.settings.locked { opacity:0.6; pointer-events:none; }
-.settings.locked::after { content:'🔒 ゲーム中はあいてを変えられないよ'; display:block; font-size:9px; color:var(--ink-sub); text-align:center; margin-top:6px; font-weight:700; }
-.diff-row { display:flex; gap:6px; }
-.diff-btn { flex:1; background:rgba(255,255,255,0.5); border:1px solid var(--border); border-radius:10px; padding:8px 4px; font-family:inherit; font-size:12px; font-weight:800; color:var(--ink-sub); cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; align-items:center; gap:4px; }
-.diff-btn .diff-label { font-size:9px; opacity:0.7; }
-.diff-btn.active { background:rgba(255,255,255,0.92); color:var(--accent); border:2.5px solid var(--accent); box-shadow:0 4px 12px rgba(46,125,176,0.3); }
-.diff-btn.active img { filter:none; }
-.btn-row { display:flex; gap:8px; margin-top:12px; }
-.start-btn { flex:1; background:linear-gradient(135deg,#5BA3D0,#2E7DB0); color:white; border:none; border-radius:14px; padding:13px; font-family:inherit; font-size:13px; font-weight:900; cursor:pointer; box-shadow:0 4px 14px rgba(46,125,176,0.4); transition:transform 0.1s, opacity 0.2s; letter-spacing:1px; }
-.start-btn:active { transform:scale(0.97); }
-.start-btn:disabled { opacity:0.4; cursor:not-allowed; box-shadow:none; }
-.pass-btn { flex:0 0 80px; background:rgba(255,255,255,0.8); color:var(--accent); border:1px solid var(--border); border-radius:14px; padding:13px; font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; }
-.pass-btn:disabled { opacity:0.3; }
-.status { margin-top:10px; text-align:center; font-size:12px; color:var(--ink-sub); font-weight:700; min-height:18px; display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap; }
-.status.your-turn { color:#D63A1A; }
-.status.cpu-turn { color:var(--accent); }
-.status img { width:18px; height:18px; vertical-align:middle; object-fit:contain; }
-#overlay { display:none; position:absolute; inset:0; background:rgba(232,244,251,0.82); border-radius:12px; flex-direction:column; align-items:center; justify-content:center; gap:8px; z-index:10; padding:16px; text-align:center; backdrop-filter: blur(2px); }
-#overlay.show { display:flex; }
-.overlay-title { font-size:22px; font-weight:900; color:var(--accent); }
-.overlay-msg { font-size:13px; color:var(--ink-sub); font-weight:700; }
-.overlay-result { background:rgba(255,255,255,0.9); padding:10px 16px; border-radius:12px; font-size:14px; font-weight:800; margin-top:6px; border:1px solid var(--border); color:var(--ink); }</style> </head><body><canvas id="bubbleCanvas"></canvas><div class="header"><div class="logo"><span>🫧 水槽のオセロ</span></div><button class="back-btn" onclick="history.back()">← もどる</button></div><div class="wrap"><div class="score-row"><div class="player-card" id="playerBlack"><div class="player-info"><div class="stone-mini black"></div><span class="player-label">あなた</span></div><div class="player-count" id="blackCount">2</div></div><div class="player-card" id="playerWhite"><div class="player-info"><img id="cpuIcon" src="" style="width:20px;height:20px;object-fit:contain;display:none;"><span class="player-label" id="cpuName">あいて</span></div><div class="player-count" id="whiteCount">2</div></div></div><div style="position:relative;"><div class="board" id="board"></div><div id="overlay" class="show"><div class="overlay-title" id="overlayTitle">🫧 水槽のオセロ</div><div class="overlay-msg" id="overlayMsg">あいてを えらんで「START」をタップしてね</div><div class="overlay-result" id="overlayResult" style="display:none;"></div></div></div><div class="status" id="status">あいてを えらんでね</div><div class="settings" id="settingsBox"><div class="settings-label">あいてを えらんでね</div><div class="diff-row"><button class="diff-btn" data-level="easy"><img src="assets/beteli.svg" style="width:32px;height:32px;object-fit:contain;"><br><span>ベティ</span><span style="font-size:9px;font-weight:700;opacity:0.7;">よわい</span></button><button class="diff-btn" data-level="normal"><img src="assets/beru.svg" style="width:32px;height:32px;object-fit:contain;"><br><span>ベル</span><span style="font-size:9px;font-weight:700;opacity:0.7;">ふつう</span></button><button class="diff-btn" data-level="hard"><img src="assets/koito.svg" style="width:32px;height:32px;object-fit:contain;"><br><span>こいと</span><span style="font-size:9px;font-weight:700;opacity:0.7;">つよい</span></button></div></div><div class="btn-row"><button class="start-btn" id="startBtn" onclick="startGame()" disabled>START ★</button><button class="pass-btn" id="passBtn" onclick="pass()" disabled>パス</button></div></div> <script>const SIZE = 8;
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>水槽のオセロ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
+
+  :root {
+    --water-pale:   #E8F4FB;
+    --water-light:  #C8E4F5;
+    --water-mid:    #A8D3EE;
+    --board-blue:   #5BA3D0;
+    --board-cell:   #6FB5DC;
+    --accent:       #2E7DB0;
+    --gold:         #F7DC6F;
+    --koi-white:    #FBF7F4;
+    --kingyo-red:   #E8502A;
+    --surface:      rgba(255,255,255,0.10);
+    --border:       rgba(91,163,208,0.3);
+    --ink:          #2C4A66;
+    --ink-sub:      #6B8AA6;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { background-color: #E8F4FB; overscroll-behavior: none; }
+  body {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 16px 12px 24px;
+    color: var(--ink);
+    position: relative; overflow-x: hidden;
+    background: linear-gradient(180deg, #E8F4FB 0%, #C8E4F5 60%, #A8D3EE 100%);
+  }
+  #bubbleCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  /* 光の揺らめき：水面のキラキラを強めに */
+  body::before {
+    content: ''; position: fixed; top: -10%; left: 50%; transform: translateX(-50%);
+    width: 200%; height: 50%;
+    background: radial-gradient(ellipse at center top, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.2) 30%, transparent 70%);
+    animation: lightWave 5s ease-in-out infinite;
+    pointer-events: none; z-index: 0;
+    mix-blend-mode: overlay;
+  }
+  @keyframes lightWave {
+    0%,100% { transform: translateX(-50%) scaleX(1); opacity: 0.8; }
+    50% { transform: translateX(-46%) scaleX(1.08); opacity: 1; }
+  }
+  .header, .wrap { position: relative; z-index: 2; }
+  .header { width:100%; max-width:420px; display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .logo { font-size:16px; font-weight:900; color:var(--accent); letter-spacing:0.5px; display:flex; align-items:center; gap:6px; }
+  .logo-fish { display:flex; gap:2px; align-items:center; }
+  .logo-fish img { width:22px; height:22px; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(46,125,176,0.2)); }
+  .back-btn { background:var(--surface); border:1px solid var(--border); border-radius:100px; padding:5px 12px; font-family:inherit; font-size:11px; font-weight:700; color:var(--ink-sub); cursor:pointer; }
+  .wrap { width:100%; max-width:420px; background:var(--surface); border-radius:24px; padding:14px; border:1px solid rgba(91,163,208,0.2); box-shadow:0 0 40px rgba(91,163,208,0.1); }
+  .score-row { display:flex; gap:8px; margin-bottom:12px; }
+  .player-card { flex:1; background:rgba(255,255,255,0.42); border-radius:14px; padding:8px; text-align:center; border:1px solid var(--border); transition:transform 0.2s,box-shadow 0.2s; }
+  .player-card.active { transform:scale(1.02); box-shadow:0 0 16px rgba(46,125,176,0.3); border-color:var(--accent); background:rgba(255,255,255,0.60); }
+  .player-info { display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:4px; }
+  .stone-mini { width:18px; height:18px; border-radius:50%; flex-shrink:0; }
+  .stone-mini.black { background:radial-gradient(circle at 35% 35%,#FF7A55,var(--kingyo-red)); box-shadow:inset -2px -2px 4px rgba(0,0,0,0.4),0 0 6px rgba(232,80,42,0.4); }
+  .stone-mini.white { background:radial-gradient(circle at 35% 35%,#FFFFFF,var(--koi-white)); box-shadow:inset -2px -2px 4px rgba(0,0,0,0.15),0 0 6px rgba(245,240,238,0.5); border:1px solid rgba(200,200,210,0.5); }
+  .player-label { font-size:10px; font-weight:800; color:var(--ink); }
+  .player-count { font-size:24px; font-weight:900; color:var(--accent); line-height:1; }
+  .board { background:var(--board-blue); border-radius:12px; padding:5px; aspect-ratio:1/1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); gap:2px; position:relative; box-shadow:inset 0 0 20px rgba(46,125,176,0.4),0 0 0 2px rgba(255,255,255,0.4),0 4px 12px rgba(46,125,176,0.3); }
+  .cell { background:var(--board-cell); border-radius:3px; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative; transition:background 0.15s; }
+  .cell.valid::after { content:''; width:30%; height:30%; border-radius:50%; background:rgba(255,255,255,0.7); animation:validPulse 1.5s infinite; }
+  @keyframes validPulse { 0%,100%{transform:scale(1);opacity:0.5} 50%{transform:scale(1.2);opacity:1} }
+  .cell.valid:active { background:rgba(255,255,255,0.2); }
+  .stone { width:82%; height:82%; border-radius:50%; }
+  .stone.black { background:radial-gradient(circle at 35% 35%,#FF7A55,var(--kingyo-red),#9A2A10); box-shadow:inset -3px -3px 6px rgba(0,0,0,0.4),0 2px 6px rgba(232,80,42,0.5); }
+  .stone.white { background:radial-gradient(circle at 35% 35%,#FFFFFF,var(--koi-white),#D8D0D8); box-shadow:inset -3px -3px 6px rgba(0,0,0,0.15),0 2px 6px rgba(245,240,238,0.4); border:1px solid rgba(200,200,210,0.4); }
+  .stone.placing { animation:placeStone 0.4s ease-out; }
+  @keyframes placeStone { 0%{transform:scale(0) rotate(-20deg)} 60%{transform:scale(1.15)} 100%{transform:scale(1)} }
+  .stone.flipped { animation:flipStone 0.7s ease-in-out; }
+  @keyframes flipStone { 0%{transform:scale(1) rotateY(0deg)} 50%{transform:scale(1.2) rotateY(90deg)} 100%{transform:scale(1) rotateY(180deg)} }
+  .cell.cpu-last { background:rgba(247,220,111,0.45); animation:cpuGlow 1.5s ease-in-out 4; }
+  .cell.player-last { background:rgba(232,80,42,0.3); animation:playerGlow 1.5s ease-in-out 4; }
+  @keyframes cpuGlow { 0%,100%{box-shadow:0 0 0 2px rgba(247,220,111,0.5)} 50%{box-shadow:0 0 0 3px rgba(247,220,111,0.9)} }
+  @keyframes playerGlow { 0%,100%{box-shadow:0 0 0 2px rgba(232,80,42,0.5)} 50%{box-shadow:0 0 0 3px rgba(232,80,42,0.9)} }
+  .settings { margin-top:12px; background:rgba(255,255,255,0.35); border-radius:14px; padding:10px 12px; border:1px solid var(--border); }
+  .settings-label { font-size:10px; font-weight:800; color:var(--ink-sub); margin-bottom:6px; }
+  .settings.locked { opacity:0.6; pointer-events:none; }
+  .settings.locked::after { content:'🔒 ゲーム中はあいてを変えられないよ'; display:block; font-size:9px; color:var(--ink-sub); text-align:center; margin-top:6px; font-weight:700; }
+  .diff-row { display:flex; gap:6px; }
+  .diff-btn { flex:1; background:rgba(255,255,255,0.5); border:1px solid var(--border); border-radius:10px; padding:8px 4px; font-family:inherit; font-size:12px; font-weight:800; color:var(--ink-sub); cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .diff-btn .diff-label { font-size:9px; opacity:0.7; }
+  .diff-btn.active { background:rgba(255,255,255,0.92); color:var(--accent); border:2.5px solid var(--accent); box-shadow:0 4px 12px rgba(46,125,176,0.3); }
+  .diff-btn.active img { filter:none; }
+  .btn-row { display:flex; gap:8px; margin-top:12px; }
+  .start-btn { flex:1; background:linear-gradient(135deg,#5BA3D0,#2E7DB0); color:white; border:none; border-radius:14px; padding:13px; font-family:inherit; font-size:13px; font-weight:900; cursor:pointer; box-shadow:0 4px 14px rgba(46,125,176,0.4); transition:transform 0.1s, opacity 0.2s; letter-spacing:1px; }
+  .start-btn:active { transform:scale(0.97); }
+  .start-btn:disabled { opacity:0.4; cursor:not-allowed; box-shadow:none; }
+  .pass-btn { flex:0 0 80px; background:rgba(255,255,255,0.8); color:var(--accent); border:1px solid var(--border); border-radius:14px; padding:13px; font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+  .pass-btn:disabled { opacity:0.3; }
+  .status { margin-top:10px; text-align:center; font-size:12px; color:var(--ink-sub); font-weight:700; min-height:18px; display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap; }
+  .status.your-turn { color:#D63A1A; }
+  .status.cpu-turn { color:var(--accent); }
+  .status img { width:18px; height:18px; vertical-align:middle; object-fit:contain; }
+  #overlay { display:none; position:absolute; inset:0; background:rgba(232,244,251,0.82); border-radius:12px; flex-direction:column; align-items:center; justify-content:center; gap:8px; z-index:10; padding:16px; text-align:center; backdrop-filter: blur(2px); }
+  #overlay.show { display:flex; }
+  .overlay-title { font-size:22px; font-weight:900; color:var(--accent); }
+  .overlay-msg { font-size:13px; color:var(--ink-sub); font-weight:700; }
+  .overlay-result { background:rgba(255,255,255,0.9); padding:10px 16px; border-radius:12px; font-size:14px; font-weight:800; margin-top:6px; border:1px solid var(--border); color:var(--ink); }
+</style>
+</head>
+<body>
+<canvas id="bubbleCanvas"></canvas>
+
+<div class="header">
+  <div class="logo">
+    <span>🫧 水槽のオセロ</span>
+  </div>
+  <button class="back-btn" onclick="history.back()">← もどる</button>
+</div>
+
+<div class="wrap">
+  <!-- スコア -->
+  <div class="score-row">
+    <div class="player-card" id="playerBlack">
+      <div class="player-info">
+        <div class="stone-mini black"></div>
+        <span class="player-label">あなた</span>
+      </div>
+      <div class="player-count" id="blackCount">2</div>
+    </div>
+    <div class="player-card" id="playerWhite">
+      <div class="player-info">
+        <img id="cpuIcon" src="" style="width:20px;height:20px;object-fit:contain;display:none;">
+        <span class="player-label" id="cpuName">あいて</span>
+      </div>
+      <div class="player-count" id="whiteCount">2</div>
+    </div>
+  </div>
+
+  <!-- ボード -->
+  <div style="position:relative;">
+    <div class="board" id="board"></div>
+    <div id="overlay" class="show">
+      <div class="overlay-title" id="overlayTitle">🫧 水槽のオセロ</div>
+      <div class="overlay-msg" id="overlayMsg">あいてを えらんで「START」をタップしてね</div>
+      <div class="overlay-result" id="overlayResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="status" id="status">あいてを えらんでね</div>
+
+  <!-- 設定 -->
+  <div class="settings" id="settingsBox">
+    <div class="settings-label">あいてを えらんでね</div>
+    <div class="diff-row">
+      <button class="diff-btn" data-level="easy">
+        <img src="assets/beteli.svg" style="width:32px;height:32px;object-fit:contain;"><br>
+        <span>ベティ</span>
+        <span style="font-size:9px;font-weight:700;opacity:0.7;">よわい</span>
+      </button>
+      <button class="diff-btn" data-level="normal">
+        <img src="assets/beru.svg" style="width:32px;height:32px;object-fit:contain;"><br>
+        <span>ベル</span>
+        <span style="font-size:9px;font-weight:700;opacity:0.7;">ふつう</span>
+      </button>
+      <button class="diff-btn" data-level="hard">
+        <img src="assets/koito.svg" style="width:32px;height:32px;object-fit:contain;"><br>
+        <span>こいと</span>
+        <span style="font-size:9px;font-weight:700;opacity:0.7;">つよい</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="start-btn" id="startBtn" onclick="startGame()" disabled>START ★</button>
+    <button class="pass-btn" id="passBtn" onclick="pass()" disabled>パス</button>
+  </div>
+</div>
+
+<script>
+const SIZE = 8;
 const EMPTY = 0, BLACK = 1, WHITE = 2;
 const DIRS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
 let grid, turn, difficulty, gameRunning, cpuColor;
 let isAnimating = false;
 // 描画状態：今この瞬間に何をアニメーションさせるか
 let renderState = {
-newlyPlaced: null, // {r,c} - 今置かれた石（placeアニメ）
-newlyFlipped: [], // [{r,c}] - 今ひっくり返った石（flipアニメ）
-lastMoveCell: null, // {r,c,by} - 最後の手のハイライト
+  newlyPlaced: null,      // {r,c} - 今置かれた石（placeアニメ）
+  newlyFlipped: [],       // [{r,c}] - 今ひっくり返った石（flipアニメ）
+  lastMoveCell: null,     // {r,c,by} - 最後の手のハイライト
 };
 const boardEl = document.getElementById('board');
 const statusEl = document.getElementById('status');
+
 function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 // 評価用：角・辺の重み（CPU用）
 const WEIGHTS = [
-[100,-20, 10, 5, 5, 10,-20,100],
-[-20,-40, -2, -2, -2, -2,-40,-20],
-[ 10, -2, 5, 1, 1, 5, -2, 10],
-[ 5, -2, 1, 1, 1, 1, -2, 5],
-[ 5, -2, 1, 1, 1, 1, -2, 5],
-[ 10, -2, 5, 1, 1, 5, -2, 10],
-[-20,-40, -2, -2, -2, -2,-40,-20],
-[100,-20, 10, 5, 5, 10,-20,100],
+  [100,-20, 10,  5,  5, 10,-20,100],
+  [-20,-40, -2, -2, -2, -2,-40,-20],
+  [ 10, -2,  5,  1,  1,  5, -2, 10],
+  [  5, -2,  1,  1,  1,  1, -2,  5],
+  [  5, -2,  1,  1,  1,  1, -2,  5],
+  [ 10, -2,  5,  1,  1,  5, -2, 10],
+  [-20,-40, -2, -2, -2, -2,-40,-20],
+  [100,-20, 10,  5,  5, 10,-20,100],
 ];
+
 function newGrid() {
-const g = Array.from({length: SIZE}, () => Array(SIZE).fill(EMPTY));
-g[3][3] = WHITE; g[3][4] = BLACK;
-g[4][3] = BLACK; g[4][4] = WHITE;
-return g;
+  const g = Array.from({length: SIZE}, () => Array(SIZE).fill(EMPTY));
+  g[3][3] = WHITE; g[3][4] = BLACK;
+  g[4][3] = BLACK; g[4][4] = WHITE;
+  return g;
 }
+
 // (r,c)に置けるかチェック。返り値：ひっくり返せる石の座標リスト
 function flipsForMove(g, r, c, color) {
-if (g[r][c] !== EMPTY) return [];
-const opp = color === BLACK ? WHITE : BLACK;
-const flips = [];
-for (const [dr, dc] of DIRS) {
-const line = [];
-let nr = r + dr, nc = c + dc;
-while (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && g[nr][nc] === opp) {
-line.push([nr, nc]);
-nr += dr; nc += dc;
+  if (g[r][c] !== EMPTY) return [];
+  const opp = color === BLACK ? WHITE : BLACK;
+  const flips = [];
+  for (const [dr, dc] of DIRS) {
+    const line = [];
+    let nr = r + dr, nc = c + dc;
+    while (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && g[nr][nc] === opp) {
+      line.push([nr, nc]);
+      nr += dr; nc += dc;
+    }
+    if (line.length > 0 && nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && g[nr][nc] === color) {
+      flips.push(...line);
+    }
+  }
+  return flips;
 }
-if (line.length > 0 && nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && g[nr][nc] === color) {
-flips.push(...line);
-}
-}
-return flips;
-}
+
 function validMoves(g, color) {
-const moves = [];
-for (let r = 0; r < SIZE; r++)
-for (let c = 0; c < SIZE; c++) {
-if (g[r][c] !== EMPTY) continue;
-const flips = flipsForMove(g, r, c, color);
-if (flips.length > 0) moves.push({r, c, flips});
+  const moves = [];
+  for (let r = 0; r < SIZE; r++)
+    for (let c = 0; c < SIZE; c++) {
+      if (g[r][c] !== EMPTY) continue;
+      const flips = flipsForMove(g, r, c, color);
+      if (flips.length > 0) moves.push({r, c, flips});
+    }
+  return moves;
 }
-return moves;
-}
+
 function countStones(g) {
-let b = 0, w = 0;
-for (let r = 0; r < SIZE; r++)
-for (let c = 0; c < SIZE; c++) {
-if (g[r][c] === BLACK) b++;
-else if (g[r][c] === WHITE) w++;
+  let b = 0, w = 0;
+  for (let r = 0; r < SIZE; r++)
+    for (let c = 0; c < SIZE; c++) {
+      if (g[r][c] === BLACK) b++;
+      else if (g[r][c] === WHITE) w++;
+    }
+  return { black: b, white: w };
 }
-return { black: b, white: w };
-}
+
 function placeMove(g, move, color) {
-g[move.r][move.c] = color;
-for (const [r, c] of move.flips) g[r][c] = color;
+  g[move.r][move.c] = color;
+  for (const [r, c] of move.flips) g[r][c] = color;
 }
+
 function render() {
-boardEl.innerHTML = '';
-const moves = (gameRunning && !isAnimating && turn === BLACK) ? validMoves(grid, BLACK) : [];
-for (let r = 0; r < SIZE; r++) {
-for (let c = 0; c < SIZE; c++) {
-const cell = document.createElement('div');
-cell.className = 'cell';
-// 最後の手のハイライト
-if (renderState.lastMoveCell && renderState.lastMoveCell.r === r && renderState.lastMoveCell.c === c) {
-cell.classList.add(renderState.lastMoveCell.by === 'cpu' ? 'cpu-last' : 'player-last');
+  boardEl.innerHTML = '';
+  const moves = (gameRunning && !isAnimating && turn === BLACK) ? validMoves(grid, BLACK) : [];
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      // 最後の手のハイライト
+      if (renderState.lastMoveCell && renderState.lastMoveCell.r === r && renderState.lastMoveCell.c === c) {
+        cell.classList.add(renderState.lastMoveCell.by === 'cpu' ? 'cpu-last' : 'player-last');
+      }
+      if (grid[r][c] === BLACK || grid[r][c] === WHITE) {
+        const s = document.createElement('div');
+        s.className = 'stone ' + (grid[r][c] === BLACK ? 'black' : 'white');
+        // 今置かれた石？
+        if (renderState.newlyPlaced && renderState.newlyPlaced.r === r && renderState.newlyPlaced.c === c) {
+          s.classList.add('placing');
+        }
+        // 今ひっくり返った石？
+        if (renderState.newlyFlipped.some(p => p.r === r && p.c === c)) {
+          s.classList.add('flipped');
+        }
+        cell.appendChild(s);
+      } else if (moves.some(m => m.r === r && m.c === c)) {
+        cell.classList.add('valid');
+        cell.onclick = () => playerMove(r, c);
+      }
+      boardEl.appendChild(cell);
+    }
+  }
+  // スコア更新
+  const count = countStones(grid);
+  document.getElementById('blackCount').textContent = count.black;
+  document.getElementById('whiteCount').textContent = count.white;
+  // アクティブカード
+  document.getElementById('playerBlack').classList.toggle('active', turn === BLACK && gameRunning && !isAnimating);
+  document.getElementById('playerWhite').classList.toggle('active', turn === WHITE && gameRunning);
 }
-if (grid[r][c] === BLACK || grid[r][c] === WHITE) {
-const s = document.createElement('div');
-s.className = 'stone ' + (grid[r][c] === BLACK ? 'black' : 'white');
-// 今置かれた石？
-if (renderState.newlyPlaced && renderState.newlyPlaced.r === r && renderState.newlyPlaced.c === c) {
-s.classList.add('placing');
-}
-// 今ひっくり返った石？
-if (renderState.newlyFlipped.some(p => p.r === r && p.c === c)) {
-s.classList.add('flipped');
-}
-cell.appendChild(s);
-} else if (moves.some(m => m.r === r && m.c === c)) {
-cell.classList.add('valid');
-cell.onclick = () => playerMove(r, c);
-}
-boardEl.appendChild(cell);
-}
-}
-// スコア更新
-const count = countStones(grid);
-document.getElementById('blackCount').textContent = count.black;
-document.getElementById('whiteCount').textContent = count.white;
-// アクティブカード
-document.getElementById('playerBlack').classList.toggle('active', turn === BLACK && gameRunning && !isAnimating);
-document.getElementById('playerWhite').classList.toggle('active', turn === WHITE && gameRunning);
-}
+
 // 1手をアニメーション付きで実行
 async function executeMove(move, color, isCpu) {
-isAnimating = true;
-// Step 1: 石を置く（placeアニメ）
-grid[move.r][move.c] = color;
-renderState.newlyPlaced = { r: move.r, c: move.c };
-renderState.newlyFlipped = [];
-renderState.lastMoveCell = { r: move.r, c: move.c, by: isCpu ? 'cpu' : 'player' };
-render();
-// 置いたあと少し時間置く（石をしっかり見せる）
-await wait(800);
-// Step 2: ひっくり返しを1個ずつ順番に
-renderState.newlyPlaced = null;
-for (const [r, c] of move.flips) {
-grid[r][c] = color;
-renderState.newlyFlipped = [{ r, c }];
-render();
-await wait(280); // 1個ずつわかるスピード
+  isAnimating = true;
+  // Step 1: 石を置く（placeアニメ）
+  grid[move.r][move.c] = color;
+  renderState.newlyPlaced = { r: move.r, c: move.c };
+  renderState.newlyFlipped = [];
+  renderState.lastMoveCell = { r: move.r, c: move.c, by: isCpu ? 'cpu' : 'player' };
+  render();
+
+  // 置いたあと少し時間置く（石をしっかり見せる）
+  await wait(800);
+
+  // Step 2: ひっくり返しを1個ずつ順番に
+  renderState.newlyPlaced = null;
+  for (const [r, c] of move.flips) {
+    grid[r][c] = color;
+    renderState.newlyFlipped = [{ r, c }];
+    render();
+    await wait(280); // 1個ずつわかるスピード
+  }
+
+  // Step 3: 全部終わって落ち着くまで待つ
+  renderState.newlyFlipped = [];
+  await wait(600);
+  render();
+  isAnimating = false;
 }
-// Step 3: 全部終わって落ち着くまで待つ
-renderState.newlyFlipped = [];
-await wait(600);
-render();
-isAnimating = false;
-}
+
 async function playerMove(r, c) {
-if (!gameRunning || turn !== BLACK || isAnimating) return;
-const flips = flipsForMove(grid, r, c, BLACK);
-if (flips.length === 0) return;
-document.getElementById('passBtn').disabled = true;
-// アニメーション付きで石を置く
-await executeMove({r, c, flips}, BLACK, false);
-turn = WHITE;
-statusEl.innerHTML = cpuThinkingMsg();
-statusEl.className = 'status cpu-turn';
-render();
-// CPUが考える間（少し長めに）
-await wait(1200);
-cpuMove();
+  if (!gameRunning || turn !== BLACK || isAnimating) return;
+  const flips = flipsForMove(grid, r, c, BLACK);
+  if (flips.length === 0) return;
+  document.getElementById('passBtn').disabled = true;
+
+  // アニメーション付きで石を置く
+  await executeMove({r, c, flips}, BLACK, false);
+
+  turn = WHITE;
+  statusEl.innerHTML = cpuThinkingMsg();
+  statusEl.className = 'status cpu-turn';
+  render();
+  // CPUが考える間（少し長めに）
+  await wait(1200);
+  cpuMove();
 }
+
 async function cpuMove() {
-if (!gameRunning) return;
-const cpuName = cpuNames[difficulty];
-const moves = validMoves(grid, WHITE);
-if (moves.length === 0) {
-// CPUパス
-turn = BLACK;
-if (validMoves(grid, BLACK).length === 0) {
-endGame();
-return;
+  if (!gameRunning) return;
+  const cpuName = cpuNames[difficulty];
+  const moves = validMoves(grid, WHITE);
+  if (moves.length === 0) {
+    // CPUパス
+    turn = BLACK;
+    if (validMoves(grid, BLACK).length === 0) {
+      endGame();
+      return;
+    }
+    statusEl.textContent = cpuName + 'はパス。あなたの番だよ 🌷';
+    statusEl.className = 'status your-turn';
+    render();
+    return;
+  }
+
+  let chosen;
+  if (difficulty === 'easy') {
+    chosen = moves[Math.floor(Math.random() * moves.length)];
+  } else if (difficulty === 'normal') {
+    let best = -Infinity, bests = [];
+    for (const m of moves) {
+      const score = WEIGHTS[m.r][m.c] + m.flips.length;
+      if (score > best) { best = score; bests = [m]; }
+      else if (score === best) bests.push(m);
+    }
+    chosen = bests[Math.floor(Math.random() * bests.length)];
+  } else {
+    chosen = minimaxBest(grid, WHITE, 3);
+  }
+
+  // アニメーション付きで石を置く
+  await executeMove(chosen, WHITE, true);
+
+  turn = BLACK;
+  const colLabels = ['A','B','C','D','E','F','G','H'];
+  const placedAt = colLabels[chosen.c] + (chosen.r + 1);
+
+  const playerMoves = validMoves(grid, BLACK);
+  if (playerMoves.length === 0) {
+    if (validMoves(grid, WHITE).length === 0) {
+      render();
+      endGame();
+      return;
+    }
+    document.getElementById('passBtn').disabled = false;
+    statusEl.textContent = cpuName + 'は ' + placedAt + ' に置いた → 置ける場所なし、パスして';
+    statusEl.className = 'status';
+  } else {
+    statusEl.textContent = cpuName + 'は ' + placedAt + ' に置いた（' + chosen.flips.length + '個ひっくり返したよ）';
+    statusEl.className = 'status your-turn';
+    document.getElementById('passBtn').disabled = true;
+  }
+  render();
 }
-statusEl.textContent = cpuName + 'はパス。あなたの番だよ 🌷';
-statusEl.className = 'status your-turn';
-render();
-return;
-}
-let chosen;
-if (difficulty === 'easy') {
-chosen = moves[Math.floor(Math.random() * moves.length)];
-} else if (difficulty === 'normal') {
-let best = -Infinity, bests = [];
-for (const m of moves) {
-const score = WEIGHTS[m.r][m.c] + m.flips.length;
-if (score > best) { best = score; bests = [m]; }
-else if (score === best) bests.push(m);
-}
-chosen = bests[Math.floor(Math.random() * bests.length)];
-} else {
-chosen = minimaxBest(grid, WHITE, 3);
-}
-// アニメーション付きで石を置く
-await executeMove(chosen, WHITE, true);
-turn = BLACK;
-const colLabels = ['A','B','C','D','E','F','G','H'];
-const placedAt = colLabels[chosen.c] + (chosen.r + 1);
-const playerMoves = validMoves(grid, BLACK);
-if (playerMoves.length === 0) {
-if (validMoves(grid, WHITE).length === 0) {
-render();
-endGame();
-return;
-}
-document.getElementById('passBtn').disabled = false;
-statusEl.textContent = cpuName + 'は ' + placedAt + ' に置いた → 置ける場所なし、パスして';
-statusEl.className = 'status';
-} else {
-statusEl.textContent = cpuName + 'は ' + placedAt + ' に置いた（' + chosen.flips.length + '個ひっくり返したよ）';
-statusEl.className = 'status your-turn';
-document.getElementById('passBtn').disabled = true;
-}
-render();
-}
+
 async function pass() {
-if (turn !== BLACK || validMoves(grid, BLACK).length > 0 || isAnimating) return;
-turn = WHITE;
-document.getElementById('passBtn').disabled = true;
-statusEl.innerHTML = cpuThinkingMsg();
-statusEl.className = 'status cpu-turn';
-render();
-await wait(1000);
-cpuMove();
+  if (turn !== BLACK || validMoves(grid, BLACK).length > 0 || isAnimating) return;
+  turn = WHITE;
+  document.getElementById('passBtn').disabled = true;
+  statusEl.innerHTML = cpuThinkingMsg();
+  statusEl.className = 'status cpu-turn';
+  render();
+  await wait(1000);
+  cpuMove();
 }
+
 // ミニマックス（hard用、depth=3）
 function evaluate(g) {
-let s = 0;
-for (let r = 0; r < SIZE; r++)
-for (let c = 0; c < SIZE; c++) {
-if (g[r][c] === WHITE) s += WEIGHTS[r][c];
-else if (g[r][c] === BLACK) s -= WEIGHTS[r][c];
+  let s = 0;
+  for (let r = 0; r < SIZE; r++)
+    for (let c = 0; c < SIZE; c++) {
+      if (g[r][c] === WHITE) s += WEIGHTS[r][c];
+      else if (g[r][c] === BLACK) s -= WEIGHTS[r][c];
+    }
+  return s;
 }
-return s;
-}
+
 function minimax(g, color, depth, alpha, beta) {
-const moves = validMoves(g, color);
-if (depth === 0 || moves.length === 0) {
-return evaluate(g);
+  const moves = validMoves(g, color);
+  if (depth === 0 || moves.length === 0) {
+    return evaluate(g);
+  }
+  const opp = color === WHITE ? BLACK : WHITE;
+  if (color === WHITE) {
+    let max = -Infinity;
+    for (const m of moves) {
+      const ng = g.map(r => [...r]);
+      placeMove(ng, m, WHITE);
+      const v = minimax(ng, opp, depth - 1, alpha, beta);
+      max = Math.max(max, v);
+      alpha = Math.max(alpha, v);
+      if (beta <= alpha) break;
+    }
+    return max;
+  } else {
+    let min = Infinity;
+    for (const m of moves) {
+      const ng = g.map(r => [...r]);
+      placeMove(ng, m, BLACK);
+      const v = minimax(ng, opp, depth - 1, alpha, beta);
+      min = Math.min(min, v);
+      beta = Math.min(beta, v);
+      if (beta <= alpha) break;
+    }
+    return min;
+  }
 }
-const opp = color === WHITE ? BLACK : WHITE;
-if (color === WHITE) {
-let max = -Infinity;
-for (const m of moves) {
-const ng = g.map(r => [...r]);
-placeMove(ng, m, WHITE);
-const v = minimax(ng, opp, depth - 1, alpha, beta);
-max = Math.max(max, v);
-alpha = Math.max(alpha, v);
-if (beta <= alpha) break;
-}
-return max;
-} else {
-let min = Infinity;
-for (const m of moves) {
-const ng = g.map(r => [...r]);
-placeMove(ng, m, BLACK);
-const v = minimax(ng, opp, depth - 1, alpha, beta);
-min = Math.min(min, v);
-beta = Math.min(beta, v);
-if (beta <= alpha) break;
-}
-return min;
-}
-}
+
 function minimaxBest(g, color, depth) {
-const moves = validMoves(g, color);
-let bestMove = moves[0];
-let bestScore = -Infinity;
-for (const m of moves) {
-const ng = g.map(r => [...r]);
-placeMove(ng, m, color);
-const v = minimax(ng, BLACK, depth - 1, -Infinity, Infinity);
-if (v > bestScore) { bestScore = v; bestMove = m; }
+  const moves = validMoves(g, color);
+  let bestMove = moves[0];
+  let bestScore = -Infinity;
+  for (const m of moves) {
+    const ng = g.map(r => [...r]);
+    placeMove(ng, m, color);
+    const v = minimax(ng, BLACK, depth - 1, -Infinity, Infinity);
+    if (v > bestScore) { bestScore = v; bestMove = m; }
+  }
+  return bestMove;
 }
-return bestMove;
-}
+
 function endGame() {
-gameRunning = false;
-const count = countStones(grid);
-const cpuName = cpuNames[difficulty] || 'あいて';
-const overlay = document.getElementById('overlay');
-const titleEl = document.getElementById('overlayTitle');
-const msgEl = document.getElementById('overlayMsg');
-const resEl = document.getElementById('overlayResult');
-if (count.black > count.white) {
-titleEl.textContent = '🎉 あなたの勝ち！';
-msgEl.textContent = 'おめでとう🌷';
-} else if (count.white > count.black) {
-titleEl.textContent = '😢 ' + cpuName + 'の勝ち';
-msgEl.textContent = 'もう一回ちょうせん！';
-} else {
-titleEl.textContent = '🤝 引き分け';
-msgEl.textContent = '惜しい！';
+  gameRunning = false;
+  const count = countStones(grid);
+  const cpuName = cpuNames[difficulty] || 'あいて';
+  const overlay = document.getElementById('overlay');
+  const titleEl = document.getElementById('overlayTitle');
+  const msgEl = document.getElementById('overlayMsg');
+  const resEl = document.getElementById('overlayResult');
+
+  if (count.black > count.white) {
+    titleEl.textContent = '🎉 あなたの勝ち！';
+    msgEl.textContent = 'おめでとう🌷';
+  } else if (count.white > count.black) {
+    titleEl.textContent = '😢 ' + cpuName + 'の勝ち';
+    msgEl.textContent = 'もう一回ちょうせん！';
+  } else {
+    titleEl.textContent = '🤝 引き分け';
+    msgEl.textContent = '惜しい！';
+  }
+  resEl.style.display = 'block';
+  resEl.innerHTML = `<span style="color:#2C4A66">あなた ${count.black}</span> - <span style="color:#2E7DB0">${cpuName} ${count.white}</span>`;
+  overlay.classList.add('show');
+  document.getElementById('playerBlack').classList.remove('active');
+  document.getElementById('playerWhite').classList.remove('active');
+  // 設定パネルロック解除
+  document.getElementById('settingsBox').classList.remove('locked');
 }
-resEl.style.display = 'block';
-resEl.innerHTML = `<span style="color:#2C4A66">あなた ${count.black}</span> - <span style="color:#2E7DB0">${cpuName} ${count.white}</span>`;
-overlay.classList.add('show');
-document.getElementById('playerBlack').classList.remove('active');
-document.getElementById('playerWhite').classList.remove('active');
-// 設定パネルロック解除
-document.getElementById('settingsBox').classList.remove('locked');
-}
+
 function startGame() {
-if (!difficulty) return; // 難易度未選択ガード
-grid = newGrid();
-turn = BLACK;
-gameRunning = true;
-isAnimating = false;
-renderState = { newlyPlaced: null, newlyFlipped: [], lastMoveCell: null };
-document.getElementById('overlay').classList.remove('show');
-document.getElementById('passBtn').disabled = true;
-document.getElementById('overlayResult').style.display = 'none';
-// 設定パネルをロック
-document.getElementById('settingsBox').classList.add('locked');
-statusEl.textContent = 'あなたの番だよ 🌷 ひかってるマスに置けるよ';
-statusEl.className = 'status your-turn';
-render();
+  if (!difficulty) return; // 難易度未選択ガード
+  grid = newGrid();
+  turn = BLACK;
+  gameRunning = true;
+  isAnimating = false;
+  renderState = { newlyPlaced: null, newlyFlipped: [], lastMoveCell: null };
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('passBtn').disabled = true;
+  document.getElementById('overlayResult').style.display = 'none';
+  // 設定パネルをロック
+  document.getElementById('settingsBox').classList.add('locked');
+  statusEl.textContent = 'あなたの番だよ 🌷 ひかってるマスに置けるよ';
+  statusEl.className = 'status your-turn';
+  render();
 }
+
 // 難易度切替
 const cpuNames = { easy:'ベティ', normal:'ベル', hard:'こいと' };
 const cpuIcons = { easy:'assets/beteli.svg', normal:'assets/beru.svg', hard:'assets/koito.svg' };
+
 function cpuThinkingMsg() {
-const name = cpuNames[difficulty];
-const icon = cpuIcons[difficulty];
-return `<img src="${icon}">${name}が考え中...`;
+  const name = cpuNames[difficulty];
+  const icon = cpuIcons[difficulty];
+  return `<img src="${icon}">${name}が考え中...`;
 }
 document.querySelectorAll('.diff-btn').forEach(btn => {
-btn.addEventListener('click', () => {
-if (gameRunning) return; // ゲーム中は変更不可
-document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
-btn.classList.add('active');
-difficulty = btn.dataset.level;
-document.getElementById('cpuName').textContent = cpuNames[difficulty];
-const iconEl = document.getElementById('cpuIcon');
-iconEl.src = cpuIcons[difficulty];
-iconEl.style.display = 'inline-block';
-// STARTボタン有効化
-document.getElementById('startBtn').disabled = false;
+  btn.addEventListener('click', () => {
+    if (gameRunning) return; // ゲーム中は変更不可
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    difficulty = btn.dataset.level;
+    document.getElementById('cpuName').textContent = cpuNames[difficulty];
+    const iconEl = document.getElementById('cpuIcon');
+    iconEl.src = cpuIcons[difficulty];
+    iconEl.style.display = 'inline-block';
+    // STARTボタン有効化
+    document.getElementById('startBtn').disabled = false;
+  });
 });
-});
+
 // ===== 水槽の泡エフェクト（改良版）=====
 const bc = document.getElementById('bubbleCanvas');
 const bctx = bc.getContext('2d');
 function resizeBC() { bc.width = window.innerWidth; bc.height = window.innerHeight; }
 window.addEventListener('resize', resizeBC); resizeBC();
+
 // 泡を3サイズに分けてバラバラ感を出す
 const BUBBLE_COUNT = 50;
 const bubbles = Array.from({length: BUBBLE_COUNT}, () => {
-const sizeRoll = Math.random();
-let r;
-if (sizeRoll < 0.45) r = Math.random() * 3 + 2; // 小: 2-5px
-else if (sizeRoll < 0.80) r = Math.random() * 5 + 6; // 中: 6-11px
-else r = Math.random() * 8 + 12; // 大: 12-20px
-return {
-x: Math.random() * window.innerWidth,
-y: window.innerHeight + Math.random() * window.innerHeight,
-r: r,
-speed: Math.random() * 0.7 + 0.3,
-phase: Math.random() * Math.PI * 2,
-opacity: Math.random() * 0.4 + 0.4, // 0.4-0.8 濃いめ
-};
+  const sizeRoll = Math.random();
+  let r;
+  if (sizeRoll < 0.45)      r = Math.random() * 3 + 2;    // 小: 2-5px
+  else if (sizeRoll < 0.80) r = Math.random() * 5 + 6;    // 中: 6-11px
+  else                       r = Math.random() * 8 + 12;   // 大: 12-20px
+  return {
+    x: Math.random() * window.innerWidth,
+    y: window.innerHeight + Math.random() * window.innerHeight,
+    r: r,
+    speed: Math.random() * 0.7 + 0.3,
+    phase: Math.random() * Math.PI * 2,
+    opacity: Math.random() * 0.4 + 0.4,  // 0.4-0.8 濃いめ
+  };
 });
+
 function animateBubbles() {
-bctx.clearRect(0, 0, bc.width, bc.height);
-const t = Date.now() / 1000;
-bubbles.forEach(b => {
-b.y -= b.speed;
-const dx = Math.sin(t * 0.8 + b.phase) * 0.7;
-b.x += dx;
-if (b.y < -30) { b.y = bc.height + 20; b.x = Math.random() * bc.width; }
-// 1. 泡の本体（水色みがかった半透明）
-bctx.globalAlpha = b.opacity * 0.35;
-bctx.fillStyle = 'rgba(180,220,245,0.8)';
-bctx.beginPath();
-bctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-bctx.fill();
-// 2. 泡の輪郭（濃い青でくっきり）
-bctx.globalAlpha = b.opacity;
-bctx.strokeStyle = 'rgba(30,90,160,0.85)';
-bctx.lineWidth = b.r > 10 ? 2.2 : 1.6;
-bctx.stroke();
-// 3. 光のハイライト（左上のキラリ）
-bctx.globalAlpha = b.opacity * 0.95;
-bctx.fillStyle = '#FFFFFF';
-bctx.beginPath();
-bctx.arc(b.x - b.r * 0.35, b.y - b.r * 0.35, b.r * 0.28, 0, Math.PI * 2);
-bctx.fill();
-});
-bctx.globalAlpha = 1;
-requestAnimationFrame(animateBubbles);
+  bctx.clearRect(0, 0, bc.width, bc.height);
+  const t = Date.now() / 1000;
+  bubbles.forEach(b => {
+    b.y -= b.speed;
+    const dx = Math.sin(t * 0.8 + b.phase) * 0.7;
+    b.x += dx;
+    if (b.y < -30) { b.y = bc.height + 20; b.x = Math.random() * bc.width; }
+
+    // 1. 泡の本体（水色みがかった半透明）
+    bctx.globalAlpha = b.opacity * 0.35;
+    bctx.fillStyle = 'rgba(180,220,245,0.8)';
+    bctx.beginPath();
+    bctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    bctx.fill();
+
+    // 2. 泡の輪郭（濃い青でくっきり）
+    bctx.globalAlpha = b.opacity;
+    bctx.strokeStyle = 'rgba(30,90,160,0.85)';
+    bctx.lineWidth = b.r > 10 ? 2.2 : 1.6;
+    bctx.stroke();
+
+    // 3. 光のハイライト（左上のキラリ）
+    bctx.globalAlpha = b.opacity * 0.95;
+    bctx.fillStyle = '#FFFFFF';
+    bctx.beginPath();
+    bctx.arc(b.x - b.r * 0.35, b.y - b.r * 0.35, b.r * 0.28, 0, Math.PI * 2);
+    bctx.fill();
+  });
+  bctx.globalAlpha = 1;
+  requestAnimationFrame(animateBubbles);
 }
 animateBubbles();
 // ===== 泡エフェクト END =====
@@ -479,4 +598,7 @@ gameRunning = false;
 turn = BLACK;
 difficulty = null;
 render();
-// オーバーレイは初期表示済みなので何もしない</script> </body></html>
+// オーバーレイは初期表示済みなので何もしない
+</script>
+</body>
+</html>
