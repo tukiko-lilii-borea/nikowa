@@ -228,13 +228,25 @@
     background: rgba(78,205,196,0.25);
     border-radius: 16px;
   }
+
+  .vol-row { display:flex; gap:3px; }
+  .vol-btn { flex:1; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); border-radius:6px; color:#5C3D1E; font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .vol-btn.active { background:var(--coral); border-color:var(--coral); color:white; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="logo">niko<span>wa.</span> ブロック</div>
-  <button class="back-btn" onclick="history.back()">← もどる</button>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <div class="vol-row">
+      <button class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button>
+      <button class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button>
+      <button class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button>
+      <button class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
+    </div>
+    <button class="back-btn" onclick="history.back()">← もどる</button>
+  </div>
 </div>
 
 <div class="wrap">
@@ -297,7 +309,7 @@ function resizeCanvas() {
 // 難易度設定
 const DIFF = {
   easy:   { paddleW: 0.25, ballSpeed: 0.55, rows:  4, cols: 7, bh: 18, padding: 4, speedMult: 1.000 },
-  normal: { paddleW: 0.18, ballSpeed: 0.95, rows: 10, cols: 7, bh: 16, padding: 3, speedMult: 1.005 },
+  normal: { paddleW: 0.18, ballSpeed: 1.20, rows: 10, cols: 7, bh: 16, padding: 3, speedMult: 1.005 },
   hard:   { paddleW: 0.10, ballSpeed: 1.10, rows: 16, cols: 9, bh: 11, padding: 2, speedMult: 1.022 },
 };
 const BLOCK_COLORS = [
@@ -375,6 +387,7 @@ function returnToStart() {
 }
 
 function startGame() {
+  initAudio().then(()=>{ stopBGM(); startBGM(); });
   resizeCanvas();
   score = 0;
   lives = 3;
@@ -430,6 +443,7 @@ function update(dt) {
     ball.vy > 0
   ) {
     ball.y = paddle.y - ball.r;
+    sfxPaddle();
     // パドル上の当たり位置で角度を変える
     const hit = (ball.x - (paddle.x + paddle.w / 2)) / (paddle.w / 2); // -1 〜 +1
     const angle = -Math.PI / 2 + hit * (Math.PI / 3); // -60度 〜 +60度
@@ -447,6 +461,7 @@ function update(dt) {
       ball.y - ball.r < b.y + b.h
     ) {
       b.alive = false;
+      sfxBrick();
       score += 10;
       // ブロックを壊すごとに加速（難易度別）
       const mult = DIFF[difficulty].speedMult;
@@ -469,6 +484,7 @@ function update(dt) {
   // 下に落ちた
   if (ball.y - ball.r > H) {
     lives--;
+    sfxLoseLife();
     document.getElementById('livesVal').textContent = lives;
     updateLifeIcons();
     if (lives <= 0) {
@@ -560,6 +576,7 @@ function loop(now) {
 
 function winLevel() {
   gameState = 'won';
+  sfxWin();
   saveBest();
   const overlay = document.getElementById('overlay');
   document.getElementById('overlayTitle').textContent = '🎉 ぜんぶ崩した！';
@@ -573,6 +590,7 @@ function winLevel() {
 
 function endGame() {
   gameState = 'over';
+  sfxOver();
   saveBest();
   const overlay = document.getElementById('overlay');
   document.getElementById('overlayTitle').textContent = '😢 おしまい';
@@ -767,6 +785,85 @@ document.getElementById('bestVal').textContent = best;
 setup();
 draw();
 document.getElementById('overlay').classList.add('show');
+
+// ===== ブロック崩し BGM & 効果音 =====
+let audioCtx = null;
+let bgmRunning = false;
+let bgmNoteIdx = 0;
+let bgmTimer = null;
+let masterVol = 0;
+
+const BPM_B = 132;
+const EN_B = 60000 / BPM_B / 2;
+
+// 軽快ポップ・弾む8bitメロディ
+const BREAKOUT_MEL = [
+  659.25,523.25,587.33,659.25,  783.99,659.25,587.33,523.25,
+  587.33,698.46,783.99,880.00,  783.99,698.46,659.25,587.33,
+  523.25,587.33,659.25,783.99,  659.25,587.33,523.25,440.00,
+  493.88,523.25,587.33,659.25,  783.99,659.25,523.25,0,
+];
+const BREAKOUT_BASS = [
+  261.63,0,261.63,0, 329.63,0,329.63,0,
+  293.66,0,293.66,0, 392.00,0,392.00,0,
+  261.63,0,261.63,0, 329.63,0,329.63,0,
+  246.94,0,246.94,0, 392.00,0,392.00,0,
+];
+
+function setVol(v) {
+  masterVol = v;
+  ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
+  document.getElementById(map[v])?.classList.add('active');
+  if (v === 0) stopBGM();
+  else if (gameState === 'playing' && !bgmRunning) startBGM();
+}
+
+function initAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+  }
+  return audioCtx.resume();
+}
+
+function playNote(freq, dur, vol, type) {
+  if (!audioCtx || !freq || masterVol === 0) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = type || 'square';
+  o.frequency.value = freq;
+  const t = audioCtx.currentTime;
+  g.gain.setValueAtTime(vol * masterVol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.9);
+  o.start(t); o.stop(t + dur);
+}
+
+function startBGM() {
+  if (bgmRunning) return;
+  bgmRunning = true; bgmNoteIdx = 0;
+  tickBGM();
+}
+function stopBGM() {
+  bgmRunning = false;
+  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+}
+function tickBGM() {
+  if (!bgmRunning) return;
+  const i = bgmNoteIdx % BREAKOUT_MEL.length;
+  playNote(BREAKOUT_MEL[i],  EN_B/1000*0.8,  0.10, 'square');
+  playNote(BREAKOUT_BASS[i], EN_B/1000*1.6,  0.07, 'triangle');
+  bgmNoteIdx++;
+  bgmTimer = setTimeout(tickBGM, EN_B);
+}
+
+function sfxPaddle()  { playNote(330, 0.08, 0.22, 'sine'); }
+function sfxBrick()   { playNote(660, 0.06, 0.20, 'square'); }
+function sfxWall()    { playNote(220, 0.06, 0.15, 'square'); }
+function sfxLoseLife(){ stopBGM(); [440,349.23,293.66].forEach((f,i)=>setTimeout(()=>playNote(f,0.2,0.18,'sawtooth'),i*100)); setTimeout(()=>{ if(gameState==='playing') startBGM(); },400); }
+function sfxWin()     { stopBGM(); [523.25,659.25,783.99,1046.50].forEach((f,i)=>setTimeout(()=>playNote(f,0.2,0.22,'sine'),i*100)); }
+function sfxOver()    { stopBGM(); [440,349.23,261.63,196].forEach((f,i)=>setTimeout(()=>playNote(f,0.25,0.18,'sawtooth'),i*120)); }
+// ===== ここまで BGM =====
 </script>
 </body>
 </html>
