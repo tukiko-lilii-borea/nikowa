@@ -87,9 +87,11 @@ function update(){
     // スコア
     if(!p.passed && p.x+PIPE_W<BIRD.x){p.passed=true;score++;}
     // 衝突
-    const bx=BIRD.x-BIRD.w/2,by=BIRD.y-BIRD.h/2;
-    if(bx+BIRD.w>p.x && bx<p.x+PIPE_W){
-      if(by<p.topH || by+BIRD.h>p.topH+GAP){die();return;}
+    const margin=10; // あたり判定を少し緩める
+    const bx=BIRD.x-BIRD.w/2+margin,by=BIRD.y-BIRD.h/2+margin;
+    const bw=BIRD.w-margin*2,bh=BIRD.h-margin*2;
+    if(bx+bw>p.x && bx<p.x+PIPE_W){
+      if(by<p.topH || by+bh>p.topH+GAP){die();return;}
     }
   }
   pipes=pipes.filter(p=>p.x+PIPE_W>0);
@@ -103,52 +105,54 @@ function die(){
   if(score>best){best=score;localStorage.setItem(best_key,best);}
 }
 
-function drawCloud(x,y,s){
-  ctx.fillStyle='rgba(255,255,255,0.85)';
-  ctx.beginPath();
-  ctx.ellipse(x,y,36*s,22*s,0,0,Math.PI*2);
-  ctx.ellipse(x+22*s,y+4*s,28*s,18*s,0,0,Math.PI*2);
-  ctx.ellipse(x-20*s,y+6*s,24*s,16*s,0,0,Math.PI*2);
-  ctx.fill();
-}
+// drawCloud: draw関数内で処理
+
 
 function drawPipe(p){
   const r=14;
-  // グリーン
-  ctx.fillStyle='#88CC66';
-  // 上パイプ
+  const pc=getPipeColors();
+  ctx.fillStyle=pc.main;
   ctx.beginPath();
   ctx.roundRect(p.x,0,PIPE_W,p.topH-12,r);
   ctx.fill();
-  ctx.fillStyle='#66BB44';
+  ctx.fillStyle=pc.dark;
   ctx.beginPath();
   ctx.roundRect(p.x-4,p.topH-20,PIPE_W+8,20,r);
   ctx.fill();
-  // 下パイプ
   const botY=p.topH+GAP;
-  ctx.fillStyle='#88CC66';
+  ctx.fillStyle=pc.main;
   ctx.beginPath();
   ctx.roundRect(p.x,botY+12,PIPE_W,canvas.height-botY-12,r);
   ctx.fill();
-  ctx.fillStyle='#66BB44';
+  ctx.fillStyle=pc.dark;
   ctx.beginPath();
   ctx.roundRect(p.x-4,botY,PIPE_W+8,20,r);
   ctx.fill();
 }
 
 function draw(){
-  // 空
+  // 空（スコアで変化）
+  const sk=getSkyColors();
   const grad=ctx.createLinearGradient(0,0,0,canvas.height);
-  grad.addColorStop(0,'#B8E4FF');
-  grad.addColorStop(1,'#D8F4FF');
+  grad.addColorStop(0,sk.top);
+  grad.addColorStop(1,sk.bot);
   ctx.fillStyle=grad;
   ctx.fillRect(0,0,canvas.width,canvas.height);
   // 雲
-  clouds.forEach(c=>drawCloud(c.x,c.y,c.s));
+  ctx.save();
+  clouds.forEach(c=>{
+    ctx.fillStyle=sk.cloud;
+    ctx.beginPath();
+    ctx.ellipse(c.x,c.y,36*c.s,22*c.s,0,0,Math.PI*2);
+    ctx.ellipse(c.x+22*c.s,c.y+4*c.s,28*c.s,18*c.s,0,0,Math.PI*2);
+    ctx.ellipse(c.x-20*c.s,c.y+6*c.s,24*c.s,16*c.s,0,0,Math.PI*2);
+    ctx.fill();
+  });
+  ctx.restore();
   // 地面
-  ctx.fillStyle='#8BC34A';
+  ctx.fillStyle=sk.ground;
   ctx.fillRect(0,canvas.height-18,canvas.width,18);
-  ctx.fillStyle='#7CB342';
+  ctx.fillStyle=sk.ground2;
   ctx.fillRect(0,canvas.height-18,canvas.width,6);
   // パイプ
   pipes.forEach(drawPipe);
@@ -225,6 +229,24 @@ frame();
 window.addEventListener('resize',()=>{resize();resetBird();});
 
 
+
+// スコアに応じた空とパイプの色
+function getSkyColors(){
+  const s=score%50;
+  if(s>=40) return {top:'#0A0A2E',bot:'#1A1A4E',cloud:'rgba(100,100,180,0.3)',ground:'#2A2A5E',ground2:'#1A1A4E'};
+  if(s>=30) return {top:'#0D1B4B',bot:'#1A3366',cloud:'rgba(150,150,220,0.4)',ground:'#1A3366',ground2:'#0D1B4B'};
+  if(s>=20) return {top:'#FF6B35',bot:'#FFB347',cloud:'rgba(255,200,150,0.7)',ground:'#CC4400',ground2:'#AA3300'};
+  if(s>=10) return {top:'#87CEEB',bot:'#E0F7FA',cloud:'rgba(255,255,255,0.85)',ground:'#66BB6A',ground2:'#558B2F'};
+  return {top:'#B8E4FF',bot:'#D8F4FF',cloud:'rgba(255,255,255,0.85)',ground:'#8BC34A',ground2:'#7CB342'};
+}
+function getPipeColors(){
+  const s=score%50;
+  if(s>=40) return {main:'#9B59B6',dark:'#7D3C98'};
+  if(s>=30) return {main:'#2980B9',dark:'#1A5276'};
+  if(s>=20) return {main:'#E67E22',dark:'#CA6F1E'};
+  if(s>=10) return {main:'#E74C3C',dark:'#C0392B'};
+  return {main:'#88CC66',dark:'#66BB44'};
+}
 // ===== フラッピー BGM & 効果音（安全版） =====
 var audioCtx=null, bgmRunning=false, bgmIdx=0, bgmTimer=null;
 var masterVol=(function(){ try{ return parseFloat(localStorage.getItem('nikowa_bgm_vol')||'0'); }catch(e){ return 0; } })();
