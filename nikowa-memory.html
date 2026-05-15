@@ -706,6 +706,7 @@ const MEM_BASS = [
 
 function setVol(v) {
   masterVol = v;
+  try { localStorage.setItem('nikowa_bgm_vol', String(v)); } catch(e){}
   ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
   const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
   document.getElementById(map[v])?.classList.add('active');
@@ -750,6 +751,21 @@ function sfxMatch() { [1046.50,1318.51].forEach((f,i)=>setTimeout(()=>playNote(f
 function sfxMiss()  { playNote(220, 0.10, 0.12, 'triangle'); }
 function sfxWin()   { stopBGM(); [523.25,659.25,783.99,1046.50,1318.51].forEach((f,i)=>setTimeout(()=>playNote(f,0.15,0.20,'sine'),i*90)); }
 // ===== ここまで =====
+
+// nikowa_bgm_vol_restore_marker - 起動時にアプリ全体の音量設定を読み込む
+(function(){
+  try {
+    var saved = parseFloat(localStorage.getItem('nikowa_bgm_vol'));
+    if (!isNaN(saved) && typeof setVol === 'function') {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function(){ setVol(saved); });
+      } else {
+        setVol(saved);
+      }
+    }
+  } catch(e){}
+})();
+
 </script>
 </body>
 </html>

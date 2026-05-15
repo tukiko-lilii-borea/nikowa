@@ -624,7 +624,7 @@ let audioCtx = null;
 let bgmRunning = false;
 let bgmNoteIdx = 0;
 let bgmTimer = null;
-let masterVol = 0;
+let masterVol = (function(){ try{ return parseFloat(localStorage.getItem('nikowa_bgm_vol')||'0'); }catch(e){ return 0; } })();
 
 const BPM_O = 88;
 const EN_O = 60000 / BPM_O / 2;
@@ -645,6 +645,7 @@ const OTHELLO_BASS = [
 
 function setVol(v) {
   masterVol = v;
+  try { localStorage.setItem('nikowa_bgm_vol', String(v)); } catch(e){}
   ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
   const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
   document.getElementById(map[v])?.classList.add('active');
@@ -696,6 +697,21 @@ function sfxWin()   { [523.25,659.25,783.99,1046.50].forEach((f,i) => setTimeout
 function sfxLose()  { [440,349.23,293.66,220].forEach((f,i) => setTimeout(()=>playNote(f,0.22,0.15,'triangle'),i*120)); }
 function sfxDraw()  { [523.25,523.25].forEach((f,i) => setTimeout(()=>playNote(f,0.15,0.12,'sine'),i*200)); }
 // ===== ここまで BGM =====
+
+// nikowa_bgm_vol_restore_marker - 起動時にアプリ全体の音量設定を読み込む
+(function(){
+  try {
+    var saved = parseFloat(localStorage.getItem('nikowa_bgm_vol'));
+    if (!isNaN(saved) && typeof setVol === 'function') {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function(){ setVol(saved); });
+      } else {
+        setVol(saved);
+      }
+    }
+  } catch(e){}
+})();
+
 </script>
 </body>
 </html>

@@ -347,6 +347,8 @@
   .vol-row { display:flex; gap:3px; }
   .vol-btn { background:rgba(255,255,255,0.15); border:1px solid rgba(124,108,119,0.3); border-radius:6px; color:#7C6C77; font-size:9px; font-weight:800; padding:4px 6px; cursor:pointer; font-family:inherit; min-width:30px; }
   .vol-btn.active { background:#7C6C77; border-color:#7C6C77; color:white; }
+
+  .toolbar-row { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; width:100%; max-width:460px; }
 </style>
 </head>
 <body>
@@ -354,6 +356,13 @@
 <div class="header">
   <div class="logo">niko<span>wa.</span> マイン</div>
   <div style="display:flex;gap:8px;">
+    
+    <button type="button" class="back-btn" onclick="history.back()">← もどる</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="toolbar-row">
     <button type="button" class="help-btn" onclick="document.getElementById('howtoModal').classList.add('show')">？ 遊び方</button>
     <div class="vol-row">
       <button type="button" class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button>
@@ -361,11 +370,7 @@
       <button type="button" class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button>
       <button type="button" class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
     </div>
-    <button type="button" class="back-btn" onclick="history.back()">← もどる</button>
   </div>
-</div>
-
-<div class="wrap">
   <div class="stats">
     <div class="stat-card">
       <div class="stat-label">🚩 のこり</div>
@@ -382,7 +387,7 @@
   </div>
 
   <div class="diff-row">
-    <button class="diff-btn active" data-diff="easy">🌱<span>かんたん</span><span class="diff-label">9×9</span></button>
+    <button class="diff-btn active" data-diff="easy">🌱<span>かんたん</span><span class="diff-label">7×7</span></button>
     <button class="diff-btn" data-diff="normal">🌷<span>ふつう</span><span class="diff-label">10×12</span></button>
     <button class="diff-btn" data-diff="hard">🔥<span>むずかしい</span><span class="diff-label">10×16</span></button>
   </div>
@@ -445,7 +450,7 @@
 
 <script>
 const DIFF = {
-  easy:   { cols: 9,  rows: 9,  mines: 10 },
+  easy:   { cols: 7,  rows: 7,  mines: 6 },
   normal: { cols: 10, rows: 12, mines: 20 },
   hard:   { cols: 10, rows: 16, mines: 35 },
 };
@@ -695,10 +700,11 @@ var audioCtx = null;
 var bgmRunning = false;
 var bgmNoteIdx = 0;
 var bgmTimer = null;
-var masterVol = 0;
+var masterVol = (function(){ try{ return parseFloat(localStorage.getItem('nikowa_bgm_vol')||'0'); }catch(e){ return 0; } })();
 
 function setVol(v) {
   masterVol = v;
+  try { localStorage.setItem('nikowa_bgm_vol', String(v)); } catch(e){}
   ['vOff','vLo','vMd','vHi'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.classList.remove('active');
@@ -752,8 +758,8 @@ function stopBGM() {
 function tickBGM() {
   if (!bgmRunning) return;
   var i = bgmNoteIdx % MS_MEL.length;
-  playNote(MS_MEL[i], 0.30, 0.08, 'triangle');
-  playNote(MS_BASS[i], 0.72, 0.10, 'sine');
+  playNote(MS_MEL[i], 0.30, 0.20, 'triangle');
+  playNote(MS_BASS[i], 0.72, 0.22, 'sine');
   bgmNoteIdx++;
   bgmTimer = setTimeout(tickBGM, 400);
 }
@@ -815,6 +821,20 @@ if (typeof startGame !== 'undefined') {
 }
 // ===== BGMここまで =====
 
+
+// nikowa_bgm_vol_restore_marker - 起動時にアプリ全体の音量設定を読み込む
+(function(){
+  try {
+    var saved = parseFloat(localStorage.getItem('nikowa_bgm_vol'));
+    if (!isNaN(saved) && typeof setVol === 'function') {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function(){ setVol(saved); });
+      } else {
+        setVol(saved);
+      }
+    }
+  } catch(e){}
+})();
 </script>
 </body>
 </html>

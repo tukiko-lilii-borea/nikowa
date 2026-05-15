@@ -816,10 +816,11 @@ const BGM_BASS = [
   220.00,0,174.61,0, 196.00,0,196.00,0,
 ];
 
-let masterVol = 0; // デフォルト：OFF
+let masterVol = (function(){ try{ return parseFloat(localStorage.getItem('nikowa_bgm_vol')||'0'); }catch(e){ return 0; } })(); // デフォルト：OFF
 
 function setVol(v) {
   masterVol = v;
+  try { localStorage.setItem('nikowa_bgm_vol', String(v)); } catch(e){}
   ['vOff','vLo','vMd','vHi'].forEach(id => {
     document.getElementById(id)?.classList.remove('active');
   });
@@ -883,6 +884,21 @@ function sfxGameOver() {
   );
 }
 // ===== ここまで BGM =====
+
+// nikowa_bgm_vol_restore_marker - 起動時にアプリ全体の音量設定を読み込む
+(function(){
+  try {
+    var saved = parseFloat(localStorage.getItem('nikowa_bgm_vol'));
+    if (!isNaN(saved) && typeof setVol === 'function') {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function(){ setVol(saved); });
+      } else {
+        setVol(saved);
+      }
+    }
+  } catch(e){}
+})();
+
 </script>
 </body>
 </html>

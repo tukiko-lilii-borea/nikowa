@@ -102,24 +102,24 @@
   .go-btn { background:#E94B8A; color:white; border:none; border-radius:14px; padding:13px 36px; font-family:inherit; font-size:14px; font-weight:900; cursor:pointer; margin-top:6px; box-shadow:0 4px 14px rgba(233,75,138,0.35); }
   .go-theme-btn { background:white; color:#3D2B3E; border:2px solid rgba(200,150,180,0.35); border-radius:14px; padding:11px 28px; font-family:inherit; font-size:13px; font-weight:800; cursor:pointer; }
 
+  .toolbar-row { display:flex; justify-content:center; align-items:center; gap:8px; margin-top:6px; }
   .vol-row { display:flex; gap:3px; }
-  .vol-btn { flex:1; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); border-radius:6px; color:#9B59B6; font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
-  .vol-btn.active { background:#9B59B6; border-color:#9B59B6; color:white; }
+  .vol-btn { background:rgba(255,255,255,0.7); border:1px solid rgba(200,150,180,0.3); border-radius:6px; color:#8B6A85; font-size:9px; font-weight:800; padding:4px 7px; cursor:pointer; font-family:inherit; }
+  .vol-btn.active { background:#E94B6F; border-color:#E94B6F; color:white; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="logo" id="gameLogo"><img src="assets/logo-soft.svg" draggable="false"></div>
-  <div style="display:flex;align-items:center;gap:6px;">
+  <button type="button" class="back-btn" onclick="history.back()">← もどる</button>
+  <div class="toolbar-row">
     <div class="vol-row">
-      <button class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button>
-      <button class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button>
-      <button class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button>
-      <button class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
+      <button type="button" class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button>
+      <button type="button" class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button>
+      <button type="button" class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button>
+      <button type="button" class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
     </div>
-    <button class="back-btn" onclick="history.back()">← もどる</button>
-</div>
   </div>
 </div>
 
@@ -144,28 +144,28 @@
   </div>
 </div>
 
-<button class="start-btn" id="startBtn" onclick="startGame()">START ★</button>
+<button type="button" class="start-btn" id="startBtn" onclick="startGame()">START ★</button>
 
 <!-- 難易度選択 -->
 <div id="difficultyOverlay">
   <div class="diff-title">🎮 サイモン</div>
   <div class="diff-sub">むずかしさを えらんでね</div>
   <div class="diff-grid">
-    <button class="diff-btn" onclick="selectDifficulty('easy')">
+    <button type="button" class="diff-btn" onclick="selectDifficulty('easy')">
       <span class="diff-emoji">🌱</span>
       <div class="diff-info">
         <div class="diff-name">かんたん</div>
         <div class="diff-desc">4まい</div>
       </div>
     </button>
-    <button class="diff-btn" onclick="selectDifficulty('normal')">
+    <button type="button" class="diff-btn" onclick="selectDifficulty('normal')">
       <span class="diff-emoji">🌷</span>
       <div class="diff-info">
         <div class="diff-name">ふつう</div>
         <div class="diff-desc">6まい</div>
       </div>
     </button>
-    <button class="diff-btn" onclick="selectDifficulty('hard')">
+    <button type="button" class="diff-btn" onclick="selectDifficulty('hard')">
       <span class="diff-emoji">🔥</span>
       <div class="diff-info">
         <div class="diff-name">むずい</div>
@@ -182,8 +182,8 @@
   <div class="go-score" id="goScore"></div>
   <div class="go-best" id="goBest"></div>
   <div class="go-new-best" id="goNewBest" style="display:none;">🌟 ベスト更新！</div>
-  <button class="go-btn" onclick="restartGame()">もう一回 ★</button>
-  <button class="go-theme-btn" onclick="backToTheme()">テーマを変える</button>
+  <button type="button" class="go-btn" onclick="restartGame()">もう一回 ★</button>
+  <button type="button" class="go-theme-btn" onclick="backToTheme()">テーマを変える</button>
 </div>
 
 <script>
@@ -279,7 +279,6 @@ function buildGrid(count, cols) {
 
 
 function startGame() {
-  initAudio().then(()=>{ stopBGM(); startBGM(); });
   sequence = [];
   userInput = [];
   level = 0;
@@ -401,7 +400,6 @@ function clearProgressTimer() {
 }
 
 function gameOver() {
-  stopBGM();
   gameActive = false;
   isUserTurn = false;
   setButtonsEnabled(false);
@@ -438,50 +436,67 @@ function backToTheme() {
 // ページ起動時に初期化
 initTheme();
 
-// ===== simon BGM & 効果音 =====
-let audioCtx = null;
-let bgmRunning = false;
-let bgmNoteIdx = 0;
-let bgmTimer = null;
-let masterVol = 0;
+// ===== サイモン BGM & 効果音 =====
+var audioCtx = null;
+var bgmRunning = false;
+var bgmNoteIdx = 0;
+var bgmTimer = null;
+var masterVol = (function(){ try{ return parseFloat(localStorage.getItem('nikowa_bgm_vol')||'0'); }catch(e){ return 0; } })();
 
-const EN_SIM = 300.00;
-const BGM_MEL_SIMO = [523.25,659.25,783.99,659.25,523.25,440.0,523.25,0,659.25,783.99,880.0,783.99,659.25,523.25,659.25,0,440.0,523.25,659.25,523.25,440.0,349.23,440.0,0,523.25,659.25,523.25,440.0,523.25,0,523.25,0];
-const BGM_BASS_SIMO = [261.63,0,0,0,261.63,0,0,0,261.63,0,0,0,261.63,0,0,0,220.0,0,0,0,220.0,0,0,0,220.0,0,0,0,220.0,0,0,0];
+// 各キャラの音階（メジャースケール C5～C6）
+var BTN_NOTES = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50];
+
+// サイモンBGM：軽快なリズムパターン（音ゲー風）
+var SIM_MEL = [
+  659.25,0,659.25,0, 659.25,0,523.25,0,
+  659.25,0,783.99,0, 0,0,587.33,0,
+  523.25,0,523.25,0, 698.46,0,659.25,0,
+  587.33,0,0,0, 0,0,0,0,
+];
+var SIM_BASS = [
+  130.81,0,164.81,0, 130.81,0,164.81,0,
+  130.81,0,196.00,0, 196.00,0,164.81,0,
+  130.81,0,164.81,0, 174.61,0,164.81,0,
+  146.83,0,146.83,0, 130.81,0,130.81,0,
+];
 
 function setVol(v) {
   masterVol = v;
-  ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
-  const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
-  document.getElementById(map[v])?.classList.add('active');
+  try { localStorage.setItem('nikowa_bgm_vol', String(v)); } catch(e){}
+  ['vOff','vLo','vMd','vHi'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  var map = {0:'vOff',0.3:'vLo',0.7:'vMd',1.0:'vHi'};
+  var act = document.getElementById(map[v]);
+  if (act) act.classList.add('active');
   if (v === 0) stopBGM();
-  else if (!bgmRunning) startBGM();
-}
-
-function initAudio() {
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+  else {
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+    }
+    if (audioCtx) audioCtx.resume();
   }
-  return audioCtx.resume();
 }
 
 function playNote(freq, dur, vol, type) {
   if (!audioCtx || !freq || masterVol === 0) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.connect(g); g.connect(audioCtx.destination);
-  o.type = type || 'sine';
-  o.frequency.value = freq;
-  const t = audioCtx.currentTime;
-  g.gain.setValueAtTime(vol * masterVol, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
-  o.start(t); o.stop(t + dur);
+  try {
+    var o = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    var t = audioCtx.currentTime;
+    g.gain.setValueAtTime(vol * masterVol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
+    o.start(t); o.stop(t + dur);
+  } catch(e){}
 }
 
 function startBGM() {
   if (bgmRunning) return;
-  bgmRunning = true; bgmNoteIdx = 0;
-  tickBGM();
+  bgmRunning = true; bgmNoteIdx = 0; tickBGM();
 }
 function stopBGM() {
   bgmRunning = false;
@@ -489,16 +504,85 @@ function stopBGM() {
 }
 function tickBGM() {
   if (!bgmRunning) return;
-  const i = bgmNoteIdx % BGM_MEL_SIMO.length;
-  playNote(BGM_MEL_SIMO[i], EN_SIM/1000*0.82, 0.09, 'sine');
-  playNote(BGM_BASS_SIMO[i], EN_SIM/1000*1.7, 0.06, 'triangle');
+  var i = bgmNoteIdx % SIM_MEL.length;
+  playNote(SIM_MEL[i], 0.20, 0.16, 'square');
+  playNote(SIM_BASS[i], 0.45, 0.18, 'triangle');
   bgmNoteIdx++;
-  bgmTimer = setTimeout(tickBGM, EN_SIM);
+  bgmTimer = setTimeout(tickBGM, 230);
 }
 
-function sfxCorrect(){ playNote(880,0.08,0.18,'sine'); }
-function sfxWrong(){ stopBGM(); [440,220].forEach((f,i)=>setTimeout(()=>playNote(f,0.2,0.18,'sawtooth'),i*150)); setTimeout(()=>{ if(typeof isPlaying!=='undefined'&&!isPlaying) return; },400); }
-// ===== ここまで BGM =====
+// flashButtonをラップして音を追加
+if (typeof flashButton !== 'undefined') {
+  var _origFlash = flashButton;
+  flashButton = async function(idx, dur) {
+    playNote(BTN_NOTES[idx] || 523.25, 0.25, 0.32, 'sine');
+    return _origFlash(idx, dur);
+  };
+}
+
+// tapFlashをラップ
+if (typeof tapFlash !== 'undefined') {
+  var _origTapFlash = tapFlash;
+  tapFlash = function(idx) {
+    playNote(BTN_NOTES[idx] || 523.25, 0.20, 0.28, 'sine');
+    return _origTapFlash(idx);
+  };
+}
+
+// startGameをラップ
+if (typeof startGame !== 'undefined') {
+  var _origStart = startGame;
+  startGame = function() {
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+    }
+    if (audioCtx && masterVol > 0) {
+      audioCtx.resume().then(function(){ stopBGM(); startBGM(); }).catch(function(){});
+    }
+    return _origStart();
+  };
+}
+
+// gameOverをラップ
+if (typeof gameOver !== 'undefined') {
+  var _origOver = gameOver;
+  gameOver = function() {
+    stopBGM();
+    [440,349.23,261.63,196].forEach(function(f,i){
+      setTimeout(function(){ playNote(f, 0.22, 0.20, 'sawtooth'); }, i * 100);
+    });
+    return _origOver();
+  };
+}
+
+// ── localStorageから音量読み込んでUI反映 ──
+(function(){
+  var v = masterVol;
+  var map = {0:'vOff',0.3:'vLo',0.7:'vMd',1.0:'vHi'};
+  Object.values(map).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.classList.remove('active','bgm-vol-active');
+  });
+  var activeId = map[v];
+  if(activeId){ var el = document.getElementById(activeId); if(el) el.classList.add('active'); }
+})();
+// ===== ここまで =====
+
+// nikowa_bgm_vol_restore_marker - 起動時にアプリ全体の音量設定を読み込む
+(function(){
+  try {
+    var saved = parseFloat(localStorage.getItem('nikowa_bgm_vol'));
+    if (!isNaN(saved) && typeof setVol === 'function') {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function(){ setVol(saved); });
+      } else {
+        setVol(saved);
+      }
+    }
+  } catch(e){}
+})();
+
+
 </script>
 </body>
 </html>
