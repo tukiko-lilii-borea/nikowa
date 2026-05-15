@@ -312,6 +312,7 @@ const DIFF = {
 };
 
 let snake, dir, nextDir, food, score, best, gameRunning, paused, lastMove;
+let loopGen = 0;  // 世代カウンタ：古いループ無効化用
 let difficulty = 'easy';
 let cellSize = 20;
 
@@ -454,15 +455,15 @@ function step() {
   }
 }
 
-function loop(now) {
-  if (!gameRunning) return;
+function loop(now, myGen) {
+  if (!gameRunning || myGen !== loopGen) return;  // 古い世代は終了
   if (!paused && now - lastMove > DIFF[difficulty].speed) {
     step();
     if (!gameRunning) return;
     lastMove = now;
   }
   draw();
-  requestAnimationFrame(loop);
+  requestAnimationFrame(t => loop(t, myGen));
 }
 
 function startGame() {
@@ -476,7 +477,9 @@ function startGame() {
   document.getElementById('startBtn').textContent = '🔄 リセット';
   document.getElementById('pauseBtn').disabled = false;
   document.getElementById('pauseBtn').textContent = '⏸ ぽーず';
-  requestAnimationFrame(loop);
+  loopGen++;  // 古いループ無効化
+  const myGen = loopGen;
+  requestAnimationFrame(t => loop(t, myGen));
 }
 
 function endGame() {
@@ -505,8 +508,9 @@ function endGame() {
 function togglePause() {
   if (!gameRunning) return;
   paused = !paused;
-  document.getElementById('pauseBtn').textContent = paused ? '▶ さいかい' : '⏸ ぽーず';
-  if (!paused) { lastMove = performance.now(); requestAnimationFrame(loop); }
+  document.getElementById('pauseBtn').textContent = paused ? '▶︎ さいかい' : '⏸ ぽーず';
+  if (!paused) { lastMove = performance.now(); }
+  // ループは既に走ってるので新たに呼ばない（2重ループ防止）
 }
 
 function handleDir(dx, dy) {
