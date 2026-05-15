@@ -238,7 +238,7 @@
   }
 
   .vol-row { display:flex; gap:3px; }
-  .vol-btn { flex:1; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); border-radius:6px; color:#2F855A; font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .vol-btn { flex:1; background:rgba(255,255,255,0.15); border:1px solid rgba(47,133,90,0.3); border-radius:6px; color:#2F855A; font-size:9px; font-weight:800; padding:4px 2px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
   .vol-btn.active { background:#2F855A; border-color:#2F855A; color:white; }
 </style>
 </head>
@@ -246,16 +246,7 @@
 
 <div class="header">
   <div class="logo">niko<span>wa.</span> スネーク</div>
-  <div style="display:flex;align-items:center;gap:6px;">
-    <div class="vol-row">
-      <button class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button>
-      <button class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button>
-      <button class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button>
-      <button class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
-    </div>
-    <button class="back-btn" onclick="history.back()">← もどる</button>
-</div>
-  </div>
+  <div style="display:flex;align-items:center;gap:6px;"><div class="vol-row"><button class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button><button class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button><button class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button><button class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button></div><button class="back-btn" onclick="history.back()">← もどる</button></div>
 </div>
 
 <div class="wrap">
@@ -471,6 +462,7 @@ function step() {
   snake = futureSnake;
 
   if (willEat) {
+    sfxEat();
     score += 10;
     document.getElementById('scoreVal').textContent = score;
     document.getElementById('lengthVal').textContent = snake.length;
@@ -530,7 +522,7 @@ function startGame() {
 }
 
 function endGame(reason) {
-  stopBGM();
+  sfxDie();
   gameRunning = false;
   paused = false;
   document.getElementById('pauseBtn').disabled = true;
@@ -643,67 +635,65 @@ newGame();
 draw();
 document.getElementById('overlay').classList.add('show');
 
-// ===== snake BGM & 効果音 =====
-let audioCtx = null;
-let bgmRunning = false;
-let bgmNoteIdx = 0;
-let bgmTimer = null;
-let masterVol = 0;
+// ===== のんびり草原スネーク BGM & 効果音 =====
+let audioCtx=null, bgmRunning=false, bgmNoteIdx=0, bgmTimer=null, masterVol=0;
+const EN_SN = 315.79; // 95BPM 8分音符
 
-const EN_SNA = 375.00;
-const BGM_MEL_SNAK = [392.0,440.0,523.25,0,440.0,392.0,349.23,0,392.0,440.0,523.25,587.33,523.25,440.0,392.0,0,349.23,392.0,440.0,0,523.25,440.0,392.0,0,349.23,392.0,440.0,523.25,440.0,392.0,349.23,0];
-const BGM_BASS_SNAK = [130.81,0,0,0,130.81,0,0,0,130.81,0,0,0,130.81,0,0,0,110.0,0,0,0,110.0,0,0,0,110.0,0,0,0,110.0,0,0,0];
+// 草原：メジャーキー・スキップするような明るいメロディ（他と被らない！）
+const SN_MEL = [
+  329.63,392.00,440.00,392.00, 329.63,261.63,293.66,329.63,
+  392.00,329.63,293.66,261.63, 293.66,329.63,392.00,440.00,
+  523.25,440.00,392.00,329.63, 392.00,440.00,523.25,440.00,
+  392.00,329.63,293.66,261.63, 293.66,261.63,246.94,261.63,
+];
+const SN_BASS = [
+  130.81,0,164.81,0, 130.81,0,164.81,0,
+  146.83,0,174.61,0, 146.83,0,174.61,0,
+  130.81,0,164.81,0, 130.81,0,164.81,0,
+  146.83,0,130.81,0, 146.83,0,123.47,0,
+];
 
 function setVol(v) {
   masterVol = v;
   ['vOff','vLo','vMd','vHi'].forEach(id => document.getElementById(id)?.classList.remove('active'));
-  const map = { 0:'vOff', 0.3:'vLo', 0.7:'vMd', 1.0:'vHi' };
+  const map = {0:'vOff',0.3:'vLo',0.7:'vMd',1.0:'vHi'};
   document.getElementById(map[v])?.classList.add('active');
-  if (v === 0) stopBGM();
-  else if (!bgmRunning) startBGM();
+  if (v===0) stopBGM();
+  else if (gameRunning && !bgmRunning) startBGM();
 }
-
 function initAudio() {
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
-  }
+  if (!audioCtx) try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
   return audioCtx.resume();
 }
-
-function playNote(freq, dur, vol, type) {
-  if (!audioCtx || !freq || masterVol === 0) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
+function playNote(freq,dur,vol,type) {
+  if (!audioCtx||!freq||masterVol===0) return;
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
   o.connect(g); g.connect(audioCtx.destination);
-  o.type = type || 'sine';
-  o.frequency.value = freq;
-  const t = audioCtx.currentTime;
-  g.gain.setValueAtTime(vol * masterVol, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.92);
-  o.start(t); o.stop(t + dur);
+  o.type=type||'sine'; o.frequency.value=freq;
+  const t=audioCtx.currentTime;
+  g.gain.setValueAtTime(vol*masterVol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t+dur*0.92);
+  o.start(t); o.stop(t+dur);
 }
-
 function startBGM() {
   if (bgmRunning) return;
-  bgmRunning = true; bgmNoteIdx = 0;
-  tickBGM();
+  bgmRunning=true; bgmNoteIdx=0; tickBGM();
 }
 function stopBGM() {
-  bgmRunning = false;
-  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+  bgmRunning=false;
+  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer=null; }
 }
 function tickBGM() {
   if (!bgmRunning) return;
-  const i = bgmNoteIdx % BGM_MEL_SNAK.length;
-  playNote(BGM_MEL_SNAK[i], EN_SNA/1000*0.82, 0.09, 'sine');
-  playNote(BGM_BASS_SNAK[i], EN_SNA/1000*1.7, 0.06, 'triangle');
+  const i=bgmNoteIdx%SN_MEL.length;
+  playNote(SN_MEL[i], EN_SN/1000*0.80, 0.10, 'sine');
+  playNote(SN_BASS[i], EN_SN/1000*1.6, 0.06, 'triangle');
   bgmNoteIdx++;
-  bgmTimer = setTimeout(tickBGM, EN_SNA);
+  bgmTimer=setTimeout(tickBGM, EN_SN);
 }
-
-function sfxEat(){ playNote(880,0.07,0.20,'sine'); }
-function sfxDie(){ stopBGM(); [440,349.23,261.63].forEach((f,i)=>setTimeout(()=>playNote(f,0.18,0.15,'sawtooth'),i*110)); }
-// ===== ここまで BGM =====
+function sfxEat() { playNote(880, 0.07, 0.22, 'sine'); }
+function sfxDie() { stopBGM(); [440,329.63,261.63].forEach((f,i)=>setTimeout(()=>playNote(f,0.2,0.16,'sawtooth'),i*110)); }
+// ===== ここまで =====
 </script>
 </body>
 </html>
