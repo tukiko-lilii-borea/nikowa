@@ -9029,13 +9029,14 @@ window.closeHomeQuickStampEdit = closeHomeQuickStampEdit;
 // =============================================
 // ===== ドロワーメニュー カテゴリー定義 =====
 const _DRW_CATS = [
-  { key:'today',   icon:'today',         label:'今日',     color:'#E5524A', desc:'きょうのきろく' },
-  { key:'kurashi', icon:'coffee',         label:'くらし',   color:'#F5A623', desc:'まいにちのくらし' },
-  { key:'health',  icon:'favorite',       label:'けんこう', color:'#4FB677', desc:'からだの記録' },
-  { key:'work',    icon:'work',           label:'仕事',     color:'#4A90E2', desc:'まなびとしごと' },
-  { key:'family',  icon:'diversity_3',    label:'輪',       color:'#E94B6F', desc:'たいせつなひと' },
-  { key:'machi',   icon:'location_city',  label:'まち',     color:'#1FA8C9', desc:'まちでつながる' },
-  { key:'create',  icon:'palette',        label:'お店',     color:'#9B5DB8', desc:'クリエイティブ' },
+  { key:'today',    icon:'today',         label:'今日',     color:'#E5524A', desc:'きょうのきろく' },
+  { key:'kurashi',  icon:'coffee',         label:'くらし',   color:'#F5A623', desc:'まいにちのくらし' },
+  { key:'health',   icon:'favorite',       label:'けんこう', color:'#4FB677', desc:'からだの記録' },
+  { key:'work',     icon:'work',           label:'仕事',     color:'#4A90E2', desc:'まなびとしごと' },
+  { key:'family',   icon:'diversity_3',    label:'輪',       color:'#E94B6F', desc:'たいせつなひと' },
+  { key:'machi',    icon:'location_city',  label:'まち',     color:'#1FA8C9', desc:'まちでつながる' },
+  { key:'yuuenchi', icon:'celebration',    label:'遊園地',   color:'#FF7AAA', desc:'みんなで あそぼう' },
+  { key:'create',   icon:'palette',        label:'お店',     color:'#9B5DB8', desc:'クリエイティブ' },
 ];
 
 function _getDrawerContent(key) {
@@ -9164,6 +9165,16 @@ function _getDrawerContent(key) {
     h += _itemBtn('location_city',      'Town',   'にこわタウン',          `closeDrawerMenu();currentView='town';render();`);
     h += _itemBtn('videocam',           'ライブ', 'ライブカメラ',          `closeDrawerMenu();currentView='town';townMainTab='live';townHideMainTabs=false;render();`);
     h += _itemBtn('volunteer_activism', '保護団体','シェルター',           `closeDrawerMenu();currentView='town';townMainTab='rainbow';townAnimalSubTab='shelter';render();`);
+
+  } else if (key === 'yuuenchi') {
+    h += _itemBtn('celebration',    'ゆうえんち',     'ゲーム一覧へ',     `closeDrawerMenu();window.location.href='yuuenchi.html';`);
+    h += `<div style="height:1px;background:${col}22;margin:8px 0;"></div>`;
+    h += _itemBtn('grid_view',      'ゆめめのテトリス','夜空のブロック',  `closeDrawerMenu();window.location.href='nikowa-tetris.html';`);
+    h += _itemBtn('circle',         '水槽のオセロ',   '金魚と対戦',      `closeDrawerMenu();window.location.href='nikowa-othello.html';`);
+    h += _itemBtn('style',          '神経衰弱',       'カードめくり',    `closeDrawerMenu();window.location.href='nikowa-memory.html';`);
+    h += _itemBtn('water',          'ヘビ',           'いちごを たべる', `closeDrawerMenu();window.location.href='nikowa-snake.html';`);
+    h += _itemBtn('sports_baseball','ブロック崩し',   'ボールで くずす', `closeDrawerMenu();window.location.href='nikowa-breakout.html';`);
+    h += _itemBtn('warning',        'マインスイーパー','ばくだん さがし',`closeDrawerMenu();window.location.href='nikowa-minesweeper.html';`);
 
   } else if (key === 'create') {
     h += _itemBtn('palette',    'Atelier', '作品づくり',  `closeDrawerMenu();goToAtelierView();`);
