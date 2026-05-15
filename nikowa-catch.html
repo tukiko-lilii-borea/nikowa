@@ -6,38 +6,36 @@
 <title>にこわ キャッチ</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
-  :root{--bg:#E8F8F3;--accent:#2EB875;--pink:#E94B6F;--surface:rgba(255,255,255,0.92);--ink:#1A3A2A;--ink-sub:#4A7A5A;}
+  :root{--bg:#F6AD55;--accent:#1E3A8A;--amber:#1E3A8A;--pink:#1E3A8A;--surface:rgba(255,251,247,0.2);--ink:#1A2744;--ink-sub:rgba(30,58,138,0.7);}
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
-  body{font-family:'Zen Maru Gothic',sans-serif;background:var(--bg);
-    background-image:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(46,184,117,0.1) 29px,rgba(46,184,117,0.1) 30px),
-    repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(46,184,117,0.1) 29px,rgba(46,184,117,0.1) 30px);
+  body{font-family:'Zen Maru Gothic',sans-serif;background-color:#F6AD55 !important;background-image:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(30,58,138,0.15) 29px,rgba(30,58,138,0.15) 30px),repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(30,58,138,0.15) 29px,rgba(30,58,138,0.15) 30px) !important;
     height:100dvh;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:10px 12px 0;color:var(--ink);}
   .header{width:100%;max-width:420px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;}
   .logo{height:24px;width:auto;object-fit:contain;}
-  .back-btn{background:var(--surface);border:1.5px solid rgba(46,184,117,0.3);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;}
+  .back-btn{background:rgba(255,255,255,0.35);border:1.5px solid rgba(30,58,138,0.2);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;color:#1E3A8A;cursor:pointer;}
   .hud{width:100%;max-width:420px;display:flex;gap:8px;margin-bottom:8px;flex-shrink:0;}
-  .hud-card{flex:1;background:var(--surface);border-radius:12px;padding:6px 8px;text-align:center;border:1.5px solid rgba(46,184,117,0.2);}
-  .hud-label{font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1px;}
-  .hud-val{font-size:20px;font-weight:900;color:var(--accent);}
+  .hud-card{flex:1;background:rgba(255,255,255,0.35);border-radius:12px;padding:6px 8px;text-align:center;border:1.5px solid rgba(30,58,138,0.15);backdrop-filter:blur(4px);}
+  .hud-label{font-size:9px;font-weight:700;color:rgba(30,58,138,0.7);letter-spacing:1px;}
+  .hud-val{font-size:20px;font-weight:900;color:#1E3A8A;}
   .lives{display:flex;justify-content:center;gap:2px;font-size:16px;}
-  #gameArea{position:relative;width:100%;max-width:420px;flex:1;max-height:calc(100dvh - 130px);overflow:hidden;background:var(--surface);border-radius:20px 20px 0 0;border:1.5px solid rgba(46,184,117,0.2);}
+  #gameArea{position:relative;width:100%;max-width:420px;flex:1;max-height:calc(100dvh - 130px);overflow:hidden;background:rgba(255,255,255,0.30);border-radius:20px 20px 0 0;border:1.5px solid rgba(30,58,138,0.2);}
   .falling-char{position:absolute;width:56px;height:56px;display:flex;align-items:center;justify-content:center;pointer-events:none;}
   .falling-char img{width:100%;height:100%;object-fit:contain;}
   .basket{position:absolute;bottom:8px;display:flex;flex-direction:column;align-items:center;transition:left .05s linear;}
-  .basket-body{width:80px;height:32px;background:linear-gradient(135deg,var(--accent),#1A9A55);border-radius:0 0 24px 24px;
-    box-shadow:0 4px 12px rgba(46,184,117,0.4);}
-  .basket-top{width:90px;height:10px;background:var(--accent);border-radius:6px;}
-  .overlay{display:none;position:absolute;inset:0;background:rgba(255,255,255,0.92);border-radius:20px 20px 0 0;
+  .basket-body{width:80px;height:32px;background:linear-gradient(135deg,#2d4fa8,#1E3A8A);border-radius:0 0 24px 24px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.3);}
+  .basket-top{width:90px;height:10px;background:#FFFBF7;border-radius:6px;box-shadow:0 2px 8px rgba(255,255,255,0.5);}
+  .overlay{display:none;position:absolute;inset:0;background:rgba(246,173,85,0.97);border-radius:20px 20px 0 0;
     flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;}
   .overlay.show{display:flex;}
-  .overlay-title{font-size:28px;font-weight:900;color:var(--accent);}
-  .overlay-sub{font-size:14px;color:var(--ink-sub);font-weight:700;}
-  .start-btn{background:linear-gradient(135deg,var(--accent),#1A9A55);color:white;border:none;border-radius:16px;
-    padding:14px 32px;font-family:inherit;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 4px 14px rgba(46,184,117,0.4);}
+  .overlay-title{font-size:28px;font-weight:900;color:#1E3A8A;}
+  .overlay-sub{font-size:14px;color:rgba(30,58,138,0.8);font-weight:700;}
+  .start-btn{background:linear-gradient(135deg,#1E3A8A,#162d6e);color:white;border:none;border-radius:16px;
+    padding:14px 32px;font-family:inherit;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 4px 14px rgba(30,58,138,0.4);}
 
   .vol-row { display:flex; gap:3px; }
-  .vol-btn { background:rgba(255,255,255,0.7); border:1px solid rgba(46,184,117,0.3); border-radius:6px; color:#2EB875; font-size:9px; font-weight:800; padding:4px 7px; cursor:pointer; font-family:inherit; }
-  .vol-btn.active { background:#2EB875; border-color:#2EB875; color:white; }
+  .vol-btn { background:rgba(255,255,255,0.35); border:1px solid rgba(30,58,138,0.2); border-radius:6px; color:#1E3A8A; font-size:9px; font-weight:800; padding:4px 7px; cursor:pointer; font-family:inherit; }
+  .vol-btn.active { background:#1E3A8A; border-color:#1E3A8A; color:white; }
 </style>
 </head>
 <body>
@@ -170,7 +168,7 @@ function popEffect(x,y){
   const area=document.getElementById('gameArea');
   const p=document.createElement('div');
   p.style.cssText=`position:absolute;left:${x-20}px;top:${y-20}px;width:40px;height:40px;border-radius:50%;
-    background:rgba(46,184,117,0.5);animation:pop .3s ease-out forwards;pointer-events:none;z-index:5;`;
+    background:rgba(246,173,85,0.6);animation:pop .3s ease-out forwards;pointer-events:none;z-index:5;`;
   area.appendChild(p);
   const style=document.createElement('style');
   style.textContent='@keyframes pop{0%{transform:scale(0);opacity:1}100%{transform:scale(2);opacity:0}}';
@@ -187,7 +185,7 @@ function gameOver(){
   gameActive=false;clearTimeout(spawnTimer);cancelAnimationFrame(animId);
   const ov=document.getElementById('overlay');
   ov.innerHTML=`<div style="font-size:48px;">💔</div>
-    <div class="overlay-title" style="color:var(--pink)">ゲームオーバー</div>
+    <div class="overlay-title" style="color:var(--amber)">ゲームオーバー</div>
     <div class="overlay-sub">スコア：${score}こ<br>ベスト：${best}こ</div>
     <button class="start-btn" onclick="startGame()">もう一回！</button>`;
   ov.classList.add('show');
