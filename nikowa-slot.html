@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>にこわ スロット</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
+  :root {
+    --bg:#FFF8F0; --accent:#C49A6C; --accent2:#E8C49C;
+    --pink:#E94B6F; --surface:rgba(255,255,255,0.92);
+    --ink:#3D2B1F; --ink-sub:#8B7355;
+    --gold:#F5C842; --gold2:#E8A800;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Zen Maru Gothic',sans-serif;background:var(--bg);
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(196,154,108,0.1) 29px,rgba(196,154,108,0.1) 30px),
+    repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(196,154,108,0.1) 29px,rgba(196,154,108,0.1) 30px);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 12px 24px;color:var(--ink);}
+  .header{width:100%;max-width:400px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .logo{height:28px;width:auto;object-fit:contain;}
+  .back-btn{background:var(--surface);border:1.5px solid rgba(196,154,108,0.3);border-radius:100px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;color:var(--ink-sub);cursor:pointer;}
+  .score-wrap{width:100%;max-width:400px;display:flex;gap:8px;margin-bottom:14px;}
+  .score-card{flex:1;background:var(--surface);border-radius:14px;padding:8px;text-align:center;border:1.5px solid rgba(196,154,108,0.2);}
+  .score-label{font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1px;}
+  .score-val{font-size:22px;font-weight:900;color:var(--accent);}
+  .machine{width:100%;max-width:400px;background:var(--surface);border-radius:28px;padding:20px 16px;
+    box-shadow:0 6px 28px rgba(196,154,108,0.18);border:2px solid rgba(196,154,108,0.25);}
+  .reels-frame{background:linear-gradient(135deg,#FFF0D8,#FFE8C0);border-radius:20px;padding:12px;
+    display:flex;gap:10px;margin-bottom:16px;border:2px solid rgba(196,154,108,0.3);
+    box-shadow:inset 0 3px 10px rgba(0,0,0,0.08);}
+  .reel-wrap{flex:1;border-radius:14px;overflow:hidden;height:96px;background:white;
+    border:2px solid rgba(196,154,108,0.2);position:relative;}
+  .reel-win-line{position:absolute;inset:0;border:3px solid transparent;border-radius:14px;z-index:2;pointer-events:none;transition:border-color .3s;}
+  .reel-win-line.win{border-color:var(--gold);box-shadow:0 0 16px rgba(245,200,66,0.7);}
+  .reel{display:flex;flex-direction:column;transition:transform .08s linear;}
+  .reel-item{height:96px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .reel-item img{width:64px;height:64px;object-fit:contain;}
+  .reel-item .sym-text{font-size:44px;line-height:1;}
+  .spin-btn{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#3D2B1F;
+    border:none;border-radius:18px;padding:16px;font-family:inherit;font-size:18px;font-weight:900;
+    cursor:pointer;box-shadow:0 5px 16px rgba(245,200,66,0.45);transition:all .12s;letter-spacing:.5px;}
+  .spin-btn:active{transform:scale(0.97);}
+  .spin-btn:disabled{background:linear-gradient(135deg,#ccc,#bbb);color:#888;box-shadow:none;cursor:not-allowed;}
+  .win-msg{text-align:center;font-size:22px;font-weight:900;color:var(--pink);min-height:36px;margin-top:12px;transition:opacity .3s;}
+  @keyframes winBounce{0%,100%{transform:scale(1)}40%{transform:scale(1.15)}70%{transform:scale(0.95)}}
+  .win-msg.show{animation:winBounce .5s ease-out;}
+  .jackpot-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;
+    align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+  .jackpot-overlay.show{display:flex;}
+  .jackpot-box{background:white;border-radius:28px;padding:28px 24px;text-align:center;width:88%;max-width:320px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.25);animation:winBounce .4s ease-out;}
+  .jackpot-title{font-size:36px;font-weight:900;color:var(--gold2);margin-bottom:8px;}
+  .jackpot-chars{display:flex;justify-content:center;gap:6px;margin:10px 0;}
+  .jackpot-chars img{width:52px;height:52px;object-fit:contain;}
+  .jackpot-ok{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#3D2B1F;border:none;
+    border-radius:14px;padding:12px 32px;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="header">
+  <img class="logo" src="assets/logo-soft.svg" alt="nikowa">
+  <button class="back-btn" onclick="location.href='./yuuenchi.html'">← もどる</button>
+</div>
+<div class="score-wrap">
+  <div class="score-card"><div class="score-label">SPIN</div><div class="score-val" id="spinCount">0</div></div>
+  <div class="score-card"><div class="score-label">WIN</div><div class="score-val" id="winCount">0</div></div>
+  <div class="score-card"><div class="score-label">JACKPOT</div><div class="score-val" id="jackpotCount">0</div></div>
+</div>
+<div class="machine">
+  <div class="reels-frame" id="reelsFrame">
+    <div class="reel-wrap" id="rw0"><div class="reel-win-line" id="wl0"></div><div class="reel" id="reel0"></div></div>
+    <div class="reel-wrap" id="rw1"><div class="reel-win-line" id="wl1"></div><div class="reel" id="reel1"></div></div>
+    <div class="reel-wrap" id="rw2"><div class="reel-win-line" id="wl2"></div><div class="reel" id="reel2"></div></div>
+  </div>
+  <button class="spin-btn" id="spinBtn" onclick="spin()">🎰 SPIN !</button>
+  <div class="win-msg" id="winMsg"></div>
+</div>
+<div class="jackpot-overlay" id="jackpotOverlay">
+  <div class="jackpot-box">
+    <div class="jackpot-title">🎉 JACKPOT !!</div>
+    <div class="jackpot-chars" id="jackpotChars"></div>
+    <div style="font-size:15px;font-weight:800;color:var(--ink-sub);margin-bottom:8px;" id="jackpotMsg"></div>
+    <button class="jackpot-ok" onclick="document.getElementById('jackpotOverlay').classList.remove('show')">やったー！</button>
+  </div>
+</div>
+<script>
+const SYMBOLS = [
+  {img:'assets/anzu.svg',   name:'あんず'},
+  {img:'assets/beru.svg',   name:'ベル'},
+  {img:'assets/beteli.svg', name:'ベティ'},
+  {img:'assets/koito.svg',  name:'こいと'},
+  {img:'assets/kotatu.svg', name:'こたつ'},
+  {img:'assets/tukiko.svg', name:'つきこ'},
+  {img:'assets/yumeme.svg', name:'ゆめめ'},
+];
+const REPEAT = 20;
+let spinning = false, spinCount = 0, winCount = 0, jackpotCount = 0;
+let reelPos = [0, 0, 0];
+
+function buildReels() {
+  for (let r = 0; r < 3; r++) {
+    const el = document.getElementById('reel' + r);
+    el.innerHTML = '';
+    for (let i = 0; i < SYMBOLS.length * REPEAT; i++) {
+      const s = SYMBOLS[i % SYMBOLS.length];
+      const item = document.createElement('div');
+      item.className = 'reel-item';
+      item.innerHTML = `<img src="${s.img}" alt="${s.name}">`;
+      el.appendChild(item);
+    }
+    // 初期位置
+    setReelPos(r, 0);
+  }
+}
+
+function setReelPos(r, idx) {
+  const el = document.getElementById('reel' + r);
+  el.style.transition = 'none';
+  el.style.transform = `translateY(${-idx * 96}px)`;
+  reelPos[r] = idx;
+}
+
+function getSymbol(r) { return reelPos[r] % SYMBOLS.length; }
+
+async function spin() {
+  if (spinning) return;
+  spinning = true;
+  spinCount++;
+  document.getElementById('spinCount').textContent = spinCount;
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('winMsg').textContent = '';
+  document.getElementById('winMsg').classList.remove('show');
+  for (let i = 0; i < 3; i++) document.getElementById('wl'+i).classList.remove('win');
+
+  // 結果を事前決定
+  const results = [
+    Math.floor(Math.random() * SYMBOLS.length),
+    Math.floor(Math.random() * SYMBOLS.length),
+    Math.floor(Math.random() * SYMBOLS.length),
+  ];
+  // 10%で強制WIN
+  if (Math.random() < 0.10) { results[1] = results[0]; results[2] = results[0]; }
+
+  // 各リールをアニメーション
+  const spinReel = (r, delay, finalSym) => new Promise(res => {
+    setTimeout(() => {
+      const el = document.getElementById('reel' + r);
+      const totalItems = SYMBOLS.length * REPEAT;
+      // 現在位置から十分先の finalSym へ
+      const current = reelPos[r];
+      const rounds = 3 + r; // リールごとに回転数を変える
+      const target = Math.floor(current / SYMBOLS.length + rounds) * SYMBOLS.length + finalSym;
+      const dist = target - current;
+      const duration = 800 + r * 300;
+      el.style.transition = `transform ${duration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+      el.style.transform = `translateY(${-target * 96}px)`;
+      reelPos[r] = target;
+      setTimeout(res, duration + 50);
+    }, delay);
+  });
+
+  await spinReel(0, 0, results[0]);
+  await spinReel(1, 0, results[1]);
+  await spinReel(2, 0, results[2]);
+
+  // 判定
+  const s0 = results[0], s1 = results[1], s2 = results[2];
+  const msg = document.getElementById('winMsg');
+  if (s0 === s1 && s1 === s2) {
+    // JACKPOT
+    jackpotCount++;
+    winCount++;
+    document.getElementById('winCount').textContent = winCount;
+    document.getElementById('jackpotCount').textContent = jackpotCount;
+    for (let i = 0; i < 3; i++) document.getElementById('wl'+i).classList.add('win');
+    setTimeout(() => {
+      const fc = document.getElementById('jackpotChars');
+      const s = SYMBOLS[s0];
+      fc.innerHTML = `<img src="${s.img}"><img src="${s.img}"><img src="${s.img}">`;
+      document.getElementById('jackpotMsg').textContent = s.name + ' 3つそろった！';
+      document.getElementById('jackpotOverlay').classList.add('show');
+    }, 200);
+  } else if (s0 === s1 || s1 === s2 || s0 === s2) {
+    winCount++;
+    document.getElementById('winCount').textContent = winCount;
+    msg.textContent = '✨ 2つそろった！';
+    msg.classList.add('show');
+    const pair = s0===s1 ? [0,1] : s1===s2 ? [1,2] : [0,2];
+    pair.forEach(i => document.getElementById('wl'+i).classList.add('win'));
+  } else {
+    msg.textContent = 'はずれ… またね🌷';
+    msg.classList.add('show');
+  }
+  spinning = false;
+  document.getElementById('spinBtn').disabled = false;
+}
+
+buildReels();
+</script>
+</body>
+</html>

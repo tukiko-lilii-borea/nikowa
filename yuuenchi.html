@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>にこわ ゆうえんち</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
 
   :root {
     --mint: #B2E4D8;
@@ -21,7 +21,7 @@
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
   body {
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Zen Maru Gothic', sans-serif;
     background-color: var(--bg);
     background-image:
       repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px),
@@ -42,7 +42,8 @@
     justify-content: space-between;
     margin-bottom: 14px;
   }
-  .logo { font-size: 22px; font-weight: 900; color: var(--accent); }
+  .logo { display:flex; align-items:center; height:28px; }
+  .logo img { height:100%; width:auto; object-fit:contain; }
   .logo span { color: var(--mint); }
   .back-btn {
     background: var(--surface);
@@ -135,6 +136,10 @@
   .game-card[data-game="mine"]    { background: linear-gradient(135deg, #FFF, #FFE8E8); }
   .game-card[data-game="simon"]   { background: linear-gradient(135deg, #FFF, #FFF0F8); }
   .game-card[data-game="tap"]     { background: linear-gradient(135deg, #FFF, #F0FFF4); }
+  .game-card[data-game="slot"]    { background: linear-gradient(135deg, #FFF, #FFFBE0); }
+  .game-card[data-game="catch"]   { background: linear-gradient(135deg, #FFF, #E8FAF0); }
+  .game-card[data-game="flappy"]  { background: linear-gradient(135deg, #FFF, #E0F4FF); }
+  .game-card[data-game="bubble"]  { background: linear-gradient(135deg, #FFF, #FFF0FA); }
 
   .footer {
     margin-top: 20px;
@@ -148,7 +153,7 @@
 <body>
 
 <div class="header">
-  <div class="logo">niko<span>wa.</span> 🎡</div>
+  <div class="logo"><img src="assets/logo-soft.svg" alt="nikowa"> <span style="font-size:20px;">🎡</span></div>
   <a href="index.html" class="back-btn">← ホーム</a>
 </div>
 
@@ -204,6 +209,30 @@
     <div class="game-icon">👆</div>
     <div class="game-name">タップ！</div>
     <div class="game-desc">出てきたら<br>すばやくタップ</div>
+  </a>
+
+  <a href="nikowa-slot.html" class="game-card" data-game="slot">
+    <div class="game-icon">🎰</div>
+    <div class="game-name">スロット</div>
+    <div class="game-desc">キャラを<br>ならべよう</div>
+  </a>
+
+  <a href="nikowa-catch.html" class="game-card" data-game="catch">
+    <div class="game-icon">🪣</div>
+    <div class="game-name">キャッチ</div>
+    <div class="game-desc">おちてくる<br>キャラをつかまえ</div>
+  </a>
+
+  <a href="nikowa-flappy.html" class="game-card" data-game="flappy">
+    <div class="game-icon">🐥</div>
+    <div class="game-name">フラッピー</div>
+    <div class="game-desc">タップで<br>とびあがれ！</div>
+  </a>
+
+  <a href="nikowa-bubble.html" class="game-card" data-game="bubble">
+    <div class="game-icon">🫧</div>
+    <div class="game-name">バブル</div>
+    <div class="game-desc">同じ色を<br>つなげてけせ</div>
   </a>
 </div>
 

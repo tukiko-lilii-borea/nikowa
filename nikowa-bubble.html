@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>にこわ バブル</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
+  :root{--bg:#FFF0F8;--accent:#E94B8A;--surface:rgba(255,255,255,0.92);--ink:#3A1A2A;--ink-sub:#8A5A7A;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Zen Maru Gothic',sans-serif;background:var(--bg);
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(233,75,138,0.08) 29px,rgba(233,75,138,0.08) 30px),
+    repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(233,75,138,0.08) 29px,rgba(233,75,138,0.08) 30px);
+    height:100vh;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:10px 12px 0;color:var(--ink);}
+  .header{width:100%;max-width:420px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-shrink:0;}
+  .logo{height:24px;object-fit:contain;}
+  .back-btn{background:var(--surface);border:1.5px solid rgba(233,75,138,0.2);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;}
+  .hud{width:100%;max-width:420px;display:flex;gap:8px;margin-bottom:6px;flex-shrink:0;}
+  .hud-card{flex:1;background:var(--surface);border-radius:12px;padding:6px 8px;text-align:center;border:1.5px solid rgba(233,75,138,0.15);}
+  .hud-label{font-size:9px;font-weight:700;color:var(--ink-sub);letter-spacing:1px;}
+  .hud-val{font-size:20px;font-weight:900;color:var(--accent);}
+  #canvas{display:block;border-radius:20px 20px 0 0;touch-action:none;cursor:crosshair;max-width:420px;width:100%;}
+</style>
+</head>
+<body>
+<div class="header">
+  <img class="logo" src="assets/logo-soft.svg" alt="nikowa">
+  <button class="back-btn" onclick="location.href='./yuuenchi.html'">← もどる</button>
+</div>
+<div class="hud">
+  <div class="hud-card"><div class="hud-label">SCORE</div><div class="hud-val" id="scoreVal">0</div></div>
+  <div class="hud-card"><div class="hud-label">BEST</div><div class="hud-val" id="bestVal">0</div></div>
+  <div class="hud-card"><div class="hud-label">SHOTS</div><div class="hud-val" id="shotsVal">30</div></div>
+</div>
+<canvas id="canvas"></canvas>
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const BEST_KEY='nikowa_bubble_best';
+
+function resize(){
+  const maxW=Math.min(420,window.innerWidth-24);
+  canvas.width=maxW;
+  canvas.height=window.innerHeight-canvas.getBoundingClientRect().top;
+}
+resize();
+
+// カラー（にこわキャラカラー）
+const COLORS=['#FFB3CA','#A8E6CC','#B8CCFF','#DDB8FF','#FFD4A0','#A8DCEC','#FFDDA8'];
+const CNAMES=['あんず色','ベティ色','ベル色','こいと色','こたつ色','つきこ色','ゆめめ色'];
+const R=20; // 玉の半径
+const COLS=9;
+let rows,grid,score,best,shots,gameState,shooterAngle,currentBall,nextBall;
+let bullet=null; // 飛んでる玉
+
+function init(){
+  score=0;shots=30;gameState='play';
+  best=parseInt(localStorage.getItem(BEST_KEY)||'0');
+  document.getElementById('bestVal').textContent=best;
+  updateHUD();
+  rows=7;
+  grid=[];
+  for(let r=0;r<rows;r++){
+    grid[r]=[];
+    const cols=r%2===0?COLS:COLS-1;
+    for(let c=0;c<cols;c++){
+      grid[r][c]=COLORS[Math.floor(Math.random()*COLORS.length)];
+    }
+  }
+  shooterAngle=-Math.PI/2;
+  currentBall=randomColor();
+  nextBall=randomColor();
+  bullet=null;
+}
+
+function randomColor(){return COLORS[Math.floor(Math.random()*COLORS.length)];}
+function updateHUD(){
+  document.getElementById('scoreVal').textContent=score;
+  document.getElementById('shotsVal').textContent=shots;
+}
+
+function bubbleX(r,c){
+  const off=r%2===0?0:R;
+  return off+R+c*(R*2);
+}
+function bubbleY(r){return R+r*(R*1.74);}
+
+function shoot(angle){
+  if(bullet||gameState!=='play')return;
+  if(shots<=0){endGame();return;}
+  shots--;updateHUD();
+  const sx=canvas.width/2,sy=canvas.height-60;
+  bullet={x:sx,y:sy,vx:Math.cos(angle)*10,vy:Math.sin(angle)*10,color:currentBall};
+  currentBall=nextBall;nextBall=randomColor();
+}
+
+function moveBullet(){
+  if(!bullet)return;
+  bullet.x+=bullet.vx;bullet.y+=bullet.vy;
+  // 壁反射
+  if(bullet.x-R<0){bullet.x=R;bullet.vx*=-1;}
+  if(bullet.x+R>canvas.width){bullet.x=canvas.width-R;bullet.vx*=-1;}
+  // 天井
+  if(bullet.y-R<0){placeBullet();return;}
+  // グリッド衝突
+  for(let r=0;r<grid.length;r++){
+    const cols=r%2===0?COLS:COLS-1;
+    for(let c=0;c<cols;c++){
+      if(!grid[r][c])continue;
+      const bx=bubbleX(r,c),by=bubbleY(r);
+      const dx=bullet.x-bx,dy=bullet.y-by;
+      if(dx*dx+dy*dy<(R*2)*(R*2)){placeBullet(r,c);return;}
+    }
+  }
+}
+
+function placeBullet(nearR,nearC){
+  if(!bullet)return;
+  // 最近のグリッド位置を探す
+  let bestR=-1,bestC=-1,bestD=9999;
+  for(let r=0;r<=Math.min(rows,grid.length);r++){
+    const cols=r%2===0?COLS:COLS-1;
+    for(let c=0;c<cols;c++){
+      if(grid[r] && grid[r][c])continue;
+      const bx=bubbleX(r,c),by=bubbleY(r);
+      const d=Math.sqrt((bullet.x-bx)**2+(bullet.y-by)**2);
+      if(d<bestD){bestD=d;bestR=r;bestC=c;}
+    }
+  }
+  if(bestR<0){bestR=0;bestC=0;}
+  if(!grid[bestR])grid[bestR]=[];
+  grid[bestR][bestC]=bullet.color;
+  bullet=null;
+  // マッチチェック
+  const popped=findMatches(bestR,bestC,grid[bestR][bestC]);
+  if(popped.length>=3){
+    popped.forEach(([r,c])=>{if(grid[r])grid[r][c]=null;});
+    score+=popped.length*10;
+    if(score>best){best=score;localStorage.setItem(BEST_KEY,best);document.getElementById('bestVal').textContent=best;}
+    updateHUD();
+    // 孤立した玉を落とす
+    dropFloating();
+  }
+  if(shots<=0){endGame();}
+  // 玉がなくなったらクリア
+  if(grid.every(row=>row.every(c=>!c))){clearGame();}
+}
+
+function findMatches(r,c,color){
+  const visited=new Set(),stack=[[r,c]];
+  const res=[];
+  while(stack.length){
+    const [cr,cc]=stack.pop();
+    const key=cr+','+cc;
+    if(visited.has(key))continue;
+    visited.add(key);
+    if(!grid[cr]||grid[cr][cc]!==color)continue;
+    res.push([cr,cc]);
+    getNeighbors(cr,cc).forEach(n=>stack.push(n));
+  }
+  return res;
+}
+
+function getNeighbors(r,c){
+  const isEven=r%2===0;
+  const dirs=isEven?[[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]]:
+                    [[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]];
+  return dirs.map(([dr,dc])=>[r+dr,c+dc]).filter(([nr,nc])=>nr>=0&&nc>=0&&grid[nr]&&grid[nr][nc]);
+}
+
+function dropFloating(){
+  // ルートから到達できない玉を削除
+  const reachable=new Set();
+  const stack=[];
+  if(grid[0])grid[0].forEach((c,i)=>{if(c)stack.push([0,i]);});
+  while(stack.length){
+    const [r,c]=stack.pop();
+    const key=r+','+c;
+    if(reachable.has(key))continue;
+    if(!grid[r]||!grid[r][c])continue;
+    reachable.add(key);
+    getNeighbors(r,c).forEach(n=>{if(grid[n[0]]&&grid[n[0]][n[1]])stack.push(n);});
+  }
+  for(let r=1;r<grid.length;r++){
+    if(!grid[r])continue;
+    for(let c=0;c<grid[r].length;c++){
+      if(grid[r][c]&&!reachable.has(r+','+c)){
+        grid[r][c]=null;score+=5;
+      }
+    }
+  }
+  updateHUD();
+}
+
+function endGame(){
+  gameState='over';
+  if(score>best){best=score;localStorage.setItem(BEST_KEY,best);}
+}
+function clearGame(){
+  gameState='clear';
+  if(score>best){best=score;localStorage.setItem(BEST_KEY,best);}
+}
+
+function drawBubble(x,y,color,alpha=1){
+  ctx.globalAlpha=alpha;
+  ctx.beginPath();ctx.arc(x,y,R-1,0,Math.PI*2);
+  ctx.fillStyle=color;ctx.fill();
+  ctx.beginPath();ctx.arc(x,y,R-1,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=2;ctx.stroke();
+  // ハイライト
+  ctx.beginPath();ctx.arc(x-R*0.3,y-R*0.3,R*0.25,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.6)';ctx.fill();
+  ctx.globalAlpha=1;
+}
+
+function draw(){
+  // 背景
+  ctx.fillStyle='#FFF0F8';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  // グリッドの玉
+  for(let r=0;r<grid.length;r++){
+    if(!grid[r])continue;
+    const cols=r%2===0?COLS:COLS-1;
+    for(let c=0;c<cols;c++){
+      if(grid[r][c]) drawBubble(bubbleX(r,c),bubbleY(r),grid[r][c]);
+    }
+  }
+  // 飛んでる玉
+  if(bullet) drawBubble(bullet.x,bullet.y,bullet.color);
+  // シューター
+  const sx=canvas.width/2,sy=canvas.height-60;
+  // 照準線
+  ctx.strokeStyle='rgba(233,75,138,0.25)';ctx.lineWidth=2;ctx.setLineDash([8,8]);
+  ctx.beginPath();ctx.moveTo(sx,sy);
+  ctx.lineTo(sx+Math.cos(shooterAngle)*120,sy+Math.sin(shooterAngle)*120);
+  ctx.stroke();ctx.setLineDash([]);
+  // 現在の玉
+  drawBubble(sx,sy,currentBall);
+  // 次の玉
+  drawBubble(sx+50,sy+14,nextBall,0.7);
+  ctx.fillStyle='rgba(233,75,138,0.6)';
+  ctx.font='700 10px "Zen Maru Gothic",sans-serif';
+  ctx.textAlign='left';ctx.fillText('NEXT',sx+34,sy+2);
+  // 区切り線
+  ctx.strokeStyle='rgba(233,75,138,0.2)';ctx.lineWidth=2;ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(0,canvas.height-90);ctx.lineTo(canvas.width,canvas.height-90);ctx.stroke();
+
+  // オーバーレイ
+  if(gameState==='over'||gameState==='clear'){
+    ctx.fillStyle='rgba(0,0,0,0.45)';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='white';ctx.textAlign='center';
+    ctx.font='900 30px "Zen Maru Gothic",sans-serif';
+    ctx.fillText(gameState==='clear'?'🎉 クリア！':'😢 ゲームオーバー',canvas.width/2,canvas.height/2-40);
+    ctx.font='700 18px "Zen Maru Gothic",sans-serif';
+    ctx.fillText('スコア：'+score+'てん',canvas.width/2,canvas.height/2+0);
+    ctx.fillStyle='rgba(255,255,255,0.8)';
+    ctx.font='700 15px "Zen Maru Gothic",sans-serif';
+    ctx.fillText('ベスト：'+best+'てん',canvas.width/2,canvas.height/2+30);
+    ctx.fillStyle='#E94B8A';
+    ctx.beginPath();ctx.roundRect(canvas.width/2-70,canvas.height/2+52,140,46,14);ctx.fill();
+    ctx.fillStyle='white';ctx.font='900 17px "Zen Maru Gothic",sans-serif';
+    ctx.fillText('もう一回！',canvas.width/2,canvas.height/2+80);
+  }
+}
+
+function gameLoop(){
+  moveBullet();draw();
+  requestAnimationFrame(gameLoop);
+}
+
+canvas.addEventListener('pointermove',e=>{
+  if(gameState!=='play')return;
+  const rect=canvas.getBoundingClientRect();
+  const cx=(e.clientX-rect.left)*(canvas.width/rect.width);
+  const cy=(e.clientY-rect.top)*(canvas.height/rect.height);
+  const sx=canvas.width/2,sy=canvas.height-60;
+  const angle=Math.atan2(cy-sy,cx-sx);
+  shooterAngle=Math.max(-Math.PI+0.15,Math.min(-0.15,angle));
+});
+canvas.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  if(gameState==='over'||gameState==='clear'){
+    const rect=canvas.getBoundingClientRect();
+    const cy=(e.clientY-rect.top)*(canvas.height/rect.height);
+    if(cy>canvas.height/2+48){init();return;}
+  }
+  if(gameState==='play') shoot(shooterAngle);
+});
+
+init();gameLoop();
+window.addEventListener('resize',()=>{resize();init();});
+</script>
+</body>
+</html>
