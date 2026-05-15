@@ -8,14 +8,16 @@
   @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
 
   :root {
-    --mint: #B2E4D8;
-    --accent: #A67C52;
-    --accent-light: #C49A6C;
-    --pink: #E94B6F;
-    --bg: #E8F8F3;
-    --surface: rgba(255,255,255,0.88);
-    --ink: #3D2B1F;
-    --ink-sub: #8B7355;
+    --coral: #FF6B6B;
+    --yellow: #FFE66D;
+    --teal: #4ECDC4;
+    --bg: #FFE66D;
+    --surface: rgba(255,255,255,0.72);
+    --ink: #2D3436;
+    --ink-sub: #636E72;
+    --accent: #FF6B6B;
+    --accent-light: #FF8E8E;
+    --border: rgba(255,107,107,0.25);
   }
 
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -24,8 +26,10 @@
     font-family: 'Zen Maru Gothic', sans-serif;
     background-color: var(--bg);
     background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px),
-      repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(178,228,216,0.4) 29px, rgba(178,228,216,0.4) 30px);
+      radial-gradient(circle, rgba(255,107,107,0.22) 20px, transparent 20px),
+      radial-gradient(circle, rgba(78,205,196,0.18) 14px, transparent 14px);
+    background-size: 70px 70px, 70px 70px;
+    background-position: 0 0, 35px 35px;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -41,13 +45,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 14px;
+    margin-bottom: 8px;
   }
-  .logo { font-size: 22px; font-weight: 900; color: var(--accent); }
-  .logo span { color: var(--mint); }
+  .logo { font-size: 22px; font-weight: 900; color: var(--coral); }
+  .logo span { color: var(--teal); }
   .back-btn {
     background: var(--surface);
-    border: 1.5px solid rgba(166,124,82,0.2);
+    border: 1.5px solid var(--border);
     border-radius: 100px;
     padding: 6px 14px;
     font-family: inherit;
@@ -61,55 +65,56 @@
     width: 100%;
     max-width: 420px;
     background: var(--surface);
-    border-radius: 24px;
-    padding: 16px;
+    border-radius: 20px;
+    padding: 10px;
     box-shadow: 0 4px 20px rgba(166,124,82,0.12);
-    border: 1.5px solid rgba(178,228,216,0.6);
+    border: 1.5px solid var(--border);
   }
 
   .stats {
     display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
+    gap: 6px;
+    margin-bottom: 6px;
   }
   .stat-card {
     flex: 1;
     background: var(--bg);
     border-radius: 12px;
-    padding: 8px;
+    padding: 4px 2px;
     text-align: center;
-    border: 1.5px solid rgba(178,228,216,0.6);
+    border: 1.5px solid var(--border);
   }
-  .stat-label { font-size: 9px; font-weight: 700; color: var(--ink-sub); text-transform: uppercase; }
-  .stat-val { font-size: 22px; font-weight: 900; color: var(--accent); }
+  .stat-label { font-size: 7px; font-weight: 700; color: var(--ink-sub); letter-spacing: 0.3px; }
+  .stat-val { font-size: 15px; font-weight: 900; color: var(--coral); line-height: 1.2; }
 
   .diff-row {
     display: flex;
-    gap: 6px;
-    margin-bottom: 12px;
+    gap: 5px;
+    margin-bottom: 8px;
   }
   .diff-btn {
     flex: 1;
     background: white;
     border: 1.5px solid rgba(178,228,216,0.6);
     border-radius: 10px;
-    padding: 8px 4px;
+    padding: 5px 2px;
     font-family: inherit;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
     color: var(--ink-sub);
     cursor: pointer;
     transition: all 0.15s;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 2px;
+    justify-content: center;
+    gap: 4px;
   }
-  .diff-btn .diff-label { font-size: 9px; opacity: 0.7; }
+  .diff-btn .diff-label { display: none; }
   .diff-btn.active {
-    background: var(--accent);
+    background: var(--coral);
     color: white;
-    border-color: var(--accent);
+    border-color: var(--coral);
   }
 
   .board-wrap {
@@ -122,7 +127,7 @@
     width: 100%;
     height: 100%;
     border-radius: 16px;
-    background: linear-gradient(180deg, #C5EEE4 0%, #E8F8F3 100%);
+    background: linear-gradient(160deg, #4ECDC4 0%, #38B2AC 100%);
     border: 2px solid rgba(178,228,216,0.8);
     box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);
     touch-action: none;
@@ -136,7 +141,7 @@
   }
   .start-btn {
     flex: 1;
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
     color: white;
     border: none;
     border-radius: 14px;
@@ -162,7 +167,7 @@
     display: none;
     position: absolute;
     inset: 0;
-    background: rgba(232,248,243,0.94);
+    background: rgba(255,230,109,0.95);
     border-radius: 16px;
     flex-direction: column;
     align-items: center;
@@ -173,15 +178,55 @@
     text-align: center;
   }
   #overlay.show { display: flex; }
-  .overlay-title { font-size: 24px; font-weight: 900; color: var(--accent); }
+  .overlay-title { font-size: 24px; font-weight: 900; color: var(--coral); }
   .overlay-msg { font-size: 13px; color: var(--ink-sub); font-weight: 700; }
   .overlay-result {
-    background: white;
+    background: rgba(255,255,255,0.8);
     padding: 10px 16px;
     border-radius: 12px;
     font-size: 14px;
     font-weight: 800;
     margin-top: 6px;
+  }
+
+  /* 残基キャラアイコン */
+  #lifeIcons {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 5px;
+    z-index: 5;
+    pointer-events: none;
+  }
+  #lifeIcons img {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    transition: opacity 0.3s, transform 0.3s;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+  }
+  #lifeIcons img.lost {
+    opacity: 0.18;
+    transform: scale(0.8);
+  }
+
+  /* カウントダウン */
+  #countdownEl {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 88px;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 0 30px rgba(255,107,107,0.8), 0 4px 16px rgba(0,0,0,0.3);
+    pointer-events: none;
+    z-index: 6;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    background: rgba(78,205,196,0.25);
+    border-radius: 16px;
   }
 </style>
 </head>
@@ -216,6 +261,8 @@
 
   <div class="board-wrap">
     <canvas id="board"></canvas>
+    <div id="lifeIcons"></div>
+    <div id="countdownEl"></div>
     <div id="overlay">
       <div class="overlay-title" id="overlayTitle">🌷 ブロック崩し</div>
       <div class="overlay-msg" id="overlayMsg">パドルを動かしてボールを跳ね返そう！</div>
@@ -226,7 +273,7 @@
   <div class="hint">指でなぞって パドルを動かす</div>
 
   <div class="btn-row">
-    <button class="start-btn" id="startBtn" onclick="startGame()">🌷 はじめる</button>
+    <button class="start-btn" id="startBtn" onclick="handleStartClick()">🌱 スタート</button>
   </div>
 </div>
 
@@ -249,9 +296,9 @@ function resizeCanvas() {
 
 // 難易度設定
 const DIFF = {
-  easy:   { paddleW: 0.25, ballSpeed: 0.42, rows: 4 },
-  normal: { paddleW: 0.18, ballSpeed: 0.55, rows: 5 },
-  hard:   { paddleW: 0.10, ballSpeed: 0.95, rows: 7 },
+  easy:   { paddleW: 0.25, ballSpeed: 0.55, rows:  4, cols: 7, bh: 18, padding: 4, speedMult: 1.000 },
+  normal: { paddleW: 0.18, ballSpeed: 0.95, rows: 10, cols: 7, bh: 16, padding: 3, speedMult: 1.005 },
+  hard:   { paddleW: 0.10, ballSpeed: 1.10, rows: 16, cols: 9, bh: 11, padding: 2, speedMult: 1.022 },
 };
 const BLOCK_COLORS = [
   '#E94B6F', // pink
@@ -264,6 +311,9 @@ const BLOCK_COLORS = [
 
 let difficulty = 'easy';
 let paddle, ball, bricks, score, lives, best, gameState; // 'idle','playing','paused','over'
+let launchGuardTime = 0; // スタート直後の誤発射防止
+let countdownActive = false;
+let countdownTimerID = null;
 let lastTime = 0;
 
 function setup() {
@@ -284,13 +334,13 @@ function setup() {
     stuck: true, // パドルに乗ってる状態
   };
   bricks = [];
-  const cols = 7;
+  const cols = cfg.cols;
   const rows = cfg.rows;
-  const padding = 4;
+  const padding = cfg.padding;
   const offsetTop = 50;
   const offsetSide = 12;
   const bw = (W - offsetSide * 2 - padding * (cols - 1)) / cols;
-  const bh = 18;
+  const bh = cfg.bh;
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       bricks.push({
@@ -305,15 +355,41 @@ function setup() {
   }
 }
 
+function handleStartClick() {
+  if (gameState === 'playing') {
+    returnToStart(); // ゲーム中→スタート画面へ
+  } else {
+    startGame();     // スタート画面→ゲーム開始
+  }
+}
+
+function returnToStart() {
+  gameState = 'idle';
+  setup();
+  draw();
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('overlayTitle').textContent = '🧱 にこわブロック';
+  document.getElementById('overlayMsg').textContent = '難易度を選んでスタート！';
+  document.getElementById('overlayResult').style.display = 'none';
+  document.getElementById('startBtn').textContent = '🌱 スタート';
+}
+
 function startGame() {
   resizeCanvas();
   score = 0;
   lives = 3;
-  difficulty = document.querySelector('.diff-btn.active').dataset.diff;
+  // difficulty はクリックハンドラで既に設定済み（DOM再読み込みしない）
   setup();
   gameState = 'playing';
+  launchGuardTime = Date.now() + 500; // 500ms間は誤発射ブロック
   document.getElementById('scoreVal').textContent = '0';
   document.getElementById('livesVal').textContent = '3';
+  // カウントダウンリセット
+  if (countdownTimerID) { clearTimeout(countdownTimerID); countdownTimerID = null; }
+  countdownActive = false;
+  document.getElementById('countdownEl').style.display = 'none';
+  initLifeIcons();
+  updateLifeIcons();
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('startBtn').textContent = '🔄 リセット';
   lastTime = performance.now();
@@ -321,7 +397,7 @@ function startGame() {
 }
 
 function launchBall() {
-  if (!ball.stuck) return;
+  if (!ball.stuck || countdownActive) return;
   ball.stuck = false;
   // ランダムな角度（上方向）
   const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI / 3;
@@ -372,12 +448,9 @@ function update(dt) {
     ) {
       b.alive = false;
       score += 10;
-      // 難しいモードはブロックを壊すごとに少しずつ加速
-      if (difficulty === 'hard') {
-        ball.speed *= 1.012;
-      } else if (difficulty === 'normal') {
-        ball.speed *= 1.005;
-      }
+      // ブロックを壊すごとに加速（難易度別）
+      const mult = DIFF[difficulty].speedMult;
+      if (mult > 1) ball.speed *= mult;
       document.getElementById('scoreVal').textContent = score;
       // 当たった面を判定（簡易版）
       const overlapX = Math.min(ball.x + ball.r - b.x, b.x + b.w - (ball.x - ball.r));
@@ -397,11 +470,16 @@ function update(dt) {
   if (ball.y - ball.r > H) {
     lives--;
     document.getElementById('livesVal').textContent = lives;
+    updateLifeIcons();
     if (lives <= 0) {
       endGame();
     } else {
       ball.stuck = true;
       ball.vx = 0; ball.vy = 0;
+      // 即座にパドル上に戻す
+      ball.x = paddle.x + paddle.w / 2;
+      ball.y = paddle.y - ball.r - 1;
+      startCountdown();
     }
   }
 }
@@ -431,8 +509,8 @@ function draw() {
 
   // パドル
   const pGrad = ctx.createLinearGradient(0, paddle.y, 0, paddle.y + paddle.h);
-  pGrad.addColorStop(0, '#C49A6C');
-  pGrad.addColorStop(1, '#A67C52');
+  pGrad.addColorStop(0, '#FF8E8E');
+  pGrad.addColorStop(1, '#FF6B6B');
   ctx.fillStyle = pGrad;
   roundRect(ctx, paddle.x, paddle.y, paddle.w, paddle.h, paddle.h / 2);
   ctx.fill();
@@ -443,8 +521,8 @@ function draw() {
 
   // ボール
   const bGrad = ctx.createRadialGradient(ball.x - ball.r/3, ball.y - ball.r/3, 0, ball.x, ball.y, ball.r);
-  bGrad.addColorStop(0, '#FFF0F5');
-  bGrad.addColorStop(1, '#E94B6F');
+  bGrad.addColorStop(0, '#FFFFF0');
+  bGrad.addColorStop(1, '#FFE66D');
   ctx.fillStyle = bGrad;
   ctx.beginPath();
   ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
@@ -519,6 +597,9 @@ function saveBest() {
 }
 
 // パドル操作（タッチ・マウス）
+let lastTouchX = null;
+const PADDLE_DEADZONE = 7; // この pixel 以下の動きは無視
+
 function setPaddleX(clientX) {
   const rect = board.getBoundingClientRect();
   const x = clientX - rect.left;
@@ -527,11 +608,19 @@ function setPaddleX(clientX) {
 
 board.addEventListener('touchstart', e => {
   e.preventDefault();
+  lastTouchX = e.touches[0].clientX;
   if (gameState === 'playing' && ball.stuck) launchBall();
   setPaddleX(e.touches[0].clientX);
 }, { passive: false });
 board.addEventListener('touchmove', e => {
   e.preventDefault();
+  const currentX = e.touches[0].clientX;
+  const moved = Math.abs(currentX - (lastTouchX ?? currentX));
+  if (moved >= PADDLE_DEADZONE) {
+    if (gameState === 'playing' && ball.stuck && !countdownActive && Date.now() > launchGuardTime) launchBall();
+    setPaddleX(currentX);
+    lastTouchX = currentX;
+  }
   setPaddleX(e.touches[0].clientX);
 }, { passive: false });
 board.addEventListener('mousemove', e => {
@@ -560,14 +649,108 @@ setInterval(() => {
 }, 16);
 
 // 難易度切替
+
+
+// カウントダウン
+function startCountdown() {
+  countdownActive = true;
+  showCountdownStep(3);
+}
+
+function showCountdownStep(n) {
+  const el = document.getElementById('countdownEl');
+  if (n > 0) {
+    el.textContent = n;
+    el.style.display = 'flex';
+    countdownTimerID = setTimeout(() => showCountdownStep(n - 1), 550);
+  } else {
+    el.style.display = 'none';
+    countdownActive = false;
+    launchGuardTime = Date.now() + 300;
+  }
+}
+
+// キャラ残基
+const LIFE_CHARS = [
+  'assets/yumeme.svg','assets/anzu.svg','assets/kotatu.svg',
+  'assets/beteli.svg','assets/beru.svg','assets/koito.svg'
+];
+let lifeCharSrcs = [];
+
+function initLifeIcons() {
+  const shuffled = [...LIFE_CHARS].sort(() => Math.random() - 0.5);
+  lifeCharSrcs = shuffled.slice(0, 3);
+  const el = document.getElementById('lifeIcons');
+  el.innerHTML = lifeCharSrcs.map(src =>
+    `<img src="${src}" alt="">`
+  ).join('');
+}
+
+function updateLifeIcons() {
+  const imgs = document.querySelectorAll('#lifeIcons img');
+  imgs.forEach((img, i) => {
+    img.classList.toggle('lost', i >= lives);
+  });
+}
+
 document.querySelectorAll('.diff-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    
+
+// カウントダウン
+function startCountdown() {
+  countdownActive = true;
+  showCountdownStep(3);
+}
+
+function showCountdownStep(n) {
+  const el = document.getElementById('countdownEl');
+  if (n > 0) {
+    el.textContent = n;
+    el.style.display = 'flex';
+    countdownTimerID = setTimeout(() => showCountdownStep(n - 1), 550);
+  } else {
+    el.style.display = 'none';
+    countdownActive = false;
+    launchGuardTime = Date.now() + 300;
+  }
+}
+
+// キャラ残基
+const LIFE_CHARS = [
+  'assets/yumeme.svg','assets/anzu.svg','assets/kotatu.svg',
+  'assets/beteli.svg','assets/beru.svg','assets/koito.svg'
+];
+let lifeCharSrcs = [];
+
+function initLifeIcons() {
+  const shuffled = [...LIFE_CHARS].sort(() => Math.random() - 0.5);
+  lifeCharSrcs = shuffled.slice(0, 3);
+  const el = document.getElementById('lifeIcons');
+  el.innerHTML = lifeCharSrcs.map(src =>
+    `<img src="${src}" alt="">`
+  ).join('');
+}
+
+function updateLifeIcons() {
+  const imgs = document.querySelectorAll('#lifeIcons img');
+  imgs.forEach((img, i) => {
+    img.classList.toggle('lost', i >= lives);
+  });
+}
+
+document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     difficulty = btn.dataset.diff;
     const b = parseInt(localStorage.getItem('nikowa_breakout_best_' + difficulty) || '0');
     best = b;
     document.getElementById('bestVal').textContent = b;
+    // ゲーム前なら即パドル・ブロック反映
+    if (gameState !== 'playing') {
+      resizeCanvas();
+      setup();
+      draw();
+    }
   });
 });
 

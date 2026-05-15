@@ -207,7 +207,7 @@
     display: none;
     position: absolute;
     inset: 0;
-    background: rgba(232,248,243,0.94);
+    background: rgba(247,243,233,0.96);
     border-radius: 16px;
     flex-direction: column;
     align-items: center;
@@ -286,7 +286,7 @@
   </div>
 
   <div class="btn-row">
-    <button class="start-btn" id="startBtn" onclick="handleStartClick()">🌷 はじめる</button>
+    <button class="start-btn" id="startBtn" onclick="handleStartClick()">🌱 スタート</button>
     <button class="pause-btn" id="pauseBtn" onclick="togglePause()" disabled>⏸ ぽーず</button>
   </div>
 </div>
@@ -477,11 +477,26 @@ function loop(now, myGen) {
 }
 
 function handleStartClick() {
-  // ゲーム中の誤タップでリセットされるのを防ぐ
-  if (gameRunning && !paused) {
-    if (!confirm('ゲームをリセットしますか？')) return;
+  if (gameRunning) {
+    returnToStart(); // ゲーム中→スタート画面へ
+  } else {
+    startGame();     // スタート画面→ゲーム開始
   }
-  startGame();
+}
+
+function returnToStart() {
+  gameRunning = false;
+  loopGen++;          // 実行中のループを止める
+  paused = false;
+  newGame();
+  draw();
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('overlayTitle').textContent = '🐍 にこわスネーク';
+  document.getElementById('overlayMsg').textContent = 'いちごを食べて大きくなろう！🍓';
+  document.getElementById('overlayResult').style.display = 'none';
+  document.getElementById('startBtn').textContent = '🌱 スタート';
+  document.getElementById('pauseBtn').disabled = true;
+  document.getElementById('pauseBtn').textContent = '⏸ ぽーず';
 }
 
 function startGame() {
