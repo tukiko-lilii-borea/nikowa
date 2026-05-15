@@ -286,7 +286,7 @@
   </div>
 
   <div class="btn-row">
-    <button class="start-btn" id="startBtn" onclick="startGame()">🌷 はじめる</button>
+    <button class="start-btn" id="startBtn" onclick="handleStartClick()">🌷 はじめる</button>
     <button class="pause-btn" id="pauseBtn" onclick="togglePause()" disabled>⏸ ぽーず</button>
   </div>
 </div>
@@ -437,21 +437,31 @@ function step() {
     endGame();
     return;
   }
-  // 自分衝突
-  if (snake.some(s => s.x === head.x && s.y === head.y)) {
-    endGame();
-    return;
+
+  const willEat = head.x === food.x && head.y === food.y;
+
+  // 「動いた後の蛇」を仮想的に作って衝突判定（最も堅牢な方式）
+  // 1. unshiftで新head追加  2. 食べないならpopで尻尾削除
+  // 3. 新蛇の中で head と同じ座標の他セグメントがあれば衝突
+  const futureSnake = [head, ...snake];
+  if (!willEat) futureSnake.pop();
+
+  // i=1から：i=0は新head自身なのでスキップ
+  for (let i = 1; i < futureSnake.length; i++) {
+    if (futureSnake[i].x === head.x && futureSnake[i].y === head.y) {
+      endGame();
+      return;
+    }
   }
 
-  snake.unshift(head);
+  // 衝突なし → 実際に状態更新
+  snake = futureSnake;
 
-  if (head.x === food.x && head.y === food.y) {
+  if (willEat) {
     score += 10;
     document.getElementById('scoreVal').textContent = score;
     document.getElementById('lengthVal').textContent = snake.length;
     placeFood();
-  } else {
-    snake.pop();
   }
 }
 
@@ -464,6 +474,14 @@ function loop(now, myGen) {
   }
   draw();
   requestAnimationFrame(t => loop(t, myGen));
+}
+
+function handleStartClick() {
+  // ゲーム中の誤タップでリセットされるのを防ぐ
+  if (gameRunning && !paused) {
+    if (!confirm('ゲームをリセットしますか？')) return;
+  }
+  startGame();
 }
 
 function startGame() {
@@ -543,15 +561,17 @@ Object.entries(dirMap).forEach(([id, [dx, dy]]) => {
 });
 
 // スワイプ操作
-let touchStartX, touchStartY;
+let touchStartX = null, touchStartY = null;
 board.addEventListener('touchstart', e => {
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
 }, { passive: true });
 board.addEventListener('touchend', e => {
   if (!gameRunning) return;
+  if (touchStartX === null) return;  // touchstart未登録の不正touchendを無視
   const dx = e.changedTouches[0].clientX - touchStartX;
   const dy = e.changedTouches[0].clientY - touchStartY;
+  touchStartX = touchStartY = null;
   if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
   if (Math.abs(dx) > Math.abs(dy)) {
     handleDir(dx > 0 ? 1 : -1, 0);
@@ -572,6 +592,8 @@ document.addEventListener('keydown', e => {
 // 難易度切替
 document.querySelectorAll('.diff-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    // ゲーム中・ぽーず中は難易度変更不可（速度急変によるバグ防止）
+    if (gameRunning) return;
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     difficulty = btn.dataset.diff;
