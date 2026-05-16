@@ -8579,6 +8579,8 @@ function infoBarHtml() {
 function renderTop() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('houses');
+  // Recordモードの色入れ替えをクリア
+  try { ['--mint','--mint-deep','--mint-bg','--accent','--accent-deep','--accent-bg'].forEach(v => document.body.style.removeProperty(v)); } catch(e) {}
   renderPCSidebar(); // PC/iPad サイドバー更新
   const _isPC = window.innerWidth >= 900;
   const _isTablet = window.innerWidth >= 600 && window.innerWidth < 900;
@@ -22834,6 +22836,23 @@ function renderTweetsDiary() {
   h += 'window.addEventListener("resize",adjust);';
   // 最下部スクロール
   h += 'setTimeout(function(){window.scrollTo(0,document.body.scrollHeight);},120);';
+  // Recordタブ時の色反転（mint↔accent をbody全体で入れ替え）
+  if (diaryInputTab === 'record') {
+    h += '(function(){try{var cs=getComputedStyle(document.documentElement);';
+    h += 'var b=document.body;';
+    h += 'var _m=cs.getPropertyValue("--mint").trim();';
+    h += 'var _md=cs.getPropertyValue("--mint-deep").trim();';
+    h += 'var _mb=cs.getPropertyValue("--mint-bg").trim();';
+    h += 'var _a=cs.getPropertyValue("--accent").trim();';
+    h += 'var _ad=cs.getPropertyValue("--accent-deep").trim();';
+    h += 'var _ab=cs.getPropertyValue("--accent-bg").trim();';
+    h += 'b.style.setProperty("--mint",_a);b.style.setProperty("--mint-deep",_ad);b.style.setProperty("--mint-bg",_ab);';
+    h += 'b.style.setProperty("--accent",_m);b.style.setProperty("--accent-deep",_md);b.style.setProperty("--accent-bg",_mb);';
+    h += '}catch(e){}})();';
+  } else {
+    // Diaryタブに戻ったら色入れ替えをクリア
+    h += '(function(){try{var b=document.body;["--mint","--mint-deep","--mint-bg","--accent","--accent-deep","--accent-bg"].forEach(function(v){b.style.removeProperty(v);});}catch(e){}})();';
+  }
   h += '})();</scr'+'ipt>';
   
   return h;
@@ -23010,33 +23029,41 @@ function setStampCatForRecord(cat) {
 window.setStampCatForRecord = setStampCatForRecord;
 
 function postStampRecord(icon, name) {
-  if (!data.tweets) data.tweets = [];
-  const now = new Date();
-  // 日記タイムラインにスタンプ記録を追加
-  const tweet = {
-    id: 'tw_' + Date.now(),
-    body: name,
-    stampIcon: icon,
-    timestamp: now.getTime(),
-    tags: [],
-    region: data.tweetCurrentRegion || data.userRegion || '大阪',
-    weather: (window._weatherCache && window._weatherCache.icon) || null
-  };
-  data.tweets.push(tweet);
-  // 既存スタンプ履歴にも記録（Day画面と共有）
-  if (typeof addStampRecord === 'function') {
-    addStampRecord(icon, name, 'diary');
+  // スタンプ履歴のみに記録（ダイアリータイムラインには追加しない）
+  const def = (typeof _findStampDef === 'function') ? _findStampDef(icon, name) : null;
+  const type = def && def.type ? def.type : 'simple';
+  if (type === 'simple') {
+    // シンプルなスタンプは即記録
+    if (typeof addStampRecord === 'function') {
+      addStampRecord(icon, name, 'stamp');
+    }
+    // 全再描画せずトースト表示でフィードバック
+    if (typeof showToast === 'function') {
+      showToast(name + ' を記録したよ🌷');
+    }
+    // ピン留めバーだけ即更新（画面ゆがみ防止）
+    saveData();
+  } else {
+    // 値入力タイプは既存モーダルを開く
+    if (typeof openValueInputModal === 'function') {
+      openValueInputModal({
+        icon: icon,
+        name: name,
+        type: def.type,
+        unit: def.unit,
+        step: def.step,
+        min: def.min,
+        max: def.max,
+        placeholder: def.placeholder,
+        photo: def.photo,
+        period: def.period
+      });
+    } else {
+      if (typeof addStampRecord === 'function') addStampRecord(icon, name, 'stamp');
+      saveData();
+    }
   }
-  saveData();
-  _suppressScrollTop = true;
-  render();
-  // タップフィードバック
-  setTimeout(() => {
-    const btn = document.activeElement;
-    if (btn) { btn.style.transform = 'scale(0.92)'; setTimeout(() => { btn.style.transform = ''; }, 100); }
-  }, 0);
 }
-window.postStampRecord = postStampRecord;
 window.postStampRecord = postStampRecord;
 
 // ===== 背景画像設定（プレミアム機能） =====
@@ -42210,6 +42237,13 @@ function setModePageTab(mode, tabId) {
   currentModeTab[mode] = tabId;
   modeTabEditMode = false;
   _suppressScrollTop = true;
+  // Diary以外に移ったら色入れ替えをクリア（mint/accent入れ替えがbodyに残らないように）
+  if (!(mode === 'me' && tabId === 'diary')) {
+    try {
+      const b = document.body;
+      ['--mint','--mint-deep','--mint-bg','--accent','--accent-deep','--accent-bg'].forEach(v => b.style.removeProperty(v));
+    } catch(e) {}
+  }
   render();
 }
 
