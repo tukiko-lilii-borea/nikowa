@@ -8884,14 +8884,13 @@ function _makeSwipeHandler(checkView, checkDx, onTrigger) {
     if (e.touches[0].clientX < 30) { blocked = true; return; }
     let el = e.target;
     while (el && el !== app) {
-      // ★ ボタン・リンク・入力フォーム上では絶対にスワイプしない（誤発火防止）
+      // ★ ボタン・リンク・入力フォーム上ではスワイプしない（誤発火防止）
       const tag = el.tagName;
       if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'LABEL') { blocked = true; return; }
-      // ★ onclick属性持ち要素も除外（ボタン代わりに使われてる）
       if (el.hasAttribute && el.hasAttribute('onclick')) { blocked = true; return; }
       const cs = window.getComputedStyle(el);
-      if ((cs.overflowX === 'auto' || cs.overflowX === 'scroll')) { blocked = true; return; }
-      if ((cs.overflowY === 'auto' || cs.overflowY === 'scroll') && el.scrollHeight > el.clientHeight) { blocked = true; return; }
+      // 横スクロール可能な要素上はスワイプしない（実際にscroll可能な場合のみ）
+      if ((cs.overflowX === 'auto' || cs.overflowX === 'scroll') && el.scrollWidth > el.clientWidth) { blocked = true; return; }
       el = el.parentElement;
     }
     sx = e.touches[0].clientX; sy = e.touches[0].clientY;
@@ -8900,14 +8899,13 @@ function _makeSwipeHandler(checkView, checkDx, onTrigger) {
   const onMove = function(e) {
     if (!checkView() || blocked || e.touches.length !== 1) return;
     const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
-    if (!decided && (Math.abs(dx) > 20 || Math.abs(dy) > 20)) {
-      isSwipe = Math.abs(dx) > Math.abs(dy) * 2; decided = true;
+    if (!decided && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) {
+      isSwipe = Math.abs(dx) > Math.abs(dy) * 1.5; decided = true;
     }
   };
   const onEnd = function(e) {
     if (!checkView() || blocked) { blocked = false; return; }
     const dx = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX - sx : 0;
-    // ★ 閾値を80pxに引き上げ（誤発火防止）
     if (isSwipe && checkDx(dx)) _swipeFadeTo(onTrigger);
     isSwipe = false; decided = false;
   };
@@ -8924,7 +8922,7 @@ function _attachHomeSwipeNav() {
   }
   const h = _makeSwipeHandler(
     function() { return currentView === 'top'; },
-    function(dx) { return dx > 80; },
+    function(dx) { return dx > 50; },
     function() { switchMode('me'); currentView = 'me'; currentModeTab['me'] = 'diary'; render(); }
   );
   app._swipeStart = h.onStart;
@@ -9973,6 +9971,64 @@ window.openQuickAddMenu = function() {
 
   h += '</div></div>';
   document.body.insertAdjacentHTML('beforeend', h);
+  
+  // ★ 下スワイプで閉じる（追従アニメ付き）
+  setTimeout(function() {
+    const overlay = document.getElementById('quickAddMenu');
+    if (!overlay) return;
+    const sheet = overlay.firstElementChild;
+    if (!sheet) return;
+    let startY = 0, dy = 0, dragging = false, decided = false;
+    const onStart = function(e) {
+      if (e.touches.length !== 1) return;
+      startY = e.touches[0].clientY;
+      dy = 0;
+      dragging = false;
+      decided = false;
+    };
+    const onMove = function(e) {
+      if (e.touches.length !== 1) return;
+      const y = e.touches[0].clientY;
+      dy = y - startY;
+      // 20px動いたら判定（下方向のみドラッグモード開始）
+      if (!decided && Math.abs(dy) > 20) {
+        decided = true;
+        if (dy > 0) {
+          dragging = true;
+          sheet.style.animation = 'none';
+          sheet.style.transition = 'none';
+        }
+      }
+      if (dragging && dy > 0) {
+        sheet.style.transform = 'translateY(' + dy + 'px)';
+      }
+    };
+    const onEnd = function() {
+      if (!dragging) return;
+      if (dy > 100) {
+        // 閉じる
+        sheet.style.transition = 'transform 0.2s ease-out';
+        sheet.style.transform = 'translateY(100%)';
+        setTimeout(function() {
+          if (typeof window.closeQuickAddMenu === 'function') window.closeQuickAddMenu();
+        }, 200);
+      } else {
+        // 元に戻す
+        sheet.style.transition = 'transform 0.2s ease-out';
+        sheet.style.transform = 'translateY(0)';
+        setTimeout(function() {
+          sheet.style.transform = '';
+          sheet.style.transition = '';
+        }, 200);
+      }
+      dragging = false;
+      decided = false;
+    };
+    overlay.addEventListener('touchstart', onStart, { passive: true });
+    overlay.addEventListener('touchmove', onMove, { passive: true });
+    overlay.addEventListener('touchend', onEnd, { passive: true });
+    overlay.addEventListener('touchcancel', onEnd, { passive: true });
+  }, 50);
 };
 
 window.closeQuickAddMenu = function() {
@@ -22598,7 +22654,7 @@ function _attachMeSwipeBack() {
   }
   const h = _makeSwipeHandler(
     function() { return currentView === 'me'; },
-    function(dx) { return dx < -80; },
+    function(dx) { return dx < -50; },
     function() { switchMode('pet'); currentView = 'top'; render(); }
   );
   app._meSwipeStart = h.onStart;
