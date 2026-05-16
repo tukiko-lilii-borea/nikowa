@@ -22556,6 +22556,20 @@ function renderMeMode() {
   html += '<div style="height:80px;"></div>';
   app.innerHTML = html;
   _attachMeSwipeBack();
+  // Diaryタブの場合は描画後の調整＆スクロールを実行
+  if (tab === 'diary') {
+    // ★ 重要：render()末尾のscrollTo(0,0)を阻止
+    _suppressScrollTop = true;
+    const _dit = data.diaryInputTab || 'diary';
+    if (_dit === 'record') {
+      _applyRecordColorSwap();
+    } else {
+      _clearRecordColorSwap();
+    }
+    _diaryAdjustAndScroll();
+  } else {
+    _clearRecordColorSwap();
+  }
 }
 
 // ===== ME→ホーム 左スワイプで戻る =====
@@ -22847,57 +22861,106 @@ function renderTweetsDiary() {
   h += '</div>'; // 入力カード閉じ
   h += '</div>'; // tweetBottomBlock閉じ
   
-  // 描画後：入力欄ブロックをbottom-navの上に貼り付け＋タイムラインに正しいpadding-bottom＋最下部スクロール
-  h += '<scr'+'ipt>(function(){function adjust(){try{';
-  // mode-content-wrapとその親要素も全部透明化
-  h += 'var mc=document.querySelector(".mode-content-wrap");';
-  h += 'if(mc){mc.style.cssText="background:transparent !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;padding:0 !important;margin:0 !important;min-height:0 !important;border-radius:0 !important;";}';
-  // tweetWrapの親も透明化
-  h += 'var tw=document.getElementById("tweetWrap");';
-  h += 'if(tw){var p=tw.parentElement;while(p&&p!==document.body){var st=getComputedStyle(p);if(st.background.indexOf("rgba")>=0||st.backgroundColor.indexOf("rgba(255")>=0){p.style.background="transparent";p.style.backgroundColor="transparent";p.style.backdropFilter="none";p.style.webkitBackdropFilter="none";}p=p.parentElement;}}';
-  h += 'var nav=document.querySelector(".bottom-nav");';
-  h += 'var navH=nav?(window.innerHeight-nav.getBoundingClientRect().top):64;';
-  h += 'var bottomBlock=document.getElementById("tweetBottomBlock");';
-  h += 'if(bottomBlock)bottomBlock.style.bottom=navH+"px";';
-  // ★ LINE風：tweetWrapのpadding-bottomを動的に入力ブロック高さに合わせる
-  h += 'if(tw&&bottomBlock){var bbH=bottomBlock.getBoundingClientRect().height;tw.style.paddingBottom=(bbH+navH+20)+"px";}';
-  h += '}catch(e){}}';
-  h += 'setTimeout(adjust,40);setTimeout(adjust,150);setTimeout(adjust,400);';
-  h += 'window.addEventListener("resize",adjust);';
-  // ★ 最下部スクロール（即時+rAF+setTimeoutで滑らか）
-  h += 'function _sb(){try{window.scrollTo(0,document.body.scrollHeight+9999);}catch(e){}}';
-  h += 'adjust();_sb();';  // 即時実行（最初の見え方をズラさない）
-  h += 'requestAnimationFrame(function(){adjust();_sb();});';
-  h += 'requestAnimationFrame(function(){requestAnimationFrame(function(){adjust();_sb();});});';
-  h += 'setTimeout(function(){adjust();_sb();},120);';
-  h += 'setTimeout(function(){adjust();_sb();},300);';
-  // Recordタブ時の色反転（mint↔accent をbody全体で入れ替え）
-  if (diaryInputTab === 'record') {
-    h += '(function(){try{var cs=getComputedStyle(document.documentElement);';
-    h += 'var html=document.documentElement;var b=document.body;';
-    h += 'var _bg=cs.getPropertyValue("--bg").trim();';
-    h += 'var _m=cs.getPropertyValue("--mint").trim();';
-    h += 'var _md=cs.getPropertyValue("--mint-deep").trim();';
-    h += 'var _mb=cs.getPropertyValue("--mint-bg").trim();';
-    h += 'var _sw=cs.getPropertyValue("--surface-warm").trim();';
-    h += 'var _a=cs.getPropertyValue("--accent").trim();';
-    h += 'var _ad=cs.getPropertyValue("--accent-deep").trim();';
-    h += 'var _ab=cs.getPropertyValue("--accent-bg").trim();';
-    // htmlとbody両方に設定（!importantを上書きするためにstyleSheet経由）
-    h += 'var swapStyle=document.getElementById("recordColorSwap")||document.createElement("style");';
-    h += 'swapStyle.id="recordColorSwap";';
-    h += 'swapStyle.textContent=":root,html,body{--mint:"+_a+" !important;--mint-deep:"+_ad+" !important;--mint-bg:"+_ab+" !important;--accent:"+_m+" !important;--accent-deep:"+_md+" !important;--accent-bg:"+_mb+" !important;--bg:"+_ab+" !important;--surface-warm:"+_ab+" !important;}";';
-    h += 'if(!swapStyle.parentNode)document.head.appendChild(swapStyle);';
-    h += '}catch(e){}})();';
-  } else {
-    // Diaryタブに戻ったら色入れ替えをクリア
-    h += '(function(){try{var s=document.getElementById("recordColorSwap");if(s)s.remove();}catch(e){}})();';
-  }
-  h += '})();</scr'+'ipt>';
+  // 描画後の処理は外部関数 _diaryAdjustAndScroll で実行（innerHTML経由ではscript実行されないため）
   
   return h;
 }
 window.renderTweetsDiary = renderTweetsDiary;
+
+// ===== Diary描画後の調整＆スクロール（innerHTML設定後にJS側から呼ぶ） =====
+function _diaryAdjustAndScroll() {
+  function adjust() {
+    try {
+      // 強制レイアウト計算（scrollHeight正確化のため）
+      void document.body.offsetHeight;
+      // 透明化処理
+      const mc = document.querySelector('.mode-content-wrap');
+      if (mc) {
+        mc.style.cssText = 'background:transparent !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;padding:0 !important;margin:0 !important;min-height:0 !important;border-radius:0 !important;';
+      }
+      const tw = document.getElementById('tweetWrap');
+      if (tw) {
+        let p = tw.parentElement;
+        while (p && p !== document.body) {
+          const st = getComputedStyle(p);
+          if (st.background.indexOf('rgba') >= 0 || st.backgroundColor.indexOf('rgba(255') >= 0) {
+            p.style.background = 'transparent';
+            p.style.backgroundColor = 'transparent';
+            p.style.backdropFilter = 'none';
+            p.style.webkitBackdropFilter = 'none';
+          }
+          p = p.parentElement;
+        }
+      }
+      // bottom block位置・タイムラインpadding計算
+      const nav = document.querySelector('.bottom-nav');
+      const navH = nav ? (window.innerHeight - nav.getBoundingClientRect().top) : 64;
+      const bottomBlock = document.getElementById('tweetBottomBlock');
+      if (bottomBlock) bottomBlock.style.bottom = navH + 'px';
+      if (tw && bottomBlock) {
+        const bbH = bottomBlock.getBoundingClientRect().height;
+        tw.style.paddingBottom = (bbH + navH + 20) + 'px';
+      }
+    } catch(e) { console.error('adjust err:', e); }
+  }
+  function scrollBottom() {
+    try {
+      // 強制レイアウトでscrollHeight正確化
+      void document.body.offsetHeight;
+      const target = document.body.scrollHeight + 9999;
+      window.scrollTo(0, target);
+      document.documentElement.scrollTop = target;
+      document.body.scrollTop = target;
+    } catch(e) {}
+  }
+  function step() { adjust(); scrollBottom(); }
+  // 同期で即時 + 多段階バックアップ
+  step();
+  requestAnimationFrame(() => {
+    step();
+    requestAnimationFrame(() => {
+      step();
+      setTimeout(step, 50);
+      setTimeout(step, 150);
+      setTimeout(step, 350);
+      setTimeout(step, 700);
+    });
+  });
+  // resize対応
+  if (!window._diaryResizeAttached) {
+    window.addEventListener('resize', adjust);
+    window._diaryResizeAttached = true;
+  }
+}
+window._diaryAdjustAndScroll = _diaryAdjustAndScroll;
+
+// ===== Recordタブ用：色入れ替えを適用/解除 =====
+function _applyRecordColorSwap() {
+  try {
+    const cs = getComputedStyle(document.documentElement);
+    const _m = cs.getPropertyValue('--mint').trim();
+    const _md = cs.getPropertyValue('--mint-deep').trim();
+    const _mb = cs.getPropertyValue('--mint-bg').trim();
+    const _a = cs.getPropertyValue('--accent').trim();
+    const _ad = cs.getPropertyValue('--accent-deep').trim();
+    const _ab = cs.getPropertyValue('--accent-bg').trim();
+    let swapStyle = document.getElementById('recordColorSwap');
+    if (!swapStyle) {
+      swapStyle = document.createElement('style');
+      swapStyle.id = 'recordColorSwap';
+      document.head.appendChild(swapStyle);
+    }
+    swapStyle.textContent = ':root,html,body{--mint:'+_a+' !important;--mint-deep:'+_ad+' !important;--mint-bg:'+_ab+' !important;--accent:'+_m+' !important;--accent-deep:'+_md+' !important;--accent-bg:'+_mb+' !important;--bg:'+_ab+' !important;--surface-warm:'+_ab+' !important;}';
+  } catch(e) {}
+}
+function _clearRecordColorSwap() {
+  try {
+    const s = document.getElementById('recordColorSwap');
+    if (s) s.remove();
+  } catch(e) {}
+}
+window._applyRecordColorSwap = _applyRecordColorSwap;
+window._clearRecordColorSwap = _clearRecordColorSwap;
 
 // つぶやきカレンダー（月別の投稿数表示、日付タップでジャンプ）
 function openTweetCalendarModal() {
