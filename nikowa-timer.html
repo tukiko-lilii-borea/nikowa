@@ -355,16 +355,18 @@ function _playPreview(){
 
 // プリセット
 function selectPreset(btn,min){
-  setDrumTo(min);
+  drumH=Math.floor(min/60); drumM=min%60; drumS=0;
+  var disp=document.getElementById('drumDisplay');
+  if(disp) disp.textContent='-';
   document.querySelectorAll('.preset-btn').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');
-  document.getElementById('customMin').value='';
-  if(!running){totalSec=min*60;remSec=min*60;initDrum();updateDisplay();updateRing();}
+  var cm=document.getElementById('customMin'); if(cm) cm.value='';
+  if(!running){totalSec=min*60;remSec=min*60;updateDisplay();updateRing();}
 }
 function onCustomInput(el){
   var v=parseInt(el.value);if(!v||v<1)return;
   document.querySelectorAll('.preset-btn').forEach(function(b){b.classList.remove('active');});
-  if(!running){totalSec=v*60;remSec=v*60;initDrum();updateDisplay();updateRing();}
+  if(!running){totalSec=v*60;remSec=v*60;updateDisplay();updateRing();}
 }
 
 // サウンド選択
@@ -496,10 +498,8 @@ function onReset(){
   document.getElementById('startBtn').textContent='スタート';
   document.getElementById('startBtn').className='ctrl-btn ctrl-start';
   document.getElementById('timeSub').textContent='待機中';
-  initDrum();updateDisplay();updateRing();
-}
-function tick(){
-  remSec--;initDrum();updateDisplay();updateRing();
+  updateDisplay();updateRing();
+  remSec--;updateDisplay();updateRing();
   if(remSec<=0){running=false;clearInterval(timerInterval);playEndSoundLoop();showOverlay();}
 }
 
