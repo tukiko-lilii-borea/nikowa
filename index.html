@@ -22697,6 +22697,52 @@ function renderTweetsDiary() {
     h += '</div>';
   }
   
+  // ★ Recordタブ：コンパクトスタンプグリッド（タイムライン・入力欄はスキップ）
+  if (diaryInputTab === 'record') {
+    if (!data.stampSelCat) data.stampSelCat = '生活';
+    const _selCat = data.stampSelCat;
+    const _stampLib = data.stampLib || {};
+    const _cats = Object.keys(_stampLib).filter(c => !(_stampLib[c]._hidden));
+    const _CAT_COLORS = {'生活':'#7BAE99','美容':'#D48FAA','ダイエット':'#D48FAA','体調':'#7BAE99','家事':'#A89B7B','仕事':'#7B8FAE','趣味':'#8F7BAE'};
+    // カテゴリピル
+    h += '<div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 6px;">';
+    for (const cat of _cats) {
+      const isC = cat === _selCat;
+      const cc = _CAT_COLORS[cat] || 'var(--accent-deep)';
+      h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:5px 14px;border-radius:100px;border:1.5px solid '+(isC?cc:'var(--line)')+';background:'+(isC?cc:'var(--surface-warm)')+';color:'+(isC?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+    }
+    h += '</div>';
+    // ピン留め
+    const _pinnedIds = data.stampPins || [];
+    if (_pinnedIds.length > 0) {
+      h += '<div style="margin-bottom:8px;padding:6px 8px;background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;">';
+      h += '<div style="font-size:9px;font-weight:700;color:var(--ink-sub);margin-bottom:5px;">📌 ピン留め</div>';
+      h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">';
+      for (const pid of _pinnedIds.slice(0,8)) {
+        const [pCat,pIdx] = pid.split('__');
+        const ps = (_stampLib[pCat]||[])[parseInt(pIdx)];
+        if (!ps) continue;
+        h += '<button onclick="postStampRecord(\''+escapeHtml(ps.icon)+'\',\''+escapeHtml(ps.name)+'\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:8px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;">';
+        h += renderStampIcon(ps.icon,'font-size:20px;color:var(--accent-deep);');
+        h += '<span style="font-size:9px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(ps.name)+'</span>';
+        h += '</button>';
+      }
+      h += '</div></div>';
+    }
+    // コンパクトスタンプグリッド（4列）
+    const _stamps = (_stampLib[_selCat] || []).filter(s => !s._hidden);
+    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding-bottom:16px;">';
+    for (const s of _stamps) {
+      h += '<button onclick="postStampRecord(\''+escapeHtml(s.icon)+'\',\''+escapeHtml(s.name)+'\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-warm);cursor:pointer;font-family:inherit;">';
+      h += renderStampIcon(s.icon,'font-size:22px;color:var(--accent-deep);');
+      h += '<span style="font-size:10px;font-weight:700;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+      h += '</button>';
+    }
+    h += '</div>';
+    h += '</div>'; // tweetWrap閉じ
+    return h;
+  }
+  
   // ★ タイムライン（高さ自由・背景透ける・カードなし）
   h += '<div data-tweets-area id="tweetsTimeline" style="background:transparent;display:flex;flex-direction:column;gap:0;">';
   
@@ -22972,6 +23018,14 @@ function setDiaryInputTab(tab) {
   render();
 }
 window.setDiaryInputTab = setDiaryInputTab;
+
+function setStampCatForRecord(cat) {
+  data.stampSelCat = cat;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window.setStampCatForRecord = setStampCatForRecord;
 
 function postStampRecord(icon, name) {
   // スタンプをDiaryのつぶやきとして記録
