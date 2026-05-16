@@ -22859,13 +22859,9 @@ function renderTweetsDiary() {
   h += '}catch(e){}}';
   h += 'setTimeout(adjust,80);setTimeout(adjust,300);';
   h += 'window.addEventListener("resize",adjust);';
-  // 最下部スクロール（LINE風・複数回試行で確実に最下部へ）
-  h += 'function _scrollBottom(){try{var sh=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);window.scrollTo({top:sh,left:0,behavior:"instant"});}catch(e){window.scrollTo(0,document.body.scrollHeight);}}';
-  h += 'requestAnimationFrame(_scrollBottom);';
-  h += 'setTimeout(_scrollBottom,50);';
-  h += 'setTimeout(_scrollBottom,150);';
-  h += 'setTimeout(_scrollBottom,300);';
-  h += 'setTimeout(_scrollBottom,600);';
+  // 最下部スクロール（LINE風・複数試行）
+  h += 'function _sb(){try{window.scrollTo(0,99999);}catch(e){}}';
+  h += 'requestAnimationFrame(_sb);setTimeout(_sb,80);setTimeout(_sb,200);setTimeout(_sb,500);';
   // Recordタブ時の色反転（mint↔accent をbody全体で入れ替え）
   if (diaryInputTab === 'record') {
     h += '(function(){try{var cs=getComputedStyle(document.documentElement);';
