@@ -10303,7 +10303,17 @@ function saveHomeQuickThought() {
   if (currentMode === 'me') {
     if (!data.tweets) data.tweets = [];
     data.tweets.push(tweet);
-    saveData();
+    saveData(); // localStorageとFirestoreどちらにも保存
+  } else {
+    // ★ currentModeがpetでも、meモードのFirestoreに直接書く（消失バグの根本修正）
+    // （Firebaseに同期しないとloadFromFirestoreで上書きされてしまう）
+    if (currentUser && db) {
+      try {
+        db.collection('users').doc(currentUser.uid).collection('modes').doc('me')
+          .set(meData)
+          .catch(e => console.log('Home diary Firestore sync error:', e));
+      } catch(e) {}
+    }
   }
 
   inp.value = '';
@@ -22905,11 +22915,7 @@ function renderTweetsDiary() {
   
   let h = '';
   
-  // 背景画像のラッパー（あれば）
-  if (bgImage) {
-    h += '<div id="tweetBgWrapper" style="position:fixed;inset:0;z-index:-1;background-image:url('+bgImage+');background-size:cover;background-position:center;background-attachment:fixed;"></div>';
-    h += '<div id="tweetBgOverlay" style="position:fixed;inset:0;z-index:-1;background:rgba(255,255,255,0.55);backdrop-filter:blur(2px);"></div>';
-  }
+  // ★ 背景画像はtweetsTimeline内にCSSで直接統合済み（tweetBgWrapper不要）
   
   // ===== 全体ラッパー（普通の流れ、fixed使わない）=====
   h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:8px 10px 250px;gap:8px;">';
@@ -22917,7 +22923,7 @@ function renderTweetsDiary() {
   // 上部バー（独立カード）
   // Record/Diary タブ + 検索・カレンダー・壁紙アイコン
   const diaryInputTab = data.diaryInputTab || 'diary';
-  h += '<div style="background:'+(bgImage?'rgba(255,255,255,0.85)':'var(--surface)')+';backdrop-filter:'+(bgImage?'blur(10px)':'none')+';border:1px solid var(--line);border-radius:14px;padding:6px 10px;display:flex;gap:6px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:6px 10px;display:flex;gap:6px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   // Record/Diary タブ
   h += '<button onclick="setDiaryInputTab(\'record\')" style="flex:0 0 auto;padding:4px 10px;border-radius:100px;border:1.5px solid '+(diaryInputTab==='record'?'var(--accent-deep)':'var(--line)')+';background:'+(diaryInputTab==='record'?'var(--accent-deep)':'transparent')+';color:'+(diaryInputTab==='record'?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Record</button>';
   h += '<button onclick="setDiaryInputTab(\'diary\')" style="flex:0 0 auto;padding:4px 10px;border-radius:100px;border:1.5px solid '+(diaryInputTab==='diary'?'var(--accent-deep)':'var(--line)')+';background:'+(diaryInputTab==='diary'?'var(--accent-deep)':'transparent')+';color:'+(diaryInputTab==='diary'?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Diary</button>';
@@ -22942,7 +22948,7 @@ function renderTweetsDiary() {
   const weatherIcon = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dateKeyForWeather) : null;
   
   // 9日固定日付バー（前後4日 = 合計9日）スクロールなし・各日に天気アイコン
-  h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:4px 6px;">';
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:4px 6px;">';
   h += '<div style="display:flex;justify-content:space-between;">';
   for (let di = -4; di <= 4; di++) {
     const d = new Date(today);
@@ -22976,7 +22982,21 @@ function renderTweetsDiary() {
   }
   
   // ★ タイムライン（独立スクロールコンテナ：高さはJSで動的計算）
-  h += '<div data-tweets-area id="tweetsTimeline" style="background:rgba(255,255,255,0.4);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;gap:0;padding:10px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  // ★ 白カードを基準に、背景画像をカード内レイヤーで重ねる
+  // 構造：白カード(base) → 背景画像(middle) → コンテンツ(top)
+  // background-attachment:scroll = コンテンツがスクロールしても背景はカード内に固定
+  let _tlBg, _tlShadow, _tlBorder;
+  if (bgImage) {
+    // 白下地(50%白オーバーレイ) + 背景画像 = 背景が透けて見えるけど文字は読みやすい
+    _tlBg = 'background-color:white;background-image:linear-gradient(rgba(255,255,255,0.55),rgba(255,255,255,0.55)),url(\'' + bgImage.replace(/'/g,"\\'") + '\');background-size:cover;background-position:center;background-attachment:scroll;';
+    _tlShadow = '0 2px 12px rgba(0,0,0,0.10)';
+    _tlBorder = '1.5px solid rgba(255,255,255,0.8)';
+  } else {
+    _tlBg = 'background:white;';
+    _tlShadow = '0 2px 8px rgba(0,0,0,0.07)';
+    _tlBorder = '1px solid var(--line)';
+  }
+  h += '<div data-tweets-area id="tweetsTimeline" style="'+_tlBg+'border:'+_tlBorder+';border-radius:14px;display:flex;flex-direction:column;gap:0;padding:10px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:'+_tlShadow+';">';
   
   if (diaryInputTab === 'record') {
     // ─── Recordタブ：スタンプ履歴のみ表示（data.stampHistoryから） ───
