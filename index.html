@@ -12573,7 +12573,8 @@ async function _handleStampMemoPhotoSelect(event) {
   if (!file.type.startsWith('image/')) { showToast('画像ファイルを選んでね'); return; }
   showToast('写真を処理中...');
   try {
-    const dataUrl = await resizeImageToBase64(file, 480, 0.75);
+    // ★ 800px正方形にセンタークロップ＋高品質（0.88）でくっきり保存
+    const dataUrl = await cropImageToSquareBase64(file, 800, 0.88);
     window._stampMemoPhotoData = dataUrl;
     const area = document.getElementById('stampMemoPhotoArea');
     if (area) {
@@ -12590,6 +12591,40 @@ async function _handleStampMemoPhotoSelect(event) {
   event.target.value = '';
 }
 window._handleStampMemoPhotoSelect = _handleStampMemoPhotoSelect;
+
+// ★ 正方形センタークロップ＋高品質
+function cropImageToSquareBase64(file, size, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('画像の読み込みに失敗'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('画像の解析に失敗'));
+      img.onload = () => {
+        // 元画像の短辺を取って中央クロップ
+        const srcW = img.width, srcH = img.height;
+        const minSide = Math.min(srcW, srcH);
+        const sx = (srcW - minSide) / 2;
+        const sy = (srcH - minSide) / 2;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        // 高画質処理
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        // 中央クロップ → 正方形に縮小
+        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+        try {
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        } catch(err) { reject(err); }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+window.cropImageToSquareBase64 = cropImageToSquareBase64;
 
 function closeStampMemoModal() {
   const el = document.getElementById('stampMemoModal');
@@ -22702,8 +22737,105 @@ function _attachMeSwipeBack() {
 }
 
 // ===== LINE風つぶやき日記（MEのDiaryタブ） =====
+// ===== スタンプライブラリ初期化（Day画面を開いてなくても初期化される）=====
+function _ensureStampLib() {
+  if (data.stampLib && Object.keys(data.stampLib).length > 0) {
+    // 既に何か入ってる→OK
+    return;
+  }
+  // Day画面と同じDEFAULT_STAMPSで初期化
+  const DEFAULT_STAMPS = {
+    '生活': [
+      {icon:'water_drop',name:'水'},{icon:'bathtub',name:'おふろ'},
+      {icon:'bed',name:'睡眠'},{icon:'coffee',name:'コーヒー'},
+      {icon:'local_cafe',name:'お茶'},{icon:'shower',name:'シャワー'},
+      {icon:'dentistry',name:'歯みがき'},{icon:'pets',name:'散歩'},
+      {icon:'egg_alt',name:'朝ごはん'},{icon:'ramen_dining',name:'昼ごはん'},
+      {icon:'dinner_dining',name:'晩ごはん'},{icon:'cookie',name:'おやつ'}
+    ],
+    '美容': [
+      {icon:'face',name:'スキンケア'},{icon:'palette',name:'メイク'},{icon:'content_cut',name:'ヘア'},
+      {icon:'colors',name:'ネイル'},{icon:'spa',name:'マッサージ'},{icon:'checkroom',name:'おしゃれ'},
+      {icon:'face_retouching_natural',name:'パック'},{icon:'back_hand',name:'ハンドクリーム'},
+      {icon:'soap',name:'ボディケア'},{icon:'wb_sunny',name:'日焼け止め'}
+    ],
+    'ダイエット': [
+      {icon:'monitor_weight',name:'体重',type:'number',unit:'kg',step:0.1,min:0,max:200,photo:true,period:'morning'},
+      {icon:'lunch_dining',name:'食事',type:'text',placeholder:'食べたもの',photo:true},
+      {icon:'directions_run',name:'運動',type:'number',unit:'分',step:1,min:0,max:600},
+      {icon:'fitness_center',name:'筋トレ',type:'number',unit:'分',step:1,min:0,max:300},
+      {icon:'directions_walk',name:'歩数',type:'number',unit:'歩',step:100,min:0,max:50000},
+      {icon:'self_improvement',name:'ヨガ',type:'number',unit:'分',step:1,min:0,max:300},
+      {icon:'square_foot',name:'体脂肪',type:'number',unit:'%',step:0.1,min:0,max:100,period:'morning'},
+      {icon:'rule',name:'ウエスト',type:'number',unit:'cm',step:0.1,min:0,max:200}
+    ],
+    '体調': [
+      {icon:'medication',name:'くすり',type:'text',placeholder:'薬の名前'},
+      {icon:'local_drink',name:'生理開始'},
+      {icon:'local_drink',name:'生理終了'},
+      {icon:'mood',name:'PMS'},
+      {icon:'healing',name:'生理痛'},
+      {icon:'sick',name:'体調不良',type:'text',placeholder:'症状'},
+      {icon:'local_hospital',name:'通院'},
+      {icon:'thermostat',name:'体温',type:'number',unit:'℃',step:0.1,min:34,max:42},
+      {icon:'bathtub',name:'入浴'},
+      {icon:'hot_tub',name:'半身浴'},
+      {icon:'spa',name:'サウナ'}
+    ],
+    'メンタル': [
+      {icon:'sentiment_very_satisfied',name:'嬉しい'},
+      {icon:'mood',name:'楽しい'},
+      {icon:'favorite',name:'幸せ'},
+      {icon:'auto_awesome',name:'感謝'},
+      {icon:'sentiment_satisfied',name:'機嫌◎'},
+      {icon:'spa',name:'落ち着いてる'},
+      {icon:'celebration',name:'達成感'},
+      {icon:'sentiment_neutral',name:'普通'},
+      {icon:'cloud',name:'もやもや'},
+      {icon:'sentiment_dissatisfied',name:'不安'},
+      {icon:'sentiment_very_dissatisfied',name:'悲しい'},
+      {icon:'thunderstorm',name:'ストレス'},
+      {icon:'battery_alert',name:'疲れた'},
+      {icon:'mood_bad',name:'イライラ'},
+      {icon:'whatshot',name:'怒り'},
+      {icon:'mindfulness',name:'瞑想',type:'number',unit:'分',step:1,min:0,max:120},
+      {icon:'air',name:'深呼吸'},
+      {icon:'self_improvement',name:'リラックス'},
+      {icon:'rocket_launch',name:'やる気'},
+      {icon:'center_focus_strong',name:'集中'}
+    ],
+    '家事': [
+      {icon:'cleaning_services',name:'掃除'},{icon:'local_laundry_service',name:'洗濯'},{icon:'kitchen',name:'料理'},
+      {icon:'shopping_cart',name:'買い物'},{icon:'delete',name:'ゴミ出し'},{icon:'wash',name:'食器洗い'},
+      {icon:'iron',name:'アイロン'},{icon:'inventory_2',name:'片づけ'},{icon:'bento',name:'お弁当'}
+    ],
+    '趣味': [
+      {icon:'sports_esports',name:'ゲーム'},{icon:'menu_book',name:'読書'},{icon:'music_note',name:'音楽'},
+      {icon:'brush',name:'お絵描き'},{icon:'live_tv',name:'動画'},{icon:'mic',name:'カラオケ'},
+      {icon:'movie',name:'映画'},{icon:'local_cafe',name:'カフェ'},{icon:'favorite',name:'推し活'},
+      {icon:'photo_camera',name:'写真'},{icon:'nature_people',name:'お散歩'}
+    ],
+    'ポジティブ': [
+      {icon:'star',name:'えらい'},{icon:'auto_awesome',name:'神ってる'},{icon:'favorite',name:'可愛い'},
+      {icon:'psychology',name:'我慢できた'},{icon:'trophy',name:'成功'},{icon:'local_fire_department',name:'かっこいい'},
+      {icon:'celebration',name:'やったー'},{icon:'bolt',name:'がんばった'},{icon:'thumb_up',name:'ナイス'},
+      {icon:'favorite_border',name:'好き'},{icon:'volunteer_activism',name:'大好き'}
+    ]
+  };
+  if (!data.stampLib) data.stampLib = {};
+  for (const cat in DEFAULT_STAMPS) {
+    if (!data.stampLib[cat]) {
+      data.stampLib[cat] = DEFAULT_STAMPS[cat].map(s => ({...s, id: 's_'+cat+'_'+s.name, hidden: false}));
+    }
+  }
+  try { saveData(); } catch(e) {}
+}
+window._ensureStampLib = _ensureStampLib;
+
 function renderTweetsDiary() {
   if (!data.tweets) data.tweets = [];
+  // ★ スタンプライブラリ初期化を保証（Day画面未訪問でも動作するように）
+  _ensureStampLib();
   // フィルタタグ
   const filterTag = data.tweetFilterTag || null;
   // 背景画像（プレミアム機能：今は全員利用可）
