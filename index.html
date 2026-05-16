@@ -22917,13 +22917,13 @@ function renderTweetsDiary() {
   
   // ★ 背景画像はtweetsTimeline内にCSSで直接統合済み（tweetBgWrapper不要）
   
-  // ===== 全体ラッパー（普通の流れ、fixed使わない）=====
-  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:8px 10px 250px;gap:8px;">';
+  // ===== 全体ラッパー（透明。カード間にはページ背景が見える）=====
+  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:8px 10px 0;gap:8px;">';
   
-  // 上部バー（独立カード）
+  // ===== 上部バー（独立カード）：白背景エリアの外・上に配置 =====
   // Record/Diary タブ + 検索・カレンダー・壁紙アイコン
   const diaryInputTab = data.diaryInputTab || 'diary';
-  h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:6px 10px;display:flex;gap:6px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:6px 10px;display:flex;gap:6px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:8px;">';
   // Record/Diary タブ
   h += '<button onclick="setDiaryInputTab(\'record\')" style="flex:0 0 auto;padding:4px 10px;border-radius:100px;border:1.5px solid '+(diaryInputTab==='record'?'var(--accent-deep)':'var(--line)')+';background:'+(diaryInputTab==='record'?'var(--accent-deep)':'transparent')+';color:'+(diaryInputTab==='record'?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Record</button>';
   h += '<button onclick="setDiaryInputTab(\'diary\')" style="flex:0 0 auto;padding:4px 10px;border-radius:100px;border:1.5px solid '+(diaryInputTab==='diary'?'var(--accent-deep)':'var(--line)')+';background:'+(diaryInputTab==='diary'?'var(--accent-deep)':'transparent')+';color:'+(diaryInputTab==='diary'?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Diary</button>';
@@ -22948,7 +22948,7 @@ function renderTweetsDiary() {
   const weatherIcon = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dateKeyForWeather) : null;
   
   // 9日固定日付バー（前後4日 = 合計9日）スクロールなし・各日に天気アイコン
-  h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:4px 6px;">';
+  h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:4px 6px;margin-bottom:4px;">';
   h += '<div style="display:flex;justify-content:space-between;">';
   for (let di = -4; di <= 4; di++) {
     const d = new Date(today);
@@ -22974,29 +22974,15 @@ function renderTweetsDiary() {
   h += '</div>';
   h += '</div>';
   
-  // 今日以外は「今日へ」ボタン
-  if (!isToday) {
-    h += '<div style="text-align:center;">';
-    h += '<button onclick="jumpDiaryToToday()" style="background:var(--surface-warm);border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:4px 14px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:12px;">today</span>今日へ</button>';
-    h += '</div>';
-  }
-  
-  // ★ タイムライン（独立スクロールコンテナ：高さはJSで動的計算）
-  // ★ 白カードを基準に、背景画像をカード内レイヤーで重ねる
-  // 構造：白カード(base) → 背景画像(middle) → コンテンツ(top)
-  // background-attachment:scroll = コンテンツがスクロールしても背景はカード内に固定
-  let _tlBg, _tlShadow, _tlBorder;
+  // ★ タイムライン：白背景で横いっぱい（枠なし・ネガティブマージンで端まで）
+  // レイヤー: 白背景(base) → 背景画像(middle) → コンテンツ(top)
+  let _tlBg;
   if (bgImage) {
-    // 白下地(50%白オーバーレイ) + 背景画像 = 背景が透けて見えるけど文字は読みやすい
-    _tlBg = 'background-color:white;background-image:linear-gradient(rgba(255,255,255,0.55),rgba(255,255,255,0.55)),url(\'' + bgImage.replace(/'/g,"\\'") + '\');background-size:cover;background-position:center;background-attachment:scroll;';
-    _tlShadow = '0 2px 12px rgba(0,0,0,0.10)';
-    _tlBorder = '1.5px solid rgba(255,255,255,0.8)';
+    _tlBg = 'background-color:white;background-image:linear-gradient(rgba(255,255,255,0.5),rgba(255,255,255,0.5)),url(\'' + bgImage.replace(/'/g,"\\'") + '\');background-size:cover;background-position:center;background-attachment:scroll;';
   } else {
     _tlBg = 'background:white;';
-    _tlShadow = '0 2px 8px rgba(0,0,0,0.07)';
-    _tlBorder = '1px solid var(--line)';
   }
-  h += '<div data-tweets-area id="tweetsTimeline" style="'+_tlBg+'border:'+_tlBorder+';border-radius:14px;display:flex;flex-direction:column;gap:0;padding:10px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:'+_tlShadow+';">';
+  h += '<div data-tweets-area id="tweetsTimeline" style="'+_tlBg+'border:none;border-radius:0;display:flex;flex-direction:column;gap:0;padding:8px 10px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0 -10px;min-height:60vh;">';
   
   if (diaryInputTab === 'record') {
     // ─── Recordタブ：スタンプ履歴のみ表示（data.stampHistoryから） ───
