@@ -148,17 +148,13 @@
     font-weight: 700;
     text-align: center;
   }
-
-  .vol-row { display:flex; gap:3px; }
-  .vol-btn { background:rgba(255,255,255,0.7); border:1px solid rgba(180,140,200,0.3); border-radius:6px; color:#6B5B7B; font-size:9px; font-weight:800; padding:4px 7px; cursor:pointer; font-family:inherit; }
-  .vol-btn.active { background:#8B6BAA; border-color:#8B6BAA; color:white; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="logo"><img src="assets/logo-soft.svg" alt="nikowa"> <span style="font-size:20px;">🎡</span></div>
-  <div style="display:flex;align-items:center;gap:6px;"><div class="vol-row"><button type="button" class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button><button type="button" class="vol-btn" onclick="setVol(0.3)" id="vLo">小</button><button type="button" class="vol-btn" onclick="setVol(0.7)" id="vMd">中</button><button type="button" class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button></div><a href="index.html" class="back-btn">← ホーム</a></div>
+  <a href="index.html" class="back-btn">← ホーム</a></div>
 </div>
 
 <div class="title-card">
@@ -245,155 +241,6 @@
 </div>
 
 
-<script>
-// ===== 遊園地 アンティーク幻想オルゴール =====
-var audioCtx = null;
-var bgmRunning = false;
-var bgmNoteIdx = 0;
-var bgmTimer = null;
-var masterVol = 0;
 
-// アンティーク幻想：Dマイナー、ゆっくりワルツ感（80BPM）
-// オルゴールはきらきら高音＋疎なリズム
-var YU_MEL = [
-  // ふわっと上昇する幻想フレーズ
-  1174.66,0,1396.91,0, 1760.00,0,2093.00,0,
-  1760.00,0,1396.91,0, 1174.66,0,1046.50,0,
-  // 切ない下降
-  1318.51,0,1567.98,0, 1864.66,0,1567.98,0,
-  1318.51,0,1046.50,0, 932.33,0,1046.50,0,
-  // ゆめうつつフレーズ
-  987.77,0,1174.66,0, 1396.91,0,1864.66,0,
-  1396.91,0,1174.66,0, 987.77,0,880.00,0,
-  // 締めくくり
-  880.00,0,1046.50,0, 1396.91,0,1760.00,0,
-  1396.91,0,1046.50,0, 880.00,0,0,0,
-];
-
-// 低音は控えめに（オルゴールは響き重視）
-var YU_BASS = [
-  293.66,0,0,0, 0,0,0,0,
-  293.66,0,0,0, 0,0,0,0,
-  261.63,0,0,0, 0,0,0,0,
-  261.63,0,0,0, 0,0,0,0,
-  246.94,0,0,0, 0,0,0,0,
-  246.94,0,0,0, 0,0,0,0,
-  220.00,0,0,0, 0,0,0,0,
-  293.66,0,0,0, 0,0,0,0,
-];
-
-function setVol(v) {
-  masterVol = v;
-  ['vOff','vLo','vMd','vHi'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
-  var map = {0:'vOff',0.3:'vLo',0.7:'vMd',1.0:'vHi'};
-  var act = document.getElementById(map[v]);
-  if (act) act.classList.add('active');
-  
-  // 設定を保存
-  try { localStorage.setItem('nikowa_bgm_vol', v); } catch(e){}
-  
-  if (v === 0) stopBGM();
-  else {
-    if (!audioCtx) {
-      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
-    }
-    if (audioCtx) {
-      audioCtx.resume().then(function(){
-        if (!bgmRunning) startBGM();
-      }).catch(function(){});
-    }
-  }
-}
-
-function playBell(freq, dur, vol) {
-  // オルゴール音：sine + 高音の倍音を少し
-  if (!audioCtx || !freq || masterVol === 0) return;
-  try {
-    var t = audioCtx.currentTime;
-    // 基音（sine、長め）
-    var o1 = audioCtx.createOscillator();
-    var g1 = audioCtx.createGain();
-    o1.connect(g1); g1.connect(audioCtx.destination);
-    o1.type = 'sine';
-    o1.frequency.value = freq;
-    g1.gain.setValueAtTime(vol * masterVol, t);
-    g1.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.95);
-    o1.start(t); o1.stop(t + dur);
-    // 倍音（さらに高い、薄く）
-    var o2 = audioCtx.createOscillator();
-    var g2 = audioCtx.createGain();
-    o2.connect(g2); g2.connect(audioCtx.destination);
-    o2.type = 'sine';
-    o2.frequency.value = freq * 2;
-    g2.gain.setValueAtTime(vol * masterVol * 0.25, t);
-    g2.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.5);
-    o2.start(t); o2.stop(t + dur);
-  } catch(e){}
-}
-
-function startBGM() {
-  if (bgmRunning) return;
-  bgmRunning = true; bgmNoteIdx = 0; tickBGM();
-}
-function stopBGM() {
-  bgmRunning = false;
-  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
-}
-function tickBGM() {
-  if (!bgmRunning) return;
-  var i = bgmNoteIdx % YU_MEL.length;
-  if (YU_MEL[i]) playBell(YU_MEL[i], 0.9, 0.20);
-  if (YU_BASS[i]) playBell(YU_BASS[i], 1.4, 0.10);
-  bgmNoteIdx++;
-  bgmTimer = setTimeout(tickBGM, 200);
-}
-
-// ページロード時に保存された音量を復元
-window.addEventListener('DOMContentLoaded', function(){
-  try {
-    var saved = localStorage.getItem('nikowa_bgm_vol');
-    if (saved !== null) {
-      var v = parseFloat(saved);
-      ['vOff','vLo','vMd','vHi'].forEach(function(id){
-        var el = document.getElementById(id);
-        if (el) el.classList.remove('active');
-      });
-      var map = {0:'vOff',0.3:'vLo',0.7:'vMd',1.0:'vHi'};
-      var act = document.getElementById(map[v]);
-      if (act) act.classList.add('active');
-      masterVol = v;
-      // 注意：iOSは自動再生不可。ユーザーが画面タップしたときに開始
-      if (v > 0) {
-        document.body.addEventListener('click', function once(){
-          document.body.removeEventListener('click', once);
-          if (!audioCtx) {
-            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
-          }
-          if (audioCtx) audioCtx.resume().then(function(){ if(!bgmRunning) startBGM(); }).catch(function(){});
-        }, { once: true });
-      }
-    }
-  } catch(e){}
-});
-// ===== ここまで =====
-
-// nikowa_bgm_vol_restore_marker - 起動時にアプリ全体の音量設定を読み込む
-(function(){
-  try {
-    var saved = parseFloat(localStorage.getItem('nikowa_bgm_vol'));
-    if (!isNaN(saved) && typeof setVol === 'function') {
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function(){ setVol(saved); });
-      } else {
-        setVol(saved);
-      }
-    }
-  } catch(e){}
-})();
-
-</script>
 </body>
 </html>
