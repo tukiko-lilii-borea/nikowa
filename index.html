@@ -8948,7 +8948,7 @@ function _attachHomeSwipeNav() {
   const h = _makeSwipeHandler(
     function() { return currentView === 'top'; },
     function(dx) { return dx > 50; },
-    function() { switchMode('me'); currentView = 'me'; currentModeTab['me'] = 'diary'; render(); }
+    function() { switchMode('me'); currentView = 'me'; currentModeTab['me'] = 'diary'; delete data.tweetViewDate; render(); }
   );
   app._swipeStart = h.onStart;
   app._swipeMove = h.onMove;
@@ -22128,15 +22128,15 @@ function renderMeMode() {
 
   let html = '';
   if (tab === 'diary') {
-    // ===== Diary専用topbar：天気なし、Record/Diary/アイコン/≡ を右側に =====
+    // ===== Diary専用topbar：日付・時間・天気なし、コントロールのみ =====
     const _dit2 = data.diaryInputTab || 'diary';
     const _isRec2 = _dit2 === 'record';
     html += '<div style="padding:8px 12px 4px;display:flex;align-items:center;gap:6px;">';
-    // 左：日付（コンパクト、天気なし）
-    html += '<div style="font-size:11px;font-weight:700;color:var(--ink-dark);white-space:nowrap;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">'+_yyyy2+'/'+_mm2+'/'+_dd2+'('+_wk2+') '+_hh2+':'+_mi2+' · '+escapeHtml(_region2)+'</div>';
     // Record / Diary タブボタン
-    html += '<button onclick="setDiaryInputTab(\'record\')" style="flex-shrink:0;padding:3px 8px;border-radius:100px;border:1.5px solid '+(_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(_isRec2?'var(--accent-deep)':'transparent')+';color:'+(_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">Record</button>';
-    html += '<button onclick="setDiaryInputTab(\'diary\')" style="flex-shrink:0;padding:3px 8px;border-radius:100px;border:1.5px solid '+(!_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(!_isRec2?'var(--accent-deep)':'transparent')+';color:'+(!_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">Diary</button>';
+    html += '<button onclick="setDiaryInputTab(\'record\')" style="flex-shrink:0;padding:4px 10px;border-radius:100px;border:1.5px solid '+(_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(_isRec2?'var(--accent-deep)':'transparent')+';color:'+(_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Record</button>';
+    html += '<button onclick="setDiaryInputTab(\'diary\')" style="flex-shrink:0;padding:4px 10px;border-radius:100px;border:1.5px solid '+(!_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(!_isRec2?'var(--accent-deep)':'transparent')+';color:'+(!_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Diary</button>';
+    // スペーサー
+    html += '<div style="flex:1;"></div>';
     // アクションアイコン
     html += '<button onclick="openTweetFilterModal()" title="検索" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">search</span></button>';
     html += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">calendar_month</span></button>';
@@ -22995,13 +22995,6 @@ function renderTweetsDiary() {
   h += '</div>';
   h += '</div>';
   
-  // 今日以外は「今日へ」ボタン
-  if (!isToday) {
-    h += '<div style="text-align:center;">';
-    h += '<button onclick="jumpDiaryToToday()" style="background:var(--surface-warm);border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:4px 14px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:12px;">today</span>今日へ</button>';
-    h += '</div>';
-  }
-  
   // タイムライン（スクロールコンテナ）
   h += '<div data-tweets-area id="tweetsTimeline" style="background:rgba(255,255,255,0.4);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;gap:0;padding:10px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   
@@ -23197,12 +23190,12 @@ function _diaryAdjustAndScroll() {
       const navH = nav ? (window.innerHeight - nav.getBoundingClientRect().top) : 64;
       const bottomBlock = document.getElementById('tweetBottomBlock');
       if (bottomBlock) bottomBlock.style.bottom = navH + 'px';
-      // ★ タイムラインの高さを動的計算
+      // ★ タイムラインの高さを動的計算（上下8pxの余白を確保）
       const tl = document.getElementById('tweetsTimeline');
       if (tl && bottomBlock) {
         const tlTop = tl.getBoundingClientRect().top;
         const bbH = bottomBlock.getBoundingClientRect().height;
-        const tlHeight = window.innerHeight - tlTop - bbH - navH - 8;
+        const tlHeight = window.innerHeight - tlTop - bbH - navH - 16; // 上8+下8
         if (tlHeight > 100) {
           tl.style.height = tlHeight + 'px';
           tl.style.maxHeight = tlHeight + 'px';
@@ -42804,12 +42797,16 @@ function setModePageTab(mode, tabId) {
   currentModeTab[mode] = tabId;
   modeTabEditMode = false;
   _suppressScrollTop = true;
-  // Diary以外に移ったら色入れ替えをクリア（mint/accent入れ替えがbodyに残らないように）
+  // Diary以外に移ったら色入れ替えをクリア
   if (!(mode === 'me' && tabId === 'diary')) {
     try {
       const s = document.getElementById('recordColorSwap');
       if (s) s.remove();
     } catch(e) {}
+  }
+  // ★ Diaryに切り替えたら今日の日付にリセット（過去日を見てた状態で戻ってくる問題を防ぐ）
+  if (mode === 'me' && tabId === 'diary') {
+    delete data.tweetViewDate;
   }
   render();
 }
