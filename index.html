@@ -22844,24 +22844,28 @@ function renderTweetsDiary() {
   h += '</div>'; // 入力カード閉じ
   h += '</div>'; // tweetBottomBlock閉じ
   
-  // 描画後：入力欄ブロックをbottom-navの上に貼り付け＋ページ最下部スクロール
+  // 描画後：入力欄ブロックをbottom-navの上に貼り付け＋タイムラインに正しいpadding-bottom＋最下部スクロール
   h += '<scr'+'ipt>(function(){function adjust(){try{';
   // mode-content-wrapとその親要素も全部透明化
   h += 'var mc=document.querySelector(".mode-content-wrap");';
   h += 'if(mc){mc.style.cssText="background:transparent !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;padding:0 !important;margin:0 !important;min-height:0 !important;border-radius:0 !important;";}';
-  // tweetWrapの親（mode-content-wrapの中の親要素）も透明化
+  // tweetWrapの親も透明化
   h += 'var tw=document.getElementById("tweetWrap");';
   h += 'if(tw){var p=tw.parentElement;while(p&&p!==document.body){var st=getComputedStyle(p);if(st.background.indexOf("rgba")>=0||st.backgroundColor.indexOf("rgba(255")>=0){p.style.background="transparent";p.style.backgroundColor="transparent";p.style.backdropFilter="none";p.style.webkitBackdropFilter="none";}p=p.parentElement;}}';
   h += 'var nav=document.querySelector(".bottom-nav");';
   h += 'var navH=nav?(window.innerHeight-nav.getBoundingClientRect().top):64;';
   h += 'var bottomBlock=document.getElementById("tweetBottomBlock");';
   h += 'if(bottomBlock)bottomBlock.style.bottom=navH+"px";';
+  // ★ LINE風：tweetWrapのpadding-bottomを動的に入力ブロック高さに合わせる
+  h += 'if(tw&&bottomBlock){var bbH=bottomBlock.getBoundingClientRect().height;tw.style.paddingBottom=(bbH+navH+20)+"px";}';
   h += '}catch(e){}}';
-  h += 'setTimeout(adjust,80);setTimeout(adjust,300);';
+  h += 'setTimeout(adjust,40);setTimeout(adjust,150);setTimeout(adjust,400);';
   h += 'window.addEventListener("resize",adjust);';
-  // 最下部スクロール（LINE風・複数試行）
-  h += 'function _sb(){try{window.scrollTo(0,99999);}catch(e){}}';
-  h += 'requestAnimationFrame(_sb);setTimeout(_sb,80);setTimeout(_sb,200);setTimeout(_sb,500);';
+  // ★ 最下部スクロール（adjust の後に必ず実行）
+  h += 'function _sb(){try{window.scrollTo(0,document.body.scrollHeight+9999);}catch(e){}}';
+  h += 'setTimeout(function(){adjust();_sb();},60);';
+  h += 'setTimeout(function(){adjust();_sb();},200);';
+  h += 'setTimeout(function(){adjust();_sb();},500);';
   // Recordタブ時の色反転（mint↔accent をbody全体で入れ替え）
   if (diaryInputTab === 'record') {
     h += '(function(){try{var cs=getComputedStyle(document.documentElement);';
