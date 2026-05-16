@@ -22736,63 +22736,71 @@ function renderTweetsDiary() {
   h += '<div id="tweetBottomBlock" style="position:fixed;left:0;right:0;margin:0 auto;width:100%;max-width:480px;bottom:64px;padding:0 8px 4px;z-index:100;box-sizing:border-box;pointer-events:none;">';
   h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 -2px 8px rgba(0,0,0,0.06);overflow:hidden;pointer-events:auto;">';
   
-  // 現在地ピル
-  h += '<div style="padding:4px 12px 0;display:flex;justify-content:flex-start;">';
-  h += '<button onclick="openTweetLocationModal()" style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px 3px 7px;background:'+(isAway?'linear-gradient(135deg,#FFE8B0,#FFD580)':'var(--surface-warm)')+';border:1px solid '+(isAway?'#E89A4A':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:9px;font-weight:600;color:'+(isAway?'#8B6914':'var(--ink-sub)')+';cursor:pointer;letter-spacing:0.03em;">';
-  if (currentWeatherIcon) {
-    h += weatherIconHtml(currentWeatherIcon, 'font-size:11px;');
-  } else {
-    h += '<span class="material-symbols-rounded" style="font-size:10px;">place</span>';
+  // 現在地ピル（Diaryタブのみ表示）
+  if (diaryInputTab !== 'record') {
+    h += '<div style="padding:4px 12px 0;display:flex;justify-content:flex-start;">';
+    h += '<button onclick="openTweetLocationModal()" style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px 3px 7px;background:'+(isAway?'linear-gradient(135deg,#FFE8B0,#FFD580)':'var(--surface-warm)')+';border:1px solid '+(isAway?'#E89A4A':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:9px;font-weight:600;color:'+(isAway?'#8B6914':'var(--ink-sub)')+';cursor:pointer;letter-spacing:0.03em;">';
+    if (currentWeatherIcon) {
+      h += weatherIconHtml(currentWeatherIcon, 'font-size:11px;');
+    } else {
+      h += '<span class="material-symbols-rounded" style="font-size:10px;">place</span>';
+    }
+    h += '<span>'+escapeHtml(currentRegionEn)+'</span>';
+    if (isAway) {
+      h += '<span style="font-size:8px;opacity:0.6;">·</span>';
+      h += '<span style="font-size:8px;color:#C4762A;font-weight:700;letter-spacing:0.05em;">trip</span>';
+    }
+    h += '<span class="material-symbols-rounded" style="font-size:9px;opacity:0.5;margin-left:1px;">expand_less</span>';
+    h += '</button>';
+    h += '</div>';
   }
-  h += '<span>'+escapeHtml(currentRegionEn)+'</span>';
-  if (isAway) {
-    h += '<span style="font-size:8px;opacity:0.6;">·</span>';
-    h += '<span style="font-size:8px;color:#C4762A;font-weight:700;letter-spacing:0.05em;">trip</span>';
-  }
-  h += '<span class="material-symbols-rounded" style="font-size:9px;opacity:0.5;margin-left:1px;">expand_less</span>';
-  h += '</button>';
-  h += '</div>';
   
   // 写真プレビュー
   h += '<div id="tweetPhotoPreview" style="padding:4px 12px 0;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>';
   
   // 入力欄（Record/Diaryタブで切り替え）
   if (diaryInputTab === 'record') {
-    // ── Record: ピン1行 + カテゴリタブ + スタンプ1列 ──
+    // ── Record: ピン1行 + カテゴリタブ + スタンプ1列（色反転：茶色メイン）──
     const _sLib = data.stampLib || {};
     const _sCats = Object.keys(_sLib).filter(c => !(_sLib[c] && _sLib[c]._hidden));
     const _sCat = data.stampSelCat || (_sCats[0] || '生活');
-    const _pins = data.stampPins || [];
-    // ピン止め1行（非常にコンパクト）
-    if (_pins.length > 0) {
-      h += '<div style="padding:4px 10px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;align-items:center;">';
-      h += '<span style="font-size:9px;color:var(--ink-sub);flex-shrink:0;">📌</span>';
-      for (const pid of _pins.slice(0,8)) {
-        const [pCat,pIdx] = pid.split('__');
-        const ps = (_sLib[pCat]||[])[parseInt(pIdx)];
-        if (!ps) continue;
-        h += '<button onclick="postStampRecord(\''+escapeHtml(ps.icon)+'\',\''+escapeHtml(ps.name)+'\')" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 6px;border-radius:7px;border:1px solid var(--line);background:var(--surface-warm);cursor:pointer;font-family:inherit;min-width:34px;">';
-        h += renderStampIcon(ps.icon,'font-size:14px;color:var(--accent-deep);');
-        h += '<span style="font-size:8px;font-weight:700;color:var(--ink-dark);white-space:nowrap;">'+escapeHtml(ps.name)+'</span>';
+    const _pinned = data.pinnedStamps || [];
+    // ピン止め1行（Osaka位置に常設・コンパクト・茶色ベース）
+    h += '<div style="padding:5px 10px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;align-items:center;">';
+    h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);flex-shrink:0;">push_pin</span>';
+    if (_pinned.length === 0) {
+      h += '<span style="font-size:9px;color:var(--ink-light);flex-shrink:0;">スタンプの📌でピン留めできるよ</span>';
+    } else {
+      for (const p of _pinned.slice(0,12)) {
+        const _safeName = escapeHtml(p.name).replace(/'/g,"\\'");
+        h += '<button onclick="postStampRecord(\''+p.icon+'\',\''+_safeName+'\')" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 5px;border-radius:7px;border:1px solid var(--accent);background:var(--accent-bg);cursor:pointer;font-family:inherit;min-width:36px;">';
+        h += renderStampIcon(p.icon,'font-size:14px;color:var(--accent-deep);');
+        h += '<span style="font-size:8px;font-weight:700;color:var(--accent-deep);white-space:nowrap;">'+escapeHtml(p.name)+'</span>';
         h += '</button>';
       }
-      h += '</div>';
     }
-    // カテゴリタブ
+    h += '</div>';
+    // カテゴリタブ（茶色がメイン）
     h += '<div style="padding:4px 10px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;">';
     for (const cat of _sCats) {
       const isC = cat === _sCat;
-      h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+(isC?'var(--accent-deep)':'var(--line)')+';background:'+(isC?'var(--accent-deep)':'transparent')+';color:'+(isC?'white':'var(--ink-sub)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+      h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+(isC?'var(--accent-deep)':'var(--accent)')+';background:'+(isC?'var(--accent-deep)':'transparent')+';color:'+(isC?'white':'var(--accent-deep)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
     }
     h += '</div>';
-    // スタンプ1列スクロール
+    // スタンプ1列スクロール（茶色ベース＋各ボタンにピンマーク）
     const _stamps = (_sLib[_sCat] || []).filter(s => !s._hidden);
     h += '<div style="padding:4px 10px 6px;display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">';
     for (const s of _stamps) {
-      h += '<button onclick="postStampRecord(\''+escapeHtml(s.icon)+'\',\''+escapeHtml(s.name)+'\')" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 5px;border-radius:9px;border:1.5px solid var(--line);background:var(--surface-warm);cursor:pointer;font-family:inherit;min-width:44px;">';
-      h += renderStampIcon(s.icon,'font-size:18px;color:var(--accent-deep);');
-      h += '<span style="font-size:9px;font-weight:700;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40px;">'+escapeHtml(s.name)+'</span>';
+      const _safeName = escapeHtml(s.name).replace(/'/g,"\\'");
+      const _isPin = (_pinned.findIndex(p => (p.icon+'|'+p.name) === (s.icon+'|'+s.name)) >= 0);
+      h += '<div style="flex:0 0 auto;position:relative;min-width:48px;">';
+      h += '<button onclick="postStampRecord(\''+s.icon+'\',\''+_safeName+'\')" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 4px;border-radius:9px;border:1.5px solid var(--accent);background:var(--accent-bg);cursor:pointer;font-family:inherit;">';
+      h += renderStampIcon(s.icon,'font-size:20px;color:var(--accent-deep);');
+      h += '<span style="font-size:9px;font-weight:700;color:var(--accent-deep);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44px;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
+      // 小さいピンマーク（右上）：ピン中は薄茶アクセント色
+      h += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:'+(_isPin?'var(--accent-deep)':'white')+';border:1px solid '+(_isPin?'var(--accent-deep)':'var(--accent)')+';color:'+(_isPin?'white':'var(--accent-deep)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:8px;">push_pin</span></span>';
+      h += '</div>';
     }
     h += '</div>';
   } else {
