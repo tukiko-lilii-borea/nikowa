@@ -8848,6 +8848,57 @@ function renderTop() {
 }
 
 // ===== ホーム→Diary スワイプナビゲーション =====
+function _swipeFadeTo(fn) {
+  const app = document.getElementById('app');
+  if (!app) return;
+  app.style.transition = 'opacity 0.08s ease-out';
+  app.style.opacity = '0';
+  setTimeout(function() {
+    try { fn(); } catch(e) { console.error(e); }
+    app.style.opacity = '0';
+    requestAnimationFrame(function() {
+      app.style.transition = 'opacity 0.1s ease-out';
+      app.style.opacity = '1';
+      setTimeout(function() {
+        app.style.transition = ''; app.style.opacity = '';
+      }, 100);
+    });
+  }, 80);
+}
+
+function _makeSwipeHandler(checkView, checkDx, onTrigger) {
+  const app = document.getElementById('app');
+  if (!app) return;
+  let sx = 0, sy = 0, isSwipe = false, decided = false, blocked = false;
+  const onStart = function(e) {
+    if (!checkView() || e.touches.length !== 1) return;
+    blocked = false;
+    if (e.touches[0].clientX < 30) { blocked = true; return; }
+    let el = e.target;
+    while (el && el !== app) {
+      const cs = window.getComputedStyle(el);
+      if ((cs.overflowX === 'auto' || cs.overflowX === 'scroll') && el.scrollWidth > el.clientWidth) { blocked = true; return; }
+      el = el.parentElement;
+    }
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    isSwipe = false; decided = false;
+  };
+  const onMove = function(e) {
+    if (!checkView() || blocked || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+    if (!decided && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) {
+      isSwipe = Math.abs(dx) > Math.abs(dy) * 1.5; decided = true;
+    }
+  };
+  const onEnd = function(e) {
+    if (!checkView() || blocked) { blocked = false; return; }
+    const dx = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX - sx : 0;
+    if (isSwipe && checkDx(dx)) _swipeFadeTo(onTrigger);
+    isSwipe = false; decided = false;
+  };
+  return { onStart, onMove, onEnd };
+}
+
 function _attachHomeSwipeNav() {
   const app = document.getElementById('app');
   if (!app) return;
@@ -8856,59 +8907,17 @@ function _attachHomeSwipeNav() {
     app.removeEventListener('touchmove', app._swipeMove);
     app.removeEventListener('touchend', app._swipeEnd);
   }
-  let sx = 0, sy = 0, isSwipe = false, decided = false, blocked = false;
-  app._swipeStart = function(e) {
-    if (currentView !== 'top' || e.touches.length !== 1) return;
-    blocked = false;
-    if (e.touches[0].clientX < 30) { blocked = true; return; }
-    let el = e.target;
-    while (el && el !== app) {
-      const cs = window.getComputedStyle(el);
-      if ((cs.overflowX === 'auto' || cs.overflowX === 'scroll') && el.scrollWidth > el.clientWidth) {
-        blocked = true; return;
-      }
-      el = el.parentElement;
-    }
-    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
-    isSwipe = false; decided = false;
-  };
-  app._swipeMove = function(e) {
-    if (currentView !== 'top' || blocked || e.touches.length !== 1) return;
-    const dx = e.touches[0].clientX - sx;
-    const dy = e.touches[0].clientY - sy;
-    if (!decided && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) {
-      isSwipe = Math.abs(dx) > Math.abs(dy) * 1.5;
-      decided = true;
-    }
-  };
-  app._swipeEnd = function(e) {
-    if (currentView !== 'top' || blocked) { blocked = false; return; }
-    const dx = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX - sx : 0;
-    if (isSwipe && dx > 50) {
-      app.style.transition = 'opacity 0.15s ease-out';
-      app.style.opacity = '0';
-      setTimeout(function() {
-        try {
-          switchMode('me');
-          currentView = 'me';
-          currentModeTab['me'] = 'diary';
-          render();
-        } catch (err) { console.error('Diary nav error:', err); }
-        app.style.opacity = '0';
-        requestAnimationFrame(function() {
-          app.style.transition = 'opacity 0.18s ease-out';
-          app.style.opacity = '1';
-          setTimeout(function() {
-            app.style.transition = ''; app.style.opacity = '';
-          }, 180);
-        });
-      }, 150);
-    }
-    isSwipe = false; decided = false;
-  };
-  app.addEventListener('touchstart', app._swipeStart, { passive: true });
-  app.addEventListener('touchmove', app._swipeMove, { passive: true });
-  app.addEventListener('touchend', app._swipeEnd, { passive: true });
+  const h = _makeSwipeHandler(
+    function() { return currentView === 'top'; },
+    function(dx) { return dx > 50; },
+    function() { switchMode('me'); currentView = 'me'; currentModeTab['me'] = 'diary'; render(); }
+  );
+  app._swipeStart = h.onStart;
+  app._swipeMove = h.onMove;
+  app._swipeEnd = h.onEnd;
+  app.addEventListener('touchstart', h.onStart, { passive: true });
+  app.addEventListener('touchmove', h.onMove, { passive: true });
+  app.addEventListener('touchend', h.onEnd, { passive: true });
 }
 
 function openMyShopList() {
@@ -22544,7 +22553,6 @@ function renderMeMode() {
   _attachMeSwipeBack();
 }
 
-// ===== LINE風つぶやき日記（MEのDiaryタブ） =====
 // ===== ME→ホーム 左スワイプで戻る =====
 function _attachMeSwipeBack() {
   const app = document.getElementById('app');
@@ -22554,59 +22562,20 @@ function _attachMeSwipeBack() {
     app.removeEventListener('touchmove', app._meSwipeMove);
     app.removeEventListener('touchend', app._meSwipeEnd);
   }
-  let sx = 0, sy = 0, isSwipe = false, decided = false, blocked = false;
-  app._meSwipeStart = function(e) {
-    if (currentView !== 'me' || e.touches.length !== 1) return;
-    blocked = false;
-    let el = e.target;
-    while (el && el !== app) {
-      const cs = window.getComputedStyle(el);
-      if ((cs.overflowX === 'auto' || cs.overflowX === 'scroll') && el.scrollWidth > el.clientWidth) {
-        blocked = true; return;
-      }
-      el = el.parentElement;
-    }
-    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
-    isSwipe = false; decided = false;
-  };
-  app._meSwipeMove = function(e) {
-    if (currentView !== 'me' || blocked || e.touches.length !== 1) return;
-    const dx = e.touches[0].clientX - sx;
-    const dy = e.touches[0].clientY - sy;
-    if (!decided && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) {
-      isSwipe = Math.abs(dx) > Math.abs(dy) * 1.5;
-      decided = true;
-    }
-  };
-  app._meSwipeEnd = function(e) {
-    if (currentView !== 'me' || blocked) { blocked = false; return; }
-    const dx = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX - sx : 0;
-    if (isSwipe && dx < -50) {
-      app.style.transition = 'opacity 0.15s ease-out';
-      app.style.opacity = '0';
-      setTimeout(function() {
-        try {
-          switchMode('pet');
-          currentView = 'top';
-          render();
-        } catch (err) { console.error('Home nav error:', err); }
-        app.style.opacity = '0';
-        requestAnimationFrame(function() {
-          app.style.transition = 'opacity 0.18s ease-out';
-          app.style.opacity = '1';
-          setTimeout(function() {
-            app.style.transition = ''; app.style.opacity = '';
-          }, 180);
-        });
-      }, 150);
-    }
-    isSwipe = false; decided = false;
-  };
-  app.addEventListener('touchstart', app._meSwipeStart, { passive: true });
-  app.addEventListener('touchmove', app._meSwipeMove, { passive: true });
-  app.addEventListener('touchend', app._meSwipeEnd, { passive: true });
+  const h = _makeSwipeHandler(
+    function() { return currentView === 'me'; },
+    function(dx) { return dx < -50; },
+    function() { switchMode('pet'); currentView = 'top'; render(); }
+  );
+  app._meSwipeStart = h.onStart;
+  app._meSwipeMove = h.onMove;
+  app._meSwipeEnd = h.onEnd;
+  app.addEventListener('touchstart', h.onStart, { passive: true });
+  app.addEventListener('touchmove', h.onMove, { passive: true });
+  app.addEventListener('touchend', h.onEnd, { passive: true });
 }
-// ===== ここから既存のLINE風日記 =====
+
+// ===== LINE風つぶやき日記（MEのDiaryタブ） =====
 function renderTweetsDiary() {
   if (!data.tweets) data.tweets = [];
   // フィルタタグ
