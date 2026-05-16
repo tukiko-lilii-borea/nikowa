@@ -22126,20 +22126,41 @@ function renderMeMode() {
   const _wTemp2 = _wc2 ? Math.round(_wc2.temp) : '--';
   const _region2 = data.userRegion || '大阪';
 
-  let html = '<div style="padding:10px 14px 6px;display:flex;align-items:center;gap:8px;">';
-  html += '<div class="home-weather-pill" onclick="showWeatherPopup()" style="flex:1;margin:0;">';
-  html += '<div class="home-weather-pill-left">';
-  html += '<span>'+_yyyy2+'/'+_mm2+'/'+_dd2+'('+_wk2+') '+_hh2+':'+_mi2+'</span>';
-  html += '<span style="color:var(--ink-light);">·</span>';
-  html += '<span class="home-weather-pill-region">'+escapeHtml(_region2)+'</span>';
-  html += '</div>';
-  html += '<div class="home-weather-pill-right">';
-  html += '<span class="home-weather-pill-icon">'+weatherIconHtml(_wIcon2,'font-size:18px;')+'</span>';
-  html += '<span class="home-weather-pill-temp">'+_wTemp2+'<span class="unit">℃</span></span>';
-  html += '</div>';
-  html += '</div>';
-  html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
-  html += '</div>';
+  let html = '';
+  if (tab === 'diary') {
+    // ===== Diary専用topbar：天気なし、Record/Diary/アイコン/≡ を右側に =====
+    const _dit2 = data.diaryInputTab || 'diary';
+    const _isRec2 = _dit2 === 'record';
+    html += '<div style="padding:8px 12px 4px;display:flex;align-items:center;gap:6px;">';
+    // 左：日付（コンパクト、天気なし）
+    html += '<div style="font-size:11px;font-weight:700;color:var(--ink-dark);white-space:nowrap;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">'+_yyyy2+'/'+_mm2+'/'+_dd2+'('+_wk2+') '+_hh2+':'+_mi2+' · '+escapeHtml(_region2)+'</div>';
+    // Record / Diary タブボタン
+    html += '<button onclick="setDiaryInputTab(\'record\')" style="flex-shrink:0;padding:3px 8px;border-radius:100px;border:1.5px solid '+(_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(_isRec2?'var(--accent-deep)':'transparent')+';color:'+(_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">Record</button>';
+    html += '<button onclick="setDiaryInputTab(\'diary\')" style="flex-shrink:0;padding:3px 8px;border-radius:100px;border:1.5px solid '+(!_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(!_isRec2?'var(--accent-deep)':'transparent')+';color:'+(!_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">Diary</button>';
+    // アクションアイコン
+    html += '<button onclick="openTweetFilterModal()" title="検索" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">search</span></button>';
+    html += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">calendar_month</span></button>';
+    html += '<button onclick="openTweetBgModal()" title="壁紙" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">wallpaper</span></button>';
+    // ハンバーガー
+    html += '<button onclick="openDrawerMenu()" style="flex-shrink:0;background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+    html += '</div>';
+  } else {
+    // 通常topbar（天気あり）
+    html += '<div style="padding:10px 14px 6px;display:flex;align-items:center;gap:8px;">';
+    html += '<div class="home-weather-pill" onclick="showWeatherPopup()" style="flex:1;margin:0;">';
+    html += '<div class="home-weather-pill-left">';
+    html += '<span>'+_yyyy2+'/'+_mm2+'/'+_dd2+'('+_wk2+') '+_hh2+':'+_mi2+'</span>';
+    html += '<span style="color:var(--ink-light);">·</span>';
+    html += '<span class="home-weather-pill-region">'+escapeHtml(_region2)+'</span>';
+    html += '</div>';
+    html += '<div class="home-weather-pill-right">';
+    html += '<span class="home-weather-pill-icon">'+weatherIconHtml(_wIcon2,'font-size:18px;')+'</span>';
+    html += '<span class="home-weather-pill-temp">'+_wTemp2+'<span class="unit">℃</span></span>';
+    html += '</div>';
+    html += '</div>';
+    html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+    html += '</div>';
+  }
   
   // コンテンツエリア（白い角丸背景）
   html += '<div class="mode-content-wrap">';
@@ -22917,21 +22938,21 @@ function renderTweetsDiary() {
   
   // ★ 背景画像はtweetsTimeline内にCSSで直接統合済み（tweetBgWrapper不要）
   
-  // ===== 全体ラッパー（透明。カード間にはページ背景が見える）=====
-  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:8px 10px 0;gap:8px;">';
+  // 背景画像のラッパー（あれば）
+  if (bgImage) {
+    h += '<div id="tweetBgWrapper" style="position:fixed;inset:0;z-index:-1;background-image:url('+bgImage+');background-size:cover;background-position:center;background-attachment:fixed;"></div>';
+    h += '<div id="tweetBgOverlay" style="position:fixed;inset:0;z-index:-1;background:rgba(255,255,255,0.55);backdrop-filter:blur(2px);"></div>';
+  }
   
-  // ===== 上部バー（独立カード）：白背景エリアの外・上に配置 =====
-  // Record/Diary タブ + 検索・カレンダー・壁紙アイコン
+  // ===== 全体ラッパー（普通の流れ、fixed使わない）=====
+  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:8px 10px 250px;gap:8px;">';
+  
+  // ★ タブ行カードはtopbarに移動済みのため削除
+  // const diaryInputTab は上部で既に取得済み
   const diaryInputTab = data.diaryInputTab || 'diary';
-  h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:6px 10px;display:flex;gap:6px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:8px;">';
-  // Record/Diary タブ
-  h += '<button onclick="setDiaryInputTab(\'record\')" style="flex:0 0 auto;padding:4px 10px;border-radius:100px;border:1.5px solid '+(diaryInputTab==='record'?'var(--accent-deep)':'var(--line)')+';background:'+(diaryInputTab==='record'?'var(--accent-deep)':'transparent')+';color:'+(diaryInputTab==='record'?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Record</button>';
-  h += '<button onclick="setDiaryInputTab(\'diary\')" style="flex:0 0 auto;padding:4px 10px;border-radius:100px;border:1.5px solid '+(diaryInputTab==='diary'?'var(--accent-deep)':'var(--line)')+';background:'+(diaryInputTab==='diary'?'var(--accent-deep)':'transparent')+';color:'+(diaryInputTab==='diary'?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Diary</button>';
-  // 検索
-  h += '<button onclick="openTweetFilterModal()" title="検索" style="flex:0 0 auto;width:28px;height:28px;background:var(--surface-warm);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:auto;"><span class="material-symbols-rounded" style="font-size:15px;">search</span></button>';
-  h += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex:0 0 auto;width:28px;height:28px;background:var(--surface-warm);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:15px;">calendar_month</span></button>';
-  h += '<button onclick="openTweetBgModal()" title="背景画像" style="flex:0 0 auto;width:28px;height:28px;background:var(--surface-warm);color:var(--accent-deep);border:1px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:15px;">wallpaper</span></button>';
-  h += '</div>';
+  
+  // ===== 全体ラッパー（日付バーから始まる）=====
+  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:4px 10px 250px;gap:6px;">';
   
   // 日付ピル（独立カード）
   const dateNum = (viewDate.getMonth()+1)+'/'+viewDate.getDate();
@@ -22948,7 +22969,7 @@ function renderTweetsDiary() {
   const weatherIcon = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dateKeyForWeather) : null;
   
   // 9日固定日付バー（前後4日 = 合計9日）スクロールなし・各日に天気アイコン
-  h += '<div style="background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:4px 6px;margin-bottom:4px;">';
+  h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:4px 6px;">';
   h += '<div style="display:flex;justify-content:space-between;">';
   for (let di = -4; di <= 4; di++) {
     const d = new Date(today);
@@ -22974,15 +22995,15 @@ function renderTweetsDiary() {
   h += '</div>';
   h += '</div>';
   
-  // ★ タイムライン：白背景で横いっぱい（枠なし・ネガティブマージンで端まで）
-  // レイヤー: 白背景(base) → 背景画像(middle) → コンテンツ(top)
-  let _tlBg;
-  if (bgImage) {
-    _tlBg = 'background-color:white;background-image:linear-gradient(rgba(255,255,255,0.5),rgba(255,255,255,0.5)),url(\'' + bgImage.replace(/'/g,"\\'") + '\');background-size:cover;background-position:center;background-attachment:scroll;';
-  } else {
-    _tlBg = 'background:white;';
+  // 今日以外は「今日へ」ボタン
+  if (!isToday) {
+    h += '<div style="text-align:center;">';
+    h += '<button onclick="jumpDiaryToToday()" style="background:var(--surface-warm);border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:4px 14px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:12px;">today</span>今日へ</button>';
+    h += '</div>';
   }
-  h += '<div data-tweets-area id="tweetsTimeline" style="'+_tlBg+'border:none;border-radius:0;display:flex;flex-direction:column;gap:0;padding:8px 10px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0 -10px;min-height:60vh;">';
+  
+  // タイムライン（スクロールコンテナ）
+  h += '<div data-tweets-area id="tweetsTimeline" style="background:rgba(255,255,255,0.4);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;gap:0;padding:10px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   
   if (diaryInputTab === 'record') {
     // ─── Recordタブ：スタンプ履歴のみ表示（data.stampHistoryから） ───
