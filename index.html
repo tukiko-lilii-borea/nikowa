@@ -22871,9 +22871,6 @@ window.renderTweetsDiary = renderTweetsDiary;
 function _diaryAdjustAndScroll() {
   function adjust() {
     try {
-      // 強制レイアウト計算（scrollHeight正確化のため）
-      void document.body.offsetHeight;
-      // 透明化処理
       const mc = document.querySelector('.mode-content-wrap');
       if (mc) {
         mc.style.cssText = 'background:transparent !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;padding:0 !important;margin:0 !important;min-height:0 !important;border-radius:0 !important;';
@@ -22892,7 +22889,6 @@ function _diaryAdjustAndScroll() {
           p = p.parentElement;
         }
       }
-      // bottom block位置・タイムラインpadding計算
       const nav = document.querySelector('.bottom-nav');
       const navH = nav ? (window.innerHeight - nav.getBoundingClientRect().top) : 64;
       const bottomBlock = document.getElementById('tweetBottomBlock');
@@ -22901,49 +22897,33 @@ function _diaryAdjustAndScroll() {
         const bbH = bottomBlock.getBoundingClientRect().height;
         tw.style.paddingBottom = (bbH + navH + 20) + 'px';
       }
-    } catch(e) { console.error('adjust err:', e); }
-  }
-  function scrollBottom() {
-    try {
-      // 強制レイアウトでscrollHeight正確化
-      void document.body.offsetHeight;
-      const target = document.body.scrollHeight + 9999;
-      window.scrollTo(0, target);
-      document.documentElement.scrollTop = target;
-      document.body.scrollTop = target;
     } catch(e) {}
   }
-  function step() { adjust(); scrollBottom(); }
-  // 同期で即時 + 多段階バックアップ
-  step();
-  requestAnimationFrame(() => {
-    step();
-    requestAnimationFrame(() => {
-      step();
-      setTimeout(step, 50);
-      setTimeout(step, 150);
-      setTimeout(step, 350);
-      setTimeout(step, 700);
-    });
-  });
-  // resize対応
-  if (!window._diaryResizeAttached) {
-    window.addEventListener('resize', adjust);
-    window._diaryResizeAttached = true;
+  function scrollBottom() {
+    try { window.scrollTo(0, document.body.scrollHeight + 9999); } catch(e) {}
   }
+  // 即時 + rAF + 短い遅延の3段階のみ
+  adjust();
+  scrollBottom();
+  requestAnimationFrame(() => { adjust(); scrollBottom(); });
+  setTimeout(() => { adjust(); scrollBottom(); }, 200);
 }
 window._diaryAdjustAndScroll = _diaryAdjustAndScroll;
 
 // ===== Recordタブ用：色入れ替えを適用/解除 =====
 function _applyRecordColorSwap() {
   try {
-    const cs = getComputedStyle(document.documentElement);
-    const _m = cs.getPropertyValue('--mint').trim();
-    const _md = cs.getPropertyValue('--mint-deep').trim();
-    const _mb = cs.getPropertyValue('--mint-bg').trim();
-    const _a = cs.getPropertyValue('--accent').trim();
-    const _ad = cs.getPropertyValue('--accent-deep').trim();
-    const _ab = cs.getPropertyValue('--accent-bg').trim();
+    // テーマから「元の」値を取得（getComputedStyleだと既に入れ替わった値を読んでしまうため）
+    const theme = THEMES[data.themeId || 'mint'];
+    if (!theme || !theme.vars) return;
+    const v = theme.vars;
+    const _m = v['--mint'] || '';
+    const _md = v['--mint-deep'] || '';
+    const _mb = v['--mint-bg'] || '';
+    const _a = v['--accent'] || '';
+    const _ad = v['--accent-deep'] || '';
+    const _ab = v['--accent-bg'] || '';
+    if (!_m || !_a) return;
     let swapStyle = document.getElementById('recordColorSwap');
     if (!swapStyle) {
       swapStyle = document.createElement('style');
