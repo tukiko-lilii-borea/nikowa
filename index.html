@@ -2399,6 +2399,12 @@
   }
   .memo-textarea:focus { border-color: var(--mint); }
   .memo-textarea::placeholder { color: var(--ink-light); }
+  /* Diary入力欄：フォーカス＆入力中はplaceholder完全に隠す（IME入力中の文字重なり防止） */
+  #tweetInput::placeholder { color: var(--ink-light); transition: color 0.1s; }
+  #tweetInput:focus::placeholder { color: transparent !important; }
+  #tweetInput:not(:placeholder-shown)::placeholder { color: transparent !important; }
+  #tweetInput::-webkit-input-placeholder { color: var(--ink-light); }
+  #tweetInput:focus::-webkit-input-placeholder { color: transparent !important; }
   .memo-photo-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .memo-photo-wrap { position: relative; display: inline-block; }
   .memo-photo-thumb {
@@ -22902,6 +22908,8 @@ function renderTweetsDiary() {
       const isC = cat === _sCat;
       h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+(isC?'var(--mint-deep)':'var(--mint)')+';background:'+(isC?'var(--mint-deep)':'transparent')+';color:'+(isC?'white':'var(--mint-deep)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
     }
+    // ★ カテゴリタブ末尾に編集ボタン（スタンプ管理画面を開く）
+    h += '<button onclick="openStampManagerModal()" title="スタンプ編集" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px dashed var(--mint-deep);background:transparent;color:var(--mint-deep);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:12px;">edit</span>編集</button>';
     h += '</div>';
     // スタンプ1列スクロール（mint変数=swap後茶色＋各ボタンにピンマーク）
     const _stamps = (_sLib[_sCat] || []).filter(s => !s._hidden);
