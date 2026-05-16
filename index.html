@@ -9934,9 +9934,10 @@ window.openQuickAddMenu = function() {
   const ex = document.getElementById('quickAddMenu');
   if (ex) { ex.remove(); return; }
 
-  // bodyの背景をそのまま使う（テーマに確実に合う）
+  // ★ 必ずテーマの元の色を使う（bodyのoverride colorに引きずられない）
+  const _theme = (typeof THEMES !== 'undefined') ? THEMES[data.themeId || 'mint'] : null;
+  const _qBg = (_theme && _theme.vars && _theme.vars['--bg']) || '#D0FCED';
   const _bodyStyle = document.body.style;
-  const _qBg = _bodyStyle.backgroundColor || getComputedStyle(document.body).getPropertyValue('--bg') || '#D0FCED';
   const _qPattern = _bodyStyle.backgroundImage || '';
   const _qPatternSize = _bodyStyle.backgroundSize || '14px 14px';
 
@@ -22885,11 +22886,9 @@ window.renderTweetsDiary = renderTweetsDiary;
 function _diaryAdjustAndScroll() {
   function adjust() {
     try {
-      // ★ bodyのスクロールを完全停止（画面固定）
+      // ★ bodyのスクロールを完全停止（画面固定）。htmlは触らない（iOS Safariのスクロール問題回避）
       document.body.style.overflow = 'hidden';
       document.body.style.height = '100vh';
-      document.documentElement.style.overflow = 'hidden';
-      document.documentElement.style.height = '100vh';
       // mode-content-wrap透明化
       const mc = document.querySelector('.mode-content-wrap');
       if (mc) {
@@ -22948,8 +22947,6 @@ function _releaseDiaryScrollLock() {
   try {
     document.body.style.overflow = '';
     document.body.style.height = '';
-    document.documentElement.style.overflow = '';
-    document.documentElement.style.height = '';
   } catch(e) {}
 }
 window._releaseDiaryScrollLock = _releaseDiaryScrollLock;
@@ -49419,6 +49416,15 @@ let _isNavigatingBack = false;
 
 function render() {
   const _t0 = performance.now();
+  // ★ render先頭でRecord関連の上書きを全部解除（diary recordで再適用される）
+  try {
+    document.body.style.overflow = '';
+    document.body.style.height = '';
+    document.body.style.removeProperty('background-color');
+    document.body.removeAttribute('data-record-mode');
+    const _s = document.getElementById('recordColorSwap');
+    if (_s) _s.remove();
+  } catch(e) {}
   // PC/iPadサイドバー（全ビュー共通）
   if (typeof renderPCSidebar === 'function') renderPCSidebar();
   
