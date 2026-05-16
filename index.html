@@ -22676,8 +22676,8 @@ function renderTweetsDiary() {
     const wdJp = ['日','月','火','水','木','金','土'][d.getDay()];
     const isSun = d.getDay() === 0;
     const isSat = d.getDay() === 6;
-    const textColor = isActive ? 'white' : (isSun ? '#e05' : (isSat ? '#44a' : 'var(--ink-dark))'));
-    const subColor = isActive ? 'rgba(255,255,255,0.8)' : (isSun ? '#e05' : (isSat ? '#44a' : 'var(--ink-sub))'));
+    const textColor = isActive ? 'white' : (isSun ? '#E57373' : (isSat ? '#64B5F6' : 'var(--ink-dark)'));
+    const subColor = isActive ? 'rgba(255,255,255,0.8)' : (isSun ? '#E57373' : (isSat ? '#64B5F6' : 'var(--ink-sub)'));
     const dKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     const dWeather = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dKey) : null;
     h += '<button onclick="setTweetViewDate(\''+dk+'\')" style="flex:1;padding:5px 2px;border-radius:10px;border:none;background:'+(isActive?'var(--accent-deep)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;font-family:inherit;">';
