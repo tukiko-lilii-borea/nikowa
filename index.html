@@ -8829,6 +8829,11 @@ function renderTop() {
   html += '<span class="material-symbols-rounded" style="font-size:20px;color:#E89A4A;">sticky_note_2</span>';
   html += '<span style="font-size:10px;font-weight:700;color:var(--ink-sub);">メモ</span>';
   html += '</button>';
+  // タイマー
+  html += '<button onclick="location.href=\'./nikowa-timer.html\'" style="padding:10px 4px;background:#FFFFFF;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;color:#2EB875;">timer</span>';
+  html += '<span style="font-size:10px;font-weight:700;color:var(--ink-sub);">タイマー</span>';
+  html += '</button>';
   html += '</div>';
 
   html += '<div style="height: 24px;"></div>';
@@ -49083,6 +49088,194 @@ if (data.themeId && !THEMES[data.themeId]) { data.themeId = 'mint'; }
 applyTheme(data.themeId || 'mint');
 render();
 initFirebase();
+</script>
+<script>
+// ===== にこわアプリ BGM v3 =====
+(function() {
+  'use strict';
+  var audioCtx = null, bgmRunning = false, bgmIdx = 0, bgmTimer = null;
+  var masterVol = 0, currentBgm = '';
+
+  var HOME = {
+    mel:[1046.50,0,1318.51,0,1567.98,0,1318.51,0,1046.50,0,880.00,0,1046.50,0,0,0,
+         987.77,0,1174.66,0,1396.91,0,1174.66,0,987.77,0,783.99,0,880.00,0,0,0,
+         880.00,0,1046.50,0,1318.51,0,1046.50,0,880.00,0,698.46,0,783.99,0,0,0,
+         1046.50,0,1318.51,0,1567.98,0,1864.66,0,1567.98,0,1318.51,0,1046.50,0,0,0],
+    bass:[261.63,0,0,0,261.63,0,0,0,261.63,0,0,0,261.63,0,0,0,
+          246.94,0,0,0,246.94,0,0,0,220.00,0,0,0,220.00,0,0,0,
+          220.00,0,0,0,220.00,0,0,0,174.61,0,0,0,196.00,0,0,0,
+          261.63,0,0,0,261.63,0,0,0,261.63,0,0,0,261.63,0,0,0],
+    ms:220
+  };
+  var TOWN = {
+    mel:[1567.98,0,1318.51,0,1567.98,0,1318.51,0,1046.50,0,1174.66,0,1318.51,0,1046.50,0,
+         880.00,0,1046.50,0,1318.51,0,1046.50,0,1174.66,0,987.77,0,1046.50,0,0,0,
+         1318.51,0,1567.98,0,1760.00,0,1567.98,0,1318.51,0,1046.50,0,880.00,0,1046.50,0,
+         1174.66,0,1318.51,0,1567.98,0,1046.50,0,880.00,0,987.77,0,1046.50,0,0,0],
+    bass:[196.00,0,293.66,0,196.00,0,293.66,0,261.63,0,329.63,0,261.63,0,329.63,0,
+          220.00,0,329.63,0,220.00,0,329.63,0,246.94,0,293.66,0,261.63,0,0,0,
+          196.00,0,293.66,0,196.00,0,293.66,0,261.63,0,329.63,0,220.00,0,261.63,0,
+          293.66,0,329.63,0,261.63,0,196.00,0,220.00,0,246.94,0,261.63,0,0,0],
+    ms:200
+  };
+
+  function playBell(freq, dur, vol) {
+    if (!audioCtx || !freq || masterVol === 0) return;
+    try {
+      var t = audioCtx.currentTime;
+      [1, 2].forEach(function(mult, idx) {
+        var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.type = 'sine'; o.frequency.value = freq * mult;
+        var v = idx === 0 ? vol * masterVol : vol * masterVol * 0.15;
+        g.gain.setValueAtTime(v, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur * (idx === 0 ? 0.95 : 0.5));
+        o.start(t); o.stop(t + dur);
+      });
+    } catch(e){}
+  }
+
+  function startBGM(name) {
+    if (bgmRunning && currentBgm === name) return;
+    stopBGM(); currentBgm = name; bgmRunning = true; bgmIdx = 0; tick();
+  }
+  function stopBGM() {
+    bgmRunning = false;
+    if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+  }
+  function tick() {
+    if (!bgmRunning) return;
+    var cfg = currentBgm === 'town' ? TOWN : HOME;
+    var i = bgmIdx % cfg.mel.length;
+    if (cfg.mel[i]) playBell(cfg.mel[i], 0.9, 0.16);
+    if (cfg.bass[i]) playBell(cfg.bass[i], 1.4, 0.08);
+    bgmIdx++;
+    bgmTimer = setTimeout(tick, cfg.ms);
+  }
+
+  function ensureAudio() {
+    if (!audioCtx) try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return Promise.resolve(); }
+    try { return audioCtx.resume(); } catch(e){ return Promise.resolve(); }
+  }
+
+  function getViewFromDOM() {
+    var active = document.querySelector('.nav-btn.active[data-view]');
+    if (!active) return null;
+    var v = active.dataset.view;
+    if (v === 'houses') return 'home';
+    if (v === 'town') return 'town';
+    return null;
+  }
+
+  function checkAndUpdateBGM() {
+    if (masterVol === 0) return;
+    var target = getViewFromDOM();
+    if (target === null) {
+      if (bgmRunning) { stopBGM(); currentBgm = ''; }
+      return;
+    }
+    if (currentBgm !== target) {
+      ensureAudio().then(function(){ startBGM(target); }).catch(function(){});
+    }
+  }
+
+  // 設定画面ボタンから呼ばれる
+  window._bgmSetVol = function(v) {
+    masterVol = v;
+    try { localStorage.setItem('nikowa_bgm_vol', String(v)); } catch(e){}
+    // UI更新
+    document.querySelectorAll('.bgm-vol-btn').forEach(function(b) {
+      var isActive = parseFloat(b.dataset.vol) === v;
+      b.classList.toggle('bgm-vol-active', isActive);
+      b.style.background = isActive ? 'var(--accent)' : 'var(--surface-warm)';
+      b.style.color = isActive ? 'white' : 'var(--ink-sub)';
+    });
+    if (v === 0) { stopBGM(); currentBgm = ''; return; }
+    // プレビュー音（設定画面でも聞こえる）
+    ensureAudio().then(function() {
+      // テスト音：ふわっとオルゴール風和音
+      setTimeout(function(){ playBell(1046.50, 0.6, 0.20); }, 0);
+      setTimeout(function(){ playBell(1318.51, 0.6, 0.20); }, 150);
+      setTimeout(function(){ playBell(1567.98, 0.8, 0.20); }, 300);
+      // ビューがhome/townならBGM開始
+      var target = getViewFromDOM();
+      if (target) setTimeout(function(){ startBGM(target); }, 1100);
+    }).catch(function(){});
+  };
+
+  // 設定画面に音量UIを注入
+  function injectSettings() {
+    if (document.getElementById('bgmSettingsSection')) return;
+    var firstSection = document.querySelector('.section');
+    if (!firstSection) return;
+
+    var saved = 0;
+    try { saved = parseFloat(localStorage.getItem('nikowa_bgm_vol') || '0'); } catch(e){}
+    masterVol = saved;
+
+    var levels = [{v:0,l:'OFF'},{v:0.3,l:'小'},{v:0.7,l:'中'},{v:1.0,l:'大'}];
+    var btnsHtml = levels.map(function(lv) {
+      var active = lv.v === saved;
+      return '<button type="button" class="bgm-vol-btn'+(active?' bgm-vol-active':'')+'" data-vol="'+lv.v+'" onclick="window._bgmSetVol('+lv.v+')" style="flex:1;padding:11px 0;border:1.5px solid var(--card-border);background:'+(active?'var(--accent)':'var(--surface-warm)')+';color:'+(active?'white':'var(--ink-sub)')+';border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">'+lv.l+'</button>';
+    }).join('');
+
+    var section = document.createElement('div');
+    section.id = 'bgmSettingsSection';
+    section.className = 'section';
+    section.innerHTML = '<div class="section-head"><h2 class="section-title">🎵 BGM</h2></div><div style="padding:12px 16px 16px;"><div style="font-size:11px;color:var(--ink-sub);margin-bottom:10px;line-height:1.6;">ホーム・タウン画面でBGMが流れるよ🌷<br>音量を変えるとテスト音が鳴るで。</div><div style="display:flex;gap:6px;">'+btnsHtml+'</div></div>';
+
+    firstSection.parentNode.insertBefore(section, firstSection);
+  }
+
+  // ── 監視（複数の方法でカバー）──
+  function startObservers() {
+    var app = document.getElementById('app');
+    var bottomNav = document.getElementById('bottomNav');
+
+    // アプリ全体の変更を監視 → 設定画面検出
+    if (app) {
+      var appObs = new MutationObserver(function() {
+        var title = document.querySelector('.topbar-title');
+        if (title && /せってい|Setting/i.test(title.textContent || '')) {
+          injectSettings();
+        }
+        // ビュー変化があったかも知れないので遅延チェック
+        setTimeout(checkAndUpdateBGM, 100);
+      });
+      appObs.observe(app, { childList: true, subtree: true });
+    }
+
+    // ナビボタンのactive変化を監視
+    if (bottomNav) {
+      var navObs = new MutationObserver(function() {
+        setTimeout(checkAndUpdateBGM, 50);
+      });
+      navObs.observe(bottomNav, { attributes: true, subtree: true, attributeFilter: ['class'] });
+    }
+
+    // 念のため定期チェック（保険）
+    setInterval(checkAndUpdateBGM, 2000);
+  }
+
+  function init() {
+    try { masterVol = parseFloat(localStorage.getItem('nikowa_bgm_vol') || '0'); } catch(e){}
+    startObservers();
+    // 最初のタップでオーディオ準備
+    document.addEventListener('click', function once() {
+      document.removeEventListener('click', once);
+      ensureAudio().then(function() {
+        if (masterVol > 0) {
+          var target = getViewFromDOM();
+          if (target) startBGM(target);
+        }
+      }).catch(function(){});
+    }, { once: true });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
 </script>
 </body>
 </html>
