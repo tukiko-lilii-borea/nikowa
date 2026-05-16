@@ -22663,10 +22663,10 @@ function renderTweetsDiary() {
   const dateKeyForWeather = viewDate.getFullYear()+'-'+String(viewDate.getMonth()+1).padStart(2,'0')+'-'+String(viewDate.getDate()).padStart(2,'0');
   const weatherIcon = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dateKeyForWeather) : null;
   
-  // 横スクロール日付バー（前後7日 = 合計15日分）
-  h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">';
-  h += '<div id="diaryDateScroll" style="display:flex;overflow-x:auto;scrollbar-width:none;padding:4px 6px;gap:2px;-webkit-overflow-scrolling:touch;" onscroll="this.style.pointerEvents=\'none\';clearTimeout(this._st);this._st=setTimeout(()=>this.style.pointerEvents=\'\',100)">';
-  for (let di = -7; di <= 7; di++) {
+  // 9日固定日付バー（前後4日 = 合計9日）スクロールなし・各日に天気アイコン
+  h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:4px 6px;">';
+  h += '<div style="display:flex;justify-content:space-between;">';
+  for (let di = -4; di <= 4; di++) {
     const d = new Date(today);
     d.setDate(today.getDate() + di);
     const dk = d.toDateString();
@@ -22676,17 +22676,18 @@ function renderTweetsDiary() {
     const wdJp = ['日','月','火','水','木','金','土'][d.getDay()];
     const isSun = d.getDay() === 0;
     const isSat = d.getDay() === 6;
-    const textColor = isActive ? 'white' : (isSun ? '#e05' : (isSat ? '#44a' : 'var(--ink-dark)'));
-    h += '<button onclick="setTweetViewDate(\''+dk+'\')" style="flex:0 0 auto;min-width:40px;padding:5px 4px;border-radius:10px;border:none;background:'+(isActive?'var(--accent-deep)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;font-family:inherit;">';
-    h += '<span style="font-size:9px;font-weight:600;color:'+(isActive?'rgba(255,255,255,0.8)':( isSun?'#e05':(isSat?'#44a':'var(--ink-sub)')));h+='">'+ wdJp + '</span>';
-    h += '<span style="font-size:15px;font-weight:900;color:'+textColor+';line-height:1;">'+dayNum+'</span>';
-    if (isTodayDate) h += '<span style="width:4px;height:4px;border-radius:50%;background:'+(isActive?'white':'var(--accent)')+';margin-top:1px;"></span>';
-    else h += '<span style="width:4px;height:4px;"></span>';
+    const textColor = isActive ? 'white' : (isSun ? '#e05' : (isSat ? '#44a' : 'var(--ink-dark))'));
+    const subColor = isActive ? 'rgba(255,255,255,0.8)' : (isSun ? '#e05' : (isSat ? '#44a' : 'var(--ink-sub))'));
+    const dKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const dWeather = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dKey) : null;
+    h += '<button onclick="setTweetViewDate(\''+dk+'\')" style="flex:1;padding:5px 2px;border-radius:10px;border:none;background:'+(isActive?'var(--accent-deep)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;font-family:inherit;">';
+    h += '<span style="font-size:9px;font-weight:600;color:'+subColor+';">'+wdJp+'</span>';
+    h += '<span style="font-size:15px;font-weight:900;color:'+textColor+';line-height:1.2;">'+dayNum+'</span>';
+    h += dWeather ? '<span style="line-height:1;margin-top:1px;">'+weatherIconHtml(dWeather,'font-size:11px;')+'</span>' : '<span style="height:13px;margin-top:1px;"></span>';
+    h += isTodayDate ? '<span style="width:4px;height:4px;border-radius:50%;background:'+(isActive?'white':'var(--accent)')+';margin-top:1px;"></span>' : '<span style="width:4px;height:4px;margin-top:1px;"></span>';
     h += '</button>';
   }
   h += '</div>';
-  // 天気アイコンを右端に表示
-  if (weatherIcon) h += '<div style="text-align:right;padding:0 10px 4px;font-size:11px;color:var(--ink-sub);">'+weatherIconHtml(weatherIcon,'font-size:13px;')+'</div>';
   h += '</div>';
   
   // 今日以外は「今日へ」ボタン
@@ -22695,9 +22696,6 @@ function renderTweetsDiary() {
     h += '<button onclick="jumpDiaryToToday()" style="background:var(--surface-warm);border:1px solid var(--accent);color:var(--accent-deep);border-radius:100px;padding:4px 14px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:12px;">today</span>今日へ</button>';
     h += '</div>';
   }
-  
-  // 選択日をスクロール中央に表示するスクリプト
-  h += '<script>requestAnimationFrame(function(){var el=document.getElementById(\'diaryDateScroll\');if(!el)return;var active=el.querySelector(\'button[style*="accent-deep"]\');if(active){var offset=active.offsetLeft-el.offsetWidth/2+active.offsetWidth/2;el.scrollLeft=offset;}});<\/script>';
   
   // ★ タイムライン（高さ自由・背景透ける・カードなし）
   h += '<div data-tweets-area id="tweetsTimeline" style="background:transparent;display:flex;flex-direction:column;gap:0;">';
