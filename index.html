@@ -22717,8 +22717,8 @@ function renderTweetsDiary() {
     h += '</div>';
   }
   
-  // ★ タイムライン（タブに応じて切り替え）
-  h += '<div data-tweets-area id="tweetsTimeline" style="background:transparent;display:flex;flex-direction:column;gap:0;">';
+  // ★ タイムライン（独立スクロールコンテナ：高さはJSで動的計算）
+  h += '<div data-tweets-area id="tweetsTimeline" style="background:rgba(255,255,255,0.4);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;gap:0;padding:10px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   
   if (diaryInputTab === 'record') {
     // ─── Recordタブ：スタンプ履歴のみ表示（data.stampHistoryから） ───
@@ -22867,16 +22867,19 @@ function renderTweetsDiary() {
 }
 window.renderTweetsDiary = renderTweetsDiary;
 
-// ===== Diary描画後の調整＆スクロール（innerHTML設定後にJS側から呼ぶ） =====
+// ===== Diary描画後の調整＆スクロール（タイムライン独立スクロール方式・LINE風） =====
 function _diaryAdjustAndScroll() {
   function adjust() {
     try {
+      // mode-content-wrap透明化
       const mc = document.querySelector('.mode-content-wrap');
       if (mc) {
         mc.style.cssText = 'background:transparent !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;padding:0 !important;margin:0 !important;min-height:0 !important;border-radius:0 !important;';
       }
       const tw = document.getElementById('tweetWrap');
       if (tw) {
+        // tweetWrap自体のpadding-bottomは小さく（タイムラインが独立スクロールするため）
+        tw.style.paddingBottom = '8px';
         let p = tw.parentElement;
         while (p && p !== document.body) {
           const st = getComputedStyle(p);
@@ -22889,24 +22892,48 @@ function _diaryAdjustAndScroll() {
           p = p.parentElement;
         }
       }
+      // bottom block位置をbottom-navの上に
       const nav = document.querySelector('.bottom-nav');
       const navH = nav ? (window.innerHeight - nav.getBoundingClientRect().top) : 64;
       const bottomBlock = document.getElementById('tweetBottomBlock');
       if (bottomBlock) bottomBlock.style.bottom = navH + 'px';
-      if (tw && bottomBlock) {
+      // ★ タイムラインの高さを動的計算（画面いっぱい使う）
+      const tl = document.getElementById('tweetsTimeline');
+      if (tl && bottomBlock) {
+        const tlTop = tl.getBoundingClientRect().top;
         const bbH = bottomBlock.getBoundingClientRect().height;
-        tw.style.paddingBottom = (bbH + navH + 20) + 'px';
+        const tlHeight = window.innerHeight - tlTop - bbH - navH - 8;
+        if (tlHeight > 100) {
+          tl.style.height = tlHeight + 'px';
+          tl.style.maxHeight = tlHeight + 'px';
+        }
       }
     } catch(e) {}
   }
   function scrollBottom() {
-    try { window.scrollTo(0, document.body.scrollHeight + 9999); } catch(e) {}
+    try {
+      // タイムライン内をスクロール（ウィンドウじゃない）
+      const tl = document.getElementById('tweetsTimeline');
+      if (tl) {
+        tl.scrollTop = tl.scrollHeight + 9999;
+      }
+      // ウィンドウは念のため上に固定
+      window.scrollTo(0, 0);
+    } catch(e) {}
   }
-  // 即時 + rAF + 短い遅延の3段階のみ
+  // 即時 + rAF + 短い遅延の3段階
   adjust();
   scrollBottom();
   requestAnimationFrame(() => { adjust(); scrollBottom(); });
   setTimeout(() => { adjust(); scrollBottom(); }, 200);
+  // resize対応（一度だけ登録）
+  if (!window._diaryResizeAttached) {
+    window.addEventListener('resize', () => {
+      const tl = document.getElementById('tweetsTimeline');
+      if (tl) adjust();
+    });
+    window._diaryResizeAttached = true;
+  }
 }
 window._diaryAdjustAndScroll = _diaryAdjustAndScroll;
 
