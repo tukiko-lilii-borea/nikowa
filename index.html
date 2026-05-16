@@ -22700,26 +22700,51 @@ function renderTweetsDiary() {
     h += '</div>';
   }
   
-  // ★ タイムライン（高さ自由・背景透ける・カードなし）
+  // ★ タイムライン（タブに応じて切り替え）
   h += '<div data-tweets-area id="tweetsTimeline" style="background:transparent;display:flex;flex-direction:column;gap:0;">';
   
-  if (tweets.length === 0) {
-    h += '<div style="text-align:center;padding:40px 20px;color:var(--ink-sub);">';
-    h += '<div style="font-size:36px;margin-bottom:10px;opacity:0.5;"><span class="material-symbols-rounded" style="font-size:36px;color:var(--accent-deep);">chat_bubble</span></div>';
-    if (filterTag) {
-      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">「#'+escapeHtml(filterTag)+'」のつぶやきはまだないよ</div>';
-      h += '<div style="font-size:10px;line-height:1.7;">他のタグも見てみてね</div>';
-    } else if (isToday) {
-      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">まだつぶやきがないよ</div>';
-      h += '<div style="font-size:10px;line-height:1.7;">下の入力欄から<br>気持ちをひとこと書いてみてね🌷</div>';
+  if (diaryInputTab === 'record') {
+    // ─── Recordタブ：スタンプ履歴のみ表示（data.stampHistoryから） ───
+    const stampsToday = (data.stampHistory || []).filter(s => {
+      const sd = new Date(s.timestamp || 0);
+      return sd.toDateString() === viewDateKey;
+    }).sort((a,b) => (a.timestamp||0) - (b.timestamp||0));
+    
+    if (stampsToday.length === 0) {
+      h += '<div style="text-align:center;padding:40px 20px;color:var(--ink-sub);">';
+      h += '<div style="font-size:36px;margin-bottom:10px;opacity:0.5;"><span class="material-symbols-rounded" style="font-size:36px;color:var(--mint-deep);">push_pin</span></div>';
+      if (isToday) {
+        h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">まだスタンプ記録なし</div>';
+        h += '<div style="font-size:10px;line-height:1.7;">下のスタンプボタンから<br>記録してみてね🌷</div>';
+      } else {
+        h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">この日はスタンプ記録なし</div>';
+      }
+      h += '</div>';
     } else {
-      h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">この日はつぶやきなし</div>';
-      h += '<div style="font-size:10px;line-height:1.7;">📅 から他の日も見れるよ</div>';
+      for (const st of stampsToday) {
+        h += _renderStampHistoryBubble(st);
+      }
     }
-    h += '</div>';
   } else {
-    for (const tw of tweets) {
-      h += _renderTweetBubble(tw);
+    // ─── Diaryタブ：文字日記のみ表示 ───
+    if (tweets.length === 0) {
+      h += '<div style="text-align:center;padding:40px 20px;color:var(--ink-sub);">';
+      h += '<div style="font-size:36px;margin-bottom:10px;opacity:0.5;"><span class="material-symbols-rounded" style="font-size:36px;color:var(--accent-deep);">chat_bubble</span></div>';
+      if (filterTag) {
+        h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">「#'+escapeHtml(filterTag)+'」のつぶやきはまだないよ</div>';
+        h += '<div style="font-size:10px;line-height:1.7;">他のタグも見てみてね</div>';
+      } else if (isToday) {
+        h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">まだつぶやきがないよ</div>';
+        h += '<div style="font-size:10px;line-height:1.7;">下の入力欄から<br>気持ちをひとこと書いてみてね🌷</div>';
+      } else {
+        h += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);margin-bottom:4px;">この日はつぶやきなし</div>';
+        h += '<div style="font-size:10px;line-height:1.7;">📅 から他の日も見れるよ</div>';
+      }
+      h += '</div>';
+    } else {
+      for (const tw of tweets) {
+        h += _renderTweetBubble(tw);
+      }
     }
   }
   
@@ -23034,38 +23059,29 @@ function setStampCatForRecord(cat) {
 window.setStampCatForRecord = setStampCatForRecord;
 
 function postStampRecord(icon, name) {
-  // スタンプ履歴のみに記録（ダイアリータイムラインには追加しない）
+  // スタンプ履歴に記録（Day画面と共有）
   const def = (typeof _findStampDef === 'function') ? _findStampDef(icon, name) : null;
   const type = def && def.type ? def.type : 'simple';
   if (type === 'simple') {
-    // シンプルなスタンプは即記録
     if (typeof addStampRecord === 'function') {
       addStampRecord(icon, name, 'stamp');
     }
-    // 全再描画せずトースト表示でフィードバック
-    if (typeof showToast === 'function') {
-      showToast(name + ' を記録したよ🌷');
-    }
-    // ピン留めバーだけ即更新（画面ゆがみ防止）
-    saveData();
+    // タイムラインに反映するためrender
+    _suppressScrollTop = true;
+    render();
   } else {
-    // 値入力タイプは既存モーダルを開く
+    // 値入力タイプは既存モーダル
     if (typeof openValueInputModal === 'function') {
       openValueInputModal({
-        icon: icon,
-        name: name,
-        type: def.type,
-        unit: def.unit,
-        step: def.step,
-        min: def.min,
-        max: def.max,
-        placeholder: def.placeholder,
-        photo: def.photo,
-        period: def.period
+        icon: icon, name: name,
+        type: def.type, unit: def.unit, step: def.step,
+        min: def.min, max: def.max,
+        placeholder: def.placeholder, photo: def.photo, period: def.period
       });
     } else {
       if (typeof addStampRecord === 'function') addStampRecord(icon, name, 'stamp');
-      saveData();
+      _suppressScrollTop = true;
+      render();
     }
   }
 }
@@ -23596,6 +23612,36 @@ function deleteTweetTag(name) {
 window.deleteTweetTag = deleteTweetTag;
 
 // 個別のつぶやき吹き出し
+function _renderStampHistoryBubble(st) {
+  const t = new Date(st.timestamp || 0);
+  const timeStr = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+  
+  let h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
+  // 時刻ピル
+  h += '<div style="flex-shrink:0;display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;background:white;border:1px solid var(--line);padding:3px 8px;border-radius:100px;letter-spacing:0.02em;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.04);">';
+  h += '<span>'+timeStr+'</span>';
+  h += '</div>';
+  
+  // スタンプ吹き出し本体
+  h += '<div style="flex:1;min-width:0;max-width:82%;position:relative;">';
+  // 削除ボタン
+  h += '<button onclick="event.stopPropagation();deleteStampRecord(\''+st.id+'\')" title="削除" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:white;color:#999;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,0.08);font-family:inherit;padding:0;line-height:1;"><span class="material-symbols-rounded" style="font-size:12px;">close</span></button>';
+  // 本体カード
+  h += '<div style="background:white;border:1px solid var(--mint);border-radius:14px;padding:8px 12px;display:flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">';
+  h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--mint-bg);border-radius:9px;flex-shrink:0;">'+renderStampIcon(st.icon,'font-size:20px;color:var(--mint-deep);')+'</span>';
+  h += '<div style="flex:1;min-width:0;">';
+  h += '<div style="font-size:12.5px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(st.name||'')+'</div>';
+  if (st.value !== undefined && st.value !== null && st.value !== '') {
+    h += '<div style="font-size:10.5px;color:var(--mint-deep);font-weight:600;margin-top:1px;">'+escapeHtml(String(st.value))+(st.unit?escapeHtml(st.unit):'')+'</div>';
+  }
+  h += '</div>';
+  h += '</div>';
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+window._renderStampHistoryBubble = _renderStampHistoryBubble;
+
 function _renderTweetBubble(tw) {
   const t = new Date(tw.timestamp || 0);
   const timeStr = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
