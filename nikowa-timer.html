@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>にこわ タイマー</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>
+:root{--mint:#C8EFE0;--mint-deep:#7DC9A8;--cream:#FFFBF7;--amber:#F6AD55;--navy:#1E3A8A;--ink:#2D3748;--ink-sub:#718096;--surface:rgba(255,255,255,0.88);--card-border:rgba(0,0,0,0.07);--accent:#2EB875;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-image:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(126,201,168,0.18) 29px,rgba(126,201,168,0.18) 30px),repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(126,201,168,0.18) 29px,rgba(126,201,168,0.18) 30px);min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:12px 16px 24px;color:var(--ink);}
+.header{width:100%;max-width:380px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.back-btn{background:var(--surface);border:1.5px solid var(--card-border);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;}
+.timer-card{width:100%;max-width:380px;background:var(--surface);border-radius:24px;border:1.5px solid var(--card-border);padding:20px 18px;box-shadow:0 4px 20px rgba(0,0,0,0.06);margin-bottom:12px;}
+.preset-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
+.preset-btn{flex:1;min-width:50px;background:var(--mint);border:1.5px solid var(--mint-deep);border-radius:100px;padding:7px 4px;font-family:inherit;font-size:12px;font-weight:800;color:var(--ink-sub);cursor:pointer;transition:all 0.18s;}
+.preset-btn.active{background:var(--accent);border-color:var(--accent);color:white;}
+.custom-row{display:flex;align-items:center;gap:6px;margin-bottom:20px;}
+.custom-input{flex:1;padding:8px 12px;border:1.5px solid var(--card-border);border-radius:12px;font-family:inherit;font-size:14px;background:var(--cream);color:var(--ink);outline:none;}
+.custom-input:focus{border-color:var(--accent);}
+.custom-label{font-size:11px;color:var(--ink-sub);font-weight:700;}
+.clock-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:20px;}
+.clock-ring{position:relative;width:180px;height:180px;}
+.clock-ring svg{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:var(--mint);stroke-width:10;}
+.ring-fg{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset 0.5s linear;}
+.ring-fg.warning{stroke:var(--amber);}
+.ring-fg.danger{stroke:#E94F37;}
+.clock-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+.time-display{font-size:38px;font-weight:900;color:var(--ink);line-height:1;letter-spacing:-1px;}
+.time-display.warning{color:var(--amber);}
+.time-display.danger{color:#E94F37;}
+.time-sub{font-size:11px;color:var(--ink-sub);font-weight:700;margin-top:2px;}
+.ctrl-row{display:flex;gap:10px;justify-content:center;}
+.ctrl-btn{flex:1;max-width:140px;padding:13px 0;border-radius:16px;border:none;font-family:inherit;font-size:14px;font-weight:900;cursor:pointer;transition:all 0.15s;}
+.ctrl-start{background:linear-gradient(135deg,var(--accent),#1A9A55);color:white;box-shadow:0 4px 12px rgba(46,184,117,0.35);}
+.ctrl-start:active{transform:scale(0.97);}
+.ctrl-pause{background:var(--amber);color:white;box-shadow:0 4px 12px rgba(246,173,85,0.35);}
+.ctrl-reset{background:var(--surface);border:1.5px solid var(--card-border) !important;color:var(--ink-sub);}
+.sound-card{width:100%;max-width:380px;background:var(--surface);border-radius:20px;border:1.5px solid var(--card-border);padding:14px 16px;box-shadow:0 2px 10px rgba(0,0,0,0.04);margin-bottom:12px;}
+.sound-label{font-size:11px;font-weight:800;color:var(--ink-sub);margin-bottom:8px;}
+.sound-row{display:flex;gap:6px;flex-wrap:wrap;}
+.sound-btn{padding:6px 11px;background:var(--mint);border:1.5px solid var(--mint-deep);border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;color:var(--ink-sub);cursor:pointer;transition:all 0.15s;}
+.sound-btn.active{background:var(--navy);border-color:var(--navy);color:white;}
+.preview-btn,.loop-btn{width:28px;height:28px;background:var(--mint);border:1.5px solid var(--mint-deep);border-radius:50%;color:var(--mint-deep);font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+.preview-btn{background:var(--mint-deep);border-color:var(--mint-deep);color:white;}
+.preview-btn:active,.loop-btn:active{transform:scale(0.9);}
+.loop-btn.active{background:var(--amber);border-color:var(--amber);color:white;}
+.overlay{position:fixed;inset:0;background:rgba(255,251,247,0.96);backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity 0.35s;}
+.overlay.show{opacity:1;pointer-events:all;}
+.speech-bubble{background:white;border:2px solid var(--mint-deep);border-radius:18px;padding:12px 20px;font-size:17px;font-weight:900;color:var(--ink);text-align:center;position:relative;margin-bottom:10px;animation:charaPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;}
+.speech-bubble::after{content:'';position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--mint-deep);}
+.speech-bubble::before{content:'';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:white;z-index:1;}
+.chara-img{width:160px;height:160px;object-fit:contain;animation:charaPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;margin-bottom:16px;}
+@keyframes charaPop{from{transform:scale(0.5) translateY(20px);opacity:0;}to{transform:scale(1) translateY(0);opacity:1;}}
+.chara-sub{font-size:13px;color:var(--ink-sub);margin-bottom:24px;text-align:center;}
+.overlay-close{background:linear-gradient(135deg,var(--accent),#1A9A55);color:white;border:none;border-radius:100px;padding:12px 36px;font-family:inherit;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 4px 14px rgba(46,184,117,0.35);}
+
+
+/* ドラムロール 3列 iOS風 */
+.drum-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 200; display: none; align-items: flex-end;
+}
+.drum-modal-overlay.show { display: flex; }
+.drum-modal {
+  width: 100%; background: var(--cream);
+  border-radius: 24px 24px 0 0;
+  padding: 16px 20px 30px;
+  animation: slideUp 0.3s cubic-bezier(0.32,0.72,0,1);
+  max-height: 80vh; box-sizing: border-box;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.drum-modal-title { font-size: 13px; font-weight: 800; color: var(--ink-sub); text-align: center; margin-bottom: 12px; }
+.drum-cols {
+  position: relative; height: 180px;
+  display: flex; gap: 6px; margin-bottom: 16px;
+  overflow: hidden;
+}
+.drum-col { flex: 1; position: relative; overflow: hidden; }
+.drum-scroll {
+  height: 100%; overflow-y: scroll;
+  scroll-snap-type: y mandatory; scrollbar-width: none; -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+.drum-scroll::-webkit-scrollbar { display: none; }
+.drum-item {
+  height: 36px; display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 800; color: rgba(45,55,72,0.25);
+  scroll-snap-align: center; flex-shrink: 0;
+  transition: color 0.1s, font-size 0.1s;
+  user-select: none;
+}
+.drum-item.near { color: rgba(45,55,72,0.55); font-size: 22px; }
+.drum-item.selected { color: var(--ink); font-size: 26px; }
+.drum-spacer { height: 72px; flex-shrink: 0; }
+.drum-cols::before {
+  content: ''; position: absolute;
+  top: 50%; transform: translateY(-50%);
+  left: 0; right: 0; height: 36px;
+  background: rgba(45,55,72,0.08);
+  border-radius: 10px; z-index: 2; pointer-events: none;
+}
+.drum-cols::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to bottom, var(--cream) 0%, transparent 25%, transparent 75%, var(--cream) 100%);
+  z-index: 3; pointer-events: none;
+}
+.drum-confirm {
+  width: 100%; padding: 15px; border: none; border-radius: 16px;
+  background: var(--accent); color: white;
+  font-family: inherit; font-size: 15px; font-weight: 900; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(46,184,117,0.35);
+}
+.drum-trigger {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; background: var(--mint); border: 1.5px solid var(--mint-deep);
+  border-radius: 14px; padding: 10px 18px;
+  font-family: inherit; font-size: 14px; font-weight: 800; color: var(--ink-sub);
+  cursor: pointer; margin-bottom: 18px;
+}
+.drum-trigger span { font-size: 18px; font-weight: 900; color: var(--ink); }
+
+.vol-row{display:flex;gap:3px;}
+.vol-btn{background:rgba(255,255,255,0.7);border:1px solid rgba(0,0,0,0.1);border-radius:6px;color:var(--ink-sub);font-size:9px;font-weight:800;padding:4px 7px;cursor:pointer;font-family:inherit;}
+.vol-btn.active{background:var(--accent);border-color:var(--accent);color:white;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="vol-row">
+    <button type="button" class="vol-btn active" onclick="setVol(0)" id="vOff">OFF</button>
+    <button type="button" class="vol-btn" onclick="setVol(0.5)" id="vLo">小</button>
+    <button type="button" class="vol-btn" onclick="setVol(1.0)" id="vHi">大</button>
+  </div>
+  <button type="button" class="back-btn" onclick="location.href='./index.html'">← ホーム</button>
+</div>
+
+<div class="timer-card">
+  <div class="preset-row">
+    <button type="button" class="preset-btn active" onclick="selectPreset(this,1)">1分</button>
+    <button type="button" class="preset-btn" onclick="selectPreset(this,3)">3分</button>
+    <button type="button" class="preset-btn" onclick="selectPreset(this,5)">5分</button>
+    <button type="button" class="preset-btn" onclick="selectPreset(this,10)">10分</button>
+    <button type="button" class="preset-btn" onclick="selectPreset(this,25)">25分</button>
+  </div>
+  <button type="button" class="drum-trigger" id="drumTrigger" onclick="openDrumModal()">
+    カスタム　<span id="drumDisplay">-</span>　分
+  </button>
+  <div class="clock-wrap">
+    <div class="clock-ring">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle class="ring-bg" cx="90" cy="90" r="80"/>
+        <circle class="ring-fg" id="ringFg" cx="90" cy="90" r="80" stroke-dasharray="502.65" stroke-dashoffset="0"/>
+      </svg>
+      <div class="clock-text">
+        <div class="time-display" id="timeDisplay">1:00</div>
+        <div class="time-sub" id="timeSub">待機中</div>
+      </div>
+    </div>
+  </div>
+  <div class="ctrl-row">
+    <button type="button" class="ctrl-btn ctrl-start" id="startBtn" onclick="onStart()">スタート</button>
+    <button type="button" class="ctrl-btn ctrl-reset" id="resetBtn" onclick="onReset()">リセット</button>
+  </div>
+</div>
+
+<!-- ドラムロールモーダル -->
+<div class="drum-modal-overlay" id="drumOverlay" onclick="onDrumOverlayClick(event)">
+  <div class="drum-modal">
+    <div class="drum-modal-title">時間を設定</div>
+    <div class="drum-cols">
+      <div class="drum-col"><div class="drum-scroll" id="drumH"></div></div>
+      <div class="drum-col"><div class="drum-scroll" id="drumM"></div></div>
+      <div class="drum-col"><div class="drum-scroll" id="drumS"></div></div>
+    </div>
+    <button type="button" class="drum-confirm" onclick="closeDrumModal()">決定</button>
+  </div>
+</div>
+
+<div class="sound-card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div class="sound-label" style="margin-bottom:0;">🔔 終了音</div>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <button type="button" class="preview-btn" onclick="previewSound()">♪</button>
+      <button type="button" class="loop-btn" id="loopBtn" onclick="toggleLoop()"><span class="material-symbols-rounded" style="font-size:16px;">repeat</span></button>
+    </div>
+  </div>
+  <div class="sound-row">
+    <button type="button" class="sound-btn active" onclick="selectSound(this,'orugoru')">オルゴール</button>
+    <button type="button" class="sound-btn" onclick="selectSound(this,'chime')">チャイム</button>
+    <button type="button" class="sound-btn" onclick="selectSound(this,'bell')">ベル</button>
+    <button type="button" class="sound-btn" onclick="selectSound(this,'fanfare')">ファンファーレ</button>
+    <button type="button" class="sound-btn" onclick="selectSound(this,'pop')">ポップ</button>
+    <button type="button" class="sound-btn" onclick="selectSound(this,'antique')">アンティーク</button>
+    <button type="button" class="sound-btn" onclick="selectSound(this,'forest')">森</button>
+    <button type="button" class="sound-btn" onclick="selectSound(this,'star')">星</button>
+    <button type="button" class="sound-btn" onclick="selectSound(this,'piano')">ピアノ</button>
+    <button type="button" class="sound-btn" onclick="selectSound(this,'sea')">海</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="speech-bubble" id="charaMsg">おわったよ〜！</div>
+  <img class="chara-img" id="charaImg" src="" alt="キャラ">
+  <div class="chara-sub" id="charaSub">よくがんばったね🌷</div>
+  <button type="button" class="overlay-close" onclick="closeOverlay()">もう一度</button>
+</div>
+
+<script>
+var totalSec=60,remSec=60,running=false,paused=false,timerInterval=null;
+var selectedSound='orugoru',masterVol=0,audioCtx=null;
+var loopMode=false,loopTimer=null;
+
+var CHARAS=[
+  {src:'assets/anzu.svg',   msg:'おわったよ〜！',  sub:'あんずだよ🐾 よくがんばった！'},
+  {src:'assets/beteli.svg', msg:'できたよ〜！',     sub:'ベティだよ🐟 えらいえらい！'},
+  {src:'assets/beru.svg',   msg:'タイムアップ！',   sub:'ベルだよ🐠 お疲れさまだよ〜'},
+  {src:'assets/koito.svg',  msg:'おわりだよ〜！',   sub:'こいとだよ🎏 すごいじゃん！'},
+  {src:'assets/kotatu.svg', msg:'よくできました！', sub:'こたつだよ🐕 がんばったね！'},
+  {src:'assets/yumeme.svg', msg:'ゆっくりしてね！',sub:'ゆめめだよ🐑 お疲れ様〜！'},
+];
+
+// 音量
+function setVol(v){
+  masterVol=v;
+  ['vOff','vLo','vHi'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});
+  var m={0:'vOff',0.5:'vLo',1.0:'vHi'};
+  var el=document.getElementById(m[v]);if(el)el.classList.add('active');
+  try{localStorage.setItem('nikowa_bgm_vol',String(v));}catch(e){}
+}
+function ensureAudio(){
+  if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return Promise.resolve();}
+  try{return audioCtx.resume();}catch(e){return Promise.resolve();}
+}
+function playNote(freq,dur,vol,type){
+  if(!audioCtx||masterVol===0)return;
+  try{
+    var o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.connect(g);g.connect(audioCtx.destination);
+    o.type=type||'sine';o.frequency.value=freq;
+    var t=audioCtx.currentTime;
+    g.gain.setValueAtTime(vol*masterVol,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur*0.95);
+    o.start(t);o.stop(t+dur);
+  }catch(e){}
+}
+
+// 終了音
+function playEndSound(){
+  if(selectedSound==='orugoru'){
+    [1046.50,1318.51,1567.98,1046.50,1318.51,1760.00].forEach(function(f,i){setTimeout(function(){playNote(f,0.8,0.18,'sine');},i*200);});
+  } else if(selectedSound==='chime'){
+    [523.25,659.25,783.99,1046.50].forEach(function(f,i){setTimeout(function(){playNote(f,0.6,0.22,'sine');},i*180);});
+  } else if(selectedSound==='bell'){
+    playNote(1174.66,1.2,0.25,'sine');
+    setTimeout(function(){playNote(880,1.0,0.18,'sine');},300);
+  } else if(selectedSound==='fanfare'){
+    [523.25,659.25,783.99,1046.50,1318.51,1046.50].forEach(function(f,i){setTimeout(function(){playNote(f,0.3,0.20,'square');},i*120);});
+  } else if(selectedSound==='pop'){
+    [880,1100,1320].forEach(function(f,i){setTimeout(function(){playNote(f,0.12,0.22,'sine');},i*80);});
+  } else if(selectedSound==='antique'){
+    var A=[1174.66,0,1396.91,0,1760.00,0,2093.00,0,1760.00,0,1396.91,0,1174.66,0,1046.50,0,
+           1318.51,0,1567.98,0,1864.66,0,1567.98,0,1318.51,0,1046.50,0,932.33,0,1046.50,0,
+           987.77,0,1174.66,0,1396.91,0,1864.66,0,1396.91,0,1174.66,0,987.77,0,880.00,0,
+           880.00,0,1046.50,0,1396.91,0,1760.00,0,1396.91,0,1046.50,0,880.00,0,0,0];
+    A.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.9,0.18,'sine');playNote(f*2,0.5,0.05,'sine');},i*200);});
+  } else if(selectedSound==='forest'){
+    var F=[523.25,0,659.25,0,783.99,0,659.25,0,523.25,0,440.00,0,523.25,0,0,0,
+           698.46,0,880.00,0,783.99,0,659.25,0,587.33,0,523.25,0,587.33,0,0,0,
+           523.25,0,659.25,0,783.99,0,1046.50,0,880.00,0,783.99,0,659.25,0,523.25,0];
+    F.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.7,0.20,'sine');},i*220);});
+  } else if(selectedSound==='star'){
+    var S=[2093.00,0,1864.66,0,1567.98,0,1864.66,0,2093.00,0,2349.32,0,2093.00,0,0,0,
+           1567.98,0,1396.91,0,1174.66,0,1396.91,0,1567.98,0,1864.66,0,1567.98,0,0,0,
+           2349.32,0,2093.00,0,1760.00,0,2093.00,0,2349.32,0,2637.02,0,2093.00,0,0,0];
+    S.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.4,0.12,'sine');playNote(f*0.5,0.8,0.06,'sine');},i*180);});
+  } else if(selectedSound==='piano'){
+    var P=[523.25,659.25,783.99,1046.50,587.33,698.46,880.00,1174.66,
+           523.25,659.25,783.99,1046.50,440.00,523.25,659.25,880.00,
+           493.88,587.33,698.46,987.77,523.25,659.25,783.99,1046.50];
+    P.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.5,0.22,'triangle');},i*160);});
+  } else if(selectedSound==='sea'){
+    var Se=[440.00,0,0,523.25,0,0,659.25,0,0,587.33,0,0,
+            523.25,0,0,440.00,0,0,392.00,0,0,440.00,0,0,
+            523.25,0,0,659.25,0,0,783.99,0,0,659.25,0,0,
+            587.33,0,0,523.25,0,0,440.00,0,0,0,0,0];
+    Se.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,1.0,0.16,'sine');},i*180);});
+  }
+}
+
+// ループ
+function toggleLoop(){
+  loopMode=!loopMode;
+  var btn=document.getElementById('loopBtn');if(btn)btn.classList.toggle('active',loopMode);
+  if(!loopMode&&loopTimer){clearTimeout(loopTimer);loopTimer=null;}
+}
+function playEndSoundLoop(){
+  playEndSound();
+  if(loopMode){
+    var dur={orugoru:1400,chime:800,bell:1600,fanfare:800,antique:13000,pop:300,forest:8000,star:6500,piano:4200,sea:8400};
+    loopTimer=setTimeout(playEndSoundLoop,(dur[selectedSound]||1200)+400);
+  }
+}
+
+// 試聴
+var previewTimers=[];
+function previewSound(){
+  // 前の試聴を止める
+  previewTimers.forEach(function(t){clearTimeout(t);});
+  previewTimers=[];
+  var pv=masterVol; masterVol=1.0;
+  ensureAudio().then(function(){
+    // playEndSoundのsetTimeoutを全部収集してキャンセルできるよう置き換え
+    _playPreview();
+    masterVol=pv;
+  }).catch(function(){masterVol=pv;});
+}
+function _playPreview(){
+  // selectedSoundに応じて試聴（タイマーを管理）
+  function pt(fn,ms){ previewTimers.push(setTimeout(fn,ms)); }
+  if(selectedSound==='orugoru'){
+    [1046.50,1318.51,1567.98,1046.50,1318.51,1760.00].forEach(function(f,i){pt(function(){playNote(f,0.8,0.18,'sine');},i*200);});
+  } else if(selectedSound==='chime'){
+    [523.25,659.25,783.99,1046.50].forEach(function(f,i){pt(function(){playNote(f,0.6,0.22,'sine');},i*180);});
+  } else if(selectedSound==='bell'){
+    pt(function(){playNote(1174.66,1.2,0.25,'sine');},0);
+    pt(function(){playNote(880,1.0,0.18,'sine');},300);
+  } else if(selectedSound==='fanfare'){
+    [523.25,659.25,783.99,1046.50,1318.51,1046.50].forEach(function(f,i){pt(function(){playNote(f,0.3,0.20,'square');},i*120);});
+  } else if(selectedSound==='pop'){
+    [880,1100,1320].forEach(function(f,i){pt(function(){playNote(f,0.12,0.22,'sine');},i*80);});
+  } else if(selectedSound==='antique'){
+    var A=[1174.66,0,1396.91,0,1760.00,0,2093.00,0,1760.00,0,1396.91,0,1174.66,0,1046.50,0,
+           1318.51,0,1567.98,0,1864.66,0,1567.98,0,1318.51,0,1046.50,0,932.33,0,1046.50,0,
+           987.77,0,1174.66,0,1396.91,0,1864.66,0,1396.91,0,1174.66,0,987.77,0,880.00,0,
+           880.00,0,1046.50,0,1396.91,0,1760.00,0,1396.91,0,1046.50,0,880.00,0,0,0];
+    A.forEach(function(f,i){if(!f)return;pt(function(){playNote(f,0.9,0.18,'sine');playNote(f*2,0.5,0.05,'sine');},i*200);});
+  } else if(selectedSound==='forest'){
+    var F=[523.25,0,659.25,0,783.99,0,659.25,0,523.25,0,440.00,0,523.25,0,0,0,698.46,0,880.00,0,783.99,0,659.25,0,587.33,0,523.25,0,587.33,0,0,0];
+    F.forEach(function(f,i){if(!f)return;pt(function(){playNote(f,0.7,0.20,'sine');},i*220);});
+  } else if(selectedSound==='star'){
+    var S=[2093.00,0,1864.66,0,1567.98,0,1864.66,0,2093.00,0,2349.32,0,2093.00,0,0,0,1567.98,0,1396.91,0,1174.66,0,1396.91,0,1567.98,0,1864.66,0,1567.98,0,0,0];
+    S.forEach(function(f,i){if(!f)return;pt(function(){playNote(f,0.4,0.12,'sine');playNote(f*0.5,0.8,0.06,'sine');},i*180);});
+  } else if(selectedSound==='piano'){
+    var P=[523.25,659.25,783.99,1046.50,587.33,698.46,880.00,1174.66,523.25,659.25,783.99,1046.50,440.00,523.25,659.25,880.00];
+    P.forEach(function(f,i){if(!f)return;pt(function(){playNote(f,0.5,0.22,'triangle');},i*160);});
+  } else if(selectedSound==='sea'){
+    var Se=[440.00,0,0,523.25,0,0,659.25,0,0,587.33,0,0,523.25,0,0,440.00,0,0,392.00,0,0,440.00,0,0];
+    Se.forEach(function(f,i){if(!f)return;pt(function(){playNote(f,1.0,0.16,'sine');},i*180);});
+  }
+}
+
+// プリセット
+function selectPreset(btn,min){
+  setDrumTo(min);
+  document.querySelectorAll('.preset-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('customMin').value='';
+  if(!running){totalSec=min*60;remSec=min*60;initDrum();updateDisplay();updateRing();}
+}
+function onCustomInput(el){
+  var v=parseInt(el.value);if(!v||v<1)return;
+  document.querySelectorAll('.preset-btn').forEach(function(b){b.classList.remove('active');});
+  if(!running){totalSec=v*60;remSec=v*60;initDrum();updateDisplay();updateRing();}
+}
+
+// サウンド選択
+function selectSound(btn,name){
+  document.querySelectorAll('.sound-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');selectedSound=name;
+}
+
+// タイマー
+// ===== ドラムロール（3列）=====
+var drumH=0, drumM=1, drumS=0;
+var drumScrollH=null, drumScrollM=null, drumScrollS=null;
+var ITEM_H=36;
+
+function _buildCol(scrollEl, max, unitLabel){
+  var h='<div class="drum-spacer"></div>';
+  for(var i=0;i<=max;i++){
+    h+='<div class="drum-item" data-v="'+i+'">'+i+'<span class="drum-item-unit" style="font-size:11px;color:rgba(45,55,72,0.4);font-weight:700;margin-left:3px;">'+unitLabel+'</span></div>';
+  }
+  h+='<div class="drum-spacer"></div>';
+  scrollEl.innerHTML=h;
+}
+
+function initDrum(){
+  drumScrollH=document.getElementById('drumH');
+  drumScrollM=document.getElementById('drumM');
+  drumScrollS=document.getElementById('drumS');
+  if(!drumScrollH||!drumScrollM||!drumScrollS)return;
+  _buildCol(drumScrollH, 23, '時間');
+  _buildCol(drumScrollM, 59, '分');
+  _buildCol(drumScrollS, 59, '秒');
+  drumScrollH.scrollTop=drumH*ITEM_H;
+  drumScrollM.scrollTop=drumM*ITEM_H;
+  drumScrollS.scrollTop=drumS*ITEM_H;
+  updateDrumHighlight();
+  drumScrollH.addEventListener('scroll',function(){onDrumScroll('h');},{passive:true});
+  drumScrollM.addEventListener('scroll',function(){onDrumScroll('m');},{passive:true});
+  drumScrollS.addEventListener('scroll',function(){onDrumScroll('s');},{passive:true});
+}
+
+function openDrumModal(){
+  var el=document.getElementById('drumOverlay');
+  if(el) el.classList.add('show');
+  setTimeout(function(){
+    if(drumScrollH) drumScrollH.scrollTop=drumH*ITEM_H;
+    if(drumScrollM) drumScrollM.scrollTop=drumM*ITEM_H;
+    if(drumScrollS) drumScrollS.scrollTop=drumS*ITEM_H;
+  }, 80);
+}
+
+function closeDrumModal(){
+  var el=document.getElementById('drumOverlay');
+  if(el) el.classList.remove('show');
+  if(!running){
+    var sec=drumH*3600+drumM*60+drumS;
+    if(sec<1) sec=60;
+    totalSec=sec; remSec=sec;
+    var label=(drumH?drumH+'時間':'')+(drumM?drumM+'分':'')+(drumS?drumS+'秒':'');
+    document.getElementById('drumDisplay').textContent=label||'-';
+    document.querySelectorAll('.preset-btn').forEach(function(b){b.classList.remove('active');});
+    updateDisplay(); updateRing();
+  }
+}
+
+function onDrumOverlayClick(e){
+  if(e.target===document.getElementById('drumOverlay')) closeDrumModal();
+}
+
+function onDrumScroll(which){
+  var el = which==='h'?drumScrollH : which==='m'?drumScrollM : drumScrollS;
+  var max = which==='h'?23 : 59;
+  var idx=Math.round(el.scrollTop/ITEM_H);
+  idx=Math.max(0,Math.min(max,idx));
+  if(which==='h') drumH=idx;
+  else if(which==='m') drumM=idx;
+  else drumS=idx;
+  updateDrumHighlight();
+}
+
+function updateDrumHighlight(){
+  [['drumH',drumH],['drumM',drumM],['drumS',drumS]].forEach(function(pair){
+    document.querySelectorAll('#'+pair[0]+' .drum-item').forEach(function(el){
+      var v=parseInt(el.dataset.v);
+      var diff=Math.abs(v-pair[1]);
+      el.classList.toggle('selected',diff===0);
+      el.classList.toggle('near',diff===1);
+    });
+  });
+}
+
+function setDrumTo(min){
+  drumH=Math.floor(min/60);
+  drumM=min%60;
+  drumS=0;
+  var disp=document.getElementById('drumDisplay');
+  if(disp) disp.textContent='-';
+  if(drumScrollH) drumScrollH.scrollTop=drumH*ITEM_H;
+  if(drumScrollM) drumScrollM.scrollTop=drumM*ITEM_H;
+  if(drumScrollS) drumScrollS.scrollTop=drumS*ITEM_H;
+  updateDrumHighlight();
+}
+// ===== ここまで =====
+
+function onStart(){
+  if(!running&&!paused){
+    if(remSec<=0)remSec=totalSec;
+    running=true;
+    document.getElementById('startBtn').textContent='一時停止';
+    document.getElementById('startBtn').className='ctrl-btn ctrl-pause';
+    timerInterval=setInterval(tick,1000);
+    ensureAudio();
+  } else if(running){
+    running=false;paused=true;clearInterval(timerInterval);
+    document.getElementById('startBtn').textContent='再開';
+    document.getElementById('startBtn').className='ctrl-btn ctrl-start';
+    document.getElementById('timeSub').textContent='一時停止中';
+  } else {
+    running=true;paused=false;
+    document.getElementById('startBtn').textContent='一時停止';
+    document.getElementById('startBtn').className='ctrl-btn ctrl-pause';
+    timerInterval=setInterval(tick,1000);
+  }
+}
+function onReset(){
+  running=false;paused=false;clearInterval(timerInterval);
+  loopMode=false;if(loopTimer){clearTimeout(loopTimer);loopTimer=null;}
+  var lb=document.getElementById('loopBtn');if(lb)lb.classList.remove('active');
+  remSec=totalSec;
+  document.getElementById('startBtn').textContent='スタート';
+  document.getElementById('startBtn').className='ctrl-btn ctrl-start';
+  document.getElementById('timeSub').textContent='待機中';
+  initDrum();updateDisplay();updateRing();
+}
+function tick(){
+  remSec--;initDrum();updateDisplay();updateRing();
+  if(remSec<=0){running=false;clearInterval(timerInterval);playEndSoundLoop();showOverlay();}
+}
+
+// 表示
+function updateDisplay(){
+  var m=Math.floor(remSec/60),s=remSec%60;
+  document.getElementById('timeDisplay').textContent=m+':'+(s<10?'0':'')+s;
+  var pct=totalSec>0?remSec/totalSec:1;
+  var el=document.getElementById('timeDisplay');
+  if(pct<=0.1){el.className='time-display danger';document.getElementById('timeSub').textContent='あと少し！';}
+  else if(pct<=0.25){el.className='time-display warning';document.getElementById('timeSub').textContent='もう少し！';}
+  else{el.className='time-display';if(running)document.getElementById('timeSub').textContent='がんばれ！';}
+}
+var CIRC=2*Math.PI*80;
+function updateRing(){
+  var pct=totalSec>0?remSec/totalSec:1;
+  var ring=document.getElementById('ringFg');
+  ring.style.strokeDashoffset=CIRC*(1-pct);
+  if(pct<=0.1)ring.className='ring-fg danger';
+  else if(pct<=0.25)ring.className='ring-fg warning';
+  else ring.className='ring-fg';
+}
+
+// オーバーレイ
+function showOverlay(){
+  var c=CHARAS[Math.floor(Math.random()*CHARAS.length)];
+  document.getElementById('charaImg').src=c.src;
+  document.getElementById('charaMsg').textContent=c.msg;
+  document.getElementById('charaSub').textContent=c.sub;
+  document.getElementById('startBtn').textContent='スタート';
+  document.getElementById('startBtn').className='ctrl-btn ctrl-start';
+  document.getElementById('timeSub').textContent='完了！';
+  document.getElementById('overlay').classList.add('show');
+}
+function closeOverlay(){
+  loopMode=false;if(loopTimer){clearTimeout(loopTimer);loopTimer=null;}
+  var lb=document.getElementById('loopBtn');if(lb)lb.classList.remove('active');
+  document.getElementById('overlay').classList.remove('show');
+  onReset();
+}
+
+// 初期化
+try{
+  var sv=parseFloat(localStorage.getItem('nikowa_bgm_vol')||'0');
+  masterVol=sv;
+  var mv={0:'vOff',0.5:'vLo',1.0:'vHi'};
+  ['vOff','vLo','vHi'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});
+  var sel=document.getElementById(mv[sv]||'vOff');if(sel)sel.classList.add('active');
+}catch(e){}
+initDrum();updateDisplay();updateRing();
+</script>
+</body>
+</html>
