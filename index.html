@@ -22768,7 +22768,7 @@ function renderTweetsDiary() {
       h += '<div style="padding:4px 10px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;align-items:center;">';
       h += '<span style="font-size:9px;color:var(--ink-sub);flex-shrink:0;">📌</span>';
       for (const pid of _pins.slice(0,8)) {
-        const [pCat,pIdx] = pid.split(\'__\');
+        const [pCat,pIdx] = pid.split('__');
         const ps = (_sLib[pCat]||[])[parseInt(pIdx)];
         if (!ps) continue;
         h += '<button onclick="postStampRecord(\''+escapeHtml(ps.icon)+'\',\''+escapeHtml(ps.name)+'\')" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 6px;border-radius:7px;border:1px solid var(--line);background:var(--surface-warm);cursor:pointer;font-family:inherit;min-width:34px;">';
@@ -22782,7 +22782,7 @@ function renderTweetsDiary() {
     h += '<div style="padding:4px 10px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;">';
     for (const cat of _sCats) {
       const isC = cat === _sCat;
-      h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+(isC?\'var(--accent-deep)\':\'var(--line)\')+';background:'+(isC?\'var(--accent-deep)\':\'transparent\')+';color:'+(isC?\'white\':\'var(--ink-sub)\')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+      h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+(isC?'var(--accent-deep)':'var(--line)')+';background:'+(isC?'var(--accent-deep)':'transparent')+';color:'+(isC?'white':'var(--ink-sub)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
     }
     h += '</div>';
     // スタンプ1列スクロール
