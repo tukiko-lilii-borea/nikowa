@@ -8579,8 +8579,14 @@ function infoBarHtml() {
 function renderTop() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('houses');
-  // Recordモードの色入れ替えをクリア
-  try { const s = document.getElementById('recordColorSwap'); if (s) s.remove(); } catch(e) {}
+  // Recordモードの色入れ替え＆bodyスクロール固定をクリア
+  try { 
+    const s = document.getElementById('recordColorSwap'); 
+    if (s) s.remove();
+    document.body.removeAttribute('data-record-mode');
+    document.body.style.removeProperty('background-color');
+    if (typeof _releaseDiaryScrollLock === 'function') _releaseDiaryScrollLock();
+  } catch(e) {}
   renderPCSidebar(); // PC/iPad サイドバー更新
   const _isPC = window.innerWidth >= 900;
   const _isTablet = window.innerWidth >= 600 && window.innerWidth < 900;
@@ -8878,8 +8884,14 @@ function _makeSwipeHandler(checkView, checkDx, onTrigger) {
     if (e.touches[0].clientX < 30) { blocked = true; return; }
     let el = e.target;
     while (el && el !== app) {
+      // ★ ボタン・リンク・入力フォーム上では絶対にスワイプしない（誤発火防止）
+      const tag = el.tagName;
+      if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'LABEL') { blocked = true; return; }
+      // ★ onclick属性持ち要素も除外（ボタン代わりに使われてる）
+      if (el.hasAttribute && el.hasAttribute('onclick')) { blocked = true; return; }
       const cs = window.getComputedStyle(el);
-      if ((cs.overflowX === 'auto' || cs.overflowX === 'scroll') && el.scrollWidth > el.clientWidth) { blocked = true; return; }
+      if ((cs.overflowX === 'auto' || cs.overflowX === 'scroll')) { blocked = true; return; }
+      if ((cs.overflowY === 'auto' || cs.overflowY === 'scroll') && el.scrollHeight > el.clientHeight) { blocked = true; return; }
       el = el.parentElement;
     }
     sx = e.touches[0].clientX; sy = e.touches[0].clientY;
@@ -8888,13 +8900,14 @@ function _makeSwipeHandler(checkView, checkDx, onTrigger) {
   const onMove = function(e) {
     if (!checkView() || blocked || e.touches.length !== 1) return;
     const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
-    if (!decided && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) {
-      isSwipe = Math.abs(dx) > Math.abs(dy) * 1.5; decided = true;
+    if (!decided && (Math.abs(dx) > 20 || Math.abs(dy) > 20)) {
+      isSwipe = Math.abs(dx) > Math.abs(dy) * 2; decided = true;
     }
   };
   const onEnd = function(e) {
     if (!checkView() || blocked) { blocked = false; return; }
     const dx = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX - sx : 0;
+    // ★ 閾値を80pxに引き上げ（誤発火防止）
     if (isSwipe && checkDx(dx)) _swipeFadeTo(onTrigger);
     isSwipe = false; decided = false;
   };
@@ -8911,7 +8924,7 @@ function _attachHomeSwipeNav() {
   }
   const h = _makeSwipeHandler(
     function() { return currentView === 'top'; },
-    function(dx) { return dx > 50; },
+    function(dx) { return dx > 80; },
     function() { switchMode('me'); currentView = 'me'; currentModeTab['me'] = 'diary'; render(); }
   );
   app._swipeStart = h.onStart;
@@ -22569,6 +22582,7 @@ function renderMeMode() {
     _diaryAdjustAndScroll();
   } else {
     _clearRecordColorSwap();
+    _releaseDiaryScrollLock();
   }
 }
 
@@ -22583,7 +22597,7 @@ function _attachMeSwipeBack() {
   }
   const h = _makeSwipeHandler(
     function() { return currentView === 'me'; },
-    function(dx) { return dx < -50; },
+    function(dx) { return dx < -80; },
     function() { switchMode('pet'); currentView = 'top'; render(); }
   );
   app._meSwipeStart = h.onStart;
@@ -22871,6 +22885,11 @@ window.renderTweetsDiary = renderTweetsDiary;
 function _diaryAdjustAndScroll() {
   function adjust() {
     try {
+      // ★ bodyのスクロールを完全停止（画面固定）
+      document.body.style.overflow = 'hidden';
+      document.body.style.height = '100vh';
+      document.documentElement.style.overflow = 'hidden';
+      document.documentElement.style.height = '100vh';
       // mode-content-wrap透明化
       const mc = document.querySelector('.mode-content-wrap');
       if (mc) {
@@ -22878,7 +22897,6 @@ function _diaryAdjustAndScroll() {
       }
       const tw = document.getElementById('tweetWrap');
       if (tw) {
-        // tweetWrap自体のpadding-bottomは小さく（タイムラインが独立スクロールするため）
         tw.style.paddingBottom = '8px';
         let p = tw.parentElement;
         while (p && p !== document.body) {
@@ -22897,7 +22915,7 @@ function _diaryAdjustAndScroll() {
       const navH = nav ? (window.innerHeight - nav.getBoundingClientRect().top) : 64;
       const bottomBlock = document.getElementById('tweetBottomBlock');
       if (bottomBlock) bottomBlock.style.bottom = navH + 'px';
-      // ★ タイムラインの高さを動的計算（画面いっぱい使う）
+      // ★ タイムラインの高さを動的計算
       const tl = document.getElementById('tweetsTimeline');
       if (tl && bottomBlock) {
         const tlTop = tl.getBoundingClientRect().top;
@@ -22912,35 +22930,33 @@ function _diaryAdjustAndScroll() {
   }
   function scrollBottom() {
     try {
-      // タイムライン内をスクロール（ウィンドウじゃない）
       const tl = document.getElementById('tweetsTimeline');
       if (tl) {
         tl.scrollTop = tl.scrollHeight + 9999;
       }
-      // ウィンドウは念のため上に固定
-      window.scrollTo(0, 0);
     } catch(e) {}
   }
-  // 即時 + rAF + 短い遅延の3段階
   adjust();
   scrollBottom();
   requestAnimationFrame(() => { adjust(); scrollBottom(); });
   setTimeout(() => { adjust(); scrollBottom(); }, 200);
-  // resize対応（一度だけ登録）
-  if (!window._diaryResizeAttached) {
-    window.addEventListener('resize', () => {
-      const tl = document.getElementById('tweetsTimeline');
-      if (tl) adjust();
-    });
-    window._diaryResizeAttached = true;
-  }
 }
 window._diaryAdjustAndScroll = _diaryAdjustAndScroll;
 
-// ===== Recordタブ用：色入れ替えを適用/解除 =====
+// ===== Diary離脱時：bodyスクロール固定を解除 =====
+function _releaseDiaryScrollLock() {
+  try {
+    document.body.style.overflow = '';
+    document.body.style.height = '';
+    document.documentElement.style.overflow = '';
+    document.documentElement.style.height = '';
+  } catch(e) {}
+}
+window._releaseDiaryScrollLock = _releaseDiaryScrollLock;
+
+// ===== Recordタブ用：色入れ替えを適用/解除（tweetWrapスコープのみ） =====
 function _applyRecordColorSwap() {
   try {
-    // テーマから「元の」値を取得（getComputedStyleだと既に入れ替わった値を読んでしまうため）
     const theme = THEMES[data.themeId || 'mint'];
     if (!theme || !theme.vars) return;
     const v = theme.vars;
@@ -22957,7 +22973,20 @@ function _applyRecordColorSwap() {
       swapStyle.id = 'recordColorSwap';
       document.head.appendChild(swapStyle);
     }
-    swapStyle.textContent = ':root,html,body{--mint:'+_a+' !important;--mint-deep:'+_ad+' !important;--mint-bg:'+_ab+' !important;--accent:'+_m+' !important;--accent-deep:'+_md+' !important;--accent-bg:'+_mb+' !important;--bg:'+_ab+' !important;--surface-warm:'+_ab+' !important;}';
+    // ★ スコープを限定：tweetWrap配下のみ。モーダル等は影響受けない
+    swapStyle.textContent = '#tweetWrap, #tweetBottomBlock { --mint:'+_a+' !important;--mint-deep:'+_ad+' !important;--mint-bg:'+_ab+' !important;--accent:'+_m+' !important;--accent-deep:'+_md+' !important;--accent-bg:'+_mb+' !important;--surface-warm:'+_ab+' !important; }';
+    // body背景は別途インラインで処理（モーダル等が開いてもbodyの背景は維持）
+    document.body.dataset.recordMode = '1';
+    document.body.style.setProperty('background-color', _ab, 'important');
+  } catch(e) {}
+}
+function _clearRecordColorSwap() {
+  try {
+    const s = document.getElementById('recordColorSwap');
+    if (s) s.remove();
+    // body背景をテーマ標準に戻す
+    document.body.removeAttribute('data-record-mode');
+    document.body.style.removeProperty('background-color');
   } catch(e) {}
 }
 function _clearRecordColorSwap() {
