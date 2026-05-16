@@ -6526,6 +6526,23 @@ function loadFromFirestore() {
   _getModeDocRef().get().then(doc => {
     if (doc.exists) {
       const saved = doc.data();
+      // ★★★ データ消失防止：ローカルの方がデータ多い場合はローカル優先
+      // （別デバイスのFirestoreが古い等で空データに上書きされるのを防ぐ）
+      const protectedArrayKeys = ['tweets', 'stampHistory', 'posts', 'tasks', 'schedules', 'records', 'houses', 'pets', 'members', 'memos', 'planner'];
+      let _protected = [];
+      for (const k of protectedArrayKeys) {
+        const localArr = data[k];
+        const remoteArr = saved[k];
+        const localLen = Array.isArray(localArr) ? localArr.length : (localArr && typeof localArr === 'object' ? Object.keys(localArr).length : 0);
+        const remoteLen = Array.isArray(remoteArr) ? remoteArr.length : (remoteArr && typeof remoteArr === 'object' ? Object.keys(remoteArr).length : 0);
+        if (localLen > remoteLen) {
+          saved[k] = localArr; // ローカル優先
+          _protected.push(k+'('+localLen+'>'+remoteLen+')');
+        }
+      }
+      if (_protected.length > 0) {
+        console.warn('🛡️ ローカルデータ保護:', _protected.join(', '));
+      }
       // 写真URLを復元（別デバイスからの同期用）
       if (saved._photos) {
         Object.assign(photos, saved._photos);
@@ -6534,6 +6551,8 @@ function loadFromFirestore() {
       }
       for (const k in saved) data[k] = saved[k];
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+      // 保護したデータをFirestoreにも書き戻し（次回他デバイスで開いた時のため）
+      if (_protected.length > 0) saveToFirestore();
       render();
     } else {
       // Firestoreにまだない → localStorageのデータを移行
@@ -42139,6 +42158,81 @@ function loadSampleData() {
   render();
 }
 window.loadSampleData = loadSampleData;
+
+// ===== データバックアップ・復元 =====
+function exportDataBackup() {
+  try {
+    const backup = {
+      _meta: {
+        version: 'nikowa-backup-v1',
+        mode: currentMode,
+        exportedAt: new Date().toISOString(),
+        userAgent: navigator.userAgent
+      },
+      data: data,
+      photos: photos
+    };
+    const json = JSON.stringify(backup, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const ymd = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    const hms = String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0');
+    a.href = url;
+    a.download = 'nikowa-backup-'+currentMode+'-'+ymd+'-'+hms+'.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('バックアップ保存したよ🌷');
+  } catch(e) {
+    console.error(e);
+    showToast('バックアップ失敗: '+e.message);
+  }
+}
+window.exportDataBackup = exportDataBackup;
+
+function importDataBackup(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const backup = JSON.parse(e.target.result);
+      if (!backup || !backup.data) {
+        showToast('バックアップファイル形式が違うよ');
+        return;
+      }
+      const tweetCount = (backup.data.tweets || []).length;
+      const stampCount = (backup.data.stampHistory || []).length;
+      const msg = '復元する内容：\n📝 日記: '+tweetCount+'件\n⭐ スタンプ: '+stampCount+'件\n\n現在のデータは上書きされるよ。続けてもいい？';
+      if (!confirm(msg)) {
+        event.target.value = '';
+        return;
+      }
+      // データ復元
+      for (const k in backup.data) data[k] = backup.data[k];
+      if (backup.photos) {
+        for (const k in backup.photos) photos[k] = backup.photos[k];
+      }
+      saveData();
+      try { localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos)); } catch(e) {}
+      showToast('復元したよ🌷');
+      render();
+    } catch(err) {
+      console.error(err);
+      showToast('復元失敗: '+err.message);
+    }
+    event.target.value = '';
+  };
+  reader.onerror = function() {
+    showToast('ファイル読み込み失敗');
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+window.importDataBackup = importDataBackup;
 // ===== サンプルデータ一括投入 END =====
 function renderSettings() {
   document.getElementById('bottomNav').style.display = 'flex';
@@ -42151,6 +42245,29 @@ function renderSettings() {
   const mb = (bytes / 1024 / 1024).toFixed(2);
   const photoCount = Object.keys(photos).length;
   let html = '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div><div class="topbar-title">⚙️ せってい</div><div class="topbar-spacer"></div></div>';
+
+  // ★★★ データ確認・復旧セクション（最上部・緊急用） ★★★
+  const _tweetCount = (data.tweets || []).length;
+  const _stampHistCount = (data.stampHistory || []).length;
+  const _postCount = (data.posts || []).length;
+  html += '<div class="section" style="border:2px solid var(--accent);"><div class="section-head"><h2 class="section-title">🛡️ データ確認・バックアップ</h2></div>';
+  html += '<div style="padding:12px 16px 16px;">';
+  html += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:10px;line-height:1.6;">今このデバイスに保存されてるデータの件数。空ならデータ消失の可能性。</div>';
+  html += '<div style="background:var(--surface-warm);padding:10px;border-radius:10px;margin-bottom:10px;font-size:12px;font-family:monospace;line-height:1.8;">';
+  html += '📝 Diary（日記）: <b>'+_tweetCount+'件</b><br>';
+  html += '⭐ Recordスタンプ履歴: <b>'+_stampHistCount+'件</b><br>';
+  html += '🏠 投稿: <b>'+_postCount+'件</b><br>';
+  html += '📂 容量: '+mb+'MB';
+  html += '</div>';
+  // データバックアップボタン
+  html += '<button onclick="exportDataBackup()" style="width:100%;padding:11px;background:var(--mint-deep);color:white;border:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:15px;">download</span>データをバックアップ（JSON保存）</button>';
+  html += '<button onclick="document.getElementById(\'restoreFileInput\').click()" style="width:100%;padding:11px;background:white;color:var(--mint-deep);border:1.5px solid var(--mint-deep);border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:15px;">upload</span>バックアップから復元</button>';
+  html += '<input type="file" id="restoreFileInput" accept=".json,application/json" style="display:none;" onchange="importDataBackup(event)">';
+  // Firestore強制再取得
+  if (currentUser) {
+    html += '<button onclick="if(confirm(\'クラウド（Firestore）から最新を取得します。ローカルが新しい場合は上書きされません。続けますか？\'))loadFromFirestore()" style="width:100%;padding:9px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">☁️ クラウドから再取得</button>';
+  }
+  html += '</div></div>';
 
   // ── サンプルデータ ──
   html += '<div class="section"><div class="section-head"><h2 class="section-title">🌷 サンプルデータ</h2></div>';
