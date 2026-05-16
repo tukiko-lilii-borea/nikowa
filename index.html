@@ -12565,8 +12565,11 @@ function deleteStampRecord(id) {
   const scrollY = window.scrollY;
   data.stampHistory = data.stampHistory.filter(r => r.id !== id);
   saveData();
+  _suppressScrollTop = true;
   render();
-  setTimeout(() => window.scrollTo(0, scrollY), 0);
+  // 即時+rAFでスクロール位置を復元（ゆがみ防止）
+  window.scrollTo(0, scrollY);
+  requestAnimationFrame(() => window.scrollTo(0, scrollY));
 }
 
 function _formatStampTime(ts) {
@@ -22637,7 +22640,7 @@ function renderTweetsDiary() {
   }
   
   // ===== 全体ラッパー（普通の流れ、fixed使わない）=====
-  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:8px 10px 130px;gap:8px;">';
+  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:8px 10px 250px;gap:8px;">';
   
   // 上部バー（独立カード）
   // Record/Diary タブ + 検索・カレンダー・壁紙アイコン
@@ -22861,11 +22864,13 @@ function renderTweetsDiary() {
   h += '}catch(e){}}';
   h += 'setTimeout(adjust,40);setTimeout(adjust,150);setTimeout(adjust,400);';
   h += 'window.addEventListener("resize",adjust);';
-  // ★ 最下部スクロール（adjust の後に必ず実行）
+  // ★ 最下部スクロール（即時+rAF+setTimeoutで滑らか）
   h += 'function _sb(){try{window.scrollTo(0,document.body.scrollHeight+9999);}catch(e){}}';
-  h += 'setTimeout(function(){adjust();_sb();},60);';
-  h += 'setTimeout(function(){adjust();_sb();},200);';
-  h += 'setTimeout(function(){adjust();_sb();},500);';
+  h += 'adjust();_sb();';  // 即時実行（最初の見え方をズラさない）
+  h += 'requestAnimationFrame(function(){adjust();_sb();});';
+  h += 'requestAnimationFrame(function(){requestAnimationFrame(function(){adjust();_sb();});});';
+  h += 'setTimeout(function(){adjust();_sb();},120);';
+  h += 'setTimeout(function(){adjust();_sb();},300);';
   // Recordタブ時の色反転（mint↔accent をbody全体で入れ替え）
   if (diaryInputTab === 'record') {
     h += '(function(){try{var cs=getComputedStyle(document.documentElement);';
