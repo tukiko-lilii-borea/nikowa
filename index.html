@@ -8580,7 +8580,7 @@ function renderTop() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('houses');
   // Recordモードの色入れ替えをクリア
-  try { ['--mint','--mint-deep','--mint-bg','--accent','--accent-deep','--accent-bg'].forEach(v => document.body.style.removeProperty(v)); } catch(e) {}
+  try { const s = document.getElementById('recordColorSwap'); if (s) s.remove(); } catch(e) {}
   renderPCSidebar(); // PC/iPad サイドバー更新
   const _isPC = window.innerWidth >= 900;
   const _isTablet = window.innerWidth >= 600 && window.innerWidth < 900;
@@ -22616,8 +22616,9 @@ function renderTweetsDiary() {
   const viewDate = new Date(viewDateKey);
   const isToday = (viewDateKey === todayKey);
   
-  // フィルタ＆その日のみ
+  // フィルタ＆その日のみ（stampIcon持ちのエントリは除外＝Diaryには文字日記のみ）
   let tweets = data.tweets.filter(t => {
+    if (t.stampIcon) return false;
     const td = new Date(t.timestamp || 0);
     return td.toDateString() === viewDateKey;
   });
@@ -22767,41 +22768,40 @@ function renderTweetsDiary() {
     const _sCats = Object.keys(_sLib).filter(c => !(_sLib[c] && _sLib[c]._hidden));
     const _sCat = data.stampSelCat || (_sCats[0] || '生活');
     const _pinned = data.pinnedStamps || [];
-    // ピン止め1行（Osaka位置に常設・コンパクト・茶色ベース）
+    // ピン止め1行（swap前提：mint変数→swap後に茶色になる）
     h += '<div style="padding:5px 10px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;align-items:center;">';
-    h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--accent-deep);flex-shrink:0;">push_pin</span>';
+    h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--mint-deep);flex-shrink:0;">push_pin</span>';
     if (_pinned.length === 0) {
       h += '<span style="font-size:9px;color:var(--ink-light);flex-shrink:0;">スタンプの📌でピン留めできるよ</span>';
     } else {
       for (const p of _pinned.slice(0,12)) {
         const _safeName = escapeHtml(p.name).replace(/'/g,"\\'");
-        h += '<button onclick="postStampRecord(\''+p.icon+'\',\''+_safeName+'\')" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 5px;border-radius:7px;border:1px solid var(--accent);background:var(--accent-bg);cursor:pointer;font-family:inherit;min-width:36px;">';
-        h += renderStampIcon(p.icon,'font-size:14px;color:var(--accent-deep);');
-        h += '<span style="font-size:8px;font-weight:700;color:var(--accent-deep);white-space:nowrap;">'+escapeHtml(p.name)+'</span>';
+        h += '<button onclick="postStampRecord(\''+p.icon+'\',\''+_safeName+'\')" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 5px;border-radius:7px;border:1px solid var(--mint);background:var(--mint-bg);cursor:pointer;font-family:inherit;min-width:36px;">';
+        h += renderStampIcon(p.icon,'font-size:14px;color:var(--mint-deep);');
+        h += '<span style="font-size:8px;font-weight:700;color:var(--mint-deep);white-space:nowrap;">'+escapeHtml(p.name)+'</span>';
         h += '</button>';
       }
     }
     h += '</div>';
-    // カテゴリタブ（茶色がメイン）
+    // カテゴリタブ（mint変数=swap後茶色）
     h += '<div style="padding:4px 10px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;">';
     for (const cat of _sCats) {
       const isC = cat === _sCat;
-      h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+(isC?'var(--accent-deep)':'var(--accent)')+';background:'+(isC?'var(--accent-deep)':'transparent')+';color:'+(isC?'white':'var(--accent-deep)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+      h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+(isC?'var(--mint-deep)':'var(--mint)')+';background:'+(isC?'var(--mint-deep)':'transparent')+';color:'+(isC?'white':'var(--mint-deep)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
     }
     h += '</div>';
-    // スタンプ1列スクロール（茶色ベース＋各ボタンにピンマーク）
+    // スタンプ1列スクロール（mint変数=swap後茶色＋各ボタンにピンマーク）
     const _stamps = (_sLib[_sCat] || []).filter(s => !s._hidden);
     h += '<div style="padding:4px 10px 6px;display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">';
     for (const s of _stamps) {
       const _safeName = escapeHtml(s.name).replace(/'/g,"\\'");
       const _isPin = (_pinned.findIndex(p => (p.icon+'|'+p.name) === (s.icon+'|'+s.name)) >= 0);
       h += '<div style="flex:0 0 auto;position:relative;min-width:48px;">';
-      h += '<button onclick="postStampRecord(\''+s.icon+'\',\''+_safeName+'\')" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 4px;border-radius:9px;border:1.5px solid var(--accent);background:var(--accent-bg);cursor:pointer;font-family:inherit;">';
-      h += renderStampIcon(s.icon,'font-size:20px;color:var(--accent-deep);');
-      h += '<span style="font-size:9px;font-weight:700;color:var(--accent-deep);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44px;">'+escapeHtml(s.name)+'</span>';
+      h += '<button onclick="postStampRecord(\''+s.icon+'\',\''+_safeName+'\')" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 4px;border-radius:9px;border:1.5px solid var(--mint);background:var(--mint-bg);cursor:pointer;font-family:inherit;">';
+      h += renderStampIcon(s.icon,'font-size:20px;color:var(--mint-deep);');
+      h += '<span style="font-size:9px;font-weight:700;color:var(--mint-deep);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44px;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
-      // 小さいピンマーク（右上）：ピン中は薄茶アクセント色
-      h += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:'+(_isPin?'var(--accent-deep)':'white')+';border:1px solid '+(_isPin?'var(--accent-deep)':'var(--accent)')+';color:'+(_isPin?'white':'var(--accent-deep)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:8px;">push_pin</span></span>';
+      h += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:'+(_isPin?'var(--mint-deep)':'white')+';border:1px solid '+(_isPin?'var(--mint-deep)':'var(--mint)')+';color:'+(_isPin?'white':'var(--mint-deep)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:8px;">push_pin</span></span>';
       h += '</div>';
     }
     h += '</div>';
@@ -22839,19 +22839,24 @@ function renderTweetsDiary() {
   // Recordタブ時の色反転（mint↔accent をbody全体で入れ替え）
   if (diaryInputTab === 'record') {
     h += '(function(){try{var cs=getComputedStyle(document.documentElement);';
-    h += 'var b=document.body;';
+    h += 'var html=document.documentElement;var b=document.body;';
+    h += 'var _bg=cs.getPropertyValue("--bg").trim();';
     h += 'var _m=cs.getPropertyValue("--mint").trim();';
     h += 'var _md=cs.getPropertyValue("--mint-deep").trim();';
     h += 'var _mb=cs.getPropertyValue("--mint-bg").trim();';
+    h += 'var _sw=cs.getPropertyValue("--surface-warm").trim();';
     h += 'var _a=cs.getPropertyValue("--accent").trim();';
     h += 'var _ad=cs.getPropertyValue("--accent-deep").trim();';
     h += 'var _ab=cs.getPropertyValue("--accent-bg").trim();';
-    h += 'b.style.setProperty("--mint",_a);b.style.setProperty("--mint-deep",_ad);b.style.setProperty("--mint-bg",_ab);';
-    h += 'b.style.setProperty("--accent",_m);b.style.setProperty("--accent-deep",_md);b.style.setProperty("--accent-bg",_mb);';
+    // htmlとbody両方に設定（!importantを上書きするためにstyleSheet経由）
+    h += 'var swapStyle=document.getElementById("recordColorSwap")||document.createElement("style");';
+    h += 'swapStyle.id="recordColorSwap";';
+    h += 'swapStyle.textContent=":root,html,body{--mint:"+_a+" !important;--mint-deep:"+_ad+" !important;--mint-bg:"+_ab+" !important;--accent:"+_m+" !important;--accent-deep:"+_md+" !important;--accent-bg:"+_mb+" !important;--bg:"+_ab+" !important;--surface-warm:"+_ab+" !important;}";';
+    h += 'if(!swapStyle.parentNode)document.head.appendChild(swapStyle);';
     h += '}catch(e){}})();';
   } else {
     // Diaryタブに戻ったら色入れ替えをクリア
-    h += '(function(){try{var b=document.body;["--mint","--mint-deep","--mint-bg","--accent","--accent-deep","--accent-bg"].forEach(function(v){b.style.removeProperty(v);});}catch(e){}})();';
+    h += '(function(){try{var s=document.getElementById("recordColorSwap");if(s)s.remove();}catch(e){}})();';
   }
   h += '})();</scr'+'ipt>';
   
@@ -23618,14 +23623,7 @@ function _renderTweetBubble(tw) {
   h += '<button onclick="openTweetEditModal(\''+tw.id+'\')" style="text-align:left;background:white;border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-family:inherit;cursor:pointer;width:100%;display:flex;flex-direction:column;gap:5px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">';
   
   // テキスト本文（タグハイライト、フォント小さめ）
-  if (tw.stampIcon) {
-    // スタンプ記録の表示
-    h += '<div style="display:flex;align-items:center;gap:6px;padding:2px 0;">';
-    h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:var(--accent-bg);border-radius:8px;flex-shrink:0;">'+renderStampIcon(tw.stampIcon,'font-size:18px;color:var(--accent-deep);')+'</span>';
-    h += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(tw.body||tw.text||'')+'</span>';
-    if (tw.stampValue) h += '<span style="font-size:11px;color:var(--ink-sub);font-weight:600;">'+escapeHtml(String(tw.stampValue))+(tw.stampUnit?escapeHtml(tw.stampUnit):'')+'</span>';
-    h += '</div>';
-  } else if (tw.body) {
+  if (tw.body) {
     h += '<div style="font-size:11.5px;color:var(--ink-dark);line-height:1.7;white-space:pre-wrap;word-wrap:break-word;text-align:left;letter-spacing:0.02em;">'+_renderTweetTextWithTags(tw.body)+'</div>';
   }
   
@@ -42240,8 +42238,8 @@ function setModePageTab(mode, tabId) {
   // Diary以外に移ったら色入れ替えをクリア（mint/accent入れ替えがbodyに残らないように）
   if (!(mode === 'me' && tabId === 'diary')) {
     try {
-      const b = document.body;
-      ['--mint','--mint-deep','--mint-bg','--accent','--accent-deep','--accent-bg'].forEach(v => b.style.removeProperty(v));
+      const s = document.getElementById('recordColorSwap');
+      if (s) s.remove();
     } catch(e) {}
   }
   render();
