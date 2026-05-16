@@ -22944,15 +22944,12 @@ function renderTweetsDiary() {
     h += '<div id="tweetBgOverlay" style="position:fixed;inset:0;z-index:-1;background:rgba(255,255,255,0.55);backdrop-filter:blur(2px);"></div>';
   }
   
-  // ===== 全体ラッパー（普通の流れ、fixed使わない）=====
-  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:8px 10px 250px;gap:8px;">';
-  
   // ★ タブ行カードはtopbarに移動済みのため削除
   // const diaryInputTab は上部で既に取得済み
   const diaryInputTab = data.diaryInputTab || 'diary';
   
   // ===== 全体ラッパー（日付バーから始まる）=====
-  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:4px 10px 250px;gap:6px;">';
+  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:4px 10px 250px;gap:3px;">';
   
   // 日付ピル（独立カード）
   const dateNum = (viewDate.getMonth()+1)+'/'+viewDate.getDate();
@@ -22994,6 +22991,11 @@ function renderTweetsDiary() {
   }
   h += '</div>';
   h += '</div>';
+  
+  // ★ 白カード（後ろの下地）：縦横ともに極小余白で、画面端ギリギリまで広がる
+  // margin:0 -8px = tweetWrapの10px paddingを打ち消して画面端2pxまで広がる
+  // padding:2px = タイムライン枠の周りにわずかに白縁が見える
+  h += '<div id="tweetTimelineWhiteCard" style="background:white;margin:0 -8px;padding:2px;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">';
   
   // タイムライン（スクロールコンテナ）
   h += '<div data-tweets-area id="tweetsTimeline" style="background:rgba(255,255,255,0.4);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;gap:0;padding:10px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
@@ -23053,6 +23055,7 @@ function renderTweetsDiary() {
   }
   
   h += '</div>'; // タイムライン閉じ
+  h += '</div>'; // 白カード閉じ
   
   // 現在地ピル
   const homeRegion = (data && data.userRegion) || '大阪';
@@ -23190,12 +23193,12 @@ function _diaryAdjustAndScroll() {
       const navH = nav ? (window.innerHeight - nav.getBoundingClientRect().top) : 64;
       const bottomBlock = document.getElementById('tweetBottomBlock');
       if (bottomBlock) bottomBlock.style.bottom = navH + 'px';
-      // ★ タイムラインの高さを動的計算（上下8pxの余白を確保）
+      // ★ タイムラインの高さを動的計算（白カードpadding2px+下16pxの余白を確保）
       const tl = document.getElementById('tweetsTimeline');
       if (tl && bottomBlock) {
         const tlTop = tl.getBoundingClientRect().top;
         const bbH = bottomBlock.getBoundingClientRect().height;
-        const tlHeight = window.innerHeight - tlTop - bbH - navH - 16; // 上8+下8
+        const tlHeight = window.innerHeight - tlTop - bbH - navH - 20; // 白カード下padding2 + 余白18
         if (tlHeight > 100) {
           tl.style.height = tlHeight + 'px';
           tl.style.maxHeight = tlHeight + 'px';
