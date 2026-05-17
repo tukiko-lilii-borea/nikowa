@@ -23372,6 +23372,74 @@ function renderTweetsDiary() {
   // 入力欄（Record/Diaryタブで切り替え）
   if (diaryInputTab === 'record') {
     // ── Record: ピン1行 + カテゴリタブ + スタンプ1列（色反転：茶色メイン）──
+    // ★ ワーク系カテゴリの追加migration（既存ユーザーにも反映）
+    if (!data._stampWorkCatsAdded_v1) {
+      if (!data.stampLib) data.stampLib = {};
+      const _WORK_CATS = {
+        'お仕事': [
+          {icon:'edit_note',name:'ひとこと',type:'text',placeholder:'仕事のひとこと'},
+          {icon:'phone',name:'電話'},{icon:'groups',name:'会議'},{icon:'handshake',name:'打合せ'},
+          {icon:'check_circle',name:'タスク完了'},{icon:'mail',name:'メール'},{icon:'description',name:'資料作成'},
+          {icon:'coffee',name:'休憩'},{icon:'sentiment_dissatisfied',name:'愚痴',type:'text',placeholder:'吐き出して'},
+          {icon:'commute',name:'出勤'},{icon:'logout',name:'退勤'},{icon:'restaurant',name:'ランチ'}
+        ],
+        '製造': [
+          {icon:'precision_manufacturing',name:'加工'},{icon:'search_check',name:'検査'},
+          {icon:'settings',name:'段取り'},{icon:'verified',name:'完成'},
+          {icon:'warning',name:'不良'},{icon:'build',name:'機械点検'},
+          {icon:'cleaning_services',name:'清掃'},{icon:'local_shipping',name:'出荷'},
+          {icon:'inventory_2',name:'材料準備'},{icon:'engineering',name:'CAD作業'},
+          {icon:'rule',name:'測定',type:'number',unit:'mm',step:0.001,min:0,max:1000}
+        ],
+        '経理': [
+          {icon:'download',name:'入金',type:'number',unit:'円',step:100,min:0,max:99999999},
+          {icon:'upload',name:'支払い',type:'number',unit:'円',step:100,min:0,max:99999999},
+          {icon:'receipt_long',name:'請求書'},{icon:'receipt',name:'領収書'},
+          {icon:'calculate',name:'計算'},{icon:'event_available',name:'月次締め'},
+          {icon:'account_balance',name:'振込'},{icon:'book',name:'帳簿'},
+          {icon:'savings',name:'経費'},{icon:'fact_check',name:'チェック'}
+        ],
+        '接客': [
+          {icon:'emoji_people',name:'来客'},{icon:'directions',name:'案内'},
+          {icon:'support_agent',name:'接客'},{icon:'assignment',name:'注文'},
+          {icon:'point_of_sale',name:'会計'},{icon:'waving_hand',name:'お見送り'},
+          {icon:'report_problem',name:'クレーム',type:'text',placeholder:'内容メモ'},
+          {icon:'chat',name:'雑談'},{icon:'star',name:'指名'},
+          {icon:'redeem',name:'プレゼント'}
+        ],
+        '配信': [
+          {icon:'videocam',name:'配信開始'},{icon:'videocam_off',name:'配信終了'},
+          {icon:'connect_without_contact',name:'コラボ'},{icon:'lightbulb',name:'企画'},
+          {icon:'theater_comedy',name:'リハ'},{icon:'archive',name:'アーカイブ'},
+          {icon:'paid',name:'投げ銭',type:'number',unit:'円',step:100,min:0,max:9999999},
+          {icon:'favorite',name:'ファン交流'},{icon:'mic',name:'雑談配信'},
+          {icon:'sports_esports',name:'ゲーム配信'},{icon:'edit',name:'動画編集'}
+        ],
+        '営業': [
+          {icon:'directions_car',name:'訪問'},{icon:'handshake',name:'商談'},
+          {icon:'request_quote',name:'見積もり'},{icon:'assignment_turned_in',name:'受注'},
+          {icon:'forum',name:'フォロー'},{icon:'badge',name:'名刺交換'},
+          {icon:'tips_and_updates',name:'提案'},{icon:'event',name:'アポ取り'},
+          {icon:'call',name:'テレアポ'},{icon:'sentiment_satisfied',name:'契約成立'},
+          {icon:'thumb_down',name:'失注'}
+        ],
+        '学校': [
+          {icon:'school',name:'授業'},{icon:'quiz',name:'テスト',type:'number',unit:'点',step:1,min:0,max:100},
+          {icon:'edit_document',name:'課題'},{icon:'sports_baseball',name:'部活'},
+          {icon:'celebration',name:'行事'},{icon:'grading',name:'採点'},
+          {icon:'contact_mail',name:'連絡帳'},{icon:'groups',name:'会議'},
+          {icon:'directions_run',name:'体育'},{icon:'music_note',name:'音楽'},
+          {icon:'menu_book',name:'読書感想'}
+        ]
+      };
+      for (const cat in _WORK_CATS) {
+        if (!data.stampLib[cat]) {
+          data.stampLib[cat] = _WORK_CATS[cat].map(s => ({...s, id: 's_'+cat+'_'+s.name, hidden: false}));
+        }
+      }
+      data._stampWorkCatsAdded_v1 = true;
+      try { saveData(); } catch(e) {}
+    }
     const _sLib = data.stampLib || {};
     const _sCats = Object.keys(_sLib).filter(c => !(_sLib[c] && _sLib[c]._hidden));
     const _sCat = data.stampSelCat || (_sCats[0] || '生活');
@@ -23644,16 +23712,29 @@ function _collectTweetAlbumPhotos() {
   const tab = (typeof diaryInputTab !== 'undefined') ? diaryInputTab : (data.diaryInputTab || 'diary');
   const items = [];
   if (tab === 'record') {
-    // Recordモード：stampHistory のphotoを集める
+    // Recordモード：stampHistory の photo と memoPhoto の両方を集める
     const hist = data.stampHistory || [];
     for (const st of hist) {
+      // メイン写真
       if (st.photo) {
         items.push({
           src: st.photo,
           ts: st.timestamp || 0,
           source: 'stamp',
           stampId: st.id,
-          key: 'stamp|'+st.id
+          field: 'photo',
+          key: 'stamp|'+st.id+'|photo'
+        });
+      }
+      // メモ写真
+      if (st.memoPhoto) {
+        items.push({
+          src: st.memoPhoto,
+          ts: st.timestamp || 0,
+          source: 'stamp',
+          stampId: st.id,
+          field: 'memoPhoto',
+          key: 'stamp|'+st.id+'|memoPhoto'
         });
       }
     }
@@ -23775,7 +23856,7 @@ function _deleteSelectedTweetAlbumPhotos() {
 
   // tweetsとstampHistoryから該当写真を削除
   const tweetDeletes = {}; // {tweetId: [photoIndex...]}
-  const stampDeletes = {}; // {stampId: true}
+  const stampDeletes = {}; // {stampId: {photo:true, memoPhoto:true}}
 
   for (const k of keys) {
     const parts = k.split('|');
@@ -23785,7 +23866,10 @@ function _deleteSelectedTweetAlbumPhotos() {
       if (!tweetDeletes[tid]) tweetDeletes[tid] = [];
       tweetDeletes[tid].push(idx);
     } else if (parts[0] === 'stamp') {
-      stampDeletes[parts[1]] = true;
+      const sid = parts[1];
+      const field = parts[2] || 'photo';
+      if (!stampDeletes[sid]) stampDeletes[sid] = {};
+      stampDeletes[sid][field] = true;
     }
   }
 
@@ -23806,12 +23890,13 @@ function _deleteSelectedTweetAlbumPhotos() {
     }
   }
 
-  // stamp写真削除：photoフィールドのみクリア（スタンプ自体は残す）
+  // stamp写真削除：指定フィールド（photo / memoPhoto）だけクリア
   if (data.stampHistory) {
     for (const st of data.stampHistory) {
-      if (stampDeletes[st.id]) {
-        delete st.photo;
-      }
+      const dels = stampDeletes[st.id];
+      if (!dels) continue;
+      if (dels.photo) delete st.photo;
+      if (dels.memoPhoto) delete st.memoPhoto;
     }
   }
 
