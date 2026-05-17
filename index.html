@@ -8720,7 +8720,7 @@ function renderTop() {
   html += '<div style="flex:1;display:flex;justify-content:space-around;">';
   for (const m of _moods) {
     const isActive = _todayMood && _todayMood.moodId === m.id;
-    html += '<button onclick="recordHomeMood(\''+m.id+'\',\''+m.icon+'\',\''+m.label+'\',\''+m.color+'\')" title="'+m.label+'" style="width:36px;height:36px;border-radius:50%;background:'+(isActive ? m.color : m.color+'22')+';border:2px solid '+(isActive ? m.color : m.color+'66')+';cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;">';
+    html += '<button onclick="recordHomeMood(\''+m.id+'\',\''+m.icon+'\',\''+m.label+'\',\''+m.color+'\')" title="'+m.label+'" style="width:36px;height:36px;border-radius:50%;background:'+m.color+'22;border:'+(isActive ? '2.5px solid '+m.color : '1.5px solid '+m.color+'55')+';cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;">';
     html += '<span class="material-symbols-rounded" style="font-size:22px;color:'+m.color+' !important;">'+m.icon+'</span>';
     html += '</button>';
   }
@@ -8791,7 +8791,7 @@ function renderTop() {
   html += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">';
   html += '<button onclick="openHomeTodoList()" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">';
   html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">checklist</span>';
-  html += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);">TODO</span>';
+  html += '<span style="font-size:11px;font-weight:800;color:#333333;">TODO</span>';
   html += '<span class="material-symbols-rounded" style="font-size:12px;color:var(--ink-light);">expand_more</span>';
   html += '</button>';
   html += '<button onclick="openHomeTodoAdd()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--accent-deep);padding:0;"><span class="material-symbols-rounded" style="font-size:16px;">add</span></button>';
@@ -8803,7 +8803,7 @@ function renderTop() {
     for (const todo of _incompleteTodos) {
       html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">';
       html += '<button onclick="toggleHomeTodo(\''+todo.id+'\')" style="width:16px;height:16px;border-radius:4px;border:1.5px solid var(--accent);background:white;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;"></button>';
-      html += '<span style="font-size:11px;color:var(--ink-dark);line-height:1.3;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(todo.text)+'</span>';
+      html += '<span style="font-size:11px;color:#333333;line-height:1.3;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(todo.text)+'</span>';
       html += '</div>';
     }
   }
@@ -8817,7 +8817,7 @@ function renderTop() {
   html += '<div style="flex:1;background:white;border:1.5px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;min-height:100px;">';
   html += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">';
   html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">edit_note</span>';
-  html += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);">Diary</span>';
+  html += '<span style="font-size:11px;font-weight:800;color:#333333;">Diary</span>';
   html += '</div>';
   html += '<textarea id="homeQuickInput" placeholder="今日のひとこと..." style="flex:1;width:100%;min-height:50px;padding:6px;border:1px solid var(--line-soft);border-radius:8px;font-family:inherit;font-size:11px;background:#FFFFFF;box-sizing:border-box;resize:none;line-height:1.4;outline:none;color:#333333;"></textarea>';
   html += '<button onclick="saveHomeQuickThought()" style="margin-top:6px;padding:5px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:inherit;font-size:10px;font-weight:800;cursor:pointer;">記録</button>';
