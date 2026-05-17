@@ -9527,16 +9527,28 @@ function openMeDrawerMenu() {
   h += '<div onclick="closeMeDrawerMenu()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);"></div>';
   h += '<div id="meDrawerBody" style="position:relative;width:88%;max-width:340px;height:100%;background:var(--surface);box-shadow:4px 0 20px rgba(0,0,0,0.15);transform:translateX(-100%);transition:transform 0.28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;">';
 
-  // ヘッダー（nikowa ロゴ + ユーザー）
+  // ヘッダー（nikowa ロゴ + アバター）
   const _logoSrc = (typeof getCurrentLogoSrc === 'function') ? getCurrentLogoSrc() : 'assets/logo-dark.svg';
-  h += '<div style="flex-shrink:0;padding:16px 18px 12px;border-bottom:1px solid var(--line);background:var(--bg);">';
+  // アバター：material icon名 / 絵文字 / テキスト を安全に表示
+  const _avatarHtml = (function(av) {
+    if (!av) return '<span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">person</span>';
+    if (/^[a-z][a-z0-9_]*$/.test(av)) {
+      // material icon名
+      return '<span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">'+av+'</span>';
+    }
+    // 絵文字・テキスト（長すぎる場合はperson icon）
+    if (av.length > 4) return '<span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">person</span>';
+    return '<span style="font-size:26px;">'+escapeHtml(av)+'</span>';
+  })(userAvatar);
+  h += '<div style="flex-shrink:0;padding:14px 18px 12px;border-bottom:1px solid var(--line);background:var(--bg);">';
   h += '<div style="display:flex;align-items:center;gap:10px;">';
-  h += '<div style="flex:1;">';
-  h += '<img src="'+_logoSrc+'" alt="nikowa" style="height:28px;width:auto;object-fit:contain;display:block;">';
-  h += '<div style="font-size:11px;color:var(--ink-sub);margin-top:4px;font-weight:600;">'+escapeHtml(userName)+'</div>';
+  // ロゴ：大きめ・余白を上下クリップ
+  h += '<div style="flex:1;overflow:hidden;">';
+  h += '<img src="'+_logoSrc+'" alt="nikowa" style="height:44px;width:auto;max-width:180px;object-fit:contain;object-position:left center;display:block;">';
   h += '</div>';
-  h += '<div style="position:relative;width:48px;height:48px;border-radius:50%;background:var(--accent-bg);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">'+escapeHtml(userAvatar);
-  h += '<div style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:var(--mint-deep);border:2px solid white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:10px;color:white;">pets</span></div>';
+  // アバター
+  h += '<div style="position:relative;width:46px;height:46px;border-radius:50%;background:var(--accent-bg);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">'+_avatarHtml;
+  h += '<div style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:var(--mint-deep);border:2px solid white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:9px;color:white;">pets</span></div>';
   h += '</div>';
   h += '</div>';
   h += '</div>';
