@@ -24014,7 +24014,20 @@ function _renderStampHistoryBubble(st) {
   const _hasPhoto = !!st.photo;
   const _safeName = escapeHtml(st.name || '');
   
-  let h = '<div style="display:flex;align-items:center;gap:5px;padding:3px 6px;background:var(--surface-warm);border:1px solid var(--line);border-radius:6px;margin-bottom:3px;">';
+  // ★ カテゴリ別パステルカラー（優しい色合い）
+  const _CAT_COLORS = {
+    '生活':      { bg:'#EEF6EE', left:'#7DC47D' },
+    '美容':      { bg:'#FDEAF3', left:'#E080B0' },
+    'ダイエット': { bg:'#EAF0FD', left:'#6EA8E0' },
+    '体調':      { bg:'#EAF8EF', left:'#6EC898' },
+    'メンタル':   { bg:'#F2EAFD', left:'#A87AD4' },
+    '家事':      { bg:'#FDF2EA', left:'#D4956A' },
+    '趣味':      { bg:'#FEF0E8', left:'#D47A60' },
+    'ポジティブ': { bg:'#FDFCEA', left:'#C4B848' },
+  };
+  const _cc = _CAT_COLORS[st.category] || { bg:'var(--surface-warm)', left:'var(--accent)' };
+  
+  let h = '<div style="display:flex;align-items:center;gap:5px;padding:3px 6px;background:'+_cc.bg+';border:1px solid rgba(0,0,0,0.06);border-left:3px solid '+_cc.left+';border-radius:6px;margin-bottom:3px;">';
   // アイコン（枠なし・小さく）
   h += '<span style="flex-shrink:0;width:14px;display:inline-flex;align-items:center;justify-content:center;">'+renderStampIcon(st.icon,'font-size:14px;line-height:1;color:var(--ink-dark);')+'</span>';
   // 名前
@@ -24055,8 +24068,8 @@ function _renderStampHistoryBubble(st) {
     h += '<button onclick="event.stopPropagation();openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(st.photo)+'" style="flex-shrink:0;width:22px;height:22px;border-radius:4px;border:1px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+st.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
   }
   
-  // 時刻
-  h += '<span style="font-size:8px;color:var(--ink-sub);font-variant-numeric:tabular-nums;flex-shrink:0;">'+timeStr+'</span>';
+  // ★ 時刻（アイコンと同じ濃い色に変更）
+  h += '<span style="font-size:8px;color:var(--ink-dark);font-weight:600;font-variant-numeric:tabular-nums;flex-shrink:0;">'+timeStr+'</span>';
   // 削除ボタン
   h += '<button onclick="event.stopPropagation();deleteStampRecord(\''+st.id+'\')" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:0 1px;font-size:10px;line-height:1;flex-shrink:0;">×</button>';
   h += '</div>';
