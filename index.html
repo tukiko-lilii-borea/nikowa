@@ -27702,6 +27702,9 @@ function renderNewNestView() {
   setActiveNav('new_nest');
   const app = document.getElementById('app');
   
+  // appコンテナを透明に（body背景の模様が透ける）
+  app.style.background = 'transparent';
+  
   let html = '';
   
   // ===== トップバー（背景透明・テーマ背景＋花吹雪が透ける） =====
@@ -27710,8 +27713,8 @@ function renderNewNestView() {
   html += '<button class="topbar-btn" onclick="openNewNestCreate()" title="新規グループ" style="background:var(--accent);color:white;border:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><span class="material-symbols-rounded" style="font-size:20px;color:white;">add</span></button>';
   html += '</div>';
   
-  // ===== 白背景カードラッパー（テーマ背景の上に被せる） =====
-  html += '<div style="background:#FFFFFF;border-radius:20px 20px 0 0;min-height:calc(100vh - 130px);box-shadow:0 -3px 12px rgba(0,0,0,0.06);padding-bottom:90px;position:relative;z-index:1;">';
+  // ===== 白カードラッパー（左右上下にmargin、ドット背景が四方に透ける） =====
+  html += '<div style="margin:8px 10px 100px;background:#FFFFFF;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,0.08);overflow:hidden;">';
   
   // ===== カテゴリタブ =====
   html += '<div style="padding:14px 12px 10px;border-bottom:1px solid #F0F0F0;overflow-x:auto;scrollbar-width:none;">';
@@ -27748,7 +27751,7 @@ function renderNewNestView() {
   }
   
   html += '</div>';
-  html += '</div>'; // close 白背景ラッパー
+  html += '</div>'; // close 白カードラッパー
   app.innerHTML = html;
 }
 window.renderNewNestView = renderNewNestView;
