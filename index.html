@@ -21954,7 +21954,7 @@ function resizeImageToBase64(file, maxSize, quality) {
 function openPhotoPreview(dataUrl) {
   const ex = document.getElementById('photoPreviewModal');
   if (ex) ex.remove();
-  let h = '<div id="photoPreviewModal" onclick="closePhotoPreview()" style="position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;padding:20px;cursor:pointer;">';
+  let h = '<div id="photoPreviewModal" onclick="closePhotoPreview()" style="position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;padding:20px;cursor:pointer;">';
   h += '<img src="'+dataUrl+'" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.5);" />';
   h += '<button onclick="event.stopPropagation();closePhotoPreview()" style="position:absolute;top:20px;right:20px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>';
   h += '</div>';
@@ -23198,7 +23198,7 @@ function renderTweetsDiary() {
   const diaryInputTab = data.diaryInputTab || 'diary';
   
   // ===== 全体ラッパー（日付バーから始まる）=====
-  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:6px 10px 250px;gap:8px;">';
+  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:6px 10px 120px;gap:8px;">';
   
   // 日付ピル（独立カード）
   const dateNum = (viewDate.getMonth()+1)+'/'+viewDate.getDate();
@@ -23550,7 +23550,7 @@ function _diaryAdjustAndScroll() {
       }
       const tw = document.getElementById('tweetWrap');
       if (tw) {
-        tw.style.paddingBottom = '8px';
+        // ★ paddingBottomは強制上書きしない（HTMLの値を生かす）
         let p = tw.parentElement;
         while (p && p !== document.body) {
           const st = getComputedStyle(p);
@@ -23591,6 +23591,8 @@ function _diaryAdjustAndScroll() {
     } catch(e) {}
   }
   function scrollBottom() {
+    // ★ タブ切替などで抑制フラグが立ってたらスキップ（揺れ防止）
+    if (window._suppressDiaryScrollBottom) return;
     try {
       const tl = document.getElementById('tweetsTimeline');
       if (tl) {
@@ -24082,6 +24084,12 @@ function setStampCatForRecord(cat, event) {
   if (stampRow && data.stampSelCat) {
     data._stampScrollByCat[data.stampSelCat] = stampRow.scrollLeft;
   }
+  // ★ タイムラインのスクロール位置も保存（タブ切替時の揺れ防止）
+  const tl = document.getElementById('tweetsTimeline');
+  const savedTlScroll = tl ? tl.scrollTop : null;
+
+  // ★ タブ切替時はscrollBottomを抑制（揺れ防止）
+  window._suppressDiaryScrollBottom = true;
 
   data.stampSelCat = cat;
   saveData();
@@ -24097,7 +24105,16 @@ function setStampCatForRecord(cat, event) {
       const saved = data._stampScrollByCat ? (data._stampScrollByCat[cat] || 0) : 0;
       newStampRow.scrollLeft = saved;
     }
+    // タイムライン位置を復元（カクつきなく元の位置）
+    const newTl = document.getElementById('tweetsTimeline');
+    if (newTl && savedTlScroll !== null) {
+      newTl.scrollTop = savedTlScroll;
+    }
   });
+  // 200ms後（_diaryAdjustAndScrollの3回目）が終わってからフラグを戻す
+  setTimeout(() => {
+    window._suppressDiaryScrollBottom = false;
+  }, 300);
 }
 window.setStampCatForRecord = setStampCatForRecord;
 
