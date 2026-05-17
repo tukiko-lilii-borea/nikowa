@@ -22488,6 +22488,7 @@ function renderMeMode() {
   } else {
     // 通常topbar（天気あり）
     html += '<div style="padding:10px 14px 6px;display:flex;align-items:center;gap:8px;">';
+    html += '<button onclick="openMeDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
     html += '<div class="home-weather-pill" onclick="showWeatherPopup()" style="flex:1;margin:0;">';
     html += '<div class="home-weather-pill-left">';
     html += '<span>'+_yyyy2+'/'+_mm2+'/'+_dd2+'('+_wk2+') '+_hh2+':'+_mi2+'</span>';
@@ -22499,7 +22500,6 @@ function renderMeMode() {
     html += '<span class="home-weather-pill-temp">'+_wTemp2+'<span class="unit">℃</span></span>';
     html += '</div>';
     html += '</div>';
-    html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
     html += '</div>';
   }
   
