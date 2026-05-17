@@ -8962,6 +8962,8 @@ function _attachHomeSwipeNav() {
       case 'me':
         if (currentMode !== 'me') switchMode('me');
         currentView = 'me';
+        currentModeTab['me'] = 'diary'; // ★ Diary画面に直結
+        delete data.tweetViewDate;
         break;
       case 'houses':
         if (currentMode !== 'pet') switchMode('pet');
@@ -42758,10 +42760,12 @@ document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
       let needsRender = false;
 
       if (view === 'me') {
-        if (currentMode === 'me' && currentView === 'me') return;
+        if (currentMode === 'me' && currentView === 'me' && currentModeTab['me'] === 'diary') return;
         _pushNav();
         if (currentMode !== 'me') switchMode('me');
         currentView = 'me';
+        currentModeTab['me'] = 'diary'; // ★ 必ずDiary画面（日記+Record）を開く
+        delete data.tweetViewDate; // 今日の日付にリセット
         needsRender = true;
       }
       else if (view === 'houses') {
