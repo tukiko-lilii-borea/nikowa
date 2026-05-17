@@ -27757,7 +27757,6 @@ window.setNest2Tab = setNest2Tab;
 
 function _renderNest2Row(nest) {
   const catDef = _NEST2_CATEGORIES.find(c => c.id === nest.category) || _NEST2_CATEGORIES[5];
-  const icon = nest.icon || _NEST2_DEFAULT_ICONS[nest.category] || '🌿';
   const memberCount = (nest.members || []).length;
   
   // サブテキスト：メンバー数 + 最終更新
@@ -27777,10 +27776,16 @@ function _renderNest2Row(nest) {
   
   let h = '<button onclick="openNest2Detail(\''+nest.id+'\')" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:transparent;border:none;border-bottom:1px solid var(--line-soft);cursor:pointer;font-family:inherit;text-align:left;">';
   
-  // アイコン
-  h += '<div style="flex-shrink:0;width:46px;height:46px;border-radius:14px;background:'+catDef.color+'22;display:flex;align-items:center;justify-content:center;font-size:24px;">';
-  h += escapeHtml(icon);
-  h += '</div>';
+  // アイコン：写真があれば写真、なければカテゴリ material icon
+  if (nest.photo) {
+    h += '<div style="flex-shrink:0;width:48px;height:48px;border-radius:14px;background:#000;overflow:hidden;">';
+    h += '<img src="'+nest.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" />';
+    h += '</div>';
+  } else {
+    h += '<div style="flex-shrink:0;width:48px;height:48px;border-radius:14px;background:'+catDef.color+'22;display:flex;align-items:center;justify-content:center;">';
+    h += '<span class="material-symbols-rounded" style="font-size:26px;color:'+catDef.color+';">'+catDef.icon+'</span>';
+    h += '</div>';
+  }
   
   // 中央：名前＋サブ
   h += '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">';
@@ -27824,11 +27829,11 @@ function _formatNest2Time(ts) {
 }
 
 // ===== グループ作成モーダル（3ステップ） =====
-window._nest2Create = { step: 1, name: '', category: 'family', icon: '🏠', myNikowaIdSlot: null, addMethod: null, memberName: '', memberType: 'child', inviteId: '' };
+window._nest2Create = { step: 1, name: '', category: 'family', icon: '🏠', photo: null, myNikowaIdSlot: null, addMethod: null, memberName: '', memberType: 'child', memberPhoto: null, inviteId: '' };
 
 function openNewNestCreate() {
   // 初期化
-  window._nest2Create = { step: 1, name: '', category: 'family', icon: '🏠', myNikowaIdSlot: null, addMethod: null, memberName: '', memberType: 'child', inviteId: '' };
+  window._nest2Create = { step: 1, name: '', category: 'family', icon: '🏠', photo: null, myNikowaIdSlot: null, addMethod: null, memberName: '', memberType: 'child', memberPhoto: null, inviteId: '' };
   _renderNest2CreateModal();
 }
 window.openNewNestCreate = openNewNestCreate;
@@ -27906,13 +27911,83 @@ function _renderNest2CreateStep1() {
   }
   h += '</div>';
   
-  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;">アイコン（絵文字）</div>';
-  h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">';
-  h += '<input id="nest2IconInput" type="text" maxlength="2" value="'+escapeHtml(s.icon)+'" oninput="window._nest2Create.icon=this.value" style="width:60px;padding:10px;border:1.5px solid var(--card-border);border-radius:10px;font-size:24px;font-family:inherit;background:var(--surface-warm);text-align:center;box-sizing:border-box;">';
-  h += '<span style="font-size:11px;color:var(--ink-sub);">好きな絵文字を入れてね</span>';
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;">アイコン写真（任意）</div>';
+  h += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">';
+  if (s.photo) {
+    h += '<button onclick="_nest2PickPhoto()" style="flex-shrink:0;width:64px;height:64px;border-radius:16px;border:2px solid var(--accent);background:#000;padding:0;overflow:hidden;cursor:pointer;">';
+    h += '<img src="'+s.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" />';
+    h += '</button>';
+    h += '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">';
+    h += '<button onclick="_nest2PickPhoto()" style="padding:8px 12px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">photo_camera</span>変更</button>';
+    h += '<button onclick="window._nest2Create.photo=null;_renderNest2CreateModal()" style="padding:8px 12px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">delete</span>削除</button>';
+    h += '</div>';
+  } else {
+    const catDef = _NEST2_CATEGORIES.find(c => c.id === s.category) || _NEST2_CATEGORIES[1];
+    // プレビュー：カテゴリアイコン
+    h += '<div style="flex-shrink:0;width:64px;height:64px;border-radius:16px;background:'+catDef.color+'22;display:flex;align-items:center;justify-content:center;border:2px dashed '+catDef.color+';">';
+    h += '<span class="material-symbols-rounded" style="font-size:30px;color:'+catDef.color+';">'+catDef.icon+'</span>';
+    h += '</div>';
+    h += '<div style="flex:1;">';
+    h += '<button onclick="_nest2PickPhoto()" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:16px;">add_photo_alternate</span>写真を選ぶ</button>';
+    h += '<div style="font-size:10px;color:var(--ink-light);margin-top:6px;line-height:1.5;">未設定の場合はカテゴリアイコンを表示</div>';
+    h += '</div>';
+  }
   h += '</div>';
+  h += '<input type="file" id="nest2PhotoFile" accept="image/*" style="display:none;" onchange="_nest2HandlePhotoSelect(event)">';
   return h;
 }
+
+// 写真選択ファイルダイアログを開く
+function _nest2PickPhoto() {
+  const inp = document.getElementById('nest2PhotoFile');
+  if (inp) inp.click();
+}
+window._nest2PickPhoto = _nest2PickPhoto;
+
+// 写真選択 → クロッパー → base64保存
+function _nest2HandlePhotoSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('画像ファイルを選んでね'); event.target.value=''; return; }
+  // 既存のクロッパーで1:1正方形クロップ
+  openImageCropper(file, {
+    aspectRatio: 1,
+    outputSize: 240,
+    outputQuality: 0.85,
+    title: 'グループ写真のトリミング'
+  }, (dataUrl) => {
+    if (!dataUrl) { event.target.value=''; return; }
+    window._nest2Create.photo = dataUrl;
+    _renderNest2CreateModal();
+    event.target.value = '';
+  });
+}
+window._nest2HandlePhotoSelect = _nest2HandlePhotoSelect;
+
+// メンバーアバター写真選択（トリミング）
+function _nest2PickMemberPhoto() {
+  const inp = document.getElementById('nest2MemberPhotoFile');
+  if (inp) inp.click();
+}
+window._nest2PickMemberPhoto = _nest2PickMemberPhoto;
+
+function _nest2HandleMemberPhotoSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('画像ファイルを選んでね'); event.target.value=''; return; }
+  openImageCropper(file, {
+    aspectRatio: 1,
+    outputSize: 200,
+    outputQuality: 0.85,
+    title: 'アバター写真のトリミング'
+  }, (dataUrl) => {
+    if (!dataUrl) { event.target.value=''; return; }
+    window._nest2Create.memberPhoto = dataUrl;
+    _renderNest2CreateModal();
+    event.target.value = '';
+  });
+}
+window._nest2HandleMemberPhotoSelect = _nest2HandleMemberPhotoSelect;
 
 function _renderNest2CreateStep2() {
   const s = window._nest2Create;
@@ -27996,6 +28071,28 @@ function _renderNest2CreateStep3() {
       h += '</button>';
     }
     h += '</div>';
+    // ★ アバター写真（任意・トリミング）
+    h += '<div style="font-size:11.5px;color:var(--ink-sub);margin-bottom:8px;font-weight:700;">アバター写真（任意）</div>';
+    h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">';
+    if (s.memberPhoto) {
+      h += '<button onclick="_nest2PickMemberPhoto()" style="flex-shrink:0;width:56px;height:56px;border-radius:50%;border:2px solid var(--accent);background:#000;padding:0;overflow:hidden;cursor:pointer;">';
+      h += '<img src="'+s.memberPhoto+'" style="width:100%;height:100%;object-fit:cover;display:block;" />';
+      h += '</button>';
+      h += '<div style="flex:1;display:flex;flex-direction:column;gap:5px;">';
+      h += '<button onclick="_nest2PickMemberPhoto()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">変更</button>';
+      h += '<button onclick="window._nest2Create.memberPhoto=null;_renderNest2CreateModal()" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+      h += '</div>';
+    } else {
+      const _typeIcon = s.memberType === 'pet' ? 'pets' : (s.memberType === 'child' ? 'child_care' : 'person');
+      h += '<div style="flex-shrink:0;width:56px;height:56px;border-radius:50%;background:var(--accent-bg);border:2px dashed var(--accent);display:flex;align-items:center;justify-content:center;">';
+      h += '<span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">'+_typeIcon+'</span>';
+      h += '</div>';
+      h += '<button onclick="_nest2PickMemberPhoto()" style="flex:1;padding:10px;background:var(--surface-warm);color:var(--accent-deep);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">';
+      h += '<span class="material-symbols-rounded" style="font-size:15px;">add_photo_alternate</span>写真を選ぶ</button>';
+    }
+    h += '</div>';
+    h += '<input type="file" id="nest2MemberPhotoFile" accept="image/*" style="display:none;" onchange="_nest2HandleMemberPhotoSelect(event)">';
+    
     h += '<div style="font-size:11.5px;color:var(--ink-sub);margin-bottom:8px;font-weight:700;">名前</div>';
     h += '<input id="nest2MemberNameInput" type="text" placeholder="例：ひなた、こむぎ" value="'+escapeHtml(s.memberName)+'" oninput="window._nest2Create.memberName=this.value;_nest2RefreshFooter()" style="width:100%;padding:12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;">';
     h += '<div style="margin-top:12px;font-size:10.5px;color:var(--ink-light);line-height:1.6;">※ 後からメンバーを追加することもできるよ</div>';
@@ -28083,6 +28180,7 @@ function _nest2CreateFinish() {
     name: s.name.trim(),
     category: s.category,
     icon: s.icon || _NEST2_DEFAULT_ICONS[s.category] || '🌿',
+    photo: s.photo || null,
     myNikowaIdSlot: s.myNikowaIdSlot,
     members: [],
     createdAt: Date.now(),
@@ -28095,7 +28193,8 @@ function _nest2CreateFinish() {
       id: 'm_'+Date.now(),
       name: s.memberName.trim(),
       type: s.memberType,
-      avatar: s.memberType === 'pet' ? '🐾' : (s.memberType === 'child' ? '🧒' : '🌷')
+      avatar: s.memberType === 'pet' ? '🐾' : (s.memberType === 'child' ? '🧒' : '🌷'),
+      photo: s.memberPhoto || null
     });
   } else if (s.addMethod === 'invite') {
     newNest.pendingInvites = [{ nikowaId: s.inviteId, sentAt: Date.now() }];
