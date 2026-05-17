@@ -6214,7 +6214,7 @@ function switchModeFromTab(targetMode) {
   if (targetMode === 'me') {
     currentView = 'me';
   } else if (targetMode === 'nest') {
-    currentView = 'nest';
+    currentView = 'new_nest';
   } else {
     const houses = data.houses || [];
     if (houses.length > 0) {
@@ -27699,7 +27699,7 @@ window._nest2Tab = window._nest2Tab || 'all';
 
 function renderNewNestView() {
   document.getElementById('bottomNav').style.display = 'flex';
-  setActiveNav('pet');
+  setActiveNav('new_nest');
   const app = document.getElementById('app');
   
   let html = '';
@@ -28400,7 +28400,7 @@ function goToNestMode() {
     return;
   }
   switchMode('nest');
-  currentView = 'nest';
+  currentView = 'new_nest';
   render();
 }
 
@@ -44138,7 +44138,7 @@ function setActiveNav(view) {
   // meモードはdata-view='me'、ホームはdata-view='houses'
   const activeKey = (view === 'pet' || view === 'top' || view === 'house') ? 'houses'
     : (view === 'me') ? 'me'
-    : (view === 'nest') ? 'nest'
+    : (view === 'nest' || view === 'new_nest') ? 'nest'
     : view;
   for (const b of btns) b.classList.toggle('active', b.dataset.view === activeKey);
 }
@@ -44181,10 +44181,10 @@ document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
         needsRender = true;
       }
       else if (view === 'nest') {
-        if (currentMode === 'nest' && currentView === 'nest') return;
+        if (currentMode === 'nest' && currentView === 'new_nest') return;
         _pushNav();
         if (currentMode !== 'nest') switchMode('nest');
-        currentView = 'nest';
+        currentView = 'new_nest';
         needsRender = true;
       }
       else if (view === 'town') {
