@@ -24846,7 +24846,6 @@ window.deleteTweetTag = deleteTweetTag;
 
 // 個別のつぶやき吹き出し
 function _renderStampHistoryBubble(st) {
-  // Day画面と同じ行レイアウト
   const t = new Date(st.timestamp || 0);
   const timeStr = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
   
@@ -24860,75 +24859,67 @@ function _renderStampHistoryBubble(st) {
   const _hasPhoto = !!st.photo;
   const _safeName = escapeHtml(st.name || '');
   
-  // ★ カテゴリ別パステルカラー（優しい色合い）
+  // ★ カテゴリ別パステルカラー
   const _CAT_COLORS = {
-    '生活':      { bg:'#EEF6EE', left:'#7DC47D' },
-    '美容':      { bg:'#FDEAF3', left:'#E080B0' },
-    'ダイエット': { bg:'#EAF0FD', left:'#6EA8E0' },
-    '体調':      { bg:'#EAF8EF', left:'#6EC898' },
-    'メンタル':   { bg:'#F2EAFD', left:'#A87AD4' },
-    '家事':      { bg:'#FDF2EA', left:'#D4956A' },
-    '趣味':      { bg:'#FEF0E8', left:'#D47A60' },
-    'ポジティブ': { bg:'#FDFCEA', left:'#C4B848' },
-    'お仕事':    { bg:'#F5F0E4', left:'#B89860' },
-    '製造':      { bg:'#EAEEF2', left:'#7898B8' },
-    '経理':      { bg:'#E4F4ED', left:'#58B088' },
-    '接客':      { bg:'#FDEEEE', left:'#D88898' },
-    '配信':      { bg:'#F0E8FA', left:'#9878D8' },
-    '営業':      { bg:'#FDEEDD', left:'#D49060' },
-    '学校':      { bg:'#FDF8DD', left:'#C0B070' },
+    '生活':      { bg:'#EEF6EE', deep:'#5BA85B' },
+    '美容':      { bg:'#FDEAF3', deep:'#E080B0' },
+    'ダイエット': { bg:'#EAF0FD', deep:'#6EA8E0' },
+    '体調':      { bg:'#EAF8EF', deep:'#6EC898' },
+    'メンタル':   { bg:'#F2EAFD', deep:'#A87AD4' },
+    '家事':      { bg:'#FDF2EA', deep:'#D4956A' },
+    '趣味':      { bg:'#FEF0E8', deep:'#D47A60' },
+    'ポジティブ': { bg:'#FDFCEA', deep:'#B0A040' },
+    'お仕事':    { bg:'#F5F0E4', deep:'#B89860' },
+    '製造':      { bg:'#EAEEF2', deep:'#7898B8' },
+    '経理':      { bg:'#E4F4ED', deep:'#58B088' },
+    '接客':      { bg:'#FDEEEE', deep:'#D88898' },
+    '配信':      { bg:'#F0E8FA', deep:'#9878D8' },
+    '営業':      { bg:'#FDEEDD', deep:'#D49060' },
+    '学校':      { bg:'#FDF8DD', deep:'#B0A050' },
   };
-  const _cc = _CAT_COLORS[st.category] || { bg:'var(--surface-warm)', left:'var(--accent)' };
+  const _cc = _CAT_COLORS[st.category] || { bg:'#F5F0E8', deep:'#B89860' };
   
-  // ★ ダークテーマ対応：背景はvar(--surface)を基本に、左ボーダーのみカテゴリカラー
-  const _isCurrentDark = _isDarkColor((document.documentElement.style.getPropertyValue('--bg') || '#E8F4ED').trim());
-  const _rowBg = _isCurrentDark ? 'var(--surface)' : _cc.bg;
+  // 値・メモ表示用テキスト
+  let _displayMemo = '';
+  if (_editable && _hasValue) {
+    _displayMemo = String(st.value) + (st.unit || '');
+  } else if (_hasMemoText) {
+    _displayMemo = st.memo;
+  }
   
-  let h = '<div style="display:flex;align-items:center;gap:5px;padding:3px 6px;background:'+_rowBg+';border:1px solid rgba(0,0,0,0.06);border-left:3px solid '+_cc.left+';border-radius:6px;margin-bottom:3px;">';
-  // アイコン（枠なし・小さく）
-  h += '<span style="flex-shrink:0;width:14px;display:inline-flex;align-items:center;justify-content:center;">'+renderStampIcon(st.icon,'font-size:14px;line-height:1;color:var(--ink-dark);')+'</span>';
-  // 名前
-  h += '<span style="flex-shrink:0;width:62px;font-size:10px;font-weight:600;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_safeName+'</span>';
+  let h = '<div style="display:flex;align-items:stretch;gap:8px;padding:8px 6px;margin-bottom:2px;border-bottom:1px solid rgba(0,0,0,0.04);">';
   
-  // 値/メモエリア（タップで編集）
-  if (_editable) {
-    if (_hasValue) {
-      const _displayVal = _type === 'number' ? (escapeHtml(String(st.value)) + (st.unit?'<span style="font-size:8px;color:var(--ink-sub);margin-left:1px;">'+escapeHtml(st.unit)+'</span>':'')) : escapeHtml(String(st.value));
-      h += '<button onclick="event.stopPropagation();editStampRecord(\''+st.id+'\')" style="flex:1;text-align:left;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent-deep);border-radius:5px;padding:1px 5px;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;line-height:1.4;">'+_displayVal+'</button>';
-    } else {
-      h += '<button onclick="event.stopPropagation();editStampRecord(\''+st.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:5px;padding:1px 5px;font-size:9px;font-weight:600;cursor:pointer;font-family:inherit;line-height:1.4;">タップして入力</button>';
-    }
+  // ① 時間（左端）+ 縦ライン
+  h += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
+  h += '<span style="font-size:10px;color:var(--ink-sub);font-weight:700;font-variant-numeric:tabular-nums;width:32px;text-align:right;">'+timeStr+'</span>';
+  h += '<div style="width:1px;align-self:stretch;background:rgba(0,0,0,0.08);"></div>';
+  h += '</div>';
+  
+  // ② アイコン（カテゴリカラーの円形カード）
+  h += '<button onclick="event.stopPropagation();'+(_editable?'editStampRecord(\\''+st.id+'\\')':'openStampMemoModal(\\''+st.id+'\\')')+'" style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:'+_cc.bg+';border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;">';
+  h += renderStampIcon(st.icon, 'font-size:22px;color:'+_cc.deep+';');
+  h += '</button>';
+  
+  // ③ 中央：スタンプ名（上）＋ メモ（下）
+  h += '<button onclick="event.stopPropagation();'+(_editable?'editStampRecord(\\''+st.id+'\\')':'openStampMemoModal(\\''+st.id+'\\')')+'" style="flex:1;min-width:0;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;padding:2px 0;display:flex;flex-direction:column;justify-content:center;gap:2px;">';
+  h += '<div style="font-size:12px;font-weight:800;color:#222;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_safeName+'</div>';
+  if (_displayMemo) {
+    h += '<div style="font-size:10px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;">'+escapeHtml(_displayMemo)+'</div>';
   } else {
-    // simple型：メモ表示エリア
-    if (_hasMemoText || _hasMemoPhoto) {
-      h += '<button onclick="event.stopPropagation();openStampMemoModal(\''+st.id+'\')" style="flex:1;text-align:left;background:#FFF8E0;border:1px solid #E8C870;color:#8B6914;border-radius:5px;padding:1px 5px;font-size:9px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;min-width:0;line-height:1.5;">';
-      if (_hasMemoText) {
-        h += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(st.memo)+'</span>';
-      } else {
-        h += '<span style="flex:1;color:#B89855;font-style:italic;">写真メモ</span>';
-      }
-      if (_hasMemoPhoto) {
-        h += '<span class="material-symbols-rounded" style="font-size:11px;color:#8B6914;flex-shrink:0;">image</span>';
-      }
-      h += '</button>';
-    } else {
-      h += '<button onclick="event.stopPropagation();openStampMemoModal(\''+st.id+'\')" style="flex:1;text-align:left;background:none;border:1px dashed var(--line);color:var(--ink-light);border-radius:5px;padding:1px 5px;font-size:9px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:3px;line-height:1.5;">';
-      h += '<span class="material-symbols-rounded" style="font-size:10px;">edit_note</span>メモ';
-      h += '<span style="flex:1;"></span>';
-      h += '<span class="material-symbols-rounded" style="font-size:10px;color:var(--ink-light);">photo_camera</span>';
-      h += '</button>';
-    }
+    h += '<div style="font-size:9.5px;color:#AAA;font-style:italic;">タップでメモ</div>';
   }
+  h += '</button>';
   
-  // 写真サムネ（あれば）
+  // ④ 右端：写真 or チェックマーク
   if (_hasPhoto) {
-    h += '<button onclick="event.stopPropagation();openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(st.photo)+'" style="flex-shrink:0;width:22px;height:22px;border-radius:4px;border:1px solid var(--accent);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+st.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+    h += '<button onclick="event.stopPropagation();openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(st.photo)+'" style="flex-shrink:0;width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+st.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+  } else {
+    h += '<div style="flex-shrink:0;width:32px;height:32px;align-self:center;border-radius:50%;background:#E8F5E8;border:1.5px solid #7DC47D;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;color:#5BA85B;">check</span></div>';
   }
   
-  // ★ 時刻（アイコンと同じ濃い色に変更）
-  h += '<span style="font-size:8px;color:var(--ink-dark);font-weight:600;font-variant-numeric:tabular-nums;flex-shrink:0;">'+timeStr+'</span>';
-  // 削除ボタン
-  h += '<button onclick="event.stopPropagation();deleteStampRecord(\''+st.id+'\')" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:0 1px;font-size:10px;line-height:1;flex-shrink:0;">×</button>';
+  // ⑤ 削除ボタン（小さく右上に）
+  h += '<button onclick="event.stopPropagation();deleteStampRecord(\\''+st.id+'\\')" style="flex-shrink:0;align-self:flex-start;background:none;border:none;color:var(--ink-light);cursor:pointer;padding:0 2px;font-size:11px;line-height:1;">×</button>';
+  
   h += '</div>';
   
   return h;
