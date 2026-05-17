@@ -23202,35 +23202,35 @@ function renderTweetsDiary() {
     }
     h += '</div>';
 
-    // ★ カテゴリタブ（各タブが自分のカラーを持つ）
-    h += '<div style="padding:4px 10px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;">';
+    // ★ カテゴリタブ（各タブが自分のカラーを持つ、data-cat-tabs属性でスクロール位置保存）
+    h += '<div data-cat-tabs style="padding:4px 10px 6px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">';
     for (const cat of _sCats) {
       const isC = cat === _sCat;
       const _tc = _STAMP_CAT_COLORS[cat] || _defCC;
       if (isC) {
         // アクティブ：濃い色で塗る
-        h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+_tc.dark+';background:'+_tc.dark+';color:white;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+        h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\', event)" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+_tc.dark+';background:'+_tc.dark+';color:white;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;touch-action:manipulation;">'+escapeHtml(cat)+'</button>';
       } else {
         // 非アクティブ：薄い色で
-        h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+_tc.mid+';background:'+_tc.pill+';color:'+_tc.dark+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+        h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\', event)" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+_tc.mid+';background:'+_tc.pill+';color:'+_tc.dark+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;touch-action:manipulation;">'+escapeHtml(cat)+'</button>';
       }
     }
     // ★ 編集ボタン
-    h += '<button onclick="openStampManagerModal()" title="スタンプ編集" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px dashed var(--mint-deep);background:transparent;color:var(--mint-deep);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:12px;">edit</span>編集</button>';
+    h += '<button onclick="openStampManagerModal()" title="スタンプ編集" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px dashed var(--mint-deep);background:transparent;color:var(--mint-deep);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;touch-action:manipulation;"><span class="material-symbols-rounded" style="font-size:12px;">edit</span>編集</button>';
     h += '</div>';
 
     // ★ スタンプアイコン（選択中カテゴリの色で統一）
     const _stamps = (_sLib[_sCat] || []).filter(s => !s._hidden);
-    h += '<div style="padding:4px 10px 6px;display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">';
+    h += '<div data-stamps-row style="padding:8px 10px 6px;display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">';
     for (const s of _stamps) {
       const _safeName = escapeHtml(s.name).replace(/'/g,"\\'");
       const _isPin = (_pinned.findIndex(p => (p.icon+'|'+p.name) === (s.icon+'|'+s.name)) >= 0);
       h += '<div style="flex:0 0 auto;position:relative;min-width:48px;">';
-      h += '<button onclick="postStampRecord(\''+s.icon+'\',\''+_safeName+'\')" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 4px;border-radius:9px;border:1.5px solid '+_curCC.mid+';background:'+_curCC.bg+';cursor:pointer;font-family:inherit;">';
+      h += '<button onclick="event.stopPropagation();postStampRecord(\''+s.icon+'\',\''+_safeName+'\')" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 4px;border-radius:9px;border:1.5px solid '+_curCC.mid+';background:'+_curCC.bg+';cursor:pointer;font-family:inherit;touch-action:manipulation;">';
       h += renderStampIcon(s.icon,'font-size:20px;color:'+_curCC.dark+';');
       h += '<span style="font-size:9px;font-weight:700;color:'+_curCC.dark+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44px;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
-      h += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:'+(_isPin?_curCC.dark:'white')+';border:1px solid '+(_isPin?_curCC.dark:_curCC.mid)+';color:'+(_isPin?'white':_curCC.dark)+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:8px;">push_pin</span></span>';
+      h += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:'+(_isPin?_curCC.dark:'white')+';border:1px solid '+(_isPin?_curCC.dark:_curCC.mid)+';color:'+(_isPin?'white':_curCC.dark)+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;touch-action:manipulation;"><span class="material-symbols-rounded" style="font-size:8px;">push_pin</span></span>';
       h += '</div>';
     }
     h += '</div>';
@@ -23591,11 +23591,37 @@ function setDiaryInputTab(tab) {
 }
 window.setDiaryInputTab = setDiaryInputTab;
 
-function setStampCatForRecord(cat) {
+function setStampCatForRecord(cat, event) {
+  // ★ ゴーストクリック防止：イベント伝播停止
+  if (event) {
+    if (event.stopPropagation) event.stopPropagation();
+    if (event.preventDefault) event.preventDefault();
+  }
+  // ★ タブ行のスクロール位置を保存（再描画後に復元するため）
+  const tabRow = document.querySelector('[data-cat-tabs]');
+  const savedTabScroll = tabRow ? tabRow.scrollLeft : 0;
+  // ★ スタンプ行のスクロール位置も保存（カテゴリ別に保持）
+  if (!data._stampScrollByCat) data._stampScrollByCat = {};
+  const stampRow = document.querySelector('[data-stamps-row]');
+  if (stampRow && data.stampSelCat) {
+    data._stampScrollByCat[data.stampSelCat] = stampRow.scrollLeft;
+  }
+
   data.stampSelCat = cat;
   saveData();
   _suppressScrollTop = true;
   render();
+
+  // ★ 描画後にスクロール位置を復元（rAFで確実に反映）
+  requestAnimationFrame(() => {
+    const newTabRow = document.querySelector('[data-cat-tabs]');
+    if (newTabRow) newTabRow.scrollLeft = savedTabScroll;
+    const newStampRow = document.querySelector('[data-stamps-row]');
+    if (newStampRow) {
+      const saved = data._stampScrollByCat ? (data._stampScrollByCat[cat] || 0) : 0;
+      newStampRow.scrollLeft = saved;
+    }
+  });
 }
 window.setStampCatForRecord = setStampCatForRecord;
 
