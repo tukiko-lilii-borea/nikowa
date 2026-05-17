@@ -9528,7 +9528,7 @@ function openMeDrawerMenu() {
   h += '<div id="meDrawerBody" style="position:relative;width:88%;max-width:340px;height:100%;background:var(--surface);box-shadow:4px 0 20px rgba(0,0,0,0.15);transform:translateX(-100%);transition:transform 0.28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;">';
 
   // ヘッダー（nikowa ロゴ + ユーザー）
-  h += '<div style="flex-shrink:0;padding:18px 18px 14px;border-bottom:1px solid var(--line);background:#FAFAFA;">';
+  h += '<div style="flex-shrink:0;padding:18px 18px 14px;border-bottom:1px solid var(--line);background:var(--bg);">';
   h += '<div style="display:flex;align-items:center;gap:10px;">';
   h += '<div style="flex:1;">';
   h += '<div style="font-size:22px;font-weight:900;color:var(--accent-deep);letter-spacing:-0.5px;line-height:1;">nikowa<span style="font-size:14px;color:var(--mint-deep);">🍀</span></div>';
@@ -9540,8 +9540,8 @@ function openMeDrawerMenu() {
   h += '</div>';
   h += '</div>';
 
-  // スクロール領域
-  h += '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 12px;">';
+  // スクロール領域（白背景固定）
+  h += '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 12px;background:#FFFFFF;">';
 
   for (const sec of _sections) {
     // セクション見出し（ラベル＋テーマカラーのアンダーライン）
@@ -12338,7 +12338,7 @@ function _renderStampPickerModal() {
     h += '<div style="padding:0 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
     for (const s of favs) {
       h += '<button onclick="_pickerTapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\\'/g,"\\\\\\\\\'")+'\',event)" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 7px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border:1.5px solid transparent;border-radius:12px;cursor:pointer;font-family:inherit;">';
-      h += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);">'+renderStampIcon(s.icon,'font-size:24px;line-height:1;color:var(--accent-deep);')+'</span>';
+      h += '<span style="width:42px;height:42px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);">'+renderStampIcon(s.icon,'font-size:24px;line-height:1;color:var(--accent-deep);')+'</span>';
       h += '<span style="font-size:11px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
     }
@@ -15218,7 +15218,7 @@ function _renderQuickJumpContent() {
     } else {
       s += '<span style="width:38px;height:38px;border-radius:50%;background:'+bgColor+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+iconHtml+'</span>';
     }
-    s += '<div style="font-size:10.5px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(name||'')+'</div>';
+    s += '<div style="font-size:12px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(name||'')+'</div>';
     s += '</button>';
     return s;
   }
@@ -22902,15 +22902,15 @@ function renderMeMode() {
             const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
             const _isPin = _mePinnedSet.has((s.icon||'')+'|'+(s.name||''));
             const _isValueType = s.type === 'number' || s.type === 'text';
-            html += '<button onclick="tapStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
+            html += '<button onclick="tapStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:84px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
             // 右上ピン留めトグル
             html += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
             // 値入力型のミニバッジ（左上）
             if (_isValueType) {
               html += '<span style="position:absolute;top:3px;left:3px;font-size:8px;background:var(--accent);color:white;padding:1px 4px;border-radius:6px;font-weight:700;">'+(s.unit||'入力')+'</span>';
             }
-            html += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:22px;color:var(--accent-deep);')+'</span>';
-            html += '<span style="font-size:10.5px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+            html += '<span style="width:42px;height:42px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:26px;color:var(--accent-deep);')+'</span>';
+            html += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
             html += '</button>';
           }
           // ＋追加ボタン（点線□、各カテゴリ最後）
@@ -25737,15 +25737,15 @@ function renderOfficeStampTab() {
       const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
       const _isPin = _ofcPinnedSet.has((s.icon||'')+'|'+(s.name||''));
       const _isValueType = s.type === 'number' || s.type === 'text';
-      h += '<button onclick="tapOfficeStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
+      h += '<button onclick="tapOfficeStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:84px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
       // 右上ピン留めトグル
       h += '<span onclick="event.stopPropagation();toggleOfficeStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
       // 値入力型のミニバッジ
       if (_isValueType) {
         h += '<span style="position:absolute;top:3px;left:3px;font-size:8px;background:var(--accent);color:white;padding:1px 4px;border-radius:6px;font-weight:700;">'+(s.unit||'入力')+'</span>';
       }
-      h += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:22px;color:var(--accent-deep);')+'</span>';
-      h += '<span style="font-size:10.5px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+      h += '<span style="width:42px;height:42px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:26px;color:var(--accent-deep);')+'</span>';
+      h += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
     }
     // ＋追加ボタン（点線□、各カテゴリ最後）
@@ -25872,7 +25872,7 @@ function _renderOfficeStampPickerContent() {
     h += '<div style="padding:0 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
     for (const s of favs) {
       h += '<button onclick="_officePickerTapStamp(\''+s.icon+'\',\''+escapeHtml(s.name).replace(/\'/g,"\\\\'")+'\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 7px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border:1.5px solid transparent;border-radius:12px;cursor:pointer;font-family:inherit;">';
-      h += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);"><span class="material-symbols-rounded" style="font-size:24px;color:var(--accent-deep);">'+s.icon+'</span></span>';
+      h += '<span style="width:42px;height:42px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);"><span class="material-symbols-rounded" style="font-size:24px;color:var(--accent-deep);">'+s.icon+'</span></span>';
       h += '<span style="font-size:11px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
     }
@@ -32478,7 +32478,7 @@ function renderPetStampUI(pet) {
     for (const p of pinned) {
       const _safeName = escapeHtml(p.name).replace(/\'/g,"\\\\'");
       h += '<button onclick="tapPetStamp(\''+p.icon+'\',\''+_safeName+'\',event)" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;background:linear-gradient(135deg,var(--accent-bg),var(--surface-warm));border:1.5px solid transparent;border-radius:12px;cursor:pointer;font-family:inherit;">';
-      h += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+p.icon+'</span></span>';
+      h += '<span style="width:42px;height:42px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+p.icon+'</span></span>';
       h += '<span style="font-size:10.5px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(p.name)+'</span>';
       h += '</button>';
     }
@@ -32500,10 +32500,10 @@ function renderPetStampUI(pet) {
   for (const s of catStamps) {
     const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
     const isPin = pinned.some(p => p.icon === s.icon && p.name === s.name);
-    h += '<button onclick="tapPetStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
+    h += '<button onclick="tapPetStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:84px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
     h += '<span onclick="event.stopPropagation();togglePetStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:'+(isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(isPin?'var(--accent)':'var(--line)')+';color:'+(isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
-    h += '<span style="width:34px;height:34px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+s.icon+'</span></span>';
-    h += '<span style="font-size:10.5px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+    h += '<span style="width:42px;height:42px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+s.icon+'</span></span>';
+    h += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
     h += '</button>';
   }
   // ＋追加ボタン（点線□）
