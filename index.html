@@ -9465,6 +9465,149 @@ function closeDrawerMenu() {
 }
 window.closeDrawerMenu = closeDrawerMenu;
 
+// ===== Me専用ドロワー（Diary/Record画面の≡ボタンから開く） =====
+// セクション：毎日/くらし/健康/ワーク/お店 + 検索・設定
+function openMeDrawerMenu() {
+  const ex = document.getElementById('meDrawer');
+  if (ex) { ex.remove(); return; }
+
+  const userName = (data.user && data.user.name) || 'にこわ';
+  const userAvatar = (data.user && data.user.avatar) || '🌷';
+
+  // セクション定義
+  const _sections = [
+    {
+      label: '毎日', bg: '#E8F4EE', textColor: '#3A7A5C',
+      items: [
+        { icon:'calendar_month', color:'#5A9F8E', label:'カレンダー', desc:'予定の確認と管理', action:"closeMeDrawerMenu();setTimeout(()=>{currentView='schedule';render();},250);" }
+      ]
+    },
+    {
+      label: 'くらし', bg: '#F8EEDD', textColor: '#8E6840',
+      items: [
+        { icon:'payments',       color:'#D4A050', label:'マネー',     desc:'お金の管理と記録',  action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','money');},250);" },
+        { icon:'sticky_note_2',  color:'#E0B048', label:'めも',       desc:'メモ・アイデア',     action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','secret');},250);" },
+        { icon:'photo_library',  color:'#C89070', label:'コレクション', desc:'集めたものを整理',  action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','collection');},250);" },
+        { icon:'person',         color:'#B89060', label:'my',         desc:'わたしのプロフィール', action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','resume');},250);" },
+        { icon:'shopping_cart',  color:'#D08858', label:'グッズ',      desc:'持ち物や欲しいもの',  action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','goods');},250);" }
+      ]
+    },
+    {
+      label: '健康', bg: '#FAE8EE', textColor: '#A04868',
+      items: [
+        { icon:'favorite',              color:'#D87BA0', label:'ヘルス',       desc:'健康の記録',         action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
+        { icon:'monitor_weight',        color:'#D08CB0', label:'体重',         desc:'体重と体型の記録',   action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
+        { icon:'mood',                  color:'#E090B0', label:'体調',         desc:'体調・ホルモン管理', action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
+        { icon:'medical_information',   color:'#C870A0', label:'カルテ',       desc:'医療・薬・病院',      action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','resume');},250);" },
+        { icon:'groups',                color:'#B868A0', label:'みんなの健康', desc:'家族の健康記録',     action:"closeMeDrawerMenu();setTimeout(()=>{currentView='houses';render();},250);" }
+      ]
+    },
+    {
+      label: 'ワーク', bg: '#E8F0F8', textColor: '#4A6E9A',
+      items: [
+        { icon:'menu_book',     color:'#6E9AC4', label:'マニュアル', desc:'業務マニュアル',   action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','office');},250);" },
+        { icon:'edit_note',     color:'#7AA0C8', label:'メモ',       desc:'仕事のメモ',       action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','office');},250);" },
+        { icon:'handshake',     color:'#5888B8', label:'取引先',     desc:'取引先の管理',     action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','office');},250);" }
+      ]
+    },
+    {
+      label: 'お店', bg: '#F0E8F4', textColor: '#6E489A',
+      items: [
+        { icon:'palette',       color:'#A88BCC', label:'Atelier',  desc:'作品づくりの記録', action:"closeMeDrawerMenu();setTimeout(()=>{currentView='atelier';render();},250);" },
+        { icon:'storefront',    color:'#9870C0', label:'My Shop',  desc:'お店の管理と記録', action:"closeMeDrawerMenu();setTimeout(()=>{currentView='shop';render();},250);" }
+      ]
+    }
+  ];
+
+  let h = '<div id="meDrawer" style="position:fixed;inset:0;z-index:2500;display:flex;">';
+  h += '<div onclick="closeMeDrawerMenu()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);"></div>';
+  h += '<div id="meDrawerBody" style="position:relative;width:88%;max-width:340px;height:100%;background:var(--surface);box-shadow:4px 0 20px rgba(0,0,0,0.15);transform:translateX(-100%);transition:transform 0.28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;">';
+
+  // ヘッダー（nikowa ロゴ + ユーザー）
+  h += '<div style="flex-shrink:0;padding:18px 18px 14px;border-bottom:1px solid var(--line);background:#FAFAFA;">';
+  h += '<div style="display:flex;align-items:center;gap:10px;">';
+  h += '<div style="flex:1;">';
+  h += '<div style="font-size:22px;font-weight:900;color:var(--accent-deep);letter-spacing:-0.5px;line-height:1;">nikowa<span style="font-size:14px;color:var(--mint-deep);">🍀</span></div>';
+  h += '<div style="font-size:11px;color:var(--ink-sub);margin-top:4px;font-weight:600;">'+escapeHtml(userName)+'</div>';
+  h += '</div>';
+  h += '<div style="position:relative;width:48px;height:48px;border-radius:50%;background:var(--accent-bg);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">'+escapeHtml(userAvatar);
+  h += '<div style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:var(--mint-deep);border:2px solid white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:10px;color:white;">pets</span></div>';
+  h += '</div>';
+  h += '</div>';
+  h += '</div>';
+
+  // スクロール領域
+  h += '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 12px;">';
+
+  for (const sec of _sections) {
+    // セクション見出し
+    h += '<div style="padding:14px 18px 6px;">';
+    h += '<span style="display:inline-block;padding:3px 12px;border-radius:100px;background:'+sec.bg+';color:'+sec.textColor+';font-size:11px;font-weight:800;">'+sec.label+'</span>';
+    h += '</div>';
+    // 項目
+    for (const it of sec.items) {
+      h += '<button onclick="'+it.action+'" style="width:100%;padding:10px 18px;background:transparent;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:12px;text-align:left;">';
+      // アイコン
+      h += '<div style="width:34px;height:34px;border-radius:10px;background:'+it.color+'22;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+      h += '<span class="material-symbols-rounded" style="font-size:20px;color:'+it.color+';">'+it.icon+'</span>';
+      h += '</div>';
+      // ラベル＋説明
+      h += '<div style="flex:1;min-width:0;">';
+      h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);line-height:1.2;">'+escapeHtml(it.label)+'</div>';
+      h += '<div style="font-size:10.5px;color:var(--ink-light);margin-top:2px;line-height:1.2;">'+escapeHtml(it.desc)+'</div>';
+      h += '</div>';
+      // 矢印
+      h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);flex-shrink:0;">chevron_right</span>';
+      h += '</button>';
+    }
+  }
+
+  // フッター（検索・設定）
+  h += '<div style="margin-top:14px;padding:14px 18px 6px;border-top:1px solid var(--line);">';
+  h += '<span style="display:inline-block;padding:3px 12px;border-radius:100px;background:#EEEEEE;color:#666;font-size:11px;font-weight:800;">ツール</span>';
+  h += '</div>';
+  // 検索
+  h += '<button onclick="closeMeDrawerMenu();setTimeout(()=>{if(typeof toggleGlobalSearch===\'function\')toggleGlobalSearch();},250);" style="width:100%;padding:10px 18px;background:transparent;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:12px;text-align:left;">';
+  h += '<div style="width:34px;height:34px;border-radius:10px;background:#88888822;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:20px;color:#888;">search</span></div>';
+  h += '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--ink-dark);line-height:1.2;">検索</div><div style="font-size:10.5px;color:var(--ink-light);margin-top:2px;">アプリ内をまとめて検索</div></div>';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);">chevron_right</span>';
+  h += '</button>';
+  // 設定
+  h += '<button onclick="closeMeDrawerMenu();setTimeout(()=>{currentView=\'settings\';render();},250);" style="width:100%;padding:10px 18px;background:transparent;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:12px;text-align:left;">';
+  h += '<div style="width:34px;height:34px;border-radius:10px;background:#88888822;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:20px;color:#888;">settings</span></div>';
+  h += '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--ink-dark);line-height:1.2;">設定</div><div style="font-size:10.5px;color:var(--ink-light);margin-top:2px;">アプリの設定</div></div>';
+  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);">chevron_right</span>';
+  h += '</button>';
+
+  h += '</div>'; // スクロール領域end
+  h += '</div></div>'; // body, menu end
+
+  document.body.insertAdjacentHTML('beforeend', h);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const body = document.getElementById('meDrawerBody');
+      if (body) body.style.transform = 'translateX(0)';
+    });
+  });
+  // スワイプで閉じる
+  let _dsx = 0;
+  const _dbody = document.getElementById('meDrawerBody');
+  if (_dbody) {
+    _dbody.addEventListener('touchstart', e => { _dsx = e.touches[0].clientX; }, { passive:true });
+    _dbody.addEventListener('touchend', e => { if (_dsx - e.changedTouches[0].clientX > 60) closeMeDrawerMenu(); }, { passive:true });
+  }
+}
+window.openMeDrawerMenu = openMeDrawerMenu;
+
+function closeMeDrawerMenu() {
+  const body = document.getElementById('meDrawerBody');
+  const menu = document.getElementById('meDrawer');
+  if (body) body.style.transform = 'translateX(-100%)';
+  setTimeout(() => { if (menu) menu.remove(); }, 260);
+}
+window.closeMeDrawerMenu = closeMeDrawerMenu;
+
+
 // ───────────────────────────────
 // ペット/NESTドロップダウン
 // ───────────────────────────────
@@ -22186,17 +22329,18 @@ function renderMeMode() {
     const _dit2 = data.diaryInputTab || 'diary';
     const _isRec2 = _dit2 === 'record';
     html += '<div style="padding:8px 12px 4px;display:flex;align-items:center;gap:6px;">';
-    // Record / Diary タブボタン
-    html += '<button onclick="setDiaryInputTab(\'record\')" style="flex-shrink:0;padding:4px 10px;border-radius:100px;border:1.5px solid '+(_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(_isRec2?'var(--accent-deep)':'transparent')+';color:'+(_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Record</button>';
-    html += '<button onclick="setDiaryInputTab(\'diary\')" style="flex-shrink:0;padding:4px 10px;border-radius:100px;border:1.5px solid '+(!_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(!_isRec2?'var(--accent-deep)':'transparent')+';color:'+(!_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Diary</button>';
-    // スペーサー
-    html += '<div style="flex:1;"></div>';
-    // アクションアイコン
+    // ハンバーガー（一番左）
+    html += '<button onclick="openMeDrawerMenu()" style="flex-shrink:0;background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+    // アクションアイコン（左側に並ぶ）
     html += '<button onclick="openTweetFilterModal()" title="検索" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">search</span></button>';
+    html += '<button onclick="openTweetAlbumModal()" title="写真アルバム" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">photo_library</span></button>';
     html += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">calendar_month</span></button>';
     html += '<button onclick="openTweetBgModal()" title="壁紙" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">wallpaper</span></button>';
-    // ハンバーガー
-    html += '<button onclick="openDrawerMenu()" style="flex-shrink:0;background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+    // スペーサー
+    html += '<div style="flex:1;"></div>';
+    // Record / Diary タブボタン（右側）
+    html += '<button onclick="setDiaryInputTab(\'record\')" style="flex-shrink:0;padding:4px 10px;border-radius:100px;border:1.5px solid '+(_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(_isRec2?'var(--accent-deep)':'transparent')+';color:'+(_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Record</button>';
+    html += '<button onclick="setDiaryInputTab(\'diary\')" style="flex-shrink:0;padding:4px 10px;border-radius:100px;border:1.5px solid '+(!_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(!_isRec2?'var(--accent-deep)':'transparent')+';color:'+(!_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Diary</button>';
     html += '</div>';
   } else {
     // 通常topbar（天気あり）
@@ -23032,11 +23176,15 @@ function renderTweetsDiary() {
     const subColor = isActive ? 'rgba(255,255,255,0.8)' : (isSun ? '#E57373' : (isSat ? '#64B5F6' : 'var(--ink-sub)'));
     const dKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     const dWeather = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dKey) : null;
-    h += '<button onclick="setTweetViewDate(\''+dk+'\')" style="flex:1;padding:5px 2px;border-radius:10px;border:none;background:'+(isActive?'var(--accent-deep)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;font-family:inherit;">';
+    // 今日かつ選択中→白枠、今日かつ非選択→アクセント枠、それ以外→枠なし
+    let _btnBorder = 'none';
+    if (isTodayDate && isActive) _btnBorder = '2px solid rgba(255,255,255,0.7)';
+    else if (isTodayDate) _btnBorder = '2px solid var(--accent-deep)';
+    h += '<button onclick="setTweetViewDate(\''+dk+'\')" style="flex:1;padding:5px 2px;border-radius:10px;border:'+_btnBorder+';background:'+(isActive?'var(--accent-deep)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;font-family:inherit;">';
     h += '<span style="font-size:9px;font-weight:600;color:'+subColor+';">'+wdJp+'</span>';
     h += '<span style="font-size:15px;font-weight:900;color:'+textColor+';line-height:1.2;">'+dayNum+'</span>';
     h += dWeather ? '<span style="line-height:1;margin-top:1px;">'+weatherIconHtml(dWeather,'font-size:11px;')+'</span>' : '<span style="height:13px;margin-top:1px;"></span>';
-    h += isTodayDate ? '<span style="width:4px;height:4px;border-radius:50%;background:'+(isActive?'white':'var(--accent)')+';margin-top:1px;"></span>' : '<span style="width:4px;height:4px;margin-top:1px;"></span>';
+    h += '<span style="height:4px;margin-top:1px;"></span>';
     h += '</button>';
   }
   h += '</div>';
@@ -23416,6 +23564,200 @@ function _clearRecordColorSwap() {
 }
 window._applyRecordColorSwap = _applyRecordColorSwap;
 window._clearRecordColorSwap = _clearRecordColorSwap;
+
+// ===== 写真アルバムモーダル =====
+// Diary/Recordそれぞれの写真を3列正方形グリッドで表示、選択モードで複数削除可能
+let _tweetAlbumSelectMode = false;
+let _tweetAlbumSelected = {}; // {key: true} key = tweetId|photoIndex or stamp|stampId
+
+function openTweetAlbumModal() {
+  _tweetAlbumSelectMode = false;
+  _tweetAlbumSelected = {};
+  _renderTweetAlbumModal();
+}
+window.openTweetAlbumModal = openTweetAlbumModal;
+
+function _collectTweetAlbumPhotos() {
+  // diaryInputTab='diary'→tweets、それ以外→stampHistory
+  const tab = (typeof diaryInputTab !== 'undefined') ? diaryInputTab : (data.diaryInputTab || 'diary');
+  const items = [];
+  if (tab === 'record') {
+    // Recordモード：stampHistory のphotoを集める
+    const hist = data.stampHistory || [];
+    for (const st of hist) {
+      if (st.photo) {
+        items.push({
+          src: st.photo,
+          ts: st.timestamp || 0,
+          source: 'stamp',
+          stampId: st.id,
+          key: 'stamp|'+st.id
+        });
+      }
+    }
+  } else {
+    // Diaryモード：tweetsのphotosを集める（最大10枚/tweet）
+    const tweets = data.tweets || [];
+    for (const tw of tweets) {
+      if (tw.photos && tw.photos.length > 0) {
+        for (let i = 0; i < tw.photos.length; i++) {
+          items.push({
+            src: tw.photos[i],
+            ts: tw.timestamp || 0,
+            source: 'tweet',
+            tweetId: tw.id,
+            photoIndex: i,
+            key: 'tweet|'+tw.id+'|'+i
+          });
+        }
+      }
+    }
+  }
+  // 新しい順（上から下へ）
+  items.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  return items;
+}
+
+function _renderTweetAlbumModal() {
+  const tab = (typeof diaryInputTab !== 'undefined') ? diaryInputTab : (data.diaryInputTab || 'diary');
+  const title = tab === 'record' ? 'Record の写真' : 'Diary の写真';
+  const photos = _collectTweetAlbumPhotos();
+  const selectedCount = Object.keys(_tweetAlbumSelected).filter(k => _tweetAlbumSelected[k]).length;
+
+  // 既存を削除
+  const ex = document.getElementById('tweetAlbumModal');
+  if (ex) ex.remove();
+
+  let h = '<div id="tweetAlbumModal" onclick="if(event.target===this)closeTweetAlbumModal()" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:0;">';
+  h += '<div style="background:var(--surface);width:100%;max-width:480px;height:100vh;display:flex;flex-direction:column;overflow:hidden;">';
+
+  // ヘッダー
+  h += '<div style="flex-shrink:0;padding:14px 14px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);background:var(--surface);">';
+  h += '<button onclick="closeTweetAlbumModal()" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--card-border);color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:18px;">close</span></button>';
+  h += '<div style="flex:1;text-align:center;font-size:14px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(title)+(photos.length?'<span style="font-size:11px;color:var(--ink-sub);font-weight:600;margin-left:6px;">('+photos.length+')</span>':'')+'</div>';
+  // 選択ボタン
+  if (_tweetAlbumSelectMode) {
+    h += '<button onclick="_toggleTweetAlbumSelectMode()" style="flex-shrink:0;padding:5px 12px;border-radius:100px;border:1.5px solid var(--accent-deep);background:var(--accent-deep);color:white;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;">完了</button>';
+  } else {
+    h += '<button onclick="_toggleTweetAlbumSelectMode()" style="flex-shrink:0;padding:5px 12px;border-radius:100px;border:1.5px solid var(--accent);background:var(--accent-bg);color:var(--accent-deep);font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;">選択</button>';
+  }
+  h += '</div>';
+
+  // グリッド
+  h += '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:3px;background:#f4f4f4;">';
+  if (photos.length === 0) {
+    h += '<div style="padding:60px 20px;text-align:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:48px;color:var(--ink-light);">image</span><div style="margin-top:8px;font-size:13px;">写真がまだないよ</div></div>';
+  } else {
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;">';
+    for (const p of photos) {
+      const isSel = !!_tweetAlbumSelected[p.key];
+      const safeKey = p.key.replace(/'/g,"\\'");
+      if (_tweetAlbumSelectMode) {
+        h += '<div onclick="_toggleTweetAlbumPhoto(\''+safeKey+'\')" style="position:relative;aspect-ratio:1;overflow:hidden;background:#ddd;cursor:pointer;">';
+        h += '<img src="'+p.src+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;'+(isSel?'opacity:0.6;':'')+'" />';
+        h += '<div style="position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:'+(isSel?'var(--accent-deep)':'rgba(255,255,255,0.85)')+';border:2px solid '+(isSel?'white':'rgba(0,0,0,0.2)')+';display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.2);">';
+        if (isSel) h += '<span class="material-symbols-rounded" style="font-size:14px;color:white;font-weight:900;">check</span>';
+        h += '</div>';
+        h += '</div>';
+      } else {
+        h += '<div onclick="openPhotoPreview(this.dataset.src)" data-src="'+escapeHtml(p.src)+'" style="aspect-ratio:1;overflow:hidden;background:#ddd;cursor:pointer;">';
+        h += '<img src="'+p.src+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;" />';
+        h += '</div>';
+      }
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+
+  // フッター（選択モード時のみ）
+  if (_tweetAlbumSelectMode) {
+    h += '<div style="flex-shrink:0;padding:10px 14px;border-top:1px solid var(--line);background:var(--surface);display:flex;align-items:center;gap:8px;">';
+    h += '<div style="flex:1;font-size:12px;color:var(--ink-sub);font-weight:600;">'+selectedCount+' 枚 選択中</div>';
+    const canDelete = selectedCount > 0;
+    h += '<button onclick="_deleteSelectedTweetAlbumPhotos()" '+(canDelete?'':'disabled')+' style="padding:8px 16px;border-radius:100px;border:1.5px solid '+(canDelete?'#E57373':'var(--line)')+';background:'+(canDelete?'#E57373':'transparent')+';color:'+(canDelete?'white':'var(--ink-light)')+';font-family:inherit;font-size:12px;font-weight:800;cursor:'+(canDelete?'pointer':'not-allowed')+';display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">delete</span>削除</button>';
+    h += '</div>';
+  }
+
+  h += '</div>';
+  h += '</div>';
+
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+
+function closeTweetAlbumModal() {
+  _tweetAlbumSelectMode = false;
+  _tweetAlbumSelected = {};
+  const el = document.getElementById('tweetAlbumModal');
+  if (el) el.remove();
+}
+window.closeTweetAlbumModal = closeTweetAlbumModal;
+
+function _toggleTweetAlbumSelectMode() {
+  _tweetAlbumSelectMode = !_tweetAlbumSelectMode;
+  if (!_tweetAlbumSelectMode) _tweetAlbumSelected = {};
+  _renderTweetAlbumModal();
+}
+window._toggleTweetAlbumSelectMode = _toggleTweetAlbumSelectMode;
+
+function _toggleTweetAlbumPhoto(key) {
+  if (_tweetAlbumSelected[key]) delete _tweetAlbumSelected[key];
+  else _tweetAlbumSelected[key] = true;
+  _renderTweetAlbumModal();
+}
+window._toggleTweetAlbumPhoto = _toggleTweetAlbumPhoto;
+
+function _deleteSelectedTweetAlbumPhotos() {
+  const keys = Object.keys(_tweetAlbumSelected).filter(k => _tweetAlbumSelected[k]);
+  if (keys.length === 0) return;
+  if (!confirm(keys.length+'枚の写真を削除する？元に戻せへんで。')) return;
+
+  // tweetsとstampHistoryから該当写真を削除
+  const tweetDeletes = {}; // {tweetId: [photoIndex...]}
+  const stampDeletes = {}; // {stampId: true}
+
+  for (const k of keys) {
+    const parts = k.split('|');
+    if (parts[0] === 'tweet') {
+      const tid = parts[1];
+      const idx = parseInt(parts[2], 10);
+      if (!tweetDeletes[tid]) tweetDeletes[tid] = [];
+      tweetDeletes[tid].push(idx);
+    } else if (parts[0] === 'stamp') {
+      stampDeletes[parts[1]] = true;
+    }
+  }
+
+  // tweet写真削除：indexの大きい順で消す（順序維持）
+  if (data.tweets) {
+    for (const tid in tweetDeletes) {
+      const tw = data.tweets.find(t => t.id === tid);
+      if (!tw || !tw.photos) continue;
+      const idxs = tweetDeletes[tid].sort((a,b) => b - a);
+      for (const idx of idxs) {
+        tw.photos.splice(idx, 1);
+      }
+      // 写真がゼロでbody空ならtweet自体削除
+      if (tw.photos.length === 0 && !(tw.body && tw.body.trim())) {
+        const ti = data.tweets.indexOf(tw);
+        if (ti >= 0) data.tweets.splice(ti, 1);
+      }
+    }
+  }
+
+  // stamp写真削除：photoフィールドのみクリア（スタンプ自体は残す）
+  if (data.stampHistory) {
+    for (const st of data.stampHistory) {
+      if (stampDeletes[st.id]) {
+        delete st.photo;
+      }
+    }
+  }
+
+  _tweetAlbumSelected = {};
+  saveData();
+  _renderTweetAlbumModal();
+}
+window._deleteSelectedTweetAlbumPhotos = _deleteSelectedTweetAlbumPhotos;
 
 // つぶやきカレンダー（月別の投稿数表示、日付タップでジャンプ）
 function openTweetCalendarModal() {
