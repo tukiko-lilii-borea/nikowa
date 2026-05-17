@@ -23380,8 +23380,8 @@ function renderTweetsDiary() {
   const dateKeyForWeather = viewDate.getFullYear()+'-'+String(viewDate.getMonth()+1).padStart(2,'0')+'-'+String(viewDate.getDate()).padStart(2,'0');
   const weatherIcon = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dateKeyForWeather) : null;
   
-  // 9日固定日付バー（前後4日 = 合計9日）スクロールなし・各日に天気アイコン
-  h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:4px 6px;">';
+  // 9日固定日付バー（前後4日 = 合計9日）コンパクト版：曜日＋日付を横並び、天気は下
+  h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:3px 5px;">';
   h += '<div style="display:flex;justify-content:space-between;">';
   for (let di = -4; di <= 4; di++) {
     const d = new Date(today);
@@ -23394,20 +23394,21 @@ function renderTweetsDiary() {
     const isSun = d.getDay() === 0;
     const isSat = d.getDay() === 6;
     const textColor = isActive ? 'white' : (isSun ? '#E57373' : (isSat ? '#64B5F6' : 'var(--ink-dark)'));
-    const subColor = isActive ? 'rgba(255,255,255,0.8)' : (isSun ? '#E57373' : (isSat ? '#64B5F6' : 'var(--ink-sub)'));
+    const subColor = isActive ? 'rgba(255,255,255,0.85)' : (isSun ? '#E57373' : (isSat ? '#64B5F6' : 'var(--ink-sub)'));
     const dKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     const dWeather = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dKey) : null;
-    // 今日かつ選択中→白枠、今日かつ非選択→アクセント枠、それ以外→枠なし
     let _btnBorder = 'none';
-    if (isTodayDate && isActive) _btnBorder = '2px solid rgba(255,255,255,0.7)';
-    else if (isTodayDate) _btnBorder = '2px solid var(--accent-deep)';
-    h += '<button onclick="setTweetViewDate(\''+dk+'\')" style="flex:1;padding:5px 2px;border-radius:10px;border:'+_btnBorder+';background:'+(isActive?'var(--accent-deep)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;font-family:inherit;">';
+    if (isTodayDate && isActive) _btnBorder = '1.5px solid rgba(255,255,255,0.7)';
+    else if (isTodayDate) _btnBorder = '1.5px solid var(--accent-deep)';
+    h += '<button onclick="setTweetViewDate(\''+dk+'\')" style="flex:1;padding:3px 2px;border-radius:9px;border:'+_btnBorder+';background:'+(isActive?'var(--accent-deep)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;font-family:inherit;">';
+    // ★ 曜日＋日付を横並び（縦を短縮）
+    h += '<div style="display:flex;align-items:baseline;gap:3px;line-height:1;">';
     h += '<span style="font-size:9px;font-weight:600;color:'+subColor+';">'+wdJp+'</span>';
-    h += '<span style="font-size:15px;font-weight:900;color:'+textColor+';line-height:1.2;">'+dayNum+'</span>';
-    // 天気アイコン（WEATHER_EMOJI_TO_MSにあるもの=本物の天気記号のみ表示）
+    h += '<span style="font-size:14px;font-weight:900;color:'+textColor+';">'+dayNum+'</span>';
+    h += '</div>';
+    // 天気アイコン（小さめ・1行下）
     const dWeatherValid = dWeather && WEATHER_EMOJI_TO_MS[dWeather];
-    h += dWeatherValid ? '<span style="line-height:1;margin-top:1px;">'+weatherIconHtml(dWeather,'font-size:11px;')+'</span>' : '<span style="height:13px;margin-top:1px;"></span>';
-    h += '<span style="height:4px;margin-top:1px;"></span>';
+    h += dWeatherValid ? '<span style="line-height:1;margin-top:1px;">'+weatherIconHtml(dWeather,'font-size:10px;')+'</span>' : '<span style="height:11px;margin-top:1px;"></span>';
     h += '</button>';
   }
   h += '</div>';
@@ -27702,19 +27703,28 @@ function renderNewNestView() {
   setActiveNav('new_nest');
   const app = document.getElementById('app');
   
-  // appコンテナを透明に（body背景の模様が透ける）
-  app.style.background = 'transparent';
+  // ★ bodyのテーマ背景画像をappコンテナにも適用（topbar部分にもドット背景を出す）
+  const bodyStyle = window.getComputedStyle(document.body);
+  app.style.backgroundImage = bodyStyle.backgroundImage;
+  app.style.backgroundColor = bodyStyle.backgroundColor;
+  app.style.backgroundSize = bodyStyle.backgroundSize;
+  app.style.backgroundRepeat = 'repeat';
+  app.style.backgroundAttachment = 'local';
+  app.style.minHeight = '100vh';
   
   let html = '';
   
-  // ===== トップバー（背景透明・テーマ背景＋花吹雪が透ける） =====
-  html += '<div class="topbar" style="background:transparent !important;border-bottom:none !important;box-shadow:none !important;">'+topbarPetalHtml()+'<div class="topbar-spacer"></div>';
+  // ===== トップバー（完全透明：背景もbackdrop-filterも消す） =====
+  html += '<div class="topbar" style="background:transparent !important;background-image:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-bottom:none !important;box-shadow:none !important;">'+topbarPetalHtml()+'<div class="topbar-spacer"></div>';
   html += '<div class="topbar-title" style="font-weight:900;letter-spacing:1px;font-size:20px;color:var(--ink-dark);text-shadow:0 1px 2px rgba(255,255,255,0.6);">.Nest.</div>';
   html += '<button class="topbar-btn" onclick="openNewNestCreate()" title="新規グループ" style="background:var(--accent);color:white;border:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><span class="material-symbols-rounded" style="font-size:20px;color:white;">add</span></button>';
   html += '</div>';
   
-  // ===== 白カードラッパー（左右上下にmargin、ドット背景が四方に透ける） =====
-  html += '<div style="margin:8px 10px 100px;background:#FFFFFF;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,0.08);overflow:hidden;">';
+  // ===== 上の余白（ドット模様が透ける） =====
+  html += '<div style="height:14px;"></div>';
+  
+  // ===== 白カードラッパー（画面の大部分を占める広い白エリア） =====
+  html += '<div style="margin:0 10px 24px;background:#FFFFFF;border-radius:18px;min-height:calc(100vh - 280px);box-shadow:0 4px 16px rgba(0,0,0,0.08);overflow:hidden;">';
   
   // ===== カテゴリタブ =====
   html += '<div style="padding:14px 12px 10px;border-bottom:1px solid #F0F0F0;overflow-x:auto;scrollbar-width:none;">';
@@ -51594,6 +51604,18 @@ function render() {
   document.body.classList.add('mode-'+currentMode);
   // 初回起動時はオンボーディングモーダル表示
   maybeShowOnboarding();
+  // ★ new_nest以外に切り替える時、appに残ったinline背景をリセット
+  if (currentView !== 'new_nest') {
+    const _appEl = document.getElementById('app');
+    if (_appEl) {
+      _appEl.style.backgroundImage = '';
+      _appEl.style.backgroundColor = '';
+      _appEl.style.backgroundSize = '';
+      _appEl.style.backgroundRepeat = '';
+      _appEl.style.backgroundAttachment = '';
+      _appEl.style.minHeight = '';
+    }
+  }
   if (currentView === 'top') renderTop();
   else if (currentView === 'me') renderMeMode();
   else if (currentView === 'new_nest') renderNewNestView();
