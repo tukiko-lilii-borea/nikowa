@@ -28277,7 +28277,7 @@ function renderNest2Detail() {
   // ★ 下タブを非表示
   document.getElementById('bottomNav').style.display = 'none';
   
-  // appコンテナの背景をbodyテーマと同期
+  // appコンテナの背景をbodyテーマと同期（柄＋花吹雪）
   const app = document.getElementById('app');
   const bodyStyle = window.getComputedStyle(document.body);
   app.style.backgroundImage = bodyStyle.backgroundImage;
@@ -28287,53 +28287,244 @@ function renderNest2Detail() {
   app.style.backgroundRepeat = 'repeat';
   app.style.minHeight = '100vh';
   
-  if (!nest.posts) nest.posts = [];
+  // ネスト固有データ初期化
+  if (!nest.tweets) nest.tweets = [];
+  if (!nest.records) nest.records = {};
+  if (!nest.stampHistory) nest.stampHistory = [];
+  if (!nest.viewDate) nest.viewDate = new Date().toDateString();
+  if (!nest.diaryInputTab) nest.diaryInputTab = 'diary';
+  
   const catDef = _NEST2_CATEGORIES.find(c => c.id === nest.category) || _NEST2_CATEGORIES[5];
+  
+  // 日付関連
+  const today = new Date();
+  const todayKey = today.toDateString();
+  const viewDateKey = nest.viewDate;
+  const viewDate = new Date(viewDateKey);
+  const isRec = nest.diaryInputTab === 'record';
   
   let html = '';
   
-  // ===== トップバー =====
+  // ═══ トップバー（Meと同じレイアウト、戻る左／ハンバーガー＋タブ右） ═══
   html += '<div class="topbar" style="background:transparent !important;background-image:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-bottom:none !important;box-shadow:none !important;">'+topbarPetalHtml();
-  // 左：ハンバーガー
-  html += '<button onclick="openNest2DrawerMenu()" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.85);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;box-shadow:0 2px 5px rgba(0,0,0,0.1);"><span class="material-symbols-rounded" style="font-size:20px;color:#666;">menu</span></button>';
-  // 中央：グループアイコン＋名前
-  html += '<div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;">';
+  // 左：ハンバーガー（Meと同位置）
+  html += '<button onclick="openNest2DrawerMenu()" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.85);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;box-shadow:0 2px 5px rgba(0,0,0,0.1);"><span class="material-symbols-rounded" style="font-size:18px;color:#666;">menu</span></button>';
+  // 中央：グループ名＋アイコン
+  html += '<div style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;padding:0 8px;">';
   if (nest.photo) {
-    html += '<div style="flex-shrink:0;width:32px;height:32px;border-radius:10px;overflow:hidden;background:#000;"><img src="'+nest.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>';
+    html += '<div style="flex-shrink:0;width:26px;height:26px;border-radius:8px;overflow:hidden;background:#000;"><img src="'+nest.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>';
   } else {
-    html += '<div style="flex-shrink:0;width:32px;height:32px;border-radius:10px;background:'+catDef.color+'33;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;color:'+catDef.color+';">'+catDef.icon+'</span></div>';
+    html += '<div style="flex-shrink:0;width:26px;height:26px;border-radius:8px;background:'+catDef.color+'33;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;color:'+catDef.color+';">'+catDef.icon+'</span></div>';
   }
-  html += '<div style="display:flex;flex-direction:column;align-items:flex-start;min-width:0;">';
-  html += '<span style="font-size:14px;font-weight:900;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">'+escapeHtml(nest.name||'(名前なし)')+'</span>';
-  html += '<span style="font-size:9.5px;color:var(--ink-sub);">'+((nest.members||[]).length)+'メンバー</span>';
+  html += '<span style="font-size:13px;font-weight:900;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">'+escapeHtml(nest.name||'')+'</span>';
   html += '</div>';
-  html += '</div>';
-  // 右：戻るボタン
-  html += '<button onclick="_backToNest2List()" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.85);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;box-shadow:0 2px 5px rgba(0,0,0,0.1);"><span class="material-symbols-rounded" style="font-size:20px;color:#666;">close</span></button>';
+  // 右：Record/Diaryタブ＋戻る
+  html += '<button onclick="_setNest2InputTab(\'record\')" style="flex-shrink:0;padding:'+(isRec?'5px 12px':'4px 9px')+';border-radius:100px;border:'+(isRec?'2px':'1.5px')+' solid '+(isRec?'var(--accent-deep)':'var(--line)')+';background:'+(isRec?'var(--accent-deep)':'rgba(255,255,255,0.85)')+';color:'+(isRec?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(isRec?'13px':'10px')+';font-weight:'+(isRec?'900':'600')+';cursor:pointer;letter-spacing:'+(isRec?'0.4px':'0')+';transition:all 0.2s;">Record</button>';
+  html += '<button onclick="_setNest2InputTab(\'diary\')" style="flex-shrink:0;padding:'+(!isRec?'5px 12px':'4px 9px')+';border-radius:100px;border:'+(!isRec?'2px':'1.5px')+' solid '+(!isRec?'var(--accent-deep)':'var(--line)')+';background:'+(!isRec?'var(--accent-deep)':'rgba(255,255,255,0.85)')+';color:'+(!isRec?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(!isRec?'13px':'10px')+';font-weight:'+(!isRec?'900':'600')+';cursor:pointer;letter-spacing:'+(!isRec?'0.4px':'0')+';margin-left:4px;transition:all 0.2s;">Diary</button>';
+  // 戻るアイコン（小さく、右端）
+  html += '<button onclick="_backToNest2List()" style="margin-left:6px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.85);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;" title="一覧に戻る"><span class="material-symbols-rounded" style="font-size:16px;color:#888;">close</span></button>';
   html += '</div>';
   
-  // ===== 白カードラッパー（タイムライン領域） =====
-  html += '<div style="margin:0 10px 12px;background:#FFFFFF;border-radius:18px;min-height:calc(100vh - 220px);box-shadow:0 4px 16px rgba(0,0,0,0.08);overflow:hidden;display:flex;flex-direction:column;">';
-  html += '<div id="nest2Timeline" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 10px 8px;display:flex;flex-direction:column;gap:6px;">';
-  if (nest.posts.length === 0) {
-    html += '<div style="padding:50px 24px;text-align:center;color:#999;">';
-    html += '<span class="material-symbols-rounded" style="font-size:42px;color:'+catDef.color+';opacity:0.5;">forum</span>';
-    html += '<div style="font-size:13px;font-weight:700;color:#333;margin-top:12px;">まだ何もないよ</div>';
-    html += '<div style="font-size:10.5px;line-height:1.7;margin-top:6px;">下の入力欄から、最初の一言を残そう🌿</div>';
+  // ═══ 日付バー（日曜始まり7日固定・Meと同じ） ═══
+  html += '<div style="margin:6px 12px 0;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:3px 5px;">';
+  html += '<div style="display:flex;justify-content:space-between;">';
+  const _todayDow = today.getDay();
+  const _sunday = new Date(today);
+  _sunday.setDate(today.getDate() - _todayDow);
+  for (let di = 0; di < 7; di++) {
+    const d = new Date(_sunday);
+    d.setDate(_sunday.getDate() + di);
+    const dk = d.toDateString();
+    const isActive = dk === viewDateKey;
+    const isTodayDate = dk === todayKey;
+    const dayNum = d.getDate();
+    const wdJp = ['日','月','火','水','木','金','土'][d.getDay()];
+    const isSun = d.getDay() === 0;
+    const isSat = d.getDay() === 6;
+    const textColor = isActive ? 'white' : (isSun ? '#E57373' : (isSat ? '#64B5F6' : 'var(--ink-dark)'));
+    const subColor = isActive ? 'rgba(255,255,255,0.85)' : (isSun ? '#E57373' : (isSat ? '#64B5F6' : 'var(--ink-sub)'));
+    let _btnBorder = 'none';
+    if (isTodayDate && isActive) _btnBorder = '1.5px solid rgba(255,255,255,0.7)';
+    else if (isTodayDate) _btnBorder = '1.5px solid var(--accent-deep)';
+    html += '<button onclick="_setNest2ViewDate(\''+dk+'\')" style="flex:1;padding:3px 2px;border-radius:9px;border:'+_btnBorder+';background:'+(isActive?'var(--accent-deep)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;font-family:inherit;">';
+    html += '<div style="display:flex;align-items:baseline;gap:3px;line-height:1;">';
+    html += '<span style="font-size:9px;font-weight:600;color:'+subColor+';">'+wdJp+'</span>';
+    html += '<span style="font-size:14px;font-weight:900;color:'+textColor+';">'+dayNum+'</span>';
     html += '</div>';
+    html += '<span style="height:11px;margin-top:1px;"></span>';
+    html += '</button>';
+  }
+  html += '</div></div>';
+  
+  // ═══ ガラス風白カードラッパー（タイムライン） ═══
+  html += '<div style="margin:10px 12px 90px;background:rgba(255,255,255,0.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.6);border-radius:18px;min-height:calc(100vh - 260px);box-shadow:0 4px 16px rgba(0,0,0,0.08);overflow:hidden;display:flex;flex-direction:column;">';
+  
+  // 見出し
+  const _viewMD = (viewDate.getMonth()+1)+'/'+viewDate.getDate();
+  const _viewWd = ['日','月','火','水','木','金','土'][viewDate.getDay()];
+  const isViewToday = viewDateKey === todayKey;
+  
+  // ★ Record時：その日のスタンプ履歴、Diary時：その日のつぶやき
+  let dayItems;
+  if (nest.tagFilter) {
+    // タグフィルター時は Diary 側だけ
+    dayItems = (nest.tweets||[]).filter(t => _extractNest2Tags(t.text).indexOf(nest.tagFilter) >= 0);
+    dayItems = dayItems.slice().sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  } else if (isRec) {
+    // Record：スタンプ履歴
+    dayItems = (nest.stampHistory||[]).filter(s => new Date(s.timestamp||0).toDateString() === viewDateKey)
+      .sort((a,b) => (a.timestamp||0) - (b.timestamp||0));
   } else {
-    for (const p of nest.posts) html += _renderNest2Post(p, nest);
+    // Diary：つぶやき
+    dayItems = (nest.tweets||[]).filter(t => new Date(t.timestamp).toDateString() === viewDateKey);
+  }
+  
+  html += '<div style="flex-shrink:0;padding:12px 14px 8px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(0,0,0,0.05);">';
+  if (nest.tagFilter) {
+    html += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">tag</span>';
+    html += '<div style="flex:1;font-size:13px;font-weight:800;color:#333;display:flex;align-items:center;gap:6px;">';
+    html += '<span style="color:var(--accent-deep);background:var(--accent-bg);padding:2px 8px;border-radius:6px;">#'+escapeHtml(nest.tagFilter)+'</span>';
+    html += '<span style="font-size:10px;color:#999;font-weight:600;">で絞り込み中</span>';
+    html += '</div>';
+    html += '<button onclick="_clearNest2TagFilter()" style="background:none;border:none;color:#999;cursor:pointer;padding:4px;display:flex;align-items:center;gap:2px;font-family:inherit;font-size:10px;"><span class="material-symbols-rounded" style="font-size:14px;">close</span>解除</button>';
+    html += '<span style="font-size:10px;font-weight:700;color:'+catDef.color+';background:'+catDef.color+'22;padding:2px 8px;border-radius:100px;">'+dayItems.length+'件</span>';
+  } else if (isRec) {
+    // ★ Recordヘッダー（カードにするボタン付き）
+    html += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">'+(isViewToday?'history':'event_note')+'</span>';
+    html += '<div style="flex:1;font-size:13px;font-weight:800;color:#333;">'+(isViewToday?'今日のきろく':_viewMD+'('+_viewWd+')のきろく')+'</div>';
+    if (dayItems.length > 0) {
+      html += '<button onclick="showToast(\'カードにするは次回実装🌿\')" style="display:inline-flex;align-items:center;gap:3px;padding:4px 10px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:12px;">collections</span>カードにする</button>';
+    }
+    html += '<span style="font-size:10px;font-weight:700;color:'+catDef.color+';background:'+catDef.color+'22;padding:2px 8px;border-radius:100px;">'+dayItems.length+'件</span>';
+  } else {
+    html += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">'+(isViewToday?'history':'event')+'</span>';
+    html += '<div style="flex:1;font-size:13px;font-weight:800;color:#333;">'+(isViewToday?'今日のきろく':_viewMD+'('+_viewWd+')のきろく')+'</div>';
+    html += '<span style="font-size:10px;font-weight:700;color:'+catDef.color+';background:'+catDef.color+'22;padding:2px 8px;border-radius:100px;">'+dayItems.length+'件</span>';
+  }
+  html += '</div>';
+  
+  // ★ よく使うタグ（Diary時かつタグ未選択時のみ）
+  if (!nest.tagFilter && !isRec) {
+    const popularTags = _getNest2PopularTags(nest, 8);
+    if (popularTags.length >= 2) {
+      html += '<div style="flex-shrink:0;padding:8px 12px 4px;display:flex;align-items:center;gap:5px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(0,0,0,0.04);">';
+      html += '<span style="flex-shrink:0;font-size:9.5px;color:#999;font-weight:700;margin-right:2px;">タグ:</span>';
+      for (const pt of popularTags) {
+        html += '<button onclick="_filterNest2ByTag(\''+pt.tag.replace(/\'/g,'')+'\')" style="flex-shrink:0;background:var(--accent-bg);color:var(--accent-deep);border:none;border-radius:100px;padding:3px 9px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;">#'+escapeHtml(pt.tag)+'<span style="font-size:9px;color:#999;">'+pt.count+'</span></button>';
+      }
+      html += '</div>';
+    }
+  }
+  
+  // タイムライン本体
+  html += '<div id="nest2Timeline" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px 12px;">';
+  if (dayItems.length === 0) {
+    html += '<div style="padding:40px 24px;text-align:center;color:#999;">';
+    if (nest.tagFilter) {
+      html += '<span class="material-symbols-rounded" style="font-size:42px;color:'+catDef.color+';opacity:0.5;">search_off</span>';
+      html += '<div style="font-size:13px;font-weight:700;color:#333;margin-top:12px;">#'+escapeHtml(nest.tagFilter)+' のきろくはまだないよ</div>';
+    } else if (isRec) {
+      // Record空メッセージ
+      html += '<span class="material-symbols-rounded" style="font-size:42px;color:'+catDef.color+';opacity:0.5;">push_pin</span>';
+      html += '<div style="font-size:13px;font-weight:700;color:#333;margin-top:12px;">まだスタンプ記録なし</div>';
+      html += '<div style="font-size:10.5px;line-height:1.7;margin-top:6px;">スタンプ機能は次回実装🌿<br>今は Diary でひとこと残してね</div>';
+    } else {
+      html += '<span class="material-symbols-rounded" style="font-size:42px;color:'+catDef.color+';opacity:0.5;">edit_note</span>';
+      html += '<div style="font-size:13px;font-weight:700;color:#333;margin-top:12px;">この日のきろくはまだないよ</div>';
+      html += '<div style="font-size:10.5px;line-height:1.7;margin-top:6px;">下の入力欄から、ひとこと残そう🌿</div>';
+    }
+    html += '</div>';
+  } else if (isRec && !nest.tagFilter) {
+    // Record：スタンプ履歴をバブル形式で表示
+    for (const s of dayItems) html += _renderNest2StampHistory(s);
+  } else {
+    // Diary：つぶやき
+    for (const t of dayItems) html += _renderNest2Tweet(t, !!nest.tagFilter);
   }
   html += '</div>';
   html += '</div>';
   
-  // ===== 入力エリア（下部固定） =====
-  html += '<div style="position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);padding:8px 10px 14px;z-index:50;">';
-  html += '<div style="display:flex;align-items:center;gap:8px;max-width:520px;margin:0 auto;">';
-  html += '<button onclick="showToast(\'写真添付は次回実装🌿\')" style="flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--accent-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">photo_camera</span></button>';
-  html += '<input id="nest2PostInput" type="text" placeholder="ひとこと書く..." style="flex:1;padding:10px 14px;border:1.5px solid var(--card-border);border-radius:100px;font-size:14px;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;" onkeydown="if(event.key===\'Enter\')_postNest2()">';
-  html += '<button onclick="_postNest2()" style="flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--accent);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><span class="material-symbols-rounded" style="font-size:18px;color:white;">send</span></button>';
-  html += '</div>';
+  // ═══ 下部入力エリア ═══
+  html += '<div style="position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);z-index:50;">';
+  if (isRec) {
+    // ★ Recordモード時：メンバー選択＋スタンプカテゴリ＋スタンプボタン群
+    const _allowedTargets = _getNest2StampTargets(nest);
+    if (!nest.stampCategory) {
+      // デフォルトカテゴリ：ペットなら'お世話'、その他なら'生活'
+      nest.stampCategory = (nest.category === 'pet') ? 'お世話' : '生活';
+    }
+    const curCat = nest.stampCategory;
+    const curMemberId = nest.lastSelectedMemberId;
+    
+    // ── メンバー選択行
+    html += '<div style="padding:6px 10px 4px;display:flex;align-items:center;gap:5px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line-soft);">';
+    html += '<span style="flex-shrink:0;font-size:10px;color:#999;font-weight:700;margin-right:3px;">誰の？:</span>';
+    if ((nest.members||[]).length === 0) {
+      html += '<span style="flex-shrink:0;font-size:10px;color:#CCC;font-style:italic;">メンバー未登録</span>';
+    } else {
+      for (const m of nest.members) {
+        const isMSel = m.id === curMemberId;
+        const _tIcon = (m.type === 'pet') ? 'pets' : (m.type === 'child' ? 'child_care' : 'person');
+        html += '<button onclick="_selectNest2Member(\''+m.id+'\')" style="flex-shrink:0;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:100px;border:'+(isMSel?'2px':'1.5px')+' solid '+(isMSel?'var(--accent-deep)':'var(--line)')+';background:'+(isMSel?'var(--accent-deep)':'#FFFFFF')+';color:'+(isMSel?'white':'#666')+';font-family:inherit;font-size:11px;font-weight:'+(isMSel?'800':'600')+';cursor:pointer;">';
+        if (m.photo) {
+          html += '<img src="'+m.photo+'" style="width:18px;height:18px;border-radius:50%;object-fit:cover;" />';
+        } else {
+          html += '<span class="material-symbols-rounded" style="font-size:13px;color:'+(isMSel?'white':'#888')+';">'+_tIcon+'</span>';
+        }
+        html += escapeHtml(m.name)+'</button>';
+      }
+    }
+    html += '</div>';
+    
+    // ── カテゴリタブ
+    html += '<div style="padding:6px 10px 4px;display:flex;align-items:center;gap:5px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line-soft);">';
+    for (const cat of NEST2_STAMP_CATEGORIES) {
+      // このカテゴリに表示可能なスタンプがあるかチェック
+      const hasStamps = NEST2_STAMPS.some(s => s.category === cat && _allowedTargets.indexOf(s.target) >= 0);
+      if (!hasStamps) continue;
+      const isCSel = curCat === cat;
+      html += '<button onclick="_setNest2StampCategory(\''+cat+'\')" style="flex-shrink:0;padding:5px 12px;border-radius:100px;border:1.5px solid '+(isCSel?'var(--mint-deep)':'var(--line)')+';background:'+(isCSel?'var(--mint-deep)':'transparent')+';color:'+(isCSel?'white':'#777')+';font-family:inherit;font-size:11px;font-weight:'+(isCSel?'800':'600')+';cursor:pointer;">'+cat+'</button>';
+    }
+    html += '</div>';
+    
+    // ── スタンプボタングリッド
+    const visibleStamps = NEST2_STAMPS.filter(s => s.category === curCat && _allowedTargets.indexOf(s.target) >= 0);
+    html += '<div style="padding:8px 10px 14px;max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+    for (const sp of visibleStamps) {
+      // カテゴリ別パステル背景
+      const _CAT_COLORS = {
+        '生活':'#F5E8D0','学習':'#E0F0FF','遊び':'#FFE0F0','お世話':'#D5F0E0',
+        '健康':'#FFE0E0','気持ち':'#FFF5D5','お出かけ':'#D5E8FF'
+      };
+      const stampBg = _CAT_COLORS[sp.category] || '#F0F0F0';
+      html += '<button onclick="_addNest2Stamp(\''+sp.id+'\')" style="background:#FFFFFF;border:1.5px solid var(--line);border-radius:12px;padding:8px 4px 7px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;transition:transform 0.1s,box-shadow 0.1s;" ontouchstart="this.style.transform=\'scale(0.94)\';this.style.boxShadow=\'0 1px 3px rgba(0,0,0,0.15)\'" ontouchend="this.style.transform=\'\';this.style.boxShadow=\'\'">';
+      html += '<div style="width:34px;height:34px;border-radius:9px;background:'+stampBg+';display:flex;align-items:center;justify-content:center;">';
+      html += '<span class="material-symbols-rounded" style="font-size:20px;color:#7A7A7A;">'+sp.icon+'</span>';
+      html += '</div>';
+      html += '<span style="font-size:9.5px;font-weight:700;color:#444;line-height:1.1;text-align:center;">'+sp.name+'</span>';
+      html += '</button>';
+    }
+    html += '</div></div>';
+  } else {
+    // Diaryモード時：通常の入力エリア
+    html += '<div style="padding:8px 10px 14px;">';
+    if (window._nest2PendingPhoto) {
+      html += '<div style="max-width:520px;margin:0 auto 8px;display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:12px;">';
+      html += '<img src="'+window._nest2PendingPhoto+'" style="width:48px;height:48px;border-radius:8px;object-fit:cover;display:block;flex-shrink:0;" />';
+      html += '<div style="flex:1;font-size:11px;font-weight:700;color:var(--accent-deep);">写真を添付中</div>';
+      html += '<button onclick="window._nest2PendingPhoto=null;renderNest2Detail();" style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.8);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:16px;color:#999;">close</span></button>';
+      html += '</div>';
+    }
+    html += '<div style="display:flex;align-items:center;gap:7px;max-width:520px;margin:0 auto;">';
+    html += '<button onclick="_nest2PickTweetPhoto()" style="flex-shrink:0;width:38px;height:38px;border-radius:50%;background:'+(window._nest2PendingPhoto?'var(--accent)':'var(--accent-bg)')+';border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:18px;color:'+(window._nest2PendingPhoto?'white':'var(--accent-deep)')+';">photo_camera</span></button>';
+    html += '<button onclick="_nest2InsertHash()" style="flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--accent-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;font-size:16px;font-weight:900;color:var(--accent-deep);">#</button>';
+    html += '<input id="nest2TweetInput" type="text" placeholder="ひとこと書く... #タグも使えるよ" style="flex:1;padding:10px 14px;border:1.5px solid var(--card-border);border-radius:100px;font-size:14px;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;" onkeydown="if(event.key===\'Enter\')_postNest2Tweet()">';
+    html += '<button onclick="_postNest2Tweet()" style="flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--accent);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><span class="material-symbols-rounded" style="font-size:18px;color:white;">send</span></button>';
+    html += '</div>';
+    html += '<input type="file" id="nest2TweetPhotoFile" accept="image/*" style="display:none;" onchange="_nest2HandleTweetPhotoSelect(event)">';
+    html += '</div>';
+  }
   html += '</div>';
   
   app.innerHTML = html;
@@ -28344,57 +28535,491 @@ function renderNest2Detail() {
 }
 window.renderNest2Detail = renderNest2Detail;
 
-function _renderNest2Post(p, nest) {
-  const ts = p.timestamp || 0;
+// つぶやき1件のHTML（Meのバブル形式に合わせる）
+function _renderNest2Tweet(t, showDate) {
+  const ts = t.timestamp || 0;
   const d = new Date(ts);
   const hhmm = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-  let h = '<div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;">';
-  h += '<div style="flex-shrink:0;font-size:9px;color:#AAA;font-weight:600;padding-top:8px;width:36px;text-align:right;">'+hhmm+'</div>';
-  h += '<div style="flex:1;min-width:0;background:var(--surface-warm);border:1px solid var(--card-border);border-radius:14px;padding:8px 12px;position:relative;">';
-  if (p.author) {
-    h += '<div style="font-size:10px;font-weight:800;color:var(--accent-deep);margin-bottom:2px;">'+escapeHtml(p.author)+'</div>';
+  const isNight = d.getHours() < 6 || d.getHours() >= 18;
+  let h = '<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;">';
+  // 時刻ピル（左、月マーク付き、フィルター時は日付も）
+  h += '<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;">';
+  if (showDate) {
+    h += '<div style="font-size:9px;font-weight:800;color:var(--accent-deep);background:var(--accent-bg);padding:1px 6px;border-radius:6px;">'+(d.getMonth()+1)+'/'+d.getDate()+'</div>';
   }
-  h += '<div style="font-size:13px;color:var(--ink-dark);line-height:1.5;word-break:break-word;white-space:pre-wrap;">'+escapeHtml(p.text||'')+'</div>';
-  if (p.photo) h += '<img src="'+p.photo+'" style="max-width:100%;border-radius:8px;margin-top:6px;display:block;" />';
-  h += '<button onclick="_deleteNest2Post(\''+p.id+'\')" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:white;border:1px solid #DDD;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:13px;color:#999;">close</span></button>';
+  h += '<div style="display:flex;align-items:center;gap:3px;background:#FFFFFF;border:1px solid var(--line);border-radius:100px;padding:3px 8px 3px 6px;">';
+  h += '<span style="font-size:9.5px;color:#888;font-weight:700;">'+hhmm+'</span>';
+  h += '<span class="material-symbols-rounded" style="font-size:11px;color:#BBB;">'+(isNight?'dark_mode':'light_mode')+'</span>';
+  h += '</div>';
+  h += '</div>';
+  // バブル
+  h += '<div style="flex:1;min-width:0;background:#FFFFFF;border:1px solid var(--line);border-radius:18px;padding:8px 12px;position:relative;box-shadow:0 1px 2px rgba(0,0,0,0.03);">';
+  if (t.author) h += '<div style="font-size:10px;font-weight:800;color:var(--accent-deep);margin-bottom:2px;">'+escapeHtml(t.author)+'</div>';
+  h += '<div style="font-size:13px;color:var(--ink-dark);line-height:1.5;word-break:break-word;white-space:pre-wrap;">'+_formatNest2TweetText(t.text||'')+'</div>';
+  if (t.photo) {
+    h += '<img src="'+t.photo+'" onclick="_openNest2PhotoView(\''+t.id+'\')" style="max-width:100%;border-radius:10px;margin-top:'+(t.text?'6px':'0')+';display:block;cursor:zoom-in;box-shadow:0 1px 4px rgba(0,0,0,0.1);" />';
+  }
+  h += '<button onclick="_deleteNest2Tweet(\''+t.id+'\')" style="position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;background:white;border:1px solid #DDD;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:13px;color:#999;">close</span></button>';
   h += '</div></div>';
   return h;
 }
 
-function _postNest2() {
+// 投稿
+function _postNest2Tweet() {
   const nestId = data.activeNest2Id;
   const nest = (data.nests2||[]).find(n => n.id === nestId);
   if (!nest) return;
-  const inp = document.getElementById('nest2PostInput');
+  const inp = document.getElementById('nest2TweetInput');
   if (!inp) return;
   const text = (inp.value||'').trim();
-  if (!text) return;
-  if (!nest.posts) nest.posts = [];
-  nest.posts.push({
-    id: 'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+  const photo = window._nest2PendingPhoto || null;
+  // テキストも写真もない場合はスキップ
+  if (!text && !photo) return;
+  if (!nest.tweets) nest.tweets = [];
+  // 表示中の日付に投稿（時刻は現在時刻、ただし日付は viewDate に合わせる）
+  const now = new Date();
+  const vd = new Date(nest.viewDate);
+  vd.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0);
+  nest.tweets.push({
+    id: 't_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
     text: text,
-    timestamp: Date.now(),
-    author: (data.user && data.user.name) || null
+    photo: photo,
+    timestamp: vd.getTime(),
+    author: (data.user && data.user.name) || null,
+    mode: nest.diaryInputTab || 'diary'
   });
   nest.lastActivityAt = Date.now();
-  nest.lastMessage = text.length > 30 ? text.slice(0,30)+'...' : text;
+  // 一覧サブテキストはテキストor「📷写真」
+  if (text) {
+    nest.lastMessage = text.length > 30 ? text.slice(0,30)+'...' : text;
+  } else if (photo) {
+    nest.lastMessage = '📷 写真';
+  }
   saveData();
   inp.value = '';
+  window._nest2PendingPhoto = null; // ★ 添付クリア
   renderNest2Detail();
 }
-window._postNest2 = _postNest2;
+window._postNest2Tweet = _postNest2Tweet;
 
-function _deleteNest2Post(postId) {
-  const nestId = data.activeNest2Id;
-  const nest = (data.nests2||[]).find(n => n.id === nestId);
-  if (!nest || !nest.posts) return;
-  if (!confirm('この投稿を削除する？')) return;
-  nest.posts = nest.posts.filter(p => p.id !== postId);
+// ★ 写真選択（クロッパー連携）
+function _nest2PickTweetPhoto() {
+  const inp = document.getElementById('nest2TweetPhotoFile');
+  if (inp) inp.click();
+}
+window._nest2PickTweetPhoto = _nest2PickTweetPhoto;
+
+function _nest2HandleTweetPhotoSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('画像ファイルを選んでね'); event.target.value=''; return; }
+  // 自由比率は使いにくいので、4:3 でクロップ（横長・標準的）
+  // ※既存のクロッパーは aspectRatio が固定値だが、null/false を渡すと自由比率になる場合がある
+  openImageCropper(file, {
+    aspectRatio: 4/3,
+    outputSize: 800,
+    outputQuality: 0.85,
+    title: '写真をトリミング'
+  }, (dataUrl) => {
+    if (!dataUrl) { event.target.value=''; return; }
+    window._nest2PendingPhoto = dataUrl;
+    renderNest2Detail();
+    event.target.value = '';
+  });
+}
+window._nest2HandleTweetPhotoSelect = _nest2HandleTweetPhotoSelect;
+
+// ★ 写真をフルスクリーン表示
+function _openNest2PhotoView(tweetId) {
+  const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
+  if (!nest) return;
+  const t = (nest.tweets||[]).find(x => x.id === tweetId);
+  if (!t || !t.photo) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'nest2PhotoOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px;box-sizing:border-box;';
+  overlay.onclick = function() { overlay.remove(); };
+  overlay.innerHTML = '<img src="'+t.photo+'" style="max-width:100%;max-height:100%;border-radius:8px;display:block;" />';
+  document.body.appendChild(overlay);
+}
+window._openNest2PhotoView = _openNest2PhotoView;
+
+// ★ スタンプ履歴1件のHTML（スクショ通り：時刻｜アイコン｜名前＋メンバーピル＋コメント｜✓/写真）
+function _renderNest2StampHistory(s) {
+  const ts = s.timestamp || 0;
+  const d = new Date(ts);
+  const hhmm = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  // カテゴリ別パステル色（アイコン背景用）
+  const _CAT_COLORS = {
+    '生活':'#F5E8D0','美容':'#F5D5E0','ダイエット':'#D5E8F0','体調':'#FFD5D5','メンタル':'#E8D5F0',
+    '家事':'#FFE8D5','趣味':'#D5F0E0','ポジティブ':'#FFF5C8','お仕事':'#D5E0F5','製造':'#E0E0E0',
+    '経理':'#F0E0D5','接客':'#FFE0E8','配信':'#E8D0FF','営業':'#D5F5E8','学校':'#FFEAB8',
+    'お世話':'#D5F0E0','健康':'#FFE0E0','気持ち':'#FFF5D5','お出かけ':'#D5E8FF',
+    '遊び':'#FFE0F0','学習':'#E0F0FF'
+  };
+  const catBg = _CAT_COLORS[s.category] || '#E8E8E8';
+  
+  // メンバータイプによる小さなバッジ（ペットは🐾、子どもは🧒、その他なし）
+  let _memberBadge = '';
+  if (s.memberType === 'pet') _memberBadge = '<span class="material-symbols-rounded" style="font-size:11px;color:#999;">pets</span>';
+  else if (s.memberType === 'child') _memberBadge = '<span class="material-symbols-rounded" style="font-size:11px;color:#999;">child_care</span>';
+  
+  let h = '<div style="display:flex;align-items:stretch;gap:10px;padding:10px 10px;margin-bottom:8px;background:#FFFFFF;border:1px solid rgba(0,0,0,0.06);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);position:relative;">';
+  
+  // ── 左：時刻＋縦線（タイムライン感）
+  h += '<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:4px;width:34px;">';
+  h += '<span style="font-size:10.5px;color:#9A9A9A;font-weight:700;letter-spacing:0.3px;">'+hhmm+'</span>';
+  h += '<div style="flex:1;width:1.5px;background:#E5E5E5;border-radius:1px;"></div>';
+  h += '</div>';
+  
+  // ── アイコンカード（カテゴリ色背景）
+  h += '<div style="flex-shrink:0;width:48px;height:48px;border-radius:12px;background:'+catBg+';display:flex;align-items:center;justify-content:center;align-self:center;">';
+  if (s.icon) {
+    if (/^[a-z][a-z0-9_]*$/.test(s.icon)) {
+      h += '<span class="material-symbols-rounded" style="font-size:26px;color:#7A7A7A;">'+s.icon+'</span>';
+    } else {
+      h += '<span style="font-size:26px;line-height:1;">'+escapeHtml(s.icon)+'</span>';
+    }
+  } else {
+    h += '<span class="material-symbols-rounded" style="font-size:26px;color:#7A7A7A;">label</span>';
+  }
+  h += '</div>';
+  
+  // ── 中央：スタンプ名＋メンバーピル＋コメント
+  h += '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:2px 0;">';
+  // 1行目：スタンプ名＋メンバーピル（横並び）
+  h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
+  h += '<span style="font-size:14px;font-weight:800;color:#2A2A2A;line-height:1.2;">'+escapeHtml(s.name||'スタンプ')+'</span>';
+  if (s.author) {
+    h += '<span style="display:inline-flex;align-items:center;gap:3px;background:#EDF5EE;color:#5A8A6A;padding:2px 9px;border-radius:100px;font-size:10px;font-weight:700;">'+_memberBadge+escapeHtml(s.author)+'</span>';
+  }
+  h += '</div>';
+  // 2行目：コメント
+  if (s.memo) {
+    h += '<div onclick="event.stopPropagation();_editNest2StampMemo(\''+s.id+'\')" style="font-size:11px;color:#888;line-height:1.5;word-break:break-word;cursor:pointer;">'+escapeHtml(s.memo)+'</div>';
+  } else {
+    h += '<div onclick="event.stopPropagation();_editNest2StampMemo(\''+s.id+'\')" style="font-size:10px;color:#C8C8C8;display:flex;align-items:center;gap:3px;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:11px;">edit</span>メモを追加</div>';
+  }
+  h += '</div>';
+  
+  // ── 右：チェック or 写真サムネ
+  h += '<div style="flex-shrink:0;display:flex;align-items:center;justify-content:center;">';
+  if (s.photo) {
+    h += '<div style="position:relative;width:52px;height:52px;border-radius:10px;overflow:hidden;background:#000;cursor:zoom-in;" onclick="event.stopPropagation();_openNest2StampPhotoView(\''+s.id+'\')">';
+    h += '<img src="'+s.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" />';
+    // 右下に小さなバッジ
+    if (s.memberType === 'pet') {
+      h += '<div style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:12px;color:#666;">pets</span></div>';
+    } else {
+      h += '<div style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:12px;color:#666;">photo</span></div>';
+    }
+    h += '</div>';
+  } else {
+    // チェック丸枠
+    h += '<div style="width:38px;height:38px;border-radius:50%;border:2.5px solid #A8C8B0;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;color:#7BA88A;font-weight:900;">check</span></div>';
+  }
+  h += '</div>';
+  
+  // 削除ボタン（小さく右上）
+  h += '<button onclick="event.stopPropagation();_deleteNest2Stamp(\''+s.id+'\')" style="position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;background:white;border:1px solid #DDD;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;z-index:2;"><span class="material-symbols-rounded" style="font-size:13px;color:#999;">close</span></button>';
+  h += '</div>';
+  return h;
+}
+window._renderNest2StampHistory = _renderNest2StampHistory;
+
+// スタンプ削除
+function _deleteNest2Stamp(stampId) {
+  const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
+  if (!nest || !nest.stampHistory) return;
+  if (!confirm('このスタンプ記録を削除する？')) return;
+  nest.stampHistory = nest.stampHistory.filter(s => s.id !== stampId);
   saveData();
   renderNest2Detail();
 }
-window._deleteNest2Post = _deleteNest2Post;
+window._deleteNest2Stamp = _deleteNest2Stamp;
 
+// スタンプの写真拡大ビュー
+function _openNest2StampPhotoView(stampId) {
+  const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
+  if (!nest) return;
+  const s = (nest.stampHistory||[]).find(x => x.id === stampId);
+  if (!s || !s.photo) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'nest2PhotoOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px;box-sizing:border-box;';
+  overlay.onclick = function() { overlay.remove(); };
+  overlay.innerHTML = '<img src="'+s.photo+'" style="max-width:100%;max-height:100%;border-radius:8px;display:block;" />';
+  document.body.appendChild(overlay);
+}
+window._openNest2StampPhotoView = _openNest2StampPhotoView;
+
+// ═══════════════════════════════════════════════════════════════
+// ★ スタンプ定型（ペット/キッズから移植）
+// ═══════════════════════════════════════════════════════════════
+const NEST2_STAMPS = [
+  // ── 生活（共通＋キッズ寄り）
+  { id:'meal_breakfast', name:'朝ごはん',  icon:'free_breakfast',     category:'生活', target:'all' },
+  { id:'meal_lunch',     name:'お昼ごはん', icon:'lunch_dining',       category:'生活', target:'all' },
+  { id:'meal_dinner',    name:'晩ごはん',  icon:'dinner_dining',      category:'生活', target:'all' },
+  { id:'snack',          name:'おやつ',    icon:'cookie',             category:'生活', target:'all' },
+  { id:'bath',           name:'お風呂',    icon:'bathtub',            category:'生活', target:'all' },
+  { id:'teeth',          name:'歯みがき',  icon:'dentistry',          category:'生活', target:'kids' },
+  { id:'change',         name:'お着替え',  icon:'checkroom',          category:'生活', target:'kids' },
+  { id:'sleep',          name:'おやすみ',  icon:'bedtime',            category:'生活', target:'all' },
+  // ── 学習（キッズ）
+  { id:'homework',       name:'宿題',      icon:'edit_note',          category:'学習', target:'kids' },
+  { id:'study',          name:'勉強',      icon:'menu_book',          category:'学習', target:'kids' },
+  { id:'reading',        name:'読書',      icon:'auto_stories',       category:'学習', target:'kids' },
+  { id:'test',           name:'テスト',    icon:'quiz',               category:'学習', target:'kids' },
+  { id:'lessons',        name:'習い事',    icon:'school',             category:'学習', target:'kids' },
+  // ── 遊び（キッズ）
+  { id:'play_park',      name:'公園',      icon:'park',               category:'遊び', target:'kids' },
+  { id:'play_friends',   name:'お友達',    icon:'group',              category:'遊び', target:'kids' },
+  { id:'play_game',      name:'ゲーム',    icon:'sports_esports',     category:'遊び', target:'kids' },
+  { id:'play_drawing',   name:'お絵描き',  icon:'palette',            category:'遊び', target:'kids' },
+  { id:'play_tv',        name:'テレビ',    icon:'tv',                 category:'遊び', target:'kids' },
+  // ── お世話（ペット）
+  { id:'pet_food',       name:'ごはん',    icon:'restaurant',         category:'お世話', target:'pet' },
+  { id:'pet_water',      name:'お水',      icon:'water_drop',         category:'お世話', target:'pet' },
+  { id:'pet_walk',       name:'お散歩',    icon:'directions_walk',    category:'お世話', target:'pet' },
+  { id:'pet_brush',      name:'ブラッシング', icon:'brush',           category:'お世話', target:'pet' },
+  { id:'pet_nail',       name:'爪切り',    icon:'content_cut',        category:'お世話', target:'pet' },
+  { id:'pet_toilet',     name:'トイレ',    icon:'wc',                 category:'お世話', target:'pet' },
+  { id:'pet_shampoo',    name:'シャンプー', icon:'shower',            category:'お世話', target:'pet' },
+  { id:'pet_play',       name:'あそぶ',    icon:'toys',               category:'お世話', target:'pet' },
+  // ── 健康（共通）
+  { id:'medicine',       name:'おくすり',   icon:'medication',        category:'健康', target:'all' },
+  { id:'weight',         name:'体重',       icon:'monitor_weight',    category:'健康', target:'all' },
+  { id:'vaccine',        name:'ワクチン',   icon:'vaccines',          category:'健康', target:'all' },
+  { id:'hospital',       name:'通院',       icon:'local_hospital',    category:'健康', target:'all' },
+  { id:'fever',          name:'熱',         icon:'thermostat',        category:'健康', target:'all' },
+  { id:'wound',          name:'けが',       icon:'healing',           category:'健康', target:'all' },
+  // ── 気持ち（共通）
+  { id:'mood_happy',     name:'嬉しい',     icon:'sentiment_very_satisfied', category:'気持ち', target:'all' },
+  { id:'mood_normal',    name:'ふつう',     icon:'sentiment_neutral', category:'気持ち', target:'all' },
+  { id:'mood_sad',       name:'悲しい',     icon:'sentiment_dissatisfied', category:'気持ち', target:'all' },
+  { id:'mood_tired',     name:'おねむ',     icon:'nightlight_round',  category:'気持ち', target:'all' },
+  { id:'mood_energy',    name:'元気',       icon:'bolt',              category:'気持ち', target:'all' },
+  { id:'mood_proud',     name:'よくできた', icon:'star',              category:'気持ち', target:'all' },
+  // ── お出かけ
+  { id:'go_school',      name:'園/学校',    icon:'school',            category:'お出かけ', target:'kids' },
+  { id:'go_shop',        name:'お買い物',   icon:'shopping_bag',      category:'お出かけ', target:'all' },
+  { id:'go_outside',     name:'公園',       icon:'park',              category:'お出かけ', target:'all' },
+  { id:'go_trip',        name:'旅行',       icon:'flight',            category:'お出かけ', target:'all' },
+  { id:'go_grandpa',     name:'おじいちゃんち', icon:'cottage',       category:'お出かけ', target:'kids' },
+  { id:'go_dogrun',      name:'ドッグラン', icon:'park',              category:'お出かけ', target:'pet' },
+  { id:'go_groom',       name:'トリミング', icon:'cut',               category:'お出かけ', target:'pet' }
+];
+
+const NEST2_STAMP_CATEGORIES = ['生活','学習','遊び','お世話','健康','気持ち','お出かけ'];
+
+// ネストカテゴリに応じて、表示するスタンプターゲットをフィルター
+function _getNest2StampTargets(nest) {
+  if (!nest) return ['all','kids','pet'];
+  if (nest.category === 'pet') return ['all','pet'];
+  // 家族・恋人・友達・その他は両方使えるように
+  return ['all','kids','pet'];
+}
+
+// スタンプ追加
+function _addNest2Stamp(stampId) {
+  const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
+  if (!nest) return;
+  const stamp = NEST2_STAMPS.find(s => s.id === stampId);
+  if (!stamp) return;
+  if (!nest.stampHistory) nest.stampHistory = [];
+  
+  // 選択中のメンバー（lastSelectedMemberId）
+  let author = null;
+  let memberType = null;
+  if (nest.lastSelectedMemberId) {
+    const m = (nest.members||[]).find(mm => mm.id === nest.lastSelectedMemberId);
+    if (m) {
+      author = m.name;
+      memberType = m.type;
+    }
+  }
+  
+  // 表示中の日付＋現在時刻
+  const now = new Date();
+  const vd = new Date(nest.viewDate);
+  vd.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0);
+  
+  nest.stampHistory.push({
+    id: 's_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    stampId: stamp.id,
+    name: stamp.name,
+    icon: stamp.icon,
+    category: stamp.category,
+    timestamp: vd.getTime(),
+    author: author,
+    memberType: memberType,
+    memo: null,
+    photo: null
+  });
+  nest.lastActivityAt = Date.now();
+  nest.lastMessage = '🌷 '+stamp.name;
+  saveData();
+  // 軽く触感フィードバック
+  if (navigator.vibrate) navigator.vibrate(10);
+  renderNest2Detail();
+}
+window._addNest2Stamp = _addNest2Stamp;
+
+// メンバー選択切替
+function _selectNest2Member(memberId) {
+  const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
+  if (!nest) return;
+  // 同じメンバーをタップで解除
+  if (nest.lastSelectedMemberId === memberId) {
+    nest.lastSelectedMemberId = null;
+  } else {
+    nest.lastSelectedMemberId = memberId;
+  }
+  saveData();
+  renderNest2Detail();
+}
+window._selectNest2Member = _selectNest2Member;
+
+// スタンプカテゴリタブ切替
+function _setNest2StampCategory(cat) {
+  const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
+  if (!nest) return;
+  nest.stampCategory = cat;
+  saveData();
+  renderNest2Detail();
+}
+window._setNest2StampCategory = _setNest2StampCategory;
+
+// スタンプ記録のメモ追加（タップで開く）
+function _editNest2StampMemo(stampId) {
+  const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
+  if (!nest || !nest.stampHistory) return;
+  const s = nest.stampHistory.find(x => x.id === stampId);
+  if (!s) return;
+  const newMemo = prompt('「'+s.name+'」のメモ', s.memo || '');
+  if (newMemo === null) return;
+  s.memo = newMemo.trim() || null;
+  saveData();
+  renderNest2Detail();
+}
+window._editNest2StampMemo = _editNest2StampMemo;
+
+// ═══════════════════════════════════════════════════════════════
+// ★ #タグ機能
+// ═══════════════════════════════════════════════════════════════
+
+// テキストから#タグを抽出（配列で返す）
+function _extractNest2Tags(text) {
+  if (!text) return [];
+  const tags = [];
+  const re = /#([^\s#<>]+)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const tag = m[1];
+    if (tag && tags.indexOf(tag) === -1) tags.push(tag);
+  }
+  return tags;
+}
+window._extractNest2Tags = _extractNest2Tags;
+
+// テキスト内の#タグを色付きspanに変換（タップでフィルター）
+function _formatNest2TweetText(text) {
+  if (!text) return '';
+  // まずHTMLエスケープ
+  const safe = escapeHtml(text);
+  // #タグを色付きspanに置換（タグはエスケープ済み文字列に対して処理）
+  return safe.replace(/#([^\s#<>]+)/g, function(match, tag) {
+    // タグ内のシングルクオートを安全に
+    const safeTag = tag.replace(/'/g, '');
+    return '<span onclick="event.stopPropagation();_filterNest2ByTag(\''+safeTag+'\')" style="color:var(--accent-deep);font-weight:700;cursor:pointer;background:var(--accent-bg);padding:0 4px;border-radius:6px;margin:0 1px;">#'+tag+'</span>';
+  });
+}
+window._formatNest2TweetText = _formatNest2TweetText;
+
+// #ボタンタップで入力欄に#を挿入
+function _nest2InsertHash() {
+  const inp = document.getElementById('nest2TweetInput');
+  if (!inp) return;
+  const pos = inp.selectionStart || inp.value.length;
+  const val = inp.value;
+  // 直前にスペースがない場合はスペース追加、先頭なら不要
+  const needSpace = pos > 0 && val[pos-1] !== ' ' && val[pos-1] !== '\n';
+  const insert = (needSpace ? ' #' : '#');
+  inp.value = val.slice(0, pos) + insert + val.slice(pos);
+  inp.focus();
+  const newPos = pos + insert.length;
+  try { inp.setSelectionRange(newPos, newPos); } catch(e) {}
+}
+window._nest2InsertHash = _nest2InsertHash;
+
+// タグでフィルター
+function _filterNest2ByTag(tag) {
+  const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
+  if (!nest) return;
+  nest.tagFilter = tag;
+  renderNest2Detail();
+}
+window._filterNest2ByTag = _filterNest2ByTag;
+
+// タグフィルター解除
+function _clearNest2TagFilter() {
+  const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
+  if (!nest) return;
+  nest.tagFilter = null;
+  renderNest2Detail();
+}
+window._clearNest2TagFilter = _clearNest2TagFilter;
+
+// よく使うタグTOP（このネストの全投稿から集計）
+function _getNest2PopularTags(nest, limit) {
+  const counts = {};
+  for (const t of (nest.tweets||[])) {
+    const tags = _extractNest2Tags(t.text);
+    for (const tg of tags) {
+      counts[tg] = (counts[tg]||0) + 1;
+    }
+  }
+  return Object.keys(counts)
+    .map(tg => ({ tag: tg, count: counts[tg] }))
+    .sort((a,b) => b.count - a.count)
+    .slice(0, limit||10);
+}
+window._getNest2PopularTags = _getNest2PopularTags;
+
+// 投稿削除
+function _deleteNest2Tweet(tweetId) {
+  const nestId = data.activeNest2Id;
+  const nest = (data.nests2||[]).find(n => n.id === nestId);
+  if (!nest || !nest.tweets) return;
+  if (!confirm('このきろくを削除する？')) return;
+  nest.tweets = nest.tweets.filter(t => t.id !== tweetId);
+  saveData();
+  renderNest2Detail();
+}
+window._deleteNest2Tweet = _deleteNest2Tweet;
+
+// 日付切替
+function _setNest2ViewDate(dk) {
+  const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
+  if (!nest) return;
+  nest.viewDate = dk;
+  saveData();
+  renderNest2Detail();
+}
+window._setNest2ViewDate = _setNest2ViewDate;
+
+// Record/Diaryタブ切替
+function _setNest2InputTab(tab) {
+  const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
+  if (!nest) return;
+  nest.diaryInputTab = tab;
+  saveData();
+  renderNest2Detail();
+}
+window._setNest2InputTab = _setNest2InputTab;
+
+// 一覧に戻る
 function _backToNest2List() {
   data.activeNest2Id = null;
   currentView = 'new_nest';
@@ -28408,6 +29033,7 @@ function _backToNest2List() {
   render();
 }
 window._backToNest2List = _backToNest2List;
+
 
 // ===== ハンバーガーメニュー（11項目、後で実装） =====
 function openNest2DrawerMenu() {
