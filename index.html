@@ -22988,36 +22988,38 @@ function renderTweetsDiary() {
   h += '</div>';
   h += '</div>';
   
-  // ★ 白カード（後ろの下地）：縦横ともに極小余白で、画面端ギリギリまで広がる
-  // 背景画像が設定されてる場合は白カードがその画像になる
+  // ★ Record用：stampsを先に計算（ヘッダー表示のため白カード前に算出）
+  const stampsToday = (diaryInputTab === 'record') ? (data.stampHistory || []).filter(s => {
+    const sd = new Date(s.timestamp || 0);
+    return sd.toDateString() === viewDateKey;
+  }).sort((a,b) => (a.timestamp||0) - (b.timestamp||0)) : [];
+
+  // ★ 白カード（後ろの下地）
   let _wcBg;
   if (bgImage) {
-    // 白下地 + 背景画像（薄い白オーバーレイで文字読みやすく）
     _wcBg = 'background-color:white;background-image:linear-gradient(rgba(255,255,255,0.35),rgba(255,255,255,0.35)),url(\'' + bgImage.replace(/'/g,"\\'") + '\');background-size:cover;background-position:center;background-repeat:no-repeat;';
   } else {
     _wcBg = 'background:white;';
   }
   h += '<div id="tweetTimelineWhiteCard" style="'+_wcBg+'margin:0 -8px;padding:2px;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;">';
-  
-  // タイムライン（スクロールコンテナ・半透明枠で背景画像が透けて見える）
-  h += '<div data-tweets-area id="tweetsTimeline" style="background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.6);border-radius:14px;display:flex;flex-direction:column;gap:0;padding:10px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
-  
+
+  // ★★★ 「今日のきろく」ヘッダーを白カード内・タイムライン外に固定
+  // → tweetsTimelineのスクロールに引っ張られなくなる
   if (diaryInputTab === 'record') {
-    // ─── Recordタブ：スタンプ履歴のみ表示（data.stampHistoryから） ───
-    const stampsToday = (data.stampHistory || []).filter(s => {
-      const sd = new Date(s.timestamp || 0);
-      return sd.toDateString() === viewDateKey;
-    }).sort((a,b) => (a.timestamp||0) - (b.timestamp||0));
-    
-    // ★ ヘッダー：今日のきろく + カードにする + 件数（Day画面と同じ・sticky）
-    h += '<div style="position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;padding:6px 4px 8px;margin:0 0 6px;border-bottom:1px solid var(--line-soft);background:rgba(255,255,255,0.95);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:2;">';
+    h += '<div id="recordStickyHeader" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px 6px;border-bottom:1px solid var(--line-soft);background:rgba(255,255,255,0.95);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);flex-shrink:0;">';
     h += '<div style="display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">history</span><span style="font-size:11px;font-weight:800;color:var(--ink-dark);">今日のきろく</span></div>';
     h += '<div style="display:flex;align-items:center;gap:6px;">';
     h += '<button onclick="openTodayCardModal()" style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;background:var(--accent);color:white;border:none;border-radius:100px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:12px;">collections</span>カードにする</button>';
     h += '<span style="font-size:9px;color:var(--ink-sub);background:var(--surface-warm);padding:2px 7px;border-radius:100px;font-weight:700;">'+stampsToday.length+'件</span>';
     h += '</div>';
     h += '</div>';
-    
+  }
+
+  // タイムライン（スクロールコンテナ・ヘッダーの下から始まる）
+  h += '<div data-tweets-area id="tweetsTimeline" style="background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.6);border-radius:'+(diaryInputTab==='record'?'0 0 14px 14px':'14px')+';display:flex;flex-direction:column;gap:0;padding:10px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
+
+  if (diaryInputTab === 'record') {
+    // ─── Recordタブ：スタンプ履歴のみ（ヘッダーは外に出したので不要）───
     if (stampsToday.length === 0) {
       h += '<div style="text-align:center;padding:40px 20px;color:var(--ink-sub);">';
       h += '<div style="font-size:36px;margin-bottom:10px;opacity:0.5;"><span class="material-symbols-rounded" style="font-size:36px;color:var(--mint-deep);">push_pin</span></div>';
@@ -23102,6 +23104,21 @@ function renderTweetsDiary() {
     const _sCats = Object.keys(_sLib).filter(c => !(_sLib[c] && _sLib[c]._hidden));
     const _sCat = data.stampSelCat || (_sCats[0] || '生活');
     const _pinned = data.pinnedStamps || [];
+
+    // ★ カテゴリ別パステルカラー（Record履歴と同じパレット）
+    const _STAMP_CAT_COLORS = {
+      '生活':      { bg:'#EEF6EE', dark:'#4E8A4E', mid:'#7DC47D', pill:'#D4EDD4' },
+      '美容':      { bg:'#FDEAF3', dark:'#B84080', mid:'#E080B0', pill:'#F8D0E8' },
+      'ダイエット': { bg:'#EAF0FD', dark:'#3868A8', mid:'#6EA8E0', pill:'#C8DCF5' },
+      '体調':      { bg:'#EAF8EF', dark:'#3A8860', mid:'#6EC898', pill:'#C4EDD8' },
+      'メンタル':   { bg:'#F2EAFD', dark:'#6840A0', mid:'#A87AD4', pill:'#DDD0F5' },
+      '家事':      { bg:'#FDF2EA', dark:'#985030', mid:'#D4956A', pill:'#F5DECA' },
+      '趣味':      { bg:'#FEF0E8', dark:'#A04030', mid:'#D47A60', pill:'#F5D4C8' },
+      'ポジティブ': { bg:'#FDFCEA', dark:'#787020', mid:'#C4B848', pill:'#EEEAB0' },
+    };
+    const _defCC = { bg:'var(--mint-bg)', dark:'var(--mint-deep)', mid:'var(--mint)', pill:'var(--mint-bg)' };
+    const _curCC = _STAMP_CAT_COLORS[_sCat] || _defCC;
+
     // ピン止め1行（swap前提：mint変数→swap後に茶色になる）
     h += '<div style="padding:5px 10px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;align-items:center;">';
     h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--mint-deep);flex-shrink:0;">push_pin</span>';
@@ -23117,27 +23134,36 @@ function renderTweetsDiary() {
       }
     }
     h += '</div>';
-    // カテゴリタブ（mint変数=swap後茶色）
+
+    // ★ カテゴリタブ（各タブが自分のカラーを持つ）
     h += '<div style="padding:4px 10px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;">';
     for (const cat of _sCats) {
       const isC = cat === _sCat;
-      h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+(isC?'var(--mint-deep)':'var(--mint)')+';background:'+(isC?'var(--mint-deep)':'transparent')+';color:'+(isC?'white':'var(--mint-deep)')+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+      const _tc = _STAMP_CAT_COLORS[cat] || _defCC;
+      if (isC) {
+        // アクティブ：濃い色で塗る
+        h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+_tc.dark+';background:'+_tc.dark+';color:white;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+      } else {
+        // 非アクティブ：薄い色で
+        h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\')" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+_tc.mid+';background:'+_tc.pill+';color:'+_tc.dark+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+      }
     }
-    // ★ カテゴリタブ末尾に編集ボタン（スタンプ管理画面を開く）
+    // ★ 編集ボタン
     h += '<button onclick="openStampManagerModal()" title="スタンプ編集" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px dashed var(--mint-deep);background:transparent;color:var(--mint-deep);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:12px;">edit</span>編集</button>';
     h += '</div>';
-    // スタンプ1列スクロール（mint変数=swap後茶色＋各ボタンにピンマーク）
+
+    // ★ スタンプアイコン（選択中カテゴリの色で統一）
     const _stamps = (_sLib[_sCat] || []).filter(s => !s._hidden);
     h += '<div style="padding:4px 10px 6px;display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">';
     for (const s of _stamps) {
       const _safeName = escapeHtml(s.name).replace(/'/g,"\\'");
       const _isPin = (_pinned.findIndex(p => (p.icon+'|'+p.name) === (s.icon+'|'+s.name)) >= 0);
       h += '<div style="flex:0 0 auto;position:relative;min-width:48px;">';
-      h += '<button onclick="postStampRecord(\''+s.icon+'\',\''+_safeName+'\')" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 4px;border-radius:9px;border:1.5px solid var(--mint);background:var(--mint-bg);cursor:pointer;font-family:inherit;">';
-      h += renderStampIcon(s.icon,'font-size:20px;color:var(--mint-deep);');
-      h += '<span style="font-size:9px;font-weight:700;color:var(--mint-deep);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44px;">'+escapeHtml(s.name)+'</span>';
+      h += '<button onclick="postStampRecord(\''+s.icon+'\',\''+_safeName+'\')" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 4px;border-radius:9px;border:1.5px solid '+_curCC.mid+';background:'+_curCC.bg+';cursor:pointer;font-family:inherit;">';
+      h += renderStampIcon(s.icon,'font-size:20px;color:'+_curCC.dark+';');
+      h += '<span style="font-size:9px;font-weight:700;color:'+_curCC.dark+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44px;">'+escapeHtml(s.name)+'</span>';
       h += '</button>';
-      h += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:'+(_isPin?'var(--mint-deep)':'white')+';border:1px solid '+(_isPin?'var(--mint-deep)':'var(--mint)')+';color:'+(_isPin?'white':'var(--mint-deep)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:8px;">push_pin</span></span>';
+      h += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:'+(_isPin?_curCC.dark:'white')+';border:1px solid '+(_isPin?_curCC.dark:_curCC.mid)+';color:'+(_isPin?'white':_curCC.dark)+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:8px;">push_pin</span></span>';
       h += '</div>';
     }
     h += '</div>';
@@ -23220,6 +23246,37 @@ function _diaryAdjustAndScroll() {
   scrollBottom();
   requestAnimationFrame(() => { adjust(); scrollBottom(); });
   setTimeout(() => { adjust(); scrollBottom(); }, 200);
+
+  // ★ キーボード出現・消去の検知（visualViewport）
+  // iOSでキーボードが出るとvisualViewport.heightが縮む→bottomBlockとtlを再計算
+  if (window.visualViewport && !window._diaryVVListenerAdded) {
+    window._diaryVVListenerAdded = true;
+    window.visualViewport.addEventListener('resize', function() {
+      if (!document.getElementById('tweetsTimeline')) return;
+      try {
+        const vvH = window.visualViewport.height;
+        const keyboardH = Math.max(0, window.innerHeight - vvH);
+        const nav = document.querySelector('.bottom-nav');
+        const navH = nav ? (window.innerHeight - nav.getBoundingClientRect().top) : 64;
+        // bottomBlockをキーボードの上に移動
+        const bb = document.getElementById('tweetBottomBlock');
+        if (bb) bb.style.bottom = (keyboardH + navH) + 'px';
+        // タイムライン高さを再計算（visual viewportベース）
+        const tl = document.getElementById('tweetsTimeline');
+        if (tl && bb) {
+          const tlTop = tl.getBoundingClientRect().top;
+          const bbH = bb.getBoundingClientRect().height;
+          const tlH = vvH - tlTop - bbH - 28;
+          if (tlH > 80) {
+            tl.style.height = tlH + 'px';
+            tl.style.maxHeight = tlH + 'px';
+          }
+        }
+        // キーボード消えた時（高さが戻った時）は通常の計算に戻す
+        if (keyboardH === 0) adjust();
+      } catch(e) {}
+    });
+  }
 }
 window._diaryAdjustAndScroll = _diaryAdjustAndScroll;
 
