@@ -23328,15 +23328,18 @@ function _diaryAdjustAndScroll() {
         try {
           const vv = window.visualViewport;
           if (!vv) return;
-          // ★ Web Safariでキーボード出現時にページが上にスクロールするのを防ぐ
-          // body.overflow:hiddenだけでは不十分なので、強制でscrollY=0に戻す
+          // ★ ページが上にスクロールしたら戻す（topbar固定）
           if (window.scrollY !== 0) window.scrollTo(0, 0);
           const bb = document.getElementById('tweetBottomBlock');
           if (!bb) return;
           const nav = document.querySelector('.bottom-nav');
           const navH = nav ? nav.getBoundingClientRect().height : 64;
-          const offsetBottom = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
-          bb.style.bottom = (offsetBottom + navH) + 'px';
+          // 視覚ビューポート下端 = キーボードの上端
+          const keyboardH = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
+          // ★ 修正：キーボード開時はkeyboardHのみ（navは隠れてる）
+          //         キーボード閉時はnavHのみ（nav の上に乗る）
+          const targetBottom = keyboardH > 0 ? keyboardH : navH;
+          bb.style.bottom = targetBottom + 'px';
         } catch(e) {}
       });
     }
