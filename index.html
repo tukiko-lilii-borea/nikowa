@@ -23321,23 +23321,21 @@ function _diaryAdjustAndScroll() {
     window._diaryVVListenerAdded = true;
     let _vvRaf = null;
     function _updateBottomBlockForVV() {
-      if (_vvRaf) return; // rAFスロットルで連続イベント抑制
+      if (_vvRaf) return;
       _vvRaf = requestAnimationFrame(function() {
         _vvRaf = null;
         if (!document.getElementById('tweetsTimeline')) return;
         try {
           const vv = window.visualViewport;
           if (!vv) return;
+          // ★ Web Safariでキーボード出現時にページが上にスクロールするのを防ぐ
+          // body.overflow:hiddenだけでは不十分なので、強制でscrollY=0に戻す
+          if (window.scrollY !== 0) window.scrollTo(0, 0);
           const bb = document.getElementById('tweetBottomBlock');
           if (!bb) return;
           const nav = document.querySelector('.bottom-nav');
-          // navがあれば実際の高さ、なければ64px
           const navH = nav ? nav.getBoundingClientRect().height : 64;
-          // 視覚ビューポート下端からのオフセット計算
-          // window.innerHeight = レイアウトviewport高、vv.height = 実際の見える高さ
-          // vv.offsetTop = ページがどれだけ上にスクロールされたか（キーボード対応で発生）
           const offsetBottom = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
-          // bottomBlockをキーボード+navの上に固定
           bb.style.bottom = (offsetBottom + navH) + 'px';
         } catch(e) {}
       });
@@ -23346,34 +23344,9 @@ function _diaryAdjustAndScroll() {
     window.visualViewport.addEventListener('scroll', _updateBottomBlockForVV);
   }
 
-  // ★ フォーカス時のbody lock制御（input/textareaフォーカスで一時解除）
-  // body.overflow:hiddenだとiOSがキーボード対応のスクロールできないため、フォーカス中だけ解除
-  if (!window._diaryFocusListenersAdded) {
-    window._diaryFocusListenersAdded = true;
-    document.addEventListener('focusin', function(e) {
-      if (!document.getElementById('tweetsTimeline')) return;
-      const t = e.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
-        // body lockを一時解除
-        document.body.style.overflow = '';
-        document.body.style.height = '';
-      }
-    });
-    document.addEventListener('focusout', function(e) {
-      if (!document.getElementById('tweetsTimeline')) return;
-      const t = e.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
-        // 少し待ってから他にフォーカスがなければbody lock復元
-        setTimeout(function() {
-          const a = document.activeElement;
-          if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return;
-          if (document.getElementById('tweetsTimeline')) {
-            _diaryAdjustAndScroll();
-          }
-        }, 300);
-      }
-    });
-  }
+  // ★ フォーカス時のbody lock制御は撤去
+  // → 解除するとiOSがページをスクロールして上が見えなくなる
+  // → visualViewportリスナーでbottomBlockのみ動かす方針に統一
 }
 window._diaryAdjustAndScroll = _diaryAdjustAndScroll;
 
