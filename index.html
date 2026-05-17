@@ -5761,7 +5761,18 @@ function applyTheme(themeId) {
     + ' .section-title { background-image: '+crayonSvg+' !important; }'
     + ' .hero-glass::before { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
     + ' .mode-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
-    + ' .main-house-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }';
+    + ' .main-house-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
+    // ★ ダークテーマ：ホワイトハードコード要素をsurface色に一括変換
+    + (isDark
+      ? ' div[style*="background:white"],div[style*="background: white"],div[style*="background:#FFFFFF"],div[style*="background: #FFFFFF"] { background: var(--surface) !important; }'
+      + ' button[style*="background:white"],button[style*="background: white"],button[style*="background:#FFFFFF"],button[style*="background: #FFFFFF"] { background: var(--surface) !important; }'
+      + ' div[style*="background:white"] *,div[style*="background:#FFFFFF"] * { color: var(--ink-dark); }'
+      : '')
+    // ★ ネオンテーマ：カードにグロー枠
+    + (themeId === 'neon'
+      ? ' div[style*="background:white"],div[style*="background:#FFFFFF"],div[style*="background: white"] { border-color: rgba(200,35,107,0.5) !important; box-shadow: 0 0 10px rgba(200,35,107,0.15), 0 0 20px rgba(0,171,225,0.08) !important; }'
+      + ' button[style*="background:white"],button[style*="background:#FFFFFF"],button[style*="background: white"] { border-color: rgba(0,171,225,0.4) !important; box-shadow: 0 0 8px rgba(0,171,225,0.15) !important; }'
+      : '');
   // topbarに桜吹雪を追加
   setTimeout(function(){
     document.querySelectorAll('.topbar').forEach(function(tb){
