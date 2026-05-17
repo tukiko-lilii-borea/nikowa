@@ -28287,6 +28287,14 @@ function renderNest2Detail() {
   app.style.backgroundRepeat = 'repeat';
   app.style.minHeight = '100vh';
   
+  // ★ スタンプシート用アニメーションCSS（初回のみ追加）
+  if (!document.getElementById('nest2SheetStyle')) {
+    const _sheetStyle = document.createElement('style');
+    _sheetStyle.id = 'nest2SheetStyle';
+    _sheetStyle.textContent = '@keyframes nest2SheetSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}@keyframes nest2SheetFade{from{opacity:0}to{opacity:1}}';
+    document.head.appendChild(_sheetStyle);
+  }
+  
   // ネスト固有データ初期化
   if (!nest.tweets) nest.tweets = [];
   if (!nest.records) nest.records = {};
@@ -28445,9 +28453,8 @@ function renderNest2Detail() {
   html += '</div>';
   
   // ═══ 下部入力エリア ═══
-  html += '<div style="position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);z-index:50;">';
   if (isRec) {
-    // ★ Recordモード時：メンバー選択＋スタンプカテゴリ＋スタンプボタン群
+    // ★ Recordモード時：FAB（＋ボタン）＋スタンプシート（下からせり上がる方式）
     const _allowedTargets = _getNest2StampTargets(nest);
     if (!nest.stampCategory) {
       // デフォルトカテゴリ：ペットなら'お世話'、その他なら'生活'
@@ -28455,59 +28462,77 @@ function renderNest2Detail() {
     }
     const curCat = nest.stampCategory;
     const curMemberId = nest.lastSelectedMemberId;
+    const sheetOpen = !!window._nest2StampSheetOpen;
     
-    // ── メンバー選択行
-    html += '<div style="padding:6px 10px 4px;display:flex;align-items:center;gap:5px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line-soft);">';
-    html += '<span style="flex-shrink:0;font-size:10px;color:#999;font-weight:700;margin-right:3px;">誰の？:</span>';
-    if ((nest.members||[]).length === 0) {
-      html += '<span style="flex-shrink:0;font-size:10px;color:#CCC;font-style:italic;">メンバー未登録</span>';
-    } else {
-      for (const m of nest.members) {
-        const isMSel = m.id === curMemberId;
-        const _tIcon = (m.type === 'pet') ? 'pets' : (m.type === 'child' ? 'child_care' : 'person');
-        html += '<button onclick="_selectNest2Member(\''+m.id+'\')" style="flex-shrink:0;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:100px;border:'+(isMSel?'2px':'1.5px')+' solid '+(isMSel?'var(--accent-deep)':'var(--line)')+';background:'+(isMSel?'var(--accent-deep)':'#FFFFFF')+';color:'+(isMSel?'white':'#666')+';font-family:inherit;font-size:11px;font-weight:'+(isMSel?'800':'600')+';cursor:pointer;">';
-        if (m.photo) {
-          html += '<img src="'+m.photo+'" style="width:18px;height:18px;border-radius:50%;object-fit:cover;" />';
-        } else {
-          html += '<span class="material-symbols-rounded" style="font-size:13px;color:'+(isMSel?'white':'#888')+';">'+_tIcon+'</span>';
-        }
-        html += escapeHtml(m.name)+'</button>';
-      }
-    }
-    html += '</div>';
+    // ── FAB（右下＋ボタン、シート開閉中は非表示）
+    html += '<button onclick="_openNest2StampSheet()" style="position:fixed;right:22px;bottom:24px;width:64px;height:64px;border-radius:50%;background:var(--accent-deep);border:none;display:'+(sheetOpen?'none':'flex')+';align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:1900;font-family:inherit;" ontouchstart="this.style.transform=\'scale(0.92)\'" ontouchend="this.style.transform=\'\'"><span class="material-symbols-rounded" style="font-size:36px;color:white;font-weight:300;">add</span></button>';
     
-    // ── カテゴリタブ
-    html += '<div style="padding:6px 10px 4px;display:flex;align-items:center;gap:5px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line-soft);">';
-    for (const cat of NEST2_STAMP_CATEGORIES) {
-      // このカテゴリに表示可能なスタンプがあるかチェック
-      const hasStamps = NEST2_STAMPS.some(s => s.category === cat && _allowedTargets.indexOf(s.target) >= 0);
-      if (!hasStamps) continue;
-      const isCSel = curCat === cat;
-      html += '<button onclick="_setNest2StampCategory(\''+cat+'\')" style="flex-shrink:0;padding:5px 12px;border-radius:100px;border:1.5px solid '+(isCSel?'var(--mint-deep)':'var(--line)')+';background:'+(isCSel?'var(--mint-deep)':'transparent')+';color:'+(isCSel?'white':'#777')+';font-family:inherit;font-size:11px;font-weight:'+(isCSel?'800':'600')+';cursor:pointer;">'+cat+'</button>';
-    }
-    html += '</div>';
-    
-    // ── スタンプボタングリッド
-    const visibleStamps = NEST2_STAMPS.filter(s => s.category === curCat && _allowedTargets.indexOf(s.target) >= 0);
-    html += '<div style="padding:8px 10px 14px;max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
-    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
-    for (const sp of visibleStamps) {
-      // カテゴリ別パステル背景
-      const _CAT_COLORS = {
-        '生活':'#F5E8D0','学習':'#E0F0FF','遊び':'#FFE0F0','お世話':'#D5F0E0',
-        '健康':'#FFE0E0','気持ち':'#FFF5D5','お出かけ':'#D5E8FF'
-      };
-      const stampBg = _CAT_COLORS[sp.category] || '#F0F0F0';
-      html += '<button onclick="_addNest2Stamp(\''+sp.id+'\')" style="background:#FFFFFF;border:1.5px solid var(--line);border-radius:12px;padding:8px 4px 7px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;transition:transform 0.1s,box-shadow 0.1s;" ontouchstart="this.style.transform=\'scale(0.94)\';this.style.boxShadow=\'0 1px 3px rgba(0,0,0,0.15)\'" ontouchend="this.style.transform=\'\';this.style.boxShadow=\'\'">';
-      html += '<div style="width:34px;height:34px;border-radius:9px;background:'+stampBg+';display:flex;align-items:center;justify-content:center;">';
-      html += '<span class="material-symbols-rounded" style="font-size:20px;color:#7A7A7A;">'+sp.icon+'</span>';
+    if (sheetOpen) {
+      // ── オーバーレイ（タップで閉じる）
+      html += '<div onclick="_closeNest2StampSheet()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:2000;animation:nest2SheetFade 0.2s;"></div>';
+      
+      // ── スタンプシート本体
+      html += '<div style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:24px 24px 0 0;z-index:2001;display:flex;flex-direction:column;max-height:72vh;box-shadow:0 -8px 32px rgba(0,0,0,0.18);animation:nest2SheetSlideUp 0.28s cubic-bezier(0.16,1,0.3,1);">';
+      
+      // ヘッダー（ハンドル＋閉じるボタン）
+      html += '<div style="flex-shrink:0;position:relative;padding:10px 16px 6px;border-bottom:1px solid var(--line-soft);">';
+      html += '<div style="display:flex;justify-content:center;"><div style="width:42px;height:4px;border-radius:100px;background:#DDD;"></div></div>';
+      html += '<button onclick="_closeNest2StampSheet()" style="position:absolute;right:12px;top:8px;width:34px;height:34px;border-radius:50%;background:#F5F5F5;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:20px;color:#888;">close</span></button>';
       html += '</div>';
-      html += '<span style="font-size:9.5px;font-weight:700;color:#444;line-height:1.1;text-align:center;">'+sp.name+'</span>';
-      html += '</button>';
+      
+      // メンバー選択行（大きめ）
+      html += '<div style="flex-shrink:0;padding:10px 14px 8px;display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line-soft);">';
+      html += '<span style="flex-shrink:0;font-size:11px;color:#888;font-weight:800;margin-right:3px;">誰の？</span>';
+      if ((nest.members||[]).length === 0) {
+        html += '<span style="flex-shrink:0;font-size:11px;color:#CCC;font-style:italic;">メンバー未登録</span>';
+      } else {
+        for (const m of nest.members) {
+          const isMSel = m.id === curMemberId;
+          const _tIcon = (m.type === 'pet') ? 'pets' : (m.type === 'child' ? 'child_care' : 'person');
+          html += '<button onclick="_selectNest2Member(\''+m.id+'\')" style="flex-shrink:0;display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:100px;border:'+(isMSel?'2.5px':'1.5px')+' solid '+(isMSel?'var(--accent-deep)':'var(--line)')+';background:'+(isMSel?'var(--accent-deep)':'#FFFFFF')+';color:'+(isMSel?'white':'#666')+';font-family:inherit;font-size:13px;font-weight:'+(isMSel?'800':'700')+';cursor:pointer;">';
+          if (m.photo) {
+            html += '<img src="'+m.photo+'" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" />';
+          } else {
+            html += '<span class="material-symbols-rounded" style="font-size:16px;color:'+(isMSel?'white':'#888')+';">'+_tIcon+'</span>';
+          }
+          html += escapeHtml(m.name)+'</button>';
+        }
+      }
+      html += '</div>';
+      
+      // カテゴリタブ（大きめ）
+      html += '<div style="flex-shrink:0;padding:8px 14px;display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line-soft);">';
+      for (const cat of NEST2_STAMP_CATEGORIES) {
+        const hasStamps = NEST2_STAMPS.some(s => s.category === cat && _allowedTargets.indexOf(s.target) >= 0);
+        if (!hasStamps) continue;
+        const isCSel = curCat === cat;
+        html += '<button onclick="_setNest2StampCategory(\''+cat+'\')" style="flex-shrink:0;padding:7px 16px;border-radius:100px;border:1.5px solid '+(isCSel?'var(--mint-deep)':'var(--line)')+';background:'+(isCSel?'var(--mint-deep)':'#FFFFFF')+';color:'+(isCSel?'white':'#777')+';font-family:inherit;font-size:13px;font-weight:'+(isCSel?'800':'700')+';cursor:pointer;">'+cat+'</button>';
+      }
+      html += '</div>';
+      
+      // スタンプボタングリッド（3列・大きく）
+      const visibleStamps = NEST2_STAMPS.filter(s => s.category === curCat && _allowedTargets.indexOf(s.target) >= 0);
+      html += '<div style="flex:1;padding:14px 14px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
+      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">';
+      for (const sp of visibleStamps) {
+        const _CAT_COLORS = {
+          '生活':'#F5E8D0','学習':'#E0F0FF','遊び':'#FFE0F0','お世話':'#D5F0E0',
+          '健康':'#FFE0E0','気持ち':'#FFF5D5','お出かけ':'#D5E8FF'
+        };
+        const stampBg = _CAT_COLORS[sp.category] || '#F0F0F0';
+        html += '<button onclick="_addNest2Stamp(\''+sp.id+'\')" style="background:#FFFFFF;border:2px solid var(--line);border-radius:16px;padding:14px 6px 12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:96px;transition:transform 0.1s,box-shadow 0.1s;" ontouchstart="this.style.transform=\'scale(0.94)\';this.style.boxShadow=\'0 2px 6px rgba(0,0,0,0.15)\'" ontouchend="this.style.transform=\'\';this.style.boxShadow=\'\'">';
+        html += '<div style="width:52px;height:52px;border-radius:14px;background:'+stampBg+';display:flex;align-items:center;justify-content:center;">';
+        html += '<span class="material-symbols-rounded" style="font-size:30px;color:#7A7A7A;">'+sp.icon+'</span>';
+        html += '</div>';
+        html += '<span style="font-size:12px;font-weight:800;color:#444;line-height:1.2;text-align:center;">'+sp.name+'</span>';
+        html += '</button>';
+      }
+      html += '</div></div>';
+      html += '</div>'; // sheet end
     }
-    html += '</div></div>';
   } else {
-    // Diaryモード時：通常の入力エリア
+    // Diaryモード時：通常の入力エリア（変更なし）
+    html += '<div style="position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);z-index:50;">';
     html += '<div style="padding:8px 10px 14px;">';
     if (window._nest2PendingPhoto) {
       html += '<div style="max-width:520px;margin:0 auto 8px;display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:12px;">';
@@ -28524,8 +28549,8 @@ function renderNest2Detail() {
     html += '</div>';
     html += '<input type="file" id="nest2TweetPhotoFile" accept="image/*" style="display:none;" onchange="_nest2HandleTweetPhotoSelect(event)">';
     html += '</div>';
+    html += '</div>';
   }
-  html += '</div>';
   
   app.innerHTML = html;
   setTimeout(() => {
@@ -28866,6 +28891,20 @@ function _addNest2Stamp(stampId) {
 }
 window._addNest2Stamp = _addNest2Stamp;
 
+// ★ スタンプシートを開く
+function _openNest2StampSheet() {
+  window._nest2StampSheetOpen = true;
+  renderNest2Detail();
+}
+window._openNest2StampSheet = _openNest2StampSheet;
+
+// ★ スタンプシートを閉じる
+function _closeNest2StampSheet() {
+  window._nest2StampSheetOpen = false;
+  renderNest2Detail();
+}
+window._closeNest2StampSheet = _closeNest2StampSheet;
+
 // メンバー選択切替
 function _selectNest2Member(memberId) {
   const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
@@ -29014,6 +29053,8 @@ function _setNest2InputTab(tab) {
   const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
   if (!nest) return;
   nest.diaryInputTab = tab;
+  // タブ切替時はスタンプシートを閉じる
+  window._nest2StampSheetOpen = false;
   saveData();
   renderNest2Detail();
 }
@@ -29023,6 +29064,8 @@ window._setNest2InputTab = _setNest2InputTab;
 function _backToNest2List() {
   data.activeNest2Id = null;
   currentView = 'new_nest';
+  // スタンプシートもリセット
+  window._nest2StampSheetOpen = false;
   const _appEl = document.getElementById('app');
   if (_appEl) {
     _appEl.style.backgroundImage = '';
