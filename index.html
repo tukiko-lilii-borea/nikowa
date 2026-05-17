@@ -24887,12 +24887,12 @@ function _renderStampHistoryBubble(st) {
     _displayMemo = st.memo;
   }
   
-  let h = '<div style="display:flex;align-items:stretch;gap:8px;padding:8px 6px;margin-bottom:2px;border-bottom:1px solid rgba(0,0,0,0.04);">';
+  let h = '<div style="display:flex;align-items:stretch;gap:8px;padding:10px 10px;margin-bottom:6px;background:#FFFFFF;border:1px solid rgba(0,0,0,0.06);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   
   // ① 時間（左端）+ 縦ライン
   h += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
-  h += '<span style="font-size:10px;color:var(--ink-sub);font-weight:700;font-variant-numeric:tabular-nums;width:32px;text-align:right;">'+timeStr+'</span>';
-  h += '<div style="width:1px;align-self:stretch;background:rgba(0,0,0,0.08);"></div>';
+  h += '<span style="font-size:10px;color:#888;font-weight:700;font-variant-numeric:tabular-nums;width:32px;text-align:right;">'+timeStr+'</span>';
+  h += '<div style="width:1px;align-self:stretch;background:rgba(0,0,0,0.1);"></div>';
   h += '</div>';
   
   // ② アイコン（カテゴリカラーの円形カード）
@@ -24910,9 +24910,10 @@ function _renderStampHistoryBubble(st) {
   }
   h += '</button>';
   
-  // ④ 右端：写真 or チェックマーク
-  if (_hasPhoto) {
-    h += '<button onclick="event.stopPropagation();openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(st.photo)+'" style="flex-shrink:0;width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;"><img src="'+st.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
+  // ④ 右端：写真 or チェックマーク（memoPhotoも写真として扱う）
+  const _photoSrc = st.photo || st.memoPhoto || null;
+  if (_photoSrc) {
+    h += '<button onclick="event.stopPropagation();openPhotoPreview(this.dataset.photo)" data-photo="'+escapeHtml(_photoSrc)+'" style="flex-shrink:0;width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--surface);padding:0;overflow:hidden;cursor:pointer;align-self:center;"><img src="'+_photoSrc+'" style="width:100%;height:100%;object-fit:cover;display:block;" /></button>';
   } else {
     h += '<div style="flex-shrink:0;width:32px;height:32px;align-self:center;border-radius:50%;background:#E8F5E8;border:1.5px solid #7DC47D;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;color:#5BA85B;">check</span></div>';
   }
