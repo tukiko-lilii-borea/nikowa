@@ -27704,18 +27704,21 @@ function renderNewNestView() {
   
   let html = '';
   
-  // ===== トップバー =====
-  html += '<div class="topbar">'+topbarPetalHtml()+'<div class="topbar-spacer"></div>';
-  html += '<div class="topbar-title" style="font-weight:900;letter-spacing:0.5px;font-size:18px;">.Nest.</div>';
-  html += '<button class="topbar-btn" onclick="openNewNestCreate()" title="新規グループ" style="background:var(--accent);color:white;border:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:20px;color:white;">add</span></button>';
+  // ===== トップバー（背景透明・テーマ背景＋花吹雪が透ける） =====
+  html += '<div class="topbar" style="background:transparent !important;border-bottom:none !important;box-shadow:none !important;">'+topbarPetalHtml()+'<div class="topbar-spacer"></div>';
+  html += '<div class="topbar-title" style="font-weight:900;letter-spacing:1px;font-size:20px;color:var(--ink-dark);text-shadow:0 1px 2px rgba(255,255,255,0.6);">.Nest.</div>';
+  html += '<button class="topbar-btn" onclick="openNewNestCreate()" title="新規グループ" style="background:var(--accent);color:white;border:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><span class="material-symbols-rounded" style="font-size:20px;color:white;">add</span></button>';
   html += '</div>';
   
+  // ===== 白背景カードラッパー（テーマ背景の上に被せる） =====
+  html += '<div style="background:#FFFFFF;border-radius:20px 20px 0 0;min-height:calc(100vh - 130px);box-shadow:0 -3px 12px rgba(0,0,0,0.06);padding-bottom:90px;position:relative;z-index:1;">';
+  
   // ===== カテゴリタブ =====
-  html += '<div style="background:var(--surface);padding:8px 12px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;">';
+  html += '<div style="padding:14px 12px 10px;border-bottom:1px solid #F0F0F0;overflow-x:auto;scrollbar-width:none;">';
   html += '<div style="display:flex;gap:6px;min-width:max-content;">';
   for (const cat of _NEST2_CATEGORIES) {
     const isActive = window._nest2Tab === cat.id;
-    html += '<button onclick="setNest2Tab(\''+cat.id+'\')" style="flex-shrink:0;padding:6px 14px;border-radius:100px;border:1.5px solid '+(isActive?cat.color:'var(--line)')+';background:'+(isActive?cat.color:'transparent')+';color:'+(isActive?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">';
+    html += '<button onclick="setNest2Tab(\''+cat.id+'\')" style="flex-shrink:0;padding:6px 14px;border-radius:100px;border:1.5px solid '+(isActive?cat.color:'#E0E0E0')+';background:'+(isActive?cat.color:'#FFFFFF')+';color:'+(isActive?'white':'#666')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">';
     html += '<span class="material-symbols-rounded" style="font-size:13px;">'+cat.icon+'</span>'+cat.label;
     html += '</button>';
   }
@@ -27726,16 +27729,16 @@ function renderNewNestView() {
     .filter(n => window._nest2Tab === 'all' || n.category === window._nest2Tab)
     .sort((a,b) => (b.lastActivityAt||b.createdAt||0) - (a.lastActivityAt||a.createdAt||0));
   
-  html += '<div style="padding:0;">';
+  html += '<div style="padding:0;background:#FFFFFF;">';
   
   if (filtered.length === 0) {
-    html += '<div style="padding:60px 30px;text-align:center;color:var(--ink-sub);">';
+    html += '<div style="padding:60px 30px;text-align:center;color:#999;">';
     html += '<div style="font-size:48px;margin-bottom:16px;opacity:0.5;"><span class="material-symbols-rounded" style="font-size:48px;color:var(--accent-deep);">forum</span></div>';
     if ((data.nests2||[]).length === 0) {
-      html += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;">まだグループがないよ</div>';
+      html += '<div style="font-size:14px;font-weight:800;color:#333;margin-bottom:8px;">まだグループがないよ</div>';
       html += '<div style="font-size:11px;line-height:1.7;">右上の＋ボタンから<br>新しいグループを作ろう🌿</div>';
     } else {
-      html += '<div style="font-size:13px;font-weight:700;color:var(--ink-dark);">このカテゴリにはまだないよ</div>';
+      html += '<div style="font-size:13px;font-weight:700;color:#333;">このカテゴリにはまだないよ</div>';
     }
     html += '</div>';
   } else {
@@ -27745,6 +27748,7 @@ function renderNewNestView() {
   }
   
   html += '</div>';
+  html += '</div>'; // close 白背景ラッパー
   app.innerHTML = html;
 }
 window.renderNewNestView = renderNewNestView;
@@ -27774,7 +27778,7 @@ function _renderNest2Row(nest) {
   
   const unread = nest.unreadCount || 0;
   
-  let h = '<button onclick="openNest2Detail(\''+nest.id+'\')" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:transparent;border:none;border-bottom:1px solid var(--line-soft);cursor:pointer;font-family:inherit;text-align:left;">';
+  let h = '<button onclick="openNest2Detail(\''+nest.id+'\')" oncontextmenu="event.preventDefault();_nest2AskDelete(\''+nest.id+'\');return false;" ontouchstart="_nest2RowTouchStart(event,\''+nest.id+'\')" ontouchend="_nest2RowTouchEnd()" ontouchmove="_nest2RowTouchEnd()" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:#FFFFFF;border:none;border-bottom:1px solid #F0F0F0;cursor:pointer;font-family:inherit;text-align:left;">';
   
   // アイコン：写真があれば写真、なければカテゴリ material icon
   if (nest.photo) {
@@ -27790,16 +27794,16 @@ function _renderNest2Row(nest) {
   // 中央：名前＋サブ
   h += '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">';
   h += '<div style="display:flex;align-items:center;gap:6px;">';
-  h += '<span style="font-size:14px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(nest.name||'(名前なし)')+'</span>';
+  h += '<span style="font-size:14px;font-weight:800;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(nest.name||'(名前なし)')+'</span>';
   // カテゴリピル
   h += '<span style="font-size:8.5px;font-weight:700;color:'+catDef.color+';background:'+catDef.color+'22;padding:1px 6px;border-radius:100px;flex-shrink:0;">'+catDef.label+'</span>';
   h += '</div>';
-  h += '<div style="font-size:11px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(subText)+'</div>';
+  h += '<div style="font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(subText)+'</div>';
   h += '</div>';
   
   // 右側：時刻＋未読バッジ
   h += '<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px;">';
-  h += '<span style="font-size:10px;color:var(--ink-light);font-weight:600;">'+timeStr+'</span>';
+  h += '<span style="font-size:10px;color:#AAA;font-weight:600;">'+timeStr+'</span>';
   if (unread > 0) {
     h += '<span style="background:#E57373;color:white;font-size:9px;font-weight:800;padding:1px 6px;border-radius:100px;min-width:18px;text-align:center;">'+unread+'</span>';
   } else {
@@ -28174,6 +28178,9 @@ window._nest2CreateBack = _nest2CreateBack;
 
 function _nest2CreateFinish() {
   if (!_nest2CanProceed()) return;
+  if (window._nest2CreateBusy) return; // ★ 二重発火防止（iOS Safari対策）
+  window._nest2CreateBusy = true;
+  setTimeout(() => { window._nest2CreateBusy = false; }, 800);
   const s = window._nest2Create;
   const newNest = {
     id: 'n2_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
@@ -28216,6 +28223,35 @@ function openNest2Detail(nestId) {
   showToast('「'+nest.name+'」のチャット画面は次回実装予定🌿');
 }
 window.openNest2Detail = openNest2Detail;
+
+// 長押しで削除確認
+window._nest2LongPressTimer = null;
+function _nest2RowTouchStart(event, nestId) {
+  if (window._nest2LongPressTimer) clearTimeout(window._nest2LongPressTimer);
+  window._nest2LongPressTimer = setTimeout(() => {
+    if (navigator.vibrate) navigator.vibrate(15);
+    _nest2AskDelete(nestId);
+    window._nest2LongPressTimer = null;
+  }, 600);
+}
+window._nest2RowTouchStart = _nest2RowTouchStart;
+
+function _nest2RowTouchEnd() {
+  if (window._nest2LongPressTimer) { clearTimeout(window._nest2LongPressTimer); window._nest2LongPressTimer = null; }
+}
+window._nest2RowTouchEnd = _nest2RowTouchEnd;
+
+function _nest2AskDelete(nestId) {
+  const nest = (data.nests2||[]).find(n => n.id === nestId);
+  if (!nest) return;
+  if (confirm('「'+nest.name+'」を削除する？\nこの操作は元に戻せないよ。')) {
+    data.nests2 = (data.nests2||[]).filter(n => n.id !== nestId);
+    saveData();
+    renderNewNestView();
+    showToast('「'+nest.name+'」を削除したよ');
+  }
+}
+window._nest2AskDelete = _nest2AskDelete;
 
 // ═══════════════════════════════════════════════════════════════
 
