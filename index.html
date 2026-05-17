@@ -4274,10 +4274,10 @@
 <div class="app" id="app"></div>
 
 <nav class="bottom-nav" id="bottomNav" style="display:none;">
-  <button class="nav-btn nav-back-btn" id="navBackBtn" onclick="navBack()" style="display:none;"><span class="nav-icon"><span class="material-symbols-rounded">arrow_back</span></span><span class="nav-en">Back</span></button>
+  <button class="nav-btn" data-view="me"><span class="nav-icon"><span class="material-symbols-rounded">person</span></span><span class="nav-en">Me</span></button>
   <button class="nav-btn active" data-view="houses"><span class="nav-icon"><span class="material-symbols-rounded">home</span></span><span class="nav-en">Home</span></button>
-  <button class="nav-btn nav-plus-btn" id="navPlusBtn" onclick="openQuickAddMenu()" type="button"><span class="nav-icon nav-plus-icon"><span class="material-symbols-rounded">add</span></span></button>
   <button class="nav-btn" data-view="schedule"><span class="nav-icon"><span class="material-symbols-rounded">calendar_month</span></span><span class="nav-en">Schedule</span></button>
+  <button class="nav-btn" data-view="nest"><span class="nav-icon"><span class="material-symbols-rounded">groups</span></span><span class="nav-en">Nest</span></button>
   <button class="nav-btn" data-view="town"><span class="nav-icon"><span class="material-symbols-rounded">location_city</span></span><span class="nav-en">Town</span></button>
 </nav>
 </div>
@@ -8945,10 +8945,60 @@ function _attachHomeSwipeNav() {
     app.removeEventListener('touchmove', app._swipeMove);
     app.removeEventListener('touchend', app._swipeEnd);
   }
+
+  // ★ 全タブスワイプ（Me↔Home↔Schedule↔Nest↔Town）
+  const _TABS = ['me', 'houses', 'schedule', 'nest', 'town'];
+  function _getCurrentTabIdx() {
+    if (currentMode === 'me' && currentView === 'me') return 0;
+    if (currentMode === 'pet' && currentView === 'top') return 1;
+    if (currentView === 'schedule') return 2;
+    if (currentMode === 'nest' && currentView === 'nest') return 3;
+    if (currentView === 'town') return 4;
+    return -1;
+  }
+  function _navigateToTab(view) {
+    setActiveNav(view);
+    switch(view) {
+      case 'me':
+        if (currentMode !== 'me') switchMode('me');
+        currentView = 'me';
+        break;
+      case 'houses':
+        if (currentMode !== 'pet') switchMode('pet');
+        currentView = 'top';
+        data.selectedHouseId = null;
+        break;
+      case 'schedule':
+        currentView = 'schedule';
+        if (!schedCalMonth) { const t = new Date(); schedCalMonth = { year: t.getFullYear(), month: t.getMonth() }; }
+        if (!schedCalSelected) schedCalSelected = todayKey();
+        break;
+      case 'nest':
+        if (currentMode !== 'nest') switchMode('nest');
+        currentView = 'nest';
+        break;
+      case 'town':
+        currentView = 'town';
+        townHideMainTabs = false;
+        break;
+    }
+    render();
+  }
+
+  // クロージャでdxを保持してonTriggerに渡す
+  let _capturedDx = 0;
   const h = _makeSwipeHandler(
-    function() { return currentView === 'top'; },
-    function(dx) { return dx > 50; },
-    function() { switchMode('me'); currentView = 'me'; currentModeTab['me'] = 'diary'; delete data.tweetViewDate; render(); }
+    function() { return _getCurrentTabIdx() >= 0; },
+    function(dx) { _capturedDx = dx; return Math.abs(dx) > 60; },
+    function() {
+      const idx = _getCurrentTabIdx();
+      if (idx < 0) return;
+      if (_capturedDx < 0 && idx < _TABS.length - 1) {
+        _navigateToTab(_TABS[idx + 1]); // 左スワイプ → 右のタブ
+      } else if (_capturedDx > 0 && idx > 0) {
+        _navigateToTab(_TABS[idx - 1]); // 右スワイプ → 左のタブ
+      }
+    }
   );
   app._swipeStart = h.onStart;
   app._swipeMove = h.onMove;
@@ -22088,7 +22138,7 @@ window.openMePhotoPicker = openMePhotoPicker;
 
 function renderMeMode() {
   document.getElementById('bottomNav').style.display = 'flex';
-  setActiveNav('pet');
+  setActiveNav('me');
   const app = document.getElementById('app');
   
   const validMeTabs = ['stamp','diary','study','money','goods','collection','resume','office','secret'];
@@ -22746,7 +22796,7 @@ function renderMeMode() {
   html += '</div>'; // コンテンツエリア閉じ
   html += '<div style="height:80px;"></div>';
   app.innerHTML = html;
-  _attachMeSwipeBack();
+  // ★ Meタブのスワイプはユニバーサルハンドラーのみで処理（_attachMeSwipeBackは不要）
   // Diaryタブの場合は描画後の調整＆スクロールを実行
   if (tab === 'diary') {
     // ★ 重要：render()末尾のscrollTo(0,0)を阻止
@@ -23077,21 +23127,36 @@ function renderTweetsDiary() {
   
   // 現在地ピル（Diaryタブのみ表示）
   if (diaryInputTab !== 'record') {
-    h += '<div style="padding:4px 12px 0;display:flex;justify-content:flex-start;">';
-    h += '<button onclick="openTweetLocationModal()" style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px 3px 7px;background:'+(isAway?'linear-gradient(135deg,#FFE8B0,#FFD580)':'var(--surface-warm)')+';border:1px solid '+(isAway?'#E89A4A':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:9px;font-weight:600;color:'+(isAway?'#8B6914':'var(--ink-sub)')+';cursor:pointer;letter-spacing:0.03em;">';
-    if (currentWeatherIcon) {
-      h += weatherIconHtml(currentWeatherIcon, 'font-size:11px;');
+    // ★ 過去日を見てる場合：追記バナーを表示
+    if (!isToday && data.tweetViewDate) {
+      const _vd = new Date(data.tweetViewDate);
+      const _vdM = _vd.getMonth()+1;
+      const _vdD = _vd.getDate();
+      const _vdW = ['日','月','火','水','木','金','土'][_vd.getDay()];
+      h += '<div style="padding:4px 12px 0;display:flex;align-items:center;gap:4px;">';
+      h += '<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:linear-gradient(135deg,#FFF3CD,#FFE08A);border:1px solid #E8C870;border-radius:100px;font-size:9px;font-weight:700;color:#8B6914;">';
+      h += '<span class="material-symbols-rounded" style="font-size:11px;">history_edu</span>';
+      h += '<span>'+_vdM+'/'+_vdD+'('+_vdW+') に追記</span>';
+      h += '</div>';
+      h += '</div>';
     } else {
-      h += '<span class="material-symbols-rounded" style="font-size:10px;">place</span>';
+      // 通常：現在地ピル
+      h += '<div style="padding:4px 12px 0;display:flex;justify-content:flex-start;">';
+      h += '<button onclick="openTweetLocationModal()" style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px 3px 7px;background:'+(isAway?'linear-gradient(135deg,#FFE8B0,#FFD580)':'var(--surface-warm)')+';border:1px solid '+(isAway?'#E89A4A':'var(--line)')+';border-radius:100px;font-family:inherit;font-size:9px;font-weight:600;color:'+(isAway?'#8B6914':'var(--ink-sub)')+';cursor:pointer;letter-spacing:0.03em;">';
+      if (currentWeatherIcon) {
+        h += weatherIconHtml(currentWeatherIcon, 'font-size:11px;');
+      } else {
+        h += '<span class="material-symbols-rounded" style="font-size:10px;">place</span>';
+      }
+      h += '<span>'+escapeHtml(currentRegionEn)+'</span>';
+      if (isAway) {
+        h += '<span style="font-size:8px;opacity:0.6;">·</span>';
+        h += '<span style="font-size:8px;color:#C4762A;font-weight:700;letter-spacing:0.05em;">trip</span>';
+      }
+      h += '<span class="material-symbols-rounded" style="font-size:9px;opacity:0.5;margin-left:1px;">expand_less</span>';
+      h += '</button>';
+      h += '</div>';
     }
-    h += '<span>'+escapeHtml(currentRegionEn)+'</span>';
-    if (isAway) {
-      h += '<span style="font-size:8px;opacity:0.6;">·</span>';
-      h += '<span style="font-size:8px;color:#C4762A;font-weight:700;letter-spacing:0.05em;">trip</span>';
-    }
-    h += '<span class="material-symbols-rounded" style="font-size:9px;opacity:0.5;margin-left:1px;">expand_less</span>';
-    h += '</button>';
-    h += '</div>';
   }
   
   // 写真プレビュー
@@ -24310,11 +24375,23 @@ function postTweet() {
     }
   }
   
-  // 投稿時の天気を取得（その日の天気アイコン）
+  // ★ タイムスタンプ：過去日を見てる時はその日付の現在時刻で保存（Me限定）
   const now = new Date();
+  let _postTimestamp = now.getTime();
+  const _isViewingPast = !!data.tweetViewDate;
+  if (_isViewingPast) {
+    const viewDate = new Date(data.tweetViewDate);
+    // 選択日付 + 現在の時分秒（日中の順序が保たれる）
+    const pastTs = new Date(
+      viewDate.getFullYear(), viewDate.getMonth(), viewDate.getDate(),
+      now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds()
+    );
+    _postTimestamp = pastTs.getTime();
+  }
+  
+  // 天気を取得（過去日の場合も同じキャッシュから）
   const todayKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   const currentWeather = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(todayKey) : null;
-  // 投稿時の地域（旅先 or ホーム）
   const homeRegion = (data && data.userRegion) || '大阪';
   const postRegion = data.tweetCurrentRegion || homeRegion;
   
@@ -24323,10 +24400,10 @@ function postTweet() {
     body: body,
     photos: photos.slice(),
     tags: tags,
-    timestamp: Date.now()
+    timestamp: _postTimestamp
   };
   if (currentWeather) newTweet.weather = currentWeather;
-  if (postRegion !== homeRegion) newTweet.region = postRegion; // 旅先のみ保存
+  if (postRegion !== homeRegion) newTweet.region = postRegion;
   
   data.tweets.push(newTweet);
   saveData();
@@ -24339,8 +24416,9 @@ function postTweet() {
   window._tweetPendingPhotos = [];
   _renderTweetPhotoPreview();
   
-  // 過去日見てる時は今日に戻す
-  if (data.tweetViewDate) {
+  // ★ 過去日に書いた場合：その日に留まる（今日に戻さない）
+  // 今日に書いた場合：tweetViewDateを消して今日表示
+  if (!_isViewingPast && data.tweetViewDate) {
     delete data.tweetViewDate;
     saveData();
   }
@@ -42664,33 +42742,30 @@ function saveUserRegion(region) {
 
 function setActiveNav(view) {
   const btns = document.querySelectorAll('.nav-btn[data-view]');
-  for (const b of btns) b.classList.toggle('active', b.dataset.view === view);
-  // 戻るボタン：top以外、または検索画面表示中で表示
-  const backBtn = document.getElementById('navBackBtn');
-  const searchOpen = !!document.getElementById('globalSearchModal');
-  if (backBtn) backBtn.style.display = (view === 'top' && !searchOpen) ? 'none' : 'flex';
+  // meモードはdata-view='me'、ホームはdata-view='houses'
+  const activeKey = (view === 'pet' || view === 'top' || view === 'house') ? 'houses'
+    : (view === 'me') ? 'me'
+    : (view === 'nest') ? 'nest'
+    : view;
+  for (const b of btns) b.classList.toggle('active', b.dataset.view === activeKey);
 }
 document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
   btn.onclick = () => {
     const view = btn.dataset.view;
-    
-    // 検索画面が開いていたら閉じる
-    if (document.getElementById('globalSearchModal')) {
-      closeGlobalSearch();
-    }
-    
-    // 即座に視覚フィードバック（アクティブ表示変更）
+    if (document.getElementById('globalSearchModal')) closeGlobalSearch();
     setActiveNav(view);
-    
-    // 重い処理は次フレームで実行（タップの即時感を出すため）
     requestAnimationFrame(() => {
       let needsRender = false;
-      
-      if (view === 'houses') {
-        // 既にホーム画面（pet モード × top view）なら何もしない
-        if (currentMode === 'pet' && currentView === 'top' && !data.selectedHouseId) {
-          return;
-        }
+
+      if (view === 'me') {
+        if (currentMode === 'me' && currentView === 'me') return;
+        _pushNav();
+        if (currentMode !== 'me') switchMode('me');
+        currentView = 'me';
+        needsRender = true;
+      }
+      else if (view === 'houses') {
+        if (currentMode === 'pet' && currentView === 'top' && !data.selectedHouseId) return;
         _pushNav();
         if (currentMode !== 'pet') switchMode('pet');
         currentView = 'top';
@@ -42699,10 +42774,10 @@ document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
         needsRender = true;
       }
       else if (view === 'schedule') {
-        if (currentView === 'schedule') return; // 既にスケジュール画面
+        if (currentView === 'schedule') return;
         _pushNav();
         currentView = 'schedule';
-        data._schedView = 'month'; // 常にカレンダー表示
+        data._schedView = 'month';
         if (!schedCalMonth) {
           const t = new Date();
           schedCalMonth = { year: t.getFullYear(), month: t.getMonth() };
@@ -42710,12 +42785,19 @@ document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
         if (!schedCalSelected) schedCalSelected = todayKey();
         needsRender = true;
       }
+      else if (view === 'nest') {
+        if (currentMode === 'nest' && currentView === 'nest') return;
+        _pushNav();
+        if (currentMode !== 'nest') switchMode('nest');
+        currentView = 'nest';
+        needsRender = true;
+      }
       else if (view === 'town') {
         if (currentView === 'town') return;
         _pushNav();
         currentView = 'town';
-        townHideMainTabs = false; // 通常アクセスはタブ表示
-        townMainTab = 'live';     // デフォルトタブにリセット
+        townHideMainTabs = false;
+        townMainTab = 'live';
         needsRender = true;
       }
       else if (view === 'settings') {
@@ -42724,7 +42806,7 @@ document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
         currentView = 'settings';
         needsRender = true;
       }
-      
+
       if (needsRender) render();
     });
   };
