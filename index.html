@@ -5474,8 +5474,14 @@ function paperBackground(theme) {
       return 'none';
     case 'dot':
       return 'radial-gradient('+c+' 1px, transparent 1px)';
-    case 'polka':
-      return 'radial-gradient('+c+' 8px, transparent 8.5px), radial-gradient('+c+' 8px, transparent 8.5px)';
+    case 'polka': {
+      // 千鳥配置（互い違い）のドットをSVGタイルで実現：位置オフセット問題回避
+      const polkaSvg = "<svg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'>"
+        + "<circle cx='11.5' cy='11.5' r='8' fill='"+c+"'/>"
+        + "<circle cx='34.5' cy='34.5' r='8' fill='"+c+"'/>"
+        + "</svg>";
+      return "url(\"data:image/svg+xml;utf8," + encodeURIComponent(polkaSvg) + "\")";
+    }
     case 'stripe':
       return 'repeating-linear-gradient(45deg, '+c+' 0 1px, transparent 1px 14px)';
     case 'gingham':
@@ -5559,7 +5565,7 @@ function paperBackgroundSize(theme) {
   switch (theme.pattern) {
     case 'plain': return 'auto';
     case 'dot': return '10px 10px';
-    case 'polka': return '46px 46px, 46px 46px';
+    case 'polka': return '46px 46px';
     case 'stripe': return 'auto';
     case 'gingham': return '22px 22px, 22px 22px';
     case 'asanoha': return '28px 48px, 28px 48px, 28px 48px, 28px 48px';
@@ -5723,7 +5729,6 @@ function applyTheme(themeId) {
   const paperSize = paperBackgroundSize(themeLight);
   const multiPosPatterns = ['polka','dalmatian','dalmatian_inv','seigaiha','asanoha'];
   const paperPosMap = {
-    'polka': '0 0, 23px 23px',
     'dalmatian': '0 0',
     'dalmatian_inv': '0 0',
     'seigaiha': '0 0, 18px 0, 36px 0',
@@ -9534,25 +9539,33 @@ function openMeDrawerMenu() {
   const _logoSrc = (typeof getCurrentLogoSrc === 'function') ? getCurrentLogoSrc() : 'assets/logo-dark.svg';
   // アバター：material icon名 / 絵文字 / テキスト を安全に表示
   const _avatarHtml = (function(av) {
-    if (!av) return '<span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">person</span>';
+    if (!av) return '<span class="material-symbols-rounded" style="font-size:30px;color:var(--accent-deep);">person</span>';
     if (/^[a-z][a-z0-9_]*$/.test(av)) {
       // material icon名
-      return '<span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">'+av+'</span>';
+      return '<span class="material-symbols-rounded" style="font-size:30px;color:var(--accent-deep);">'+av+'</span>';
     }
     // 絵文字・テキスト（長すぎる場合はperson icon）
-    if (av.length > 4) return '<span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">person</span>';
-    return '<span style="font-size:26px;">'+escapeHtml(av)+'</span>';
+    if (av.length > 4) return '<span class="material-symbols-rounded" style="font-size:30px;color:var(--accent-deep);">person</span>';
+    return '<span style="font-size:30px;">'+escapeHtml(av)+'</span>';
   })(userAvatar);
-  h += '<div style="flex-shrink:0;padding:14px 18px 12px;border-bottom:1px solid var(--line);background:var(--bg);">';
-  h += '<div style="display:flex;align-items:center;gap:10px;">';
-  // ロゴ：大きめ・余白を上下クリップ
+  
+  // ★ bodyのテーマ背景を取得（柄あれば柄あり）
+  const _bodyStyle = window.getComputedStyle(document.body);
+  const _hdrBgImage = _bodyStyle.backgroundImage || 'none';
+  const _hdrBgColor = _bodyStyle.backgroundColor || 'var(--bg)';
+  
+  h += '<div style="flex-shrink:0;padding:20px 18px 18px;border-bottom:1px solid var(--line);background-color:'+_hdrBgColor+';background-image:'+_hdrBgImage+';background-repeat:repeat;position:relative;overflow:hidden;">';
+  // ★ 花吹雪レイヤー
+  h += topbarPetalHtml();
+  h += '<div style="display:flex;align-items:center;gap:10px;position:relative;z-index:1;">';
+  // ★ ロゴ：2倍（44px → 80px）
   h += '<div style="flex:1;overflow:hidden;">';
-  h += '<img src="'+_logoSrc+'" alt="nikowa" style="height:44px;width:auto;max-width:180px;object-fit:contain;object-position:left center;display:block;">';
+  h += '<img src="'+_logoSrc+'" alt="nikowa" style="height:80px;width:auto;max-width:240px;object-fit:contain;object-position:left center;display:block;filter:drop-shadow(0 1px 2px rgba(255,255,255,0.5));">';
   h += '</div>';
-  // アバター
-  h += '<div style="position:relative;width:46px;height:46px;border-radius:50%;background:var(--accent-bg);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">'+_avatarHtml;
-  h += '<div style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:var(--mint-deep);border:2px solid white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:9px;color:white;">pets</span></div>';
-  h += '</div>';
+  // ★ アバター（タップでマイプロフィール画面へ遷移）
+  h += '<button onclick="closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab(\'me\',\'resume\');},250);" style="position:relative;width:54px;height:54px;border-radius:50%;background:var(--accent-bg);border:2.5px solid var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;cursor:pointer;padding:0;font-family:inherit;box-shadow:0 2px 6px rgba(0,0,0,0.15);">'+_avatarHtml;
+  h += '<div style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:var(--mint-deep);border:2px solid white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:11px;color:white;">person</span></div>';
+  h += '</button>';
   h += '</div>';
   h += '</div>';
 
@@ -23380,12 +23393,16 @@ function renderTweetsDiary() {
   const dateKeyForWeather = viewDate.getFullYear()+'-'+String(viewDate.getMonth()+1).padStart(2,'0')+'-'+String(viewDate.getDate()).padStart(2,'0');
   const weatherIcon = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dateKeyForWeather) : null;
   
-  // 9日固定日付バー（前後4日 = 合計9日）コンパクト版：曜日＋日付を横並び、天気は下
+  // 日曜始まり7日固定の日付バー（今週の日〜土）：コンパクト版
   h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:3px 5px;">';
   h += '<div style="display:flex;justify-content:space-between;">';
-  for (let di = -4; di <= 4; di++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + di);
+  // 今日の曜日（0=日, 6=土）→ 日曜まで戻る日数
+  const _todayDow = today.getDay();
+  const _sunday = new Date(today);
+  _sunday.setDate(today.getDate() - _todayDow);
+  for (let di = 0; di < 7; di++) {
+    const d = new Date(_sunday);
+    d.setDate(_sunday.getDate() + di);
     const dk = d.toDateString();
     const isActive = dk === viewDateKey;
     const isTodayDate = dk === todayKey;
@@ -23401,7 +23418,7 @@ function renderTweetsDiary() {
     if (isTodayDate && isActive) _btnBorder = '1.5px solid rgba(255,255,255,0.7)';
     else if (isTodayDate) _btnBorder = '1.5px solid var(--accent-deep)';
     h += '<button onclick="setTweetViewDate(\''+dk+'\')" style="flex:1;padding:3px 2px;border-radius:9px;border:'+_btnBorder+';background:'+(isActive?'var(--accent-deep)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;font-family:inherit;">';
-    // ★ 曜日＋日付を横並び（縦を短縮）
+    // 曜日＋日付を横並び
     h += '<div style="display:flex;align-items:baseline;gap:3px;line-height:1;">';
     h += '<span style="font-size:9px;font-weight:600;color:'+subColor+';">'+wdJp+'</span>';
     h += '<span style="font-size:14px;font-weight:900;color:'+textColor+';">'+dayNum+'</span>';
@@ -27708,6 +27725,7 @@ function renderNewNestView() {
   app.style.backgroundImage = bodyStyle.backgroundImage;
   app.style.backgroundColor = bodyStyle.backgroundColor;
   app.style.backgroundSize = bodyStyle.backgroundSize;
+  app.style.backgroundPosition = bodyStyle.backgroundPosition;
   app.style.backgroundRepeat = 'repeat';
   app.style.backgroundAttachment = 'local';
   app.style.minHeight = '100vh';
@@ -45657,8 +45675,58 @@ function renderNewsTab() {
 }
 
 // ===== Resume（履歴書）タブ =====
+// ===== にこわID 操作ヘルパー（マイプロフィール用） =====
+function _copyNikowaId(id) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(id).then(() => {
+      showToast('ID「'+id+'」をコピーしたよ🌷');
+    }).catch(() => {
+      showToast('コピーできなかったよ');
+    });
+  } else {
+    // フォールバック：テキストエリア経由
+    const ta = document.createElement('textarea');
+    ta.value = id;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('ID「'+id+'」をコピーしたよ🌷'); }
+    catch(e) { showToast('コピーできなかったよ'); }
+    document.body.removeChild(ta);
+  }
+}
+window._copyNikowaId = _copyNikowaId;
+
+function _createNikowaIdInProfile(slot) {
+  const label = prompt('このIDの用途は？（例：リアル用 / ネット用 / 仕事用）', '用途'+slot);
+  if (label === null) return;
+  if (!data.nikowaIds) data.nikowaIds = [];
+  // 重複チェック
+  if (data.nikowaIds.some(n => n.slot === slot)) {
+    showToast('そのスロットは既に使われてるよ');
+    return;
+  }
+  const newId = (typeof generateNikowaId === 'function') ? generateNikowaId() : ('NKW-'+Math.random().toString(36).slice(2,7).toUpperCase());
+  data.nikowaIds.push({ slot: slot, id: newId, label: label || ('用途'+slot), active: true, createdAt: Date.now() });
+  saveData();
+  render();
+  showToast('にこわID生成 🌷 '+newId);
+}
+window._createNikowaIdInProfile = _createNikowaIdInProfile;
+
+function _deleteNikowaId(slot) {
+  const existing = (data.nikowaIds||[]).find(n => n.slot === slot);
+  if (!existing) return;
+  if (!confirm('ID「'+existing.id+'」を削除する？\nこのIDで作ったグループの招待は無効になるよ。')) return;
+  data.nikowaIds = (data.nikowaIds||[]).filter(n => n.slot !== slot);
+  saveData();
+  render();
+  showToast('IDを削除したよ');
+}
+window._deleteNikowaId = _deleteNikowaId;
+
 function renderResumeTab() {
   if (!data.resume) data.resume = {};
+  if (!data.nikowaIds) data.nikowaIds = [];
   const r = data.resume;
   
   // ユーザー情報を取得（onboardingデータ）
@@ -45668,6 +45736,37 @@ function renderResumeTab() {
   const userRegion = data.userRegion || '';
   
   let html = '<div style="padding:12px 16px 8px;">';
+  
+  // ═════════════════════════════════════════
+  // ★ にこわID（5スロット）セクション
+  // ═════════════════════════════════════════
+  html += '<div class="section-head"><h2 class="section-title" style="font-size:11px;letter-spacing:0.4px;">🆔 にこわID</h2></div>';
+  html += '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;margin-bottom:14px;padding:8px 0;">';
+  html += '<div style="padding:4px 14px 10px;font-size:10.5px;color:var(--ink-sub);line-height:1.6;">招待や共有で使うID。用途別に最大5つまで作れるよ（リアル用・ネット用など使い分けOK）</div>';
+  
+  for (let slot = 1; slot <= 5; slot++) {
+    const existing = (data.nikowaIds || []).find(n => n.slot === slot);
+    if (slot > 1) html += '<div style="height:1px;background:var(--card-divider);margin:0 14px;"></div>';
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;">';
+    // 番号バッジ
+    html += '<div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:'+(existing?'var(--accent)':'var(--line)')+';color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;">'+slot+'</div>';
+    
+    if (existing) {
+      html += '<div style="flex:1;min-width:0;">';
+      html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);font-family:monospace;letter-spacing:0.5px;">'+escapeHtml(existing.id)+'</div>';
+      html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:1px;">'+escapeHtml(existing.label||'用途未設定')+'</div>';
+      html += '</div>';
+      // コピーボタン
+      html += '<button onclick="_copyNikowaId(\''+existing.id+'\')" style="flex-shrink:0;padding:6px 10px;background:var(--surface-warm);color:var(--accent-deep);border:1px solid var(--accent);border-radius:8px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">content_copy</span>コピー</button>';
+      // 削除ボタン（小さく）
+      html += '<button onclick="_deleteNikowaId('+slot+')" style="flex-shrink:0;padding:6px;background:transparent;color:#999;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;" title="削除"><span class="material-symbols-rounded" style="font-size:16px;">delete</span></button>';
+    } else {
+      html += '<div style="flex:1;min-width:0;font-size:11.5px;color:var(--ink-light);font-style:italic;">空きスロット</div>';
+      html += '<button onclick="_createNikowaIdInProfile('+slot+')" style="flex-shrink:0;padding:6px 12px;background:var(--mint-deep);color:white;border:none;border-radius:8px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">add</span>生成する</button>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
   
   // ヘッダー
   html += '<div class="section-head"><h2 class="section-title" style="font-size:11px;letter-spacing:0.4px;">📋 わたしの履歴書</h2>';
@@ -51611,6 +51710,7 @@ function render() {
       _appEl.style.backgroundImage = '';
       _appEl.style.backgroundColor = '';
       _appEl.style.backgroundSize = '';
+      _appEl.style.backgroundPosition = '';
       _appEl.style.backgroundRepeat = '';
       _appEl.style.backgroundAttachment = '';
       _appEl.style.minHeight = '';
