@@ -8716,7 +8716,7 @@ function renderTop() {
   html += '<div style="margin:0 14px 12px;background:white;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;">';
   html += '<div style="display:flex;align-items:center;gap:8px;">';
   html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);flex-shrink:0;">mood</span>';
-  html += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);flex-shrink:0;">今の気分</span>';
+  html += '<span style="font-size:11px;font-weight:800;color:#333333;flex-shrink:0;">今の気分</span>';
   html += '<div style="flex:1;display:flex;justify-content:space-around;">';
   for (const m of _moods) {
     const isActive = _todayMood && _todayMood.moodId === m.id;
@@ -9507,7 +9507,8 @@ function openMeDrawerMenu() {
       items: [
         { icon:'menu_book',     color:'#6E9AC4', label:'マニュアル', desc:'業務マニュアル',   action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','office');},250);" },
         { icon:'edit_note',     color:'#7AA0C8', label:'メモ',       desc:'仕事のメモ',       action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','office');},250);" },
-        { icon:'handshake',     color:'#5888B8', label:'取引先',     desc:'取引先の管理',     action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','office');},250);" }
+        { icon:'handshake',     color:'#5888B8', label:'取引先',     desc:'取引先の管理',     action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','office');},250);" },
+        { icon:'school',        color:'#4A9BB0', label:'スタディ',   desc:'成績・点数の記録', action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','study');},250);" }
       ]
     },
     {
