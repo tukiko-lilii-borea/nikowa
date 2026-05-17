@@ -22945,7 +22945,7 @@ function renderTweetsDiary() {
   const diaryInputTab = data.diaryInputTab || 'diary';
   
   // ===== 全体ラッパー（日付バーから始まる）=====
-  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:4px 10px 250px;gap:3px;">';
+  h += '<div id="tweetWrap" style="display:flex;flex-direction:column;background:transparent;padding:6px 10px 250px;gap:8px;">';
   
   // 日付ピル（独立カード）
   const dateNum = (viewDate.getMonth()+1)+'/'+viewDate.getDate();
@@ -23195,12 +23195,12 @@ function _diaryAdjustAndScroll() {
       const navH = nav ? (window.innerHeight - nav.getBoundingClientRect().top) : 64;
       const bottomBlock = document.getElementById('tweetBottomBlock');
       if (bottomBlock) bottomBlock.style.bottom = navH + 'px';
-      // ★ タイムラインの高さを動的計算（白カードpadding2px+下16pxの余白を確保）
+      // ★ タイムラインの高さを動的計算（白カード上下に余白を確保）
       const tl = document.getElementById('tweetsTimeline');
       if (tl && bottomBlock) {
         const tlTop = tl.getBoundingClientRect().top;
         const bbH = bottomBlock.getBoundingClientRect().height;
-        const tlHeight = window.innerHeight - tlTop - bbH - navH - 20; // 白カード下padding2 + 余白18
+        const tlHeight = window.innerHeight - tlTop - bbH - navH - 28; // 白カード下padding2 + 余白26
         if (tlHeight > 100) {
           tl.style.height = tlHeight + 'px';
           tl.style.maxHeight = tlHeight + 'px';
@@ -24091,9 +24091,9 @@ function _renderTweetBubble(tw) {
   h += '<button onclick="event.stopPropagation();deleteTweet(\''+tw.id+'\')" title="削除" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:white;color:#999;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,0.08);font-family:inherit;padding:0;line-height:1;"><span class="material-symbols-rounded" style="font-size:12px;">close</span></button>';
   h += '<button onclick="openTweetEditModal(\''+tw.id+'\')" style="text-align:left;background:white;border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-family:inherit;cursor:pointer;display:inline-flex;flex-direction:column;gap:5px;box-shadow:0 1px 2px rgba(0,0,0,0.04);max-width:100%;">';
   
-  // テキスト本文（タグハイライト、フォント小さめ）
+  // テキスト本文（タグハイライト、少し太字・行間詰め）
   if (tw.body) {
-    h += '<div style="font-size:11.5px;color:var(--ink-dark);line-height:1.7;white-space:pre-wrap;word-wrap:break-word;text-align:left;letter-spacing:0.02em;">'+_renderTweetTextWithTags(tw.body)+'</div>';
+    h += '<div style="font-size:11.5px;font-weight:500;color:var(--ink-dark);line-height:1.4;white-space:pre-wrap;word-wrap:break-word;text-align:left;letter-spacing:0.02em;">'+_renderTweetTextWithTags(tw.body)+'</div>';
   }
   
   // 写真グリッド（最大10枚、最大3列）
