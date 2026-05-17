@@ -9546,18 +9546,18 @@ function openMeDrawerMenu() {
     h += '</div>';
     // 項目
     for (const it of sec.items) {
-      h += '<button onclick="'+it.action+'" style="width:100%;padding:10px 18px;background:transparent;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:12px;text-align:left;">';
-      // アイコン
-      h += '<div style="width:34px;height:34px;border-radius:10px;background:'+it.color+'22;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
-      h += '<span class="material-symbols-rounded" style="font-size:20px;color:'+it.color+';">'+it.icon+'</span>';
+      h += '<button onclick="'+it.action+'" style="width:100%;padding:8px 18px;background:transparent;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:10px;text-align:left;">';
+      // アイコン（小さめ）
+      h += '<div style="width:28px;height:28px;border-radius:8px;background:'+it.color+'22;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+      h += '<span class="material-symbols-rounded" style="font-size:16px;color:'+it.color+';">'+it.icon+'</span>';
       h += '</div>';
-      // ラベル＋説明
-      h += '<div style="flex:1;min-width:0;">';
-      h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);line-height:1.2;">'+escapeHtml(it.label)+'</div>';
-      h += '<div style="font-size:10.5px;color:var(--ink-light);margin-top:2px;line-height:1.2;">'+escapeHtml(it.desc)+'</div>';
+      // タイトル＋説明を1行で
+      h += '<div style="flex:1;min-width:0;display:flex;align-items:baseline;gap:6px;overflow:hidden;">';
+      h += '<span style="font-size:13px;font-weight:800;color:var(--ink-dark);white-space:nowrap;">'+escapeHtml(it.label)+'</span>';
+      h += '<span style="font-size:10.5px;color:var(--ink-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escapeHtml(it.desc)+'</span>';
       h += '</div>';
       // 矢印
-      h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);flex-shrink:0;">chevron_right</span>';
+      h += '<span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-light);flex-shrink:0;">chevron_right</span>';
       h += '</button>';
     }
   }
@@ -9567,16 +9567,16 @@ function openMeDrawerMenu() {
   h += '<span style="display:inline-block;padding:3px 12px;border-radius:100px;background:#EEEEEE;color:#666;font-size:11px;font-weight:800;">ツール</span>';
   h += '</div>';
   // 検索
-  h += '<button onclick="closeMeDrawerMenu();setTimeout(()=>{if(typeof toggleGlobalSearch===\'function\')toggleGlobalSearch();},250);" style="width:100%;padding:10px 18px;background:transparent;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:12px;text-align:left;">';
-  h += '<div style="width:34px;height:34px;border-radius:10px;background:#88888822;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:20px;color:#888;">search</span></div>';
-  h += '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--ink-dark);line-height:1.2;">検索</div><div style="font-size:10.5px;color:var(--ink-light);margin-top:2px;">アプリ内をまとめて検索</div></div>';
-  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);">chevron_right</span>';
+  h += '<button onclick="closeMeDrawerMenu();setTimeout(()=>{if(typeof toggleGlobalSearch===\'function\')toggleGlobalSearch();},250);" style="width:100%;padding:8px 18px;background:transparent;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:10px;text-align:left;">';
+  h += '<div style="width:28px;height:28px;border-radius:8px;background:#88888822;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;color:#888;">search</span></div>';
+  h += '<div style="flex:1;display:flex;align-items:baseline;gap:6px;"><span style="font-size:13px;font-weight:800;color:var(--ink-dark);">検索</span><span style="font-size:10.5px;color:var(--ink-light);">アプリ内をまとめて検索</span></div>';
+  h += '<span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-light);">chevron_right</span>';
   h += '</button>';
   // 設定
-  h += '<button onclick="closeMeDrawerMenu();setTimeout(()=>{currentView=\'settings\';render();},250);" style="width:100%;padding:10px 18px;background:transparent;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:12px;text-align:left;">';
-  h += '<div style="width:34px;height:34px;border-radius:10px;background:#88888822;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:20px;color:#888;">settings</span></div>';
-  h += '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--ink-dark);line-height:1.2;">設定</div><div style="font-size:10.5px;color:var(--ink-light);margin-top:2px;">アプリの設定</div></div>';
-  h += '<span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-light);">chevron_right</span>';
+  h += '<button onclick="closeMeDrawerMenu();setTimeout(()=>{currentView=\'settings\';render();},250);" style="width:100%;padding:8px 18px;background:transparent;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:10px;text-align:left;">';
+  h += '<div style="width:28px;height:28px;border-radius:8px;background:#88888822;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;color:#888;">settings</span></div>';
+  h += '<div style="flex:1;display:flex;align-items:baseline;gap:6px;"><span style="font-size:13px;font-weight:800;color:var(--ink-dark);">設定</span><span style="font-size:10.5px;color:var(--ink-light);">アプリの設定</span></div>';
+  h += '<span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-light);">chevron_right</span>';
   h += '</button>';
 
   h += '</div>'; // スクロール領域end
@@ -24851,10 +24851,21 @@ function _renderStampHistoryBubble(st) {
     '家事':      { bg:'#FDF2EA', left:'#D4956A' },
     '趣味':      { bg:'#FEF0E8', left:'#D47A60' },
     'ポジティブ': { bg:'#FDFCEA', left:'#C4B848' },
+    'お仕事':    { bg:'#F5F0E4', left:'#B89860' },
+    '製造':      { bg:'#EAEEF2', left:'#7898B8' },
+    '経理':      { bg:'#E4F4ED', left:'#58B088' },
+    '接客':      { bg:'#FDEEEE', left:'#D88898' },
+    '配信':      { bg:'#F0E8FA', left:'#9878D8' },
+    '営業':      { bg:'#FDEEDD', left:'#D49060' },
+    '学校':      { bg:'#FDF8DD', left:'#C0B070' },
   };
   const _cc = _CAT_COLORS[st.category] || { bg:'var(--surface-warm)', left:'var(--accent)' };
   
-  let h = '<div style="display:flex;align-items:center;gap:5px;padding:3px 6px;background:'+_cc.bg+';border:1px solid rgba(0,0,0,0.06);border-left:3px solid '+_cc.left+';border-radius:6px;margin-bottom:3px;">';
+  // ★ ダークテーマ対応：背景はvar(--surface)を基本に、左ボーダーのみカテゴリカラー
+  const _isCurrentDark = _isDarkColor((document.documentElement.style.getPropertyValue('--bg') || '#E8F4ED').trim());
+  const _rowBg = _isCurrentDark ? 'var(--surface)' : _cc.bg;
+  
+  let h = '<div style="display:flex;align-items:center;gap:5px;padding:3px 6px;background:'+_rowBg+';border:1px solid rgba(0,0,0,0.06);border-left:3px solid '+_cc.left+';border-radius:6px;margin-bottom:3px;">';
   // アイコン（枠なし・小さく）
   h += '<span style="flex-shrink:0;width:14px;display:inline-flex;align-items:center;justify-content:center;">'+renderStampIcon(st.icon,'font-size:14px;line-height:1;color:var(--ink-dark);')+'</span>';
   // 名前
@@ -24912,8 +24923,8 @@ function _renderTweetBubble(tw) {
   const weather = tw.weather || null;
   
   let h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
-  // 時刻ラベル（白い丸ピル）
-  h += '<div style="flex-shrink:0;display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;background:white;border:1px solid var(--line);padding:3px 8px;border-radius:100px;letter-spacing:0.02em;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.04);">';
+  // 時刻ラベル（テーマ対応ピル）
+  h += '<div style="flex-shrink:0;display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--ink-sub);font-variant-numeric:tabular-nums;background:var(--surface);border:1px solid var(--line);padding:3px 8px;border-radius:100px;letter-spacing:0.02em;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.04);">';
   h += '<span>'+timeStr+'</span>';
   if (weather) {
     h += weatherIconHtml(weather, 'font-size:10px;');
@@ -24921,15 +24932,15 @@ function _renderTweetBubble(tw) {
   // 旅先タグ（英語表記）
   if (tw.region) {
     const regionEn = (typeof WEATHER_CITY_MAP !== 'undefined' && WEATHER_CITY_MAP[tw.region]) || tw.region;
-    h += '<span style="background:#FFE8B0;color:#8B6914;padding:1px 5px;border-radius:100px;font-size:8px;font-weight:700;margin-left:1px;letter-spacing:0.03em;">'+escapeHtml(regionEn)+'</span>';
+    h += '<span style="background:var(--accent-bg);color:var(--accent-deep);padding:1px 5px;border-radius:100px;font-size:8px;font-weight:700;margin-left:1px;letter-spacing:0.03em;">'+escapeHtml(regionEn)+'</span>';
   }
   h += '</div>';
   
   // 吹き出し本体（LINE風：文字量に合わせて自動フィット、max-width 75%）
   h += '<div style="flex:0 1 auto;min-width:0;max-width:75%;position:relative;">';
-  // 削除×ボタン（吹き出しの右上に小さく、ホバーで濃く）
-  h += '<button onclick="event.stopPropagation();deleteTweet(\''+tw.id+'\')" title="削除" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:white;color:#999;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,0.08);font-family:inherit;padding:0;line-height:1;"><span class="material-symbols-rounded" style="font-size:12px;">close</span></button>';
-  h += '<button onclick="openTweetEditModal(\''+tw.id+'\')" style="text-align:left;background:white;border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-family:inherit;cursor:pointer;display:inline-flex;flex-direction:column;gap:5px;box-shadow:0 1px 2px rgba(0,0,0,0.04);max-width:100%;">';
+  // 削除×ボタン（テーマ対応）
+  h += '<button onclick="event.stopPropagation();deleteTweet(\''+tw.id+'\')" title="削除" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:var(--surface);color:var(--ink-sub);border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,0.08);font-family:inherit;padding:0;line-height:1;"><span class="material-symbols-rounded" style="font-size:12px;">close</span></button>';
+  h += '<button onclick="openTweetEditModal(\''+tw.id+'\')" style="text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-family:inherit;cursor:pointer;display:inline-flex;flex-direction:column;gap:5px;box-shadow:0 1px 2px rgba(0,0,0,0.04);max-width:100%;">';
   
   // テキスト本文（タグハイライト、少し太字・行間詰め）
   if (tw.body) {
