@@ -23247,34 +23247,64 @@ function _diaryAdjustAndScroll() {
   requestAnimationFrame(() => { adjust(); scrollBottom(); });
   setTimeout(() => { adjust(); scrollBottom(); }, 200);
 
-  // ★ キーボード出現・消去の検知（visualViewport）
-  // iOSでキーボードが出るとvisualViewport.heightが縮む→bottomBlockとtlを再計算
+  // ★ キーボード対応：visualViewportでbottomBlockのみ追従させる
+  // iOS推奨：vv.offsetTop方式で、入力欄が確実にキーボード上に乗る
+  // タイムラインの高さは触らない（layout thrashing防止）
   if (window.visualViewport && !window._diaryVVListenerAdded) {
     window._diaryVVListenerAdded = true;
-    window.visualViewport.addEventListener('resize', function() {
+    let _vvRaf = null;
+    function _updateBottomBlockForVV() {
+      if (_vvRaf) return; // rAFスロットルで連続イベント抑制
+      _vvRaf = requestAnimationFrame(function() {
+        _vvRaf = null;
+        if (!document.getElementById('tweetsTimeline')) return;
+        try {
+          const vv = window.visualViewport;
+          if (!vv) return;
+          const bb = document.getElementById('tweetBottomBlock');
+          if (!bb) return;
+          const nav = document.querySelector('.bottom-nav');
+          // navがあれば実際の高さ、なければ64px
+          const navH = nav ? nav.getBoundingClientRect().height : 64;
+          // 視覚ビューポート下端からのオフセット計算
+          // window.innerHeight = レイアウトviewport高、vv.height = 実際の見える高さ
+          // vv.offsetTop = ページがどれだけ上にスクロールされたか（キーボード対応で発生）
+          const offsetBottom = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
+          // bottomBlockをキーボード+navの上に固定
+          bb.style.bottom = (offsetBottom + navH) + 'px';
+        } catch(e) {}
+      });
+    }
+    window.visualViewport.addEventListener('resize', _updateBottomBlockForVV);
+    window.visualViewport.addEventListener('scroll', _updateBottomBlockForVV);
+  }
+
+  // ★ フォーカス時のbody lock制御（input/textareaフォーカスで一時解除）
+  // body.overflow:hiddenだとiOSがキーボード対応のスクロールできないため、フォーカス中だけ解除
+  if (!window._diaryFocusListenersAdded) {
+    window._diaryFocusListenersAdded = true;
+    document.addEventListener('focusin', function(e) {
       if (!document.getElementById('tweetsTimeline')) return;
-      try {
-        const vvH = window.visualViewport.height;
-        const keyboardH = Math.max(0, window.innerHeight - vvH);
-        const nav = document.querySelector('.bottom-nav');
-        const navH = nav ? (window.innerHeight - nav.getBoundingClientRect().top) : 64;
-        // bottomBlockをキーボードの上に移動
-        const bb = document.getElementById('tweetBottomBlock');
-        if (bb) bb.style.bottom = (keyboardH + navH) + 'px';
-        // タイムライン高さを再計算（visual viewportベース）
-        const tl = document.getElementById('tweetsTimeline');
-        if (tl && bb) {
-          const tlTop = tl.getBoundingClientRect().top;
-          const bbH = bb.getBoundingClientRect().height;
-          const tlH = vvH - tlTop - bbH - 28;
-          if (tlH > 80) {
-            tl.style.height = tlH + 'px';
-            tl.style.maxHeight = tlH + 'px';
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
+        // body lockを一時解除
+        document.body.style.overflow = '';
+        document.body.style.height = '';
+      }
+    });
+    document.addEventListener('focusout', function(e) {
+      if (!document.getElementById('tweetsTimeline')) return;
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
+        // 少し待ってから他にフォーカスがなければbody lock復元
+        setTimeout(function() {
+          const a = document.activeElement;
+          if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return;
+          if (document.getElementById('tweetsTimeline')) {
+            _diaryAdjustAndScroll();
           }
-        }
-        // キーボード消えた時（高さが戻った時）は通常の計算に戻す
-        if (keyboardH === 0) adjust();
-      } catch(e) {}
+        }, 300);
+      }
     });
   }
 }
