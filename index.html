@@ -8909,6 +8909,8 @@ function _makeSwipeHandler(checkView, checkDx, onTrigger) {
     if (e.touches[0].clientX < 30) { blocked = true; return; }
     let el = e.target;
     while (el && el !== app) {
+      // ★ 入力欄カード全体をスワイプ禁止（textarea周辺の余白タップも保護）
+      if (el.id === 'tweetBottomBlock') { blocked = true; return; }
       // ★ ボタン・リンク・入力フォーム上ではスワイプしない（誤発火防止）
       const tag = el.tagName;
       if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'LABEL') { blocked = true; return; }
@@ -23283,11 +23285,20 @@ function _diaryAdjustAndScroll() {
           p = p.parentElement;
         }
       }
-      // bottom block位置をbottom-navの上に
+      // bottom block位置をbottom-navの上に（キーボード出てたらキーボード上）
       const nav = document.querySelector('.bottom-nav');
       const navH = nav ? (window.innerHeight - nav.getBoundingClientRect().top) : 64;
       const bottomBlock = document.getElementById('tweetBottomBlock');
-      if (bottomBlock) bottomBlock.style.bottom = navH + 'px';
+      if (bottomBlock) {
+        // ★ visualViewportを考慮：キーボード出てたらkeyboardH、出てなかったらnavH
+        let _tb = navH;
+        const _vv = window.visualViewport;
+        if (_vv) {
+          const _kh = Math.max(0, window.innerHeight - _vv.height - (_vv.offsetTop || 0));
+          if (_kh > 0) _tb = _kh;
+        }
+        bottomBlock.style.bottom = _tb + 'px';
+      }
       // ★ タイムラインの高さを動的計算（白カード上下に余白を確保）
       const tl = document.getElementById('tweetsTimeline');
       if (tl && bottomBlock) {
