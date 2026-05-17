@@ -5776,6 +5776,8 @@ function setTheme(themeId) {
   data.themeId = themeId;
   applyTheme(themeId);
   saveData();
+  // ★ モードをまたいで共通のテーマキーにも保存（起動時に読む）
+  try { localStorage.setItem('nikowa_global_theme', themeId); } catch(e) {}
   _suppressScrollTop = true;
   render();
 }
@@ -5786,6 +5788,7 @@ function setThemeFromOnboarding(themeId) {
   data.themeId = themeId;
   applyTheme(themeId);
   saveData();
+  try { localStorage.setItem('nikowa_global_theme', themeId); } catch(e) {}
   // 選択状態を更新（描画し直し）
   highlightOnbThemeBtn();
   // モーダル背景もテーマに合わせる
@@ -50802,6 +50805,12 @@ loadData();
 const THEME_COMPAT = { 'soda':'candy_soda', 'cola':'cream_soda', 'matcha':'edamame', 'rose_garden':'neon' };
 if (data.themeId && THEME_COMPAT[data.themeId]) { data.themeId = THEME_COMPAT[data.themeId]; saveData(); }
 if (data.themeId && !THEMES[data.themeId]) { data.themeId = 'mint'; }
+// ★ 全モード共通テーマキーを優先（Meモードで変えてもPETモード起動でリセットされる問題を解消）
+const _globalTheme = (function(){ try { return localStorage.getItem('nikowa_global_theme'); } catch(e){ return null; } })();
+if (_globalTheme && THEMES[_globalTheme]) {
+  data.themeId = _globalTheme;
+  try { localStorage.setItem('nikowa_global_theme', _globalTheme); } catch(e) {}
+}
 applyTheme(data.themeId || 'mint');
 render();
 initFirebase();
