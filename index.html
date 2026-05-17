@@ -22517,9 +22517,9 @@ function renderMeMode() {
     html += '<button onclick="openTweetBgModal()" title="壁紙" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">wallpaper</span></button>';
     // スペーサー
     html += '<div style="flex:1;"></div>';
-    // Record / Diary タブボタン（右側）
-    html += '<button onclick="setDiaryInputTab(\'record\')" style="flex-shrink:0;padding:4px 10px;border-radius:100px;border:1.5px solid '+(_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(_isRec2?'var(--accent-deep)':'transparent')+';color:'+(_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Record</button>';
-    html += '<button onclick="setDiaryInputTab(\'diary\')" style="flex-shrink:0;padding:4px 10px;border-radius:100px;border:1.5px solid '+(!_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(!_isRec2?'var(--accent-deep)':'transparent')+';color:'+(!_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Diary</button>';
+    // Record / Diary タブボタン（右側）：選択中は大きく＆太字
+    html += '<button onclick="setDiaryInputTab(\'record\')" style="flex-shrink:0;padding:'+(_isRec2?'6px 14px':'4px 10px')+';border-radius:100px;border:'+(_isRec2?'2px':'1.5px')+' solid '+(_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(_isRec2?'var(--accent-deep)':'transparent')+';color:'+(_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(_isRec2?'14px':'11px')+';font-weight:'+(_isRec2?'900':'600')+';cursor:pointer;letter-spacing:'+(_isRec2?'0.5px':'0')+';transition:all 0.2s;">Record</button>';
+    html += '<button onclick="setDiaryInputTab(\'diary\')" style="flex-shrink:0;padding:'+(!_isRec2?'6px 14px':'4px 10px')+';border-radius:100px;border:'+(!_isRec2?'2px':'1.5px')+' solid '+(!_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(!_isRec2?'var(--accent-deep)':'transparent')+';color:'+(!_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(!_isRec2?'14px':'11px')+';font-weight:'+(!_isRec2?'900':'600')+';cursor:pointer;letter-spacing:'+(!_isRec2?'0.5px':'0')+';transition:all 0.2s;">Diary</button>';
     html += '</div>';
   } else {
     // 通常topbar（天気あり）
