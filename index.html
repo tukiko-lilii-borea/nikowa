@@ -22938,11 +22938,7 @@ function renderTweetsDiary() {
   
   // ★ 背景画像はtweetsTimeline内にCSSで直接統合済み（tweetBgWrapper不要）
   
-  // 背景画像のラッパー（あれば）
-  if (bgImage) {
-    h += '<div id="tweetBgWrapper" style="position:fixed;inset:0;z-index:-1;background-image:url('+bgImage+');background-size:cover;background-position:center;background-attachment:fixed;"></div>';
-    h += '<div id="tweetBgOverlay" style="position:fixed;inset:0;z-index:-1;background:rgba(255,255,255,0.55);backdrop-filter:blur(2px);"></div>';
-  }
+  // ★ 背景画像は白カード(tweetTimelineWhiteCard)内に統合済み（fixed wrapper不要）
   
   // ★ タブ行カードはtopbarに移動済みのため削除
   // const diaryInputTab は上部で既に取得済み
@@ -22993,12 +22989,18 @@ function renderTweetsDiary() {
   h += '</div>';
   
   // ★ 白カード（後ろの下地）：縦横ともに極小余白で、画面端ギリギリまで広がる
-  // margin:0 -8px = tweetWrapの10px paddingを打ち消して画面端2pxまで広がる
-  // padding:2px = タイムライン枠の周りにわずかに白縁が見える
-  h += '<div id="tweetTimelineWhiteCard" style="background:white;margin:0 -8px;padding:2px;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">';
+  // 背景画像が設定されてる場合は白カードがその画像になる
+  let _wcBg;
+  if (bgImage) {
+    // 白下地 + 背景画像（薄い白オーバーレイで文字読みやすく）
+    _wcBg = 'background-color:white;background-image:linear-gradient(rgba(255,255,255,0.35),rgba(255,255,255,0.35)),url(\'' + bgImage.replace(/'/g,"\\'") + '\');background-size:cover;background-position:center;background-repeat:no-repeat;';
+  } else {
+    _wcBg = 'background:white;';
+  }
+  h += '<div id="tweetTimelineWhiteCard" style="'+_wcBg+'margin:0 -8px;padding:2px;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;">';
   
-  // タイムライン（スクロールコンテナ）
-  h += '<div data-tweets-area id="tweetsTimeline" style="background:rgba(255,255,255,0.4);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;gap:0;padding:10px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  // タイムライン（スクロールコンテナ・半透明枠で背景画像が透けて見える）
+  h += '<div data-tweets-area id="tweetsTimeline" style="background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.6);border-radius:14px;display:flex;flex-direction:column;gap:0;padding:10px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
   
   if (diaryInputTab === 'record') {
     // ─── Recordタブ：スタンプ履歴のみ表示（data.stampHistoryから） ───
@@ -24083,11 +24085,11 @@ function _renderTweetBubble(tw) {
   }
   h += '</div>';
   
-  // 吹き出し本体（幅を80%に狭める）
-  h += '<div style="flex:1;min-width:0;max-width:82%;position:relative;">';
+  // 吹き出し本体（LINE風：文字量に合わせて自動フィット、max-width 75%）
+  h += '<div style="flex:0 1 auto;min-width:0;max-width:75%;position:relative;">';
   // 削除×ボタン（吹き出しの右上に小さく、ホバーで濃く）
   h += '<button onclick="event.stopPropagation();deleteTweet(\''+tw.id+'\')" title="削除" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:white;color:#999;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,0.08);font-family:inherit;padding:0;line-height:1;"><span class="material-symbols-rounded" style="font-size:12px;">close</span></button>';
-  h += '<button onclick="openTweetEditModal(\''+tw.id+'\')" style="text-align:left;background:white;border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-family:inherit;cursor:pointer;width:100%;display:flex;flex-direction:column;gap:5px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">';
+  h += '<button onclick="openTweetEditModal(\''+tw.id+'\')" style="text-align:left;background:white;border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-family:inherit;cursor:pointer;display:inline-flex;flex-direction:column;gap:5px;box-shadow:0 1px 2px rgba(0,0,0,0.04);max-width:100%;">';
   
   // テキスト本文（タグハイライト、フォント小さめ）
   if (tw.body) {
