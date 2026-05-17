@@ -5761,17 +5761,7 @@ function applyTheme(themeId) {
     + ' .section-title { background-image: '+crayonSvg+' !important; }'
     + ' .hero-glass::before { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
     + ' .mode-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
-    + ' .main-house-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
-    // ★ ダークテーマ：白背景カード上のテキストを強制ダーク（背景は白のまま・文字だけ黒に）
-    + (isDark
-      ? ' div[style*="background:white"] { color: #1A1A1A !important; }'
-      + ' div[style*="background:#FFFFFF"] { color: #1A1A1A !important; }'
-      + ' div[style*="background:white"] * { color: #1A1A1A !important; }'
-      + ' div[style*="background:#FFFFFF"] * { color: #1A1A1A !important; }'
-      // ただしアクセントボタン・アイコンは除外（var(--accent)系はそのまま）
-      + ' div[style*="background:white"] [style*="color:var(--accent"] { color: unset !important; }'
-      + ' div[style*="background:white"] [style*="color: var(--accent"] { color: unset !important; }'
-      : '');
+    + ' .main-house-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }';
   // topbarに桜吹雪を追加
   setTimeout(function(){
     document.querySelectorAll('.topbar').forEach(function(tb){
@@ -8730,8 +8720,8 @@ function renderTop() {
   html += '<div style="flex:1;display:flex;justify-content:space-around;">';
   for (const m of _moods) {
     const isActive = _todayMood && _todayMood.moodId === m.id;
-    html += '<button onclick="recordHomeMood(\''+m.id+'\',\''+m.icon+'\',\''+m.label+'\',\''+m.color+'\')" title="'+m.label+'" style="width:36px;height:36px;border-radius:50%;background:'+(isActive?m.color+'33':'transparent')+';border:1.5px solid '+(isActive?m.color:'transparent')+';cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">';
-    html += '<span class="material-symbols-rounded" style="font-size:24px;color:'+m.color+';">'+m.icon+'</span>';
+    html += '<button onclick="recordHomeMood(\''+m.id+'\',\''+m.icon+'\',\''+m.label+'\',\''+m.color+'\')" title="'+m.label+'" style="width:36px;height:36px;border-radius:50%;background:'+(isActive ? m.color : m.color+'22')+';border:2px solid '+(isActive ? m.color : m.color+'66')+';cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;">';
+    html += '<span class="material-symbols-rounded" style="font-size:22px;color:'+m.color+' !important;">'+m.icon+'</span>';
     html += '</button>';
   }
   html += '</div>';
@@ -8829,7 +8819,7 @@ function renderTop() {
   html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">edit_note</span>';
   html += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);">Diary</span>';
   html += '</div>';
-  html += '<textarea id="homeQuickInput" placeholder="今日のひとこと..." style="flex:1;width:100%;min-height:50px;padding:6px;border:1px solid var(--line-soft);border-radius:8px;font-family:inherit;font-size:11px;background:var(--surface-warm);box-sizing:border-box;resize:none;line-height:1.4;outline:none;color:var(--ink-dark);"></textarea>';
+  html += '<textarea id="homeQuickInput" placeholder="今日のひとこと..." style="flex:1;width:100%;min-height:50px;padding:6px;border:1px solid var(--line-soft);border-radius:8px;font-family:inherit;font-size:11px;background:#FFFFFF;box-sizing:border-box;resize:none;line-height:1.4;outline:none;color:#333333;"></textarea>';
   html += '<button onclick="saveHomeQuickThought()" style="margin-top:6px;padding:5px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:inherit;font-size:10px;font-weight:800;cursor:pointer;">記録</button>';
   html += '</div>';
 
