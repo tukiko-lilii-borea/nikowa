@@ -21951,16 +21951,156 @@ function resizeImageToBase64(file, maxSize, quality) {
 }
 
 // 写真全画面プレビュー
-function openPhotoPreview(dataUrl) {
+// 写真プレビューの状態（前/次・日記ジャンプ用）
+let _photoPreviewState = null;
+
+function openPhotoPreview(dataUrl, opts) {
+  opts = opts || {};
+  _photoPreviewState = {
+    items: opts.items || null,
+    currentIdx: typeof opts.currentIdx === 'number' ? opts.currentIdx : 0
+  };
+  // itemsが指定されてたらそっちのsrcを使う
+  if (_photoPreviewState.items && _photoPreviewState.items[_photoPreviewState.currentIdx]) {
+    dataUrl = _photoPreviewState.items[_photoPreviewState.currentIdx].src;
+  }
+  _renderPhotoPreview(dataUrl);
+}
+
+function _renderPhotoPreview(dataUrl) {
   const ex = document.getElementById('photoPreviewModal');
   if (ex) ex.remove();
-  let h = '<div id="photoPreviewModal" onclick="closePhotoPreview()" style="position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;padding:20px;cursor:pointer;">';
-  h += '<img src="'+dataUrl+'" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.5);" />';
-  h += '<button onclick="event.stopPropagation();closePhotoPreview()" style="position:absolute;top:20px;right:20px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>';
+
+  const state = _photoPreviewState;
+  const hasItems = !!(state && state.items && state.items.length > 1);
+  const currentItem = (state && state.items) ? state.items[state.currentIdx] : null;
+  const canJump = !!(currentItem && (currentItem.tweetId || currentItem.stampId));
+
+  let h = '<div id="photoPreviewModal" onclick="if(event.target===this)closePhotoPreview()" style="position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;padding:20px;">';
+  // 写真本体
+  h += '<img id="photoPreviewImg" src="'+dataUrl+'" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.5);" />';
+
+  // 上部ツールバー
+  h += '<div style="position:absolute;top:20px;left:0;right:0;padding:0 20px;display:flex;align-items:center;justify-content:space-between;pointer-events:none;">';
+  // カウンター（左）
+  if (hasItems) {
+    h += '<div style="background:rgba(0,0,0,0.55);color:white;padding:6px 14px;border-radius:100px;font-size:13px;font-weight:700;pointer-events:auto;">' + (state.currentIdx+1) + ' / ' + state.items.length + '</div>';
+  } else {
+    h += '<div></div>';
+  }
+  // 右側のアクション
+  h += '<div style="display:flex;gap:8px;pointer-events:auto;">';
+  if (canJump) {
+    h += '<button onclick="event.stopPropagation();_photoPreviewJumpToDiary()" title="この日記を見る" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;">arrow_outward</span></button>';
+  }
+  h += '<button onclick="event.stopPropagation();_photoPreviewSave()" title="保存" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;">download</span></button>';
+  h += '<button onclick="event.stopPropagation();closePhotoPreview()" title="閉じる" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '</div>';
+  h += '</div>';
+
+  // 前/次ボタン（左右）
+  if (hasItems) {
+    if (state.currentIdx > 0) {
+      h += '<button onclick="event.stopPropagation();_photoPreviewPrev()" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.55);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:28px;">chevron_left</span></button>';
+    }
+    if (state.currentIdx < state.items.length - 1) {
+      h += '<button onclick="event.stopPropagation();_photoPreviewNext()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.55);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:28px;">chevron_right</span></button>';
+    }
+  }
+
   h += '</div>';
   document.body.insertAdjacentHTML('beforeend', h);
 }
+
+function _photoPreviewPrev() {
+  if (!_photoPreviewState || !_photoPreviewState.items) return;
+  if (_photoPreviewState.currentIdx > 0) {
+    _photoPreviewState.currentIdx--;
+    _renderPhotoPreview(_photoPreviewState.items[_photoPreviewState.currentIdx].src);
+  }
+}
+window._photoPreviewPrev = _photoPreviewPrev;
+
+function _photoPreviewNext() {
+  if (!_photoPreviewState || !_photoPreviewState.items) return;
+  if (_photoPreviewState.currentIdx < _photoPreviewState.items.length - 1) {
+    _photoPreviewState.currentIdx++;
+    _renderPhotoPreview(_photoPreviewState.items[_photoPreviewState.currentIdx].src);
+  }
+}
+window._photoPreviewNext = _photoPreviewNext;
+
+// 保存：iOSなら共有シート、それ以外はダウンロード
+function _photoPreviewSave() {
+  let dataUrl;
+  if (_photoPreviewState && _photoPreviewState.items && _photoPreviewState.items[_photoPreviewState.currentIdx]) {
+    dataUrl = _photoPreviewState.items[_photoPreviewState.currentIdx].src;
+  } else {
+    const img = document.getElementById('photoPreviewImg');
+    if (!img) return;
+    dataUrl = img.src;
+  }
+  // iOS Safari等：navigator.shareで共有シート→写真に追加
+  if (navigator.canShare && dataUrl.startsWith('data:')) {
+    fetch(dataUrl).then(r => r.blob()).then(blob => {
+      const file = new File([blob], 'nikowa-' + Date.now() + '.jpg', { type: blob.type || 'image/jpeg' });
+      if (navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file] }).catch(() => _photoPreviewFallbackDownload(dataUrl));
+      } else {
+        _photoPreviewFallbackDownload(dataUrl);
+      }
+    }).catch(() => _photoPreviewFallbackDownload(dataUrl));
+    return;
+  }
+  _photoPreviewFallbackDownload(dataUrl);
+}
+window._photoPreviewSave = _photoPreviewSave;
+
+function _photoPreviewFallbackDownload(dataUrl) {
+  try {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = 'nikowa-' + Date.now() + '.jpg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch (e) {
+    alert('長押しして「写真に追加」してね');
+  }
+}
+
+// その写真の日記に飛ぶ
+function _photoPreviewJumpToDiary() {
+  if (!_photoPreviewState || !_photoPreviewState.items) return;
+  const item = _photoPreviewState.items[_photoPreviewState.currentIdx];
+  if (!item) return;
+  // 日付セット
+  if (item.ts) {
+    data.tweetViewDate = new Date(item.ts).toDateString();
+  }
+  // Record/Diaryタブ切替
+  if (item.source === 'stamp') {
+    data.diaryInputTab = 'record';
+  } else {
+    data.diaryInputTab = 'diary';
+  }
+  // 写真プレビュー＆アルバム両方閉じる
+  closePhotoPreview();
+  const albumModal = document.getElementById('tweetAlbumModal');
+  if (albumModal) albumModal.remove();
+  // Me/Diary画面に移動
+  saveData();
+  setTimeout(() => {
+    if (typeof goToMeMode === 'function') goToMeMode();
+    setTimeout(() => {
+      if (typeof setModePageTab === 'function') setModePageTab('me', 'diary');
+    }, 100);
+  }, 50);
+}
+window._photoPreviewJumpToDiary = _photoPreviewJumpToDiary;
+
 function closePhotoPreview() {
+  _photoPreviewState = null;
   const el = document.getElementById('photoPreviewModal');
   if (el) el.remove();
 }
@@ -23602,8 +23742,12 @@ function _diaryAdjustAndScroll() {
   }
   adjust();
   scrollBottom();
-  requestAnimationFrame(() => { adjust(); scrollBottom(); });
-  setTimeout(() => { adjust(); scrollBottom(); }, 200);
+  // ★ タブ切替時（_diarySingleAdjust=true）は1回のみで終了。
+  // 初回描画時のみrAF+200ms追加実行（レイアウト確定 & 画像lazy-load後の最終調整）
+  if (!window._diarySingleAdjust) {
+    requestAnimationFrame(() => { adjust(); scrollBottom(); });
+    setTimeout(() => { adjust(); scrollBottom(); }, 200);
+  }
 
   // ★ キーボード対応：visualViewportでbottomBlockのみ追従させる
   // iOS推奨：vv.offsetTop方式で、入力欄が確実にキーボード上に乗る
@@ -23805,7 +23949,7 @@ function _renderTweetAlbumModal() {
         h += '</div>';
         h += '</div>';
       } else {
-        h += '<div onclick="openPhotoPreview(this.dataset.src)" data-src="'+escapeHtml(p.src)+'" style="aspect-ratio:1;overflow:hidden;background:#ddd;cursor:pointer;">';
+        h += '<div onclick="_openAlbumPhotoPreview('+photos.indexOf(p)+')" style="aspect-ratio:1;overflow:hidden;background:#ddd;cursor:pointer;">';
         h += '<img src="'+p.src+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;" />';
         h += '</div>';
       }
@@ -23835,6 +23979,14 @@ function closeTweetAlbumModal() {
   const el = document.getElementById('tweetAlbumModal');
   if (el) el.remove();
 }
+
+// アルバムから写真を開く（前/次ナビ・日記ジャンプ対応）
+function _openAlbumPhotoPreview(idx) {
+  const photos = _collectTweetAlbumPhotos();
+  if (!photos[idx]) return;
+  openPhotoPreview(photos[idx].src, { items: photos, currentIdx: idx });
+}
+window._openAlbumPhotoPreview = _openAlbumPhotoPreview;
 window.closeTweetAlbumModal = closeTweetAlbumModal;
 
 function _toggleTweetAlbumSelectMode() {
@@ -24088,8 +24240,9 @@ function setStampCatForRecord(cat, event) {
   const tl = document.getElementById('tweetsTimeline');
   const savedTlScroll = tl ? tl.scrollTop : null;
 
-  // ★ タブ切替時はscrollBottomを抑制（揺れ防止）
+  // ★ タブ切替時はscrollBottomもadjustの追加実行も抑制（揺れ防止）
   window._suppressDiaryScrollBottom = true;
+  window._diarySingleAdjust = true;
 
   data.stampSelCat = cat;
   saveData();
@@ -24114,6 +24267,7 @@ function setStampCatForRecord(cat, event) {
   // 200ms後（_diaryAdjustAndScrollの3回目）が終わってからフラグを戻す
   setTimeout(() => {
     window._suppressDiaryScrollBottom = false;
+    window._diarySingleAdjust = false;
   }, 300);
 }
 window.setStampCatForRecord = setStampCatForRecord;
@@ -25002,15 +25156,27 @@ function _renderTweetEditPhotos() {
   const photos = window._tweetEditPhotos || [];
   let h = '';
   for (let i = 0; i < photos.length; i++) {
+    const _safeSrc = String(photos[i]).replace(/'/g,"\\'");
     h += '<div style="position:relative;flex-shrink:0;">';
-    h += '<img src="'+photos[i]+'" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--line);" />';
-    h += '<button onclick="removeTweetEditPhoto('+i+')" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#c4506b;color:white;border:none;cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>';
+    // ★ 写真タップで拡大プレビュー（_tweetEditPhotos内のi番目を渡す）
+    h += '<img src="'+photos[i]+'" onclick="_previewTweetEditPhoto('+i+')" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:pointer;" />';
+    h += '<button onclick="event.stopPropagation();removeTweetEditPhoto('+i+')" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#c4506b;color:white;border:none;cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>';
     h += '</div>';
   }
   area.innerHTML = h;
   const cnt = document.getElementById('tweetEditPhotoCount');
   if (cnt) cnt.textContent = photos.length + '/10枚';
 }
+
+// 編集モーダル内の写真をタップ拡大表示（前/次・保存対応）
+function _previewTweetEditPhoto(idx) {
+  const photos = window._tweetEditPhotos || [];
+  if (!photos[idx]) return;
+  // itemsとして渡す（日記ジャンプはなし＝tweetId/stampIdを付けない）
+  const items = photos.map(src => ({ src: src }));
+  openPhotoPreview(photos[idx], { items: items, currentIdx: idx });
+}
+window._previewTweetEditPhoto = _previewTweetEditPhoto;
 
 function removeTweetEditPhoto(idx) {
   if (!window._tweetEditPhotos) return;
