@@ -5761,18 +5761,7 @@ function applyTheme(themeId) {
     + ' .section-title { background-image: '+crayonSvg+' !important; }'
     + ' .hero-glass::before { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
     + ' .mode-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
-    + ' .main-house-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }'
-    // ★ ダークテーマ：ホワイトハードコード要素をsurface色に一括変換
-    + (isDark
-      ? ' div[style*="background:white"],div[style*="background: white"],div[style*="background:#FFFFFF"],div[style*="background: #FFFFFF"] { background: var(--surface) !important; }'
-      + ' button[style*="background:white"],button[style*="background: white"],button[style*="background:#FFFFFF"],button[style*="background: #FFFFFF"] { background: var(--surface) !important; }'
-      + ' div[style*="background:white"] *,div[style*="background:#FFFFFF"] * { color: var(--ink-dark); }'
-      : '')
-    // ★ ネオンテーマ：カードにグロー枠
-    + (themeId === 'neon'
-      ? ' div[style*="background:white"],div[style*="background:#FFFFFF"],div[style*="background: white"] { border-color: rgba(200,35,107,0.5) !important; box-shadow: 0 0 10px rgba(200,35,107,0.15), 0 0 20px rgba(0,171,225,0.08) !important; }'
-      + ' button[style*="background:white"],button[style*="background:#FFFFFF"],button[style*="background: white"] { border-color: rgba(0,171,225,0.4) !important; box-shadow: 0 0 8px rgba(0,171,225,0.15) !important; }'
-      : '');
+    + ' .main-house-card::after { background-image: '+paperBg+' !important; background-size: '+paperSize+' !important; background-position: '+paperPos+' !important; }';
   // topbarに桜吹雪を追加
   setTimeout(function(){
     document.querySelectorAll('.topbar').forEach(function(tb){
@@ -9211,14 +9200,14 @@ window.closeHomeQuickStampEdit = closeHomeQuickStampEdit;
 // =============================================
 // ===== ドロワーメニュー カテゴリー定義 =====
 const _DRW_CATS = [
-  { key:'today',    icon:'today',         label:'今日',     color:'#E5524A', desc:'きょうのきろく' },
-  { key:'kurashi',  icon:'coffee',         label:'くらし',   color:'#F5A623', desc:'まいにちのくらし' },
-  { key:'health',   icon:'favorite',       label:'けんこう', color:'#4FB677', desc:'からだの記録' },
-  { key:'work',     icon:'work',           label:'仕事',     color:'#4A90E2', desc:'まなびとしごと' },
-  { key:'family',   icon:'diversity_3',    label:'輪',       color:'#E94B6F', desc:'たいせつなひと' },
-  { key:'machi',    icon:'location_city',  label:'まち',     color:'#1FA8C9', desc:'まちでつながる' },
-  { key:'yuuenchi', icon:'celebration',    label:'遊園地',   color:'#FF7AAA', desc:'みんなで あそぼう' },
-  { key:'create',   icon:'palette',        label:'お店',     color:'#9B5DB8', desc:'クリエイティブ' },
+  { key:'today',    icon:'today',         label:'今日',     color:'var(--accent-deep)', desc:'きょうのきろく' },
+  { key:'kurashi',  icon:'coffee',         label:'くらし',   color:'var(--accent-deep)', desc:'まいにちのくらし' },
+  { key:'health',   icon:'favorite',       label:'けんこう', color:'var(--accent-deep)', desc:'からだの記録' },
+  { key:'work',     icon:'work',           label:'仕事',     color:'var(--accent-deep)', desc:'まなびとしごと' },
+  { key:'family',   icon:'diversity_3',    label:'輪',       color:'var(--accent-deep)', desc:'たいせつなひと' },
+  { key:'machi',    icon:'location_city',  label:'まち',     color:'var(--accent-deep)', desc:'まちでつながる' },
+  { key:'yuuenchi', icon:'celebration',    label:'遊園地',   color:'var(--accent-deep)', desc:'みんなで あそぼう' },
+  { key:'create',   icon:'palette',        label:'お店',     color:'var(--accent-deep)', desc:'クリエイティブ' },
 ];
 
 function _getDrawerContent(key) {
