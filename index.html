@@ -9244,17 +9244,19 @@ function _getDrawerContent(key) {
     `</div><span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);">chevron_right</span></button>`;
 
   if (key === 'today') {
-    h += _itemBtn('home',           'ホーム',     '毎日のはじまり',   `closeDrawerMenu();currentView='top';render();`);
-    h += _itemBtn('wb_sunny',       '記録',       'スタンプ記録',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
-    h += _itemBtn('calendar_month', 'カレンダー', '予定を一覧で',     `closeDrawerMenu();currentView='schedule';render();`);
-    h += _itemBtn('edit_note',      '日記',       '気持ちを残す',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','diary'),100);`);
+    h += _itemBtn('home',           'ホーム',       '毎日のはじまり',   `closeDrawerMenu();currentView='top';render();`);
+    h += _itemBtn('wb_sunny',       '記録',         'スタンプ記録',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
+    h += _itemBtn('view_day',       'プランナー',   '今日のやること',   `closeDrawerMenu();data.stampSubTab='planner';goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
+    h += _itemBtn('calendar_month', 'カレンダー',   '予定を一覧で',     `closeDrawerMenu();currentView='schedule';render();`);
+    h += _itemBtn('edit_note',      '日記',         '気持ちを残す',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','diary'),100);`);
 
   } else if (key === 'kurashi') {
-    h += _itemBtn('payments',      'Money',      'お金の管理',       `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','money'),100);`);
-    h += _itemBtn('sticky_note_2', 'Memo',       'メモ・リスト',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','secret'),100);`);
-    h += _itemBtn('photo_library', 'Collection', '写真アルバム',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','collection'),100);`);
-    h += _itemBtn('person',        'My',         '自分のこと',       `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);`);
-    h += _itemBtn('shopping_cart', 'Goods',      '持ち物リスト',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','goods'),100);`);
+    h += _itemBtn('payments',      'Money',       'お金の管理',        `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','money'),100);`);
+    h += _itemBtn('sticky_note_2', 'Memo',        'メモ・リスト',      `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','secret'),100);`);
+    h += _itemBtn('photo_library', 'Collection',  '写真アルバム',      `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','collection'),100);`);
+    h += _itemBtn('person',        'My',          '自分のこと',        `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);`);
+    h += _itemBtn('shopping_cart', 'Goods',       '持ち物リスト',      `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','goods'),100);`);
+    h += _itemBtn('lock',          'きもち保管室', 'ないしょの気持ち', `closeDrawerMenu();currentView='kimochiRoom';render();`);
 
   } else if (key === 'health') {
     h += _itemBtn('favorite',            'Health',       'ダイエット・体調まとめ', `closeDrawerMenu();currentView='health';render();`);
@@ -9490,6 +9492,7 @@ function openMeDrawerMenu() {
     {
       label: '毎日', bg: '#E8F4EE', textColor: '#3A7A5C',
       items: [
+        { icon:'view_day',       color:'#4A8E7A', label:'プランナー', desc:'今日のやること',   action:"closeMeDrawerMenu();setTimeout(()=>{data.stampSubTab='planner';goToMeMode();setModePageTab('me','stamp');},250);" },
         { icon:'calendar_month', color:'#5A9F8E', label:'カレンダー', desc:'予定の確認と管理', action:"closeMeDrawerMenu();setTimeout(()=>{currentView='schedule';render();},250);" }
       ]
     },
@@ -30305,6 +30308,7 @@ function navBack() {
   if (navHistory.length > 0) { _popNav(); return; }
   if (currentView === 'me_diary') { currentView = 'me'; render(); }
   else if (currentView === 'collection_folder') { currentView = 'me'; data.meTab = 'collection'; render(); }
+  else if (currentView === 'kimochiRoom') { currentView = 'me'; render(); }
   else if (currentView === 'me') { switchMode('pet'); currentView = 'top'; render(); }
   else if (currentView === 'nest') { switchMode('pet'); currentView = 'top'; render(); }
   else if (currentView === 'secret_memo') {
@@ -46150,6 +46154,222 @@ function secretMemoImport(event) {
   event.target.value = '';
 }
 
+// =============================================
+// ===== きもち保管室 =====
+// =============================================
+
+function renderKimochiRoom() {
+  const app = document.getElementById('app');
+  if (!app) return;
+  if (!data.me) data.me = {};
+  if (!data.me.kimochiRoom) data.me.kimochiRoom = [];
+
+  const allEntries = [...data.me.kimochiRoom].sort((a, b) => b.createdAt - a.createdAt);
+  const inputOpen  = !!window._kimochiInputOpen;
+  const pendingPhoto = window._kimochiPendingPhoto || null;
+  const filterTag  = window._kimochiFilterTag || null;
+
+  // 全タグ収集（件数付き・多い順）
+  const tagCount = {};
+  for (const e of allEntries) for (const t of (e.tags||[])) tagCount[t] = (tagCount[t]||0)+1;
+  const allTags = Object.keys(tagCount).sort((a,b) => tagCount[b]-tagCount[a]);
+
+  // フィルター適用
+  const entries = filterTag ? allEntries.filter(e => (e.tags||[]).includes(filterTag)) : allEntries;
+
+  let html = '';
+
+  // ── topbar
+  html += '<div style="position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--line-soft);">';
+  html += '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;">';
+  html += '<button onclick="currentView=\'me\';render();" style="width:36px;height:36px;border-radius:50%;background:var(--accent-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">arrow_back</span></button>';
+  html += '<div style="flex:1;display:flex;align-items:center;gap:7px;min-width:0;">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;color:#555;flex-shrink:0;">lock</span>';
+  html += '<span style="font-size:17px;font-weight:900;color:var(--ink-dark);">きもち保管室</span>';
+  if (filterTag) html += '<span style="flex-shrink:0;font-size:11px;background:#1A1A1A;color:white;padding:2px 8px;border-radius:100px;font-weight:800;">#'+escapeHtml(filterTag)+'</span>';
+  html += '</div>';
+  html += '<button onclick="window._kimochiInputOpen=!window._kimochiInputOpen;if(!window._kimochiInputOpen)window._kimochiPendingPhoto=null;render();" style="width:36px;height:36px;border-radius:50%;background:'+(inputOpen?'#1A1A1A':'var(--accent-bg)')+';border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;color:'+(inputOpen?'white':'var(--accent-deep)')+';">'+(inputOpen?'close':'edit')+'</span></button>';
+  html += '</div>';
+
+  // ── タグ絞り込みバー
+  if (allTags.length > 0) {
+    html += '<div style="padding:6px 14px 8px;display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">';
+    const isAll = !filterTag;
+    html += '<button onclick="window._kimochiFilterTag=null;render();" style="flex-shrink:0;padding:5px 12px;border-radius:100px;border:1.5px solid '+(isAll?'#1A1A1A':'var(--line)')+';background:'+(isAll?'#1A1A1A':'transparent')+';color:'+(isAll?'white':'#777')+';font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;">すべて</button>';
+    for (const t of allTags) {
+      const isActive = filterTag === t;
+      html += '<button onclick="window._kimochiFilterTag='+(isActive?'null':'"'+t+'"')+';render();" style="flex-shrink:0;padding:5px 12px;border-radius:100px;border:1.5px solid '+(isActive?'#1A1A1A':'var(--line)')+';background:'+(isActive?'#1A1A1A':'transparent')+';color:'+(isActive?'white':'#555')+';font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;">#'+escapeHtml(t)+' <span style="font-size:10px;opacity:0.6;">'+tagCount[t]+'</span></button>';
+    }
+    html += '</div>';
+  }
+
+  html += '</div>'; // sticky end
+
+  html += '<div style="padding:14px 14px 100px;">';
+
+  // ── 入力エリア
+  if (inputOpen) {
+    html += '<div style="background:var(--surface);border:2px solid #1A1A1A;border-radius:18px;padding:16px;margin-bottom:18px;">';
+    html += '<div style="font-size:11px;font-weight:800;color:#888;margin-bottom:10px;letter-spacing:0.5px;">ないしょの気持ち</div>';
+    if (pendingPhoto) {
+      html += '<div style="position:relative;margin-bottom:12px;">';
+      html += '<img src="'+pendingPhoto+'" style="width:100%;max-height:200px;object-fit:cover;display:block;border-radius:12px;" />';
+      html += '<button onclick="window._kimochiPendingPhoto=null;render();" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:16px;color:white;">close</span></button>';
+      html += '</div>';
+    }
+    html += '<textarea id="kimochiInput" placeholder="ここに全部書いてね。#タグ もつけられるよ。（写真だけでもOK）" style="width:100%;min-height:120px;border:none;background:transparent;font-size:15px;font-family:inherit;color:var(--ink-dark);resize:none;box-sizing:border-box;outline:none;line-height:1.8;" maxlength="500" oninput="const c=document.getElementById(\'kimochiCount\');if(c)c.textContent=this.value.length;"></textarea>';
+    // ツールバー
+    html += '<div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--line-soft);margin-top:4px;">';
+    html += '<button onclick="document.getElementById(\'kimochiPhotoFile\').click();" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:100px;background:'+(pendingPhoto?'#1A1A1A':'#F2F2F2')+';border:none;cursor:pointer;font-family:inherit;flex-shrink:0;">';
+    html += '<span class="material-symbols-rounded" style="font-size:16px;color:'+(pendingPhoto?'white':'#888')+';">photo_camera</span>';
+    html += '<span style="font-size:11px;font-weight:800;color:'+(pendingPhoto?'white':'#888')+';">'+(pendingPhoto?'変更':'写真')+'</span></button>';
+    html += '<button onclick="const ta=document.getElementById(\'kimochiInput\');if(ta){const p=ta.selectionStart||ta.value.length;ta.value=ta.value.slice(0,p)+\'#\'+ta.value.slice(p);ta.focus();ta.setSelectionRange(p+1,p+1);const c=document.getElementById(\'kimochiCount\');if(c)c.textContent=ta.value.length;}" style="width:32px;height:32px;border-radius:50%;background:#F2F2F2;border:none;cursor:pointer;font-family:inherit;font-size:15px;font-weight:900;color:#555;display:flex;align-items:center;justify-content:center;flex-shrink:0;">#</button>';
+    html += '<div style="flex:1;text-align:right;"><span id="kimochiCount" style="font-size:11px;color:#AAA;">0</span><span style="font-size:11px;color:#AAA;">/500</span></div>';
+    html += '</div>';
+    html += '<input type="file" id="kimochiPhotoFile" accept="image/*" style="display:none;" onchange="_kimochiHandlePhoto(event)">';
+    html += '<button onclick="_saveKimochi()" style="width:100%;padding:14px;background:#1A1A1A;border:none;border-radius:12px;font-family:inherit;font-size:15px;font-weight:900;color:white;cursor:pointer;margin-top:10px;">黒塗りして保管</button>';
+    html += '<div style="text-align:center;font-size:10px;color:#AAA;margin-top:8px;">※ この端末にだけ保存するよ。</div>';
+    html += '</div>';
+  }
+
+  // 件数
+  if (allEntries.length > 0) {
+    const label = filterTag ? entries.length+'/'+allEntries.length+'件' : allEntries.length+'件';
+    html += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;margin-bottom:10px;">'+label+'のきろく</div>';
+  }
+
+  // 一覧
+  if (entries.length === 0 && !inputOpen) {
+    html += '<div style="text-align:center;padding:60px 20px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:52px;color:#DDD;display:block;margin-bottom:14px;">lock</span>';
+    html += filterTag
+      ? '<div style="font-size:14px;color:var(--ink-sub);font-weight:800;">#'+escapeHtml(filterTag)+' のきろくはないよ</div>'
+      : '<div style="font-size:14px;color:var(--ink-sub);font-weight:800;">まだないよ</div>';
+    if (!filterTag) html += '<div style="font-size:12px;color:var(--ink-sub);margin-top:6px;line-height:1.7;">書いた気持ちや写真は黒塗りで保管するよ。<br>一覧では見えないから安心してね。</div>';
+    html += '</div>';
+  } else {
+    for (const e of entries) {
+      const dt = new Date(e.createdAt);
+      const dateStr = dt.getFullYear()+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+String(dt.getDate()).padStart(2,'0')+'  '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+      const typeIcon = e.photo ? 'photo_camera' : 'edit_note';
+
+      html += '<div style="background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px;cursor:pointer;" onclick="_openKimochiDetail(\''+e.id+'\')">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
+      html += '<div style="display:flex;align-items:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:14px;color:#AAA;">'+typeIcon+'</span><span style="font-size:11px;color:var(--ink-sub);">'+dateStr+'</span></div>';
+      html += '<span style="font-size:11px;color:var(--ink-sub);font-weight:700;">タップで表示</span>';
+      html += '</div>';
+      // 黒塗り
+      if (e.photo) {
+        html += '<div style="height:80px;background:#1A1A1A;border-radius:10px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:24px;color:rgba(255,255,255,0.15);">lock</span></div>';
+        if (e.text) { const s0=(e.createdAt)%100; html += '<div style="height:11px;background:#1A1A1A;border-radius:3px;margin-top:8px;width:'+(50+s0%30)+'%;"></div>'; }
+      } else {
+        const lc = Math.min(Math.max(2, Math.ceil((e.text||'').length/18)), 5);
+        for (let i=0;i<lc;i++) { const s=(e.createdAt+i*137)%100; html += '<div style="height:13px;background:#1A1A1A;border-radius:3px;margin-bottom:7px;width:'+(i===lc-1?(28+s%35):(60+s%30))+'%;"></div>'; }
+      }
+      // タグバッジ（見える）
+      if ((e.tags||[]).length > 0) {
+        html += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">';
+        for (const t of e.tags) {
+          const isF = filterTag === t;
+          html += '<span onclick="event.stopPropagation();window._kimochiFilterTag='+(isF?'null':'"'+t+'"')+';render();" style="font-size:11px;padding:3px 9px;border-radius:100px;background:'+(isF?'#1A1A1A':'#F0F0F0')+';color:'+(isF?'white':'#666')+';font-weight:800;cursor:pointer;">#'+escapeHtml(t)+'</span>';
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+  }
+
+  html += '</div>';
+  app.innerHTML = html;
+}
+window.renderKimochiRoom = renderKimochiRoom;
+
+// 写真圧縮
+function _kimochiHandlePhoto(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const MAX=600; let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+      const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      window._kimochiPendingPhoto=canvas.toDataURL('image/jpeg',0.72); render();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+window._kimochiHandlePhoto = _kimochiHandlePhoto;
+
+// タグ抽出
+function _extractKimochiTags(text) {
+  if (!text) return [];
+  return [...new Set((text.match(/#([^\s#、。！？,，.!?　]+)/g)||[]).map(t=>t.slice(1)))];
+}
+
+// 保存
+function _saveKimochi() {
+  const ta = document.getElementById('kimochiInput');
+  const text = ta ? ta.value.trim() : '';
+  const photo = window._kimochiPendingPhoto || null;
+  if (!text && !photo) return;
+  if (!data.me) data.me = {};
+  if (!data.me.kimochiRoom) data.me.kimochiRoom = [];
+  data.me.kimochiRoom.push({
+    id: 'k_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+    text: text, photo: photo, tags: _extractKimochiTags(text), createdAt: Date.now()
+  });
+  window._kimochiInputOpen = false;
+  window._kimochiPendingPhoto = null;
+  saveData(); render();
+}
+window._saveKimochi = _saveKimochi;
+
+// 詳細モーダル
+function _openKimochiDetail(id) {
+  const entry = (data.me.kimochiRoom||[]).find(e=>e.id===id);
+  if (!entry) return;
+  const ex = document.getElementById('kimochiModal');
+  if (ex) { ex.remove(); return; }
+  const dt = new Date(entry.createdAt);
+  const dateStr = dt.getFullYear()+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+String(dt.getDate()).padStart(2,'0')+'  '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+  let m = '<div id="kimochiModal" style="position:fixed;inset:0;z-index:3000;display:flex;align-items:flex-end;">';
+  m += '<div onclick="document.getElementById(\'kimochiModal\').remove();" style="position:absolute;inset:0;background:rgba(0,0,0,0.55);"></div>';
+  m += '<div style="position:relative;width:100%;background:#FFFFFF;border-radius:24px 24px 0 0;padding:20px 20px 36px;box-shadow:0 -8px 32px rgba(0,0,0,0.22);max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
+  m += '<div style="display:flex;justify-content:center;margin-bottom:16px;"><div style="width:40px;height:4px;background:#DDD;border-radius:100px;"></div></div>';
+  m += '<div style="font-size:11px;color:#AAA;margin-bottom:14px;">'+dateStr+'</div>';
+  if (entry.photo) m += '<img src="'+entry.photo+'" style="width:100%;max-height:280px;object-fit:cover;border-radius:14px;display:block;margin-bottom:14px;" />';
+  if (entry.text) m += '<div style="font-size:16px;line-height:2;color:#1A1A1A;white-space:pre-wrap;padding:16px;background:#F8F8F8;border-radius:14px;margin-bottom:14px;">'+escapeHtml(entry.text)+'</div>';
+  if ((entry.tags||[]).length>0) {
+    m += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px;">';
+    for (const t of entry.tags) m += '<span style="font-size:12px;padding:4px 10px;border-radius:100px;background:#F0F0F0;color:#555;font-weight:800;">#'+escapeHtml(t)+'</span>';
+    m += '</div>';
+  }
+  m += '<div style="display:flex;gap:10px;">';
+  m += '<button onclick="document.getElementById(\'kimochiModal\').remove();" style="flex:1;padding:14px;background:#F2F2F2;border:none;border-radius:14px;font-family:inherit;font-size:14px;font-weight:800;color:#555;cursor:pointer;">再び黒塗り</button>';
+  m += '<button onclick="_deleteKimochi(\''+id+'\')" style="flex:1;padding:14px;background:#1A1A1A;border:none;border-radius:14px;font-family:inherit;font-size:14px;font-weight:800;color:white;cursor:pointer;">処分する</button>';
+  m += '</div>';
+  m += '<div style="text-align:center;font-size:10px;color:#CCC;margin-top:12px;">閉じると再び黒塗り表示に戻るよ。</div>';
+  m += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', m);
+}
+window._openKimochiDetail = _openKimochiDetail;
+
+// 処分
+function _deleteKimochi(id) {
+  if (!data.me||!data.me.kimochiRoom) return;
+  data.me.kimochiRoom = data.me.kimochiRoom.filter(e=>e.id!==id);
+  saveData();
+  const m = document.getElementById('kimochiModal');
+  if (m) m.remove();
+  render();
+}
+window._deleteKimochi = _deleteKimochi;
+
 // ===== 天気機能 =====
 
 const WEATHER_CITY_MAP = {
@@ -52639,6 +52859,7 @@ function render() {
   else if (currentView === 'town') renderTown();
   else if (currentView === 'facility') renderFacility();
   else if (currentView === 'secret_memo') renderSecretMemo();
+  else if (currentView === 'kimochiRoom') renderKimochiRoom();
   else if (currentView === 'shop_manager') renderShopManager();
   else if (currentView === 'public_shop') renderPublicShop();
   else if (currentView === 'pet_gallerie') renderPetGallerie();
