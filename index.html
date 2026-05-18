@@ -53169,32 +53169,32 @@ function render() {
   
   // ── Nest2のRecordシート（backdrop-filter完全回避・bodyに直接追加）
   (function() {
-    ['nest2StampSheet','nest2StampOverlay'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.remove();
-    });
-    if (currentView !== 'nest2_detail') return;
+    // 表示すべきか判定（NG時は全削除）
+    if (currentView !== 'nest2_detail') {
+      ['nest2StampSheet','nest2StampOverlay'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+      });
+      return;
+    }
     const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
     if (!nest) return;
     const isRec = (nest.viewTab === 'record');
-    if (!isRec || !window._nest2StampSheetOpen) return;
+    if (!isRec || !window._nest2StampSheetOpen) {
+      ['nest2StampSheet','nest2StampOverlay'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+      });
+      return;
+    }
 
     const _allowedTargets = (typeof _getNest2StampTargets === 'function') ? _getNest2StampTargets(nest) : ['self'];
     if (!nest.stampCategory) nest.stampCategory = (nest.category === 'pet') ? 'お世話' : '生活';
     const curCat = nest.stampCategory;
     const curMemberId = nest.lastSelectedMemberId;
 
-    // オーバーレイ
-    const overlay = document.createElement('div');
-    overlay.id = 'nest2StampOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.42);z-index:9998;';
-    overlay.onclick = function(){ _closeNest2StampSheet(); };
-    document.body.appendChild(overlay);
-
-    // シート本体
-    const sheet = document.createElement('div');
-    sheet.id = 'nest2StampSheet';
-    sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:24px 24px 0 0;z-index:9999;display:flex;flex-direction:column;max-height:75vh;box-shadow:0 -8px 32px rgba(0,0,0,0.18);';
+    // シート内ボタンの押した感CSS
+    const _nest2SheetCss = '<style>#nest2StampSheet button{transition:transform 0.08s ease-out,background 0.08s ease-out,border-color 0.08s ease-out,box-shadow 0.08s ease-out;}#nest2StampSheet button:active{transform:scale(0.88)!important;background:var(--accent-bg)!important;border-color:var(--accent)!important;box-shadow:0 0 0 2px var(--accent),0 4px 12px rgba(0,0,0,0.12)!important;}</style>';
 
     let sh = '';
     // ヘッダー
@@ -53252,7 +53252,24 @@ function render() {
     }
     sh += '</div></div>';
 
-    sheet.innerHTML = sh;
+    // 既存シートがあれば中身だけ更新（揺らさない）
+    let sheet = document.getElementById('nest2StampSheet');
+    if (sheet) {
+      sheet.innerHTML = _nest2SheetCss + sh;
+      return;
+    }
+
+    // 新規作成：オーバーレイ＋シート＋アニメーション
+    const overlay = document.createElement('div');
+    overlay.id = 'nest2StampOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.42);z-index:9998;';
+    overlay.onclick = function(){ _closeNest2StampSheet(); };
+    document.body.appendChild(overlay);
+
+    sheet = document.createElement('div');
+    sheet.id = 'nest2StampSheet';
+    sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:24px 24px 0 0;z-index:9999;display:flex;flex-direction:column;max-height:75vh;box-shadow:0 -8px 32px rgba(0,0,0,0.18);';
+    sheet.innerHTML = _nest2SheetCss + sh;
     sheet.style.transform = 'translateY(100%)';
     document.body.appendChild(sheet);
     requestAnimationFrame(() => {
