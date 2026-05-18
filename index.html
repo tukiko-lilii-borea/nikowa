@@ -34,15 +34,6 @@
     max-width: 480px; margin: 0 auto;
     background-color: var(--bg) !important;
   }
-  /* ── 柄の上に薄い白オーバーレイ（カードを見やすくする） */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: rgba(255,255,255,0.14);
-    pointer-events: none;
-    z-index: 0;
-  }
   .app-frame { 
     position: relative;
   }
@@ -5756,7 +5747,10 @@ function applyTheme(themeId) {
     'rhombus': '40px 0, 40px 0, 0 0, 0 0'
   };
   const paperPos = paperPosMap[theme.pattern] || '0 0';
-  document.body.style.backgroundImage = paperBg;
+  // オーバーレイを柄の下・背景色の上に重ねる（テーマごとに透明度調整）
+  const _overlayAlpha = themeId === 'honey' ? 0.55 : 0.22;
+  const _bgOverlay = 'linear-gradient(rgba(255,255,255,'+_overlayAlpha+'),rgba(255,255,255,'+_overlayAlpha+'))';
+  document.body.style.backgroundImage = paperBg ? paperBg+','+_bgOverlay : _bgOverlay;
   document.body.style.backgroundSize = paperSize;
   // PC幅用にapp-frameにも反映
   var appFrame = document.querySelector('.app-frame');
