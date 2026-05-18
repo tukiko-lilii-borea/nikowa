@@ -53268,13 +53268,13 @@ function render() {
 
     sheet = document.createElement('div');
     sheet.id = 'nest2StampSheet';
-    sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:24px 24px 0 0;z-index:9999;display:flex;flex-direction:column;max-height:75vh;box-shadow:0 -8px 32px rgba(0,0,0,0.18);';
+    sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:24px 24px 0 0;z-index:9999;display:flex;flex-direction:column;max-height:75vh;box-shadow:0 -8px 32px rgba(0,0,0,0.18);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);';
     sheet.innerHTML = _nest2SheetCss + sh;
-    sheet.style.transform = 'translateY(100%)';
     document.body.appendChild(sheet);
     requestAnimationFrame(() => {
-      sheet.style.transition = 'transform 0.3s cubic-bezier(0.16,1,0.3,1)';
-      sheet.style.transform = 'translateY(0)';
+      requestAnimationFrame(() => {
+        sheet.style.transform = 'translateY(0)';
+      });
     });
   })();
 
@@ -53372,13 +53372,15 @@ function render() {
 
     sheet = document.createElement('div');
     sheet.id = 'meStampSheet';
-    sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:24px 24px 0 0;z-index:9999;display:flex;flex-direction:column;max-height:75vh;box-shadow:0 -8px 32px rgba(0,0,0,0.18);';
+    // transitionを最初から設定、初期transformはtranslateY(100%)
+    sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:24px 24px 0 0;z-index:9999;display:flex;flex-direction:column;max-height:75vh;box-shadow:0 -8px 32px rgba(0,0,0,0.18);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);';
     sheet.innerHTML = _meSheetCss + sh;
-    sheet.style.transform = 'translateY(100%)';
     document.body.appendChild(sheet);
+    // 二重requestAnimationFrameで確実に再描画後にtransform変更
     requestAnimationFrame(() => {
-      sheet.style.transition = 'transform 0.3s cubic-bezier(0.16,1,0.3,1)';
-      sheet.style.transform = 'translateY(0)';
+      requestAnimationFrame(() => {
+        sheet.style.transform = 'translateY(0)';
+      });
     });
   })();
   
