@@ -11431,92 +11431,286 @@ const PLANNER_CATEGORIES = [
 ];
 
 function renderPlannerView() {
-  if (!data.planner) data.planner = { items: [] };
-  const items = data.planner.items || [];
-  const today = new Date().toDateString();
-  
-  let html = '<div style="padding:12px 14px 8px;">';
-  
-  // 説明
-  html += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:10px;line-height:1.5;">時間帯ごとに今日やることを管理。完了したらスタンプにも記録されるよ🌷</div>';
-  
-  // 追加ボタン
-  html += '<button onclick="openPlannerAddModal()" style="width:100%;padding:10px;border:1.5px dashed var(--accent);background:var(--accent-bg);color:var(--accent-deep);border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:14px;">＋ 予定を追加</button>';
-  
-  // カテゴリごとに表示
-  for (const cat of PLANNER_CATEGORIES) {
-    const catItems = items.filter(i => i.category === cat.id);
-    if (catItems.length === 0) continue;
-    
-    // 時間順でソート（時間なしは最後）
-    catItems.sort((a, b) => {
-      if (!a.time && !b.time) return 0;
-      if (!a.time) return 1;
-      if (!b.time) return -1;
-      return a.time.localeCompare(b.time);
-    });
-    
-    // 完了/未完了で並び替え（未完了が上）
-    const incomplete = catItems.filter(i => !i.completed || i.completedAt !== today);
-    const complete = catItems.filter(i => i.completed && i.completedAt === today);
-    const sorted = [...incomplete, ...complete];
-    
-    // カテゴリ見出し
-    html += '<div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px;">';
-    html += '<span style="font-size:18px;">'+cat.icon+'</span>';
-    html += '<span style="font-size:13px;font-weight:800;color:var(--ink-dark);letter-spacing:0.5px;">'+cat.label+'</span>';
-    html += '<span style="font-size:10px;color:var(--ink-light);">'+cat.jp+'</span>';
-    html += '<div style="flex:1;height:1px;background:linear-gradient(90deg,var(--accent) 0%,transparent 100%);opacity:0.4;"></div>';
+  if (!data.planner) data.planner = { items: [], routines: [] };
+  if (!data.planner.routines) data.planner.routines = [];
+
+  const DOW     = ['sun','mon','tue','wed','thu','fri','sat'];
+  const DOW_JP  = ['日','月','火','水','木','金','土'];
+  const today   = new Date();
+  const todayDow = DOW[today.getDay()];
+  const todayStr = today.toDateString();
+
+  // 選択中の曜日（デフォルト：今日）
+  if (!data.planner.selectedDow) data.planner.selectedDow = todayDow;
+  const selDow = data.planner.selectedDow;
+  const isToday = selDow === todayDow;
+
+  let html = '<div style="padding:8px 14px 14px;">';
+
+  // ── 曜日バー
+  html += '<div style="display:flex;gap:3px;margin-bottom:10px;">';
+  for (let i = 0; i < 7; i++) {
+    const dow = DOW[i];
+    const isAct = dow === selDow;
+    const isTod = dow === todayDow;
+    const isSun = i === 0, isSat = i === 6;
+    const dayColor = isSun ? '#E57373' : (isSat ? '#64B5F6' : 'var(--ink-dark)');
+    const actColor = isSun ? '#E57373' : (isSat ? '#64B5F6' : 'var(--accent-deep)');
+    html += '<button onclick="_plannerSelectDow(\''+dow+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid '+(isAct?actColor:'var(--line)')+';background:'+(isAct?'var(--accent-bg)':'transparent')+';cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;">';
+    html += '<span style="font-size:10px;font-weight:800;color:'+(isAct?actColor:dayColor)+';">'+DOW_JP[i]+'</span>';
+    if (isTod) html += '<span style="width:4px;height:4px;border-radius:50%;background:'+(isAct?actColor:'var(--accent)')+';"></span>';
+    html += '</button>';
+  }
+  html += '</div>';
+
+  // ── ルーティン設定ボタン
+  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">';
+  html += '<button onclick="openPlannerRoutineModal()" style="display:flex;align-items:center;gap:4px;padding:5px 12px;border-radius:100px;border:1px solid var(--line);background:var(--surface-warm);font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;"><span class="material-symbols-rounded" style="font-size:14px;">repeat</span>ルーティン設定</button>';
+  html += '</div>';
+
+  // ── 表示アイテムを構築
+  const allItems = [];
+
+  // ルーティン（選択曜日が除外でないもの）
+  for (const r of data.planner.routines) {
+    if ((r.exceptions||[]).includes(selDow)) continue;
+    const checked = !!(data.planner.routineChecked?.[todayStr]?.[r.id]);
+    allItems.push({ type:'routine', id:r.id, time:r.time, title:r.title, icon:r.icon, done:isToday&&checked });
+  }
+
+  // 今日だけの予定（今日表示の時のみ）
+  if (isToday) {
+    for (const item of (data.planner.items||[])) {
+      const isDone = item.completed && item.completedAt === todayStr;
+      allItems.push({ type:'today', id:item.id, time:item.time, title:item.task, icon:item.icon, done:isDone });
+    }
+  }
+
+  // 時間順ソート（時間なしは最後）
+  allItems.sort((a,b) => {
+    if (!a.time && !b.time) return 0;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time.localeCompare(b.time);
+  });
+
+  // ── アイテム表示
+  if (allItems.length === 0) {
+    html += '<div style="background:var(--surface-warm);border:1.5px dashed var(--card-border);border-radius:16px;padding:28px 16px;text-align:center;margin-top:4px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:36px;color:var(--line);display:block;margin-bottom:8px;">event_available</span>';
+    html += '<div style="font-size:12px;color:var(--ink-sub);font-weight:700;">'+DOW_JP[DOW.indexOf(selDow)]+'曜日の予定はないよ</div>';
+    if (!isToday) html += '<div style="font-size:10px;color:var(--ink-light);margin-top:4px;">ルーティン設定から追加できるよ</div>';
     html += '</div>';
-    
-    // アイテムリスト
-    for (const item of sorted) {
-      const isDone = item.completed && item.completedAt === today;
-      const opacity = isDone ? '0.5' : '1';
-      const textDeco = isDone ? 'text-decoration:line-through;color:var(--ink-light);' : '';
-      const bg = isDone ? 'var(--surface-warm)' : 'var(--surface)';
-      
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:'+bg+';border:1px solid var(--card-border);border-radius:12px;margin-bottom:6px;opacity:'+opacity+';" onclick="openPlannerEditModal(\''+item.id+'\')">';
-      
+  } else {
+    for (const item of allItems) {
+      const bg = item.done ? 'var(--surface-warm)' : 'var(--surface)';
+      const op = item.done ? '0.5' : '1';
+      const txStyle = item.done ? 'text-decoration:line-through;color:var(--ink-light);' : '';
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:'+bg+';border:1px solid var(--card-border);border-radius:12px;margin-bottom:6px;opacity:'+op+';">';
+      // 🔁マーク
+      if (item.type === 'routine') html += '<span class="material-symbols-rounded" style="flex-shrink:0;font-size:14px;color:var(--accent-deep);">repeat</span>';
       // 時間
-      if (item.time) {
-        html += '<span style="display:flex;align-items:center;gap:2px;background:var(--accent-bg);color:var(--accent-deep);font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:11px;">schedule</span>'+item.time+'</span>';
-      }
-      
+      if (item.time) html += '<span style="display:flex;align-items:center;gap:2px;background:var(--accent-bg);color:var(--accent-deep);font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:11px;">schedule</span>'+item.time+'</span>';
       // アイコン
-      html += '<span style="flex-shrink:0;">'+renderStampIcon(item.icon||'check_box_outline_blank','font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
-      
-      // タスク名
-      html += '<span style="flex:1;font-size:13px;font-weight:600;color:var(--ink-dark);'+textDeco+'">'+escapeHtml(item.task)+'</span>';
-      
-      // 通知マーク
-      if (item.notify) html += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-light);">notifications</span>';
-      
-      // スタンプボタン
-      if (!isDone) {
-        html += '<button onclick="event.stopPropagation();completePlannerItem(\''+item.id+'\')" style="background:var(--accent);color:white;border:none;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">check</span></button>';
-      } else {
+      html += '<span style="flex-shrink:0;">'+renderStampIcon(item.icon||'check_circle','font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
+      // タイトル
+      html += '<span style="flex:1;font-size:13px;font-weight:600;color:var(--ink-dark);'+txStyle+'">'+escapeHtml(item.title)+'</span>';
+      // チェックボタン（今日表示の時のみ）
+      if (isToday && !item.done) {
+        const fn = item.type==='routine' ? '_checkRoutine(\''+item.id+'\')' : 'completePlannerItem(\''+item.id+'\')';
+        html += '<button onclick="event.stopPropagation();'+fn+'" style="background:var(--accent);color:white;border:none;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">check</span></button>';
+      } else if (isToday && item.done && item.type==='today') {
         html += '<button onclick="event.stopPropagation();uncompletePlannerItem(\''+item.id+'\')" style="background:var(--surface-warm);color:var(--ink-light);border:1px solid var(--line);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;">undo</span></button>';
       }
-      
       html += '</div>';
     }
   }
-  
-  // 空の状態
-  if (items.length === 0) {
-    html += '<div style="background:var(--surface-warm);border:1.5px solid var(--card-border);border-radius:16px;padding:32px 16px;text-align:center;color:var(--ink-sub);font-size:12px;line-height:1.7;margin-top:8px;">';
-    html += '🌷 まだ予定がないよ<br><span style="font-size:10px;color:var(--ink-light);">「予定を追加」から作れるよ</span>';
-    html += '</div>';
+
+  // 今日だけ追加ボタン
+  if (isToday) {
+    html += '<button onclick="openPlannerAddModal()" style="width:100%;padding:10px;border:1.5px dashed var(--accent);background:var(--accent-bg);color:var(--accent-deep);border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;">＋ 今日だけ追加</button>';
   }
-  
+
   html += '</div>';
   return html;
 }
 
+
 function openPlannerAddModal() {
   openPlannerModal(null);
 }
+
+// 曜日切り替え
+function _plannerSelectDow(dow) {
+  if (!data.planner) data.planner = { items:[], routines:[] };
+  data.planner.selectedDow = dow;
+  _suppressScrollTop = true;
+  render();
+}
+window._plannerSelectDow = _plannerSelectDow;
+
+// ルーティンのチェック
+function _checkRoutine(routineId) {
+  if (!data.planner) return;
+  if (!data.planner.routineChecked) data.planner.routineChecked = {};
+  const todayStr = new Date().toDateString();
+  if (!data.planner.routineChecked[todayStr]) data.planner.routineChecked[todayStr] = {};
+  data.planner.routineChecked[todayStr][routineId] = true;
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window._checkRoutine = _checkRoutine;
+
+// ルーティン管理モーダル
+function openPlannerRoutineModal() {
+  if (!data.planner) data.planner = { items:[], routines:[] };
+  if (!data.planner.routines) data.planner.routines = [];
+  _renderPlannerRoutineModal();
+}
+window.openPlannerRoutineModal = openPlannerRoutineModal;
+
+function _renderPlannerRoutineModal() {
+  const ex = document.getElementById('plannerRoutineModal');
+  if (ex) ex.remove();
+
+  const DOW_LABELS = [
+    {key:'sun',jp:'日'},{key:'mon',jp:'月'},{key:'tue',jp:'火'},
+    {key:'wed',jp:'水'},{key:'thu',jp:'木'},{key:'fri',jp:'金'},{key:'sat',jp:'土'}
+  ];
+  const routines = data.planner.routines || [];
+
+  let h = '<div id="plannerRoutineModal" style="position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;" onclick="if(event.target===this)closePlannerRoutineModal();">';
+  h += '<div style="width:100%;background:#FFFFFF;border-radius:24px 24px 0 0;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 -8px 32px rgba(0,0,0,0.18);">';
+
+  // ヘッダー
+  h += '<div style="flex-shrink:0;padding:12px 16px 10px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;justify-content:space-between;">';
+  h += '<div style="display:flex;justify-content:center;position:absolute;left:50%;transform:translateX(-50%);"><div style="width:40px;height:4px;background:#DDD;border-radius:100px;"></div></div>';
+  h += '<span style="font-size:15px;font-weight:900;color:var(--ink-dark);">ルーティン設定</span>';
+  h += '<button onclick="closePlannerRoutineModal()" style="width:32px;height:32px;border-radius:50%;background:#F5F5F5;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;color:#888;">close</span></button>';
+  h += '</div>';
+
+  // スクロールエリア
+  h += '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 24px;">';
+
+  // 追加フォーム
+  h += '<div style="background:var(--accent-bg);border:1.5px dashed var(--accent);border-radius:14px;padding:12px;margin-bottom:16px;">';
+  h += '<div style="font-size:11px;font-weight:800;color:var(--accent-deep);margin-bottom:8px;">新しいルーティンを追加</div>';
+  h += '<div style="display:flex;gap:8px;margin-bottom:8px;">';
+  h += '<input id="rtTimeInput" type="time" style="flex:1;padding:8px 10px;border:1.5px solid var(--card-border);border-radius:10px;font-family:inherit;font-size:13px;background:white;" placeholder="時間">';
+  h += '<input id="rtTitleInput" type="text" maxlength="20" style="flex:2;padding:8px 10px;border:1.5px solid var(--card-border);border-radius:10px;font-family:inherit;font-size:13px;background:white;" placeholder="内容（例：こむぎの散歩）">';
+  h += '</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);font-weight:700;margin-bottom:5px;">除外する曜日（不要な日はチェック）</div>';
+  h += '<div style="display:flex;gap:5px;margin-bottom:10px;">';
+  for (const d of DOW_LABELS) {
+    h += '<label style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;">';
+    h += '<input type="checkbox" id="rtEx_'+d.key+'" style="accent-color:var(--accent);">';
+    h += '<span style="font-size:10px;font-weight:700;color:var(--ink-sub);">'+d.jp+'</span>';
+    h += '</label>';
+  }
+  h += '</div>';
+  h += '<button onclick="savePlannerRoutineNew()" style="width:100%;padding:10px;background:var(--accent-deep);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">追加</button>';
+  h += '</div>';
+
+  // 既存ルーティン一覧
+  if (routines.length === 0) {
+    h += '<div style="text-align:center;padding:20px;color:var(--ink-sub);font-size:12px;">ルーティンがまだないよ。上から追加してね。</div>';
+  } else {
+    for (let ri = 0; ri < routines.length; ri++) {
+      const r = routines[ri];
+      h += '<div style="background:var(--surface);border:1px solid var(--card-border);border-radius:12px;padding:10px 12px;margin-bottom:8px;">';
+      h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
+      // 上下ボタン
+      h += '<div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">';
+      if (ri > 0) h += '<button onclick="movePlannerRoutine(\''+r.id+'\',-1)" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--line);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">arrow_upward</span></button>';
+      if (ri < routines.length-1) h += '<button onclick="movePlannerRoutine(\''+r.id+'\',1)" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--line);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;">arrow_downward</span></button>';
+      h += '</div>';
+      h += '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">repeat</span>';
+      if (r.time) h += '<span style="font-size:11px;font-weight:700;color:var(--accent-deep);background:var(--accent-bg);padding:2px 8px;border-radius:100px;">'+r.time+'</span>';
+      h += '<span style="flex:1;font-size:13px;font-weight:700;color:var(--ink-dark);">'+escapeHtml(r.title)+'</span>';
+      h += '<button onclick="deletePlannerRoutine(\''+r.id+'\')" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;background:#FEE2E2;cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;color:#EF4444;">delete</span></button>';
+      h += '</div>';
+      // 除外曜日
+      h += '<div style="display:flex;align-items:center;gap:4px;">';
+      h += '<span style="font-size:10px;color:var(--ink-sub);font-weight:700;flex-shrink:0;">除外:</span>';
+      for (const d of DOW_LABELS) {
+        const isEx = (r.exceptions||[]).includes(d.key);
+        h += '<button onclick="toggleRoutineException(\''+r.id+'\',\''+d.key+'\')" style="padding:2px 6px;border-radius:100px;border:1.5px solid '+(isEx?'#EF4444':'var(--line)')+';background:'+(isEx?'#FEE2E2':'transparent')+';font-family:inherit;font-size:10px;font-weight:800;color:'+(isEx?'#EF4444':'var(--ink-sub)')+';cursor:pointer;">'+d.jp+'</button>';
+      }
+      h += '</div>';
+      h += '</div>';
+    }
+  }
+
+  h += '</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window._renderPlannerRoutineModal = _renderPlannerRoutineModal;
+
+function closePlannerRoutineModal() {
+  const m = document.getElementById('plannerRoutineModal');
+  if (m) m.remove();
+}
+window.closePlannerRoutineModal = closePlannerRoutineModal;
+
+function savePlannerRoutineNew() {
+  const time  = (document.getElementById('rtTimeInput')?.value  || '').trim();
+  const title = (document.getElementById('rtTitleInput')?.value || '').trim();
+  if (!title) { alert('内容を入力してね'); return; }
+  const DOW_KEYS = ['sun','mon','tue','wed','thu','fri','sat'];
+  const exceptions = DOW_KEYS.filter(k => document.getElementById('rtEx_'+k)?.checked);
+  if (!data.planner.routines) data.planner.routines = [];
+  data.planner.routines.push({
+    id: 'rt_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+    time, title, icon:'check_circle', exceptions
+  });
+  saveData();
+  _renderPlannerRoutineModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.savePlannerRoutineNew = savePlannerRoutineNew;
+
+function deletePlannerRoutine(id) {
+  if (!data.planner?.routines) return;
+  data.planner.routines = data.planner.routines.filter(r => r.id !== id);
+  saveData();
+  _renderPlannerRoutineModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.deletePlannerRoutine = deletePlannerRoutine;
+
+function movePlannerRoutine(id, dir) {
+  const arr = data.planner?.routines;
+  if (!arr) return;
+  const idx = arr.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+  saveData();
+  _renderPlannerRoutineModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.movePlannerRoutine = movePlannerRoutine;
+
+function toggleRoutineException(id, dow) {
+  const r = (data.planner?.routines||[]).find(r => r.id === id);
+  if (!r) return;
+  if (!r.exceptions) r.exceptions = [];
+  const idx = r.exceptions.indexOf(dow);
+  if (idx >= 0) r.exceptions.splice(idx, 1);
+  else r.exceptions.push(dow);
+  saveData();
+  _renderPlannerRoutineModal();
+  _suppressScrollTop = true;
+  render();
+}
+window.toggleRoutineException = toggleRoutineException;
+
+
 
 function openPlannerEditModal(id) {
   openPlannerModal(id);
@@ -11568,6 +11762,32 @@ function openPlannerModal(editId) {
   }
   h += '</div></div>';
   
+  // ── スタンプから選ぶ（折りたたみ）
+  h += '<div style="margin-bottom:12px;">';
+  h += '<button onclick="_togglePlannerStampPicker()" style="width:100%;padding:8px;border:1.5px dashed var(--accent);background:transparent;color:var(--accent-deep);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:16px;">auto_awesome</span>スタンプから選ぶ</button>';
+  h += '<div id="plannerStampPicker" style="display:none;margin-top:8px;border:1.5px solid var(--accent-bg);border-radius:12px;overflow:hidden;">';
+  // カテゴリタブ
+  const _allCats = Object.keys(data.stampLib||{});
+  const _defCat = _allCats[0] || '生活';
+  h += '<div id="plannerStampCatRow" style="display:flex;gap:4px;padding:8px;overflow-x:auto;scrollbar-width:none;background:var(--accent-bg);border-bottom:1px solid var(--line-soft);">';
+  for (let ci = 0; ci < _allCats.length; ci++) {
+    const cat = _allCats[ci];
+    const _isFirst = ci === 0;
+    h += '<button onclick="_setPlannerStampCat(\''+escapeHtml(cat).replace(/\'/g,"\\\\'")+'\',this)" style="flex-shrink:0;padding:4px 10px;border-radius:100px;border:1.5px solid '+(_isFirst?'var(--accent)':'var(--line)')+';background:'+(_isFirst?'var(--accent-bg)':'var(--surface)')+';color:'+(_isFirst?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">'+escapeHtml(cat)+'</button>';
+  }
+  h += '</div>';
+  // スタンプグリッド（最初のカテゴリ）
+  h += '<div id="plannerStampGrid" style="padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:180px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
+  const _defStamps = (_allCats.length > 0 ? (data.stampLib[_defCat]||[]) : []).filter(s => !s.hidden);
+  for (const s of _defStamps) {
+    const _sn = escapeHtml(s.name).replace(/\'/g,"\\\\'");
+    h += '<button onclick="_selectPlannerStamp(\''+s.icon+'\',\''+_sn+'\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;">';
+    h += '<span style="width:32px;height:32px;border-radius:8px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:20px;color:var(--accent-deep);')+'</span>';
+    h += '<span style="font-size:10px;font-weight:700;color:var(--ink-dark);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+    h += '</button>';
+  }
+  h += '</div></div></div>';
+
   // 時間（任意）
   h += '<div style="margin-bottom:12px;">';
   h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">時間（任意）</label>';
@@ -11608,6 +11828,58 @@ function closePlannerModal() {
   const el = document.getElementById('plannerModal');
   if (el) el.remove();
 }
+
+// スタンプピッカー開閉
+function _togglePlannerStampPicker() {
+  const p = document.getElementById('plannerStampPicker');
+  if (!p) return;
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+window._togglePlannerStampPicker = _togglePlannerStampPicker;
+
+// カテゴリ切替
+function _setPlannerStampCat(cat, btn) {
+  if (!data.stampLib) return;
+  // タブのハイライト更新
+  const row = document.getElementById('plannerStampCatRow');
+  if (row) {
+    row.querySelectorAll('button').forEach(b => {
+      b.style.background = 'var(--surface)';
+      b.style.borderColor = 'var(--line)';
+      b.style.color = 'var(--ink-sub)';
+    });
+    if (btn) {
+      btn.style.background = 'var(--accent-bg)';
+      btn.style.borderColor = 'var(--accent)';
+      btn.style.color = 'var(--accent-deep)';
+    }
+  }
+  // グリッド更新
+  const grid = document.getElementById('plannerStampGrid');
+  if (!grid) return;
+  const stamps = (data.stampLib[cat]||[]).filter(s => !s.hidden);
+  grid.innerHTML = stamps.map(s => {
+    const sn = s.name.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    return '<button onclick="_selectPlannerStamp(\''+s.icon+'\',\''+sn+'\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;"><span style="width:32px;height:32px;border-radius:8px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">'+s.icon+'</span></span><span style="font-size:10px;font-weight:700;color:var(--ink-dark);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span></button>';
+  }).join('');
+}
+window._setPlannerStampCat = _setPlannerStampCat;
+
+// スタンプ選択 → タスク名・アイコン自動入力
+function _selectPlannerStamp(icon, name) {
+  const ta = document.getElementById('pmTask');
+  if (ta) ta.value = name;
+  window._pmIcon = icon;
+  // アイコン選択ボタンのUI更新
+  document.querySelectorAll('#plannerModal button[data-icon]').forEach(b => {
+    b.style.background = 'var(--surface)';
+    b.style.borderColor = 'var(--line)';
+  });
+  // ピッカーを閉じる
+  const p = document.getElementById('plannerStampPicker');
+  if (p) p.style.display = 'none';
+}
+window._selectPlannerStamp = _selectPlannerStamp;
 
 function savePlannerItem(editId) {
   if (!data.planner) data.planner = { items: [] };
@@ -22543,7 +22815,7 @@ function renderMeMode() {
     html += '<button onclick="openTweetFilterModal()" title="検索" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">search</span></button>';
     html += '<button onclick="openTweetAlbumModal()" title="写真アルバム" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">photo_library</span></button>';
     html += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">calendar_month</span></button>';
-    html += '<button onclick="openTweetBgModal()" title="壁紙" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">wallpaper</span></button>';
+    html += '<button onclick="window._plannerOnly=true;data.stampSubTab=\'planner\';setModePageTab(\'me\',\'stamp\');" title="プランナー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">edit_calendar</span></button>';
     // スペーサー
     html += '<div style="flex:1;"></div>';
     // Record / Diary タブボタン（右側）：選択中は大きく＆太字
@@ -22948,10 +23220,9 @@ function renderMeMode() {
       // ===== ペット型レイアウト：カテゴリ＋スタンプグリッド =====
       const _meVisibleCats = _getVisibleStampCats();
       if (_meVisibleCats.length > 0) {
-        // ── FAB（＋ボタン）
+        // ── FABとシートはrender()末尾でbodyに直接追加（backdrop-filter問題回避）
         const _meSheetOpen = !!window._meStampSheetOpen;
-        html += '<button onclick="_openMeStampSheet()" style="position:fixed;right:22px;bottom:90px;width:60px;height:60px;border-radius:50%;background:var(--accent-deep);border:none;display:'+ (_meSheetOpen?'none':'flex') +';align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:1900;font-family:inherit;" ontouchstart="this.style.transform=\'scale(0.92)\'" ontouchend="this.style.transform=\'\'"><span class="material-symbols-rounded" style="font-size:32px;color:white;font-weight:300;">add</span></button>';
-
+        // シートはDOMに直接出力（position:fixedがmode-content-wrapの外になる）
         if (_meSheetOpen) {
           // オーバーレイ
           html += '<div onclick="_closeMeStampSheet()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:2000;animation:nest2SheetFade 0.2s;"></div>';
@@ -52932,6 +53203,26 @@ function render() {
   else if (currentView === 'creator_home') renderCreatorHome();
   else renderTop();
   renderSidePanel();
+  
+  // ── Meスタンプ用FAB（backdrop-filter回避のためbodyに直接管理）
+  (function() {
+    const _oldFab = document.getElementById('meStampFab');
+    if (_oldFab) _oldFab.remove();
+    const _showFab = currentView === 'me'
+      && data.stampSubTab === 'stamp'
+      && !window._meStampSheetOpen;
+    if (_showFab) {
+      const _fab = document.createElement('button');
+      _fab.id = 'meStampFab';
+      _fab.innerHTML = '<span class="material-symbols-rounded" style="font-size:32px;color:white;font-weight:300;">add</span>';
+      _fab.style.cssText = 'position:fixed;right:22px;bottom:90px;width:60px;height:60px;border-radius:50%;background:var(--accent-deep);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:9999;font-family:inherit;';
+      _fab.ontouchstart = function(){ this.style.transform='scale(0.92)'; };
+      _fab.ontouchend   = function(){ this.style.transform=''; };
+      _fab.onclick = function(){ _openMeStampSheet(); };
+      document.body.appendChild(_fab);
+    }
+  })();
+  
   if (!_suppressScrollTop) window.scrollTo(0, 0);
   _suppressScrollTop = false;
   const _t1 = performance.now();
