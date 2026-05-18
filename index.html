@@ -9256,7 +9256,7 @@ function _getDrawerContent(key) {
 
   if (key === 'today') {
     h += _itemBtn('home',           'ホーム',       '毎日のはじまり',   `closeDrawerMenu();currentView='top';render();`);
-    h += _itemBtn('wb_sunny',       '記録',         'スタンプ記録',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
+    h += _itemBtn('wb_sunny',       '記録',         'スタンプ記録',     `closeDrawerMenu();goToMeMode();setTimeout(()=>{data.diaryInputTab='record';setModePageTab('me','diary');},100);`);
     h += _itemBtn('view_day',       'プランナー',   '今日のやること',   `closeDrawerMenu();data.stampSubTab='planner';goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
     h += _itemBtn('calendar_month', 'カレンダー',   '予定を一覧で',     `closeDrawerMenu();currentView='schedule';render();`);
     h += _itemBtn('edit_note',      '日記',         '気持ちを残す',     `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','diary'),100);`);
@@ -9271,7 +9271,7 @@ function _getDrawerContent(key) {
 
   } else if (key === 'health') {
     h += _itemBtn('favorite',            'Health',       'ダイエット・体調まとめ', `closeDrawerMenu();currentView='health';render();`);
-    h += _itemBtn('check_circle',        'スタンプ記録',  'スタンプで記録',         `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
+    h += _itemBtn('check_circle',        'スタンプ記録',  'スタンプで記録',         `closeDrawerMenu();goToMeMode();setTimeout(()=>{data.diaryInputTab='record';setModePageTab('me','diary');},100);`);
     h += _itemBtn('monitor_weight',      '体重',         '体重を記録',             `closeDrawerMenu();currentView='health';render();`);
     h += _itemBtn('water_drop',          '生理',         'ホルモン管理',           `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
     h += _itemBtn('medical_information', 'カルテ',       '医療・薬・病院',         `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);`);
@@ -10234,7 +10234,7 @@ window.openQuickAddMenu = function() {
 
   // スタンプ（フル幅・大きめ）
   h += '<div style="margin-top:10px;">';
-  h += '<button onclick="closeQuickAddMenu();goToMeMode();setTimeout(()=>setModePageTab(\'me\',\'stamp\'),100);" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,0.88);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.95);border-radius:14px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,0.08);">';
+  h += '<button onclick="closeQuickAddMenu();goToMeMode();setTimeout(()=>{data.diaryInputTab=\'record\';setModePageTab(\'me\',\'diary\');},100);" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,0.88);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.95);border-radius:14px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,0.08);">';
   h += '<div style="width:46px;height:46px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">wb_sunny</span></div>';
   h += '<div style="flex:1;text-align:left;"><div style="font-size:13px;font-weight:800;color:var(--ink-dark);">スタンプ</div><div style="font-size:10px;color:var(--ink-sub);">体調・お世話・気持ちを記録</div></div>';
   h += '<span class="material-symbols-rounded" style="color:var(--accent-deep);">chevron_right</span>';
@@ -23972,149 +23972,8 @@ function renderTweetsDiary() {
   
   // 入力欄（Record/Diaryタブで切り替え）
   if (diaryInputTab === 'record') {
-    // ── Record: ピン1行 + カテゴリタブ + スタンプ1列（色反転：茶色メイン）──
-    // ★ ワーク系カテゴリの追加migration（既存ユーザーにも反映）
-    if (!data._stampWorkCatsAdded_v1) {
-      if (!data.stampLib) data.stampLib = {};
-      const _WORK_CATS = {
-        'お仕事': [
-          {icon:'edit_note',name:'ひとこと',type:'text',placeholder:'仕事のひとこと'},
-          {icon:'phone',name:'電話'},{icon:'groups',name:'会議'},{icon:'handshake',name:'打合せ'},
-          {icon:'check_circle',name:'タスク完了'},{icon:'mail',name:'メール'},{icon:'description',name:'資料作成'},
-          {icon:'coffee',name:'休憩'},{icon:'sentiment_dissatisfied',name:'愚痴',type:'text',placeholder:'吐き出して'},
-          {icon:'commute',name:'出勤'},{icon:'logout',name:'退勤'},{icon:'restaurant',name:'ランチ'}
-        ],
-        '製造': [
-          {icon:'precision_manufacturing',name:'加工'},{icon:'search_check',name:'検査'},
-          {icon:'settings',name:'段取り'},{icon:'verified',name:'完成'},
-          {icon:'warning',name:'不良'},{icon:'build',name:'機械点検'},
-          {icon:'cleaning_services',name:'清掃'},{icon:'local_shipping',name:'出荷'},
-          {icon:'inventory_2',name:'材料準備'},{icon:'engineering',name:'CAD作業'},
-          {icon:'rule',name:'測定',type:'number',unit:'mm',step:0.001,min:0,max:1000}
-        ],
-        '経理': [
-          {icon:'download',name:'入金',type:'number',unit:'円',step:100,min:0,max:99999999},
-          {icon:'upload',name:'支払い',type:'number',unit:'円',step:100,min:0,max:99999999},
-          {icon:'receipt_long',name:'請求書'},{icon:'receipt',name:'領収書'},
-          {icon:'calculate',name:'計算'},{icon:'event_available',name:'月次締め'},
-          {icon:'account_balance',name:'振込'},{icon:'book',name:'帳簿'},
-          {icon:'savings',name:'経費'},{icon:'fact_check',name:'チェック'}
-        ],
-        '接客': [
-          {icon:'emoji_people',name:'来客'},{icon:'directions',name:'案内'},
-          {icon:'support_agent',name:'接客'},{icon:'assignment',name:'注文'},
-          {icon:'point_of_sale',name:'会計'},{icon:'waving_hand',name:'お見送り'},
-          {icon:'report_problem',name:'クレーム',type:'text',placeholder:'内容メモ'},
-          {icon:'chat',name:'雑談'},{icon:'star',name:'指名'},
-          {icon:'redeem',name:'プレゼント'}
-        ],
-        '配信': [
-          {icon:'videocam',name:'配信開始'},{icon:'videocam_off',name:'配信終了'},
-          {icon:'connect_without_contact',name:'コラボ'},{icon:'lightbulb',name:'企画'},
-          {icon:'theater_comedy',name:'リハ'},{icon:'archive',name:'アーカイブ'},
-          {icon:'paid',name:'投げ銭',type:'number',unit:'円',step:100,min:0,max:9999999},
-          {icon:'favorite',name:'ファン交流'},{icon:'mic',name:'雑談配信'},
-          {icon:'sports_esports',name:'ゲーム配信'},{icon:'edit',name:'動画編集'}
-        ],
-        '営業': [
-          {icon:'directions_car',name:'訪問'},{icon:'handshake',name:'商談'},
-          {icon:'request_quote',name:'見積もり'},{icon:'assignment_turned_in',name:'受注'},
-          {icon:'forum',name:'フォロー'},{icon:'badge',name:'名刺交換'},
-          {icon:'tips_and_updates',name:'提案'},{icon:'event',name:'アポ取り'},
-          {icon:'call',name:'テレアポ'},{icon:'sentiment_satisfied',name:'契約成立'},
-          {icon:'thumb_down',name:'失注'}
-        ],
-        '学校': [
-          {icon:'school',name:'授業'},{icon:'quiz',name:'テスト',type:'number',unit:'点',step:1,min:0,max:100},
-          {icon:'edit_document',name:'課題'},{icon:'sports_baseball',name:'部活'},
-          {icon:'celebration',name:'行事'},{icon:'grading',name:'採点'},
-          {icon:'contact_mail',name:'連絡帳'},{icon:'groups',name:'会議'},
-          {icon:'directions_run',name:'体育'},{icon:'music_note',name:'音楽'},
-          {icon:'menu_book',name:'読書感想'}
-        ]
-      };
-      for (const cat in _WORK_CATS) {
-        if (!data.stampLib[cat]) {
-          data.stampLib[cat] = _WORK_CATS[cat].map(s => ({...s, id: 's_'+cat+'_'+s.name, hidden: false}));
-        }
-      }
-      data._stampWorkCatsAdded_v1 = true;
-      try { saveData(); } catch(e) {}
-    }
-    const _sLib = data.stampLib || {};
-    const _sCats = Object.keys(_sLib).filter(c => !(_sLib[c] && _sLib[c]._hidden));
-    const _sCat = data.stampSelCat || (_sCats[0] || '生活');
-    const _pinned = data.pinnedStamps || [];
-
-    // ★ カテゴリ別パステルカラー（Record履歴と同じパレット）
-    const _STAMP_CAT_COLORS = {
-      '生活':      { bg:'#EEF6EE', dark:'#4E8A4E', mid:'#7DC47D', pill:'#D4EDD4' },
-      '美容':      { bg:'#FDEAF3', dark:'#B84080', mid:'#E080B0', pill:'#F8D0E8' },
-      'ダイエット': { bg:'#EAF0FD', dark:'#3868A8', mid:'#6EA8E0', pill:'#C8DCF5' },
-      '体調':      { bg:'#EAF8EF', dark:'#3A8860', mid:'#6EC898', pill:'#C4EDD8' },
-      'メンタル':   { bg:'#F2EAFD', dark:'#6840A0', mid:'#A87AD4', pill:'#DDD0F5' },
-      '家事':      { bg:'#FDF2EA', dark:'#985030', mid:'#D4956A', pill:'#F5DECA' },
-      '趣味':      { bg:'#FEF0E8', dark:'#A04030', mid:'#D47A60', pill:'#F5D4C8' },
-      'ポジティブ': { bg:'#FDFCEA', dark:'#787020', mid:'#C4B848', pill:'#EEEAB0' },
-      'お仕事':     { bg:'#F5F0E4', dark:'#7A6840', mid:'#B89860', pill:'#E8DDC4' },
-      '製造':      { bg:'#EAEEF2', dark:'#506880', mid:'#7898B8', pill:'#C8D4E0' },
-      '経理':      { bg:'#E4F4ED', dark:'#287858', mid:'#58B088', pill:'#B8E0C8' },
-      '接客':      { bg:'#FDEEEE', dark:'#A85060', mid:'#D88898', pill:'#F4CCD0' },
-      '配信':      { bg:'#F0E8FA', dark:'#7050B8', mid:'#9878D8', pill:'#DCC8F0' },
-      '営業':      { bg:'#FDEEDD', dark:'#A06030', mid:'#D49060', pill:'#F4D4B8' },
-      '学校':      { bg:'#FDF8DD', dark:'#888040', mid:'#C0B070', pill:'#EEE4A8' },
-    };
-    const _defCC = { bg:'var(--mint-bg)', dark:'var(--mint-deep)', mid:'var(--mint)', pill:'var(--mint-bg)' };
-    const _curCC = _STAMP_CAT_COLORS[_sCat] || _defCC;
-
-    // ピン止め1行（swap前提：mint変数→swap後に茶色になる）
-    h += '<div style="padding:5px 10px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;align-items:center;">';
-    h += '<span class="material-symbols-rounded" style="font-size:13px;color:var(--mint-deep);flex-shrink:0;">push_pin</span>';
-    if (_pinned.length === 0) {
-      h += '<span style="font-size:9px;color:var(--ink-light);flex-shrink:0;">スタンプの📌でピン留めできるよ</span>';
-    } else {
-      for (const p of _pinned.slice(0,12)) {
-        const _safeName = escapeHtml(p.name).replace(/'/g,"\\'");
-        h += '<button onclick="postStampRecord(\''+p.icon+'\',\''+_safeName+'\')" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 5px;border-radius:7px;border:1px solid var(--mint);background:var(--mint-bg);cursor:pointer;font-family:inherit;min-width:36px;">';
-        h += renderStampIcon(p.icon,'font-size:14px;color:var(--mint-deep);');
-        h += '<span style="font-size:8px;font-weight:700;color:var(--mint-deep);white-space:nowrap;">'+escapeHtml(p.name)+'</span>';
-        h += '</button>';
-      }
-    }
-    h += '</div>';
-
-    // ★ カテゴリタブ（各タブが自分のカラーを持つ、data-cat-tabs属性でスクロール位置保存）
-    h += '<div data-cat-tabs style="padding:4px 10px 6px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">';
-    for (const cat of _sCats) {
-      const isC = cat === _sCat;
-      const _tc = _STAMP_CAT_COLORS[cat] || _defCC;
-      if (isC) {
-        // アクティブ：濃い色で塗る
-        h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\', event)" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+_tc.dark+';background:'+_tc.dark+';color:white;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;touch-action:manipulation;">'+escapeHtml(cat)+'</button>';
-      } else {
-        // 非アクティブ：薄い色で
-        h += '<button onclick="setStampCatForRecord(\''+escapeHtml(cat)+'\', event)" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px solid '+_tc.mid+';background:'+_tc.pill+';color:'+_tc.dark+';font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;touch-action:manipulation;">'+escapeHtml(cat)+'</button>';
-      }
-    }
-    // ★ 編集ボタン
-    h += '<button onclick="openStampManagerModal()" title="スタンプ編集" style="flex:0 0 auto;padding:3px 10px;border-radius:100px;border:1.5px dashed var(--mint-deep);background:transparent;color:var(--mint-deep);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;touch-action:manipulation;"><span class="material-symbols-rounded" style="font-size:12px;">edit</span>編集</button>';
-    h += '</div>';
-
-    // ★ スタンプアイコン（選択中カテゴリの色で統一）
-    const _stamps = (_sLib[_sCat] || []).filter(s => !s._hidden);
-    h += '<div data-stamps-row style="padding:8px 10px 6px;display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">';
-    for (const s of _stamps) {
-      const _safeName = escapeHtml(s.name).replace(/'/g,"\\'");
-      const _isPin = (_pinned.findIndex(p => (p.icon+'|'+p.name) === (s.icon+'|'+s.name)) >= 0);
-      h += '<div style="flex:0 0 auto;position:relative;min-width:48px;">';
-      h += '<button onclick="event.stopPropagation();postStampRecord(\''+s.icon+'\',\''+_safeName+'\')" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 4px;border-radius:9px;border:1.5px solid '+_curCC.mid+';background:'+_curCC.bg+';cursor:pointer;font-family:inherit;touch-action:manipulation;">';
-      h += renderStampIcon(s.icon,'font-size:20px;color:'+_curCC.dark+';');
-      h += '<span style="font-size:9px;font-weight:700;color:'+_curCC.dark+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44px;">'+escapeHtml(s.name)+'</span>';
-      h += '</button>';
-      h += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:'+(_isPin?_curCC.dark:'white')+';border:1px solid '+(_isPin?_curCC.dark:_curCC.mid)+';color:'+(_isPin?'white':_curCC.dark)+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;touch-action:manipulation;"><span class="material-symbols-rounded" style="font-size:8px;">push_pin</span></span>';
-      h += '</div>';
-    }
-    h += '</div>';
+    // FAB＋シートはrender()末尾でbodyに直接追加（backdrop-filter完全回避）
+    // ここでは何も描画しない
   } else {
     // Diary: テキスト入力（既存）
     h += '<div style="padding:6px 10px;display:flex;align-items:flex-end;gap:5px;">';
@@ -53403,7 +53262,9 @@ function render() {
       if (el) el.remove();
     });
     if (currentView !== 'me') return;
-    if ((data.stampSubTab || 'stamp') !== 'stamp') return;
+    // Me内のDiaryタブのRecord側でだけFAB＋シートを表示
+    if (currentModeTab['me'] !== 'diary') return;
+    if ((data.diaryInputTab || 'diary') !== 'record') return;
 
     const _isOpen = !!window._meStampSheetOpen;
     const selCat  = data.stampSelCat || '生活';
@@ -53458,7 +53319,7 @@ function render() {
     for (const s of stamps) {
       const sn = s.name.replace(/'/g,"\\'");
       const isPin = pinnedSet.has((s.icon||'')+'|'+(s.name||''));
-      sh += '<button onclick="tapStamp(\''+s.icon+'\',\''+sn+'\',event)" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;background:#FAF7F5;border:1.5px solid #EEE;border-radius:14px;cursor:pointer;font-family:inherit;">';
+      sh += '<button onclick="postStampRecord(\''+s.icon+'\',\''+sn+'\')" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;background:#FAF7F5;border:1.5px solid #EEE;border-radius:14px;cursor:pointer;font-family:inherit;">';
       sh += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+sn+'\',event)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:'+(isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(isPin?'var(--accent)':'#DDD')+';color:'+(isPin?'white':'#BBB')+';display:flex;align-items:center;justify-content:center;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
       sh += '<span style="width:46px;height:46px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:28px;color:var(--accent-deep);')+'</span>';
       sh += '<span style="font-size:12px;font-weight:700;color:#333;text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span>';
