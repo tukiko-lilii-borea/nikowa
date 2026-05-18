@@ -29182,14 +29182,14 @@ window._addNest2Stamp = _addNest2Stamp;
 // ★ スタンプシートを開く
 function _openNest2StampSheet() {
   window._nest2StampSheetOpen = true;
-  renderNest2Detail();
+  render();
 }
 window._openNest2StampSheet = _openNest2StampSheet;
 
 // ★ スタンプシートを閉じる
 function _closeNest2StampSheet() {
   window._nest2StampSheetOpen = false;
-  renderNest2Detail();
+  render();
 }
 window._closeNest2StampSheet = _closeNest2StampSheet;
 
@@ -29204,7 +29204,7 @@ function _selectNest2Member(memberId) {
     nest.lastSelectedMemberId = memberId;
   }
   saveData();
-  renderNest2Detail();
+  render();
 }
 window._selectNest2Member = _selectNest2Member;
 
@@ -29214,7 +29214,7 @@ function _setNest2StampCategory(cat) {
   if (!nest) return;
   nest.stampCategory = cat;
   saveData();
-  renderNest2Detail();
+  render();
 }
 window._setNest2StampCategory = _setNest2StampCategory;
 
