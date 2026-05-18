@@ -10919,6 +10919,26 @@ function _closeMeStampSheet() {
 }
 window._closeMeStampSheet = _closeMeStampSheet;
 
+// スタンプタップ時の視覚フィードバック（縮む＋光る）
+function _meStampFlash(el) {
+  if (!el) return;
+  const _origTransition = el.style.transition;
+  const _origTransform = el.style.transform;
+  const _origBg = el.style.background;
+  const _origBorderColor = el.style.borderColor;
+  el.style.transition = 'transform 0.12s ease-out, background 0.12s ease-out, border-color 0.12s ease-out';
+  el.style.transform = 'scale(0.92)';
+  el.style.background = 'var(--accent-bg)';
+  el.style.borderColor = 'var(--accent)';
+  setTimeout(() => {
+    el.style.transform = _origTransform;
+    el.style.background = _origBg;
+    el.style.borderColor = _origBorderColor;
+    setTimeout(() => { el.style.transition = _origTransition; }, 200);
+  }, 180);
+}
+window._meStampFlash = _meStampFlash;
+
 function switchStampCat(cat) {
   // チップ位置保存
   let chipsScrollX = 0;
@@ -53316,7 +53336,7 @@ function render() {
     for (const s of stamps) {
       const sn = s.name.replace(/'/g,"\\'");
       const isPin = pinnedSet.has((s.icon||'')+'|'+(s.name||''));
-      sh += '<button onclick="postStampRecord(\''+s.icon+'\',\''+sn+'\')" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;background:#FAF7F5;border:1.5px solid #EEE;border-radius:14px;cursor:pointer;font-family:inherit;">';
+      sh += '<button onclick="_meStampFlash(this);postStampRecord(\''+s.icon+'\',\''+sn+'\')" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;background:#FAF7F5;border:1.5px solid #EEE;border-radius:14px;cursor:pointer;font-family:inherit;">';
       sh += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+sn+'\',event)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:'+(isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(isPin?'var(--accent)':'#DDD')+';color:'+(isPin?'white':'#BBB')+';display:flex;align-items:center;justify-content:center;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
       sh += '<span style="width:46px;height:46px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:28px;color:var(--accent-deep);')+'</span>';
       sh += '<span style="font-size:12px;font-weight:700;color:#333;text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span>';
