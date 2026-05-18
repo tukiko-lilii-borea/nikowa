@@ -5395,7 +5395,7 @@ const THEMES = {
     ginghamColor: 'rgba(255,255,255,0.55)',
     headerGrad: 'linear-gradient(180deg, #FEF4F4 0%, #FBE2E8 50%, #F4BCC8 100%)' },
   honey: { name: 'ハニーレモン', emoji: '🍋', pattern: 'polka', cardShape: 'circle',
-    vars: { '--bg':'#FFF080', '--surface':'#FFFFFF', '--surface-warm':'#FFF8C8', '--line':'#E8E070', '--line-soft':'#F0E890', '--ink-dark':'#4A4008', '--ink':'#6A5818', '--ink-sub':'#907830', '--ink-light':'#B8A058', '--mint':'#70EE7C', '--mint-deep':'#40C848', '--mint-bg':'#B0F0B8', '--accent':'#FF8387', '--accent-deep':'#D85058', '--accent-bg':'#FFD0D2', '--today-bg':'#FFF056', '--today-border':'#D8C820', '--warm-yellow':'#FFF056', '--soft-purple':'#D8C098' },
+    vars: { '--bg':'#FFF4B5', '--surface':'#FFFFFF', '--surface-warm':'#FFF8C8', '--line':'#E8E070', '--line-soft':'#F0E890', '--ink-dark':'#4A4008', '--ink':'#6A5818', '--ink-sub':'#907830', '--ink-light':'#B8A058', '--mint':'#70EE7C', '--mint-deep':'#40C848', '--mint-bg':'#B0F0B8', '--accent':'#FF8387', '--accent-deep':'#D85058', '--accent-bg':'#FFD0D2', '--today-bg':'#FFF056', '--today-border':'#D8C820', '--warm-yellow':'#FFF056', '--soft-purple':'#D8C098' },
     paperColor: 'rgba(255,255,255,1)',
     headerGrad: 'linear-gradient(180deg, #FFFEE0 0%, #FFF056 50%, #70EE7C 100%)' },
   pancake: { name: 'ホットケーキ', emoji: '🥞', pattern: 'gingham', cardShape: 'circle',
@@ -5747,8 +5747,8 @@ function applyTheme(themeId) {
     'rhombus': '40px 0, 40px 0, 0 0, 0 0'
   };
   const paperPos = paperPosMap[theme.pattern] || '0 0';
-  // オーバーレイを柄の下・背景色の上に重ねる（テーマごとに透明度調整）
-  const _overlayAlpha = themeId === 'honey' ? 0.55 : 0.22;
+  // オーバーレイを柄の下・背景色の上に重ねる
+  const _overlayAlpha = 0.22;
   const _bgOverlay = 'linear-gradient(rgba(255,255,255,'+_overlayAlpha+'),rgba(255,255,255,'+_overlayAlpha+'))';
   document.body.style.backgroundImage = paperBg ? paperBg+','+_bgOverlay : _bgOverlay;
   document.body.style.backgroundSize = paperSize;
@@ -11509,7 +11509,9 @@ function renderPlannerView() {
       const bg = item.done ? 'var(--surface-warm)' : 'var(--surface)';
       const op = item.done ? '0.5' : '1';
       const txStyle = item.done ? 'text-decoration:line-through;color:var(--ink-light);' : '';
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:'+bg+';border:1px solid var(--card-border);border-radius:12px;margin-bottom:6px;opacity:'+op+';">';
+      // 長押しイベント（touch + mouse 両対応）
+      const _longPress = 'data-planner-item="'+item.id+'" data-planner-type="'+item.type+'"';
+      html += '<div '+_longPress+' style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:'+bg+';border:1px solid var(--card-border);border-radius:12px;margin-bottom:6px;opacity:'+op+';user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;">';
       // 🔁マーク
       if (item.type === 'routine') html += '<span class="material-symbols-rounded" style="flex-shrink:0;font-size:14px;color:var(--accent-deep);">repeat</span>';
       // 時間
@@ -11517,13 +11519,17 @@ function renderPlannerView() {
       // アイコン
       html += '<span style="flex-shrink:0;">'+renderStampIcon(item.icon||'check_circle','font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
       // タイトル
-      html += '<span style="flex:1;font-size:13px;font-weight:600;color:var(--ink-dark);'+txStyle+'">'+escapeHtml(item.title)+'</span>';
+      html += '<span style="flex:1;font-size:13px;font-weight:600;color:var(--ink-dark);'+txStyle+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(item.title)+'</span>';
       // チェックボタン（今日表示の時のみ）
       if (isToday && !item.done) {
         const fn = item.type==='routine' ? '_checkRoutine(\''+item.id+'\')' : 'completePlannerItem(\''+item.id+'\')';
-        html += '<button onclick="event.stopPropagation();'+fn+'" style="background:var(--accent);color:white;border:none;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">check</span></button>';
+        html += '<button onclick="event.stopPropagation();'+fn+'" style="background:var(--accent);color:white;border:none;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:17px;">check</span></button>';
       } else if (isToday && item.done && item.type==='today') {
-        html += '<button onclick="event.stopPropagation();uncompletePlannerItem(\''+item.id+'\')" style="background:var(--surface-warm);color:var(--ink-light);border:1px solid var(--line);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;">undo</span></button>';
+        html += '<button onclick="event.stopPropagation();uncompletePlannerItem(\''+item.id+'\')" style="background:var(--surface-warm);color:var(--ink-light);border:1px solid var(--line);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:15px;">undo</span></button>';
+      }
+      // ✕ボタン（今日だけ予定のみ）
+      if (item.type === 'today') {
+        html += '<button onclick="event.stopPropagation();_deletePlannerToday(\''+item.id+'\')" title="削除" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:2px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:18px;">close</span></button>';
       }
       html += '</div>';
     }
@@ -11551,6 +11557,140 @@ function _plannerSelectDow(dow) {
   render();
 }
 window._plannerSelectDow = _plannerSelectDow;
+
+// プランナー専用モード閉じる（Recordモードに戻る）
+function _closePlannerOnly() {
+  window._plannerOnly = false;
+  data.stampSubTab = 'stamp';
+  saveData();
+  render();
+}
+window._closePlannerOnly = _closePlannerOnly;
+
+// 今日だけ予定の削除（確認なし・即削除）
+function _deletePlannerToday(id) {
+  if (!data.planner?.items) return;
+  if (!confirm('この予定を削除する？')) return;
+  data.planner.items = data.planner.items.filter(i => i.id !== id);
+  saveData();
+  _suppressScrollTop = true;
+  render();
+}
+window._deletePlannerToday = _deletePlannerToday;
+
+// 長押し検出（プランナーアイテム用） - render後にイベント付与
+function _attachPlannerLongPress() {
+  const items = document.querySelectorAll('[data-planner-item]');
+  items.forEach(el => {
+    if (el._longPressBound) return;
+    el._longPressBound = true;
+    let timer = null;
+    let moved = false;
+    const trigger = () => {
+      const id = el.getAttribute('data-planner-item');
+      const type = el.getAttribute('data-planner-type');
+      _openPlannerItemEditor(id, type);
+    };
+    el.addEventListener('touchstart', e => {
+      moved = false;
+      timer = setTimeout(() => { if (!moved) trigger(); }, 500);
+    }, {passive:true});
+    el.addEventListener('touchmove', () => { moved = true; clearTimeout(timer); }, {passive:true});
+    el.addEventListener('touchend',  () => clearTimeout(timer), {passive:true});
+    el.addEventListener('touchcancel', () => clearTimeout(timer), {passive:true});
+    // PCマウス対応
+    el.addEventListener('mousedown', () => { moved=false; timer = setTimeout(() => { if(!moved) trigger(); }, 500); });
+    el.addEventListener('mousemove', () => { moved = true; clearTimeout(timer); });
+    el.addEventListener('mouseup',   () => clearTimeout(timer));
+    el.addEventListener('mouseleave',() => clearTimeout(timer));
+  });
+}
+window._attachPlannerLongPress = _attachPlannerLongPress;
+
+// プランナーアイテム編集モーダル（長押しで開く）
+function _openPlannerItemEditor(id, type) {
+  if (type === 'today') {
+    openPlannerEditModal(id);
+  } else if (type === 'routine') {
+    _openRoutineEditModal(id);
+  }
+}
+window._openPlannerItemEditor = _openPlannerItemEditor;
+
+// ルーティン編集モーダル
+function _openRoutineEditModal(id) {
+  const r = (data.planner?.routines||[]).find(r => r.id === id);
+  if (!r) return;
+  const ex = document.getElementById('routineEditModal');
+  if (ex) ex.remove();
+  const DOW_LABELS = [
+    {key:'sun',jp:'日'},{key:'mon',jp:'月'},{key:'tue',jp:'火'},
+    {key:'wed',jp:'水'},{key:'thu',jp:'木'},{key:'fri',jp:'金'},{key:'sat',jp:'土'}
+  ];
+  let h = '<div id="routineEditModal" style="position:fixed;inset:0;z-index:2150;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;" onclick="if(event.target===this)_closeRoutineEditModal();">';
+  h += '<div style="width:100%;max-width:380px;background:#FFFFFF;border-radius:20px;padding:18px;max-height:80vh;overflow-y:auto;">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">';
+  h += '<div style="font-size:15px;font-weight:900;color:var(--ink-dark);display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">repeat</span>ルーティンを編集</div>';
+  h += '<button onclick="_closeRoutineEditModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-sub);">✕</button>';
+  h += '</div>';
+  // 時間・タイトル
+  h += '<div style="display:flex;gap:8px;margin-bottom:12px;">';
+  h += '<input id="rtEditTime" type="time" value="'+escapeHtml(r.time||'')+'" style="flex:1;padding:9px 10px;border:1.5px solid var(--card-border);border-radius:10px;font-family:inherit;font-size:13px;">';
+  h += '<input id="rtEditTitle" type="text" maxlength="30" value="'+escapeHtml(r.title||'')+'" style="flex:2;padding:9px 10px;border:1.5px solid var(--card-border);border-radius:10px;font-family:inherit;font-size:13px;">';
+  h += '</div>';
+  // 除外曜日
+  h += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;margin-bottom:5px;">除外する曜日</div>';
+  h += '<div style="display:flex;gap:5px;margin-bottom:14px;">';
+  for (const d of DOW_LABELS) {
+    const isEx = (r.exceptions||[]).includes(d.key);
+    h += '<label style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:5px 0;border-radius:8px;background:'+(isEx?'#FEE2E2':'transparent')+';border:1.5px solid '+(isEx?'#EF4444':'var(--line)')+';">';
+    h += '<input type="checkbox" id="rtEditEx_'+d.key+'" '+(isEx?'checked':'')+' style="accent-color:#EF4444;">';
+    h += '<span style="font-size:10px;font-weight:800;color:'+(isEx?'#EF4444':'var(--ink-sub)')+';">'+d.jp+'</span>';
+    h += '</label>';
+  }
+  h += '</div>';
+  // ボタン
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<button onclick="_deleteRoutineFromEdit(\''+id+'\')" style="flex:0 0 auto;padding:11px 14px;background:#FEE2E2;color:#EF4444;border:1px solid #FECACA;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">削除</button>';
+  h += '<button onclick="_saveRoutineFromEdit(\''+id+'\')" style="flex:1;padding:11px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window._openRoutineEditModal = _openRoutineEditModal;
+
+function _closeRoutineEditModal() {
+  const m = document.getElementById('routineEditModal');
+  if (m) m.remove();
+}
+window._closeRoutineEditModal = _closeRoutineEditModal;
+
+function _saveRoutineFromEdit(id) {
+  const r = (data.planner?.routines||[]).find(r => r.id === id);
+  if (!r) return;
+  const time = document.getElementById('rtEditTime')?.value || '';
+  const title = (document.getElementById('rtEditTitle')?.value || '').trim();
+  if (!title) { alert('内容を入力してね'); return; }
+  const DOW_KEYS = ['sun','mon','tue','wed','thu','fri','sat'];
+  r.time = time;
+  r.title = title;
+  r.exceptions = DOW_KEYS.filter(k => document.getElementById('rtEditEx_'+k)?.checked);
+  saveData();
+  _closeRoutineEditModal();
+  _suppressScrollTop = true;
+  render();
+}
+window._saveRoutineFromEdit = _saveRoutineFromEdit;
+
+function _deleteRoutineFromEdit(id) {
+  if (!confirm('このルーティンを削除する？')) return;
+  data.planner.routines = (data.planner.routines||[]).filter(r => r.id !== id);
+  saveData();
+  _closeRoutineEditModal();
+  _suppressScrollTop = true;
+  render();
+}
+window._deleteRoutineFromEdit = _deleteRoutineFromEdit;
 
 // ルーティンのチェック
 function _checkRoutine(routineId) {
@@ -22807,7 +22947,14 @@ function renderMeMode() {
   const _region2 = data.userRegion || '大阪';
 
   let html = '';
-  if (tab === 'diary') {
+  if (window._plannerOnly) {
+    // ===== プランナー専用topbar（天気なし・戻るボタン付き） =====
+    html += '<div style="padding:8px 12px 4px;display:flex;align-items:center;gap:8px;">';
+    html += '<button onclick="openMeDrawerMenu()" style="flex-shrink:0;background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
+    html += '<div style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">edit_calendar</span><span style="font-size:14px;font-weight:900;color:var(--ink-dark);">プランナー</span></div>';
+    html += '<button onclick="_closePlannerOnly()" title="閉じる" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-sub);">close</span></button>';
+    html += '</div>';
+  } else if (tab === 'diary') {
     // ===== Diary専用topbar：日付・時間・天気なし、コントロールのみ =====
     const _dit2 = data.diaryInputTab || 'diary';
     const _isRec2 = _dit2 === 'record';
@@ -25582,11 +25729,40 @@ async function handleTweetPhotoSelect(event) {
       console.error('写真エラー:', e);
     }
   }
+  // ★ 撮影後すぐlocalStorageにバックアップ（render等で消えないように）
+  _saveTweetPendingBackup();
   _renderTweetPhotoPreview();
   // input clear
   event.target.value = '';
 }
 window.handleTweetPhotoSelect = handleTweetPhotoSelect;
+
+// 撮影中写真のバックアップ・復元
+function _saveTweetPendingBackup() {
+  try {
+    localStorage.setItem('_tweetPendingPhotos_backup', JSON.stringify(window._tweetPendingPhotos || []));
+  } catch(e) { /* 容量オーバー時は無視 */ }
+}
+function _loadTweetPendingBackup() {
+  try {
+    const s = localStorage.getItem('_tweetPendingPhotos_backup');
+    if (s) {
+      const arr = JSON.parse(s);
+      if (Array.isArray(arr) && arr.length > 0) {
+        window._tweetPendingPhotos = arr;
+        return true;
+      }
+    }
+  } catch(e) {}
+  return false;
+}
+function _clearTweetPendingBackup() {
+  window._tweetPendingPhotos = [];
+  try { localStorage.removeItem('_tweetPendingPhotos_backup'); } catch(e) {}
+}
+window._saveTweetPendingBackup = _saveTweetPendingBackup;
+window._loadTweetPendingBackup = _loadTweetPendingBackup;
+window._clearTweetPendingBackup = _clearTweetPendingBackup;
 
 // 写真プレビュー描画
 function _renderTweetPhotoPreview() {
@@ -25613,6 +25789,7 @@ function _renderTweetPhotoPreview() {
 function removeTweetPhoto(idx) {
   if (!window._tweetPendingPhotos) return;
   window._tweetPendingPhotos.splice(idx, 1);
+  _saveTweetPendingBackup();
   _renderTweetPhotoPreview();
 }
 window.removeTweetPhoto = removeTweetPhoto;
@@ -25677,6 +25854,7 @@ function postTweet() {
     inp.style.height = 'auto';
   }
   window._tweetPendingPhotos = [];
+  try { localStorage.removeItem('_tweetPendingPhotos_backup'); } catch(e) {}
   _renderTweetPhotoPreview();
   
   // ★ 過去日に書いた場合：その日に留まる（今日に戻さない）
@@ -28417,39 +28595,61 @@ function _renderNest2CreateStep3() {
   } else if (s.addMethod === 'add') {
     h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:14px;">メンバーを追加</div>';
     h += '<div style="font-size:11.5px;color:var(--ink-sub);margin-bottom:8px;font-weight:700;">種類</div>';
-    h += '<div style="display:flex;gap:8px;margin-bottom:18px;">';
-    for (const t of [{id:'child',label:'子ども',icon:'child_care'},{id:'pet',label:'ペット',icon:'pets'},{id:'local',label:'その他',icon:'person'}]) {
+    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:18px;">';
+    for (const t of [
+      {id:'child', label:'子ども', icon:'child_care'},
+      {id:'pet',   label:'ペット', icon:'pets'},
+      {id:'invite',label:'招待',   icon:'mail'},
+      {id:'later', label:'あとで', icon:'schedule'}
+    ]) {
       const isActive = s.memberType === t.id;
-      h += '<button onclick="window._nest2Create.memberType=\''+t.id+'\';_renderNest2CreateModal()" style="flex:1;padding:14px 6px;border-radius:12px;border:2px solid '+(isActive?'var(--accent)':'var(--line)')+';background:'+(isActive?'var(--accent-bg)':'transparent')+';cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;">';
+      h += '<button onclick="window._nest2Create.memberType=\''+t.id+'\';_renderNest2CreateModal()" style="padding:12px 4px;border-radius:12px;border:2px solid '+(isActive?'var(--accent)':'var(--line)')+';background:'+(isActive?'var(--accent-bg)':'transparent')+';cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;">';
       h += '<span class="material-symbols-rounded" style="font-size:22px;color:'+(isActive?'var(--accent-deep)':'var(--ink-sub)')+';">'+t.icon+'</span>';
-      h += '<span style="font-size:11px;font-weight:'+(isActive?'800':'600')+';color:'+(isActive?'var(--accent-deep)':'var(--ink-sub)')+';">'+t.label+'</span>';
+      h += '<span style="font-size:10.5px;font-weight:'+(isActive?'800':'600')+';color:'+(isActive?'var(--accent-deep)':'var(--ink-sub)')+';">'+t.label+'</span>';
       h += '</button>';
     }
     h += '</div>';
-    // ★ アバター写真（任意・トリミング）
-    h += '<div style="font-size:11.5px;color:var(--ink-sub);margin-bottom:8px;font-weight:700;">アバター写真（任意）</div>';
-    h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">';
-    if (s.memberPhoto) {
-      h += '<button onclick="_nest2PickMemberPhoto()" style="flex-shrink:0;width:56px;height:56px;border-radius:50%;border:2px solid var(--accent);background:#000;padding:0;overflow:hidden;cursor:pointer;">';
-      h += '<img src="'+s.memberPhoto+'" style="width:100%;height:100%;object-fit:cover;display:block;" />';
-      h += '</button>';
-      h += '<div style="flex:1;display:flex;flex-direction:column;gap:5px;">';
-      h += '<button onclick="_nest2PickMemberPhoto()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">変更</button>';
-      h += '<button onclick="window._nest2Create.memberPhoto=null;_renderNest2CreateModal()" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+
+    if (s.memberType === 'child' || s.memberType === 'pet') {
+      // ── 子ども・ペット：写真＋名前入力（従来通り）
+      h += '<div style="font-size:11.5px;color:var(--ink-sub);margin-bottom:8px;font-weight:700;">アバター写真（任意）</div>';
+      h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">';
+      if (s.memberPhoto) {
+        h += '<button onclick="_nest2PickMemberPhoto()" style="flex-shrink:0;width:56px;height:56px;border-radius:50%;border:2px solid var(--accent);background:#000;padding:0;overflow:hidden;cursor:pointer;">';
+        h += '<img src="'+s.memberPhoto+'" style="width:100%;height:100%;object-fit:cover;display:block;" />';
+        h += '</button>';
+        h += '<div style="flex:1;display:flex;flex-direction:column;gap:5px;">';
+        h += '<button onclick="_nest2PickMemberPhoto()" style="padding:6px 10px;background:var(--surface-warm);color:var(--ink-sub);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">変更</button>';
+        h += '<button onclick="window._nest2Create.memberPhoto=null;_renderNest2CreateModal()" style="padding:6px 10px;background:var(--surface-warm);color:#c4506b;border:1px solid #f0bdc6;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">削除</button>';
+        h += '</div>';
+      } else {
+        const _typeIcon = s.memberType === 'pet' ? 'pets' : 'child_care';
+        h += '<div style="flex-shrink:0;width:56px;height:56px;border-radius:50%;background:var(--accent-bg);border:2px dashed var(--accent);display:flex;align-items:center;justify-content:center;">';
+        h += '<span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">'+_typeIcon+'</span>';
+        h += '</div>';
+        h += '<button onclick="_nest2PickMemberPhoto()" style="flex:1;padding:10px;background:var(--surface-warm);color:var(--accent-deep);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">';
+        h += '<span class="material-symbols-rounded" style="font-size:15px;">add_photo_alternate</span>写真を選ぶ</button>';
+      }
       h += '</div>';
-    } else {
-      const _typeIcon = s.memberType === 'pet' ? 'pets' : (s.memberType === 'child' ? 'child_care' : 'person');
-      h += '<div style="flex-shrink:0;width:56px;height:56px;border-radius:50%;background:var(--accent-bg);border:2px dashed var(--accent);display:flex;align-items:center;justify-content:center;">';
-      h += '<span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">'+_typeIcon+'</span>';
+      h += '<input type="file" id="nest2MemberPhotoFile" accept="image/*" style="display:none;" onchange="_nest2HandleMemberPhotoSelect(event)">';
+      h += '<div style="font-size:11.5px;color:var(--ink-sub);margin-bottom:8px;font-weight:700;">名前</div>';
+      h += '<input id="nest2MemberNameInput" type="text" placeholder="例：ひなた、こむぎ" value="'+escapeHtml(s.memberName)+'" oninput="window._nest2Create.memberName=this.value;_nest2RefreshFooter()" style="width:100%;padding:12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;">';
+    } else if (s.memberType === 'invite') {
+      // ── 招待：にこわID入力
+      h += '<div style="font-size:11.5px;color:var(--ink-sub);margin-bottom:8px;font-weight:700;">相手のにこわID</div>';
+      h += '<input id="nest2InviteIdInput" type="text" placeholder="NKW-XXXXX" value="'+escapeHtml(s.inviteId)+'" oninput="window._nest2Create.inviteId=this.value.toUpperCase();_nest2RefreshFooter()" style="width:100%;padding:14px;border:1.5px solid var(--card-border);border-radius:10px;font-size:16px;font-family:monospace;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;letter-spacing:1px;text-align:center;">';
+      h += '<div style="margin-top:12px;padding:10px;background:#FFF8E0;border:1px solid #E8C870;border-radius:10px;font-size:10.5px;color:#8B6914;line-height:1.5;">';
+      h += '<span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;margin-right:3px;">info</span>';
+      h += '招待は相手の承認が必要だよ。相手にIDを教えてもらってね。';
       h += '</div>';
-      h += '<button onclick="_nest2PickMemberPhoto()" style="flex:1;padding:10px;background:var(--surface-warm);color:var(--accent-deep);border:1.5px dashed var(--accent);border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">';
-      h += '<span class="material-symbols-rounded" style="font-size:15px;">add_photo_alternate</span>写真を選ぶ</button>';
+    } else if (s.memberType === 'later') {
+      // ── あとで：メッセージのみ
+      h += '<div style="padding:24px 16px;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:14px;text-align:center;">';
+      h += '<span class="material-symbols-rounded" style="font-size:36px;color:var(--accent-deep);display:block;margin-bottom:8px;">schedule</span>';
+      h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:5px;">あとでメンバーを追加するよ</div>';
+      h += '<div style="font-size:11px;color:var(--ink-sub);line-height:1.6;">先にグループだけ作っておいて、<br>メンバーは落ち着いてから追加できるよ。</div>';
+      h += '</div>';
     }
-    h += '</div>';
-    h += '<input type="file" id="nest2MemberPhotoFile" accept="image/*" style="display:none;" onchange="_nest2HandleMemberPhotoSelect(event)">';
-    
-    h += '<div style="font-size:11.5px;color:var(--ink-sub);margin-bottom:8px;font-weight:700;">名前</div>';
-    h += '<input id="nest2MemberNameInput" type="text" placeholder="例：ひなた、こむぎ" value="'+escapeHtml(s.memberName)+'" oninput="window._nest2Create.memberName=this.value;_nest2RefreshFooter()" style="width:100%;padding:12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;">';
     h += '<div style="margin-top:12px;font-size:10.5px;color:var(--ink-light);line-height:1.6;">※ 後からメンバーを追加することもできるよ</div>';
   } else if (s.addMethod === 'invite') {
     h += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;">相手のにこわIDを入力</div>';
@@ -28494,7 +28694,12 @@ function _nest2CanProceed() {
   if (s.step === 2) return s.myNikowaIdSlot !== null;
   if (s.step === 3) {
     if (!s.addMethod) return false;
-    if (s.addMethod === 'add') return !!s.memberName.trim();
+    if (s.addMethod === 'add') {
+      if (s.memberType === 'child' || s.memberType === 'pet') return !!s.memberName.trim();
+      if (s.memberType === 'invite') return /^NKW-[A-Z2-9]{5}$/.test(s.inviteId);
+      if (s.memberType === 'later') return true; // メンバーなしでも作成可能
+      return false;
+    }
     if (s.addMethod === 'invite') return /^NKW-[A-Z2-9]{5}$/.test(s.inviteId);
   }
   return false;
@@ -53225,6 +53430,25 @@ function render() {
       document.body.appendChild(_fab);
     }
   })();
+  
+  // ── プランナーアイテム長押し検出
+  setTimeout(() => { try { _attachPlannerLongPress(); } catch(e) {} }, 50);
+  
+  // ── Diary写真プレビュー自動復元（render時にDOM再生成されても写真が消えないように）
+  setTimeout(() => {
+    try {
+      // バックアップから _tweetPendingPhotos が消えてたら復元
+      if ((!window._tweetPendingPhotos || window._tweetPendingPhotos.length === 0) && typeof _loadTweetPendingBackup === 'function') {
+        _loadTweetPendingBackup();
+      }
+      if (window._tweetPendingPhotos && window._tweetPendingPhotos.length > 0) {
+        const area = document.getElementById('tweetPhotoPreview');
+        if (area && typeof _renderTweetPhotoPreview === 'function') {
+          _renderTweetPhotoPreview();
+        }
+      }
+    } catch(e) {}
+  }, 30);
   
   if (!_suppressScrollTop) window.scrollTo(0, 0);
   _suppressScrollTop = false;
