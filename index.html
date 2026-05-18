@@ -53239,7 +53239,7 @@ function render() {
     }
     const nest = (data.nests2||[]).find(n => n.id === data.activeNest2Id);
     if (!nest) return;
-    const isRec = (nest.viewTab === 'record');
+    const isRec = (nest.diaryInputTab === 'record');
     if (!isRec || !window._nest2StampSheetOpen) {
       ['nest2StampSheet','nest2StampOverlay'].forEach(id => {
         const el = document.getElementById(id);
