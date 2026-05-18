@@ -53367,7 +53367,8 @@ function render() {
       const el = document.getElementById(id);
       if (el) el.remove();
     });
-    if (currentView !== 'me' || data.stampSubTab !== 'stamp') return;
+    if (currentView !== 'me') return;
+    if ((data.stampSubTab || 'stamp') !== 'stamp') return;
 
     const _isOpen = !!window._meStampSheetOpen;
     const selCat  = data.stampSelCat || '生活';
