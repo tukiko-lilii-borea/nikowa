@@ -2631,15 +2631,23 @@
   }
   .nav-btn .nav-en {
     font-size: 9px;
-    color: transparent;
-    font-weight: 700;
+    color: var(--ink-light);
+    font-weight: 600;
     line-height: 1;
     margin-top: 1px;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.3px;
     height: 11px;
   }
   .nav-btn.active { color: var(--mint-deep); background: var(--mint-bg); }
-  .nav-btn.active .nav-en { color: var(--mint-deep); }
+  .nav-btn.active .nav-en {
+    color: var(--mint-deep);
+    font-size: 10px;
+    font-weight: 900;
+  }
+  .nav-btn.active .nav-icon .material-symbols-rounded {
+    font-size: 28px;
+    font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
   .nav-back-btn {
     color: var(--accent-deep) !important;
     background: var(--accent-bg) !important;
@@ -10888,10 +10896,25 @@ function switchStampSubTab(sub) {
   data.stampSubTab = sub;
   // タブを手動で切り替えたらプランナー専用モードを解除
   window._plannerOnly = false;
+  // stampタブ以外に移動したらシートも閉じる
+  if (sub !== 'stamp') window._meStampSheetOpen = false;
   saveData();
   render();
   setTimeout(() => window.scrollTo(0, scrollY), 0);
 }
+
+// ── MeスタンプシートFAB開閉
+function _openMeStampSheet() {
+  window._meStampSheetOpen = true;
+  render();
+}
+window._openMeStampSheet = _openMeStampSheet;
+
+function _closeMeStampSheet() {
+  window._meStampSheetOpen = false;
+  render();
+}
+window._closeMeStampSheet = _closeMeStampSheet;
 
 function switchStampCat(cat) {
   // チップ位置保存
@@ -22925,43 +22948,57 @@ function renderMeMode() {
       // ===== ペット型レイアウト：カテゴリ＋スタンプグリッド =====
       const _meVisibleCats = _getVisibleStampCats();
       if (_meVisibleCats.length > 0) {
-        // カテゴリ選択タブ（横スクロール）
-        html += '<div style="margin:0 12px 8px;display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;">';
-        for (const cat of _meVisibleCats) {
-          const _act = cat === selCat;
-          html += '<button onclick="switchStampCat(\''+escapeHtml(cat).replace(/\'/g,"\\\\'")+'\')" style="flex-shrink:0;padding:6px 12px;border-radius:100px;border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'transparent')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
-        }
-        html += '</div>';
-        
-        // スタンプグリッド（2行×横スクロール）
-        const _meCatStamps = (data.stampLib[selCat] || []).filter(s => !s.hidden);
-        const _mePinnedSet = new Set((data.pinnedStamps || []).map(p => (p.icon||'')+'|'+(p.name||'')));
-        if (_meCatStamps.length === 0) {
-          html += '<div style="margin:0 12px 14px;padding:18px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:12px;font-size:11px;color:var(--ink-light);">このカテゴリにはまだスタンプがないよ<br>「✏」から追加できるよ</div>';
-        } else {
-          html += '<div style="margin:0 12px 14px;display:grid;grid-auto-flow:column;grid-template-rows:1fr 1fr;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:8px;">';
-          for (const s of _meCatStamps) {
-            const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
-            const _isPin = _mePinnedSet.has((s.icon||'')+'|'+(s.name||''));
-            const _isValueType = s.type === 'number' || s.type === 'text';
-            html += '<button onclick="tapStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:84px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;">';
-            // 右上ピン留めトグル
-            html += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
-            // 値入力型のミニバッジ（左上）
-            if (_isValueType) {
-              html += '<span style="position:absolute;top:3px;left:3px;font-size:8px;background:var(--accent);color:white;padding:1px 4px;border-radius:6px;font-weight:700;">'+(s.unit||'入力')+'</span>';
-            }
-            html += '<span style="width:42px;height:42px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:26px;color:var(--accent-deep);')+'</span>';
-            html += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
-            html += '</button>';
-          }
-          // ＋追加ボタン（点線□、各カテゴリ最後）
-          const _safeCat = escapeHtml(selCat).replace(/\'/g,"\\\\'");
-          html += '<button onclick="addCustomStamp(\''+_safeCat+'\')" style="flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;background:transparent;border:1.5px dashed var(--accent);border-radius:12px;cursor:pointer;font-family:inherit;color:var(--accent-deep);">';
-          html += '<span style="width:34px;height:34px;border-radius:10px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">add</span></span>';
-          html += '<span style="font-size:10.5px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;">追加</span>';
-          html += '</button>';
+        // ── FAB（＋ボタン）
+        const _meSheetOpen = !!window._meStampSheetOpen;
+        html += '<button onclick="_openMeStampSheet()" style="position:fixed;right:22px;bottom:90px;width:60px;height:60px;border-radius:50%;background:var(--accent-deep);border:none;display:'+ (_meSheetOpen?'none':'flex') +';align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:1900;font-family:inherit;" ontouchstart="this.style.transform=\'scale(0.92)\'" ontouchend="this.style.transform=\'\'"><span class="material-symbols-rounded" style="font-size:32px;color:white;font-weight:300;">add</span></button>';
+
+        if (_meSheetOpen) {
+          // オーバーレイ
+          html += '<div onclick="_closeMeStampSheet()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:2000;animation:nest2SheetFade 0.2s;"></div>';
+          // シート本体
+          html += '<div style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:24px 24px 0 0;z-index:2001;display:flex;flex-direction:column;max-height:72vh;box-shadow:0 -8px 32px rgba(0,0,0,0.18);animation:nest2SheetSlideUp 0.28s cubic-bezier(0.16,1,0.3,1);">';
+          // ヘッダー
+          html += '<div style="flex-shrink:0;position:relative;padding:10px 16px 6px;border-bottom:1px solid var(--line-soft);">';
+          html += '<div style="display:flex;justify-content:center;"><div style="width:42px;height:4px;background:#DDD;border-radius:100px;"></div></div>';
+          html += '<button onclick="openStampManagerModal()" style="position:absolute;left:12px;top:8px;padding:4px 10px;border-radius:100px;background:var(--surface-warm);border:1px solid var(--line);font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">edit</span>編集</button>';
+          html += '<button onclick="_closeMeStampSheet()" style="position:absolute;right:12px;top:8px;width:34px;height:34px;border-radius:50%;background:#F5F5F5;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:20px;color:#888;">close</span></button>';
           html += '</div>';
+          // カテゴリタブ
+          html += '<div style="flex-shrink:0;padding:8px 14px;display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid var(--line-soft);">';
+          for (const cat of _meVisibleCats) {
+            const _act = cat === selCat;
+            html += '<button onclick="switchStampCat(\''+escapeHtml(cat).replace(/\'/g,"\\\\'")+'\');" style="flex-shrink:0;padding:7px 14px;border-radius:100px;border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'transparent')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
+          }
+          html += '</div>';
+          // スタンプグリッド（2行×横スクロール）
+          const _meCatStamps = (data.stampLib[selCat] || []).filter(s => !s.hidden);
+          const _mePinnedSet = new Set((data.pinnedStamps || []).map(p => (p.icon||'')+'|'+(p.name||'')));
+          html += '<div style="flex:1;padding:12px 14px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
+          if (_meCatStamps.length === 0) {
+            html += '<div style="padding:18px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:12px;font-size:11px;color:var(--ink-light);">このカテゴリにはまだスタンプがないよ<br>「編集」から追加できるよ</div>';
+          } else {
+            html += '<div style="display:grid;grid-auto-flow:column;grid-template-rows:1fr 1fr;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;">';
+            for (const s of _meCatStamps) {
+              const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
+              const _isPin = _mePinnedSet.has((s.icon||'')+'|'+(s.name||''));
+              const _isValueType = s.type === 'number' || s.type === 'text';
+              html += '<button onclick="tapStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:90px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:14px;cursor:pointer;font-family:inherit;">';
+              html += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
+              if (_isValueType) html += '<span style="position:absolute;top:4px;left:4px;font-size:8px;background:var(--accent);color:white;padding:1px 4px;border-radius:6px;font-weight:700;">'+(s.unit||'入力')+'</span>';
+              html += '<span style="width:46px;height:46px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:28px;color:var(--accent-deep);')+'</span>';
+              html += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+              html += '</button>';
+            }
+            // ＋追加ボタン
+            const _safeCat2 = escapeHtml(selCat).replace(/\'/g,"\\\\'");
+            html += '<button onclick="addCustomStamp(\''+_safeCat2+'\')" style="flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;background:transparent;border:1.5px dashed var(--accent);border-radius:12px;cursor:pointer;font-family:inherit;color:var(--accent-deep);">';
+            html += '<span style="width:34px;height:34px;border-radius:10px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">add</span></span>';
+            html += '<span style="font-size:10.5px;font-weight:700;color:var(--accent-deep);">追加</span>';
+            html += '</button>';
+            html += '</div>';
+          }
+          html += '</div>';
+          html += '</div>'; // sheet end
         }
       }
       
@@ -28322,24 +28359,32 @@ function renderNest2Detail() {
   
   let html = '';
   
-  // ═══ トップバー（Meと同じレイアウト、戻る左／ハンバーガー＋タブ右） ═══
+  // ═══ トップバー（Meと同じレイアウト） ═══
   html += '<div class="topbar" style="background:transparent !important;background-image:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-bottom:none !important;box-shadow:none !important;">'+topbarPetalHtml();
-  // 左：ハンバーガー（Meと同位置）
-  html += '<button onclick="openNest2DrawerMenu()" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.85);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;box-shadow:0 2px 5px rgba(0,0,0,0.1);"><span class="material-symbols-rounded" style="font-size:18px;color:#666;">menu</span></button>';
-  // 中央：グループ名＋アイコン
-  html += '<div style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;padding:0 8px;">';
+  html += '<div style="padding:8px 12px 4px;display:flex;align-items:center;gap:6px;width:100%;">';
+  // 左：ハンバーガー
+  html += '<button onclick="openNest2DrawerMenu()" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.85);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;box-shadow:0 2px 5px rgba(0,0,0,0.1);"><span class="material-symbols-rounded" style="font-size:18px;color:#666;">menu</span></button>';
+  // アクションアイコン4つ（Meと同じ順・仮実装）
+  const _nIBtn = (icon, fn, title) => '<button onclick="'+fn+'()" title="'+title+'" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">'+icon+'</span></button>';
+  html += _nIBtn('search',        '_nest2OpenSearch',  '検索');
+  html += _nIBtn('photo_library', '_nest2OpenAlbum',   'アルバム');
+  html += _nIBtn('calendar_month','_nest2OpenDateCal', 'カレンダー');
+  html += _nIBtn('wallpaper',     '_nest2OpenBg',      '背景');
+  // グループ名（flex:1スペーサー兼用・小さく）
+  html += '<div style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:4px;padding:0 4px;overflow:hidden;">';
   if (nest.photo) {
-    html += '<div style="flex-shrink:0;width:26px;height:26px;border-radius:8px;overflow:hidden;background:#000;"><img src="'+nest.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>';
+    html += '<div style="flex-shrink:0;width:16px;height:16px;border-radius:4px;overflow:hidden;"><img src="'+nest.photo+'" style="width:100%;height:100%;object-fit:cover;"/></div>';
   } else {
-    html += '<div style="flex-shrink:0;width:26px;height:26px;border-radius:8px;background:'+catDef.color+'33;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:16px;color:'+catDef.color+';">'+catDef.icon+'</span></div>';
+    html += '<span class="material-symbols-rounded" style="flex-shrink:0;font-size:13px;color:'+catDef.color+';">'+catDef.icon+'</span>';
   }
-  html += '<span style="font-size:13px;font-weight:900;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">'+escapeHtml(nest.name||'')+'</span>';
+  html += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escapeHtml(nest.name||'')+'</span>';
   html += '</div>';
-  // 右：Record/Diaryタブ＋戻る
-  html += '<button onclick="_setNest2InputTab(\'record\')" style="flex-shrink:0;padding:'+(isRec?'5px 12px':'4px 9px')+';border-radius:100px;border:'+(isRec?'2px':'1.5px')+' solid '+(isRec?'var(--accent-deep)':'var(--line)')+';background:'+(isRec?'var(--accent-deep)':'rgba(255,255,255,0.85)')+';color:'+(isRec?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(isRec?'13px':'10px')+';font-weight:'+(isRec?'900':'600')+';cursor:pointer;letter-spacing:'+(isRec?'0.4px':'0')+';transition:all 0.2s;">Record</button>';
-  html += '<button onclick="_setNest2InputTab(\'diary\')" style="flex-shrink:0;padding:'+(!isRec?'5px 12px':'4px 9px')+';border-radius:100px;border:'+(!isRec?'2px':'1.5px')+' solid '+(!isRec?'var(--accent-deep)':'var(--line)')+';background:'+(!isRec?'var(--accent-deep)':'rgba(255,255,255,0.85)')+';color:'+(!isRec?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(!isRec?'13px':'10px')+';font-weight:'+(!isRec?'900':'600')+';cursor:pointer;letter-spacing:'+(!isRec?'0.4px':'0')+';margin-left:4px;transition:all 0.2s;">Diary</button>';
-  // 戻るアイコン（小さく、右端）
-  html += '<button onclick="_backToNest2List()" style="margin-left:6px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.85);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;" title="一覧に戻る"><span class="material-symbols-rounded" style="font-size:16px;color:#888;">close</span></button>';
+  // Record/Diaryタブ
+  html += '<button onclick="_setNest2InputTab(\'record\')" style="flex-shrink:0;padding:'+(isRec?'5px 12px':'4px 9px')+';border-radius:100px;border:'+(isRec?'2px':'1.5px')+' solid '+(isRec?'var(--accent-deep)':'var(--line)')+';background:'+(isRec?'var(--accent-deep)':'rgba(255,255,255,0.85)')+';color:'+(isRec?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(isRec?'13px':'10px')+';font-weight:'+(isRec?'900':'600')+';cursor:pointer;transition:all 0.2s;">Record</button>';
+  html += '<button onclick="_setNest2InputTab(\'diary\')" style="flex-shrink:0;padding:'+(!isRec?'5px 12px':'4px 9px')+';border-radius:100px;border:'+(!isRec?'2px':'1.5px')+' solid '+(!isRec?'var(--accent-deep)':'var(--line)')+';background:'+(!isRec?'var(--accent-deep)':'rgba(255,255,255,0.85)')+';color:'+(!isRec?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(!isRec?'13px':'10px')+';font-weight:'+(!isRec?'900':'600')+';cursor:pointer;transition:all 0.2s;">Diary</button>';
+  // 戻る
+  html += '<button onclick="_backToNest2List()" style="flex-shrink:0;margin-left:2px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.85);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;" title="一覧に戻る"><span class="material-symbols-rounded" style="font-size:16px;color:#888;">close</span></button>';
+  html += '</div>';
   html += '</div>';
   
   // ═══ 日付バー（日曜始まり7日固定・Meと同じ） ═══
@@ -29085,6 +29130,16 @@ function _backToNest2List() {
   render();
 }
 window._backToNest2List = _backToNest2List;
+
+// ── Nest topbarアイコン（仮実装・順次実装予定）
+function _nest2OpenSearch()  { /* TODO: Nest内検索 */ }
+function _nest2OpenAlbum()   { /* TODO: 写真アルバム */ }
+function _nest2OpenDateCal() { /* TODO: 日付カレンダー */ }
+function _nest2OpenBg()      { /* TODO: 背景変更 */ }
+window._nest2OpenSearch  = _nest2OpenSearch;
+window._nest2OpenAlbum   = _nest2OpenAlbum;
+window._nest2OpenDateCal = _nest2OpenDateCal;
+window._nest2OpenBg      = _nest2OpenBg;
 
 
 // ===== ハンバーガーメニュー（11項目、後で実装） =====
