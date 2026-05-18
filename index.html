@@ -23368,60 +23368,8 @@ function renderMeMode() {
       html += renderPinnedStampsRow('me');
       
       // ===== ペット型レイアウト：カテゴリ＋スタンプグリッド =====
-      const _meVisibleCats = _getVisibleStampCats();
-      if (_meVisibleCats.length > 0) {
-        // ── FABとシートはrender()末尾でbodyに直接追加（backdrop-filter問題回避）
-        const _meSheetOpen = !!window._meStampSheetOpen;
-        // シートはDOMに直接出力（position:fixedがmode-content-wrapの外になる）
-        if (_meSheetOpen) {
-          // オーバーレイ
-          html += '<div onclick="_closeMeStampSheet()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:2000;animation:nest2SheetFade 0.2s;"></div>';
-          // シート本体
-          html += '<div style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:24px 24px 0 0;z-index:2001;display:flex;flex-direction:column;max-height:72vh;box-shadow:0 -8px 32px rgba(0,0,0,0.18);animation:nest2SheetSlideUp 0.28s cubic-bezier(0.16,1,0.3,1);">';
-          // ヘッダー
-          html += '<div style="flex-shrink:0;position:relative;padding:10px 16px 6px;border-bottom:1px solid var(--line-soft);">';
-          html += '<div style="display:flex;justify-content:center;"><div style="width:42px;height:4px;background:#DDD;border-radius:100px;"></div></div>';
-          html += '<button onclick="openStampManagerModal()" style="position:absolute;left:12px;top:8px;padding:4px 10px;border-radius:100px;background:var(--surface-warm);border:1px solid var(--line);font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">edit</span>編集</button>';
-          html += '<button onclick="_closeMeStampSheet()" style="position:absolute;right:12px;top:8px;width:34px;height:34px;border-radius:50%;background:#F5F5F5;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:20px;color:#888;">close</span></button>';
-          html += '</div>';
-          // カテゴリタブ
-          html += '<div style="flex-shrink:0;padding:8px 14px;display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid var(--line-soft);">';
-          for (const cat of _meVisibleCats) {
-            const _act = cat === selCat;
-            html += '<button onclick="switchStampCat(\''+escapeHtml(cat).replace(/\'/g,"\\\\'")+'\');" style="flex-shrink:0;padding:7px 14px;border-radius:100px;border:1.5px solid '+(_act?'var(--accent)':'var(--line)')+';background:'+(_act?'var(--accent-bg)':'transparent')+';color:'+(_act?'var(--accent-deep)':'var(--ink-sub)')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">'+escapeHtml(cat)+'</button>';
-          }
-          html += '</div>';
-          // スタンプグリッド（2行×横スクロール）
-          const _meCatStamps = (data.stampLib[selCat] || []).filter(s => !s.hidden);
-          const _mePinnedSet = new Set((data.pinnedStamps || []).map(p => (p.icon||'')+'|'+(p.name||'')));
-          html += '<div style="flex:1;padding:12px 14px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
-          if (_meCatStamps.length === 0) {
-            html += '<div style="padding:18px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:12px;font-size:11px;color:var(--ink-light);">このカテゴリにはまだスタンプがないよ<br>「編集」から追加できるよ</div>';
-          } else {
-            html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">';
-            for (const s of _meCatStamps) {
-              const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
-              const _isPin = _mePinnedSet.has((s.icon||'')+'|'+(s.name||''));
-              const _isValueType = s.type === 'number' || s.type === 'text';
-              html += '<button onclick="tapStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:14px;cursor:pointer;font-family:inherit;">';
-              html += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
-              if (_isValueType) html += '<span style="position:absolute;top:4px;left:4px;font-size:8px;background:var(--accent);color:white;padding:1px 4px;border-radius:6px;font-weight:700;">'+(s.unit||'入力')+'</span>';
-              html += '<span style="width:46px;height:46px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:28px;color:var(--accent-deep);')+'</span>';
-              html += '<span style="font-size:12px;font-weight:700;color:var(--ink-dark);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
-              html += '</button>';
-            }
-            // ＋追加ボタン
-            const _safeCat2 = escapeHtml(selCat).replace(/\'/g,"\\\\'");
-            html += '<button onclick="addCustomStamp(\''+_safeCat2+'\')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:12px 4px;background:transparent;border:1.5px dashed var(--accent);border-radius:14px;cursor:pointer;font-family:inherit;color:var(--accent-deep);">';
-            html += '<span style="width:40px;height:40px;border-radius:12px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:24px;color:var(--accent-deep);">add</span></span>';
-            html += '<span style="font-size:10.5px;font-weight:700;color:var(--accent-deep);">追加</span>';
-            html += '</button>';
-            html += '</div>';
-          }
-          html += '</div>';
-          html += '</div>'; // sheet end
-        }
-      }
+      // FAB・シートはrender()末尾でbodyに直接追加（backdrop-filter完全回避）
+      // ここでは何も描画しない
       
       // ===== カードB: 今日の記録（白カード・細枠、高さ固定＋中スクロール） =====
       html += '<div style="margin:0 12px 12px;background:white;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
@@ -53412,23 +53360,91 @@ function render() {
   else renderTop();
   renderSidePanel();
   
-  // ── Meスタンプ用FAB（backdrop-filter回避のためbodyに直接管理）
+  // ── Meスタンプ用FAB＋シート（backdrop-filter完全回避・bodyに直接追加）
   (function() {
-    const _oldFab = document.getElementById('meStampFab');
-    if (_oldFab) _oldFab.remove();
-    const _showFab = currentView === 'me'
-      && data.stampSubTab === 'stamp'
-      && !window._meStampSheetOpen;
-    if (_showFab) {
-      const _fab = document.createElement('button');
-      _fab.id = 'meStampFab';
-      _fab.innerHTML = '<span class="material-symbols-rounded" style="font-size:32px;color:white;font-weight:300;">add</span>';
-      _fab.style.cssText = 'position:fixed;right:22px;bottom:90px;width:60px;height:60px;border-radius:50%;background:var(--accent-deep);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:9999;font-family:inherit;';
-      _fab.ontouchstart = function(){ this.style.transform='scale(0.92)'; };
-      _fab.ontouchend   = function(){ this.style.transform=''; };
-      _fab.onclick = function(){ _openMeStampSheet(); };
-      document.body.appendChild(_fab);
+    // 既存要素を全部削除
+    ['meStampFab','meStampSheet','meStampOverlay'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+    if (currentView !== 'me' || data.stampSubTab !== 'stamp') return;
+
+    const _isOpen = !!window._meStampSheetOpen;
+    const selCat  = data.stampSelCat || '生活';
+    const _cats   = (typeof _getVisibleStampCats === 'function') ? _getVisibleStampCats() : [];
+
+    // FAB（シートが閉じてる時だけ表示）
+    if (!_isOpen) {
+      const fab = document.createElement('button');
+      fab.id = 'meStampFab';
+      fab.innerHTML = '<span class="material-symbols-rounded" style="font-size:32px;color:white;">add</span>';
+      fab.style.cssText = 'position:fixed;right:22px;bottom:90px;width:60px;height:60px;border-radius:50%;background:var(--accent-deep);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.25);z-index:9999;';
+      fab.ontouchstart = function(){ this.style.transform='scale(0.92)'; };
+      fab.ontouchend   = function(){ this.style.transform=''; };
+      fab.onclick = function(){ _openMeStampSheet(); };
+      document.body.appendChild(fab);
+      return;
     }
+
+    // オーバーレイ
+    const overlay = document.createElement('div');
+    overlay.id = 'meStampOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.42);z-index:9998;';
+    overlay.onclick = function(){ _closeMeStampSheet(); };
+    document.body.appendChild(overlay);
+
+    // シート本体
+    const sheet = document.createElement('div');
+    sheet.id = 'meStampSheet';
+    sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:24px 24px 0 0;z-index:9999;display:flex;flex-direction:column;max-height:75vh;box-shadow:0 -8px 32px rgba(0,0,0,0.18);';
+
+    // ヘッダー
+    let sh = '<div style="flex-shrink:0;position:relative;padding:10px 16px 8px;border-bottom:1px solid #EEE;">';
+    sh += '<div style="display:flex;justify-content:center;margin-bottom:6px;"><div style="width:42px;height:4px;background:#DDD;border-radius:100px;"></div></div>';
+    sh += '<button onclick="openStampManagerModal()" style="position:absolute;left:12px;top:10px;padding:4px 10px;border-radius:100px;background:#F5F5F5;border:1px solid #DDD;font-family:inherit;font-size:11px;font-weight:700;color:#888;cursor:pointer;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">edit</span>編集</button>';
+    sh += '<button onclick="_closeMeStampSheet()" style="position:absolute;right:12px;top:8px;width:34px;height:34px;border-radius:50%;background:#F5F5F5;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:20px;color:#888;">close</span></button>';
+    sh += '</div>';
+
+    // カテゴリタブ
+    sh += '<div style="flex-shrink:0;padding:8px 14px;display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid #EEE;">';
+    for (const cat of _cats) {
+      const isAct = cat === selCat;
+      const safeCat = cat.replace(/'/g,"\\'");
+      sh += '<button onclick="switchStampCat(\''+safeCat+'\')" style="flex-shrink:0;padding:7px 14px;border-radius:100px;border:1.5px solid '+(isAct?'var(--accent)':'#DDD')+';background:'+(isAct?'var(--accent-bg)':'transparent')+';color:'+(isAct?'var(--accent-deep)':'#888')+';font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">'+cat+'</button>';
+    }
+    sh += '</div>';
+
+    // スタンプグリッド
+    const stamps = ((data.stampLib && data.stampLib[selCat]) || []).filter(s => !s.hidden);
+    const pinnedSet = new Set((data.pinnedStamps||[]).map(p => (p.icon||'')+'|'+(p.name||'')));
+    sh += '<div style="flex:1;padding:12px 14px 30px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
+    sh += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">';
+    for (const s of stamps) {
+      const sn = s.name.replace(/'/g,"\\'");
+      const isPin = pinnedSet.has((s.icon||'')+'|'+(s.name||''));
+      sh += '<button onclick="tapStamp(\''+s.icon+'\',\''+sn+'\',event)" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;background:#FAF7F5;border:1.5px solid #EEE;border-radius:14px;cursor:pointer;font-family:inherit;">';
+      sh += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+sn+'\',event)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:'+(isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(isPin?'var(--accent)':'#DDD')+';color:'+(isPin?'white':'#BBB')+';display:flex;align-items:center;justify-content:center;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
+      sh += '<span style="width:46px;height:46px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:28px;color:var(--accent-deep);')+'</span>';
+      sh += '<span style="font-size:12px;font-weight:700;color:#333;text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+s.name+'</span>';
+      sh += '</button>';
+    }
+    // ＋追加
+    const sc = selCat.replace(/'/g,"\\'");
+    sh += '<button onclick="addCustomStamp(\''+sc+'\')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:12px 4px;background:transparent;border:1.5px dashed var(--accent);border-radius:14px;cursor:pointer;font-family:inherit;">';
+    sh += '<span style="width:40px;height:40px;border-radius:12px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:24px;color:var(--accent-deep);">add</span></span>';
+    sh += '<span style="font-size:10.5px;font-weight:700;color:var(--accent-deep);">追加</span>';
+    sh += '</button>';
+    sh += '</div></div>';
+
+    sheet.innerHTML = sh;
+
+    // アニメーション
+    sheet.style.transform = 'translateY(100%)';
+    document.body.appendChild(sheet);
+    requestAnimationFrame(() => {
+      sheet.style.transition = 'transform 0.3s cubic-bezier(0.16,1,0.3,1)';
+      sheet.style.transform = 'translateY(0)';
+    });
   })();
   
   // ── プランナーアイテム長押し検出
