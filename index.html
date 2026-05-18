@@ -28510,19 +28510,19 @@ function renderNest2Detail() {
       }
       html += '</div>';
       
-      // スタンプボタングリッド（3列・大きく）
+      // スタンプボタングリッド（2行×横スクロール・カテゴリ切替で歪まない）
       const visibleStamps = NEST2_STAMPS.filter(s => s.category === curCat && _allowedTargets.indexOf(s.target) >= 0);
-      html += '<div style="flex:1;padding:14px 14px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
-      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">';
+      html += '<div style="flex:1;padding:14px 0 24px;display:flex;align-items:flex-start;">';
+      html += '<div style="display:grid;grid-template-rows:repeat(2,1fr);grid-auto-flow:column;grid-auto-columns:110px;gap:10px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;scrollbar-width:none;padding:0 14px 4px;width:100%;">';
       for (const sp of visibleStamps) {
         const _CAT_COLORS = {
           '生活':'#F5E8D0','学習':'#E0F0FF','遊び':'#FFE0F0','お世話':'#D5F0E0',
           '健康':'#FFE0E0','気持ち':'#FFF5D5','お出かけ':'#D5E8FF'
         };
         const stampBg = _CAT_COLORS[sp.category] || '#F0F0F0';
-        html += '<button onclick="_addNest2Stamp(\''+sp.id+'\')" style="background:#FFFFFF;border:2px solid var(--line);border-radius:16px;padding:14px 6px 12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:96px;transition:transform 0.1s,box-shadow 0.1s;" ontouchstart="this.style.transform=\'scale(0.94)\';this.style.boxShadow=\'0 2px 6px rgba(0,0,0,0.15)\'" ontouchend="this.style.transform=\'\';this.style.boxShadow=\'\'">';
-        html += '<div style="width:52px;height:52px;border-radius:14px;background:'+stampBg+';display:flex;align-items:center;justify-content:center;">';
-        html += '<span class="material-symbols-rounded" style="font-size:30px;color:#7A7A7A;">'+sp.icon+'</span>';
+        html += '<button onclick="_addNest2Stamp(\''+sp.id+'\')" style="background:#FFFFFF;border:2px solid var(--line);border-radius:16px;padding:12px 6px 10px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:96px;scroll-snap-align:start;transition:transform 0.1s,box-shadow 0.1s;" ontouchstart="this.style.transform=\'scale(0.94)\';this.style.boxShadow=\'0 2px 6px rgba(0,0,0,0.15)\'" ontouchend="this.style.transform=\'\';this.style.boxShadow=\'\'">';
+        html += '<div style="width:50px;height:50px;border-radius:14px;background:'+stampBg+';display:flex;align-items:center;justify-content:center;">';
+        html += '<span class="material-symbols-rounded" style="font-size:28px;color:#7A7A7A;">'+sp.icon+'</span>';
         html += '</div>';
         html += '<span style="font-size:12px;font-weight:800;color:#444;line-height:1.2;text-align:center;">'+sp.name+'</span>';
         html += '</button>';
@@ -28544,7 +28544,7 @@ function renderNest2Detail() {
     html += '<div style="display:flex;align-items:center;gap:7px;max-width:520px;margin:0 auto;">';
     html += '<button onclick="_nest2PickTweetPhoto()" style="flex-shrink:0;width:38px;height:38px;border-radius:50%;background:'+(window._nest2PendingPhoto?'var(--accent)':'var(--accent-bg)')+';border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:18px;color:'+(window._nest2PendingPhoto?'white':'var(--accent-deep)')+';">photo_camera</span></button>';
     html += '<button onclick="_nest2InsertHash()" style="flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--accent-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;font-size:16px;font-weight:900;color:var(--accent-deep);">#</button>';
-    html += '<input id="nest2TweetInput" type="text" placeholder="ひとこと書く... #タグも使えるよ" style="flex:1;padding:10px 14px;border:1.5px solid var(--card-border);border-radius:100px;font-size:14px;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;" onkeydown="if(event.key===\'Enter\')_postNest2Tweet()">';
+    html += '<input id="nest2TweetInput" type="text" placeholder="ひとこと書く... #タグも使えるよ" style="flex:1;min-width:0;padding:10px 14px;border:1.5px solid var(--card-border);border-radius:100px;font-size:14px;font-family:inherit;background:var(--surface-warm);color:var(--ink-dark);box-sizing:border-box;" onkeydown="if(event.key===\'Enter\')_postNest2Tweet()">';
     html += '<button onclick="_postNest2Tweet()" style="flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--accent);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><span class="material-symbols-rounded" style="font-size:18px;color:white;">send</span></button>';
     html += '</div>';
     html += '<input type="file" id="nest2TweetPhotoFile" accept="image/*" style="display:none;" onchange="_nest2HandleTweetPhotoSelect(event)">';
