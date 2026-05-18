@@ -9492,18 +9492,19 @@ function openMeDrawerMenu() {
     {
       label: '毎日', bg: '#E8F4EE', textColor: '#3A7A5C',
       items: [
-        { icon:'view_day',       color:'#4A8E7A', label:'プランナー', desc:'今日のやること',   action:"closeMeDrawerMenu();setTimeout(()=>{data.stampSubTab='planner';goToMeMode();setModePageTab('me','stamp');},250);" },
+        { icon:'view_day',       color:'#4A8E7A', label:'プランナー', desc:'今日のやること',   action:"closeMeDrawerMenu();setTimeout(()=>{window._plannerOnly=true;data.stampSubTab='planner';goToMeMode();setModePageTab('me','stamp');},250);" },
         { icon:'calendar_month', color:'#5A9F8E', label:'カレンダー', desc:'予定の確認と管理', action:"closeMeDrawerMenu();setTimeout(()=>{currentView='schedule';render();},250);" }
       ]
     },
     {
       label: 'くらし', bg: '#F8EEDD', textColor: '#8E6840',
       items: [
-        { icon:'payments',       color:'#D4A050', label:'マネー',     desc:'お金の管理と記録',  action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','money');},250);" },
-        { icon:'sticky_note_2',  color:'#E0B048', label:'めも',       desc:'メモ・アイデア',     action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','secret');},250);" },
-        { icon:'photo_library',  color:'#C89070', label:'コレクション', desc:'集めたものを整理',  action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','collection');},250);" },
-        { icon:'person',         color:'#B89060', label:'my',         desc:'わたしのプロフィール', action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','resume');},250);" },
-        { icon:'shopping_cart',  color:'#D08858', label:'グッズ',      desc:'持ち物や欲しいもの',  action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','goods');},250);" }
+        { icon:'payments',       color:'#D4A050', label:'マネー',       desc:'お金の管理と記録',    action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','money');},250);" },
+        { icon:'sticky_note_2',  color:'#E0B048', label:'めも',         desc:'メモ・アイデア',       action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','secret');},250);" },
+        { icon:'photo_library',  color:'#C89070', label:'コレクション', desc:'集めたものを整理',     action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','collection');},250);" },
+        { icon:'person',         color:'#B89060', label:'my',           desc:'わたしのプロフィール', action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','resume');},250);" },
+        { icon:'shopping_cart',  color:'#D08858', label:'グッズ',        desc:'持ち物や欲しいもの',  action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','goods');},250);" },
+        { icon:'lock',           color:'#888888', label:'きもち保管室',  desc:'ないしょの気持ち',     action:"closeMeDrawerMenu();setTimeout(()=>{currentView='kimochiRoom';render();},250);" }
       ]
     },
     {
@@ -10885,6 +10886,8 @@ window.deleteCollectionItem = deleteCollectionItem;
 function switchStampSubTab(sub) {
   const scrollY = window.scrollY;
   data.stampSubTab = sub;
+  // タブを手動で切り替えたらプランナー専用モードを解除
+  window._plannerOnly = false;
   saveData();
   render();
   setTimeout(() => window.scrollTo(0, scrollY), 0);
@@ -22574,9 +22577,7 @@ function renderMeMode() {
     const _cActive = ssTab === 'calendar';
     const _gActive = ssTab === 'gallery';
 
-    // ── タブ行（出っ張りスタイル・均等割）──
-    html += '<div style="padding:12px 14px 0;display:flex;gap:4px;position:relative;z-index:1;">';
-
+    // ── タブ行（プランナーのみ表示の時は非表示）──
     const _tabStyle = (isActive) =>
       `flex:1;padding:8px 4px;border-radius:10px 10px 0 0;border:2px solid var(--accent);` +
       `background:${isActive ? 'white' : 'var(--surface-warm)'};` +
@@ -22585,14 +22586,19 @@ function renderMeMode() {
       `display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap;` +
       `${isActive ? 'border-bottom:2px solid white;margin-bottom:-2px;z-index:2;position:relative;' : 'margin-top:4px;border-bottom:2px solid var(--accent);'}`;
 
-    html += `<button onclick="switchStampSubTab('stamp')" style="${_tabStyle(_sActive)}"><span class="material-symbols-rounded" style="font-size:14px;">check_circle</span>スタンプ</button>`;
-    html += `<button onclick="switchStampSubTab('planner')" style="${_tabStyle(_pActive)}"><span class="material-symbols-rounded" style="font-size:14px;">edit_calendar</span>プランナー</button>`;
-    html += `<button onclick="switchStampSubTab('calendar')" style="${_tabStyle(_cActive)}"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span>カレンダー</button>`;
-    html += `<button onclick="switchStampSubTab('gallery')" style="${_tabStyle(_gActive)}"><span class="material-symbols-rounded" style="font-size:14px;">photo_library</span>ギャラリー</button>`;
-    html += '</div>';
+    if (!window._plannerOnly) {
+      html += '<div style="padding:12px 14px 0;display:flex;gap:4px;position:relative;z-index:1;">';
+      html += `<button onclick="switchStampSubTab('stamp')" style="${_tabStyle(_sActive)}"><span class="material-symbols-rounded" style="font-size:14px;">check_circle</span>スタンプ</button>`;
+      html += `<button onclick="switchStampSubTab('planner')" style="${_tabStyle(_pActive)}"><span class="material-symbols-rounded" style="font-size:14px;">edit_calendar</span>プランナー</button>`;
+      html += `<button onclick="switchStampSubTab('calendar')" style="${_tabStyle(_cActive)}"><span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span>カレンダー</button>`;
+      html += `<button onclick="switchStampSubTab('gallery')" style="${_tabStyle(_gActive)}"><span class="material-symbols-rounded" style="font-size:14px;">photo_library</span>ギャラリー</button>`;
+      html += '</div>';
+    }
 
     // ── コンテンツエリア（var(--accent)で枠）──
-    html += '<div style="margin:0 14px 14px;border:2px solid var(--accent);border-radius:0 10px 10px 10px;background:white;padding:12px;position:relative;z-index:0;">';
+    const _plannerRadius = window._plannerOnly ? '10px' : '0 10px 10px 10px';
+    const _plannerMargin = window._plannerOnly ? '8px 14px 14px' : '0 14px 14px';
+    html += `<div style="margin:${_plannerMargin};border:2px solid var(--accent);border-radius:${_plannerRadius};background:white;padding:12px;position:relative;z-index:0;">`;
     
     if (ssTab === 'gallery') {
       html += renderStampGallery();
