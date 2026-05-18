@@ -24028,6 +24028,11 @@ window.renderTweetsDiary = renderTweetsDiary;
 
 // ===== Diary描画後の調整＆スクロール（タイムライン独立スクロール方式・LINE風） =====
 function _diaryAdjustAndScroll() {
+  // ★ 揺れ防止：初回描画時はタイムラインを隠してレイアウト確定後に表示
+  const tlInit = document.getElementById('tweetsTimeline');
+  if (!window._diarySingleAdjust && tlInit) {
+    tlInit.style.visibility = 'hidden';
+  }
   function adjust() {
     try {
       // ★ 最初にwindow scrollを0にリセット（既存スクロール位置で固定されると上が切れるため）
@@ -24098,7 +24103,37 @@ function _diaryAdjustAndScroll() {
   // 初回描画時のみrAF+200ms追加実行（レイアウト確定 & 画像lazy-load後の最終調整）
   if (!window._diarySingleAdjust) {
     requestAnimationFrame(() => { adjust(); scrollBottom(); });
-    setTimeout(() => { adjust(); scrollBottom(); }, 200);
+    setTimeout(() => {
+      adjust();
+      scrollBottom();
+      // ★ 最終調整後にタイムラインを表示（揺れる遷移が見えなくなる）
+      if (tlInit) tlInit.style.visibility = 'visible';
+      // ★ 写真onloadで再scrollBottom（写真が遅れて読み込まれてもズレない）
+      if (tlInit) {
+        const imgs = tlInit.querySelectorAll('img');
+        imgs.forEach(img => {
+          if (img.dataset.tlScrollBound === '1') return;
+          img.dataset.tlScrollBound = '1';
+          img.addEventListener('load', () => {
+            // ユーザーが手動で上にスクロール中じゃない時のみ最新に戻す
+            if (window._userScrolledUpInTimeline) return;
+            tlInit.scrollTop = tlInit.scrollHeight + 9999;
+          });
+        });
+        // ユーザースクロール検知（手動で上に動かしたら自動追従を止める）
+        if (!tlInit.dataset.scrollListenerBound) {
+          tlInit.dataset.scrollListenerBound = '1';
+          tlInit.addEventListener('scroll', () => {
+            // 最下部付近にいたら追従ON、そうでなければOFF
+            const nearBottom = (tlInit.scrollHeight - tlInit.scrollTop - tlInit.clientHeight) < 60;
+            window._userScrolledUpInTimeline = !nearBottom;
+          }, { passive: true });
+        }
+      }
+    }, 200);
+  } else {
+    // タブ切替時もvisibilityを念のためvisibleに
+    if (tlInit) tlInit.style.visibility = 'visible';
   }
 
   // ★ キーボード対応：visualViewportでbottomBlockのみ追従させる
