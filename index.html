@@ -10919,24 +10919,9 @@ function _closeMeStampSheet() {
 }
 window._closeMeStampSheet = _closeMeStampSheet;
 
-// スタンプタップ時の視覚フィードバック（ボタン上にチェックマークが浮かび上がる）
+// スタンプタップ時の視覚フィードバック（CSS :activeで実装）
 function _meStampFlash(el) {
-  if (!el) return;
-  try {
-    // keyframesが未登録なら追加
-    if (!document.getElementById('_meStampFlashStyle')) {
-      const _s = document.createElement('style');
-      _s.id = '_meStampFlashStyle';
-      _s.textContent = '@keyframes _meStampFlashAnim{0%{transform:scale(0.5);opacity:0}25%{transform:scale(1.15);opacity:1}100%{transform:scale(1.3) translateY(-40px);opacity:0}}';
-      document.head.appendChild(_s);
-    }
-    const rect = el.getBoundingClientRect();
-    const flash = document.createElement('div');
-    flash.style.cssText = 'position:fixed;left:'+(rect.left + rect.width/2 - 22)+'px;top:'+(rect.top + rect.height/2 - 22)+'px;width:44px;height:44px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;z-index:10001;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,0.25);animation:_meStampFlashAnim 0.55s cubic-bezier(0.16,1,0.3,1) forwards;';
-    flash.innerHTML = '<span class="material-symbols-rounded" style="font-size:26px;color:white;font-weight:700;">check</span>';
-    document.body.appendChild(flash);
-    setTimeout(() => { if (flash.parentNode) flash.remove(); }, 600);
-  } catch(e) {}
+  // 何もしない（CSSの:activeで実現するため）
 }
 window._meStampFlash = _meStampFlash;
 
@@ -53350,10 +53335,13 @@ function render() {
     sh += '</button>';
     sh += '</div></div>';
 
+    // シート内ボタンの押した感CSS
+    const _meSheetCss = '<style>#meStampSheet button{transition:transform 0.08s ease-out,background 0.08s ease-out,border-color 0.08s ease-out,box-shadow 0.08s ease-out;}#meStampSheet button:active{transform:scale(0.88)!important;background:var(--accent-bg)!important;border-color:var(--accent)!important;box-shadow:0 0 0 2px var(--accent),0 4px 12px rgba(0,0,0,0.12)!important;}</style>';
+
     // 既存シートがあれば中身だけ更新（揺らさない）
     let sheet = document.getElementById('meStampSheet');
     if (sheet) {
-      sheet.innerHTML = sh;
+      sheet.innerHTML = _meSheetCss + sh;
       return;
     }
 
@@ -53367,7 +53355,7 @@ function render() {
     sheet = document.createElement('div');
     sheet.id = 'meStampSheet';
     sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:24px 24px 0 0;z-index:9999;display:flex;flex-direction:column;max-height:75vh;box-shadow:0 -8px 32px rgba(0,0,0,0.18);';
-    sheet.innerHTML = sh;
+    sheet.innerHTML = _meSheetCss + sh;
     sheet.style.transform = 'translateY(100%)';
     document.body.appendChild(sheet);
     requestAnimationFrame(() => {
