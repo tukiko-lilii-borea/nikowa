@@ -22972,7 +22972,7 @@ function renderMeMode() {
     html += '<button onclick="openTweetAlbumModal()" title="写真アルバム" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">photo_library</span></button>';
     html += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">calendar_month</span></button>';
     html += '<button onclick="window._plannerOnly=true;data.stampSubTab=\'planner\';setModePageTab(\'me\',\'stamp\');" title="プランナー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">edit_calendar</span></button>';
-    html += '<button onclick="openThemeModal()" title="背景変更" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">wallpaper</span></button>';
+    html += '<button onclick="openTweetBgModal()" title="背景画像" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">wallpaper</span></button>';
     // スペーサー
     html += '<div style="flex:1;"></div>';
     // Record / Diary タブボタン（右側）：選択中は大きく＆太字
@@ -23974,8 +23974,33 @@ function renderTweetsDiary() {
     }
   }
   
-  // 写真プレビュー
-  h += '<div id="tweetPhotoPreview" style="padding:4px 12px 0;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>';
+  // 写真プレビュー（render時に中身を直接描画してチカチカ防止）
+  // バックアップから復元（メモリに無くてもlocalStorageから読み戻す）
+  if (!window._tweetPendingPhotos || window._tweetPendingPhotos.length === 0) {
+    try {
+      const _bk = localStorage.getItem('_tweetPendingPhotos_backup');
+      if (_bk) {
+        const _arr = JSON.parse(_bk);
+        if (Array.isArray(_arr) && _arr.length > 0) {
+          window._tweetPendingPhotos = _arr;
+        }
+      }
+    } catch(e) {}
+  }
+  const _pendingPhotos = window._tweetPendingPhotos || [];
+  if (_pendingPhotos.length > 0) {
+    h += '<div id="tweetPhotoPreview" style="padding:4px 12px 0;display:flex;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;">';
+    for (let i = 0; i < _pendingPhotos.length; i++) {
+      h += '<div style="position:relative;flex-shrink:0;">';
+      h += '<img src="'+_pendingPhotos[i]+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--line);" />';
+      h += '<button onclick="removeTweetPhoto('+i+')" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#c4506b;color:white;border:none;cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>';
+      h += '</div>';
+    }
+    h += '<span style="font-size:9px;color:var(--ink-light);margin-left:auto;flex-shrink:0;">'+_pendingPhotos.length+'/10</span>';
+    h += '</div>';
+  } else {
+    h += '<div id="tweetPhotoPreview" style="padding:4px 12px 0;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>';
+  }
   
   // 入力欄（Record/Diaryタブで切り替え）
   if (diaryInputTab === 'record') {
@@ -53387,21 +53412,7 @@ function render() {
   // ── プランナーアイテム長押し検出
   setTimeout(() => { try { _attachPlannerLongPress(); } catch(e) {} }, 50);
   
-  // ── Diary写真プレビュー自動復元（render時にDOM再生成されても写真が消えないように）
-  setTimeout(() => {
-    try {
-      // バックアップから _tweetPendingPhotos が消えてたら復元
-      if ((!window._tweetPendingPhotos || window._tweetPendingPhotos.length === 0) && typeof _loadTweetPendingBackup === 'function') {
-        _loadTweetPendingBackup();
-      }
-      if (window._tweetPendingPhotos && window._tweetPendingPhotos.length > 0) {
-        const area = document.getElementById('tweetPhotoPreview');
-        if (area && typeof _renderTweetPhotoPreview === 'function') {
-          _renderTweetPhotoPreview();
-        }
-      }
-    } catch(e) {}
-  }, 30);
+  // ── Diary写真プレビューはrender時に直接描画するため、setTimeoutでの復元は不要
   
   if (!_suppressScrollTop) window.scrollTo(0, 0);
   _suppressScrollTop = false;
