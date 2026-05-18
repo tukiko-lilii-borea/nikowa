@@ -28651,6 +28651,8 @@ function openNest2Detail(nestId) {
   const nest = (data.nests2||[]).find(n => n.id === nestId);
   if (!nest) return;
   data.activeNest2Id = nestId;
+  // ★ Nestを開いたら今日の日付にリセット（過去日を見てた状態で戻ってくる問題を防ぐ）
+  nest.viewDate = new Date().toDateString();
   if (typeof _pushNav === 'function') _pushNav();
   currentView = 'nest2_detail';
   // 開いた瞬間に未読クリア
@@ -29235,7 +29237,7 @@ function _addNest2Stamp(stampId) {
   saveData();
   // 軽く触感フィードバック
   if (navigator.vibrate) navigator.vibrate(10);
-  renderNest2Detail();
+  render();
 }
 window._addNest2Stamp = _addNest2Stamp;
 
@@ -53253,8 +53255,8 @@ function render() {
     const curCat = nest.stampCategory;
     const curMemberId = nest.lastSelectedMemberId;
 
-    // シート内ボタンの押した感CSS
-    const _nest2SheetCss = '<style>#nest2StampSheet button{transition:transform 0.08s ease-out,background 0.08s ease-out,border-color 0.08s ease-out,box-shadow 0.08s ease-out;}#nest2StampSheet button:active{transform:scale(0.88)!important;background:var(--accent-bg)!important;border-color:var(--accent)!important;box-shadow:0 0 0 2px var(--accent),0 4px 12px rgba(0,0,0,0.12)!important;}</style>';
+    // シート内ボタンの押した感CSS（scaleなし・色と光る枠のみ）
+    const _nest2SheetCss = '<style>#nest2StampSheet button{transition:background 0.08s ease-out,border-color 0.08s ease-out,box-shadow 0.08s ease-out;}#nest2StampSheet button:active{background:var(--accent-bg)!important;border-color:var(--accent)!important;box-shadow:0 0 0 2px var(--accent),0 4px 12px rgba(0,0,0,0.12)!important;}</style>';
 
     let sh = '';
     // ヘッダー
