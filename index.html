@@ -23398,12 +23398,12 @@ function renderMeMode() {
           if (_meCatStamps.length === 0) {
             html += '<div style="padding:18px;text-align:center;background:var(--surface-warm);border:1.5px dashed var(--line);border-radius:12px;font-size:11px;color:var(--ink-light);">このカテゴリにはまだスタンプがないよ<br>「編集」から追加できるよ</div>';
           } else {
-            html += '<div style="display:grid;grid-auto-flow:column;grid-template-rows:1fr 1fr;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;">';
+            html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">';
             for (const s of _meCatStamps) {
               const _safeName = escapeHtml(s.name).replace(/\'/g,"\\\\'");
               const _isPin = _mePinnedSet.has((s.icon||'')+'|'+(s.name||''));
               const _isValueType = s.type === 'number' || s.type === 'text';
-              html += '<button onclick="tapStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;flex-shrink:0;width:90px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:14px;cursor:pointer;font-family:inherit;">';
+              html += '<button onclick="tapStamp(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;background:var(--surface-warm);border:1.5px solid var(--line);border-radius:14px;cursor:pointer;font-family:inherit;">';
               html += '<span onclick="event.stopPropagation();toggleStampPin(\''+s.icon+'\',\''+_safeName+'\',event)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:'+(_isPin?'var(--accent)':'rgba(255,255,255,0.95)')+';border:1px solid '+(_isPin?'var(--accent)':'var(--line)')+';color:'+(_isPin?'white':'var(--ink-light)')+';display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:11px;">push_pin</span></span>';
               if (_isValueType) html += '<span style="position:absolute;top:4px;left:4px;font-size:8px;background:var(--accent);color:white;padding:1px 4px;border-radius:6px;font-weight:700;">'+(s.unit||'入力')+'</span>';
               html += '<span style="width:46px;height:46px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(s.icon,'font-size:28px;color:var(--accent-deep);')+'</span>';
@@ -23412,8 +23412,8 @@ function renderMeMode() {
             }
             // ＋追加ボタン
             const _safeCat2 = escapeHtml(selCat).replace(/\'/g,"\\\\'");
-            html += '<button onclick="addCustomStamp(\''+_safeCat2+'\')" style="flex-shrink:0;width:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;background:transparent;border:1.5px dashed var(--accent);border-radius:12px;cursor:pointer;font-family:inherit;color:var(--accent-deep);">';
-            html += '<span style="width:34px;height:34px;border-radius:10px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">add</span></span>';
+            html += '<button onclick="addCustomStamp(\''+_safeCat2+'\')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:12px 4px;background:transparent;border:1.5px dashed var(--accent);border-radius:14px;cursor:pointer;font-family:inherit;color:var(--accent-deep);">';
+            html += '<span style="width:40px;height:40px;border-radius:12px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:24px;color:var(--accent-deep);">add</span></span>';
             html += '<span style="font-size:10.5px;font-weight:700;color:var(--accent-deep);">追加</span>';
             html += '</button>';
             html += '</div>';
