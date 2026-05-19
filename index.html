@@ -22725,6 +22725,10 @@ function renderMeGoodsTab() {
 
 function renderStampIcon(icon, sizeStyle) {
   if (!icon) return '';
+  // ★ 画像URL対応（http/https/./data: で始まる場合はimgタグ）
+  if (icon.startsWith('http') || icon.startsWith('./') || icon.startsWith('data:')) {
+    return '<img src="'+icon+'" style="width:100%;height:100%;object-fit:contain;display:block;" />';
+  }
   if (/^[a-z][a-z0-9_]*$/.test(icon)) {
     return '<span class="material-symbols-rounded" style="'+sizeStyle+'">'+icon+'</span>';
   }
@@ -23698,6 +23702,35 @@ function renderMeMode() {
           data.stampLib['体調'] = data.stampLib['体調'].filter(s => !(s.name === '瞑想' && !s.id?.startsWith('cs_')));
         }
         data._stampMigrated_v10 = true;
+        try { saveData(); } catch(e) {}
+      }
+
+      // ★ v11: NEST_CARE_STAMPSの既存データのiconを画像URLに更新
+      if (!data._stampMigrated_v11) {
+        const _IMG_BASE = 'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/';
+        const _IMG_MAP = {
+          'pet_nail':'pet_nail.png','pet_toilet':'pet_toilet.png','pet_shampoo':'pet_shampoo.png',
+          'pet_play':'pet_play.png','teeth':'pet_teeth.png','change':'pet_change.png',
+          'homework':'homework.png','reading':'reading.png','lessons':'lessons.png',
+          'play_park':'play_park.png','play_friends':'play_friends.png','play_game':'play_game.png',
+          'play_drawing':'play_drawing.png','play_tv':'play_tv.png','go_school':'go_school.png',
+          'go_grandpa':'grandparents.png','go_dogrun':'dogrun.png','go_groom':'grooming.png'
+        };
+        // petCare と kidsCare のstampLibを更新
+        ['petCare','kidsCare'].forEach(storeKey => {
+          const store = data[storeKey];
+          if (store && store.stampLib) {
+            Object.values(store.stampLib).forEach(catArr => {
+              if (!Array.isArray(catArr)) return;
+              catArr.forEach(s => {
+                if (s.id && _IMG_MAP[s.id] && !s.icon.startsWith('http')) {
+                  s.icon = _IMG_BASE + _IMG_MAP[s.id];
+                }
+              });
+            });
+          }
+        });
+        data._stampMigrated_v11 = true;
         try { saveData(); } catch(e) {}
       }
       
@@ -29504,30 +29537,30 @@ const NEST2_STAMPS = [
   { id:'meal_dinner',    name:'晩ごはん',  icon:'dinner_dining',      category:'生活', target:'all' },
   { id:'snack',          name:'おやつ',    icon:'cookie',             category:'生活', target:'all' },
   { id:'bath',           name:'お風呂',    icon:'bathtub',            category:'生活', target:'all' },
-  { id:'teeth',          name:'歯みがき',  icon:'dentistry',          category:'生活', target:'kids' },
-  { id:'change',         name:'お着替え',  icon:'checkroom',          category:'生活', target:'kids' },
+  { id:'teeth',          name:'歯みがき',  icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/pet_teeth.png',   category:'生活', target:'kids' },
+  { id:'change',         name:'お着替え',  icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/pet_change.png',  category:'生活', target:'kids' },
   { id:'sleep',          name:'おやすみ',  icon:'bedtime',            category:'生活', target:'all' },
   // ── 学習（キッズ）
-  { id:'homework',       name:'宿題',      icon:'edit_note',          category:'学習', target:'kids' },
+  { id:'homework',       name:'宿題',      icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/homework.png',     category:'学習', target:'kids' },
   { id:'study',          name:'勉強',      icon:'menu_book',          category:'学習', target:'kids' },
-  { id:'reading',        name:'読書',      icon:'auto_stories',       category:'学習', target:'kids' },
+  { id:'reading',        name:'読書',      icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/reading.png',      category:'学習', target:'kids' },
   { id:'test',           name:'テスト',    icon:'quiz',               category:'学習', target:'kids' },
-  { id:'lessons',        name:'習い事',    icon:'school',             category:'学習', target:'kids' },
+  { id:'lessons',        name:'習い事',    icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/lessons.png',      category:'学習', target:'kids' },
   // ── 遊び（キッズ）
-  { id:'play_park',      name:'公園',      icon:'park',               category:'遊び', target:'kids' },
-  { id:'play_friends',   name:'お友達',    icon:'group',              category:'遊び', target:'kids' },
-  { id:'play_game',      name:'ゲーム',    icon:'sports_esports',     category:'遊び', target:'kids' },
-  { id:'play_drawing',   name:'お絵描き',  icon:'palette',            category:'遊び', target:'kids' },
-  { id:'play_tv',        name:'テレビ',    icon:'tv',                 category:'遊び', target:'kids' },
+  { id:'play_park',      name:'公園',      icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/play_park.png',    category:'遊び', target:'kids' },
+  { id:'play_friends',   name:'お友達',    icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/play_friends.png', category:'遊び', target:'kids' },
+  { id:'play_game',      name:'ゲーム',    icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/play_game.png',    category:'遊び', target:'kids' },
+  { id:'play_drawing',   name:'お絵描き',  icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/play_drawing.png', category:'遊び', target:'kids' },
+  { id:'play_tv',        name:'テレビ',    icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/play_tv.png',      category:'遊び', target:'kids' },
   // ── お世話（ペット）
   { id:'pet_food',       name:'ごはん',    icon:'restaurant',         category:'お世話', target:'pet' },
   { id:'pet_water',      name:'お水',      icon:'water_drop',         category:'お世話', target:'pet' },
   { id:'pet_walk',       name:'お散歩',    icon:'directions_walk',    category:'お世話', target:'pet' },
   { id:'pet_brush',      name:'ブラッシング', icon:'brush',           category:'お世話', target:'pet' },
-  { id:'pet_nail',       name:'爪切り',    icon:'content_cut',        category:'お世話', target:'pet' },
-  { id:'pet_toilet',     name:'トイレ',    icon:'wc',                 category:'お世話', target:'pet' },
-  { id:'pet_shampoo',    name:'シャンプー', icon:'shower',            category:'お世話', target:'pet' },
-  { id:'pet_play',       name:'あそぶ',    icon:'toys',               category:'お世話', target:'pet' },
+  { id:'pet_nail',       name:'爪切り',    icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/pet_nail.png',     category:'お世話', target:'pet' },
+  { id:'pet_toilet',     name:'トイレ',    icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/pet_toilet.png',   category:'お世話', target:'pet' },
+  { id:'pet_shampoo',    name:'シャンプー', icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/pet_shampoo.png', category:'お世話', target:'pet' },
+  { id:'pet_play',       name:'あそぶ',    icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/pet_play.png',     category:'お世話', target:'pet' },
   // ── 健康（共通）
   { id:'medicine',       name:'おくすり',   icon:'medication',        category:'健康', target:'all' },
   { id:'weight',         name:'体重',       icon:'monitor_weight',    category:'健康', target:'all' },
@@ -29543,13 +29576,13 @@ const NEST2_STAMPS = [
   { id:'mood_energy',    name:'元気',       icon:'bolt',              category:'気持ち', target:'all' },
   { id:'mood_proud',     name:'よくできた', icon:'star',              category:'気持ち', target:'all' },
   // ── お出かけ
-  { id:'go_school',      name:'園/学校',    icon:'school',            category:'お出かけ', target:'kids' },
+  { id:'go_school',      name:'園/学校',    icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/go_school.png',    category:'お出かけ', target:'kids' },
   { id:'go_shop',        name:'お買い物',   icon:'shopping_bag',      category:'お出かけ', target:'all' },
   { id:'go_outside',     name:'公園',       icon:'park',              category:'お出かけ', target:'all' },
   { id:'go_trip',        name:'旅行',       icon:'flight',            category:'お出かけ', target:'all' },
-  { id:'go_grandpa',     name:'おじいちゃんち', icon:'cottage',       category:'お出かけ', target:'kids' },
-  { id:'go_dogrun',      name:'ドッグラン', icon:'park',              category:'お出かけ', target:'pet' },
-  { id:'go_groom',       name:'トリミング', icon:'cut',               category:'お出かけ', target:'pet' }
+  { id:'go_grandpa',     name:'おじいちゃんち', icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/grandparents.png', category:'お出かけ', target:'kids' },
+  { id:'go_dogrun',      name:'ドッグラン', icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/dogrun.png',          category:'お出かけ', target:'pet' },
+  { id:'go_groom',       name:'トリミング', icon:'https://tukiko-lilii-borea.github.io/nikowa/nikowa_stamp/grooming.png',        category:'お出かけ', target:'pet' }
 ];
 
 const NEST2_STAMP_CATEGORIES = ['生活','学習','遊び','お世話','健康','気持ち','お出かけ'];
