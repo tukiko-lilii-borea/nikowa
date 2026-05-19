@@ -23909,13 +23909,14 @@ function renderTweetsDiary() {
   const dateKeyForWeather = viewDate.getFullYear()+'-'+String(viewDate.getMonth()+1).padStart(2,'0')+'-'+String(viewDate.getDate()).padStart(2,'0');
   const weatherIcon = (typeof getDateWeatherIcon === 'function') ? getDateWeatherIcon(dateKeyForWeather) : null;
   
-  // 日曜始まり7日固定の日付バー（今週の日〜土）：コンパクト版
+  // 日曜始まり7日固定の日付バー（見てる日を含む週）：コンパクト版
   h += '<div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);padding:3px 5px;">';
   h += '<div style="display:flex;justify-content:space-between;">';
-  // 今日の曜日（0=日, 6=土）→ 日曜まで戻る日数
-  const _todayDow = today.getDay();
-  const _sunday = new Date(today);
-  _sunday.setDate(today.getDate() - _todayDow);
+  // 見てる日を含む週（日〜土）を基準にする
+  const _barBase = isToday ? today : viewDate;
+  const _todayDow = _barBase.getDay();
+  const _sunday = new Date(_barBase);
+  _sunday.setDate(_barBase.getDate() - _todayDow);
   for (let di = 0; di < 7; di++) {
     const d = new Date(_sunday);
     d.setDate(_sunday.getDate() + di);
@@ -24405,8 +24406,8 @@ function _renderTweetAlbumModal() {
   }
   h += '</div>';
 
-  // グリッド
-  h += '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:3px;background:#f4f4f4;">';
+  // グリッド（選択モード時はフッター分余白を追加）
+  h += '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:3px;'+((_tweetAlbumSelectMode)?'padding-bottom:120px;':'')+'background:#f4f4f4;">';
   if (photos.length === 0) {
     h += '<div style="padding:60px 20px;text-align:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:48px;color:var(--ink-light);">image</span><div style="margin-top:8px;font-size:13px;">写真がまだないよ</div></div>';
   } else {
@@ -24431,9 +24432,9 @@ function _renderTweetAlbumModal() {
   }
   h += '</div>';
 
-  // フッター（選択モード時のみ）
+  // フッター（選択モード時のみ・bottom-navの上に固定）
   if (_tweetAlbumSelectMode) {
-    h += '<div style="flex-shrink:0;padding:10px 14px;border-top:1px solid var(--line);background:var(--surface);display:flex;align-items:center;gap:8px;">';
+    h += '<div style="position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom, 0px) + 64px);z-index:9001;padding:10px 14px;border-top:1px solid var(--line);background:var(--surface);display:flex;align-items:center;gap:8px;box-shadow:0 -2px 8px rgba(0,0,0,0.08);">';
     h += '<div style="flex:1;font-size:12px;color:var(--ink-sub);font-weight:600;">'+selectedCount+' 枚 選択中</div>';
     const canDelete = selectedCount > 0;
     h += '<button onclick="_deleteSelectedTweetAlbumPhotos()" '+(canDelete?'':'disabled')+' style="padding:8px 16px;border-radius:100px;border:1.5px solid '+(canDelete?'#E57373':'var(--line)')+';background:'+(canDelete?'#E57373':'transparent')+';color:'+(canDelete?'white':'var(--ink-light)')+';font-family:inherit;font-size:12px;font-weight:800;cursor:'+(canDelete?'pointer':'not-allowed')+';display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">delete</span>削除</button>';
