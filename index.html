@@ -11522,10 +11522,13 @@ function renderPlannerView() {
       if (item.type === 'routine') html += '<span class="material-symbols-rounded" style="flex-shrink:0;font-size:14px;color:var(--accent-deep);">repeat</span>';
       // 時間
       if (item.time) html += '<span style="display:flex;align-items:center;gap:2px;background:var(--accent-bg);color:var(--accent-deep);font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:11px;">schedule</span>'+item.time+'</span>';
-      // アイコン（URLあればタップでブラウザで開く、ない時はただの表示）
+      // アイコン（URLあればタップでブラウザで開く＋▶マーク表示）
       if (item.url) {
         const _safeUrl = escapeHtml(item.url);
-        html += '<a href="'+_safeUrl+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="flex-shrink:0;display:flex;align-items:center;text-decoration:none;background:var(--accent-bg);border-radius:8px;padding:3px;border:1px solid var(--accent);" title="リンクを開く">'+renderStampIcon(item.icon||'check_circle','font-size:18px;line-height:1;color:var(--accent-deep);')+'</a>';
+        html += '<a href="'+_safeUrl+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;text-decoration:none;background:var(--accent-bg);border-radius:8px;padding:3px;border:1px solid var(--accent);position:relative;" title="リンクを開く">';
+        html += renderStampIcon(item.icon||'check_circle','font-size:18px;line-height:1;color:var(--accent-deep);');
+        html += '<span class="material-symbols-rounded" style="position:absolute;right:-4px;bottom:-4px;font-size:12px;background:var(--accent);color:white;border-radius:50%;padding:1px;line-height:1;">play_arrow</span>';
+        html += '</a>';
       } else {
         html += '<span style="flex-shrink:0;">'+renderStampIcon(item.icon||'check_circle','font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
       }
@@ -11569,10 +11572,13 @@ function _plannerSelectDow(dow) {
 }
 window._plannerSelectDow = _plannerSelectDow;
 
-// プランナー専用モード閉じる（Recordモードに戻る）
+// プランナー専用モード閉じる（Me Diary Recordに戻る）
 function _closePlannerOnly() {
   window._plannerOnly = false;
   data.stampSubTab = 'stamp';
+  // ★ Me Diary Record に戻す（旧Day画面じゃなく新UI）
+  currentModeTab['me'] = 'diary';
+  data.diaryInputTab = 'record';
   saveData();
   render();
 }
