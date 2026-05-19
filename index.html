@@ -11472,11 +11472,6 @@ function renderPlannerView() {
   }
   html += '</div>';
 
-  // ── ルーティン設定ボタン
-  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">';
-  html += '<button onclick="openPlannerRoutineModal()" style="display:flex;align-items:center;gap:4px;padding:5px 12px;border-radius:100px;border:1px solid var(--line);background:var(--surface-warm);font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;"><span class="material-symbols-rounded" style="font-size:14px;">repeat</span>ルーティン設定</button>';
-  html += '</div>';
-
   // ── 表示アイテムを構築
   const allItems = [];
 
@@ -11549,10 +11544,8 @@ function renderPlannerView() {
     }
   }
 
-  // 今日だけ追加ボタン
-  if (isToday) {
-    html += '<button onclick="openPlannerAddModal()" style="width:100%;padding:10px;border:1.5px dashed var(--accent);background:var(--accent-bg);color:var(--accent-deep);border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;">＋ 今日だけ追加</button>';
-  }
+  // 予定を追加ボタン（今日／繰り返し両方ここから）
+  html += '<button onclick="openPlannerAddModal()" style="width:100%;padding:10px;border:1.5px dashed var(--accent);background:var(--accent-bg);color:var(--accent-deep);border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;">＋ 予定を追加</button>';
 
   html += '</div>';
   return html;
@@ -11912,6 +11905,16 @@ function openPlannerModal(editId) {
   h += '<input id="pmTask" type="text" placeholder="例：散歩、薬、ストレッチ" value="'+escapeHtml(cur.task)+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface);box-sizing:border-box;">';
   h += '</div>';
   
+  // タイプ（今日だけ/繰り返し）※新規追加時のみ
+  if (!isEdit) {
+    h += '<div style="margin-bottom:12px;">';
+    h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">タイプ *</label>';
+    h += '<div style="display:flex;gap:4px;background:var(--surface-warm);border-radius:10px;padding:3px;">';
+    h += '<button onclick="_pmSetType(\'today\')" data-pmtype="today" type="button" style="flex:1;padding:8px;border:none;background:var(--accent);color:white;border-radius:8px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:14px;">today</span>今日だけ</button>';
+    h += '<button onclick="_pmSetType(\'routine\')" data-pmtype="routine" type="button" style="flex:1;padding:8px;border:none;background:transparent;color:var(--ink-sub);border-radius:8px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:14px;">repeat</span>繰り返し</button>';
+    h += '</div></div>';
+  }
+  
   // カテゴリ
   h += '<div style="margin-bottom:12px;">';
   h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">時間帯 *</label>';
@@ -11971,6 +11974,22 @@ function openPlannerModal(editId) {
   h += '<input id="pmUrl" type="url" inputmode="url" placeholder="https://..." value="'+escapeHtml(cur.url||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface);box-sizing:border-box;">';
   h += '</div>';
   
+  // 除外する曜日（繰り返しモード時のみ表示）
+  if (!isEdit) {
+    h += '<div id="pmRoutineDows" style="display:none;margin-bottom:12px;background:var(--accent-bg);padding:10px;border-radius:10px;">';
+    h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">除外する曜日（不要な日はチェック）</label>';
+    h += '<div style="display:flex;justify-content:space-between;gap:3px;">';
+    const _PMDOWS = ['sun','mon','tue','wed','thu','fri','sat'];
+    const _PMDOWS_JP = ['日','月','火','水','木','金','土'];
+    for (let di = 0; di < 7; di++) {
+      h += '<label style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;cursor:pointer;">';
+      h += '<input type="checkbox" data-rdow="'+_PMDOWS[di]+'" style="margin:0;width:18px;height:18px;">';
+      h += '<span style="font-size:11px;font-weight:700;color:'+(di===0?'#E57373':(di===6?'#64B5F6':'var(--ink-dark)'))+';">'+_PMDOWS_JP[di]+'</span>';
+      h += '</label>';
+    }
+    h += '</div></div>';
+  }
+  
   // 通知（UI のみ・動作は将来）
   h += '<div style="margin-bottom:14px;background:var(--surface-warm);border-radius:10px;padding:10px 12px;">';
   h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink-dark);">';
@@ -11998,8 +12017,24 @@ function openPlannerModal(editId) {
   
   window._pmCat = cur.category;
   window._pmIcon = cur.icon;
+  window._pmRoutineMode = false; // ★ デフォルト「今日だけ」
   setTimeout(() => { const ti = document.getElementById('pmTask'); if (ti && !isEdit) ti.focus(); }, 50);
 }
+
+// タイプ切替（今日だけ ⇄ 繰り返し）
+function _pmSetType(type) {
+  window._pmRoutineMode = (type === 'routine');
+  // ボタンUI更新
+  document.querySelectorAll('#plannerModal [data-pmtype]').forEach(btn => {
+    const isAct = btn.dataset.pmtype === type;
+    btn.style.background = isAct ? 'var(--accent)' : 'transparent';
+    btn.style.color = isAct ? 'white' : 'var(--ink-sub)';
+  });
+  // 除外曜日UI表示切替
+  const rd = document.getElementById('pmRoutineDows');
+  if (rd) rd.style.display = type === 'routine' ? 'block' : 'none';
+}
+window._pmSetType = _pmSetType;
 
 function closePlannerModal() {
   const el = document.getElementById('plannerModal');
@@ -12059,7 +12094,8 @@ function _selectPlannerStamp(icon, name) {
 window._selectPlannerStamp = _selectPlannerStamp;
 
 function savePlannerItem(editId) {
-  if (!data.planner) data.planner = { items: [] };
+  if (!data.planner) data.planner = { items: [], routines: [] };
+  if (!data.planner.routines) data.planner.routines = [];
   const taskEl = document.getElementById('pmTask');
   const timeEl = document.getElementById('pmTime');
   const urlEl = document.getElementById('pmUrl');
@@ -12071,6 +12107,32 @@ function savePlannerItem(editId) {
   document.querySelectorAll('#pmNotifyMin input[data-min]').forEach(cb => {
     if (cb.checked) minutes.push(parseInt(cb.dataset.min));
   });
+  
+  const isRoutine = !!window._pmRoutineMode;
+  
+  // ★ ルーティン（繰り返し）として保存
+  if (isRoutine && !editId) {
+    const exceptions = [];
+    document.querySelectorAll('#pmRoutineDows input[data-rdow]:checked').forEach(cb => {
+      exceptions.push(cb.dataset.rdow);
+    });
+    const routineData = {
+      id: 'r_' + Date.now(),
+      title: task,
+      icon: window._pmIcon || 'task',
+      time: (timeEl && timeEl.value) || '',
+      url: (urlEl && urlEl.value || '').trim(),
+      exceptions: exceptions,
+      notify: !!(notifyEl && notifyEl.checked),
+      notifyMinutesBefore: minutes
+    };
+    data.planner.routines.push(routineData);
+    saveData();
+    closePlannerModal();
+    showToast('繰り返し予定を追加したよ🌷');
+    render();
+    return;
+  }
   
   const itemData = {
     category: window._pmCat || 'morning',
