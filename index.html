@@ -11484,14 +11484,14 @@ function renderPlannerView() {
   for (const r of data.planner.routines) {
     if ((r.exceptions||[]).includes(selDow)) continue;
     const checked = !!(data.planner.routineChecked?.[todayStr]?.[r.id]);
-    allItems.push({ type:'routine', id:r.id, time:r.time, title:r.title, icon:r.icon, done:isToday&&checked });
+    allItems.push({ type:'routine', id:r.id, time:r.time, title:r.title, icon:r.icon, done:isToday&&checked, url:r.url });
   }
 
   // 今日だけの予定（今日表示の時のみ）
   if (isToday) {
     for (const item of (data.planner.items||[])) {
       const isDone = item.completed && item.completedAt === todayStr;
-      allItems.push({ type:'today', id:item.id, time:item.time, title:item.task, icon:item.icon, done:isDone });
+      allItems.push({ type:'today', id:item.id, time:item.time, title:item.task, icon:item.icon, done:isDone, url:item.url });
     }
   }
 
@@ -11522,8 +11522,13 @@ function renderPlannerView() {
       if (item.type === 'routine') html += '<span class="material-symbols-rounded" style="flex-shrink:0;font-size:14px;color:var(--accent-deep);">repeat</span>';
       // 時間
       if (item.time) html += '<span style="display:flex;align-items:center;gap:2px;background:var(--accent-bg);color:var(--accent-deep);font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:11px;">schedule</span>'+item.time+'</span>';
-      // アイコン
-      html += '<span style="flex-shrink:0;">'+renderStampIcon(item.icon||'check_circle','font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
+      // アイコン（URLあればタップでブラウザで開く、ない時はただの表示）
+      if (item.url) {
+        const _safeUrl = escapeHtml(item.url);
+        html += '<a href="'+_safeUrl+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="flex-shrink:0;display:flex;align-items:center;text-decoration:none;background:var(--accent-bg);border-radius:8px;padding:3px;border:1px solid var(--accent);" title="リンクを開く">'+renderStampIcon(item.icon||'check_circle','font-size:18px;line-height:1;color:var(--accent-deep);')+'</a>';
+      } else {
+        html += '<span style="flex-shrink:0;">'+renderStampIcon(item.icon||'check_circle','font-size:20px;line-height:1;color:var(--ink-dark);')+'</span>';
+      }
       // タイトル
       html += '<span style="flex:1;font-size:13px;font-weight:600;color:var(--ink-dark);'+txStyle+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(item.title)+'</span>';
       // チェックボタン（今日表示の時のみ）
@@ -11572,6 +11577,17 @@ function _closePlannerOnly() {
   render();
 }
 window._closePlannerOnly = _closePlannerOnly;
+
+// プランナーを開く（今日の曜日にリセット）
+function _openPlannerToday() {
+  if (!data.planner) data.planner = { items: [], routines: [] };
+  const DOW = ['sun','mon','tue','wed','thu','fri','sat'];
+  data.planner.selectedDow = DOW[new Date().getDay()];
+  window._plannerOnly = true;
+  data.stampSubTab = 'planner';
+  setModePageTab('me','stamp');
+}
+window._openPlannerToday = _openPlannerToday;
 
 // 今日だけ予定の削除（確認なし・即削除）
 function _deletePlannerToday(id) {
@@ -11943,6 +11959,12 @@ function openPlannerModal(editId) {
   h += '<input id="pmTime" type="time" value="'+escapeHtml(cur.time||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface);box-sizing:border-box;">';
   h += '</div>';
   
+  // URL（任意）
+  h += '<div style="margin-bottom:12px;">';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:4px;">URL（任意）<span style="font-size:9px;color:var(--ink-light);margin-left:4px;">アイコンタップで開く</span></label>';
+  h += '<input id="pmUrl" type="url" inputmode="url" placeholder="https://..." value="'+escapeHtml(cur.url||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface);box-sizing:border-box;">';
+  h += '</div>';
+  
   // 通知（UI のみ・動作は将来）
   h += '<div style="margin-bottom:14px;background:var(--surface-warm);border-radius:10px;padding:10px 12px;">';
   h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink-dark);">';
@@ -12034,6 +12056,7 @@ function savePlannerItem(editId) {
   if (!data.planner) data.planner = { items: [] };
   const taskEl = document.getElementById('pmTask');
   const timeEl = document.getElementById('pmTime');
+  const urlEl = document.getElementById('pmUrl');
   const notifyEl = document.getElementById('pmNotify');
   const task = (taskEl && taskEl.value || '').trim();
   if (!task) { showToast('「すること」を入力してね🌷'); return; }
@@ -12048,6 +12071,7 @@ function savePlannerItem(editId) {
     icon: window._pmIcon || 'task',
     time: (timeEl && timeEl.value) || '',
     task: task,
+    url: (urlEl && urlEl.value || '').trim(),
     notify: !!(notifyEl && notifyEl.checked),
     notifyMinutesBefore: minutes
   };
@@ -22971,7 +22995,7 @@ function renderMeMode() {
     html += '<button onclick="openTweetFilterModal()" title="検索" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">search</span></button>';
     html += '<button onclick="openTweetAlbumModal()" title="写真アルバム" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">photo_library</span></button>';
     html += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">calendar_month</span></button>';
-    html += '<button onclick="window._plannerOnly=true;data.stampSubTab=\'planner\';setModePageTab(\'me\',\'stamp\');" title="プランナー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">edit_calendar</span></button>';
+    html += '<button onclick="_openPlannerToday()" title="プランナー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">edit_calendar</span></button>';
     html += '<button onclick="openTweetBgModal()" title="背景画像" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">wallpaper</span></button>';
     // スペーサー
     html += '<div style="flex:1;"></div>';
@@ -24028,11 +24052,8 @@ window.renderTweetsDiary = renderTweetsDiary;
 
 // ===== Diary描画後の調整＆スクロール（タイムライン独立スクロール方式・LINE風） =====
 function _diaryAdjustAndScroll() {
-  // ★ 揺れ防止：初回描画時はタイムラインを隠してレイアウト確定後に表示
+  // ★ タイムライン要素を取得（後で画像onload設定に使う）
   const tlInit = document.getElementById('tweetsTimeline');
-  if (!window._diarySingleAdjust && tlInit) {
-    tlInit.style.visibility = 'hidden';
-  }
   function adjust() {
     try {
       // ★ 最初にwindow scrollを0にリセット（既存スクロール位置で固定されると上が切れるため）
@@ -24106,8 +24127,6 @@ function _diaryAdjustAndScroll() {
     setTimeout(() => {
       adjust();
       scrollBottom();
-      // ★ 最終調整後にタイムラインを表示（揺れる遷移が見えなくなる）
-      if (tlInit) tlInit.style.visibility = 'visible';
       // ★ 写真onloadで再scrollBottom（写真が遅れて読み込まれてもズレない）
       if (tlInit) {
         const imgs = tlInit.querySelectorAll('img');
@@ -24131,9 +24150,6 @@ function _diaryAdjustAndScroll() {
         }
       }
     }, 200);
-  } else {
-    // タブ切替時もvisibilityを念のためvisibleに
-    if (tlInit) tlInit.style.visibility = 'visible';
   }
 
   // ★ キーボード対応：visualViewportでbottomBlockのみ追従させる
