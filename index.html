@@ -6152,8 +6152,13 @@ function loadData() {
 }
 let _saveDataErrorShown = false;
 function saveData() {
-  try { 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); 
+  try {
+    // ★ 一時UI状態は保存対象から除外（過去日固定バグ対策）
+    const _tmpViewDate = data.tweetViewDate;
+    delete data.tweetViewDate;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // 復元（実行中は使う）
+    if (_tmpViewDate !== undefined) data.tweetViewDate = _tmpViewDate;
     _saveDataErrorShown = false;
   }
   catch(e) { 
@@ -6576,6 +6581,8 @@ function loadFromFirestore() {
         try { localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos)); } catch(e) {}
       }
       for (const k in saved) data[k] = saved[k];
+      // ★ Firestoreから読み込んだ後も一時UI状態は必ずクリア（過去日固定バグ対策）
+      delete data.tweetViewDate;
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
       // 保護したデータをFirestoreにも書き戻し（次回他デバイスで開いた時のため）
       if (_protected.length > 0) saveToFirestore();
@@ -6594,7 +6601,10 @@ function saveToFirestore() {
   for (const [id, v] of Object.entries(photos)) {
     if (typeof v === 'string' && !v.startsWith('data:')) photoUrls[id] = v;
   }
-  const payload = Object.keys(photoUrls).length > 0 ? { ...data, _photos: photoUrls } : data;
+  // ★ 一時UI状態（tweetViewDate等）はFirestoreにも保存しない
+  const _cleanData = { ...data };
+  delete _cleanData.tweetViewDate;
+  const payload = Object.keys(photoUrls).length > 0 ? { ..._cleanData, _photos: photoUrls } : _cleanData;
   _getModeDocRef().set(payload)
     .catch(e => console.log('Firestore保存エラー:', e));
 }
