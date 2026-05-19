@@ -14025,7 +14025,7 @@ function _renderMemoListContent() {
     h += '<span style="flex:1;font-size:14px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(f.name || 'フォルダ')+'</span>';
     h += '<span style="font-size:11px;color:var(--ink-sub);flex-shrink:0;">（'+itemCount+'）</span>';
     h += '</button>';
-    h += '<button onclick="memoDeleteFolder('+f._idx+')" title="削除" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:6px;font-size:14px;line-height:1;">🗑</button>';
+    h += '<button onclick="memoDeleteFolder('+f._idx+')" title="削除" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;">delete</span></button>';
     h += '</div>';
   }
   
@@ -14040,7 +14040,7 @@ function _renderMemoListContent() {
     const dateStr = (dt.getMonth()+1) + '/' + dt.getDate() + ' ' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
     const bodyPreview = (m.body || '').slice(0, 60);
     
-    h += '<button onclick="openMemoEditModal(\''+m.id+'\')" style="width:100%;text-align:left;padding:12px 8px;border:none;border-bottom:1px solid var(--line-soft);background:none;cursor:pointer;font-family:inherit;display:flex;gap:10px;align-items:flex-start;">';
+    h += '<button onclick="openMemoViewModal(\''+m.id+'\')" style="width:100%;text-align:left;padding:12px 8px;border:none;border-bottom:1px solid var(--line-soft);background:none;cursor:pointer;font-family:inherit;display:flex;gap:10px;align-items:flex-start;">';
     if (m.photo) {
       h += '<img src="'+m.photo+'" style="flex-shrink:0;width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--line);" />';
     } else {
@@ -14071,6 +14071,151 @@ function _renderMemoListContent() {
   
   return h;
 }
+
+// ── メモ詳細表示モーダル（iOS標準メモ風：タップで全文表示）
+function openMemoViewModal(memoId) {
+  _ensureMemoStructure();
+  const _findMemo = (node, id) => {
+    if (node.items) {
+      const found = node.items.find(m => m.id === id);
+      if (found) return found;
+    }
+    if (node.folders) {
+      for (const sub of node.folders) {
+        const r = _findMemo(sub, id);
+        if (r) return r;
+      }
+    }
+    return null;
+  };
+  const m = _findMemo(data.memos, memoId);
+  if (!m) return;
+  
+  const ex = document.getElementById('memoViewModal');
+  if (ex) ex.remove();
+  
+  let h = '<div id="memoViewModal" onclick="if(event.target===this)closeMemoViewModal()" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="width:100%;max-width:480px;background:var(--surface);border-radius:20px 20px 0 0;max-height:90vh;display:flex;flex-direction:column;">';
+  
+  // ヘッダー（タイトル＋閉じる）
+  h += '<div style="padding:16px 18px 12px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:8px;">';
+  h += '<span class="material-symbols-rounded" style="flex-shrink:0;font-size:20px;color:var(--accent-deep);">edit_note</span>';
+  h += '<div style="flex:1;min-width:0;font-size:15px;font-weight:800;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(m.title||'（無題のメモ）')+'</div>';
+  h += '<button onclick="closeMemoViewModal()" style="flex-shrink:0;background:none;border:none;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  
+  // 本文（スクロール可能）
+  h += '<div style="flex:1;overflow-y:auto;padding:16px 18px;">';
+  if (m.photo) {
+    h += '<img src="'+m.photo+'" style="width:100%;max-height:300px;object-fit:contain;border-radius:12px;margin-bottom:14px;background:#000;" />';
+  }
+  if (m.body) {
+    h += '<div style="font-size:13px;line-height:1.8;color:var(--ink-dark);white-space:pre-wrap;word-break:break-word;">'+escapeHtml(m.body)+'</div>';
+  } else {
+    h += '<div style="font-size:12px;color:var(--ink-light);font-style:italic;">（本文なし）</div>';
+  }
+  const updated = m.updatedAt || m.createdAt || 0;
+  if (updated) {
+    const dt = new Date(updated);
+    const dStr = dt.getFullYear()+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+    h += '<div style="font-size:10px;color:var(--ink-light);margin-top:16px;text-align:right;font-variant-numeric:tabular-nums;">'+dStr+'</div>';
+  }
+  h += '</div>';
+  
+  // フッターボタン（コピー・編集・削除）
+  h += '<div style="padding:12px 18px 18px;border-top:1px solid var(--line-soft);display:flex;gap:8px;">';
+  h += '<button onclick="memoCopyToClipboard(\''+m.id+'\')" style="flex:1;padding:11px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent-deep);border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:15px;">content_copy</span>コピー</button>';
+  h += '<button onclick="memoEditFromView(\''+m.id+'\')" style="flex:1;padding:11px;border:none;background:var(--accent);color:white;border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:15px;">edit</span>編集</button>';
+  h += '<button onclick="memoDeleteFromView(\''+m.id+'\')" style="flex:1;padding:11px;border:1.5px solid #E57373;background:var(--surface);color:#C62828;border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:15px;">delete</span>削除</button>';
+  h += '</div>';
+  
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openMemoViewModal = openMemoViewModal;
+
+function closeMemoViewModal() {
+  const el = document.getElementById('memoViewModal');
+  if (el) el.remove();
+}
+window.closeMemoViewModal = closeMemoViewModal;
+
+function memoCopyToClipboard(memoId) {
+  const _findMemo = (node, id) => {
+    if (node.items) {
+      const found = node.items.find(m => m.id === id);
+      if (found) return found;
+    }
+    if (node.folders) {
+      for (const sub of node.folders) {
+        const r = _findMemo(sub, id);
+        if (r) return r;
+      }
+    }
+    return null;
+  };
+  const m = _findMemo(data.memos, memoId);
+  if (!m) return;
+  const text = (m.title ? m.title + '\n\n' : '') + (m.body || '');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('コピーしたよ📋');
+    }).catch(() => {
+      _memoFallbackCopy(text);
+    });
+  } else {
+    _memoFallbackCopy(text);
+  }
+}
+window.memoCopyToClipboard = memoCopyToClipboard;
+
+function _memoFallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('コピーしたよ📋');
+  } catch(e) {
+    showToast('コピーできなかった');
+  }
+  document.body.removeChild(ta);
+}
+
+function memoEditFromView(memoId) {
+  closeMemoViewModal();
+  openMemoEditModal(memoId);
+}
+window.memoEditFromView = memoEditFromView;
+
+function memoDeleteFromView(memoId) {
+  if (!confirm('このメモを削除する？\n（戻せません）')) return;
+  const _delMemo = (node, id) => {
+    if (node.items) {
+      const idx = node.items.findIndex(m => m.id === id);
+      if (idx >= 0) {
+        node.items.splice(idx, 1);
+        return true;
+      }
+    }
+    if (node.folders) {
+      for (const sub of node.folders) {
+        if (_delMemo(sub, id)) return true;
+      }
+    }
+    return false;
+  };
+  if (_delMemo(data.memos, memoId)) {
+    saveData();
+    closeMemoViewModal();
+    render();
+    showToast('削除したよ');
+  }
+}
+window.memoDeleteFromView = memoDeleteFromView;
 
 function openMemoEditModal(memoId) {
   _ensureMemoStructure();
