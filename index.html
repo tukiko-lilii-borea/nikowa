@@ -8659,12 +8659,8 @@ function renderTop() {
   // 上部：左にお知らせ、右にメール
   const _notifCount = (data._notifications || []).filter(n => !n.read).length;
   const _msgCount = (data._pendingRequests || []).length;
-  html += '<div class="hero-top" style="justify-content:space-between;">';
-  // 左：ハンバーガーメニュー＋お知らせ
-  html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;" title="メニュー">';
-  html += '<span class="material-symbols-rounded" style="font-size:20px;">menu</span>';
-  html += '</button>';
-  // 右：メール
+  html += '<div class="hero-top" style="justify-content:flex-end;">';
+  // 右：メール（ハンバーガーは下のクイックアクションの設定があるので削除）
   html += '<button onclick="goToFriendView()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:38px;height:38px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;position:relative;" title="メッセージ">';
   html += '<span class="material-symbols-rounded" style="font-size:20px;">mail</span>';
   if (_msgCount > 0) {
@@ -8902,6 +8898,16 @@ function renderTop() {
   html += '<button onclick="location.href=\'./nikowa-timer.html\'" style="padding:10px 4px;background:#FFFFFF;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
   html += '<span class="material-symbols-rounded" style="font-size:20px;color:#2EB875;">timer</span>';
   html += '<span style="font-size:10px;font-weight:700;color:var(--ink-sub);">タイマー</span>';
+  html += '</button>';
+  // 設定
+  html += '<button onclick="currentView=\'settings\';render();" style="padding:10px 4px;background:#FFFFFF;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;color:#8B7AA8;">settings</span>';
+  html += '<span style="font-size:10px;font-weight:700;color:var(--ink-sub);">設定</span>';
+  html += '</button>';
+  // 遊園地
+  html += '<button onclick="location.href=\'./yuuenchi.html\'" style="padding:10px 4px;background:#FFFFFF;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+  html += '<span class="material-symbols-rounded" style="font-size:20px;color:#E85B8B;">attractions</span>';
+  html += '<span style="font-size:10px;font-weight:700;color:var(--ink-sub);">遊園地</span>';
   html += '</button>';
   html += '</div>';
 
@@ -11502,12 +11508,12 @@ function renderPlannerView() {
     allItems.push({ type:'routine', id:r.id, time:r.time, title:r.title, icon:r.icon, done:isToday&&checked, url:r.url });
   }
 
-  // 今日だけの予定（今日表示の時のみ）
-  if (isToday) {
-    for (const item of (data.planner.items||[])) {
-      const isDone = item.completed && item.completedAt === todayStr;
-      allItems.push({ type:'today', id:item.id, time:item.time, title:item.task, icon:item.icon, done:isDone, url:item.url });
-    }
+  // 単発予定（選んだ曜日のもの。dowなしは今日の曜日として扱う＝後方互換）
+  for (const item of (data.planner.items||[])) {
+    const itemDow = item.dow || todayDow;
+    if (itemDow !== selDow) continue;
+    const isDone = item.completed && item.completedAt === todayStr;
+    allItems.push({ type:'today', id:item.id, time:item.time, title:item.task, icon:item.icon, done:isDone, url:item.url });
   }
 
   // 時間順ソート（時間なしは最後）
@@ -11923,12 +11929,16 @@ function openPlannerModal(editId) {
   h += '<input id="pmTask" type="text" placeholder="例：散歩、薬、ストレッチ" value="'+escapeHtml(cur.task)+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface);box-sizing:border-box;">';
   h += '</div>';
   
-  // タイプ（今日だけ/繰り返し）※新規追加時のみ
+  // タイプ（この曜日だけ/繰り返し）※新規追加時のみ
   if (!isEdit) {
+    const _DOW_JP = ['日','月','火','水','木','金','土'];
+    const _DOW = ['sun','mon','tue','wed','thu','fri','sat'];
+    const _selDow = (data.planner && data.planner.selectedDow) || _DOW[new Date().getDay()];
+    const _selDowJp = _DOW_JP[_DOW.indexOf(_selDow)] || '今日';
     h += '<div style="margin-bottom:12px;">';
     h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:6px;">タイプ *</label>';
     h += '<div style="display:flex;gap:4px;background:var(--surface-warm);border-radius:10px;padding:3px;">';
-    h += '<button onclick="_pmSetType(\'today\')" data-pmtype="today" type="button" style="flex:1;padding:8px;border:none;background:var(--accent);color:white;border-radius:8px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:14px;">today</span>今日だけ</button>';
+    h += '<button onclick="_pmSetType(\'today\')" data-pmtype="today" type="button" style="flex:1;padding:8px;border:none;background:var(--accent);color:white;border-radius:8px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:14px;">today</span>'+_selDowJp+'曜だけ</button>';
     h += '<button onclick="_pmSetType(\'routine\')" data-pmtype="routine" type="button" style="flex:1;padding:8px;border:none;background:transparent;color:var(--ink-sub);border-radius:8px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:14px;">repeat</span>繰り返し</button>';
     h += '</div></div>';
   }
@@ -12159,7 +12169,9 @@ function savePlannerItem(editId) {
     task: task,
     url: (urlEl && urlEl.value || '').trim(),
     notify: !!(notifyEl && notifyEl.checked),
-    notifyMinutesBefore: minutes
+    notifyMinutesBefore: minutes,
+    // ★ 選択中の曜日を保存（その曜日のみに表示）
+    dow: (data.planner && data.planner.selectedDow) || ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()]
   };
   
   if (editId) {
@@ -24353,7 +24365,7 @@ function renderTweetsDiary() {
     }
   }
   
-  // 写真プレビュー（render時に中身を直接描画してチカチカ防止）
+  // 写真プレビュー（空のdivだけ用意。中身は _renderTweetPhotoPreview() が差分管理）
   // バックアップから復元（メモリに無くてもlocalStorageから読み戻す）
   if (!window._tweetPendingPhotos || window._tweetPendingPhotos.length === 0) {
     try {
@@ -24366,20 +24378,8 @@ function renderTweetsDiary() {
       }
     } catch(e) {}
   }
-  const _pendingPhotos = window._tweetPendingPhotos || [];
-  if (_pendingPhotos.length > 0) {
-    h += '<div id="tweetPhotoPreview" style="padding:4px 12px 0;display:flex;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;">';
-    for (let i = 0; i < _pendingPhotos.length; i++) {
-      h += '<div style="position:relative;flex-shrink:0;">';
-      h += '<img src="'+_pendingPhotos[i]+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--line);" />';
-      h += '<button onclick="removeTweetPhoto('+i+')" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#c4506b;color:white;border:none;cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>';
-      h += '</div>';
-    }
-    h += '<span style="font-size:9px;color:var(--ink-light);margin-left:auto;flex-shrink:0;">'+_pendingPhotos.length+'/10</span>';
-    h += '</div>';
-  } else {
-    h += '<div id="tweetPhotoPreview" style="padding:4px 12px 0;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>';
-  }
+  // 空のコンテナだけ用意（中身は render後に _renderTweetPhotoPreview がセット）
+  h += '<div id="tweetPhotoPreview" style="padding:4px 12px 0;display:none;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>';
   
   // 入力欄（Record/Diaryタブで切り替え）
   if (diaryInputTab === 'record') {
@@ -24407,6 +24407,8 @@ window.renderTweetsDiary = renderTweetsDiary;
 
 // ===== Diary描画後の調整＆スクロール（タイムライン独立スクロール方式・LINE風） =====
 function _diaryAdjustAndScroll() {
+  // ★ 写真プレビューの中身を復元（render時は空dvだけなので、ここでセット）
+  try { if (typeof _renderTweetPhotoPreview === 'function') _renderTweetPhotoPreview(); } catch(e) {}
   // ★ タイムライン要素を取得（後で画像onload設定に使う）
   const tlInit = document.getElementById('tweetsTimeline');
   function adjust() {
@@ -26009,16 +26011,32 @@ window._saveTweetPendingBackup = _saveTweetPendingBackup;
 window._loadTweetPendingBackup = _loadTweetPendingBackup;
 window._clearTweetPendingBackup = _clearTweetPendingBackup;
 
-// 写真プレビュー描画
+// 写真プレビュー描画（差分判定付き：同じ写真リストならDOM触らない＝チカチカ防止）
 function _renderTweetPhotoPreview() {
   const area = document.getElementById('tweetPhotoPreview');
   if (!area) return;
   const photos = window._tweetPendingPhotos || [];
+
   if (photos.length === 0) {
+    if (area.innerHTML !== '') area.innerHTML = '';
     area.style.display = 'none';
-    area.innerHTML = '';
     return;
   }
+
+  // 既存の<img>と新しい写真リストを比較（差分なしならスキップ）
+  const existingImgs = area.querySelectorAll('img');
+  if (existingImgs.length === photos.length) {
+    let same = true;
+    for (let i = 0; i < photos.length; i++) {
+      if (existingImgs[i].src !== photos[i]) { same = false; break; }
+    }
+    if (same) {
+      area.style.display = 'flex';
+      return; // ★ 同じならDOM操作せず終了
+    }
+  }
+
+  // 差分あり：再描画
   area.style.display = 'flex';
   let h = '';
   for (let i = 0; i < photos.length; i++) {
@@ -26030,6 +26048,7 @@ function _renderTweetPhotoPreview() {
   h += '<span style="font-size:9px;color:var(--ink-light);margin-left:auto;flex-shrink:0;">'+photos.length+'/10</span>';
   area.innerHTML = h;
 }
+window._renderTweetPhotoPreview = _renderTweetPhotoPreview;
 
 function removeTweetPhoto(idx) {
   if (!window._tweetPendingPhotos) return;
@@ -28950,6 +28969,7 @@ function _nest2CanProceed() {
   if (s.step === 2) return s.myNikowaIdSlot !== null;
   if (s.step === 3) {
     if (!s.addMethod) return false;
+    if (s.addMethod === 'skip') return true; // ★ あとで＝メンバーなしで作成OK
     if (s.addMethod === 'add') {
       if (s.memberType === 'child' || s.memberType === 'pet') return !!s.memberName.trim();
       if (s.memberType === 'invite') return /^NKW-[A-Z2-9]{5}$/.test(s.inviteId);
@@ -30430,7 +30450,7 @@ function renderRewardListPage() {
   if (!data.rewardList) data.rewardList = [];
   if (!data.rewardStartWeight) data.rewardStartWeight = null;
 
-  const rewards = data.rewardList.slice().sort((a,b) => a.targetWeight - b.targetWeight);
+  const rewards = data.rewardList.slice().sort((a,b) => b.targetWeight - a.targetWeight);
   const latestWeight = _getLatestWeight();
 
   let html = '';
@@ -34927,6 +34947,10 @@ function renderPetMedicalAllInOne(pet) {
       }
       if (sortedH.length > 5) heightBody += '<div style="text-align:center;font-size:9px;color:var(--ink-light);padding:4px;">他 '+(sortedH.length-5)+' 件</div>';
       heightBody += '</div>';
+      // ★ グラフボタン
+      if (sortedH.length >= 2) {
+        heightBody += '<button onclick="openGrowthChart(\''+petId+'\',\'heights\')" style="margin-top:10px;width:100%;padding:10px;border:1.5px solid var(--accent);background:var(--accent-bg);color:var(--accent-deep);border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;">show_chart</span>身長の伸びをグラフで見る</button>';
+      }
     }
     h += _medCard('身長', 'straighten', 'heights', petId, heightBody, '記録', 'openPetMedicalAdd(\''+petId+'\',\'height\')');
   }
@@ -34956,6 +34980,10 @@ function renderPetMedicalAllInOne(pet) {
     }
     if (sortedW.length > 5) weightBody += '<div style="text-align:center;font-size:9px;color:var(--ink-light);padding:4px;">他 '+(sortedW.length-5)+' 件</div>';
     weightBody += '</div>';
+    // ★ グラフボタン
+    if (sortedW.length >= 2) {
+      weightBody += '<button onclick="openGrowthChart(\''+petId+'\',\'weights\')" style="margin-top:10px;width:100%;padding:10px;border:1.5px solid var(--accent);background:var(--accent-bg);color:var(--accent-deep);border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><span class="material-symbols-rounded" style="font-size:16px;">show_chart</span>体重の推移をグラフで見る</button>';
+    }
   }
   h += _medCard('体重', 'monitor_weight', 'weight', petId, weightBody, '記録', 'openPetMedicalAdd(\''+petId+'\',\'weight\')');
   
@@ -34984,6 +35012,110 @@ function renderPetMedicalAllInOne(pet) {
   return h;
 }
 window.renderPetMedicalAllInOne = renderPetMedicalAllInOne;
+
+// ═══════════════════════════════════════
+// 身長・体重の推移グラフ（SVG折れ線）
+// ═══════════════════════════════════════
+function openGrowthChart(petId, kind /* 'weights' or 'heights' */) {
+  const _list = currentMode === 'kids' ? (data.kids || []) : (data.pets || []);
+  const pet = _list.find(p => p.id === petId);
+  if (!pet || !pet.medical) return;
+  const records = (pet.medical[kind] || []).slice()
+    .filter(r => r.date && r.value && !isNaN(parseFloat(r.value)))
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  if (records.length < 2) { showToast('2件以上記録するとグラフが見られるよ🌷'); return; }
+
+  const isHeight = kind === 'heights';
+  const unit = isHeight ? 'cm' : 'kg';
+  const title = isHeight ? '身長の伸び' : '体重の推移';
+  const icon = isHeight ? 'straighten' : 'monitor_weight';
+
+  // 最小/最大計算（余白付き）
+  const values = records.map(r => parseFloat(r.value));
+  const minV = Math.min(...values);
+  const maxV = Math.max(...values);
+  const range = maxV - minV;
+  const padY = range < 0.5 ? 0.5 : range * 0.15;
+  const yMin = Math.max(0, minV - padY);
+  const yMax = maxV + padY;
+
+  // 期間
+  const firstDate = records[0].date;
+  const lastDate = records[records.length - 1].date;
+  const diff = (values[values.length - 1] - values[0]).toFixed(1);
+  const diffStr = diff > 0 ? '+' + diff : String(diff);
+  const diffColor = isHeight ? (diff > 0 ? '#3CB878' : '#999') : (diff <= 0 ? '#3CB878' : '#D9534F');
+
+  // SVG寸法（モバイルファースト）
+  const W = 320, H = 200;
+  const padL = 36, padR = 16, padT = 24, padB = 32;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  // x, y 座標計算
+  const points = records.map((r, i) => {
+    const x = padL + (records.length === 1 ? innerW / 2 : (innerW * i / (records.length - 1)));
+    const y = padT + innerH - (innerH * (parseFloat(r.value) - yMin) / (yMax - yMin || 1));
+    return { x, y, value: r.value, date: r.date };
+  });
+
+  // SVG構築
+  let svg = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;">';
+  // Y軸グリッド線（4本）
+  for (let i = 0; i <= 4; i++) {
+    const gy = padT + (innerH * i / 4);
+    const gv = (yMax - (yMax - yMin) * i / 4).toFixed(1);
+    svg += '<line x1="'+padL+'" y1="'+gy+'" x2="'+(W - padR)+'" y2="'+gy+'" stroke="#EEE8E8" stroke-width="1" stroke-dasharray="2 3" />';
+    svg += '<text x="'+(padL - 4)+'" y="'+(gy + 3)+'" text-anchor="end" font-size="9" fill="#999" font-family="sans-serif">'+gv+'</text>';
+  }
+  // 折れ線
+  let pathStr = 'M '+points[0].x+' '+points[0].y;
+  for (let i = 1; i < points.length; i++) {
+    pathStr += ' L '+points[i].x+' '+points[i].y;
+  }
+  svg += '<path d="'+pathStr+'" stroke="var(--accent-deep, #C96A8A)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />';
+  // 塗りつぶし（折れ線の下）
+  let fillStr = pathStr + ' L '+points[points.length-1].x+' '+(padT + innerH)+' L '+points[0].x+' '+(padT + innerH)+' Z';
+  svg += '<path d="'+fillStr+'" fill="var(--accent-deep, #C96A8A)" opacity="0.1" />';
+  // 各点
+  for (const p of points) {
+    svg += '<circle cx="'+p.x+'" cy="'+p.y+'" r="4" fill="white" stroke="var(--accent-deep, #C96A8A)" stroke-width="2" />';
+    svg += '<text x="'+p.x+'" y="'+(p.y - 8)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#444" font-family="sans-serif">'+p.value+'</text>';
+  }
+  // X軸の日付（最初と最後だけ）
+  svg += '<text x="'+points[0].x+'" y="'+(H - 10)+'" text-anchor="start" font-size="9" fill="#999" font-family="sans-serif">'+firstDate.slice(5)+'</text>';
+  svg += '<text x="'+points[points.length-1].x+'" y="'+(H - 10)+'" text-anchor="end" font-size="9" fill="#999" font-family="sans-serif">'+lastDate.slice(5)+'</text>';
+  svg += '</svg>';
+
+  // モーダル組み立て
+  const ex = document.getElementById('growthChartModal');
+  if (ex) ex.remove();
+
+  let h = '<div id="growthChartModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;">';
+  h += '<div style="background:white;border-radius:20px;padding:18px 16px 22px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;">';
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+icon+'</span>';
+  h += '<div style="flex:1;"><div style="font-size:14px;font-weight:900;color:var(--ink-dark);">'+title+'</div>';
+  h += '<div style="font-size:10px;color:var(--ink-sub);">'+escapeHtml(pet.name || '')+' ・ '+records.length+'件の記録</div></div>';
+  h += '<button onclick="document.getElementById(\'growthChartModal\').remove()" style="background:none;border:none;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  // サマリーカード
+  h += '<div style="display:flex;gap:8px;margin-bottom:14px;">';
+  h += '<div style="flex:1;background:var(--surface-warm);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9px;color:var(--ink-sub);font-weight:700;">スタート</div><div style="font-size:16px;font-weight:900;color:var(--ink-dark);">'+values[0]+'<span style="font-size:10px;font-weight:600;">'+unit+'</span></div></div>';
+  h += '<div style="flex:1;background:var(--accent-bg);border:1.5px solid var(--accent);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9px;color:var(--accent-deep);font-weight:700;">いま</div><div style="font-size:16px;font-weight:900;color:var(--accent-deep);">'+values[values.length-1]+'<span style="font-size:10px;font-weight:600;">'+unit+'</span></div></div>';
+  h += '<div style="flex:1;background:var(--surface-warm);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9px;color:var(--ink-sub);font-weight:700;">変化</div><div style="font-size:16px;font-weight:900;color:'+diffColor+';">'+diffStr+'<span style="font-size:10px;font-weight:600;">'+unit+'</span></div></div>';
+  h += '</div>';
+  // グラフ
+  h += '<div style="background:#FFFBFB;border:1px solid var(--line);border-radius:12px;padding:10px 4px;margin-bottom:12px;">';
+  h += svg;
+  h += '</div>';
+  // 期間
+  h += '<div style="font-size:10px;color:var(--ink-light);text-align:center;">'+escapeHtml(firstDate)+' 〜 '+escapeHtml(lastDate)+'</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openGrowthChart = openGrowthChart;
 
 function togglePetMedicalAll(petId) {
   if (!data._petMedicalOpen) data._petMedicalOpen = {};
@@ -43122,6 +43254,291 @@ function _getSchedBirthdays(month, day) {
 window._getSchedBirthdays = _getSchedBirthdays;
 
 // ===== Schedule ビュー =====
+// ═══════════════════════════════════════════════════════════
+// スタンプカレンダー（新Schedule）
+// データ：data.calendarStamps = { '2026-05-19': [{id, icon, name, time, note, createdAt}, ...] }
+// ═══════════════════════════════════════════════════════════
+
+function renderStampCalendar() {
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav('schedule');
+  if (!data.calendarStamps) data.calendarStamps = {};
+  if (!window._stampCalMonth) {
+    const t = new Date();
+    window._stampCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+  }
+  if (!window._stampCalSelected) window._stampCalSelected = _todayKey();
+  if (!window._stampCalCat) window._stampCalCat = (Object.keys(data.stampLib||{})[0] || '生活');
+
+  const m = window._stampCalMonth;
+  const today = new Date();
+  const todayK = _todayKey();
+  const selKey = window._stampCalSelected;
+
+  let html = '';
+  // ── ヘッダー
+  html += '<div style="display:flex;align-items:center;padding:12px 14px 6px;gap:8px;">';
+  html += '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">calendar_month</span>';
+  html += '<div style="flex:1;font-size:16px;font-weight:900;color:var(--ink-dark);letter-spacing:0.5px;">'+m.year+'年 '+(m.month+1)+'月</div>';
+  html += '<button onclick="_stampCalPrev()" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--accent-deep);"><span class="material-symbols-rounded" style="font-size:16px;">chevron_left</span></button>';
+  html += '<button onclick="_stampCalToday()" style="padding:5px 10px;border-radius:100px;border:1.5px solid var(--accent);background:var(--accent-bg);color:var(--accent-deep);font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;">今日</button>';
+  html += '<button onclick="_stampCalNext()" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--accent-deep);"><span class="material-symbols-rounded" style="font-size:16px;">chevron_right</span></button>';
+  html += '</div>';
+
+  // ── カレンダーグリッド
+  html += '<div style="padding:0 10px;">';
+  // 曜日ヘッダー
+  const DOW_JP = ['日','月','火','水','木','金','土'];
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px;">';
+  for (let i = 0; i < 7; i++) {
+    const col = i === 0 ? '#E57373' : (i === 6 ? '#64B5F6' : 'var(--ink-sub)');
+    html += '<div style="text-align:center;font-size:10px;font-weight:800;padding:3px 0;color:'+col+';">'+DOW_JP[i]+'</div>';
+  }
+  html += '</div>';
+  // 日付セル
+  const firstDay = new Date(m.year, m.month, 1).getDay();
+  const lastDate = new Date(m.year, m.month+1, 0).getDate();
+  const prevLastDate = new Date(m.year, m.month, 0).getDate();
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">';
+  // 前月の日付
+  for (let i = 0; i < firstDay; i++) {
+    const d = prevLastDate - firstDay + i + 1;
+    html += '<div style="min-height:64px;background:#F8F8F8;border-radius:6px;padding:3px;opacity:0.4;"><div style="font-size:10px;color:#BBB;">'+d+'</div></div>';
+  }
+  // 今月の日付
+  for (let d = 1; d <= lastDate; d++) {
+    const dateKey = m.year + '-' + String(m.month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const stamps = data.calendarStamps[dateKey] || [];
+    const dow = new Date(m.year, m.month, d).getDay();
+    const isToday = dateKey === todayK;
+    const isSelected = dateKey === selKey;
+    const dayCol = dow === 0 ? '#E57373' : (dow === 6 ? '#64B5F6' : 'var(--ink-dark)');
+    const bg = isSelected ? 'var(--accent-bg)' : (isToday ? '#FFF8E1' : 'white');
+    const border = isSelected ? '2px solid var(--accent)' : (isToday ? '1.5px solid #FFD54F' : '1px solid var(--line)');
+    html += '<button onclick="_stampCalSelectDate(\''+dateKey+'\')" style="min-height:64px;background:'+bg+';border:'+border+';border-radius:6px;padding:3px;text-align:left;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:2px;overflow:hidden;">';
+    html += '<div style="font-size:10px;font-weight:'+(isToday?'900':'700')+';color:'+dayCol+';">'+d+'</div>';
+    // スタンプ表示（最大3個）
+    const show = stamps.slice(0, 3);
+    for (const s of show) {
+      html += '<div style="display:flex;align-items:center;gap:2px;background:rgba(255,255,255,0.7);border-radius:4px;padding:1px;">';
+      html += '<div style="width:14px;height:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">';
+      if (s.icon && (s.icon.startsWith('http') || s.icon.startsWith('./'))) {
+        html += '<img src="'+s.icon+'" style="width:16px;height:16px;object-fit:contain;" />';
+      } else if (s.icon && /^[a-z][a-z0-9_]*$/.test(s.icon)) {
+        html += '<span class="material-symbols-rounded" style="font-size:11px;color:var(--accent-deep);">'+s.icon+'</span>';
+      } else {
+        html += '<span style="font-size:11px;">'+(s.icon||'•')+'</span>';
+      }
+      html += '</div>';
+      html += '<span style="font-size:7px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1;">'+escapeHtml(s.name||'')+'</span>';
+      html += '</div>';
+    }
+    if (stamps.length > 3) {
+      html += '<div style="font-size:7px;color:var(--accent-deep);font-weight:700;text-align:center;">+'+(stamps.length-3)+'件</div>';
+    }
+    html += '</button>';
+  }
+  // 翌月で埋める
+  const totalCells = firstDay + lastDate;
+  const remaining = (7 - (totalCells % 7)) % 7;
+  for (let i = 1; i <= remaining; i++) {
+    html += '<div style="min-height:64px;background:#F8F8F8;border-radius:6px;padding:3px;opacity:0.4;"><div style="font-size:10px;color:#BBB;">'+i+'</div></div>';
+  }
+  html += '</div></div>';
+
+  // ── 選択日の予定リスト
+  const selStamps = data.calendarStamps[selKey] || [];
+  html += '<div style="padding:14px 16px 8px;">';
+  const selDate = new Date(selKey);
+  const selDow = DOW_JP[selDate.getDay()];
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+  html += '<div style="font-size:14px;font-weight:900;color:var(--ink-dark);">'+(selDate.getMonth()+1)+'/'+selDate.getDate()+'('+selDow+')</div>';
+  html += '<div style="font-size:11px;color:var(--ink-sub);">'+selStamps.length+'件</div>';
+  html += '</div>';
+
+  if (selStamps.length > 0) {
+    html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
+    for (const s of selStamps) {
+      html += '<div style="background:white;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;">';
+      html += '<div style="flex-shrink:0;width:36px;height:36px;border-radius:10px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;overflow:hidden;">';
+      if (s.icon && (s.icon.startsWith('http') || s.icon.startsWith('./'))) {
+        html += '<img src="'+s.icon+'" style="width:100%;height:100%;object-fit:contain;" />';
+      } else if (s.icon && /^[a-z][a-z0-9_]*$/.test(s.icon)) {
+        html += '<span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">'+s.icon+'</span>';
+      } else {
+        html += '<span style="font-size:20px;">'+(s.icon||'•')+'</span>';
+      }
+      html += '</div>';
+      html += '<div style="flex:1;min-width:0;">';
+      html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+escapeHtml(s.name||'')+'</div>';
+      if (s.time) html += '<div style="font-size:10px;color:var(--accent-deep);font-weight:700;">'+escapeHtml(s.time)+'</div>';
+      if (s.note) html += '<div style="font-size:11px;color:var(--ink-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.note)+'</div>';
+      html += '</div>';
+      html += '<button onclick="_stampCalDelete(\''+selKey+'\',\''+s.id+'\')" style="background:none;border:none;color:var(--ink-light);cursor:pointer;padding:4px;"><span class="material-symbols-rounded" style="font-size:18px;">delete</span></button>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // ── スタンプ選択シート
+  html += '<div style="background:white;border-top:2px solid var(--accent-bg);padding:12px 14px;margin-top:8px;">';
+  html += '<div style="font-size:11px;font-weight:800;color:var(--accent-deep);margin-bottom:8px;">タップでスタンプを貼る🌸</div>';
+  // カテゴリタブ
+  const cats = Object.keys(data.stampLib||{});
+  html += '<div style="display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;margin-bottom:8px;scrollbar-width:none;">';
+  for (const cat of cats) {
+    const isActive = cat === window._stampCalCat;
+    const catEsc = cat.replace(/'/g,"\\'");
+    html += '<button onclick="window._stampCalCat=\''+catEsc+'\';render();" style="flex-shrink:0;padding:5px 12px;border-radius:100px;border:1.5px solid '+(isActive?'var(--accent)':'var(--line)')+';background:'+(isActive?'var(--accent)':'var(--surface)')+';color:'+(isActive?'white':'var(--ink-sub)')+';font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;">'+escapeHtml(cat)+'</button>';
+  }
+  html += '</div>';
+  // スタンプグリッド（3行横スクロール）
+  const stamps = ((data.stampLib && data.stampLib[window._stampCalCat]) || []).filter(s => !s.hidden);
+  html += '<div style="display:grid;grid-auto-flow:column;grid-template-rows:repeat(3,auto);grid-auto-columns:78px;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding-bottom:8px;scrollbar-width:thin;">';
+  for (const s of stamps) {
+    const sn = (s.name||'').replace(/'/g,"\\'");
+    const si = (s.icon||'').replace(/'/g,"\\'");
+    html += '<button onclick="_stampCalAddStamp(\''+si+'\',\''+sn+'\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 3px;background:#FAF7F5;border:1.5px solid #EEE;border-radius:12px;cursor:pointer;font-family:inherit;">';
+    html += '<div style="width:36px;height:36px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;overflow:hidden;">';
+    if (s.icon && (s.icon.startsWith('http') || s.icon.startsWith('./'))) {
+      html += '<img src="'+s.icon+'" style="width:100%;height:100%;object-fit:contain;" />';
+    } else if (s.icon && /^[a-z][a-z0-9_]*$/.test(s.icon)) {
+      html += '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">'+s.icon+'</span>';
+    } else {
+      html += '<span style="font-size:22px;">'+(s.icon||'•')+'</span>';
+    }
+    html += '</div>';
+    html += '<span style="font-size:10px;font-weight:700;color:#444;line-height:1.1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(s.name)+'</span>';
+    html += '</button>';
+  }
+  html += '</div></div>';
+  html += '<div style="height:80px;"></div>';
+
+  document.getElementById('app').innerHTML = html;
+}
+window.renderStampCalendar = renderStampCalendar;
+
+function _todayKey() {
+  const t = new Date();
+  return t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0');
+}
+
+function _stampCalPrev() {
+  if (window._stampCalMonth.month === 0) {
+    window._stampCalMonth.month = 11;
+    window._stampCalMonth.year--;
+  } else {
+    window._stampCalMonth.month--;
+  }
+  render();
+}
+window._stampCalPrev = _stampCalPrev;
+
+function _stampCalNext() {
+  if (window._stampCalMonth.month === 11) {
+    window._stampCalMonth.month = 0;
+    window._stampCalMonth.year++;
+  } else {
+    window._stampCalMonth.month++;
+  }
+  render();
+}
+window._stampCalNext = _stampCalNext;
+
+function _stampCalToday() {
+  const t = new Date();
+  window._stampCalMonth = { year: t.getFullYear(), month: t.getMonth() };
+  window._stampCalSelected = _todayKey();
+  render();
+}
+window._stampCalToday = _stampCalToday;
+
+function _stampCalSelectDate(dateKey) {
+  window._stampCalSelected = dateKey;
+  render();
+}
+window._stampCalSelectDate = _stampCalSelectDate;
+
+function _stampCalAddStamp(icon, name) {
+  // 詳細入力モーダルを開く
+  const ex = document.getElementById('stampCalDetailModal');
+  if (ex) ex.remove();
+
+  const selKey = window._stampCalSelected;
+  const selDate = new Date(selKey);
+  const DOW_JP = ['日','月','火','水','木','金','土'];
+  const selDateStr = (selDate.getMonth()+1)+'/'+selDate.getDate()+'('+DOW_JP[selDate.getDay()]+')';
+
+  let h = '<div id="stampCalDetailModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="background:white;border-radius:20px 20px 0 0;padding:20px 18px 28px;width:100%;max-width:480px;">';
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">';
+  h += '<div style="flex-shrink:0;width:48px;height:48px;border-radius:12px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;overflow:hidden;">';
+  if (icon.startsWith('http') || icon.startsWith('./')) {
+    h += '<img src="'+icon+'" style="width:100%;height:100%;object-fit:contain;" />';
+  } else if (/^[a-z][a-z0-9_]*$/.test(icon)) {
+    h += '<span class="material-symbols-rounded" style="font-size:26px;color:var(--accent-deep);">'+icon+'</span>';
+  } else {
+    h += '<span style="font-size:26px;">'+icon+'</span>';
+  }
+  h += '</div>';
+  h += '<div style="flex:1;"><div style="font-size:14px;font-weight:900;color:var(--ink-dark);">'+escapeHtml(name)+'</div>';
+  h += '<div style="font-size:11px;color:var(--ink-sub);">'+selDateStr+' に貼る</div></div>';
+  h += '<button onclick="document.getElementById(\'stampCalDetailModal\').remove()" style="background:none;border:none;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:20px;">close</span></button>';
+  h += '</div>';
+  // 時間
+  h += '<div style="margin-bottom:12px;">';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">時間（任意）</label>';
+  h += '<input type="time" id="stampCalTime" style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box;">';
+  h += '</div>';
+  // メモ
+  h += '<div style="margin-bottom:16px;">';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-bottom:5px;">メモ（任意）</label>';
+  h += '<input type="text" id="stampCalNote" placeholder="例：2人予約、〇〇店" maxlength="50" style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;">';
+  h += '</div>';
+  // 保存ボタン
+  h += '<button onclick="_stampCalConfirmAdd(\''+icon.replace(/'/g,"\\'")+'\',\''+name.replace(/'/g,"\\'")+'\')" style="width:100%;padding:13px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:900;cursor:pointer;">この日に貼る🌸</button>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window._stampCalAddStamp = _stampCalAddStamp;
+
+function _stampCalConfirmAdd(icon, name) {
+  const time = document.getElementById('stampCalTime').value || '';
+  const note = (document.getElementById('stampCalNote').value || '').trim();
+  const selKey = window._stampCalSelected;
+  if (!data.calendarStamps) data.calendarStamps = {};
+  if (!data.calendarStamps[selKey]) data.calendarStamps[selKey] = [];
+  data.calendarStamps[selKey].push({
+    id: 'sc_' + Date.now(),
+    icon, name, time, note,
+    createdAt: Date.now()
+  });
+  // 時間順ソート（時間なしは最後）
+  data.calendarStamps[selKey].sort((a,b) => {
+    if (!a.time && !b.time) return a.createdAt - b.createdAt;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time.localeCompare(b.time);
+  });
+  saveData();
+  document.getElementById('stampCalDetailModal').remove();
+  render();
+  showToast('貼ったよ🌸');
+}
+window._stampCalConfirmAdd = _stampCalConfirmAdd;
+
+function _stampCalDelete(dateKey, stampId) {
+  if (!confirm('このスタンプを消す？')) return;
+  if (!data.calendarStamps[dateKey]) return;
+  data.calendarStamps[dateKey] = data.calendarStamps[dateKey].filter(s => s.id !== stampId);
+  if (data.calendarStamps[dateKey].length === 0) delete data.calendarStamps[dateKey];
+  saveData();
+  render();
+}
+window._stampCalDelete = _stampCalDelete;
+
 function renderSchedule() {
   document.getElementById('bottomNav').style.display = 'flex';
   setActiveNav('schedule');
@@ -53959,7 +54376,8 @@ function render() {
   else if (currentView === 'houses_fav') renderHousesFav();
   else if (currentView === 'house') renderHouse();
   else if (currentView === 'pet') renderPet();
-  else if (currentView === 'schedule') renderSchedule();
+  else if (currentView === 'schedule') renderStampCalendar();
+  else if (currentView === 'schedule_old') renderSchedule();
   else if (currentView === 'health') renderHealthBoard();
   else if (currentView === 'settings') renderSettings();
   else if (currentView === 'town') renderTown();
