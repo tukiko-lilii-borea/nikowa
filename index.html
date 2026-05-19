@@ -11472,6 +11472,11 @@ function renderPlannerView() {
   }
   html += '</div>';
 
+  // ── 予定を追加ボタン（曜日バー右下に固定）
+  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">';
+  html += '<button onclick="openPlannerAddModal()" style="display:flex;align-items:center;gap:4px;padding:5px 12px;border-radius:100px;border:1px solid var(--accent);background:var(--accent-bg);font-family:inherit;font-size:11px;font-weight:700;color:var(--accent-deep);cursor:pointer;"><span class="material-symbols-rounded" style="font-size:14px;">edit_calendar</span>予定を追加</button>';
+  html += '</div>';
+
   // ── 表示アイテムを構築
   const allItems = [];
 
@@ -11543,9 +11548,6 @@ function renderPlannerView() {
       html += '</div>';
     }
   }
-
-  // 予定を追加ボタン（今日／繰り返し両方ここから）
-  html += '<button onclick="openPlannerAddModal()" style="width:100%;padding:10px;border:1.5px dashed var(--accent);background:var(--accent-bg);color:var(--accent-deep);border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;">＋ 予定を追加</button>';
 
   html += '</div>';
   return html;
