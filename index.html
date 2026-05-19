@@ -6081,6 +6081,10 @@ function loadData() {
       for (const k in parsed) data[k] = parsed[k];
     }
   } catch(e) {}
+  // ★ 一時UI状態（過去日表示など）は起動時に必ずクリア。
+  // これらが残ると「Diaryに行ったら過去日に固定」バグになる
+  delete data.tweetViewDate;
+  if (data.planner) delete data.planner.selectedDow;
   try {
     const savedPhotos = localStorage.getItem(PHOTOS_KEY);
     if (savedPhotos) photos = JSON.parse(savedPhotos);
@@ -9521,11 +9525,12 @@ function openMeDrawerMenu() {
     {
       label: '健康', bg: '#FAE8EE', textColor: '#A04868',
       items: [
-        { icon:'favorite',              color:'#D87BA0', label:'ヘルス',       desc:'健康の記録',         action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
-        { icon:'monitor_weight',        color:'#D08CB0', label:'体重',         desc:'体重と体型の記録',   action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
-        { icon:'mood',                  color:'#E090B0', label:'体調',         desc:'体調・ホルモン管理', action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
-        { icon:'medical_information',   color:'#C870A0', label:'カルテ',       desc:'医療・薬・病院',      action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','resume');},250);" },
-        { icon:'groups',                color:'#B868A0', label:'みんなの健康', desc:'家族の健康記録',     action:"closeMeDrawerMenu();setTimeout(()=>{currentView='houses';render();},250);" }
+        { icon:'favorite',              color:'#D87BA0', label:'ヘルス',         desc:'健康の記録',         action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
+        { icon:'monitor_weight',        color:'#D08CB0', label:'体重',           desc:'体重と体型の記録',   action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
+        { icon:'mood',                  color:'#E090B0', label:'体調',           desc:'体調・ホルモン管理', action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
+        { icon:'medical_information',   color:'#C870A0', label:'カルテ',         desc:'医療・薬・病院',      action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','resume');},250);" },
+        { icon:'redeem',                color:'#E85888', label:'ご褒美リスト',   desc:'体重目標×ご褒美',    action:"closeMeDrawerMenu();setTimeout(()=>{currentView='rewardList';render();},250);" },
+        { icon:'groups',                color:'#B868A0', label:'みんなの健康',   desc:'家族の健康記録',     action:"closeMeDrawerMenu();setTimeout(()=>{currentView='houses';render();},250);" }
       ]
     },
     {
@@ -11574,6 +11579,7 @@ function _closePlannerOnly() {
   // ★ Me Diary Record に戻す（旧Day画面じゃなく新UI）
   currentModeTab['me'] = 'diary';
   data.diaryInputTab = 'record';
+  delete data.tweetViewDate; // ★ 今日に戻す
   saveData();
   render();
 }
@@ -12353,6 +12359,94 @@ function toggleStampPin(icon, name, ev) {
   render();
 }
 window.toggleStampPin = toggleStampPin;
+
+// ★ ピン留めスタンプのドラッグ並び替え（長押し→移動→離すで入れ替え）
+function _initPinnedSortable() {
+  const container = document.querySelector('[data-pinned-drag-container]');
+  if (!container) return;
+  const items = container.querySelectorAll('[data-pinned-idx]');
+  items.forEach(el => {
+    let pressTimer = null;
+    let startX = 0, startY = 0;
+    let dragging = false;
+    let dragIdx = -1;
+    let lastHoveredIdx = -1;
+    let lastHoveredEl = null;
+    
+    el.addEventListener('touchstart', function(e) {
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      pressTimer = setTimeout(() => {
+        dragging = true;
+        dragIdx = parseInt(el.dataset.pinnedIdx);
+        lastHoveredIdx = dragIdx;
+        el.style.opacity = '0.55';
+        el.style.transform = 'scale(1.12)';
+        el.style.zIndex = '100';
+        el.style.boxShadow = '0 8px 20px rgba(0,0,0,0.25)';
+        if (navigator.vibrate) { try { navigator.vibrate(40); } catch(e){} }
+      }, 400);
+    }, { passive: true });
+    
+    el.addEventListener('touchmove', function(e) {
+      if (!dragging) {
+        // 通常タッチ：移動量が大きければ長押しキャンセル（横スクロールを優先）
+        const dx = Math.abs(e.touches[0].clientX - startX);
+        const dy = Math.abs(e.touches[0].clientY - startY);
+        if (dx > 8 || dy > 8) {
+          if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+        }
+        return;
+      }
+      e.preventDefault();
+      const x = e.touches[0].clientX;
+      const y = e.touches[0].clientY;
+      const target = document.elementFromPoint(x, y);
+      const targetBtn = target && target.closest && target.closest('[data-pinned-idx]');
+      if (targetBtn && targetBtn !== el) {
+        const idx = parseInt(targetBtn.dataset.pinnedIdx);
+        if (idx !== lastHoveredIdx) {
+          if (lastHoveredEl) lastHoveredEl.style.outline = '';
+          targetBtn.style.outline = '3px dashed var(--accent-deep)';
+          targetBtn.style.outlineOffset = '2px';
+          lastHoveredIdx = idx;
+          lastHoveredEl = targetBtn;
+        }
+      }
+    }, { passive: false });
+    
+    const finish = function() {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      if (lastHoveredEl) { lastHoveredEl.style.outline = ''; lastHoveredEl.style.outlineOffset = ''; }
+      if (dragging) {
+        el.style.opacity = '';
+        el.style.transform = '';
+        el.style.zIndex = '';
+        el.style.boxShadow = '';
+        // 並び替え実行
+        if (lastHoveredIdx >= 0 && lastHoveredIdx !== dragIdx) {
+          const arr = data.pinnedStamps;
+          if (dragIdx >= 0 && dragIdx < arr.length && lastHoveredIdx >= 0 && lastHoveredIdx < arr.length) {
+            const item = arr.splice(dragIdx, 1)[0];
+            arr.splice(lastHoveredIdx, 0, item);
+            saveData();
+            _suppressScrollTop = true;
+            render();
+          }
+        }
+        dragging = false;
+      }
+      dragIdx = -1;
+      lastHoveredIdx = -1;
+      lastHoveredEl = null;
+    };
+    
+    el.addEventListener('touchend', finish, { passive: true });
+    el.addEventListener('touchcancel', finish, { passive: true });
+  });
+}
+window._initPinnedSortable = _initPinnedSortable;
 
 function renderPinnedStampsRow(source) {
   const pinned = source === 'office' ? (data.pinnedOfficeStamps||[]) : (data.pinnedStamps||[]);
@@ -13287,6 +13381,8 @@ function saveValueInput(opts) {
         if (_latestRec.isPublic) _syncWeightRecordToFirestore(_latestRec);
       }
       window._viWeightPublic = false;
+      // ★ ご褒美チェック
+      setTimeout(() => { try { _checkWeightRewards(parseFloat(value)); } catch(e){} }, 400);
     }
     closeValueInputModal();
     showToast(opts.name + (value?' '+value+(opts.unit||''):'') + ' きろく！🌷');
@@ -30277,6 +30373,260 @@ function renderMeDiary() {
   html += '<div style="height:80px;"></div>';
   app.innerHTML = html;
 }
+
+// ═══════════════════════════════════════
+// ご褒美リスト（体重×ご褒美連動）
+// ═══════════════════════════════════════
+
+function renderRewardListPage() {
+  const app = document.getElementById('app');
+  document.getElementById('bottomNav').style.display = 'flex';
+  setActiveNav('me');
+  if (!data.rewardList) data.rewardList = [];
+  if (!data.rewardStartWeight) data.rewardStartWeight = null;
+
+  const rewards = data.rewardList.slice().sort((a,b) => a.targetWeight - b.targetWeight);
+  const latestWeight = _getLatestWeight();
+
+  let html = '';
+  // topbar
+  html += '<div class="topbar">';
+  html += '<button onclick="goToMeMode()" style="background:none;border:none;cursor:pointer;padding:4px;"><span class="material-symbols-rounded" style="font-size:22px;color:var(--ink-sub);">arrow_back</span></button>';
+  html += '<div style="flex:1;text-align:center;font-size:15px;font-weight:900;color:var(--ink-dark);">ご褒美リスト</div>';
+  html += '<button onclick="openAddRewardModal()" style="background:var(--accent);border:none;border-radius:100px;padding:6px 14px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:800;color:white;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:14px;">add</span>追加</button>';
+  html += '</div>';
+
+  html += '<div style="padding:14px 14px 100px;">';
+
+  // スタート体重 & 現在体重カード
+  html += '<div style="background:white;border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--accent-deep);">monitor_weight</span><span style="font-size:13px;font-weight:800;color:var(--ink-dark);">体重</span></div>';
+  html += '<div style="display:flex;gap:10px;">';
+  // スタート体重
+  html += '<div style="flex:1;background:var(--surface-warm);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;">';
+  html += '<div style="font-size:9px;font-weight:700;color:var(--ink-sub);margin-bottom:2px;">スタート</div>';
+  html += '<div style="font-size:11px;color:var(--ink-sub);">';
+  if (data.rewardStartWeight) {
+    html += '<span style="font-size:22px;font-weight:900;color:var(--ink-dark);">'+data.rewardStartWeight+'</span><span style="font-size:11px;font-weight:600;color:var(--ink-sub);">kg</span>';
+  } else {
+    html += '<span style="font-size:12px;color:var(--ink-light);">未設定</span>';
+  }
+  html += '</div>';
+  html += '<button onclick="openSetStartWeightModal()" style="margin-top:4px;padding:2px 8px;background:none;border:1px solid var(--line);border-radius:100px;font-family:inherit;font-size:10px;color:var(--ink-sub);cursor:pointer;">変更</button>';
+  html += '</div>';
+  // 現在体重
+  html += '<div style="flex:1;background:var(--accent-bg);border:1.5px solid var(--accent);border-radius:12px;padding:10px;text-align:center;">';
+  html += '<div style="font-size:9px;font-weight:700;color:var(--accent-deep);margin-bottom:2px;">いま</div>';
+  if (latestWeight) {
+    html += '<span style="font-size:22px;font-weight:900;color:var(--accent-deep);">'+latestWeight+'</span><span style="font-size:11px;font-weight:600;color:var(--accent-deep);">kg</span>';
+    if (data.rewardStartWeight) {
+      const diff = (latestWeight - data.rewardStartWeight).toFixed(1);
+      const diffStr = diff > 0 ? '+'+diff : String(diff);
+      const diffColor = diff <= 0 ? '#2E7D32' : '#C62828';
+      html += '<div style="font-size:10px;font-weight:700;color:'+diffColor+';margin-top:2px;">'+diffStr+'kg</div>';
+    }
+  } else {
+    html += '<span style="font-size:12px;color:var(--ink-light);">記録なし</span>';
+  }
+  html += '</div>';
+  html += '</div></div>';
+
+  // ご褒美リスト本体
+  if (rewards.length === 0) {
+    html += '<div style="text-align:center;padding:40px 20px;color:var(--ink-sub);">';
+    html += '<span class="material-symbols-rounded" style="font-size:48px;color:var(--line);display:block;margin-bottom:12px;">redeem</span>';
+    html += '<div style="font-size:14px;font-weight:700;margin-bottom:6px;">ご褒美がまだないよ</div>';
+    html += '<div style="font-size:11px;color:var(--ink-light);">右上の「追加」から目標体重とご褒美を設定してね</div>';
+    html += '</div>';
+  } else {
+    for (const r of rewards) {
+      const isAchieved = r.achieved;
+      const isCurrent = latestWeight && Math.abs(latestWeight - r.targetWeight) < 0.1;
+      const isReachable = latestWeight && latestWeight <= r.targetWeight;
+      html += '<div style="background:white;border:1.5px solid '+(isAchieved?'#A5D6A7':(isCurrent?'var(--accent)':'var(--line)'))+';border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);opacity:'+(isAchieved?'0.65':'1')+';">';
+      // 左：アイコン
+      html += '<div style="flex-shrink:0;width:44px;height:44px;border-radius:12px;background:'+(isAchieved?'#E8F5E9':'var(--accent-bg)')+';display:flex;align-items:center;justify-content:center;">';
+      html += '<span class="material-symbols-rounded" style="font-size:24px;color:'+(isAchieved?'#388E3C':'var(--accent-deep)')+';">'+(isAchieved?'check_circle':'redeem')+'</span>';
+      html += '</div>';
+      // 中央：テキスト
+      html += '<div style="flex:1;min-width:0;">';
+      html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">';
+      html += '<span style="font-size:18px;font-weight:900;color:'+(isAchieved?'#388E3C':'var(--accent-deep)')+';">'+r.targetWeight+'<span style="font-size:11px;font-weight:600;">kg</span></span>';
+      if (isAchieved) html += '<span style="font-size:9px;font-weight:800;color:#388E3C;background:#E8F5E9;padding:1px 6px;border-radius:100px;">達成🎉</span>';
+      html += '</div>';
+      html += '<div style="font-size:13px;font-weight:700;color:var(--ink-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(r.reward)+'</div>';
+      if (r.memo) html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;">'+escapeHtml(r.memo)+'</div>';
+      if (isAchieved && r.achievedAt) {
+        const d = new Date(r.achievedAt);
+        html += '<div style="font-size:9px;color:#388E3C;margin-top:1px;">'+(d.getMonth()+1)+'/'+d.getDate()+' 達成</div>';
+      }
+      html += '</div>';
+      // 右：削除
+      html += '<button onclick="deleteReward(\''+r.id+'\')" style="flex-shrink:0;width:28px;height:28px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-light);"><span class="material-symbols-rounded" style="font-size:18px;">delete</span></button>';
+      html += '</div>';
+    }
+  }
+  html += '</div>';
+  app.innerHTML = html;
+}
+window.renderRewardListPage = renderRewardListPage;
+
+function _getLatestWeight() {
+  const history = data.stampHistory || [];
+  const weights = history.filter(r => r.name === '体重' && r.value).sort((a,b) => b.timestamp - a.timestamp);
+  return weights.length > 0 ? parseFloat(weights[0].value) : null;
+}
+
+function openSetStartWeightModal() {
+  const ex = document.getElementById('setStartWeightModal');
+  if (ex) ex.remove();
+  let h = '<div id="setStartWeightModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:24px;">';
+  h += '<div style="background:white;border-radius:18px;padding:20px;width:100%;max-width:320px;">';
+  h += '<div style="font-size:14px;font-weight:800;color:var(--ink-dark);margin-bottom:14px;text-align:center;">スタート体重を設定</div>';
+  h += '<input id="startWeightInput" type="number" inputmode="decimal" value="'+(data.rewardStartWeight||'')+'" placeholder="例：75" step="0.1" style="width:100%;padding:12px;border:1.5px solid var(--accent);border-radius:10px;font-size:20px;font-family:inherit;text-align:center;box-sizing:border-box;font-weight:800;">';
+  h += '<div style="font-size:10px;color:var(--ink-sub);text-align:center;margin:6px 0 14px;">kg</div>';
+  h += '<button onclick="_saveStartWeight()" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;">保存</button>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(() => { const el = document.getElementById('startWeightInput'); if(el) el.focus(); }, 100);
+}
+window.openSetStartWeightModal = openSetStartWeightModal;
+
+function _saveStartWeight() {
+  const val = parseFloat(document.getElementById('startWeightInput').value);
+  if (isNaN(val) || val < 20 || val > 300) { showToast('正しい体重を入力してね'); return; }
+  data.rewardStartWeight = val;
+  saveData();
+  document.getElementById('setStartWeightModal').remove();
+  renderRewardListPage();
+}
+window._saveStartWeight = _saveStartWeight;
+
+function openAddRewardModal() {
+  const ex = document.getElementById('addRewardModal');
+  if (ex) ex.remove();
+  let h = '<div id="addRewardModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="background:white;border-radius:20px 20px 0 0;padding:20px 18px 32px;width:100%;max-width:480px;">';
+  h += '<div style="font-size:15px;font-weight:900;color:var(--ink-dark);margin-bottom:16px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:20px;color:var(--accent-deep);">redeem</span>ご褒美を追加</div>';
+  // 目標体重
+  h += '<div style="margin-bottom:12px;">';
+  h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:5px;">目標体重（kg）</div>';
+  h += '<input id="rewardWeightInput" type="number" inputmode="decimal" placeholder="例：73" step="0.1" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit;box-sizing:border-box;font-weight:800;color:var(--accent-deep);">';
+  h += '</div>';
+  // ご褒美内容
+  h += '<div style="margin-bottom:12px;">';
+  h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:5px;">ご褒美（なに買う？なにする？）</div>';
+  h += '<input id="rewardContentInput" type="text" placeholder="例：シャネルのピアス" maxlength="50" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box;">';
+  h += '</div>';
+  // メモ（任意）
+  h += '<div style="margin-bottom:16px;">';
+  h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:5px;">メモ（任意）</div>';
+  h += '<input id="rewardMemoInput" type="text" placeholder="例：ずっと欲しかったやつ！" maxlength="50" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;">';
+  h += '</div>';
+  h += '<button onclick="_saveReward()" style="width:100%;padding:13px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:900;cursor:pointer;">追加する</button>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openAddRewardModal = openAddRewardModal;
+
+function _saveReward() {
+  const wt = parseFloat(document.getElementById('rewardWeightInput').value);
+  const content = (document.getElementById('rewardContentInput').value || '').trim();
+  const memo = (document.getElementById('rewardMemoInput').value || '').trim();
+  if (isNaN(wt) || wt < 20 || wt > 300) { showToast('目標体重を入力してね'); return; }
+  if (!content) { showToast('ご褒美内容を入力してね'); return; }
+  if (!data.rewardList) data.rewardList = [];
+  data.rewardList.push({
+    id: 'rl_'+Date.now(),
+    targetWeight: wt,
+    reward: content,
+    memo: memo,
+    achieved: false,
+    achievedAt: null
+  });
+  saveData();
+  document.getElementById('addRewardModal').remove();
+  renderRewardListPage();
+  showToast('ご褒美追加したよ🎁');
+}
+window._saveReward = _saveReward;
+
+function deleteReward(id) {
+  if (!confirm('このご褒美を削除する？')) return;
+  data.rewardList = (data.rewardList || []).filter(r => r.id !== id);
+  saveData();
+  renderRewardListPage();
+}
+window.deleteReward = deleteReward;
+
+// ★ 体重記録時にご褒美達成チェック
+function _checkWeightRewards(newWeight) {
+  if (!data.rewardList || data.rewardList.length === 0) return;
+  const unachieved = data.rewardList.filter(r => !r.achieved && newWeight <= r.targetWeight);
+  if (unachieved.length === 0) return;
+  // 達成済みにする
+  unachieved.forEach(r => {
+    r.achieved = true;
+    r.achievedAt = Date.now();
+  });
+  saveData();
+  // 一番近い目標を祝福
+  const top = unachieved.sort((a,b) => b.targetWeight - a.targetWeight)[0];
+  _showRewardCelebModal(top, newWeight);
+}
+window._checkWeightRewards = _checkWeightRewards;
+
+// 住人キャラと褒め言葉
+function _showRewardCelebModal(reward, weight) {
+  const RESIDENTS = [
+    { src:'assets/anzu.svg',   name:'あんず' },
+    { src:'assets/yumeme.svg', name:'ゆめめ' },
+    { src:'assets/kotatu.svg', name:'こたつ' },
+    { src:'assets/beteli.svg', name:'べてぃ' },
+    { src:'assets/koito.svg',  name:'こいと' },
+    { src:'assets/beru.svg',   name:'べる' },
+  ];
+  const PRAISE = [
+    'やったね！すごすぎる〜！✨',
+    'その調子！一緒にがんばろうね！',
+    'ご褒美、絶対ゲットしてね！約束だよ！',
+    'ほんとうにえらい！誇りに思うよ！',
+    '信じてたよ〜！最高すぎる！',
+    'こんなにがんばれるって、さすがだよ！',
+    '体も心も輝いてるよ！おめでとう！',
+    '一歩一歩、ちゃんと進んでるね！',
+  ];
+  const char = RESIDENTS[Math.floor(Math.random() * RESIDENTS.length)];
+  const praise = PRAISE[Math.floor(Math.random() * PRAISE.length)];
+
+  const ex = document.getElementById('rewardCelebModal');
+  if (ex) ex.remove();
+
+  let h = '<div id="rewardCelebModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:24px;">';
+  h += '<div style="background:white;border-radius:24px;padding:24px 20px 28px;width:100%;max-width:340px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.2);position:relative;overflow:hidden;">';
+  // キラキラ背景
+  h += '<div style="position:absolute;inset:0;background:linear-gradient(135deg,#FFF9C4 0%,#FFE0F0 50%,#E3F2FD 100%);opacity:0.5;"></div>';
+  h += '<div style="position:relative;z-index:1;">';
+  // キャラクター
+  h += '<div style="width:80px;height:80px;margin:0 auto 8px;"><img src="'+char.src+'" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" alt="'+char.name+'" /><div style="display:none;width:80px;height:80px;border-radius:50%;background:var(--accent-bg);align-items:center;justify-content:center;font-size:40px;">🌸</div></div>';
+  h += '<div style="font-size:11px;font-weight:800;color:var(--accent-deep);margin-bottom:10px;">'+char.name+'より</div>';
+  // 達成バッジ
+  h += '<div style="background:linear-gradient(135deg,#FFD700,#FFA500);color:white;border-radius:100px;padding:6px 18px;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:900;margin-bottom:12px;box-shadow:0 2px 8px rgba(255,165,0,0.35);">';
+  h += '<span class="material-symbols-rounded" style="font-size:16px;">emoji_events</span>'+reward.targetWeight+'kg 達成！';
+  h += '</div>';
+  // 褒め言葉
+  h += '<div style="font-size:15px;font-weight:800;color:var(--ink-dark);line-height:1.6;margin-bottom:14px;">'+praise+'</div>';
+  // ご褒美表示
+  h += '<div style="background:var(--accent-bg);border:1.5px solid var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:18px;">';
+  h += '<div style="font-size:9px;font-weight:700;color:var(--accent-deep);margin-bottom:3px;">🎁 ご褒美</div>';
+  h += '<div style="font-size:14px;font-weight:900;color:var(--accent-deep);">'+escapeHtml(reward.reward)+'</div>';
+  h += '</div>';
+  // 閉じるボタン
+  h += '<button onclick="document.getElementById(\'rewardCelebModal\').remove()" style="width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:900;cursor:pointer;">やったー！🎉</button>';
+  h += '</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window._showRewardCelebModal = _showRewardCelebModal;
 
 function renderHouses() {
   document.getElementById('bottomNav').style.display = 'flex';
@@ -53560,6 +53910,7 @@ function render() {
   else if (currentView === 'me_diary') renderMeDiary();
   else if (currentView === 'collection_folder') renderCollectionFolder();
   else if (currentView === 'houses') renderHouses();
+  else if (currentView === 'rewardList') renderRewardListPage();
   else if (currentView === 'houses_fav') renderHousesFav();
   else if (currentView === 'house') renderHouse();
   else if (currentView === 'pet') renderPet();
@@ -53747,15 +54098,18 @@ function render() {
     const pinnedSet = new Set((data.pinnedStamps||[]).map(p => (p.icon||'')+'|'+(p.name||'')));
     sh += '<div style="flex:1;padding:10px 14px 30px;overflow-y:auto;-webkit-overflow-scrolling:touch;">';
 
-    // ★ ピン留めスタンプエリア（横スクロール・全カテゴリ横断）
+    // ★ ピン留めスタンプエリア（横スクロール・ドラッグ並び替え対応）
     const pinned = data.pinnedStamps || [];
     if (pinned.length > 0) {
       sh += '<div style="margin-bottom:14px;">';
-      sh += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;padding:0 2px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">push_pin</span><span style="font-size:11px;font-weight:800;color:var(--accent-deep);">ピン留め</span><span style="font-size:10px;color:var(--ink-sub);">'+pinned.length+'個</span></div>';
-      sh += '<div style="display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:none;">';
-      for (const p of pinned) {
+      sh += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;padding:0 2px;"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent-deep);">push_pin</span><span style="font-size:11px;font-weight:800;color:var(--accent-deep);">ピン留め</span><span style="font-size:10px;color:var(--ink-sub);">'+pinned.length+'個</span><span style="font-size:9px;color:var(--ink-light);margin-left:4px;">長押しで並び替え</span></div>';
+      sh += '<div data-pinned-drag-container style="display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding:4px 2px 6px;scrollbar-width:none;">';
+      for (let pi = 0; pi < pinned.length; pi++) {
+        const p = pinned[pi];
         const pn = (p.name||'').replace(/'/g,"\\'");
-        sh += '<button onclick="_meStampFlash(this);postStampRecord(\''+p.icon+'\',\''+pn+'\')" style="flex-shrink:0;width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;background:var(--accent-bg);border:1.5px solid var(--accent);border-radius:14px;cursor:pointer;font-family:inherit;">';
+        sh += '<button data-pinned-idx="'+pi+'" data-pinned-icon="'+p.icon+'" data-pinned-name="'+escapeHtml(p.name||'')+'" onclick="_meStampFlash(this);postStampRecord(\''+p.icon+'\',\''+pn+'\')" style="position:relative;flex-shrink:0;width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;background:var(--accent-bg);border:1.5px solid var(--accent);border-radius:14px;cursor:pointer;font-family:inherit;touch-action:pan-y;">';
+        // 📌解除アイコン（タップで解除）
+        sh += '<span onclick="event.stopPropagation();toggleStampPin(\''+p.icon+'\',\''+pn+'\',event)" style="position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:var(--accent);border:1px solid var(--accent);color:white;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;"><span class="material-symbols-rounded" style="font-size:10px;">push_pin</span></span>';
         sh += '<span style="width:40px;height:40px;border-radius:11px;background:white;display:flex;align-items:center;justify-content:center;">'+renderStampIcon(p.icon,'font-size:24px;color:var(--accent-deep);')+'</span>';
         sh += '<span style="font-size:11px;font-weight:700;color:var(--accent-deep);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">'+escapeHtml(p.name||'')+'</span>';
         sh += '</button>';
@@ -53788,6 +54142,7 @@ function render() {
     let sheet = document.getElementById('meStampSheet');
     if (sheet) {
       sheet.innerHTML = _meSheetCss + sh;
+      setTimeout(() => { try { _initPinnedSortable(); } catch(e){} }, 0);
       return;
     }
 
@@ -53810,6 +54165,8 @@ function render() {
         sheet.style.transform = 'translateY(0)';
       });
     });
+    // ★ ピン留めドラッグ並び替えを初期化
+    setTimeout(() => { try { _initPinnedSortable(); } catch(e){} }, 50);
   })();
   
   // ── プランナーアイテム長押し検出
