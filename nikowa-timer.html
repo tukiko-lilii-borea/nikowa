@@ -256,11 +256,20 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
 
     <!-- 通知音 -->
     <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin:8px 0 6px;text-align:center;">🔔 切替の音</div>
-    <div class="beat-options" style="margin-bottom:14px;">
+    <div class="beat-options" style="margin-bottom:10px;">
       <button type="button" class="beat-opt active" onclick="setIvSound(this,'soft')">やわらか</button>
       <button type="button" class="beat-opt" onclick="setIvSound(this,'clock')">カチッ</button>
       <button type="button" class="beat-opt" onclick="setIvSound(this,'pop')">ピコッ</button>
       <button type="button" class="beat-opt" onclick="setIvSound(this,'whistle')">ホイッスル</button>
+    </div>
+
+    <!-- 秒読み音（スクワットなどのテンポ作り用） -->
+    <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin:8px 0 6px;text-align:center;">⏱ 秒読み（1秒ごと）</div>
+    <div class="beat-options" style="margin-bottom:14px;">
+      <button type="button" class="beat-opt active" onclick="setIvTickSound(this,'off')">なし</button>
+      <button type="button" class="beat-opt" onclick="setIvTickSound(this,'soft')">ぽこ</button>
+      <button type="button" class="beat-opt" onclick="setIvTickSound(this,'click')">カチッ</button>
+      <button type="button" class="beat-opt" onclick="setIvTickSound(this,'beep')">ピッ</button>
     </div>
 
     <!-- フェーズ表示 -->
@@ -394,6 +403,35 @@ function playNote(freq,dur,vol,type){
   g.gain.linearRampToValueAtTime(v,now+0.01);
   g.gain.exponentialRampToValueAtTime(0.001,now+dur);
   o.start(now); o.stop(now+dur+0.05);
+  // ★ 鳴ってるオシレータを追跡（後で止められるように）
+  _activeOscillators.add(o);
+  o.onended=function(){_activeOscillators.delete(o);};
+}
+
+// ★ プレビューや切替音を即止める
+var _activeOscillators=new Set();
+var _previewTimers=[];
+function stopAllPreview(){
+  // 待機中のsetTimeoutを全部キャンセル
+  _previewTimers.forEach(function(t){clearTimeout(t);});
+  _previewTimers=[];
+  // 鳴ってるオシレータを即フェードアウト＆停止
+  _activeOscillators.forEach(function(o){
+    try{
+      o.gain && o.gain.cancelScheduledValues && o.gain.cancelScheduledValues(audioCtx.currentTime);
+      o.stop(audioCtx.currentTime+0.02);
+    }catch(e){
+      try{o.stop(0);}catch(e2){}
+    }
+  });
+  _activeOscillators.clear();
+  // ループモードも止める
+  if(loopTimer){clearTimeout(loopTimer);loopTimer=null;}
+}
+function _pt(fn,ms){
+  var t=setTimeout(fn,ms);
+  _previewTimers.push(t);
+  return t;
 }
 
 // タブ切替
@@ -442,6 +480,7 @@ function selectPreset(btn,min){
 }
 
 function selectSound(btn,name){
+  stopAllPreview(); // ★ 切替時に前のプレビュー止める
   selectedSound=name;
   document.querySelectorAll('.sound-btn').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');
@@ -451,49 +490,50 @@ function toggleLoop(){
   document.getElementById('loopBtn').classList.toggle('active', loopMode);
 }
 function previewSound(){
+  stopAllPreview(); // ★ 前のプレビューを止めてから
   ensureAudio();
   _playPreview();
 }
 function _playPreview(){
   var s=selectedSound;
   if(s==='orugoru'){
-    [1046.50,1318.51,1567.98,1046.50,1318.51,1760.00].forEach(function(f,i){setTimeout(function(){playNote(f,0.8,0.18,'sine');},i*200);});
+    [1046.50,1318.51,1567.98,1046.50,1318.51,1760.00].forEach(function(f,i){_pt(function(){playNote(f,0.8,0.18,'sine');},i*200);});
   } else if(s==='chime'){
-    [523.25,659.25,783.99,1046.50].forEach(function(f,i){setTimeout(function(){playNote(f,0.6,0.22,'sine');},i*180);});
+    [523.25,659.25,783.99,1046.50].forEach(function(f,i){_pt(function(){playNote(f,0.6,0.22,'sine');},i*180);});
   } else if(s==='bell'){
     playNote(1174.66,1.2,0.25,'sine');
-    setTimeout(function(){playNote(880,1.0,0.18,'sine');},300);
+    _pt(function(){playNote(880,1.0,0.18,'sine');},300);
   } else if(s==='fanfare'){
-    [523.25,659.25,783.99,1046.50,1318.51,1046.50].forEach(function(f,i){setTimeout(function(){playNote(f,0.3,0.20,'square');},i*120);});
+    [523.25,659.25,783.99,1046.50,1318.51,1046.50].forEach(function(f,i){_pt(function(){playNote(f,0.3,0.20,'square');},i*120);});
   } else if(s==='pop'){
-    [880,1100,1320].forEach(function(f,i){setTimeout(function(){playNote(f,0.12,0.22,'sine');},i*80);});
+    [880,1100,1320].forEach(function(f,i){_pt(function(){playNote(f,0.12,0.22,'sine');},i*80);});
   } else if(s==='antique'){
     var A=[1174.66,0,1396.91,0,1760.00,0,2093.00,0,1760.00,0,1396.91,0,1174.66,0,1046.50,0,
            1318.51,0,1567.98,0,1864.66,0,1567.98,0,1318.51,0,1046.50,0,932.33,0,1046.50,0,
            987.77,0,1174.66,0,1396.91,0,1864.66,0,1396.91,0,1174.66,0,987.77,0,880.00,0,
            880.00,0,1046.50,0,1396.91,0,1760.00,0,1396.91,0,1046.50,0,880.00,0,0,0];
-    A.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.9,0.18,'sine');playNote(f*2,0.5,0.05,'sine');},i*200);});
+    A.forEach(function(f,i){if(!f)return;_pt(function(){playNote(f,0.9,0.18,'sine');playNote(f*2,0.5,0.05,'sine');},i*200);});
   } else if(s==='forest'){
     var F=[523.25,0,659.25,0,783.99,0,659.25,0,523.25,0,440.00,0,523.25,0,0,0,
            698.46,0,880.00,0,783.99,0,659.25,0,587.33,0,523.25,0,587.33,0,0,0,
            523.25,0,659.25,0,783.99,0,1046.50,0,880.00,0,783.99,0,659.25,0,523.25,0];
-    F.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.7,0.20,'sine');},i*220);});
+    F.forEach(function(f,i){if(!f)return;_pt(function(){playNote(f,0.7,0.20,'sine');},i*220);});
   } else if(s==='star'){
     var S=[2093.00,0,1864.66,0,1567.98,0,1864.66,0,2093.00,0,2349.32,0,2093.00,0,0,0,
            1567.98,0,1396.91,0,1174.66,0,1396.91,0,1567.98,0,1864.66,0,1567.98,0,0,0,
            2349.32,0,2093.00,0,1760.00,0,2093.00,0,2349.32,0,2637.02,0,2093.00,0,0,0];
-    S.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.4,0.12,'sine');playNote(f*0.5,0.8,0.06,'sine');},i*180);});
+    S.forEach(function(f,i){if(!f)return;_pt(function(){playNote(f,0.4,0.12,'sine');playNote(f*0.5,0.8,0.06,'sine');},i*180);});
   } else if(s==='piano'){
     var P=[523.25,659.25,783.99,1046.50,587.33,698.46,880.00,1174.66,
            523.25,659.25,783.99,1046.50,440.00,523.25,659.25,880.00,
            493.88,587.33,698.46,987.77,523.25,659.25,783.99,1046.50];
-    P.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.5,0.22,'triangle');},i*160);});
+    P.forEach(function(f,i){if(!f)return;_pt(function(){playNote(f,0.5,0.22,'triangle');},i*160);});
   } else if(s==='sea'){
     var Se=[440.00,0,0,523.25,0,0,659.25,0,0,587.33,0,0,
             523.25,0,0,440.00,0,0,392.00,0,0,440.00,0,0,
             523.25,0,0,659.25,0,0,783.99,0,0,659.25,0,0,
             587.33,0,0,523.25,0,0,440.00,0,0,0,0,0];
-    Se.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,1.0,0.16,'sine');},i*180);});
+    Se.forEach(function(f,i){if(!f)return;_pt(function(){playNote(f,1.0,0.16,'sine');},i*180);});
   }
 }
 function playEndSound(){
@@ -679,8 +719,10 @@ var ivWorkSec=20, ivRestSec=10, ivSets=8;
 var ivCurSet=1, ivPhase='work', ivRemSec=20;
 var ivRunning=false, ivInterval=null;
 var ivSoundType='soft'; // soft / clock / pop / whistle
+var ivTickSound='off'; // off / soft / click / beep（秒読み音）
 var IV_KEY='nikowa_iv_custom';
 var IV_SOUND_KEY='nikowa_iv_sound';
+var IV_TICK_KEY='nikowa_iv_tick';
 
 // 設定の保存・読み込み
 function saveIvCustom(){
@@ -747,12 +789,41 @@ function onIvCustomChange(){
   onIvReset();
 }
 function setIvSound(btn,name){
+  stopAllPreview(); // ★ 切替時に前の音止める
   ivSoundType=name;
   btn.parentElement.querySelectorAll('.beat-opt').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');
   try{localStorage.setItem(IV_SOUND_KEY,name);}catch(e){}
   // プレビュー（音量OFFなら鳴らない）
   playIvPhaseSound('work');
+}
+
+// ━━━━ 秒読み音（毎秒鳴る、スクワット等のテンポ作り） ━━━━
+function setIvTickSound(btn,name){
+  stopAllPreview();
+  ivTickSound=name;
+  btn.parentElement.querySelectorAll('.beat-opt').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  try{localStorage.setItem(IV_TICK_KEY,name);}catch(e){}
+  // プレビュー：3連で雰囲気わかるように（"なし"以外）
+  if(name!=='off' && masterVol>0){
+    ensureAudio();
+    [0,400,800].forEach(function(d){
+      _pt(function(){playIvTickSound(false);},d);
+    });
+  }
+}
+function playIvTickSound(isCountdown){
+  // 残り3秒以下は強調（高めの音）
+  if(masterVol===0 || ivTickSound==='off') return;
+  if(!audioCtx || audioCtx.state==='suspended') return;
+  if(ivTickSound==='soft'){
+    playNote(isCountdown?1318:880, 0.05, 0.16, 'sine');
+  } else if(ivTickSound==='click'){
+    playNote(isCountdown?1600:900, 0.03, 0.25, 'square');
+  } else if(ivTickSound==='beep'){
+    playNote(isCountdown?2000:1200, 0.06, 0.22, 'triangle');
+  }
 }
 
 // ━━━━ フェーズ切替の通知音（しっかり気付く） ━━━━
@@ -764,47 +835,41 @@ function playIvPhaseSound(toPhase){
     if(toPhase==='work'){
       // 作業：明るい上昇 C-E-G-C
       [523.25, 659.25, 783.99, 1046.50].forEach(function(f,i){
-        setTimeout(function(){playNote(f,0.35,0.32,'sine');},i*80);
+        _pt(function(){playNote(f,0.35,0.32,'sine');},i*80);
       });
     } else {
       // 休憩：落ち着く下降 A-F-D-A
       [880.00, 698.46, 587.33, 440.00].forEach(function(f,i){
-        setTimeout(function(){playNote(f,0.45,0.30,'sine');},i*100);
+        _pt(function(){playNote(f,0.45,0.30,'sine');},i*100);
       });
     }
   } else if(ivSoundType==='clock'){
     // カチッ：メトロノーム風、3連打
     if(toPhase==='work'){
-      // 作業：高めのカチッ×3
       [0,140,280].forEach(function(d,i){
-        setTimeout(function(){playNote(1500,0.04,0.5,'square');playNote(800,0.04,0.3,'square');},d);
+        _pt(function(){playNote(1500,0.04,0.5,'square');playNote(800,0.04,0.3,'square');},d);
       });
     } else {
-      // 休憩：低めのカチッ×3
       [0,160,320].forEach(function(d,i){
-        setTimeout(function(){playNote(900,0.04,0.45,'square');playNote(500,0.04,0.25,'square');},d);
+        _pt(function(){playNote(900,0.04,0.45,'square');playNote(500,0.04,0.25,'square');},d);
       });
     }
   } else if(ivSoundType==='pop'){
-    // ピコッ：電子音3連
     if(toPhase==='work'){
       [880,1100,1320,1760].forEach(function(f,i){
-        setTimeout(function(){playNote(f,0.10,0.35,'square');},i*60);
+        _pt(function(){playNote(f,0.10,0.35,'square');},i*60);
       });
     } else {
       [660,550,440,330].forEach(function(f,i){
-        setTimeout(function(){playNote(f,0.12,0.30,'square');},i*70);
+        _pt(function(){playNote(f,0.12,0.30,'square');},i*70);
       });
     }
   } else if(ivSoundType==='whistle'){
-    // ホイッスル：体育の先生風、長め
     if(toPhase==='work'){
-      // 作業：ピーッ（短く2回）
       [0,250].forEach(function(d){
-        setTimeout(function(){playNote(2093,0.18,0.40,'sine');playNote(2637,0.18,0.20,'sine');},d);
+        _pt(function(){playNote(2093,0.18,0.40,'sine');playNote(2637,0.18,0.20,'sine');},d);
       });
     } else {
-      // 休憩：ピーーーッ（長く1回）
       playNote(1568,0.6,0.40,'sine');
       playNote(1976,0.6,0.20,'sine');
     }
@@ -838,6 +903,10 @@ function updateIvDisplay(){
 }
 function ivTick(){
   ivRemSec--;
+  // ★ 毎秒の秒読み音（残り3秒以下は高音で強調＝カウントダウン感）
+  if(ivRemSec>0 && ivTickSound!=='off'){
+    playIvTickSound(ivRemSec<=3);
+  }
   if(ivRemSec<=0){
     // フェーズ切替
     if(ivPhase==='work'){
@@ -939,9 +1008,15 @@ function setBeats(n){
   if(metroPlaying){restartMetro();}
 }
 function setMetroSound(btn,name){
+  stopAllPreview(); // ★ 前の音止める
   metroSound=name;
   btn.parentElement.querySelectorAll('.beat-opt').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');
+  // ★ プレビュー試聴（アクセント音を1回）
+  if(masterVol>0){
+    ensureAudio();
+    playMetroSound(true);
+  }
 }
 function playMetroSound(isAccent){
   if(!audioCtx||masterVol===0)return;
@@ -1022,6 +1097,18 @@ try{
     ivSoundType=savedSnd;
     document.querySelectorAll('#tabInterval .beat-options:nth-of-type(1) .beat-opt, #tabInterval .beat-options .beat-opt').forEach(function(b){
       if(b.getAttribute('onclick')&&b.getAttribute('onclick').indexOf("'"+savedSnd+"'")>=0){
+        b.parentElement.querySelectorAll('.beat-opt').forEach(function(x){x.classList.remove('active');});
+        b.classList.add('active');
+      }
+    });
+  }
+  // ★ 秒読み音の選択も復元
+  var savedTick=localStorage.getItem(IV_TICK_KEY);
+  if(savedTick){
+    ivTickSound=savedTick;
+    document.querySelectorAll('#tabInterval .beat-opt').forEach(function(b){
+      var oc=b.getAttribute('onclick');
+      if(oc && oc.indexOf('setIvTickSound')>=0 && oc.indexOf("'"+savedTick+"'")>=0){
         b.parentElement.querySelectorAll('.beat-opt').forEach(function(x){x.classList.remove('active');});
         b.classList.add('active');
       }
