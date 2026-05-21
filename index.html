@@ -42479,17 +42479,36 @@ function renderTown() {
 
   let html = '<div style="padding:10px 14px 6px;display:flex;align-items:center;gap:8px;">';
   html += '<button onclick="openDrawerMenu()" style="background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
-  html += '<div class="home-weather-pill" onclick="showWeatherPopup()" style="flex:1;margin:0;">';
-  html += '<div class="home-weather-pill-left">';
-  html += '<span>'+_y3+'/'+_m3+'/'+_d3+'('+_wk3+') '+_hh3+':'+_mi3+'</span>';
-  html += '<span style="color:var(--ink-light);">·</span>';
-  html += '<span class="home-weather-pill-region">'+escapeHtml(_region3)+'</span>';
-  html += '</div>';
-  html += '<div class="home-weather-pill-right">';
-  html += '<span class="home-weather-pill-icon">'+weatherIconHtml(_wIcon3,'font-size:18px;')+'</span>';
-  html += '<span class="home-weather-pill-temp">'+_wTemp3+'<span class="unit">℃</span></span>';
-  html += '</div>';
-  html += '</div>';
+  if (townMainTab === 'search') {
+    // 「探す」タブの時：サブタブ切替（現在地・路線・お気に入り）
+    const _subTabs = [
+      { id:'search',  label:'現在地',     icon:'my_location' },
+      { id:'transit', label:'路線',       icon:'train' },
+      { id:'fav',     label:'お気に入り', icon:'favorite' }
+    ];
+    html += '<div style="flex:1;display:flex;gap:4px;background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);border-radius:100px;padding:3px;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);">';
+    for (const st of _subTabs) {
+      const isAct = townSubTab === st.id;
+      html += '<button onclick="setTownSubTab(\''+st.id+'\')" style="flex:1;background:'+(isAct?'var(--accent)':'transparent')+';color:'+(isAct?'white':'var(--ink-sub)')+';border:none;border-radius:100px;padding:6px 4px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap;">';
+      html += '<span class="material-symbols-rounded" style="font-size:14px;">'+st.icon+'</span>';
+      html += '<span>'+st.label+'</span>';
+      html += '</button>';
+    }
+    html += '</div>';
+  } else {
+    // 「探す」以外：日付＋天気pill
+    html += '<div class="home-weather-pill" onclick="showWeatherPopup()" style="flex:1;margin:0;">';
+    html += '<div class="home-weather-pill-left">';
+    html += '<span>'+_y3+'/'+_m3+'/'+_d3+'('+_wk3+') '+_hh3+':'+_mi3+'</span>';
+    html += '<span style="color:var(--ink-light);">·</span>';
+    html += '<span class="home-weather-pill-region">'+escapeHtml(_region3)+'</span>';
+    html += '</div>';
+    html += '<div class="home-weather-pill-right">';
+    html += '<span class="home-weather-pill-icon">'+weatherIconHtml(_wIcon3,'font-size:18px;')+'</span>';
+    html += '<span class="home-weather-pill-temp">'+_wTemp3+'<span class="unit">℃</span></span>';
+    html += '</div>';
+    html += '</div>';
+  }
   html += '</div>';
 
   // ノートインデックスタブ（A案・均等割）
@@ -42694,26 +42713,27 @@ function renderTown() {
   // ── 検索サブタブ
   if (townMainTab === 'search' && townSubTab === 'search') {
     html += '<div class="places-section">';
-    html += '<div class="places-loc-toggle">';
-    html += '<button class="places-loc-btn '+(placesLocMode==='addr'?'active':'')+'" onclick="setPlacesLocMode(\'addr\')"><span class=\"material-symbols-rounded\" style=\"font-size:14px;vertical-align:-2px;\">location_city</span> 住所</button>';
-    html += '<button class="places-loc-btn '+(placesLocMode==='geo'?'active':'')+'" onclick="setPlacesLocMode(\'geo\')"><span class=\"material-symbols-rounded\" style=\"font-size:14px;vertical-align:-2px;\">my_location</span> 現在地</button>';
-    html += '<button class="places-loc-btn '+(placesLocMode==='nearby'?'active':'')+'" onclick="setPlacesLocMode(\'nearby\')"><span class=\"material-symbols-rounded\" style=\"font-size:14px;vertical-align:-2px;\">near_me</span> 近く</button>';
+    // 住所/現在地/近く 切替（小型版）
+    html += '<div style="display:flex;gap:4px;padding:6px 10px 4px;">';
+    html += '<button class="places-loc-btn '+(placesLocMode==='addr'?'active':'')+'" onclick="setPlacesLocMode(\'addr\')" style="flex:1;padding:6px 4px;font-size:11px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">location_city</span>住所</button>';
+    html += '<button class="places-loc-btn '+(placesLocMode==='geo'?'active':'')+'" onclick="setPlacesLocMode(\'geo\')" style="flex:1;padding:6px 4px;font-size:11px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">my_location</span>現在地</button>';
+    html += '<button class="places-loc-btn '+(placesLocMode==='nearby'?'active':'')+'" onclick="setPlacesLocMode(\'nearby\')" style="flex:1;padding:6px 4px;font-size:11px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:13px;">near_me</span>近く</button>';
     html += '</div>';
     if (placesLocMode === 'nearby') {
       html += '</div>';
-      html += '<div style="padding:12px 14px;">';
-    // カテゴリチップ（横スクロール）
+      html += '<div style="padding:6px 10px 0;">';
+    // カテゴリチップ（小型・横スクロール）
     const nearbyCats = ['喫煙所','居酒屋','カフェ','バー','動物病院','美容院','公園','コンビニ','薬局','ラーメン','病院'];
     const selCat = window._nearbyCat || '';
-    html += '<div style="overflow-x:auto;white-space:nowrap;padding:0 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;">';
+    html += '<div style="overflow-x:auto;white-space:nowrap;padding:0 0 6px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;">';
     for (const c of nearbyCats) {
-      html += '<button class="town-cat-chip '+(selCat===c?'selected':'')+'" onclick="window._nearbyCat=\''+c+'\';window._nearbyCustomQuery=\'\';window._nearbyResults=[];renderTown();if(window._nearbyGeoStatus===\'ok\')setTimeout(searchNearbyPlaces,200);" style="display:inline-block;margin-right:6px;">'+escapeHtml(c)+'</button>';
+      html += '<button class="town-cat-chip '+(selCat===c?'selected':'')+'" onclick="window._nearbyCat=\''+c+'\';window._nearbyCustomQuery=\'\';window._nearbyResults=[];renderTown();if(window._nearbyGeoStatus===\'ok\')setTimeout(searchNearbyPlaces,200);" style="display:inline-block;margin-right:5px;padding:5px 10px;font-size:11px;">'+escapeHtml(c)+'</button>';
     }
     html += '</div>';
-    // 自由検索バー
-    html += '<div style="display:flex;gap:6px;margin-bottom:10px;">';
-    html += '<input id="nearbySearchInput" type="text" placeholder="自由に検索（例：ラーメン）" value="'+(window._nearbyCustomQuery||'')+'" style="flex:1;padding:9px 12px;border:1.5px solid var(--card-border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--ink-dark);outline:none;" onkeydown="if(event.key===\'Enter\'){window._nearbyCat=this.value;window._nearbyCustomQuery=this.value;searchNearbyPlaces();}">';
-    html += '<button onclick="var v=document.getElementById(\'nearbySearchInput\').value;if(v){window._nearbyCat=v;window._nearbyCustomQuery=v;searchNearbyPlaces();}" style="padding:8px 12px;border:none;border-radius:10px;background:var(--accent);color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;">search</span></button>';
+    // 自由検索バー（小型）
+    html += '<div style="display:flex;gap:5px;margin-bottom:6px;">';
+    html += '<input id="nearbySearchInput" type="text" placeholder="自由に検索（例：ラーメン）" value="'+(window._nearbyCustomQuery||'')+'" style="flex:1;padding:6px 10px;border:1.5px solid var(--card-border);border-radius:8px;font-size:11px;font-family:inherit;background:var(--surface);color:var(--ink-dark);outline:none;" onkeydown="if(event.key===\'Enter\'){window._nearbyCat=this.value;window._nearbyCustomQuery=this.value;searchNearbyPlaces();}">';
+    html += '<button onclick="var v=document.getElementById(\'nearbySearchInput\').value;if(v){window._nearbyCat=v;window._nearbyCustomQuery=v;searchNearbyPlaces();}" style="padding:6px 10px;border:none;border-radius:8px;background:var(--accent);color:white;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">search</span></button>';
     html += '</div>';
 
     // 地図
