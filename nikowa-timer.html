@@ -407,6 +407,28 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
         </button>
       </div>
 
+      <!-- 食事の量（pace/loopのみ表示） -->
+      <div id="moguMealTypeSection" style="display:none;">
+        <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin-bottom:6px;">🍽 食事の量</div>
+        <div class="mogu-mode-row">
+          <button type="button" class="mogu-meal-btn mogu-mode-btn" onclick="setMoguMealType(this,'snack')">
+            <span class="mogu-mode-icon">🍪</span>
+            <span>おやつ軽食</span>
+            <span class="mogu-mode-hint">〜8分目安</span>
+          </button>
+          <button type="button" class="mogu-meal-btn mogu-mode-btn active" onclick="setMoguMealType(this,'normal')">
+            <span class="mogu-mode-icon">🍱</span>
+            <span>普通</span>
+            <span class="mogu-mode-hint">〜20分目安</span>
+          </button>
+          <button type="button" class="mogu-meal-btn mogu-mode-btn" onclick="setMoguMealType(this,'heavy')">
+            <span class="mogu-mode-icon">🍖</span>
+            <span>ガッツリ</span>
+            <span class="mogu-mode-hint">〜25分目安</span>
+          </button>
+        </div>
+      </div>
+
       <!-- 待機時間設定（bite/loopのみ） -->
       <div id="moguTargetSection">
         <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin-bottom:6px;">⏱ ひと口の待ち時間</div>
@@ -1346,6 +1368,7 @@ function onMetroToggle(){
 // タブ4：もぐタイム 🍚
 // ════════════════════════════════════════════
 var moguMode='bite'; // bite / loop / pace
+var moguMealType='normal'; // snack / normal / heavy （pace/loop判定用）
 var moguState='ready'; // ready / eating / done
 var moguPhase='next_ok'; // next_ok / waiting / rest (loop用)
 var moguTargetSec=30;
@@ -1359,15 +1382,53 @@ var moguLastBiteTime=null;
 var MOGU_TARGET_KEY='nikowa_mogu_target';
 var MOGU_LAST_KEY='nikowa_mogu_last';
 var MOGU_MODE_KEY='nikowa_mogu_mode';
+var MOGU_MEAL_KEY='nikowa_mogu_meal';
 
 function setMoguMode(btn, mode){
-  document.querySelectorAll('.mogu-mode-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.mogu-mode-btn:not(.mogu-meal-btn)').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');
   moguMode=mode;
   // ペースモードは待ち時間設定不要
   var targetSec=document.getElementById('moguTargetSection');
   if(targetSec) targetSec.style.display=(mode==='pace')?'none':'';
+  // pace/loopモードは食事量選択を表示（biteは隠す）
+  var mealSec=document.getElementById('moguMealTypeSection');
+  if(mealSec) mealSec.style.display=(mode==='pace'||mode==='loop')?'':'none';
   try{localStorage.setItem(MOGU_MODE_KEY, mode);}catch(e){}
+}
+
+function setMoguMealType(btn, type){
+  document.querySelectorAll('.mogu-meal-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  moguMealType=type;
+  try{localStorage.setItem(MOGU_MEAL_KEY, type);}catch(e){}
+}
+
+// 食事タイプから判定閾値を取得（pace/loopモード用）
+function _getMoguGradeByElapsed(elapsedSec){
+  var t;
+  if(moguMealType==='snack'){
+    t={c:180, b:300, a:480}; // 3分/5分/8分
+  } else if(moguMealType==='heavy'){
+    t={c:720, b:1080, a:1500}; // 12分/18分/25分
+  } else { // normal
+    t={c:600, b:900, a:1200}; // 10分/15分/20分
+  }
+  if(elapsedSec>=t.a) return 'A';
+  if(elapsedSec>=t.b) return 'B';
+  if(elapsedSec>=t.c) return 'C';
+  return 'D';
+}
+
+function _getMoguAdvice(grade, mealType){
+  // タイプ別の親しみアドバイス
+  if(grade==='A') return 'ゆっくり食べられた🌸 完璧！';
+  if(grade==='B') return 'いいペース🌷';
+  if(grade==='C') return 'もう少しゆっくりでも🌱';
+  // D：食事タイプで目安を変える
+  if(mealType==='snack') return 'ちょっと急いだかな💧 次は5分以上を目安に';
+  if(mealType==='heavy') return 'ちょっと急いだかな💧 次は18分以上を目安に';
+  return 'ちょっと急いだかな💧 次は10分以上を目安に';
 }
 
 function setMoguTarget(btn, sec){
@@ -1582,19 +1643,15 @@ function endMogu(){
   var advice='';
   var modeLabel='';
   if(moguMode==='pace'){
-    // ペースモード：食事時間だけで判定
+    // ペースモード：食事タイプ別の閾値で判定
     modeLabel='ペース';
-    if(elapsed>=1200){ grade='A'; advice='ゆっくり食べられた🌸 完璧！'; }
-    else if(elapsed>=900){ grade='B'; advice='まずまず🌷 いいペース！'; }
-    else if(elapsed>=600){ grade='C'; advice='もう少しゆっくり食べてみよう🌱'; }
-    else { grade='D'; advice='早食い気味かも💧 次は15分以上を目標に'; }
+    grade=_getMoguGradeByElapsed(elapsed);
+    advice=_getMoguAdvice(grade, moguMealType);
   } else if(moguMode==='loop'){
-    // ループモード：食事時間で判定（ペースと同じ）
+    // ループモード：同じく食事タイプ別判定
     modeLabel='ループ';
-    if(elapsed>=1200){ grade='A'; advice='ゆっくり食べられた🌸 完璧！'; }
-    else if(elapsed>=900){ grade='B'; advice='まずまず🌷 いいペース！'; }
-    else if(elapsed>=600){ grade='C'; advice='もう少しゆっくり食べてみよう🌱'; }
-    else { grade='D'; advice='早食い気味かも💧 次は15分以上を目標に'; }
+    grade=_getMoguGradeByElapsed(elapsed);
+    advice=_getMoguAdvice(grade, moguMealType);
   } else {
     // biteモード：既存ロジック（avgInterval ベース）
     modeLabel='噛むタイマー';
@@ -1644,7 +1701,7 @@ function endMogu(){
   // 最後の記録保存
   try{
     localStorage.setItem(MOGU_LAST_KEY, JSON.stringify({
-      mode:moguMode, elapsed:elapsed, biteCount:moguBiteCount, avgInterval:avgInterval, grade:grade,
+      mode:moguMode, mealType:moguMealType, elapsed:elapsed, biteCount:moguBiteCount, avgInterval:avgInterval, grade:grade,
       targetSec:moguTargetSec, timestamp:Date.now()
     }));
   }catch(e){}
@@ -1652,10 +1709,11 @@ function endMogu(){
   // Me記録用にセット
   window._lastActivityType='moguTime';
   window._lastActivityDuration=elapsed;
+  var _mealLabel=(moguMealType==='snack')?'おやつ軽食':(moguMealType==='heavy')?'ガッツリ':'普通';
   if(moguMode==='pace'){
-    window._lastActivityDetail='ペースモード・'+modeLabel+'・'+elM+'分'+(elS>0?elS+'秒':'')+'・ゆっくり度'+grade;
+    window._lastActivityDetail='ペースモード('+_mealLabel+')・'+elM+'分'+(elS>0?elS+'秒':'')+'・ゆっくり度'+grade;
   } else if(moguMode==='loop'){
-    window._lastActivityDetail='ループモード('+moguTargetSec+'秒)・'+moguBiteCount+'サイクル・ゆっくり度'+grade;
+    window._lastActivityDetail='ループモード('+_mealLabel+'・'+moguTargetSec+'秒)・'+moguBiteCount+'サイクル・ゆっくり度'+grade;
   } else {
     window._lastActivityDetail='ひと口'+moguBiteCount+'回・平均'+avgInterval+'秒・ゆっくり度'+grade;
   }
@@ -1761,7 +1819,7 @@ try{
   var savedMm=localStorage.getItem(MOGU_MODE_KEY);
   if(savedMm && (savedMm==='bite'||savedMm==='loop'||savedMm==='pace')){
     moguMode=savedMm;
-    document.querySelectorAll('.mogu-mode-btn').forEach(function(b){
+    document.querySelectorAll('.mogu-mode-btn:not(.mogu-meal-btn)').forEach(function(b){
       b.classList.remove('active');
       var label=b.querySelector('span:nth-child(2)');
       var match=(savedMm==='bite' && label && label.textContent==='噛むタイマー')
@@ -1771,6 +1829,21 @@ try{
     });
     var ts=document.getElementById('moguTargetSection');
     if(ts) ts.style.display=(savedMm==='pace')?'none':'';
+    var ms=document.getElementById('moguMealTypeSection');
+    if(ms) ms.style.display=(savedMm==='pace'||savedMm==='loop')?'':'none';
+  }
+  // 食事タイプ復元
+  var savedMeal=localStorage.getItem(MOGU_MEAL_KEY);
+  if(savedMeal && (savedMeal==='snack'||savedMeal==='normal'||savedMeal==='heavy')){
+    moguMealType=savedMeal;
+    document.querySelectorAll('.mogu-meal-btn').forEach(function(b){
+      b.classList.remove('active');
+      var label=b.querySelector('span:nth-child(2)');
+      var match=(savedMeal==='snack' && label && label.textContent==='おやつ軽食')
+              ||(savedMeal==='normal' && label && label.textContent==='普通')
+              ||(savedMeal==='heavy' && label && label.textContent==='ガッツリ');
+      if(match) b.classList.add('active');
+    });
   }
   loadMoguLastDisplay();
 }catch(e){}
