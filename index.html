@@ -9290,12 +9290,12 @@ function _getDrawerContent(key) {
     h += _itemBtn('lock',          'きもち保管室', 'ないしょの気持ち', `closeDrawerMenu();currentView='kimochiRoom';render();`);
 
   } else if (key === 'health') {
-    h += _itemBtn('favorite',            'Health',       'ダイエット・体調まとめ', `closeDrawerMenu();currentView='health';render();`);
-    h += _itemBtn('check_circle',        'スタンプ記録',  'スタンプで記録',         `closeDrawerMenu();goToMeMode();setTimeout(()=>{data.diaryInputTab='record';setModePageTab('me','diary');},100);`);
-    h += _itemBtn('monitor_weight',      '体重',         '体重を記録',             `closeDrawerMenu();currentView='health';render();`);
-    h += _itemBtn('water_drop',          '生理',         'ホルモン管理',           `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);`);
-    h += _itemBtn('medical_information', 'カルテ',       '医療・薬・病院',         `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);`);
-    h += _itemBtn('public',              'みんなの健康',  '世界とつながる',         `closeDrawerMenu();currentView='town';townMainTab='rainbow';render();`);
+    h += _itemBtn('monitoring',          'ヘルス',       '体温・血圧・睡眠など',     `closeDrawerMenu();currentView='healthDashboard';render();`);
+    h += _itemBtn('monitor_weight',      '体重',         '体重と体型の記録',       `closeDrawerMenu();currentView='health';render();`);
+    h += _itemBtn('mood',                '体調',         '気分・症状のスタンプ',     `closeDrawerMenu();currentView='conditionTracker';render();`);
+    h += _itemBtn('water_drop',          '生理',         '周期・症状の管理',         `closeDrawerMenu();currentView='periodTracker';render();`);
+    h += _itemBtn('redeem',              'ご褒美',       '体重目標×ご褒美',          `closeDrawerMenu();currentView='rewardList';render();`);
+    h += _itemBtn('medical_information', 'カルテ',       '医療・薬・病院',           `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','resume'),100);`);
 
   } else if (key === 'work') {
     h += _itemBtn('work',   'Work',  '仕事メモ',   `closeDrawerMenu();goToMeMode();setTimeout(()=>setModePageTab('me','office'),100);`);
@@ -9541,12 +9541,12 @@ function openMeDrawerMenu() {
     {
       label: '健康', bg: '#FAE8EE', textColor: '#A04868',
       items: [
-        { icon:'favorite',              color:'#D87BA0', label:'ヘルス',         desc:'健康の記録',         action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
-        { icon:'monitor_weight',        color:'#D08CB0', label:'体重',           desc:'体重と体型の記録',   action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
-        { icon:'mood',                  color:'#E090B0', label:'体調',           desc:'体調・ホルモン管理', action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','stamp');},250);" },
-        { icon:'medical_information',   color:'#C870A0', label:'カルテ',         desc:'医療・薬・病院',      action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','resume');},250);" },
+        { icon:'monitoring',            color:'#D87BA0', label:'ヘルス',         desc:'体温・血圧・睡眠',   action:"closeMeDrawerMenu();setTimeout(()=>{currentView='healthDashboard';render();},250);" },
+        { icon:'monitor_weight',        color:'#D08CB0', label:'体重',           desc:'体重と体型の記録',   action:"closeMeDrawerMenu();setTimeout(()=>{currentView='health';render();},250);" },
+        { icon:'mood',                  color:'#E090B0', label:'体調',           desc:'気分・症状スタンプ', action:"closeMeDrawerMenu();setTimeout(()=>{currentView='conditionTracker';render();},250);" },
+        { icon:'water_drop',            color:'#C870A0', label:'生理',           desc:'周期・症状の管理',   action:"closeMeDrawerMenu();setTimeout(()=>{currentView='periodTracker';render();},250);" },
         { icon:'redeem',                color:'#E85888', label:'ご褒美リスト',   desc:'体重目標×ご褒美',    action:"closeMeDrawerMenu();setTimeout(()=>{currentView='rewardList';render();},250);" },
-        { icon:'groups',                color:'#B868A0', label:'みんなの健康',   desc:'家族の健康記録',     action:"closeMeDrawerMenu();setTimeout(()=>{currentView='houses';render();},250);" }
+        { icon:'medical_information',   color:'#C870A0', label:'カルテ',         desc:'医療・薬・病院',      action:"closeMeDrawerMenu();setTimeout(()=>{goToMeMode();setModePageTab('me','resume');},250);" }
       ]
     },
     {
@@ -30839,6 +30839,501 @@ function renderMeDiary() {
 // ご褒美リスト（体重×ご褒美連動）
 // ═══════════════════════════════════════
 
+// ════════════════════════════════════════════════
+// 🩸 生理トラッカー（periodTracker）
+// ════════════════════════════════════════════════
+function renderPeriodTracker() {
+  const app = document.getElementById('app');
+  if (!app) return;
+  if (!data.periodRecords) data.periodRecords = [];
+
+  // 現在の状態判定（最新の周期）
+  const records = data.periodRecords.slice().sort((a,b) => (b.startDate || '').localeCompare(a.startDate || ''));
+  const ongoing = records.find(r => r.startDate && !r.endDate);
+  // 平均周期計算
+  const completedRecords = records.filter(r => r.startDate && r.endDate);
+  let avgCycle = 28; // デフォルト
+  if (records.length >= 2) {
+    const cycles = [];
+    for (let i = 0; i < records.length - 1; i++) {
+      const cur = new Date(records[i].startDate);
+      const prev = new Date(records[i+1].startDate);
+      const diff = Math.round((cur - prev) / (1000*60*60*24));
+      if (diff > 15 && diff < 60) cycles.push(diff);
+    }
+    if (cycles.length > 0) avgCycle = Math.round(cycles.reduce((a,b)=>a+b,0) / cycles.length);
+  }
+  // 次回予測
+  let nextPredict = null;
+  if (records[0] && records[0].startDate) {
+    const last = new Date(records[0].startDate);
+    last.setDate(last.getDate() + avgCycle);
+    nextPredict = last;
+  }
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  let html = '';
+  // ヘッダー
+  html += '<div style="padding:14px 16px 8px;display:flex;align-items:center;gap:10px;">';
+  html += '<button onclick="navBack()" style="padding:6px;background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded">arrow_back_ios</span></button>';
+  html += '<div style="flex:1;text-align:center;font-size:16px;font-weight:900;color:var(--ink-dark);">🩸 生理</div>';
+  html += '<div style="width:36px;"></div>';
+  html += '</div>';
+
+  // 現在の状態カード
+  html += '<div style="padding:0 16px 12px;">';
+  if (ongoing) {
+    const startD = new Date(ongoing.startDate);
+    const dayNum = Math.floor((new Date(todayStr) - startD) / (1000*60*60*24)) + 1;
+    html += '<div style="background:linear-gradient(135deg,#FFE5EA,#FFD0DC);border:1.5px solid #E9759B;border-radius:18px;padding:18px;text-align:center;">';
+    html += '<div style="font-size:11px;font-weight:800;color:#A8456A;margin-bottom:4px;">生理中</div>';
+    html += '<div style="font-size:36px;font-weight:900;color:#C0356A;line-height:1;">'+dayNum+'<span style="font-size:16px;margin-left:4px;">日目</span></div>';
+    html += '<div style="font-size:11px;color:#A8456A;margin-top:8px;font-weight:700;">開始：'+ongoing.startDate+'</div>';
+    html += '<button onclick="periodEnd(\''+ongoing.id+'\')" style="margin-top:14px;padding:10px 22px;background:#C0356A;color:white;border:none;border-radius:100px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(192,53,106,0.3);">🌷 終わった</button>';
+    html += '</div>';
+  } else {
+    html += '<div style="background:linear-gradient(135deg,#FFF5F8,#FFE8EF);border:1.5px solid #F5C0D0;border-radius:18px;padding:18px;text-align:center;">';
+    if (nextPredict) {
+      const diffDays = Math.ceil((nextPredict - new Date(todayStr)) / (1000*60*60*24));
+      const m = nextPredict.getMonth()+1, d = nextPredict.getDate();
+      if (diffDays >= 0) {
+        html += '<div style="font-size:11px;font-weight:800;color:#A8456A;margin-bottom:4px;">次回予測</div>';
+        html += '<div style="font-size:28px;font-weight:900;color:#C0356A;line-height:1.1;">'+m+'/'+d+'</div>';
+        html += '<div style="font-size:11px;color:#A8456A;margin-top:6px;font-weight:700;">あと'+diffDays+'日</div>';
+      } else {
+        html += '<div style="font-size:14px;font-weight:800;color:#A8456A;">予測日を過ぎてるよ🌸</div>';
+        html += '<div style="font-size:11px;color:#A8456A;margin-top:4px;">予測：'+m+'/'+d+'</div>';
+      }
+    } else {
+      html += '<div style="font-size:14px;font-weight:800;color:#A8456A;">記録がまだないよ</div>';
+      html += '<div style="font-size:11px;color:#A8456A;margin-top:4px;">下のボタンで開始しよう🌷</div>';
+    }
+    html += '<button onclick="periodStart()" style="margin-top:14px;padding:12px 24px;background:#E94B6F;color:white;border:none;border-radius:100px;font-family:inherit;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 4px 12px rgba(233,75,111,0.35);">🩸 今日から生理</button>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // 今日の記録（生理中のみ）
+  if (ongoing) {
+    if (!ongoing.days) ongoing.days = [];
+    const todayLog = ongoing.days.find(d => d.date === todayStr);
+    html += '<div style="padding:0 16px 12px;">';
+    html += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:14px;">';
+    html += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:10px;">今日の記録 ('+todayStr+')</div>';
+    // 量
+    html += '<div style="font-size:10px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">量</div>';
+    html += '<div style="display:flex;gap:6px;margin-bottom:10px;">';
+    ['少','普通','多','極多'].forEach(amt => {
+      const sel = todayLog && todayLog.amount === amt;
+      html += '<button onclick="periodSetDayLog(\'amount\',\''+amt+'\')" style="flex:1;padding:8px 4px;background:'+(sel?'#E94B6F':'#FFF5F8')+';color:'+(sel?'white':'#A8456A')+';border:1.5px solid '+(sel?'#E94B6F':'#F5C0D0')+';border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;">'+amt+'</button>';
+    });
+    html += '</div>';
+    // 症状
+    html += '<div style="font-size:10px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">症状（複数選択OK）</div>';
+    html += '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;">';
+    ['生理痛','頭痛','腰痛','だるい','イライラ','眠い','むくみ','胸の張り','吐き気'].forEach(sym => {
+      const sel = todayLog && todayLog.symptoms && todayLog.symptoms.includes(sym);
+      html += '<button onclick="periodToggleSymptom(\''+sym+'\')" style="padding:6px 10px;background:'+(sel?'#FFB3CA':'#FAF6F8')+';color:'+(sel?'white':'#A8456A')+';border:1px solid '+(sel?'#FFB3CA':'#F5C0D0')+';border-radius:100px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">'+sym+'</button>';
+    });
+    html += '</div>';
+    // ピル
+    const pillSel = todayLog && todayLog.pill;
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+    html += '<button onclick="periodTogglePill()" style="padding:7px 14px;background:'+(pillSel?'#7DC9A8':'#F5F5F5')+';color:'+(pillSel?'white':'#888')+';border:1px solid '+(pillSel?'#7DC9A8':'#DDD')+';border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;">💊 ピル'+(pillSel?' ✓':'')+'</button>';
+    html += '</div>';
+    // メモ
+    html += '<div style="font-size:10px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">メモ</div>';
+    html += '<textarea id="periodDayNote" onchange="periodSetDayLog(\'note\',this.value)" placeholder="気分とか、なんでも🌸" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;resize:none;height:50px;box-sizing:border-box;background:#FFFAFC;">'+escapeHtml((todayLog && todayLog.note) || '')+'</textarea>';
+    html += '</div>';
+    html += '</div>';
+  }
+
+  // 履歴
+  if (records.length > 0) {
+    html += '<div style="padding:0 16px 80px;">';
+    html += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;">📅 過去の周期</div>';
+    if (records.length >= 2) {
+      html += '<div style="font-size:10px;color:var(--ink-sub);margin-bottom:8px;">平均周期：<strong>'+avgCycle+'日</strong></div>';
+    }
+    records.slice(0,12).forEach((r) => {
+      const days = r.startDate && r.endDate
+        ? Math.floor((new Date(r.endDate) - new Date(r.startDate)) / (1000*60*60*24)) + 1
+        : null;
+      html += '<div style="background:white;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">';
+      html += '<div style="font-size:18px;">🩸</div>';
+      html += '<div style="flex:1;">';
+      html += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+r.startDate+(r.endDate?' 〜 '+r.endDate:' (継続中)')+'</div>';
+      if (days) html += '<div style="font-size:10px;color:var(--ink-sub);">'+days+'日間 / '+(r.days||[]).length+'件の記録</div>';
+      html += '</div>';
+      html += '<button onclick="periodDeleteRecord(\''+r.id+'\')" style="padding:4px;background:none;border:none;cursor:pointer;color:var(--ink-light);"><span class="material-symbols-rounded" style="font-size:16px;">delete</span></button>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  app.innerHTML = html;
+}
+window.renderPeriodTracker = renderPeriodTracker;
+
+function periodStart() {
+  if (!data.periodRecords) data.periodRecords = [];
+  const today = new Date().toISOString().slice(0,10);
+  data.periodRecords.unshift({
+    id: 'pr_' + Date.now(),
+    startDate: today,
+    endDate: null,
+    days: []
+  });
+  saveData();
+  showToast('🩸 生理開始を記録したよ');
+  renderPeriodTracker();
+}
+window.periodStart = periodStart;
+
+function periodEnd(id) {
+  const r = (data.periodRecords||[]).find(x => x.id === id);
+  if (!r) return;
+  r.endDate = new Date().toISOString().slice(0,10);
+  saveData();
+  showToast('🌷 おつかれさま');
+  renderPeriodTracker();
+}
+window.periodEnd = periodEnd;
+
+function periodSetDayLog(field, value) {
+  const ongoing = (data.periodRecords||[]).find(r => r.startDate && !r.endDate);
+  if (!ongoing) return;
+  if (!ongoing.days) ongoing.days = [];
+  const today = new Date().toISOString().slice(0,10);
+  let log = ongoing.days.find(d => d.date === today);
+  if (!log) {
+    log = { date: today, symptoms: [] };
+    ongoing.days.push(log);
+  }
+  log[field] = value;
+  saveData();
+  if (field !== 'note') renderPeriodTracker();
+}
+window.periodSetDayLog = periodSetDayLog;
+
+function periodToggleSymptom(sym) {
+  const ongoing = (data.periodRecords||[]).find(r => r.startDate && !r.endDate);
+  if (!ongoing) return;
+  if (!ongoing.days) ongoing.days = [];
+  const today = new Date().toISOString().slice(0,10);
+  let log = ongoing.days.find(d => d.date === today);
+  if (!log) {
+    log = { date: today, symptoms: [] };
+    ongoing.days.push(log);
+  }
+  if (!log.symptoms) log.symptoms = [];
+  const idx = log.symptoms.indexOf(sym);
+  if (idx >= 0) log.symptoms.splice(idx, 1);
+  else log.symptoms.push(sym);
+  saveData();
+  renderPeriodTracker();
+}
+window.periodToggleSymptom = periodToggleSymptom;
+
+function periodTogglePill() {
+  const ongoing = (data.periodRecords||[]).find(r => r.startDate && !r.endDate);
+  if (!ongoing) return;
+  if (!ongoing.days) ongoing.days = [];
+  const today = new Date().toISOString().slice(0,10);
+  let log = ongoing.days.find(d => d.date === today);
+  if (!log) {
+    log = { date: today, symptoms: [] };
+    ongoing.days.push(log);
+  }
+  log.pill = !log.pill;
+  saveData();
+  renderPeriodTracker();
+}
+window.periodTogglePill = periodTogglePill;
+
+function periodDeleteRecord(id) {
+  if (!confirm('この記録を削除する？')) return;
+  data.periodRecords = (data.periodRecords||[]).filter(r => r.id !== id);
+  saveData();
+  showToast('削除したよ');
+  renderPeriodTracker();
+}
+window.periodDeleteRecord = periodDeleteRecord;
+
+// ════════════════════════════════════════════════
+// 💗 体調トラッカー（conditionTracker）
+// ════════════════════════════════════════════════
+const CONDITION_STAMPS = [
+  { id:'fine',     icon:'sentiment_very_satisfied', label:'元気',      color:'#7DC9A8' },
+  { id:'normal',   icon:'sentiment_neutral',        label:'ふつう',    color:'#9AAFB8' },
+  { id:'tired',    icon:'bedtime',                  label:'だるい',    color:'#C8A07E' },
+  { id:'sleepy',   icon:'snooze',                   label:'眠い',      color:'#A090C8' },
+  { id:'headache', icon:'medication',               label:'頭痛',      color:'#D87BA0' },
+  { id:'stomach',  icon:'sick',                     label:'お腹いたい',color:'#E0A878' },
+  { id:'nausea',   icon:'sick',                     label:'吐き気',    color:'#9CBF6F' },
+  { id:'happy',    icon:'mood',                     label:'うれしい',  color:'#F0C870' },
+  { id:'sad',      icon:'sentiment_dissatisfied',   label:'かなしい',  color:'#7AA0D8' },
+  { id:'anxious',  icon:'psychology',               label:'不安',      color:'#9078B0' },
+  { id:'angry',    icon:'mood_bad',                 label:'イライラ',  color:'#E08070' },
+  { id:'cold',     icon:'ac_unit',                  label:'寒気',      color:'#80C0D8' },
+  { id:'hot',      icon:'thermostat',               label:'ほてり',    color:'#E89060' },
+  { id:'skin',     icon:'face',                     label:'肌荒れ',    color:'#E0A0C8' },
+  { id:'pms',      icon:'water_drop',               label:'PMS',       color:'#D87BA0' }
+];
+
+function renderConditionTracker() {
+  const app = document.getElementById('app');
+  if (!app) return;
+  if (!data.conditionRecords) data.conditionRecords = [];
+
+  let html = '';
+  // ヘッダー
+  html += '<div style="padding:14px 16px 8px;display:flex;align-items:center;gap:10px;">';
+  html += '<button onclick="navBack()" style="padding:6px;background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded">arrow_back_ios</span></button>';
+  html += '<div style="flex:1;text-align:center;font-size:16px;font-weight:900;color:var(--ink-dark);">💗 体調</div>';
+  html += '<div style="width:36px;"></div>';
+  html += '</div>';
+
+  // 今日の状態タイトル
+  const todayStr = new Date().toISOString().slice(0,10);
+  const todayRecords = data.conditionRecords.filter(r => (r.date||'').slice(0,10) === todayStr);
+  html += '<div style="padding:0 16px 12px;">';
+  html += '<div style="background:linear-gradient(135deg,#FFF0F5,#FCE4EC);border-radius:16px;padding:14px;text-align:center;">';
+  html += '<div style="font-size:11px;font-weight:800;color:var(--ink-sub);margin-bottom:4px;">今日のスタンプ</div>';
+  if (todayRecords.length > 0) {
+    html += '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">';
+    todayRecords.slice(0,8).forEach(r => {
+      const s = CONDITION_STAMPS.find(x => x.id === r.stampId);
+      if (s) html += '<span style="background:white;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;color:'+s.color+';border:1.5px solid '+s.color+';">'+s.label+'</span>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="font-size:13px;color:var(--ink-sub);">まだないよ。下から選んでね🌸</div>';
+  }
+  html += '</div>';
+  html += '</div>';
+
+  // スタンプ選択
+  html += '<div style="padding:0 16px 12px;">';
+  html += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;">スタンプを押して記録</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
+  CONDITION_STAMPS.forEach(s => {
+    html += '<button onclick="conditionStamp(\''+s.id+'\')" style="padding:10px 4px;background:white;border:1.5px solid '+s.color+'66;border-radius:14px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform 0.1s;" onmousedown="this.style.transform=\'scale(0.95)\'" onmouseup="this.style.transform=\'scale(1)\'">';
+    html += '<span class="material-symbols-rounded" style="font-size:24px;color:'+s.color+';">'+s.icon+'</span>';
+    html += '<span style="font-size:10px;font-weight:700;color:var(--ink-dark);">'+s.label+'</span>';
+    html += '</button>';
+  });
+  html += '</div>';
+  html += '</div>';
+
+  // 履歴
+  if (data.conditionRecords.length > 0) {
+    html += '<div style="padding:0 16px 80px;">';
+    html += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;">📋 履歴</div>';
+    const sorted = data.conditionRecords.slice().sort((a,b) => b.timestamp - a.timestamp);
+    sorted.slice(0,30).forEach(r => {
+      const s = CONDITION_STAMPS.find(x => x.id === r.stampId);
+      if (!s) return;
+      const d = new Date(r.timestamp);
+      const dateStr = (d.getMonth()+1)+'/'+d.getDate()+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+      html += '<div style="background:white;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">';
+      html += '<span class="material-symbols-rounded" style="font-size:24px;color:'+s.color+';">'+s.icon+'</span>';
+      html += '<div style="flex:1;">';
+      html += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);">'+s.label+'</div>';
+      html += '<div style="font-size:10px;color:var(--ink-sub);">'+dateStr+'</div>';
+      if (r.note) html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:4px;">'+escapeHtml(r.note)+'</div>';
+      html += '</div>';
+      html += '<button onclick="conditionDelete(\''+r.id+'\')" style="padding:4px;background:none;border:none;cursor:pointer;color:var(--ink-light);"><span class="material-symbols-rounded" style="font-size:16px;">delete</span></button>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  app.innerHTML = html;
+}
+window.renderConditionTracker = renderConditionTracker;
+
+function conditionStamp(stampId) {
+  if (!data.conditionRecords) data.conditionRecords = [];
+  // メモ入力モーダル
+  const s = CONDITION_STAMPS.find(x => x.id === stampId);
+  if (!s) return;
+  const ex = document.getElementById('condStampModal');
+  if (ex) ex.remove();
+  let h = '<div id="condStampModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="background:white;border-radius:20px 20px 0 0;padding:20px 18px 32px;width:100%;max-width:480px;">';
+  h += '<div style="text-align:center;margin-bottom:14px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:36px;color:'+s.color+';">'+s.icon+'</span>';
+  h += '<div style="font-size:14px;font-weight:900;color:var(--ink-dark);margin-top:4px;">'+s.label+' を記録</div>';
+  h += '</div>';
+  h += '<label style="font-size:11px;font-weight:700;color:var(--ink-sub);">メモ（任意）</label>';
+  h += '<textarea id="condNote" placeholder="どんな感じ？" rows="3" style="width:100%;margin-top:4px;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:none;box-sizing:border-box;"></textarea>';
+  h += '<div style="display:flex;gap:8px;margin-top:14px;">';
+  h += '<button onclick="document.getElementById(\'condStampModal\').remove()" style="flex:1;padding:11px;border:1.5px solid var(--line);background:white;color:var(--ink-sub);border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="conditionSaveStamp(\''+stampId+'\')" style="flex:1;padding:11px;border:none;background:'+s.color+';color:white;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">記録🌸</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(()=>{const i=document.getElementById('condNote');if(i)i.focus();},80);
+}
+window.conditionStamp = conditionStamp;
+
+function conditionSaveStamp(stampId) {
+  const note = (document.getElementById('condNote').value||'').trim();
+  const now = Date.now();
+  if (!data.conditionRecords) data.conditionRecords = [];
+  data.conditionRecords.unshift({
+    id: 'cond_' + now,
+    stampId: stampId,
+    note: note,
+    timestamp: now,
+    date: new Date().toISOString()
+  });
+  if (data.conditionRecords.length > 500) data.conditionRecords = data.conditionRecords.slice(0,500);
+  saveData();
+  document.getElementById('condStampModal').remove();
+  showToast('🌸 記録したよ');
+  renderConditionTracker();
+}
+window.conditionSaveStamp = conditionSaveStamp;
+
+function conditionDelete(id) {
+  if (!confirm('この記録を削除する？')) return;
+  data.conditionRecords = (data.conditionRecords||[]).filter(r => r.id !== id);
+  saveData();
+  renderConditionTracker();
+}
+window.conditionDelete = conditionDelete;
+
+// ════════════════════════════════════════════════
+// 📊 ヘルスダッシュボード（healthDashboard）
+// ════════════════════════════════════════════════
+const HEALTH_METRICS = [
+  { id:'temperature', label:'体温',   icon:'thermostat',   unit:'℃',  min:35.0, max:42.0, step:0.1, color:'#E89060', placeholder:'36.5' },
+  { id:'bloodPressureHigh', label:'血圧（上）', icon:'monitor_heart', unit:'mmHg', min:60, max:220, step:1, color:'#E94B6F', placeholder:'120' },
+  { id:'bloodPressureLow',  label:'血圧（下）', icon:'monitor_heart', unit:'mmHg', min:40, max:140, step:1, color:'#C0356A', placeholder:'80' },
+  { id:'pulse',       label:'脈拍',   icon:'favorite',     unit:'bpm',min:30, max:200, step:1, color:'#D87BA0', placeholder:'70' },
+  { id:'sleep',       label:'睡眠',   icon:'bedtime',      unit:'時間',min:0, max:24, step:0.5, color:'#7AA0D8', placeholder:'7' },
+  { id:'water',       label:'水分',   icon:'water_drop',   unit:'L',   min:0, max:10, step:0.1, color:'#5DC0D8', placeholder:'1.5' },
+  { id:'steps',       label:'歩数',   icon:'directions_walk',unit:'歩',min:0, max:50000, step:100, color:'#7DC9A8', placeholder:'8000' },
+  { id:'oxygen',      label:'酸素',   icon:'air',          unit:'%',  min:70, max:100, step:1, color:'#85C1E9', placeholder:'98' }
+];
+
+function renderHealthDashboard() {
+  const app = document.getElementById('app');
+  if (!app) return;
+  if (!data.healthRecords) data.healthRecords = [];
+
+  let html = '';
+  // ヘッダー
+  html += '<div style="padding:14px 16px 8px;display:flex;align-items:center;gap:10px;">';
+  html += '<button onclick="navBack()" style="padding:6px;background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded">arrow_back_ios</span></button>';
+  html += '<div style="flex:1;text-align:center;font-size:16px;font-weight:900;color:var(--ink-dark);">📊 ヘルス</div>';
+  html += '<div style="width:36px;"></div>';
+  html += '</div>';
+
+  // 説明
+  html += '<div style="padding:0 16px 12px;font-size:11px;color:var(--ink-sub);text-align:center;">数値の記録だよ🌸 カードをタップで記録</div>';
+
+  // カードグリッド（2列）
+  html += '<div style="padding:0 16px 80px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">';
+  HEALTH_METRICS.forEach(m => {
+    // 最新値
+    const latest = data.healthRecords.filter(r => r.type === m.id).sort((a,b) => b.timestamp - a.timestamp)[0];
+    html += '<button onclick="healthOpenInput(\''+m.id+'\')" style="background:white;border:1.5px solid '+m.color+'33;border-radius:16px;padding:14px 10px;cursor:pointer;font-family:inherit;text-align:left;transition:transform 0.1s;" onmousedown="this.style.transform=\'scale(0.97)\'" onmouseup="this.style.transform=\'scale(1)\'">';
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:20px;color:'+m.color+';">'+m.icon+'</span>';
+    html += '<span style="font-size:11px;font-weight:800;color:var(--ink-dark);">'+m.label+'</span>';
+    html += '</div>';
+    if (latest) {
+      html += '<div style="font-size:24px;font-weight:900;color:'+m.color+';line-height:1;">'+latest.value+'<span style="font-size:11px;color:var(--ink-sub);margin-left:3px;">'+m.unit+'</span></div>';
+      const d = new Date(latest.timestamp);
+      html += '<div style="font-size:9px;color:var(--ink-sub);margin-top:4px;">'+(d.getMonth()+1)+'/'+d.getDate()+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')+'</div>';
+    } else {
+      html += '<div style="font-size:13px;color:var(--ink-light);font-weight:700;">タップで記録</div>';
+    }
+    html += '</button>';
+  });
+  html += '</div>';
+
+  // 最近の履歴
+  if (data.healthRecords.length > 0) {
+    html += '<div style="padding:0 16px 90px;">';
+    html += '<div style="font-size:12px;font-weight:800;color:var(--ink-dark);margin-bottom:8px;">📋 最近の記録</div>';
+    const sorted = data.healthRecords.slice().sort((a,b) => b.timestamp - a.timestamp);
+    sorted.slice(0,15).forEach(r => {
+      const m = HEALTH_METRICS.find(x => x.id === r.type);
+      if (!m) return;
+      const d = new Date(r.timestamp);
+      const dateStr = (d.getMonth()+1)+'/'+d.getDate()+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+      html += '<div style="background:white;border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:5px;display:flex;align-items:center;gap:10px;">';
+      html += '<span class="material-symbols-rounded" style="font-size:20px;color:'+m.color+';">'+m.icon+'</span>';
+      html += '<div style="flex:1;">';
+      html += '<div style="font-size:11px;font-weight:800;color:var(--ink-dark);">'+m.label+'</div>';
+      html += '<div style="font-size:9px;color:var(--ink-sub);">'+dateStr+'</div>';
+      html += '</div>';
+      html += '<div style="font-size:15px;font-weight:900;color:'+m.color+';">'+r.value+'<span style="font-size:10px;color:var(--ink-sub);margin-left:2px;">'+m.unit+'</span></div>';
+      html += '<button onclick="healthDelete(\''+r.id+'\')" style="padding:4px;background:none;border:none;cursor:pointer;color:var(--ink-light);"><span class="material-symbols-rounded" style="font-size:14px;">delete</span></button>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  app.innerHTML = html;
+}
+window.renderHealthDashboard = renderHealthDashboard;
+
+function healthOpenInput(metricId) {
+  const m = HEALTH_METRICS.find(x => x.id === metricId);
+  if (!m) return;
+  const ex = document.getElementById('healthInputModal');
+  if (ex) ex.remove();
+  let h = '<div id="healthInputModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;">';
+  h += '<div style="background:white;border-radius:20px 20px 0 0;padding:20px 18px 32px;width:100%;max-width:480px;">';
+  h += '<div style="text-align:center;margin-bottom:14px;">';
+  h += '<span class="material-symbols-rounded" style="font-size:36px;color:'+m.color+';">'+m.icon+'</span>';
+  h += '<div style="font-size:14px;font-weight:900;color:var(--ink-dark);margin-top:4px;">'+m.label+' を記録</div>';
+  h += '</div>';
+  h += '<div style="display:flex;align-items:baseline;justify-content:center;gap:6px;margin-bottom:14px;">';
+  h += '<input id="healthValueInput" type="number" inputmode="decimal" min="'+m.min+'" max="'+m.max+'" step="'+m.step+'" placeholder="'+m.placeholder+'" style="width:140px;padding:14px;border:1.5px solid '+m.color+';border-radius:12px;font-family:inherit;font-size:24px;font-weight:900;text-align:center;color:'+m.color+';background:white;box-sizing:border-box;">';
+  h += '<span style="font-size:14px;font-weight:800;color:var(--ink-sub);">'+m.unit+'</span>';
+  h += '</div>';
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<button onclick="document.getElementById(\'healthInputModal\').remove()" style="flex:1;padding:12px;border:1.5px solid var(--line);background:white;color:var(--ink-sub);border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  h += '<button onclick="healthSaveInput(\''+metricId+'\')" style="flex:1;padding:12px;border:none;background:'+m.color+';color:white;border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">記録🌸</button>';
+  h += '</div>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+  setTimeout(()=>{const i=document.getElementById('healthValueInput');if(i)i.focus();},80);
+}
+window.healthOpenInput = healthOpenInput;
+
+function healthSaveInput(metricId) {
+  const val = parseFloat(document.getElementById('healthValueInput').value);
+  if (isNaN(val)) { showToast('数値を入力してね'); return; }
+  if (!data.healthRecords) data.healthRecords = [];
+  data.healthRecords.unshift({
+    id: 'h_' + Date.now(),
+    type: metricId,
+    value: val,
+    timestamp: Date.now()
+  });
+  if (data.healthRecords.length > 1000) data.healthRecords = data.healthRecords.slice(0,1000);
+  saveData();
+  document.getElementById('healthInputModal').remove();
+  showToast('🌸 記録したよ');
+  renderHealthDashboard();
+}
+window.healthSaveInput = healthSaveInput;
+
+function healthDelete(id) {
+  if (!confirm('この記録を削除する？')) return;
+  data.healthRecords = (data.healthRecords||[]).filter(r => r.id !== id);
+  saveData();
+  renderHealthDashboard();
+}
+window.healthDelete = healthDelete;
+
 function renderRewardListPage() {
   const app = document.getElementById('app');
   document.getElementById('bottomNav').style.display = 'flex';
@@ -31830,6 +32325,9 @@ function navBack() {
   if (currentView === 'me_diary') { currentView = 'me'; render(); }
   else if (currentView === 'collection_folder') { currentView = 'me'; data.meTab = 'collection'; render(); }
   else if (currentView === 'kimochiRoom') { currentView = 'me'; render(); }
+  else if (currentView === 'periodTracker') { currentView = 'me'; render(); }
+  else if (currentView === 'conditionTracker') { currentView = 'me'; render(); }
+  else if (currentView === 'healthDashboard') { currentView = 'me'; render(); }
   else if (currentView === 'me') { switchMode('pet'); currentView = 'top'; render(); }
   else if (currentView === 'nest') { switchMode('pet'); currentView = 'top'; render(); }
   else if (currentView === 'secret_memo') {
@@ -55070,6 +55568,9 @@ function render() {
   else if (currentView === 'collection_folder') renderCollectionFolder();
   else if (currentView === 'houses') renderHouses();
   else if (currentView === 'rewardList') renderRewardListPage();
+  else if (currentView === 'periodTracker') renderPeriodTracker();
+  else if (currentView === 'conditionTracker') renderConditionTracker();
+  else if (currentView === 'healthDashboard') renderHealthDashboard();
   else if (currentView === 'houses_fav') renderHousesFav();
   else if (currentView === 'house') renderHouse();
   else if (currentView === 'pet') renderPet();
