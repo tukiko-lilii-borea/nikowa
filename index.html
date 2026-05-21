@@ -42730,6 +42730,11 @@ function renderTown() {
 
     // 地図
     if (window._nearbyGeoStatus === 'ok') {
+      // ★ 「今ここをお気に入り」ボタン（GPS取得済みのときだけ表示）
+      html += '<button onclick="openCurrentLocFavModal()" style="width:100%;background:linear-gradient(135deg,#E84855 0%,#C7384D 100%);border:none;color:white;border-radius:14px;padding:13px;font-size:13px;font-weight:900;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:10px;box-shadow:0 4px 12px rgba(232,72,85,0.25);">';
+      html += '<span class="material-symbols-rounded" style="font-size:18px;">push_pin</span>';
+      html += '今ここをお気に入り';
+      html += '</button>';
       html += '<div style="position:relative;">';
       html += '<div id="nearbyMap" style="background:#eceff3;border-radius:14px;height:50vh;margin-bottom:8px;overflow:hidden;"></div>';
       html += '<div id="nearbyOverlayCard" style="display:none;position:absolute;bottom:12px;left:10px;right:10px;z-index:10;"></div>';
@@ -52941,6 +52946,153 @@ function toggleNearbyFav(placeId) {
     showToast('お気に入りに追加したよ♥');
   }
 }
+
+// ════════════════════════════════════════════
+// 「今ここをお気に入り」モーダル
+// ════════════════════════════════════════════
+async function openCurrentLocFavModal() {
+  if (!window._nearbyGeoStatus || window._nearbyGeoStatus !== 'ok') {
+    showToast('先に現在地を取得してね');
+    return;
+  }
+  // モーダルDOM作成
+  let modal = document.getElementById('curLocFavModal');
+  if (modal) modal.remove();
+  modal = document.createElement('div');
+  modal.id = 'curLocFavModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2500;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 0.2s;';
+  modal.innerHTML =
+    '<div style="background:white;border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;padding:20px 18px 24px;position:relative;">' +
+    '  <div style="text-align:center;margin-bottom:16px;">' +
+    '    <div style="font-size:18px;font-weight:900;color:var(--ink-dark);margin-bottom:4px;">📍 今いる場所を登録</div>' +
+    '    <div id="curLocAddr" style="font-size:11px;color:var(--ink-sub);font-weight:700;line-height:1.5;">住所を取得中…</div>' +
+    '  </div>' +
+    '  <div style="border-top:1px solid var(--line-soft);margin:0 -18px 14px;"></div>' +
+    '  <div style="font-size:12px;color:var(--ink-sub);font-weight:800;margin-bottom:8px;">近くにあるお店</div>' +
+    '  <div id="curLocNearbyList" style="max-height:30vh;overflow-y:auto;margin-bottom:14px;">' +
+    '    <div style="font-size:11px;color:var(--ink-light);text-align:center;padding:14px;">読み込み中…</div>' +
+    '  </div>' +
+    '  <div style="border-top:1px solid var(--line-soft);margin:0 -18px 14px;"></div>' +
+    '  <div style="font-size:12px;color:var(--ink-sub);font-weight:800;margin-bottom:8px;">またはここに名前をつけて保存</div>' +
+    '  <input id="curLocCustomName" type="text" placeholder="例：パーキング、◯◯さん家、マツエクサロン" style="width:100%;padding:11px 12px;border:1.5px solid var(--card-border);border-radius:12px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink-dark);outline:none;margin-bottom:10px;box-sizing:border-box;">' +
+    '  <button onclick="saveCustomFavPlace()" style="width:100%;background:var(--accent);border:none;color:white;border-radius:12px;padding:12px;font-size:13px;font-weight:900;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">' +
+    '    <span class="material-symbols-rounded" style="font-size:18px;">favorite</span>この場所を保存' +
+    '  </button>' +
+    '  <button onclick="closeCurrentLocFavModal()" style="width:100%;background:transparent;border:none;color:var(--ink-sub);padding:10px;margin-top:6px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;">キャンセル</button>' +
+    '</div>';
+  document.body.appendChild(modal);
+  // 背景クリックで閉じる
+  modal.onclick = function(e) {
+    if (e.target === modal) closeCurrentLocFavModal();
+  };
+  // 現在地住所を取得（Geocoding逆引き）
+  reverseGeocodeCurrentLoc();
+  // 近くの店リスト表示
+  renderCurLocNearbyList();
+}
+window.openCurrentLocFavModal = openCurrentLocFavModal;
+
+function closeCurrentLocFavModal() {
+  const modal = document.getElementById('curLocFavModal');
+  if (modal) modal.remove();
+}
+window.closeCurrentLocFavModal = closeCurrentLocFavModal;
+
+async function reverseGeocodeCurrentLoc() {
+  const el = document.getElementById('curLocAddr');
+  if (!el) return;
+  if (typeof google === 'undefined' || !google.maps) {
+    el.textContent = '緯度経度 ' + window._nearbyLat.toFixed(5) + ', ' + window._nearbyLng.toFixed(5);
+    return;
+  }
+  try {
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ location: { lat: window._nearbyLat, lng: window._nearbyLng } }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        el.textContent = '📍 ' + results[0].formatted_address.replace(/^日本、?\s*/, '');
+      } else {
+        el.textContent = '緯度経度 ' + window._nearbyLat.toFixed(5) + ', ' + window._nearbyLng.toFixed(5);
+      }
+    });
+  } catch (e) {
+    el.textContent = '緯度経度 ' + window._nearbyLat.toFixed(5) + ', ' + window._nearbyLng.toFixed(5);
+  }
+}
+
+function renderCurLocNearbyList() {
+  const el = document.getElementById('curLocNearbyList');
+  if (!el) return;
+  const results = window._nearbyResults || [];
+  if (results.length === 0) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--ink-light);text-align:center;padding:14px;">近くの店リストがまだありません。<br>「近く」検索を一度実行してね🌷</div>';
+    return;
+  }
+  let h = '';
+  for (const r of results.slice(0, 15)) {
+    const idEsc = r.placeId.replace(/'/g, "\\'");
+    const isFav = !!(placesFavs['nearby'] && placesFavs['nearby'][r.placeId]);
+    const distStr = r.distance < 1000 ? Math.round(r.distance) + 'm' : (r.distance/1000).toFixed(1) + 'km';
+    h += '<div style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line-soft);">';
+    h += '<div style="width:36px;height:36px;border-radius:8px;background:var(--surface-warm);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">📍</div>';
+    h += '<div style="flex:1;min-width:0;">';
+    h += '<div style="font-weight:700;font-size:12.5px;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(r.name) + '</div>';
+    h += '<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;">' + distStr + '</div>';
+    h += '</div>';
+    h += '<button onclick="addToFavFromModal(\'' + idEsc + '\')" style="flex-shrink:0;background:' + (isFav ? '#E84855' : 'var(--accent)') + ';color:white;border:none;border-radius:100px;padding:7px 14px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer;">' + (isFav ? '✓ 登録済' : '+ 追加') + '</button>';
+    h += '</div>';
+  }
+  el.innerHTML = h;
+}
+
+function addToFavFromModal(placeId) {
+  if (!placesFavs['nearby']) placesFavs['nearby'] = {};
+  const r = (window._nearbyResults || []).find(x => x.placeId === placeId);
+  if (!r) return;
+  if (placesFavs['nearby'][placeId]) {
+    // 既に登録済 → 削除
+    delete placesFavs['nearby'][placeId];
+    savePlacesFavs();
+    showToast('お気に入りから外したよ');
+  } else {
+    placesFavs['nearby'][placeId] = { id: placeId, name: r.name, addr: r.address, mapsUrl: r.mapsUrl, catIcon: '📍' };
+    savePlacesFavs();
+    showToast('🌷 ' + r.name + ' をお気に入りに追加');
+  }
+  renderCurLocNearbyList();
+}
+window.addToFavFromModal = addToFavFromModal;
+
+function saveCustomFavPlace() {
+  const input = document.getElementById('curLocCustomName');
+  if (!input) return;
+  const name = (input.value || '').trim();
+  if (!name) {
+    showToast('名前を入れてね🌷');
+    input.focus();
+    return;
+  }
+  if (!data.customFavPlaces) data.customFavPlaces = [];
+  const id = 'cf_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+  // 住所も取得（既に reverseGeocode で表示済みのものを使う）
+  const addrEl = document.getElementById('curLocAddr');
+  let address = '';
+  if (addrEl && addrEl.textContent) {
+    address = addrEl.textContent.replace(/^📍\s*/, '');
+  }
+  data.customFavPlaces.unshift({
+    id: id,
+    name: name,
+    lat: window._nearbyLat,
+    lng: window._nearbyLng,
+    address: address,
+    createdAt: new Date().toISOString(),
+    memo: ''
+  });
+  saveData();
+  closeCurrentLocFavModal();
+  showToast('🌷 ' + name + ' を保存したよ');
+}
+window.saveCustomFavPlace = saveCustomFavPlace;
 
 function togglePlaceFav(placeId) {
   const tab = townMainTab;
