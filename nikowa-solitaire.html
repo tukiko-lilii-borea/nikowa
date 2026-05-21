@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>ソリティア | にこわ遊園地</title>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#C8EFE0;--surface:#fff;--accent:#2EB875;--accent-deep:#1a8f58;
+  --ink:#3D2B1F;--ink-sub:#8B7355;--line:#E0D5C8;
+  --card-w:46px;--card-h:64px;--card-r:6px;
+  --red:#E03030;--black:#1A1A2E;
+  --back-grad:linear-gradient(135deg,#2EB875 0%,#1a8f58 50%,#2EB875 100%);
+}
+html,body{width:100%;height:100%;overflow:hidden;
+  font-family:'M PLUS Rounded 1c',sans-serif;background:var(--bg);
+  user-select:none;-webkit-user-select:none;}
+
+#header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;background:rgba(255,255,255,0.85);
+  border-bottom:1.5px solid var(--line);position:relative;z-index:10;
+}
+.title{font-size:15px;font-weight:900;color:var(--accent-deep);line-height:1.1;}
+.timer-disp{font-size:10px;color:var(--ink-sub);font-weight:700;margin-top:2px;}
+.hbtn{padding:6px 12px;border-radius:100px;border:none;font-family:inherit;
+  font-size:11px;font-weight:800;cursor:pointer;-webkit-appearance:none;}
+.hbtn-home{background:var(--line);color:var(--ink-sub);}
+.hbtn-new{background:var(--accent);color:#fff;}
+
+#game{
+  padding:8px;
+  height:calc(100vh - 50px - 38px);
+  display:flex;flex-direction:column;gap:8px;
+}
+
+#top-zone{display:flex;align-items:flex-start;gap:6px;flex-shrink:0;}
+.zone-label{font-size:8px;color:var(--ink-sub);font-weight:800;
+  text-align:center;margin-bottom:3px;letter-spacing:1px;}
+.zone-group{display:flex;gap:4px;}
+.spacer{flex:1;}
+
+.slot,.card{
+  width:var(--card-w);height:var(--card-h);
+  border-radius:var(--card-r);flex-shrink:0;
+  position:relative;cursor:pointer;
+}
+.slot{
+  border:2px dashed rgba(46,184,117,0.35);
+  background:rgba(255,255,255,0.25);
+  display:flex;align-items:center;justify-content:center;
+}
+.slot-icon{font-size:16px;opacity:0.4;color:var(--ink-sub);}
+
+.card.face-down{
+  background:var(--back-grad);
+  box-shadow:0 2px 4px rgba(0,0,0,0.12);
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(0,0,0,0.08);
+}
+.card.face-down::before{
+  content:'';position:absolute;inset:4px;
+  border:1.5px solid rgba(255,255,255,0.45);border-radius:4px;
+}
+.card.face-down .back-art{
+  position:relative;z-index:1;width:80%;height:40%;
+  object-fit:contain;opacity:0.92;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,0.15)) brightness(10);
+}
+.card.face-up{
+  background:var(--surface);box-shadow:0 2px 6px rgba(0,0,0,0.14);
+  border:1px solid rgba(0,0,0,0.1);
+}
+.card.selected{
+  transform:translateY(-6px);
+  box-shadow:0 8px 22px rgba(46,184,117,0.55)!important;
+  border:2px solid var(--accent)!important;z-index:50!important;
+}
+.card.red{color:var(--red);}
+.card.black{color:var(--black);}
+.rank-tl,.rank-br{position:absolute;font-size:11px;font-weight:900;line-height:1;text-align:center;}
+.rank-tl{top:3px;left:4px;}
+.rank-br{bottom:3px;right:4px;transform:rotate(180deg);}
+.suit-center{position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);font-size:20px;line-height:1;}
+.char-img{position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);width:62%;height:62%;
+  object-fit:contain;pointer-events:none;}
+
+#tableau{
+  display:flex;gap:5px;flex:1;min-height:0;
+  align-items:flex-start;overflow-y:auto;overflow-x:hidden;
+}
+.col{
+  flex:1;min-width:0;position:relative;
+  min-height:var(--card-h);cursor:pointer;
+}
+.col .col-slot{
+  width:100%;height:var(--card-h);
+  border-radius:var(--card-r);
+  border:2px dashed rgba(46,184,117,0.3);
+  background:rgba(255,255,255,0.15);
+  display:flex;align-items:center;justify-content:center;
+  position:absolute;top:0;left:0;cursor:pointer;
+}
+.col .card{width:100%;}
+
+#status-bar{
+  position:fixed;bottom:0;left:0;right:0;
+  padding:9px 14px;background:rgba(255,255,255,0.92);
+  border-top:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:11px;color:var(--ink-sub);font-weight:800;z-index:5;
+}
+.score-disp{color:var(--accent-deep);font-size:14px;font-weight:900;}
+.sbtn{padding:5px 12px;background:var(--line);border:none;border-radius:100px;
+  font-family:inherit;font-size:11px;font-weight:800;color:var(--ink-sub);
+  cursor:pointer;-webkit-appearance:none;}
+
+#clear-overlay{
+  display:none;position:fixed;inset:0;z-index:100;
+  background:rgba(46,184,117,0.94);
+  flex-direction:column;align-items:center;justify-content:center;gap:14px;
+}
+#clear-overlay.show{display:flex;}
+.clear-title{font-size:38px;font-weight:900;color:#fff;}
+.clear-sub{font-size:14px;color:rgba(255,255,255,0.92);font-weight:700;}
+.clear-score{font-size:24px;font-weight:900;color:#fff;
+  background:rgba(255,255,255,0.22);padding:8px 24px;border-radius:100px;}
+.clear-btn{padding:13px 32px;background:#fff;border:none;border-radius:100px;
+  font-family:inherit;font-size:14px;font-weight:900;color:var(--accent-deep);
+  cursor:pointer;-webkit-appearance:none;}
+.clear-btn.ghost{background:rgba(255,255,255,0.22);color:#fff;}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div>
+    <div class="title">🃏 ソリティア</div>
+    <div class="timer-disp" id="timer">0:00</div>
+  </div>
+  <div style="display:flex;gap:6px;">
+    <button class="hbtn hbtn-home" type="button" onclick="goHome()">← ホーム</button>
+    <button class="hbtn hbtn-new" type="button" onclick="newGame()">新しく</button>
+  </div>
+</div>
+
+<div id="game">
+  <div id="top-zone">
+    <div>
+      <div class="zone-label">山札</div>
+      <div class="zone-group">
+        <div class="slot" id="stock-slot"></div>
+        <div class="slot" id="waste-slot"></div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div>
+      <div class="zone-label">ゴール</div>
+      <div class="zone-group" id="foundations">
+        <div class="slot" data-found="S"></div>
+        <div class="slot" data-found="H"></div>
+        <div class="slot" data-found="D"></div>
+        <div class="slot" data-found="C"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tableau">
+    <div class="col" data-col="0"></div>
+    <div class="col" data-col="1"></div>
+    <div class="col" data-col="2"></div>
+    <div class="col" data-col="3"></div>
+    <div class="col" data-col="4"></div>
+    <div class="col" data-col="5"></div>
+    <div class="col" data-col="6"></div>
+  </div>
+</div>
+
+<div id="status-bar">
+  <div>スコア <span class="score-disp" id="score-disp">0</span></div>
+  <button class="sbtn" type="button" onclick="undoMove()">↩ 戻す</button>
+  <div id="moves-disp">0手</div>
+</div>
+
+<div id="clear-overlay">
+  <div style="font-size:64px;">🌸</div>
+  <div class="clear-title">クリア！</div>
+  <div class="clear-sub" id="clear-time"></div>
+  <div class="clear-score" id="clear-score"></div>
+  <button class="clear-btn" type="button" onclick="newGame()">もう一回</button>
+  <button class="clear-btn ghost" type="button" onclick="goHome()">ホームへ</button>
+</div>
+
+<script>
+'use strict';
+
+const SUITS = ['S','H','D','C'];
+const SUIT_SYMBOL = {S:'♠',H:'♥',D:'♦',C:'♣'};
+const SUIT_COLOR  = {S:'black',H:'red',D:'red',C:'black'};
+const RANK_STR = ['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const CHAR_BY_RANK = {
+  1:  'assets/beteli.svg',
+  11: 'assets/anzu.svg',
+  12: 'assets/beru.svg',
+  13: 'assets/kotatu.svg',
+};
+const BACK_ART = 'assets/logo-soft.svg';
+
+var stock=[], waste=[];
+var tableau=[[],[],[],[],[],[],[]];
+var foundation={S:[],H:[],D:[],C:[]};
+var selected=null;
+var score=0, moves=0;
+var gameStart=null, timerInt=null;
+var history=[];
+
+function makeDeck(){
+  var d=[];
+  for(var i=0;i<SUITS.length;i++){
+    for(var r=1;r<=13;r++) d.push({suit:SUITS[i],rank:r,faceUp:false});
+  }
+  return d;
+}
+function shuffle(a){
+  for(var i=a.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=a[i];a[i]=a[j];a[j]=t;
+  }
+  return a;
+}
+
+function newGame(){
+  if(timerInt) clearInterval(timerInt);
+  document.getElementById('clear-overlay').classList.remove('show');
+  selected=null; score=0; moves=0; history=[];
+  var deck=shuffle(makeDeck());
+  tableau=[[],[],[],[],[],[],[]];
+  foundation={S:[],H:[],D:[],C:[]};
+  var idx=0;
+  for(var c=0;c<7;c++){
+    for(var r=0;r<=c;r++){
+      var card=deck[idx++];
+      card.faceUp=(r===c);
+      tableau[c].push(card);
+    }
+  }
+  stock=deck.slice(idx);
+  for(var k=0;k<stock.length;k++) stock[k].faceUp=false;
+  waste=[];
+  gameStart=Date.now();
+  timerInt=setInterval(updateTimer,1000);
+  render();
+}
+
+// ════════════════════════════════════════════
+// カード要素生成
+// ════════════════════════════════════════════
+function buildCardEl(card, isSelected){
+  var el=document.createElement('div');
+  el.className='card '+(card.faceUp?'face-up':'face-down');
+  if(card.faceUp) el.classList.add(SUIT_COLOR[card.suit]);
+  if(isSelected) el.classList.add('selected');
+
+  if(card.faceUp){
+    var rs=RANK_STR[card.rank];
+    var ss=SUIT_SYMBOL[card.suit];
+    var topLabel=document.createElement('div');
+    topLabel.className='rank-tl';
+    topLabel.innerHTML=rs+'<br>'+ss;
+    el.appendChild(topLabel);
+    var botLabel=document.createElement('div');
+    botLabel.className='rank-br';
+    botLabel.innerHTML=rs+'<br>'+ss;
+    el.appendChild(botLabel);
+    if(CHAR_BY_RANK[card.rank]){
+      var img=document.createElement('img');
+      img.className='char-img';
+      img.src=CHAR_BY_RANK[card.rank];
+      img.alt='';
+      img.onerror=function(){
+        this.style.display='none';
+        var sc=document.createElement('div');
+        sc.className='suit-center';
+        sc.textContent=ss;
+        el.appendChild(sc);
+      };
+      el.appendChild(img);
+    } else {
+      var sc=document.createElement('div');
+      sc.className='suit-center';
+      sc.textContent=ss;
+      el.appendChild(sc);
+    }
+  } else {
+    var bimg=document.createElement('img');
+    bimg.className='back-art';
+    bimg.src=BACK_ART;
+    bimg.alt='';
+    bimg.onerror=function(){
+      this.style.display='none';
+      var sp=document.createElement('span');
+      sp.style.cssText='position:relative;z-index:1;color:rgba(255,255,255,0.85);font-size:14px;font-weight:900;letter-spacing:1px;';
+      sp.textContent='にこわ';
+      el.appendChild(sp);
+    };
+    el.appendChild(bimg);
+  }
+  return el;
+}
+
+// ════════════════════════════════════════════
+// 描画
+// ════════════════════════════════════════════
+function render(){
+  document.getElementById('score-disp').textContent=score;
+  document.getElementById('moves-disp').textContent=moves+'手';
+  renderStockSlot();
+  renderWasteSlot();
+  renderFoundationSlots();
+  renderTableauCols();
+}
+
+function renderStockSlot(){
+  var slot=document.getElementById('stock-slot');
+  slot.innerHTML='';
+  slot.onclick=function(){ drawFromStock(); };
+  if(stock.length>0){
+    var el=buildCardEl({suit:'S',rank:1,faceUp:false},false);
+    el.style.position='absolute';
+    el.style.top='0';el.style.left='0';
+    el.style.width='100%';el.style.height='100%';
+    slot.appendChild(el);
+    var cnt=document.createElement('div');
+    cnt.style.cssText='position:absolute;bottom:2px;right:3px;font-size:9px;font-weight:900;color:rgba(255,255,255,0.85);z-index:2;text-shadow:0 1px 2px rgba(0,0,0,0.2);';
+    cnt.textContent=stock.length;
+    slot.appendChild(cnt);
+  } else {
+    var ic=document.createElement('span');
+    ic.className='slot-icon';
+    ic.textContent='↻';
+    slot.appendChild(ic);
+  }
+}
+
+function renderWasteSlot(){
+  var slot=document.getElementById('waste-slot');
+  slot.innerHTML='';
+  if(waste.length>0){
+    var top=waste[waste.length-1];
+    var isSel=selected && selected.from==='waste';
+    var el=buildCardEl(top,isSel);
+    el.style.position='absolute';
+    el.style.top='0';el.style.left='0';
+    el.style.width='100%';el.style.height='100%';
+    el.onclick=function(ev){ ev.stopPropagation(); clickWaste(); };
+    slot.appendChild(el);
+    slot.onclick=function(){ clickWaste(); };
+  } else {
+    var ic=document.createElement('span');
+    ic.className='slot-icon';
+    ic.textContent='–';
+    slot.appendChild(ic);
+    slot.onclick=function(){};
+  }
+}
+
+function renderFoundationSlots(){
+  for(var i=0;i<SUITS.length;i++){
+    var s=SUITS[i];
+    (function(suit){
+      var slot=document.querySelector('.slot[data-found="'+suit+'"]');
+      slot.innerHTML='';
+      slot.onclick=function(){ clickFoundation(suit); };
+      var pile=foundation[suit];
+      if(pile.length===0){
+        var ic=document.createElement('span');
+        ic.className='slot-icon';
+        ic.textContent=SUIT_SYMBOL[suit];
+        slot.appendChild(ic);
+      } else {
+        var top=pile[pile.length-1];
+        var el=buildCardEl(top,false);
+        el.style.position='absolute';
+        el.style.top='0';el.style.left='0';
+        el.style.width='100%';el.style.height='100%';
+        el.onclick=function(ev){ ev.stopPropagation(); clickFoundation(suit); };
+        slot.appendChild(el);
+      }
+    })(s);
+  }
+}
+
+function renderTableauCols(){
+  for(var c=0;c<7;c++){
+    (function(cIdx){
+      var col=document.querySelector('.col[data-col="'+cIdx+'"]');
+      col.innerHTML='';
+      col.onclick=function(ev){
+        // カード上でなくカラム自体タップ → 空カラム扱い
+        if(ev.target===col) clickEmptyCol(cIdx);
+      };
+      var cards=tableau[cIdx];
+      if(cards.length===0){
+        var slot=document.createElement('div');
+        slot.className='col-slot';
+        slot.onclick=function(ev){ ev.stopPropagation(); clickEmptyCol(cIdx); };
+        col.appendChild(slot);
+        col.style.minHeight='var(--card-h)';
+        return;
+      }
+      var y=0;
+      for(var i=0;i<cards.length;i++){
+        var card=cards[i];
+        var isSel=selected && selected.from==='tableau'
+                && selected.col===cIdx && i>=selected.idx;
+        var el=buildCardEl(card,isSel);
+        el.style.position='absolute';
+        el.style.top=y+'px';el.style.left='0';
+        el.style.width='100%';
+        (function(idx){
+          el.onclick=function(ev){ ev.stopPropagation(); clickTableauCard(cIdx, idx); };
+        })(i);
+        col.appendChild(el);
+        if(i<cards.length-1) y+=card.faceUp?18:12;
+      }
+      col.style.minHeight=(y+64)+'px';
+    })(c);
+  }
+}
+
+function updateTimer(){
+  if(!gameStart) return;
+  var sec=Math.floor((Date.now()-gameStart)/1000);
+  var m=Math.floor(sec/60), s=sec%60;
+  document.getElementById('timer').textContent=m+':'+(s<10?'0':'')+s;
+}
+
+// ════════════════════════════════════════════
+// 操作
+// ════════════════════════════════════════════
+function drawFromStock(){
+  if(stock.length===0 && waste.length===0) return;
+  saveHistory();
+  if(stock.length===0){
+    stock=waste.slice().reverse();
+    for(var i=0;i<stock.length;i++) stock[i].faceUp=false;
+    waste=[];
+    score=Math.max(0,score-100);
+  } else {
+    var c=stock.pop();
+    c.faceUp=true;
+    waste.push(c);
+    moves++;
+  }
+  selected=null;
+  render();
+}
+
+function clickWaste(){
+  if(selected && selected.from==='waste'){
+    selected=null; render(); return;
+  }
+  if(selected){
+    selected=null; render(); return;
+  }
+  if(waste.length===0) return;
+  var top=waste[waste.length-1];
+  for(var i=0;i<SUITS.length;i++){
+    if(canPlaceFoundation(top, SUITS[i])){
+      saveHistory();
+      waste.pop();
+      foundation[SUITS[i]].push(top);
+      score+=15; moves++;
+      selected=null; render(); checkClear(); return;
+    }
+  }
+  selected={from:'waste', cards:[top]};
+  render();
+}
+
+function clickFoundation(suit){
+  if(!selected){
+    return;
+  }
+  if(selected.cards.length!==1){
+    selected=null; render(); return;
+  }
+  var card=selected.cards[0];
+  if(canPlaceFoundation(card, suit)){
+    saveHistory();
+    removeSelected();
+    foundation[suit].push(card);
+    flipTopCardOfTableau();
+    score+=15; moves++;
+    selected=null; render(); checkClear();
+  } else {
+    selected=null; render();
+  }
+}
+
+function clickEmptyCol(c){
+  if(!selected) return;
+  if(canPlaceTableau(selected.cards[0], c)){
+    saveHistory();
+    var cards=selected.cards.slice();
+    removeSelected();
+    tableau[c]=tableau[c].concat(cards);
+    flipTopCardOfTableau();
+    score+=3; moves++;
+    selected=null; render();
+  } else {
+    selected=null; render();
+  }
+}
+
+function clickTableauCard(c, idx){
+  var col=tableau[c];
+  var card=col[idx];
+
+  if(selected){
+    // 移動先候補
+    if(idx===col.length-1 && canPlaceTableau(selected.cards[0], c)){
+      saveHistory();
+      var cards=selected.cards.slice();
+      removeSelected();
+      tableau[c]=tableau[c].concat(cards);
+      flipTopCardOfTableau();
+      score+=3; moves++;
+      selected=null; render(); return;
+    }
+    // 同じ位置 → 解除
+    if(selected.from==='tableau' && selected.col===c && selected.idx===idx){
+      selected=null; render(); return;
+    }
+    // 別カードへ選択切替
+    if(card.faceUp){
+      selected={from:'tableau', col:c, idx:idx, cards:col.slice(idx)};
+      render();
+    } else {
+      selected=null; render();
+    }
+    return;
+  }
+
+  // 選択なし
+  if(!card.faceUp){
+    if(idx===col.length-1){
+      // めくる
+      saveHistory();
+      card.faceUp=true;
+      score+=5; moves++;
+      render();
+    }
+    return;
+  }
+
+  // 表向きカード最下端 → 自動Foundationトライ
+  if(idx===col.length-1){
+    for(var i=0;i<SUITS.length;i++){
+      if(canPlaceFoundation(card, SUITS[i])){
+        saveHistory();
+        col.pop();
+        foundation[SUITS[i]].push(card);
+        flipTopCardOfTableau();
+        score+=15; moves++;
+        selected=null; render(); checkClear(); return;
+      }
+    }
+  }
+  selected={from:'tableau', col:c, idx:idx, cards:col.slice(idx)};
+  render();
+}
+
+// ════════════════════════════════════════════
+// ルール
+// ════════════════════════════════════════════
+function canPlaceFoundation(card, suit){
+  if(card.suit!==suit) return false;
+  var pile=foundation[suit];
+  if(pile.length===0) return card.rank===1;
+  return pile[pile.length-1].rank===card.rank-1;
+}
+function canPlaceTableau(card, c){
+  var col=tableau[c];
+  if(col.length===0) return card.rank===13;
+  var top=col[col.length-1];
+  if(!top.faceUp) return false;
+  return top.rank===card.rank+1 && SUIT_COLOR[top.suit]!==SUIT_COLOR[card.suit];
+}
+function removeSelected(){
+  if(!selected) return;
+  if(selected.from==='waste') waste.pop();
+  else if(selected.from==='tableau') tableau[selected.col]=tableau[selected.col].slice(0,selected.idx);
+}
+function flipTopCardOfTableau(){
+  for(var c=0;c<7;c++){
+    var col=tableau[c];
+    if(col.length>0 && !col[col.length-1].faceUp){
+      col[col.length-1].faceUp=true;
+      score+=5;
+    }
+  }
+}
+
+function checkClear(){
+  for(var i=0;i<SUITS.length;i++){
+    if(foundation[SUITS[i]].length!==13) return;
+  }
+  clearInterval(timerInt);
+  var sec=Math.floor((Date.now()-gameStart)/1000);
+  var m=Math.floor(sec/60), s=sec%60;
+  var timeBonus=Math.max(0,300-sec)*2;
+  var total=score+timeBonus;
+  document.getElementById('clear-time').textContent=m+'分'+s+'秒 / '+moves+'手';
+  document.getElementById('clear-score').textContent='スコア '+total+'点';
+  document.getElementById('clear-overlay').classList.add('show');
+}
+
+function saveHistory(){
+  function copyCard(c){ return {suit:c.suit, rank:c.rank, faceUp:c.faceUp}; }
+  history.push({
+    stock: stock.map(copyCard),
+    waste: waste.map(copyCard),
+    tableau: tableau.map(function(col){return col.map(copyCard);}),
+    foundation: {
+      S: foundation.S.map(copyCard),
+      H: foundation.H.map(copyCard),
+      D: foundation.D.map(copyCard),
+      C: foundation.C.map(copyCard),
+    },
+    score: score, moves: moves,
+  });
+  if(history.length>30) history.shift();
+}
+function undoMove(){
+  if(history.length===0) return;
+  var h=history.pop();
+  stock=h.stock; waste=h.waste;
+  tableau=h.tableau; foundation=h.foundation;
+  score=h.score; moves=h.moves;
+  selected=null; render();
+}
+
+function goHome(){ location.href='./index.html'; }
+
+newGame();
+</script>
+</body>
+</html>
