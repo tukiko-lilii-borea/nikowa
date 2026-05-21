@@ -7,19 +7,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 <style>
-:root{--mint:#C8EFE0;--mint-deep:#7DC9A8;--cream:#FFFBF7;--amber:#F6AD55;--navy:#1E3A8A;--ink:#2D3748;--ink-sub:#718096;--surface:rgba(255,255,255,0.88);--card-border:rgba(0,0,0,0.07);--accent:#2EB875;}
+:root{--mint:#C8EFE0;--mint-deep:#7DC9A8;--cream:#FFFBF7;--amber:#F6AD55;--navy:#1E3A8A;--ink:#2D3748;--ink-sub:#718096;--surface:rgba(255,255,255,0.88);--card-border:rgba(0,0,0,0.07);--accent:#2EB875;--rest-blue:#5B9CC9;--metro-purple:#9575CD;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
 body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-image:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(126,201,168,0.18) 29px,rgba(126,201,168,0.18) 30px),repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(126,201,168,0.18) 29px,rgba(126,201,168,0.18) 30px);min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:12px 16px 24px;color:var(--ink);}
 .header{width:100%;max-width:380px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .back-btn{background:var(--surface);border:1.5px solid var(--card-border);border-radius:100px;padding:5px 12px;font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-sub);cursor:pointer;}
-.timer-card{width:100%;max-width:380px;background:var(--surface);border-radius:24px;border:1.5px solid var(--card-border);padding:20px 18px;box-shadow:0 4px 20px rgba(0,0,0,0.06);margin-bottom:12px;}
+.vol-row{display:flex;gap:3px;}
+.vol-btn{background:rgba(255,255,255,0.7);border:1px solid rgba(0,0,0,0.1);border-radius:6px;color:var(--ink-sub);font-size:9px;font-weight:800;padding:4px 7px;cursor:pointer;font-family:inherit;}
+.vol-btn.active{background:var(--accent);border-color:var(--accent);color:white;}
+
+/* ── タブ ── */
+.tabs{width:100%;max-width:380px;display:flex;gap:4px;background:var(--surface);border:1.5px solid var(--card-border);border-radius:14px;padding:4px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.tab{flex:1;padding:9px 4px;border:none;background:transparent;color:var(--ink-sub);border-radius:10px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:all 0.18s;}
+.tab .material-symbols-rounded{font-size:14px;}
+.tab.active{background:var(--accent);color:white;}
+.tab.tab-interval.active{background:var(--accent);}
+.tab.tab-metronome.active{background:var(--metro-purple);}
+
+.tab-content{display:none;width:100%;max-width:380px;}
+.tab-content.active{display:block;}
+
+.timer-card{width:100%;background:var(--surface);border-radius:24px;border:1.5px solid var(--card-border);padding:20px 18px;box-shadow:0 4px 20px rgba(0,0,0,0.06);margin-bottom:12px;}
+
+/* 共通プリセット */
 .preset-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
 .preset-btn{flex:1;min-width:50px;background:var(--mint);border:1.5px solid var(--mint-deep);border-radius:100px;padding:7px 4px;font-family:inherit;font-size:12px;font-weight:800;color:var(--ink-sub);cursor:pointer;transition:all 0.18s;}
 .preset-btn.active{background:var(--accent);border-color:var(--accent);color:white;}
-.custom-row{display:flex;align-items:center;gap:6px;margin-bottom:20px;}
-.custom-input{flex:1;padding:8px 12px;border:1.5px solid var(--card-border);border-radius:12px;font-family:inherit;font-size:14px;background:var(--cream);color:var(--ink);outline:none;}
-.custom-input:focus{border-color:var(--accent);}
-.custom-label{font-size:11px;color:var(--ink-sub);font-weight:700;}
+
+/* 円形タイマー */
 .clock-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:20px;}
 .clock-ring{position:relative;width:180px;height:180px;}
 .clock-ring svg{transform:rotate(-90deg);}
@@ -27,10 +42,12 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
 .ring-fg{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset 0.5s linear;}
 .ring-fg.warning{stroke:var(--amber);}
 .ring-fg.danger{stroke:#E94F37;}
+.ring-fg.rest{stroke:var(--rest-blue);}
 .clock-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
 .time-display{font-size:38px;font-weight:900;color:var(--ink);line-height:1;letter-spacing:-1px;}
 .time-display.warning{color:var(--amber);}
 .time-display.danger{color:#E94F37;}
+.time-display.rest{color:var(--rest-blue);}
 .time-sub{font-size:11px;color:var(--ink-sub);font-weight:700;margin-top:2px;}
 .ctrl-row{display:flex;gap:10px;justify-content:center;}
 .ctrl-btn{flex:1;max-width:140px;padding:13px 0;border-radius:16px;border:none;font-family:inherit;font-size:14px;font-weight:900;cursor:pointer;transition:all 0.15s;}
@@ -38,7 +55,13 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
 .ctrl-start:active{transform:scale(0.97);}
 .ctrl-pause{background:var(--amber);color:white;box-shadow:0 4px 12px rgba(246,173,85,0.35);}
 .ctrl-reset{background:var(--surface);border:1.5px solid var(--card-border) !important;color:var(--ink-sub);}
-.sound-card{width:100%;max-width:380px;background:var(--surface);border-radius:20px;border:1.5px solid var(--card-border);padding:14px 16px;box-shadow:0 2px 10px rgba(0,0,0,0.04);margin-bottom:12px;}
+
+/* カスタム入力 */
+.drum-trigger{width:100%;background:rgba(255,255,255,0.6);border:1.5px solid var(--card-border);border-radius:12px;padding:10px 14px;font-family:inherit;font-size:14px;font-weight:800;color:var(--ink-sub);cursor:pointer;margin-bottom:18px;}
+.drum-trigger span{font-size:18px;font-weight:900;color:var(--ink);}
+
+/* 音設定カード */
+.sound-card{width:100%;background:var(--surface);border-radius:20px;border:1.5px solid var(--card-border);padding:14px 16px;box-shadow:0 2px 10px rgba(0,0,0,0.04);margin-bottom:12px;}
 .sound-label{font-size:11px;font-weight:800;color:var(--ink-sub);margin-bottom:8px;}
 .sound-row{display:flex;gap:6px;flex-wrap:wrap;}
 .sound-btn{padding:6px 11px;background:var(--mint);border:1.5px solid var(--mint-deep);border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;color:var(--ink-sub);cursor:pointer;transition:all 0.15s;}
@@ -47,6 +70,8 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
 .preview-btn{background:var(--mint-deep);border-color:var(--mint-deep);color:white;}
 .preview-btn:active,.loop-btn:active{transform:scale(0.9);}
 .loop-btn.active{background:var(--amber);border-color:var(--amber);color:white;}
+
+/* オーバーレイ */
 .overlay{position:fixed;inset:0;background:rgba(255,251,247,0.96);backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity 0.35s;}
 .overlay.show{opacity:1;pointer-events:all;}
 .speech-bubble{background:white;border:2px solid var(--mint-deep);border-radius:18px;padding:12px 20px;font-size:17px;font-weight:900;color:var(--ink);text-align:center;position:relative;margin-bottom:10px;animation:charaPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;}
@@ -57,74 +82,62 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
 .chara-sub{font-size:13px;color:var(--ink-sub);margin-bottom:24px;text-align:center;}
 .overlay-close{background:linear-gradient(135deg,var(--accent),#1A9A55);color:white;border:none;border-radius:100px;padding:12px 36px;font-family:inherit;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 4px 14px rgba(46,184,117,0.35);}
 
+/* ─────────── インターバル専用 ─────────── */
+.interval-phase{font-size:13px;font-weight:800;text-align:center;margin-bottom:8px;padding:4px 12px;border-radius:100px;display:inline-block;}
+.interval-phase.work{background:rgba(46,184,117,0.15);color:var(--accent);}
+.interval-phase.rest{background:rgba(91,156,201,0.15);color:var(--rest-blue);}
+.set-counter{font-size:24px;font-weight:900;color:var(--ink);}
+.set-counter .sub{font-size:13px;color:var(--ink-sub);}
+
+.iv-custom-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.iv-input-box{background:var(--mint);border:1.5px solid var(--mint-deep);border-radius:12px;padding:8px 6px;text-align:center;}
+.iv-input-box label{display:block;font-size:9px;color:var(--ink-sub);font-weight:800;margin-bottom:4px;}
+.iv-input-box input{width:100%;border:none;background:transparent;font-family:inherit;font-size:18px;font-weight:900;color:var(--ink);text-align:center;outline:none;-moz-appearance:textfield;}
+.iv-input-box input::-webkit-outer-spin-button,.iv-input-box input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.iv-input-box .unit{font-size:9px;color:var(--ink-sub);font-weight:700;}
+
+/* ─────────── メトロノーム専用 ─────────── */
+.metro-display{text-align:center;padding:30px 20px;}
+.bpm-big{font-size:64px;font-weight:900;color:var(--metro-purple);line-height:1;letter-spacing:-2px;}
+.bpm-label{font-size:13px;color:var(--ink-sub);font-weight:800;margin-top:4px;}
+.beats-row{display:flex;justify-content:center;gap:8px;margin:20px 0 14px;}
+.beat-dot{width:18px;height:18px;border-radius:50%;background:rgba(149,117,205,0.2);border:2px solid rgba(149,117,205,0.4);transition:all 0.08s;}
+.beat-dot.accent{background:rgba(149,117,205,0.4);border-color:var(--metro-purple);}
+.beat-dot.active{background:var(--metro-purple);border-color:var(--metro-purple);transform:scale(1.4);box-shadow:0 0 12px rgba(149,117,205,0.6);}
+.beat-dot.active.accent{background:#7B5BAF;border-color:#7B5BAF;box-shadow:0 0 16px rgba(123,91,175,0.8);}
+.bpm-slider{width:100%;height:6px;border-radius:100px;background:linear-gradient(to right,var(--mint) 0%,var(--metro-purple) 100%);outline:none;-webkit-appearance:none;margin-bottom:6px;}
+.bpm-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:white;border:3px solid var(--metro-purple);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2);}
+.bpm-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:white;border:3px solid var(--metro-purple);cursor:pointer;}
+.bpm-pm{display:flex;gap:8px;margin-bottom:14px;justify-content:center;}
+.bpm-pm-btn{padding:6px 16px;background:white;border:1.5px solid var(--card-border);border-radius:100px;font-family:inherit;font-size:14px;font-weight:900;color:var(--metro-purple);cursor:pointer;}
+.beat-options{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;}
+.beat-opt{padding:7px 14px;background:white;border:1.5px solid var(--card-border);border-radius:100px;font-family:inherit;font-size:12px;font-weight:800;color:var(--ink-sub);cursor:pointer;}
+.beat-opt.active{background:var(--metro-purple);border-color:var(--metro-purple);color:white;}
+.metro-ctrl{background:linear-gradient(135deg,var(--metro-purple),#7B5BAF);color:white;box-shadow:0 4px 12px rgba(149,117,205,0.35);}
+
+/* インターバルプリセット */
+.iv-preset-row{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:14px;}
+.iv-preset-btn{background:var(--mint);border:1.5px solid var(--mint-deep);border-radius:12px;padding:9px 6px;font-family:inherit;font-size:11px;font-weight:800;color:var(--ink-sub);cursor:pointer;text-align:left;}
+.iv-preset-btn.active{background:var(--accent);border-color:var(--accent);color:white;}
+.iv-preset-btn .iv-pname{font-size:12px;font-weight:900;}
+.iv-preset-btn .iv-pdesc{font-size:9px;opacity:0.8;display:block;margin-top:2px;}
 
 /* ドラムロール 3列 iOS風 */
-.drum-modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-  z-index: 200; display: none; align-items: flex-end;
-}
-.drum-modal-overlay.show { display: flex; }
-.drum-modal {
-  width: 100%; background: var(--cream);
-  border-radius: 24px 24px 0 0;
-  padding: 16px 20px 30px;
-  animation: slideUp 0.3s cubic-bezier(0.32,0.72,0,1);
-  max-height: 80vh; box-sizing: border-box;
-}
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.drum-modal-title { font-size: 13px; font-weight: 800; color: var(--ink-sub); text-align: center; margin-bottom: 12px; }
-.drum-cols {
-  position: relative; height: 180px;
-  display: flex; gap: 6px; margin-bottom: 16px;
-  overflow: hidden;
-}
-.drum-col { flex: 1; position: relative; overflow: hidden; }
-.drum-scroll {
-  height: 100%; overflow-y: scroll;
-  scroll-snap-type: y mandatory; scrollbar-width: none; -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
-}
-.drum-scroll::-webkit-scrollbar { display: none; }
-.drum-item {
-  height: 36px; display: flex; align-items: center; justify-content: center;
-  font-size: 20px; font-weight: 800; color: rgba(45,55,72,0.25);
-  scroll-snap-align: center; flex-shrink: 0;
-  transition: color 0.1s, font-size 0.1s;
-  user-select: none;
-}
-.drum-item.near { color: rgba(45,55,72,0.55); font-size: 22px; }
-.drum-item.selected { color: var(--ink); font-size: 26px; }
-.drum-spacer { height: 72px; flex-shrink: 0; }
-.drum-cols::before {
-  content: ''; position: absolute;
-  top: 50%; transform: translateY(-50%);
-  left: 0; right: 0; height: 36px;
-  background: rgba(45,55,72,0.08);
-  border-radius: 10px; z-index: 2; pointer-events: none;
-}
-.drum-cols::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(to bottom, var(--cream) 0%, transparent 25%, transparent 75%, var(--cream) 100%);
-  z-index: 3; pointer-events: none;
-}
-.drum-confirm {
-  width: 100%; padding: 15px; border: none; border-radius: 16px;
-  background: var(--accent); color: white;
-  font-family: inherit; font-size: 15px; font-weight: 900; cursor: pointer;
-  box-shadow: 0 4px 14px rgba(46,184,117,0.35);
-}
-.drum-trigger {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  width: 100%; background: var(--mint); border: 1.5px solid var(--mint-deep);
-  border-radius: 14px; padding: 10px 18px;
-  font-family: inherit; font-size: 14px; font-weight: 800; color: var(--ink-sub);
-  cursor: pointer; margin-bottom: 18px;
-}
-.drum-trigger span { font-size: 18px; font-weight: 900; color: var(--ink); }
-
-.vol-row{display:flex;gap:3px;}
-.vol-btn{background:rgba(255,255,255,0.7);border:1px solid rgba(0,0,0,0.1);border-radius:6px;color:var(--ink-sub);font-size:9px;font-weight:800;padding:4px 7px;cursor:pointer;font-family:inherit;}
-.vol-btn.active{background:var(--accent);border-color:var(--accent);color:white;}
+.drum-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;align-items:flex-end;}
+.drum-modal-overlay.show{display:flex;}
+.drum-modal{width:100%;background:var(--cream);border-radius:24px 24px 0 0;padding:16px 20px 30px;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-height:80vh;box-sizing:border-box;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.drum-modal-title{font-size:13px;font-weight:800;color:var(--ink-sub);text-align:center;margin-bottom:12px;}
+.drum-cols{position:relative;height:180px;display:flex;gap:6px;margin-bottom:16px;overflow:hidden;}
+.drum-col{flex:1;position:relative;overflow:hidden;}
+.drum-scroll{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}
+.drum-scroll::-webkit-scrollbar{display:none;}
+.drum-item{height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:rgba(45,55,72,0.25);scroll-snap-align:center;flex-shrink:0;transition:color 0.1s,font-size 0.1s;user-select:none;}
+.drum-item.near{color:rgba(45,55,72,0.55);font-size:22px;}
+.drum-item.selected{color:var(--ink);font-size:26px;}
+.drum-spacer{height:72px;flex-shrink:0;}
+.drum-cols::before{content:'';position:absolute;top:50%;transform:translateY(-50%);left:0;right:0;height:36px;background:rgba(46,184,117,0.08);border-top:1px solid rgba(46,184,117,0.2);border-bottom:1px solid rgba(46,184,117,0.2);pointer-events:none;}
+.drum-confirm{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),#1A9A55);color:white;border:none;border-radius:14px;font-family:inherit;font-size:14px;font-weight:900;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -138,36 +151,174 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
   <button type="button" class="back-btn" onclick="location.href='./index.html'">← ホーム</button>
 </div>
 
-<div class="timer-card">
-  <div class="preset-row">
-    <button type="button" class="preset-btn active" onclick="selectPreset(this,1)">1分</button>
-    <button type="button" class="preset-btn" onclick="selectPreset(this,3)">3分</button>
-    <button type="button" class="preset-btn" onclick="selectPreset(this,5)">5分</button>
-    <button type="button" class="preset-btn" onclick="selectPreset(this,10)">10分</button>
-    <button type="button" class="preset-btn" onclick="selectPreset(this,25)">25分</button>
-  </div>
-  <button type="button" class="drum-trigger" id="drumTrigger" onclick="openDrumModal()">
-    カスタム　<span id="drumDisplay">-</span>　分
-  </button>
-  <div class="clock-wrap">
-    <div class="clock-ring">
-      <svg width="180" height="180" viewBox="0 0 180 180">
-        <circle class="ring-bg" cx="90" cy="90" r="80"/>
-        <circle class="ring-fg" id="ringFg" cx="90" cy="90" r="80" stroke-dasharray="502.65" stroke-dashoffset="0"/>
-      </svg>
-      <div class="clock-text">
-        <div class="time-display" id="timeDisplay">1:00</div>
-        <div class="time-sub" id="timeSub">待機中</div>
+<!-- ===== タブ ===== -->
+<div class="tabs">
+  <button type="button" class="tab tab-timer active" onclick="switchTab('timer')"><span class="material-symbols-rounded">timer</span>タイマー</button>
+  <button type="button" class="tab tab-interval" onclick="switchTab('interval')"><span class="material-symbols-rounded">repeat</span>インターバル</button>
+  <button type="button" class="tab tab-metronome" onclick="switchTab('metronome')"><span class="material-symbols-rounded">music_note</span>メトロノーム</button>
+</div>
+
+<!-- ============================================================ -->
+<!-- タブ1：タイマー -->
+<!-- ============================================================ -->
+<div class="tab-content active" id="tabTimer">
+  <div class="timer-card">
+    <div class="preset-row">
+      <button type="button" class="preset-btn active" onclick="selectPreset(this,1)">1分</button>
+      <button type="button" class="preset-btn" onclick="selectPreset(this,3)">3分</button>
+      <button type="button" class="preset-btn" onclick="selectPreset(this,5)">5分</button>
+      <button type="button" class="preset-btn" onclick="selectPreset(this,10)">10分</button>
+      <button type="button" class="preset-btn" onclick="selectPreset(this,25)">25分</button>
+    </div>
+    <button type="button" class="drum-trigger" id="drumTrigger" onclick="openDrumModal()">
+      カスタム　<span id="drumDisplay">-</span>　分
+    </button>
+    <div class="clock-wrap">
+      <div class="clock-ring">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle class="ring-bg" cx="90" cy="90" r="80"/>
+          <circle class="ring-fg" id="ringFg" cx="90" cy="90" r="80" stroke-dasharray="502.65" stroke-dashoffset="0"/>
+        </svg>
+        <div class="clock-text">
+          <div class="time-display" id="timeDisplay">1:00</div>
+          <div class="time-sub" id="timeSub">待機中</div>
+        </div>
       </div>
     </div>
+    <div class="ctrl-row">
+      <button type="button" class="ctrl-btn ctrl-start" id="startBtn" onclick="onStart()">スタート</button>
+      <button type="button" class="ctrl-btn ctrl-reset" id="resetBtn" onclick="onReset()">リセット</button>
+    </div>
   </div>
-  <div class="ctrl-row">
-    <button type="button" class="ctrl-btn ctrl-start" id="startBtn" onclick="onStart()">スタート</button>
-    <button type="button" class="ctrl-btn ctrl-reset" id="resetBtn" onclick="onReset()">リセット</button>
+
+  <div class="sound-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div class="sound-label" style="margin-bottom:0;">🔔 終了音</div>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <button type="button" class="preview-btn" onclick="previewSound()">♪</button>
+        <button type="button" class="loop-btn" id="loopBtn" onclick="toggleLoop()"><span class="material-symbols-rounded" style="font-size:16px;">repeat</span></button>
+      </div>
+    </div>
+    <div class="sound-row">
+      <button type="button" class="sound-btn active" onclick="selectSound(this,'orugoru')">オルゴール</button>
+      <button type="button" class="sound-btn" onclick="selectSound(this,'chime')">チャイム</button>
+      <button type="button" class="sound-btn" onclick="selectSound(this,'bell')">ベル</button>
+      <button type="button" class="sound-btn" onclick="selectSound(this,'fanfare')">ファンファーレ</button>
+      <button type="button" class="sound-btn" onclick="selectSound(this,'pop')">ポップ</button>
+      <button type="button" class="sound-btn" onclick="selectSound(this,'antique')">アンティーク</button>
+      <button type="button" class="sound-btn" onclick="selectSound(this,'forest')">森</button>
+      <button type="button" class="sound-btn" onclick="selectSound(this,'star')">星</button>
+      <button type="button" class="sound-btn" onclick="selectSound(this,'piano')">ピアノ</button>
+      <button type="button" class="sound-btn" onclick="selectSound(this,'sea')">海</button>
+    </div>
   </div>
 </div>
 
-<!-- ドラムロールモーダル -->
+<!-- ============================================================ -->
+<!-- タブ2：インターバル -->
+<!-- ============================================================ -->
+<div class="tab-content" id="tabInterval">
+  <div class="timer-card">
+    <!-- プリセット -->
+    <div class="iv-preset-row">
+      <button type="button" class="iv-preset-btn active" onclick="selectIvPreset(this,20,10,8)">
+        <div class="iv-pname">タバタ</div><span class="iv-pdesc">20秒×8 / 休憩10秒</span>
+      </button>
+      <button type="button" class="iv-preset-btn" onclick="selectIvPreset(this,30,15,10)">
+        <div class="iv-pname">筋トレ</div><span class="iv-pdesc">30秒×10 / 休憩15秒</span>
+      </button>
+      <button type="button" class="iv-preset-btn" onclick="selectIvPreset(this,45,15,6)">
+        <div class="iv-pname">HIIT</div><span class="iv-pdesc">45秒×6 / 休憩15秒</span>
+      </button>
+      <button type="button" class="iv-preset-btn" onclick="selectIvPreset(this,60,30,5)">
+        <div class="iv-pname">ストレッチ</div><span class="iv-pdesc">60秒×5 / 休憩30秒</span>
+      </button>
+    </div>
+
+    <!-- カスタム -->
+    <div class="iv-custom-row">
+      <div class="iv-input-box">
+        <label>作業 <span class="unit">(秒)</span></label>
+        <input type="number" id="ivWorkSec" value="20" min="1" max="999" onchange="onIvCustomChange()">
+      </div>
+      <div class="iv-input-box">
+        <label>休憩 <span class="unit">(秒)</span></label>
+        <input type="number" id="ivRestSec" value="10" min="0" max="999" onchange="onIvCustomChange()">
+      </div>
+      <div class="iv-input-box">
+        <label>セット <span class="unit">(回)</span></label>
+        <input type="number" id="ivSets" value="8" min="1" max="99" onchange="onIvCustomChange()">
+      </div>
+    </div>
+
+    <!-- フェーズ表示 -->
+    <div style="text-align:center;margin-bottom:8px;">
+      <span class="interval-phase work" id="ivPhase">準備</span>
+    </div>
+
+    <!-- 円形タイマー -->
+    <div class="clock-wrap">
+      <div class="clock-ring">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle class="ring-bg" cx="90" cy="90" r="80"/>
+          <circle class="ring-fg" id="ivRingFg" cx="90" cy="90" r="80" stroke-dasharray="502.65" stroke-dashoffset="0"/>
+        </svg>
+        <div class="clock-text">
+          <div class="time-display" id="ivTimeDisplay">0:20</div>
+          <div class="set-counter" id="ivSetCounter"><span class="sub">1 / 8</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctrl-row">
+      <button type="button" class="ctrl-btn ctrl-start" id="ivStartBtn" onclick="onIvStart()">スタート</button>
+      <button type="button" class="ctrl-btn ctrl-reset" onclick="onIvReset()">リセット</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- タブ3：メトロノーム -->
+<!-- ============================================================ -->
+<div class="tab-content" id="tabMetronome">
+  <div class="timer-card">
+    <div class="metro-display">
+      <div class="bpm-big" id="bpmDisplay">120</div>
+      <div class="bpm-label">BPM</div>
+    </div>
+
+    <div class="beats-row" id="beatsRow"></div>
+
+    <div class="bpm-pm">
+      <button type="button" class="bpm-pm-btn" onclick="changeBpm(-10)">−10</button>
+      <button type="button" class="bpm-pm-btn" onclick="changeBpm(-1)">−1</button>
+      <button type="button" class="bpm-pm-btn" onclick="changeBpm(1)">+1</button>
+      <button type="button" class="bpm-pm-btn" onclick="changeBpm(10)">+10</button>
+    </div>
+    <input type="range" min="40" max="240" value="120" class="bpm-slider" id="bpmSlider" oninput="onBpmSlider(this.value)">
+
+    <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin:14px 0 6px;text-align:center;">拍子</div>
+    <div class="beat-options" id="beatOptions">
+      <button type="button" class="beat-opt" onclick="setBeats(2)">2/4</button>
+      <button type="button" class="beat-opt" onclick="setBeats(3)">3/4</button>
+      <button type="button" class="beat-opt active" onclick="setBeats(4)">4/4</button>
+      <button type="button" class="beat-opt" onclick="setBeats(6)">6/8</button>
+    </div>
+
+    <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin:14px 0 6px;text-align:center;">音色</div>
+    <div class="beat-options">
+      <button type="button" class="beat-opt active" onclick="setMetroSound(this,'click')">クリック</button>
+      <button type="button" class="beat-opt" onclick="setMetroSound(this,'wood')">ウッド</button>
+      <button type="button" class="beat-opt" onclick="setMetroSound(this,'bell')">ベル</button>
+    </div>
+
+    <div class="ctrl-row" style="margin-top:18px;">
+      <button type="button" class="ctrl-btn metro-ctrl" id="metroBtn" onclick="onMetroToggle()">スタート</button>
+    </div>
+  </div>
+</div>
+
+<!-- ドラムロールモーダル（タイマーのカスタム用） -->
 <div class="drum-modal-overlay" id="drumOverlay" onclick="onDrumOverlayClick(event)">
   <div class="drum-modal">
     <div class="drum-modal-title">時間を設定</div>
@@ -180,28 +331,7 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
   </div>
 </div>
 
-<div class="sound-card">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-    <div class="sound-label" style="margin-bottom:0;">🔔 終了音</div>
-    <div style="display:flex;gap:4px;align-items:center;">
-      <button type="button" class="preview-btn" onclick="previewSound()">♪</button>
-      <button type="button" class="loop-btn" id="loopBtn" onclick="toggleLoop()"><span class="material-symbols-rounded" style="font-size:16px;">repeat</span></button>
-    </div>
-  </div>
-  <div class="sound-row">
-    <button type="button" class="sound-btn active" onclick="selectSound(this,'orugoru')">オルゴール</button>
-    <button type="button" class="sound-btn" onclick="selectSound(this,'chime')">チャイム</button>
-    <button type="button" class="sound-btn" onclick="selectSound(this,'bell')">ベル</button>
-    <button type="button" class="sound-btn" onclick="selectSound(this,'fanfare')">ファンファーレ</button>
-    <button type="button" class="sound-btn" onclick="selectSound(this,'pop')">ポップ</button>
-    <button type="button" class="sound-btn" onclick="selectSound(this,'antique')">アンティーク</button>
-    <button type="button" class="sound-btn" onclick="selectSound(this,'forest')">森</button>
-    <button type="button" class="sound-btn" onclick="selectSound(this,'star')">星</button>
-    <button type="button" class="sound-btn" onclick="selectSound(this,'piano')">ピアノ</button>
-    <button type="button" class="sound-btn" onclick="selectSound(this,'sea')">海</button>
-  </div>
-</div>
-
+<!-- 完了オーバーレイ（タイマー＆インターバル共通） -->
 <div class="overlay" id="overlay">
   <div class="speech-bubble" id="charaMsg">おわったよ〜！</div>
   <img class="chara-img" id="charaImg" src="" alt="キャラ">
@@ -210,9 +340,48 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
 </div>
 
 <script>
-var totalSec=60,remSec=60,running=false,paused=false,timerInterval=null;
-var selectedSound='orugoru',masterVol=0,audioCtx=null;
-var loopMode=false,loopTimer=null;
+// ════════════════════════════════════════════
+// 共通：音、タブ切替
+// ════════════════════════════════════════════
+var masterVol=0, audioCtx=null;
+function setVol(v){
+  masterVol=v;
+  ['vOff','vLo','vHi'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});
+  var m={0:'vOff',0.5:'vLo',1.0:'vHi'};
+  var sel=document.getElementById(m[v]);if(sel)sel.classList.add('active');
+  try{localStorage.setItem('nikowa_bgm_vol',String(v));}catch(e){}
+}
+function ensureAudio(){
+  if(!audioCtx){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+  if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
+}
+function playNote(freq,dur,vol,type){
+  if(!audioCtx||masterVol===0)return;
+  var o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type||'sine'; o.frequency.value=freq;
+  g.gain.value=0;
+  o.connect(g); g.connect(audioCtx.destination);
+  var now=audioCtx.currentTime, v=(vol||0.2)*masterVol;
+  g.gain.linearRampToValueAtTime(v,now+0.01);
+  g.gain.exponentialRampToValueAtTime(0.001,now+dur);
+  o.start(now); o.stop(now+dur+0.05);
+}
+
+// タブ切替
+function switchTab(name){
+  // メトロノーム動いてたら止める
+  if(metroPlaying) stopMetro();
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});
+  document.querySelector('.tab-'+name).classList.add('active');
+  document.getElementById('tab'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');
+}
+
+// ════════════════════════════════════════════
+// タブ1：タイマー
+// ════════════════════════════════════════════
+var totalSec=60, remSec=60, running=false, paused=false, timerInterval=null;
+var selectedSound='orugoru', loopMode=false, loopTimer=null;
 
 var CHARAS=[
   {src:'assets/anzu.svg',   msg:'おわったよ〜！',  sub:'あんずだよ🐾 よくがんばった！'},
@@ -223,261 +392,115 @@ var CHARAS=[
   {src:'assets/yumeme.svg', msg:'ゆっくりしてね！',sub:'ゆめめだよ🐑 お疲れ様〜！'},
 ];
 
-// 音量
-function setVol(v){
-  masterVol=v;
-  ['vOff','vLo','vHi'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});
-  var m={0:'vOff',0.5:'vLo',1.0:'vHi'};
-  var el=document.getElementById(m[v]);if(el)el.classList.add('active');
-  try{localStorage.setItem('nikowa_bgm_vol',String(v));}catch(e){}
-}
-function ensureAudio(){
-  if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return Promise.resolve();}
-  try{return audioCtx.resume();}catch(e){return Promise.resolve();}
-}
-function playNote(freq,dur,vol,type){
-  if(!audioCtx||masterVol===0)return;
-  try{
-    var o=audioCtx.createOscillator(),g=audioCtx.createGain();
-    o.connect(g);g.connect(audioCtx.destination);
-    o.type=type||'sine';o.frequency.value=freq;
-    var t=audioCtx.currentTime;
-    g.gain.setValueAtTime(vol*masterVol,t);
-    g.gain.exponentialRampToValueAtTime(0.001,t+dur*0.95);
-    o.start(t);o.stop(t+dur);
-  }catch(e){}
-}
-
-// 終了音
-function playEndSound(){
-  if(selectedSound==='orugoru'){
-    [1046.50,1318.51,1567.98,1046.50,1318.51,1760.00].forEach(function(f,i){setTimeout(function(){playNote(f,0.8,0.18,'sine');},i*200);});
-  } else if(selectedSound==='chime'){
-    [523.25,659.25,783.99,1046.50].forEach(function(f,i){setTimeout(function(){playNote(f,0.6,0.22,'sine');},i*180);});
-  } else if(selectedSound==='bell'){
-    playNote(1174.66,1.2,0.25,'sine');
-    setTimeout(function(){playNote(880,1.0,0.18,'sine');},300);
-  } else if(selectedSound==='fanfare'){
-    [523.25,659.25,783.99,1046.50,1318.51,1046.50].forEach(function(f,i){setTimeout(function(){playNote(f,0.3,0.20,'square');},i*120);});
-  } else if(selectedSound==='pop'){
-    [880,1100,1320].forEach(function(f,i){setTimeout(function(){playNote(f,0.12,0.22,'sine');},i*80);});
-  } else if(selectedSound==='antique'){
-    var A=[1174.66,0,1396.91,0,1760.00,0,2093.00,0,1760.00,0,1396.91,0,1174.66,0,1046.50,0,
-           1318.51,0,1567.98,0,1864.66,0,1567.98,0,1318.51,0,1046.50,0,932.33,0,1046.50,0,
-           987.77,0,1174.66,0,1396.91,0,1864.66,0,1396.91,0,1174.66,0,987.77,0,880.00,0,
-           880.00,0,1046.50,0,1396.91,0,1760.00,0,1396.91,0,1046.50,0,880.00,0,0,0];
-    A.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.9,0.18,'sine');playNote(f*2,0.5,0.05,'sine');},i*200);});
-  } else if(selectedSound==='forest'){
-    var F=[523.25,0,659.25,0,783.99,0,659.25,0,523.25,0,440.00,0,523.25,0,0,0,
-           698.46,0,880.00,0,783.99,0,659.25,0,587.33,0,523.25,0,587.33,0,0,0,
-           523.25,0,659.25,0,783.99,0,1046.50,0,880.00,0,783.99,0,659.25,0,523.25,0];
-    F.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.7,0.20,'sine');},i*220);});
-  } else if(selectedSound==='star'){
-    var S=[2093.00,0,1864.66,0,1567.98,0,1864.66,0,2093.00,0,2349.32,0,2093.00,0,0,0,
-           1567.98,0,1396.91,0,1174.66,0,1396.91,0,1567.98,0,1864.66,0,1567.98,0,0,0,
-           2349.32,0,2093.00,0,1760.00,0,2093.00,0,2349.32,0,2637.02,0,2093.00,0,0,0];
-    S.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.4,0.12,'sine');playNote(f*0.5,0.8,0.06,'sine');},i*180);});
-  } else if(selectedSound==='piano'){
-    var P=[523.25,659.25,783.99,1046.50,587.33,698.46,880.00,1174.66,
-           523.25,659.25,783.99,1046.50,440.00,523.25,659.25,880.00,
-           493.88,587.33,698.46,987.77,523.25,659.25,783.99,1046.50];
-    P.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.5,0.22,'triangle');},i*160);});
-  } else if(selectedSound==='sea'){
-    var Se=[440.00,0,0,523.25,0,0,659.25,0,0,587.33,0,0,
-            523.25,0,0,440.00,0,0,392.00,0,0,440.00,0,0,
-            523.25,0,0,659.25,0,0,783.99,0,0,659.25,0,0,
-            587.33,0,0,523.25,0,0,440.00,0,0,0,0,0];
-    Se.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,1.0,0.16,'sine');},i*180);});
-  }
-}
-
-// ループ
-function toggleLoop(){
-  loopMode=!loopMode;
-  var btn=document.getElementById('loopBtn');if(btn)btn.classList.toggle('active',loopMode);
-  if(!loopMode&&loopTimer){clearTimeout(loopTimer);loopTimer=null;}
-}
-function playEndSoundLoop(){
-  playEndSound();
-  if(loopMode){
-    var dur={orugoru:1400,chime:800,bell:1600,fanfare:800,antique:13000,pop:300,forest:8000,star:6500,piano:4200,sea:8400};
-    loopTimer=setTimeout(playEndSoundLoop,(dur[selectedSound]||1200)+400);
-  }
-}
-
-// 試聴
-var previewTimers=[];
-function previewSound(){
-  // 前の試聴を止める
-  previewTimers.forEach(function(t){clearTimeout(t);});
-  previewTimers=[];
-  var pv=masterVol; masterVol=1.0;
-  ensureAudio().then(function(){
-    // playEndSoundのsetTimeoutを全部収集してキャンセルできるよう置き換え
-    _playPreview();
-    masterVol=pv;
-  }).catch(function(){masterVol=pv;});
-}
-function _playPreview(){
-  // selectedSoundに応じて試聴（タイマーを管理）
-  function pt(fn,ms){ previewTimers.push(setTimeout(fn,ms)); }
-  if(selectedSound==='orugoru'){
-    [1046.50,1318.51,1567.98,1046.50,1318.51,1760.00].forEach(function(f,i){pt(function(){playNote(f,0.8,0.18,'sine');},i*200);});
-  } else if(selectedSound==='chime'){
-    [523.25,659.25,783.99,1046.50].forEach(function(f,i){pt(function(){playNote(f,0.6,0.22,'sine');},i*180);});
-  } else if(selectedSound==='bell'){
-    pt(function(){playNote(1174.66,1.2,0.25,'sine');},0);
-    pt(function(){playNote(880,1.0,0.18,'sine');},300);
-  } else if(selectedSound==='fanfare'){
-    [523.25,659.25,783.99,1046.50,1318.51,1046.50].forEach(function(f,i){pt(function(){playNote(f,0.3,0.20,'square');},i*120);});
-  } else if(selectedSound==='pop'){
-    [880,1100,1320].forEach(function(f,i){pt(function(){playNote(f,0.12,0.22,'sine');},i*80);});
-  } else if(selectedSound==='antique'){
-    var A=[1174.66,0,1396.91,0,1760.00,0,2093.00,0,1760.00,0,1396.91,0,1174.66,0,1046.50,0,
-           1318.51,0,1567.98,0,1864.66,0,1567.98,0,1318.51,0,1046.50,0,932.33,0,1046.50,0,
-           987.77,0,1174.66,0,1396.91,0,1864.66,0,1396.91,0,1174.66,0,987.77,0,880.00,0,
-           880.00,0,1046.50,0,1396.91,0,1760.00,0,1396.91,0,1046.50,0,880.00,0,0,0];
-    A.forEach(function(f,i){if(!f)return;pt(function(){playNote(f,0.9,0.18,'sine');playNote(f*2,0.5,0.05,'sine');},i*200);});
-  } else if(selectedSound==='forest'){
-    var F=[523.25,0,659.25,0,783.99,0,659.25,0,523.25,0,440.00,0,523.25,0,0,0,698.46,0,880.00,0,783.99,0,659.25,0,587.33,0,523.25,0,587.33,0,0,0];
-    F.forEach(function(f,i){if(!f)return;pt(function(){playNote(f,0.7,0.20,'sine');},i*220);});
-  } else if(selectedSound==='star'){
-    var S=[2093.00,0,1864.66,0,1567.98,0,1864.66,0,2093.00,0,2349.32,0,2093.00,0,0,0,1567.98,0,1396.91,0,1174.66,0,1396.91,0,1567.98,0,1864.66,0,1567.98,0,0,0];
-    S.forEach(function(f,i){if(!f)return;pt(function(){playNote(f,0.4,0.12,'sine');playNote(f*0.5,0.8,0.06,'sine');},i*180);});
-  } else if(selectedSound==='piano'){
-    var P=[523.25,659.25,783.99,1046.50,587.33,698.46,880.00,1174.66,523.25,659.25,783.99,1046.50,440.00,523.25,659.25,880.00];
-    P.forEach(function(f,i){if(!f)return;pt(function(){playNote(f,0.5,0.22,'triangle');},i*160);});
-  } else if(selectedSound==='sea'){
-    var Se=[440.00,0,0,523.25,0,0,659.25,0,0,587.33,0,0,523.25,0,0,440.00,0,0,392.00,0,0,440.00,0,0];
-    Se.forEach(function(f,i){if(!f)return;pt(function(){playNote(f,1.0,0.16,'sine');},i*180);});
-  }
-}
-
-// プリセット
 function selectPreset(btn,min){
   drumH=Math.floor(min/60); drumM=min%60; drumS=0;
   var disp=document.getElementById('drumDisplay');
   if(disp) disp.textContent='-';
-  document.querySelectorAll('.preset-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('#tabTimer .preset-btn').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');
-  var cm=document.getElementById('customMin'); if(cm) cm.value='';
-  if(!running){totalSec=min*60;remSec=min*60;updateDisplay();updateRing();}
-}
-function onCustomInput(el){
-  var v=parseInt(el.value);if(!v||v<1)return;
-  document.querySelectorAll('.preset-btn').forEach(function(b){b.classList.remove('active');});
-  if(!running){totalSec=v*60;remSec=v*60;updateDisplay();updateRing();}
+  // ★ running中も止めてリセット
+  if(running||paused){
+    running=false; paused=false;
+    if(timerInterval) clearInterval(timerInterval);
+    document.getElementById('startBtn').textContent='スタート';
+    document.getElementById('startBtn').className='ctrl-btn ctrl-start';
+  }
+  totalSec=min*60;
+  remSec=min*60;
+  document.getElementById('timeSub').textContent='待機中';
+  updateDisplay();
+  updateRing();
 }
 
-// サウンド選択
 function selectSound(btn,name){
+  selectedSound=name;
   document.querySelectorAll('.sound-btn').forEach(function(b){b.classList.remove('active');});
-  btn.classList.add('active');selectedSound=name;
+  btn.classList.add('active');
 }
-
-// タイマー
-// ===== ドラムロール（3列）=====
-var drumH=0, drumM=1, drumS=0;
-var drumScrollH=null, drumScrollM=null, drumScrollS=null;
-var ITEM_H=36;
-
-function _buildCol(scrollEl, max, unitLabel){
-  var h='<div class="drum-spacer"></div>';
-  for(var i=0;i<=max;i++){
-    h+='<div class="drum-item" data-v="'+i+'">'+i+'<span class="drum-item-unit" style="font-size:11px;color:rgba(45,55,72,0.4);font-weight:700;margin-left:3px;">'+unitLabel+'</span></div>';
-  }
-  h+='<div class="drum-spacer"></div>';
-  scrollEl.innerHTML=h;
+function toggleLoop(){
+  loopMode=!loopMode;
+  document.getElementById('loopBtn').classList.toggle('active', loopMode);
 }
-
-function initDrum(){
-  drumScrollH=document.getElementById('drumH');
-  drumScrollM=document.getElementById('drumM');
-  drumScrollS=document.getElementById('drumS');
-  if(!drumScrollH||!drumScrollM||!drumScrollS)return;
-  _buildCol(drumScrollH, 23, '時間');
-  _buildCol(drumScrollM, 59, '分');
-  _buildCol(drumScrollS, 59, '秒');
-  drumScrollH.scrollTop=drumH*ITEM_H;
-  drumScrollM.scrollTop=drumM*ITEM_H;
-  drumScrollS.scrollTop=drumS*ITEM_H;
-  updateDrumHighlight();
-  drumScrollH.addEventListener('scroll',function(){onDrumScroll('h');},{passive:true});
-  drumScrollM.addEventListener('scroll',function(){onDrumScroll('m');},{passive:true});
-  drumScrollS.addEventListener('scroll',function(){onDrumScroll('s');},{passive:true});
+function previewSound(){
+  ensureAudio();
+  _playPreview();
 }
-
-function openDrumModal(){
-  var el=document.getElementById('drumOverlay');
-  if(el) el.classList.add('show');
-  setTimeout(function(){
-    if(drumScrollH) drumScrollH.scrollTop=drumH*ITEM_H;
-    if(drumScrollM) drumScrollM.scrollTop=drumM*ITEM_H;
-    if(drumScrollS) drumScrollS.scrollTop=drumS*ITEM_H;
-  }, 80);
-}
-
-function closeDrumModal(){
-  var el=document.getElementById('drumOverlay');
-  if(el) el.classList.remove('show');
-  if(!running){
-    var sec=drumH*3600+drumM*60+drumS;
-    if(sec<1) sec=60;
-    totalSec=sec; remSec=sec;
-    var label=(drumH?drumH+'時間':'')+(drumM?drumM+'分':'')+(drumS?drumS+'秒':'');
-    document.getElementById('drumDisplay').textContent=label||'-';
-    document.querySelectorAll('.preset-btn').forEach(function(b){b.classList.remove('active');});
-    updateDisplay(); updateRing();
-  }
-}
-
-function onDrumOverlayClick(e){
-  if(e.target===document.getElementById('drumOverlay')) closeDrumModal();
-}
-
-function onDrumScroll(which){
-  var el = which==='h'?drumScrollH : which==='m'?drumScrollM : drumScrollS;
-  var max = which==='h'?23 : 59;
-  var idx=Math.round(el.scrollTop/ITEM_H);
-  idx=Math.max(0,Math.min(max,idx));
-  if(which==='h') drumH=idx;
-  else if(which==='m') drumM=idx;
-  else drumS=idx;
-  updateDrumHighlight();
-}
-
-function updateDrumHighlight(){
-  [['drumH',drumH],['drumM',drumM],['drumS',drumS]].forEach(function(pair){
-    document.querySelectorAll('#'+pair[0]+' .drum-item').forEach(function(el){
-      var v=parseInt(el.dataset.v);
-      var diff=Math.abs(v-pair[1]);
-      el.classList.toggle('selected',diff===0);
-      el.classList.toggle('near',diff===1);
+function _playPreview(){
+  var previewTimers=[];
+  function pt(fn,ms){previewTimers.push(setTimeout(fn,ms));}
+  var s=selectedSound;
+  if(s==='orugoru'){
+    [[523,0],[659,200],[784,400],[1047,600]].forEach(function(p){
+      pt(function(){playNote(p[0],0.6,0.18,'sine');},p[1]);
     });
-  });
+  } else if(s==='chime'){
+    [[1047,0],[1319,150],[1568,300]].forEach(function(p){
+      pt(function(){playNote(p[0],0.5,0.2,'sine');},p[1]);
+    });
+  } else if(s==='bell'){
+    [[800,0],[800,400]].forEach(function(p){
+      pt(function(){playNote(p[0],0.4,0.22,'triangle');},p[1]);
+    });
+  } else if(s==='fanfare'){
+    [[523,0],[659,100],[784,200],[1047,300],[1319,500]].forEach(function(p){
+      pt(function(){playNote(p[0],0.5,0.2,'sawtooth');},p[1]);
+    });
+  } else if(s==='pop'){
+    [[800,0],[1000,100],[1200,200]].forEach(function(p){
+      pt(function(){playNote(p[0],0.15,0.2,'square');},p[1]);
+    });
+  } else if(s==='antique'){
+    [[440,0],[440,300]].forEach(function(p){
+      pt(function(){playNote(p[0],0.4,0.18,'triangle');},p[1]);
+    });
+  } else if(s==='forest'){
+    pt(function(){playNote(987,0.3,0.15,'sine');},0);
+    pt(function(){playNote(1319,0.4,0.13,'sine');},250);
+    pt(function(){playNote(880,0.5,0.12,'sine');},500);
+  } else if(s==='star'){
+    [[1318,0],[1568,100],[1865,200],[2093,300]].forEach(function(p){
+      pt(function(){playNote(p[0],0.3,0.15,'sine');},p[1]);
+    });
+  } else if(s==='piano'){
+    [[523,0],[659,180],[784,360]].forEach(function(p){
+      pt(function(){playNote(p[0],0.6,0.2,'triangle');},p[1]);
+    });
+  } else if(s==='sea'){
+    pt(function(){playNote(220,0.8,0.18,'sine');},0);
+    pt(function(){playNote(165,1.0,0.15,'sine');},300);
+  }
+}
+function playEndSound(){
+  _playPreview();
+}
+function playEndSoundLoop(){
+  playEndSound();
+  if(loopMode){
+    loopTimer=setTimeout(playEndSoundLoop, 1800);
+  }
 }
 
-function setDrumTo(min){
-  drumH=Math.floor(min/60);
-  drumM=min%60;
-  drumS=0;
-  var disp=document.getElementById('drumDisplay');
-  if(disp) disp.textContent='-';
-  if(drumScrollH) drumScrollH.scrollTop=drumH*ITEM_H;
-  if(drumScrollM) drumScrollM.scrollTop=drumM*ITEM_H;
-  if(drumScrollS) drumScrollS.scrollTop=drumS*ITEM_H;
-  updateDrumHighlight();
+// ★ tick関数を独立定義（バグ修正）
+function tick(){
+  remSec--;
+  updateDisplay();
+  updateRing();
+  if(remSec<=0){
+    running=false;
+    clearInterval(timerInterval);
+    playEndSoundLoop();
+    showOverlay();
+  }
 }
-// ===== ここまで =====
 
 function onStart(){
+  ensureAudio();
   if(!running&&!paused){
     if(remSec<=0)remSec=totalSec;
     running=true;
     document.getElementById('startBtn').textContent='一時停止';
     document.getElementById('startBtn').className='ctrl-btn ctrl-pause';
     timerInterval=setInterval(tick,1000);
-    ensureAudio();
   } else if(running){
     running=false;paused=true;clearInterval(timerInterval);
     document.getElementById('startBtn').textContent='再開';
@@ -492,18 +515,16 @@ function onStart(){
 }
 function onReset(){
   running=false;paused=false;clearInterval(timerInterval);
-  loopMode=false;if(loopTimer){clearTimeout(loopTimer);loopTimer=null;}
+  loopMode=false;
+  if(loopTimer){clearTimeout(loopTimer);loopTimer=null;}
   var lb=document.getElementById('loopBtn');if(lb)lb.classList.remove('active');
   remSec=totalSec;
   document.getElementById('startBtn').textContent='スタート';
   document.getElementById('startBtn').className='ctrl-btn ctrl-start';
   document.getElementById('timeSub').textContent='待機中';
   updateDisplay();updateRing();
-  remSec--;updateDisplay();updateRing();
-  if(remSec<=0){running=false;clearInterval(timerInterval);playEndSoundLoop();showOverlay();}
 }
 
-// 表示
 function updateDisplay(){
   var m=Math.floor(remSec/60),s=remSec%60;
   document.getElementById('timeDisplay').textContent=m+':'+(s<10?'0':'')+s;
@@ -523,7 +544,6 @@ function updateRing(){
   else ring.className='ring-fg';
 }
 
-// オーバーレイ
 function showOverlay(){
   var c=CHARAS[Math.floor(Math.random()*CHARAS.length)];
   document.getElementById('charaImg').src=c.src;
@@ -539,9 +559,300 @@ function closeOverlay(){
   var lb=document.getElementById('loopBtn');if(lb)lb.classList.remove('active');
   document.getElementById('overlay').classList.remove('show');
   onReset();
+  onIvReset();
 }
 
+// ドラムロール
+var drumH=0,drumM=1,drumS=0;
+var drumScrollH,drumScrollM,drumScrollS;
+var ITEM_H=36;
+function _buildCol(scrollEl, max, unitLabel){
+  var html='<div class="drum-spacer"></div>';
+  for(var i=0;i<=max;i++){
+    html+='<div class="drum-item" data-v="'+i+'">'+i+unitLabel+'</div>';
+  }
+  html+='<div class="drum-spacer"></div>';
+  scrollEl.innerHTML=html;
+}
+function initDrum(){
+  drumScrollH=document.getElementById('drumH');
+  drumScrollM=document.getElementById('drumM');
+  drumScrollS=document.getElementById('drumS');
+  _buildCol(drumScrollH,23,'時');
+  _buildCol(drumScrollM,59,'分');
+  _buildCol(drumScrollS,59,'秒');
+  ['H','M','S'].forEach(function(k){
+    var el=document.getElementById('drum'+k);
+    if(el)el.addEventListener('scroll',function(){onDrumScroll(el,k.toLowerCase());});
+  });
+}
+function openDrumModal(){
+  document.getElementById('drumOverlay').classList.add('show');
+  setTimeout(function(){
+    drumScrollH.scrollTop=drumH*ITEM_H;
+    drumScrollM.scrollTop=drumM*ITEM_H;
+    drumScrollS.scrollTop=drumS*ITEM_H;
+    updateDrumHighlight();
+  },50);
+}
+function closeDrumModal(){
+  document.getElementById('drumOverlay').classList.remove('show');
+  var total=drumH*3600+drumM*60+drumS;
+  if(total>0){
+    document.querySelectorAll('#tabTimer .preset-btn').forEach(function(b){b.classList.remove('active');});
+    var d=document.getElementById('drumDisplay');
+    if(d){
+      var s='';
+      if(drumH>0)s+=drumH+'時間';
+      if(drumM>0)s+=drumM+'分';
+      if(drumS>0)s+=drumS+'秒';
+      d.textContent=s||'-';
+    }
+    if(running||paused){
+      running=false;paused=false;
+      if(timerInterval) clearInterval(timerInterval);
+      document.getElementById('startBtn').textContent='スタート';
+      document.getElementById('startBtn').className='ctrl-btn ctrl-start';
+    }
+    totalSec=total;
+    remSec=total;
+    document.getElementById('timeSub').textContent='待機中';
+    updateDisplay();
+    updateRing();
+  }
+}
+function onDrumOverlayClick(e){
+  if(e.target.id==='drumOverlay')closeDrumModal();
+}
+function onDrumScroll(el,which){
+  var max=which==='h'?23:59;
+  var idx=Math.round(el.scrollTop/ITEM_H);
+  idx=Math.max(0,Math.min(max,idx));
+  if(which==='h')drumH=idx;
+  else if(which==='m')drumM=idx;
+  else drumS=idx;
+  updateDrumHighlight();
+}
+function updateDrumHighlight(){
+  [['drumH',drumH],['drumM',drumM],['drumS',drumS]].forEach(function(pair){
+    document.querySelectorAll('#'+pair[0]+' .drum-item').forEach(function(el){
+      var v=parseInt(el.dataset.v);
+      var diff=Math.abs(v-pair[1]);
+      el.classList.toggle('selected',diff===0);
+      el.classList.toggle('near',diff===1);
+    });
+  });
+}
+
+// ════════════════════════════════════════════
+// タブ2：インターバルタイマー
+// ════════════════════════════════════════════
+var ivWorkSec=20, ivRestSec=10, ivSets=8;
+var ivCurSet=1, ivPhase='work', ivRemSec=20;
+var ivRunning=false, ivInterval=null;
+
+function selectIvPreset(btn, w, r, s){
+  document.querySelectorAll('.iv-preset-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  ivWorkSec=w; ivRestSec=r; ivSets=s;
+  document.getElementById('ivWorkSec').value=w;
+  document.getElementById('ivRestSec').value=r;
+  document.getElementById('ivSets').value=s;
+  onIvReset();
+}
+function onIvCustomChange(){
+  document.querySelectorAll('.iv-preset-btn').forEach(function(b){b.classList.remove('active');});
+  ivWorkSec=parseInt(document.getElementById('ivWorkSec').value)||1;
+  ivRestSec=parseInt(document.getElementById('ivRestSec').value)||0;
+  ivSets=parseInt(document.getElementById('ivSets').value)||1;
+  onIvReset();
+}
+function ivFmt(s){
+  var m=Math.floor(s/60),ss=s%60;
+  return m+':'+(ss<10?'0':'')+ss;
+}
+function updateIvDisplay(){
+  var totalForPhase = ivPhase==='work'?ivWorkSec:ivRestSec;
+  var pct = totalForPhase>0?ivRemSec/totalForPhase:0;
+  document.getElementById('ivTimeDisplay').textContent=ivFmt(ivRemSec);
+  document.getElementById('ivSetCounter').innerHTML='<span class="sub">'+ivCurSet+' / '+ivSets+'</span>';
+  var ph=document.getElementById('ivPhase');
+  var td=document.getElementById('ivTimeDisplay');
+  var ring=document.getElementById('ivRingFg');
+  if(ivPhase==='work'){
+    ph.textContent='💪 作業中';
+    ph.className='interval-phase work';
+    td.className='time-display';
+    ring.className='ring-fg';
+  } else {
+    ph.textContent='😌 休憩中';
+    ph.className='interval-phase rest';
+    td.className='time-display rest';
+    ring.className='ring-fg rest';
+  }
+  ring.style.strokeDashoffset=CIRC*(1-pct);
+}
+function ivTick(){
+  ivRemSec--;
+  if(ivRemSec<=0){
+    // フェーズ切替
+    if(ivPhase==='work'){
+      if(ivCurSet>=ivSets){
+        // 完了
+        ivRunning=false;clearInterval(ivInterval);
+        document.getElementById('ivStartBtn').textContent='スタート';
+        document.getElementById('ivStartBtn').className='ctrl-btn ctrl-start';
+        playEndSoundLoop();
+        showOverlay();
+        return;
+      }
+      // 休憩フェーズへ
+      if(ivRestSec>0){
+        ivPhase='rest';
+        ivRemSec=ivRestSec;
+        playNote(523,0.2,0.3,'sine'); // 軽い通知音
+      } else {
+        // 休憩0なら即次セット
+        ivCurSet++;
+        ivRemSec=ivWorkSec;
+      }
+    } else {
+      // rest → 次セット
+      ivCurSet++;
+      ivPhase='work';
+      ivRemSec=ivWorkSec;
+      playNote(880,0.25,0.3,'triangle'); // セット開始音
+    }
+  }
+  updateIvDisplay();
+}
+function onIvStart(){
+  ensureAudio();
+  if(!ivRunning){
+    if(ivRemSec<=0){ivRemSec=ivWorkSec;ivPhase='work';ivCurSet=1;}
+    ivRunning=true;
+    document.getElementById('ivStartBtn').textContent='一時停止';
+    document.getElementById('ivStartBtn').className='ctrl-btn ctrl-pause';
+    ivInterval=setInterval(ivTick,1000);
+  } else {
+    ivRunning=false;
+    clearInterval(ivInterval);
+    document.getElementById('ivStartBtn').textContent='再開';
+    document.getElementById('ivStartBtn').className='ctrl-btn ctrl-start';
+  }
+}
+function onIvReset(){
+  ivRunning=false;
+  if(ivInterval) clearInterval(ivInterval);
+  ivCurSet=1;
+  ivPhase='work';
+  ivRemSec=ivWorkSec;
+  document.getElementById('ivStartBtn').textContent='スタート';
+  document.getElementById('ivStartBtn').className='ctrl-btn ctrl-start';
+  updateIvDisplay();
+}
+
+// ════════════════════════════════════════════
+// タブ3：メトロノーム
+// ════════════════════════════════════════════
+var metroBpm=120, metroBeats=4, metroSound='click';
+var metroPlaying=false, metroInterval=null, metroCurBeat=0;
+
+function buildBeatsDots(){
+  var row=document.getElementById('beatsRow');
+  var h='';
+  for(var i=0;i<metroBeats;i++){
+    h+='<div class="beat-dot'+(i===0?' accent':'')+'" data-beat="'+i+'"></div>';
+  }
+  row.innerHTML=h;
+}
+function changeBpm(delta){
+  metroBpm=Math.max(40,Math.min(240,metroBpm+delta));
+  document.getElementById('bpmDisplay').textContent=metroBpm;
+  document.getElementById('bpmSlider').value=metroBpm;
+  if(metroPlaying){restartMetro();}
+}
+function onBpmSlider(v){
+  metroBpm=parseInt(v);
+  document.getElementById('bpmDisplay').textContent=metroBpm;
+  if(metroPlaying){restartMetro();}
+}
+function setBeats(n){
+  metroBeats=n;
+  metroCurBeat=0;
+  document.querySelectorAll('.beat-opt').forEach(function(b){
+    if(b.textContent===n+'/4'||(n===6&&b.textContent==='6/8')){
+      // 拍子のボタンだけ更新（音色ボタンは別）
+    }
+  });
+  // 拍子ボタンの active 切替
+  var btns=document.querySelectorAll('#beatOptions .beat-opt');
+  btns.forEach(function(b){b.classList.remove('active');});
+  var labels={2:'2/4',3:'3/4',4:'4/4',6:'6/8'};
+  btns.forEach(function(b){if(b.textContent===labels[n])b.classList.add('active');});
+  buildBeatsDots();
+  if(metroPlaying){restartMetro();}
+}
+function setMetroSound(btn,name){
+  metroSound=name;
+  btn.parentElement.querySelectorAll('.beat-opt').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+}
+function playMetroSound(isAccent){
+  if(!audioCtx||masterVol===0)return;
+  var s=metroSound;
+  if(s==='click'){
+    var freq=isAccent?1500:1000;
+    playNote(freq,0.05,0.4,'square');
+  } else if(s==='wood'){
+    var freq=isAccent?900:700;
+    playNote(freq,0.08,0.35,'triangle');
+  } else if(s==='bell'){
+    var freq=isAccent?1200:800;
+    playNote(freq,0.15,0.3,'sine');
+  }
+}
+function metroTick(){
+  // ビート可視化
+  var dots=document.querySelectorAll('.beat-dot');
+  dots.forEach(function(d){d.classList.remove('active');});
+  if(dots[metroCurBeat]){
+    dots[metroCurBeat].classList.add('active');
+    setTimeout(function(){if(dots[metroCurBeat])dots[metroCurBeat].classList.remove('active');},80);
+  }
+  // 音
+  playMetroSound(metroCurBeat===0);
+  metroCurBeat=(metroCurBeat+1)%metroBeats;
+}
+function startMetro(){
+  ensureAudio();
+  metroPlaying=true;
+  metroCurBeat=0;
+  document.getElementById('metroBtn').textContent='ストップ';
+  document.getElementById('metroBtn').className='ctrl-btn ctrl-pause';
+  metroTick(); // 即1拍目
+  metroInterval=setInterval(metroTick, 60000/metroBpm);
+}
+function stopMetro(){
+  metroPlaying=false;
+  if(metroInterval){clearInterval(metroInterval);metroInterval=null;}
+  document.getElementById('metroBtn').textContent='スタート';
+  document.getElementById('metroBtn').className='ctrl-btn metro-ctrl';
+  document.querySelectorAll('.beat-dot').forEach(function(d){d.classList.remove('active');});
+}
+function restartMetro(){
+  if(metroInterval){clearInterval(metroInterval);}
+  metroCurBeat=0;
+  metroInterval=setInterval(metroTick, 60000/metroBpm);
+}
+function onMetroToggle(){
+  if(metroPlaying) stopMetro();
+  else startMetro();
+}
+
+// ════════════════════════════════════════════
 // 初期化
+// ════════════════════════════════════════════
 try{
   var sv=parseFloat(localStorage.getItem('nikowa_bgm_vol')||'0');
   masterVol=sv;
@@ -549,7 +860,11 @@ try{
   ['vOff','vLo','vHi'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});
   var sel=document.getElementById(mv[sv]||'vOff');if(sel)sel.classList.add('active');
 }catch(e){}
-initDrum();updateDisplay();updateRing();
+initDrum();
+updateDisplay();
+updateRing();
+updateIvDisplay();
+buildBeatsDots();
 </script>
 </body>
 </html>
