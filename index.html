@@ -42750,9 +42750,13 @@ function renderTown() {
     if (window._nearbyGeoStatus !== 'ok') {
       html += '<div style="font-size:11px;color:var(--ink-sub);text-align:center;padding:12px;">現在地取得後に検索結果が表示されます</div>';
     } else if (searching) {
-      html += '<div style="font-size:11px;color:var(--ink-sub);text-align:center;padding:12px;">検索中…</div>';
+      html += '<div style="font-size:11px;color:var(--ink-sub);text-align:center;padding:12px;">'+(window._nearbyCat==='__here__'?'📍 今ここの近くのお店を探してるよ…':'検索中…')+'</div>';
     } else if (results.length === 0) {
-      html += '<div style="font-size:11px;color:var(--ink-sub);text-align:center;padding:12px;">近くに該当する場所が見つかりませんでした</div>';
+      if (window._nearbyCat === '__here__') {
+        html += '<div style="font-size:11px;color:var(--ink-sub);text-align:center;padding:12px;">📍 すぐ近くにお店が見つからなかったよ<br><button onclick="searchHereOnly()" style="margin-top:8px;background:var(--accent);color:white;border:none;border-radius:100px;padding:8px 16px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;">もう一度探す</button></div>';
+      } else {
+        html += '<div style="font-size:11px;color:var(--ink-sub);text-align:center;padding:12px;">近くに該当する場所が見つかりませんでした</div>';
+      }
     } else {
       const catIconMap = {
         '喫煙所':'🚬', '居酒屋':'🍶', 'カフェ':'☕',
@@ -42760,8 +42764,12 @@ function renderTown() {
         '公園':'🌳', 'コンビニ':'🏪', '薬局':'💊', 'ラーメン':'🍜', '病院':'🏥'
       };
       const catIcon = catIconMap[selCat] || '📍';
-      // 件数表示
-      html += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:6px;">'+results.length+'件 見つかったよ</div>';
+      // 件数表示（ここの店モードかカテゴリ検索かで切替）
+      if (window._nearbyCat === '__here__') {
+        html += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:6px;font-weight:700;">📍 今ここの近くにあるお店（'+results.length+'件）</div>';
+      } else {
+        html += '<div style="font-size:11px;color:var(--ink-sub);margin-bottom:6px;">'+results.length+'件 見つかったよ</div>';
+      }
       // 横スクロールカードエリア（写真付き）
       html += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;">';
       html += '<div style="display:flex;gap:10px;padding:2px 0 4px;">';
@@ -52350,6 +52358,73 @@ function nearbyDistance(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+// ════════════════════════════════════════════
+// 「今ここの店」専用検索（超近距離・半径約50m）
+// ════════════════════════════════════════════
+async function searchHereOnly() {
+  if (typeof google === 'undefined' || !google.maps || !google.maps.importLibrary) return;
+  if (window._nearbyGeoStatus !== 'ok') return;
+  // 既存マーカークリア
+  if (window._nearbyMarkers && window._nearbyMarkers.length) {
+    for (const marker of window._nearbyMarkers) marker.setMap(null);
+  }
+  window._nearbyMarkers = [];
+  window._nearbySearching = true;
+  window._nearbyResults = [];
+  window._nearbyCat = '__here__';
+  renderTown();
+  try {
+    const { Place } = await google.maps.importLibrary('places');
+    const range = 0.0005; // 約50m四方
+    const request = {
+      textQuery: '店',
+      fields: ['displayName', 'formattedAddress', 'location', 'businessStatus', 'googleMapsURI', 'currentOpeningHours', 'photos', 'rating', 'userRatingCount'],
+      locationRestriction: new google.maps.LatLngBounds(
+        new google.maps.LatLng(window._nearbyLat - range, window._nearbyLng - range),
+        new google.maps.LatLng(window._nearbyLat + range, window._nearbyLng + range)
+      ),
+      maxResultCount: 20
+    };
+    const response = await Place.searchByText(request);
+    const places = response.places || [];
+    const list = [];
+    for (const p of places) {
+      const pos = _extractPlaceLatLng(p);
+      if (!pos) continue;
+      let photoUrl = '';
+      try {
+        if (p.photos && p.photos[0] && typeof p.photos[0].getURI === 'function') {
+          photoUrl = p.photos[0].getURI({ maxHeight: 400 });
+        }
+      } catch(e) {}
+      list.push({
+        placeId: p.id || '',
+        name: (p.displayName && (p.displayName.text || p.displayName)) || '名称不明',
+        address: p.formattedAddress || '',
+        lat: pos.lat,
+        lng: pos.lng,
+        mapsUrl: p.googleMapsURI || '',
+        businessStatus: p.businessStatus || '',
+        distance: nearbyDistance(window._nearbyLat, window._nearbyLng, pos.lat, pos.lng),
+        isOpen: p.currentOpeningHours ? p.currentOpeningHours.openNow : null,
+        hours: _getTodayHours(p.currentOpeningHours),
+        phone: '',
+        photoUrl: photoUrl
+      });
+    }
+    list.sort((a, b) => a.distance - b.distance);
+    window._nearbyResults = list;
+    window._nearbySearching = false;
+    renderTown();
+  } catch (e) {
+    console.error('searchHereOnly failed:', e);
+    window._nearbyResults = [];
+    window._nearbySearching = false;
+    renderTown();
+  }
+}
+window.searchHereOnly = searchHereOnly;
+
 async function searchNearbyPlaces() {
   if (typeof google === 'undefined' || !google.maps || !google.maps.importLibrary) return;
   if (window._nearbyGeoStatus !== 'ok') return;
@@ -52656,9 +52731,12 @@ function getNearbyLocation() {
       window._nearbyLng = pos.coords.longitude;
       window._nearbyGeoStatus = 'ok';
       renderTown();
-      // カテゴリ or 検索クエリが指定されている時のみ検索
-      if (window._nearbyCat || window._nearbyCustomQuery) {
+      // カテゴリor検索クエリあり → 通常検索
+      // 何も無し → 「今ここの店」を超近距離で自動取得
+      if ((window._nearbyCat && window._nearbyCat !== '__here__') || window._nearbyCustomQuery) {
         searchNearbyPlaces();
+      } else {
+        searchHereOnly();
       }
     },
     () => {
