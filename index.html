@@ -33521,16 +33521,19 @@ function renderPCSidebar() {
   const _uname = (data.user && data.user.name) || (data.myProfile && data.myProfile.name) || 'にこわ';
   const _cv = currentView;
 
-  const _navItems = [
-    { key:'top',      icon:'home',         label:'ホーム',    action:`currentView='top';render();` },
-    { key:'me_stamp', icon:'wb_sunny',      label:'今日の記録', action:`goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
-    { key:'schedule', icon:'calendar_month',label:'カレンダー', action:`currentView='schedule';render();` },
-    { key:'nest',     icon:'home',          label:'家族',      action:`goToNestMode();` },
-    { key:'pet',      icon:'pets',          label:'ペット',    action:`goToPetMode();` },
-    { key:'health',   icon:'favorite',      label:'けんこう',  action:`goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
-    { key:'memo',     icon:'sticky_note_2', label:'メモ',      action:`goToMeMode();setTimeout(()=>setModePageTab('me','secret'),100);` },
-    { key:'town',     icon:'location_city', label:'まち',      action:`currentView='town';render();` },
-    { key:'atelier',  icon:'palette',       label:'お店・制作', action:`goToAtelierView();` },
+  // メインナビ（ボトムナビと同じ5項目）
+  const _navMain = [
+    { key:'home',     icon:'home',           label:'ホーム',      action:`currentView='top';render();`,    isActive: (_cv==='top' || _cv==='houses') },
+    { key:'me',       icon:'person',         label:'Me',          action:`goToMeMode();`,                  isActive: (_cv==='me') },
+    { key:'schedule', icon:'calendar_month', label:'スケジュール', action:`currentView='schedule';render();`, isActive: (_cv==='schedule') },
+    { key:'nest',     icon:'groups',         label:'Nest',        action:`goToNestMode();`,                isActive: (_cv==='nest' || _cv==='new_nest') },
+    { key:'town',     icon:'location_city',  label:'Town',        action:`currentView='town';render();`,   isActive: (_cv==='town') },
+  ];
+
+  // サブナビ（PCからよく触る制作系）
+  const _navSub = [
+    { key:'atelier',  icon:'palette',        label:'アトリエ',    action:`goToAtelierView();`,             isActive: (_cv==='atelier') },
+    { key:'shop',     icon:'storefront',     label:'マイショップ', action:`currentView='shop';render();`,   isActive: (_cv==='shop') },
   ];
 
   let h = '';
@@ -33542,15 +33545,27 @@ function renderPCSidebar() {
   h += '<div style="font-size:11px;color:var(--ink-sub);margin-top:6px;font-weight:700;">'+escapeHtml(_uname)+'</div>';
   h += '</div>';
 
-  // ナビ
-  h += '<div style="padding:8px 0;flex:1;">';
-  for (const item of _navItems) {
-    const isActive = _cv === item.key || (_cv === 'me' && item.key.startsWith('me'));
-    h += `<button class="pc-nav-item ${isActive?'active':''}" onclick="${item.action}">`;
-    h += `<span class="material-symbols-rounded" style="color:${isActive?'var(--accent-deep)':'var(--ink-light)'};">${item.icon}</span>`;
-    h += `<span>${item.label}</span>`;
-    h += '</button>';
-  }
+  // ナビ描画ヘルパー
+  const _renderNavBtn = (item) => {
+    const ia = item.isActive;
+    let b = `<button class="pc-nav-item ${ia?'active':''}" onclick="${item.action}">`;
+    b += `<span class="material-symbols-rounded" style="color:${ia?'var(--accent-deep)':'var(--ink-light)'};">${item.icon}</span>`;
+    b += `<span>${item.label}</span>`;
+    b += '</button>';
+    return b;
+  };
+
+  // メインナビ
+  h += '<div style="padding:8px 0;flex:1;display:flex;flex-direction:column;">';
+  h += '<div>';
+  for (const item of _navMain) h += _renderNavBtn(item);
+  h += '</div>';
+
+  // 仕切り線＋サブナビ
+  h += '<div style="border-top:1px solid var(--line);margin:8px 0;"></div>';
+  h += '<div>';
+  for (const item of _navSub) h += _renderNavBtn(item);
+  h += '</div>';
   h += '</div>';
 
   // 下部：設定
