@@ -233,6 +233,9 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
       <button type="button" class="iv-preset-btn" onclick="selectIvPreset(this,60,30,5)">
         <div class="iv-pname">ストレッチ</div><span class="iv-pdesc">60秒×5 / 休憩30秒</span>
       </button>
+      <button type="button" class="iv-preset-btn" id="ivCustomBtn" onclick="useIvCustom(this)" style="grid-column:1/-1;background:#FFF3E0;border-color:#FFB74D;">
+        <div class="iv-pname">🌸 マイセット（前回の設定）</div><span class="iv-pdesc" id="ivCustomDesc">前回の数字を読み込み</span>
+      </button>
     </div>
 
     <!-- カスタム -->
@@ -249,6 +252,15 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
         <label>セット <span class="unit">(回)</span></label>
         <input type="number" id="ivSets" value="8" min="1" max="99" onchange="onIvCustomChange()">
       </div>
+    </div>
+
+    <!-- 通知音 -->
+    <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin:8px 0 6px;text-align:center;">🔔 切替の音</div>
+    <div class="beat-options" style="margin-bottom:14px;">
+      <button type="button" class="beat-opt active" onclick="setIvSound(this,'soft')">やわらか</button>
+      <button type="button" class="beat-opt" onclick="setIvSound(this,'clock')">カチッ</button>
+      <button type="button" class="beat-opt" onclick="setIvSound(this,'pop')">ピコッ</button>
+      <button type="button" class="beat-opt" onclick="setIvSound(this,'whistle')">ホイッスル</button>
     </div>
 
     <!-- フェーズ表示 -->
@@ -350,13 +362,30 @@ function setVol(v){
   var m={0:'vOff',0.5:'vLo',1.0:'vHi'};
   var sel=document.getElementById(m[v]);if(sel)sel.classList.add('active');
   try{localStorage.setItem('nikowa_bgm_vol',String(v));}catch(e){}
+  // ★ OFFにしたら鳴ってる音楽・ループを全部止める
+  if(v===0){
+    loopMode=false;
+    if(loopTimer){clearTimeout(loopTimer);loopTimer=null;}
+    var lb=document.getElementById('loopBtn');if(lb)lb.classList.remove('active');
+    // メトロノームも止める
+    if(typeof metroPlaying!=='undefined' && metroPlaying){stopMetro();}
+    // 現在鳴ってるオシレータをマスターでカット
+    if(audioCtx){
+      try{audioCtx.suspend();}catch(e){}
+    }
+  } else {
+    // ON時はAudioContext再開
+    if(audioCtx){try{audioCtx.resume();}catch(e){}}
+  }
 }
 function ensureAudio(){
   if(!audioCtx){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
-  if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
+  if(audioCtx&&audioCtx.state==='suspended' && masterVol>0)audioCtx.resume();
 }
 function playNote(freq,dur,vol,type){
-  if(!audioCtx||masterVol===0)return;
+  // ★ 厳密チェック：マスター0なら絶対鳴らさない
+  if(!audioCtx||masterVol===0||!freq)return;
+  if(audioCtx.state==='suspended')return; // suspended中は鳴らさない
   var o=audioCtx.createOscillator(),g=audioCtx.createGain();
   o.type=type||'sine'; o.frequency.value=freq;
   g.gain.value=0;
@@ -426,48 +455,45 @@ function previewSound(){
   _playPreview();
 }
 function _playPreview(){
-  var previewTimers=[];
-  function pt(fn,ms){previewTimers.push(setTimeout(fn,ms));}
   var s=selectedSound;
   if(s==='orugoru'){
-    [[523,0],[659,200],[784,400],[1047,600]].forEach(function(p){
-      pt(function(){playNote(p[0],0.6,0.18,'sine');},p[1]);
-    });
+    [1046.50,1318.51,1567.98,1046.50,1318.51,1760.00].forEach(function(f,i){setTimeout(function(){playNote(f,0.8,0.18,'sine');},i*200);});
   } else if(s==='chime'){
-    [[1047,0],[1319,150],[1568,300]].forEach(function(p){
-      pt(function(){playNote(p[0],0.5,0.2,'sine');},p[1]);
-    });
+    [523.25,659.25,783.99,1046.50].forEach(function(f,i){setTimeout(function(){playNote(f,0.6,0.22,'sine');},i*180);});
   } else if(s==='bell'){
-    [[800,0],[800,400]].forEach(function(p){
-      pt(function(){playNote(p[0],0.4,0.22,'triangle');},p[1]);
-    });
+    playNote(1174.66,1.2,0.25,'sine');
+    setTimeout(function(){playNote(880,1.0,0.18,'sine');},300);
   } else if(s==='fanfare'){
-    [[523,0],[659,100],[784,200],[1047,300],[1319,500]].forEach(function(p){
-      pt(function(){playNote(p[0],0.5,0.2,'sawtooth');},p[1]);
-    });
+    [523.25,659.25,783.99,1046.50,1318.51,1046.50].forEach(function(f,i){setTimeout(function(){playNote(f,0.3,0.20,'square');},i*120);});
   } else if(s==='pop'){
-    [[800,0],[1000,100],[1200,200]].forEach(function(p){
-      pt(function(){playNote(p[0],0.15,0.2,'square');},p[1]);
-    });
+    [880,1100,1320].forEach(function(f,i){setTimeout(function(){playNote(f,0.12,0.22,'sine');},i*80);});
   } else if(s==='antique'){
-    [[440,0],[440,300]].forEach(function(p){
-      pt(function(){playNote(p[0],0.4,0.18,'triangle');},p[1]);
-    });
+    var A=[1174.66,0,1396.91,0,1760.00,0,2093.00,0,1760.00,0,1396.91,0,1174.66,0,1046.50,0,
+           1318.51,0,1567.98,0,1864.66,0,1567.98,0,1318.51,0,1046.50,0,932.33,0,1046.50,0,
+           987.77,0,1174.66,0,1396.91,0,1864.66,0,1396.91,0,1174.66,0,987.77,0,880.00,0,
+           880.00,0,1046.50,0,1396.91,0,1760.00,0,1396.91,0,1046.50,0,880.00,0,0,0];
+    A.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.9,0.18,'sine');playNote(f*2,0.5,0.05,'sine');},i*200);});
   } else if(s==='forest'){
-    pt(function(){playNote(987,0.3,0.15,'sine');},0);
-    pt(function(){playNote(1319,0.4,0.13,'sine');},250);
-    pt(function(){playNote(880,0.5,0.12,'sine');},500);
+    var F=[523.25,0,659.25,0,783.99,0,659.25,0,523.25,0,440.00,0,523.25,0,0,0,
+           698.46,0,880.00,0,783.99,0,659.25,0,587.33,0,523.25,0,587.33,0,0,0,
+           523.25,0,659.25,0,783.99,0,1046.50,0,880.00,0,783.99,0,659.25,0,523.25,0];
+    F.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.7,0.20,'sine');},i*220);});
   } else if(s==='star'){
-    [[1318,0],[1568,100],[1865,200],[2093,300]].forEach(function(p){
-      pt(function(){playNote(p[0],0.3,0.15,'sine');},p[1]);
-    });
+    var S=[2093.00,0,1864.66,0,1567.98,0,1864.66,0,2093.00,0,2349.32,0,2093.00,0,0,0,
+           1567.98,0,1396.91,0,1174.66,0,1396.91,0,1567.98,0,1864.66,0,1567.98,0,0,0,
+           2349.32,0,2093.00,0,1760.00,0,2093.00,0,2349.32,0,2637.02,0,2093.00,0,0,0];
+    S.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.4,0.12,'sine');playNote(f*0.5,0.8,0.06,'sine');},i*180);});
   } else if(s==='piano'){
-    [[523,0],[659,180],[784,360]].forEach(function(p){
-      pt(function(){playNote(p[0],0.6,0.2,'triangle');},p[1]);
-    });
+    var P=[523.25,659.25,783.99,1046.50,587.33,698.46,880.00,1174.66,
+           523.25,659.25,783.99,1046.50,440.00,523.25,659.25,880.00,
+           493.88,587.33,698.46,987.77,523.25,659.25,783.99,1046.50];
+    P.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,0.5,0.22,'triangle');},i*160);});
   } else if(s==='sea'){
-    pt(function(){playNote(220,0.8,0.18,'sine');},0);
-    pt(function(){playNote(165,1.0,0.15,'sine');},300);
+    var Se=[440.00,0,0,523.25,0,0,659.25,0,0,587.33,0,0,
+            523.25,0,0,440.00,0,0,392.00,0,0,440.00,0,0,
+            523.25,0,0,659.25,0,0,783.99,0,0,659.25,0,0,
+            587.33,0,0,523.25,0,0,440.00,0,0,0,0,0];
+    Se.forEach(function(f,i){if(!f)return;setTimeout(function(){playNote(f,1.0,0.16,'sine');},i*180);});
   }
 }
 function playEndSound(){
@@ -476,7 +502,9 @@ function playEndSound(){
 function playEndSoundLoop(){
   playEndSound();
   if(loopMode){
-    loopTimer=setTimeout(playEndSoundLoop, 1800);
+    // 音楽の長さに合わせたループ間隔（短い音だと早めにループ）
+    var dur={orugoru:1400,chime:800,bell:1600,fanfare:800,antique:13000,pop:300,forest:8000,star:6500,piano:4200,sea:8400};
+    loopTimer=setTimeout(playEndSoundLoop,(dur[selectedSound]||1200)+400);
   }
 }
 
@@ -650,6 +678,56 @@ function updateDrumHighlight(){
 var ivWorkSec=20, ivRestSec=10, ivSets=8;
 var ivCurSet=1, ivPhase='work', ivRemSec=20;
 var ivRunning=false, ivInterval=null;
+var ivSoundType='soft'; // soft / clock / pop / whistle
+var IV_KEY='nikowa_iv_custom';
+var IV_SOUND_KEY='nikowa_iv_sound';
+
+// 設定の保存・読み込み
+function saveIvCustom(){
+  try{
+    localStorage.setItem(IV_KEY, JSON.stringify({w:ivWorkSec, r:ivRestSec, s:ivSets}));
+    updateIvCustomDesc();
+  }catch(e){}
+}
+function loadIvCustom(){
+  try{
+    var raw=localStorage.getItem(IV_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){return null;}
+}
+function updateIvCustomDesc(){
+  var saved=loadIvCustom();
+  var el=document.getElementById('ivCustomDesc');
+  if(!el) return;
+  if(saved) el.textContent=saved.w+'秒×'+saved.s+' / 休憩'+saved.r+'秒';
+  else el.textContent='まだ保存なし（数字を変えると保存）';
+}
+// マイセット呼び出し（保存値を反映）
+function useIvCustom(btn){
+  var saved=loadIvCustom();
+  if(!saved){
+    showIvHint('数字を変えると保存されるよ🌸');
+    return;
+  }
+  document.querySelectorAll('.iv-preset-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  ivWorkSec=saved.w; ivRestSec=saved.r; ivSets=saved.s;
+  document.getElementById('ivWorkSec').value=saved.w;
+  document.getElementById('ivRestSec').value=saved.r;
+  document.getElementById('ivSets').value=saved.s;
+  onIvReset();
+}
+function showIvHint(msg){
+  var ex=document.getElementById('ivHint');
+  if(ex) ex.remove();
+  var d=document.createElement('div');
+  d.id='ivHint';
+  d.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:white;padding:10px 18px;border-radius:100px;font-family:inherit;font-size:13px;font-weight:700;z-index:9999;';
+  d.textContent=msg;
+  document.body.appendChild(d);
+  setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},2200);
+}
 
 function selectIvPreset(btn, w, r, s){
   document.querySelectorAll('.iv-preset-btn').forEach(function(b){b.classList.remove('active');});
@@ -665,8 +743,74 @@ function onIvCustomChange(){
   ivWorkSec=parseInt(document.getElementById('ivWorkSec').value)||1;
   ivRestSec=parseInt(document.getElementById('ivRestSec').value)||0;
   ivSets=parseInt(document.getElementById('ivSets').value)||1;
+  saveIvCustom(); // ★ 変更したら自動保存
   onIvReset();
 }
+function setIvSound(btn,name){
+  ivSoundType=name;
+  btn.parentElement.querySelectorAll('.beat-opt').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  try{localStorage.setItem(IV_SOUND_KEY,name);}catch(e){}
+  // プレビュー（音量OFFなら鳴らない）
+  playIvPhaseSound('work');
+}
+
+// ━━━━ フェーズ切替の通知音（しっかり気付く） ━━━━
+function playIvPhaseSound(toPhase){
+  if(masterVol===0) return;
+  ensureAudio();
+  if(ivSoundType==='soft'){
+    // やわらか：3和音アルペジオ
+    if(toPhase==='work'){
+      // 作業：明るい上昇 C-E-G-C
+      [523.25, 659.25, 783.99, 1046.50].forEach(function(f,i){
+        setTimeout(function(){playNote(f,0.35,0.32,'sine');},i*80);
+      });
+    } else {
+      // 休憩：落ち着く下降 A-F-D-A
+      [880.00, 698.46, 587.33, 440.00].forEach(function(f,i){
+        setTimeout(function(){playNote(f,0.45,0.30,'sine');},i*100);
+      });
+    }
+  } else if(ivSoundType==='clock'){
+    // カチッ：メトロノーム風、3連打
+    if(toPhase==='work'){
+      // 作業：高めのカチッ×3
+      [0,140,280].forEach(function(d,i){
+        setTimeout(function(){playNote(1500,0.04,0.5,'square');playNote(800,0.04,0.3,'square');},d);
+      });
+    } else {
+      // 休憩：低めのカチッ×3
+      [0,160,320].forEach(function(d,i){
+        setTimeout(function(){playNote(900,0.04,0.45,'square');playNote(500,0.04,0.25,'square');},d);
+      });
+    }
+  } else if(ivSoundType==='pop'){
+    // ピコッ：電子音3連
+    if(toPhase==='work'){
+      [880,1100,1320,1760].forEach(function(f,i){
+        setTimeout(function(){playNote(f,0.10,0.35,'square');},i*60);
+      });
+    } else {
+      [660,550,440,330].forEach(function(f,i){
+        setTimeout(function(){playNote(f,0.12,0.30,'square');},i*70);
+      });
+    }
+  } else if(ivSoundType==='whistle'){
+    // ホイッスル：体育の先生風、長め
+    if(toPhase==='work'){
+      // 作業：ピーッ（短く2回）
+      [0,250].forEach(function(d){
+        setTimeout(function(){playNote(2093,0.18,0.40,'sine');playNote(2637,0.18,0.20,'sine');},d);
+      });
+    } else {
+      // 休憩：ピーーーッ（長く1回）
+      playNote(1568,0.6,0.40,'sine');
+      playNote(1976,0.6,0.20,'sine');
+    }
+  }
+}
+
 function ivFmt(s){
   var m=Math.floor(s/60),ss=s%60;
   return m+':'+(ss<10?'0':'')+ss;
@@ -710,18 +854,19 @@ function ivTick(){
       if(ivRestSec>0){
         ivPhase='rest';
         ivRemSec=ivRestSec;
-        playNote(523,0.2,0.3,'sine'); // 軽い通知音
+        playIvPhaseSound('rest'); // ★ 強化通知音
       } else {
         // 休憩0なら即次セット
         ivCurSet++;
         ivRemSec=ivWorkSec;
+        playIvPhaseSound('work');
       }
     } else {
       // rest → 次セット
       ivCurSet++;
       ivPhase='work';
       ivRemSec=ivWorkSec;
-      playNote(880,0.25,0.3,'triangle'); // セット開始音
+      playIvPhaseSound('work'); // ★ 強化通知音
     }
   }
   updateIvDisplay();
@@ -860,6 +1005,31 @@ try{
   ['vOff','vLo','vHi'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});
   var sel=document.getElementById(mv[sv]||'vOff');if(sel)sel.classList.add('active');
 }catch(e){}
+
+// ★ インターバルのカスタム設定読込
+try{
+  var savedIv=loadIvCustom();
+  if(savedIv){
+    ivWorkSec=savedIv.w; ivRestSec=savedIv.r; ivSets=savedIv.s;
+    document.getElementById('ivWorkSec').value=savedIv.w;
+    document.getElementById('ivRestSec').value=savedIv.r;
+    document.getElementById('ivSets').value=savedIv.s;
+    ivRemSec=ivWorkSec;
+  }
+  // 通知音の選択も復元
+  var savedSnd=localStorage.getItem('nikowa_iv_sound');
+  if(savedSnd){
+    ivSoundType=savedSnd;
+    document.querySelectorAll('#tabInterval .beat-options:nth-of-type(1) .beat-opt, #tabInterval .beat-options .beat-opt').forEach(function(b){
+      if(b.getAttribute('onclick')&&b.getAttribute('onclick').indexOf("'"+savedSnd+"'")>=0){
+        b.parentElement.querySelectorAll('.beat-opt').forEach(function(x){x.classList.remove('active');});
+        b.classList.add('active');
+      }
+    });
+  }
+  updateIvCustomDesc();
+}catch(e){}
+
 initDrum();
 updateDisplay();
 updateRing();
