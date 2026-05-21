@@ -65,9 +65,9 @@ html,body{width:100%;height:100%;overflow:hidden;
   border:1.5px solid rgba(255,255,255,0.45);border-radius:4px;
 }
 .card.face-down .back-art{
-  position:relative;z-index:1;width:80%;height:40%;
-  object-fit:contain;opacity:0.92;
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,0.15)) brightness(10);
+  position:relative;z-index:1;width:78%;height:auto;max-height:42%;
+  object-fit:contain;opacity:0.95;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,0.15)) brightness(0) invert(1);
 }
 .card.face-up{
   background:var(--surface);box-shadow:0 2px 6px rgba(0,0,0,0.14);
@@ -216,7 +216,7 @@ var foundation={S:[],H:[],D:[],C:[]};
 var selected=null;
 var score=0, moves=0;
 var gameStart=null, timerInt=null;
-var history=[];
+var undoHistory=[];
 
 function makeDeck(){
   var d=[];
@@ -236,7 +236,7 @@ function shuffle(a){
 function newGame(){
   if(timerInt) clearInterval(timerInt);
   document.getElementById('clear-overlay').classList.remove('show');
-  selected=null; score=0; moves=0; history=[];
+  selected=null; score=0; moves=0; undoHistory=[];
   var deck=shuffle(makeDeck());
   tableau=[[],[],[],[],[],[],[]];
   foundation={S:[],H:[],D:[],C:[]};
@@ -622,7 +622,7 @@ function checkClear(){
 
 function saveHistory(){
   function copyCard(c){ return {suit:c.suit, rank:c.rank, faceUp:c.faceUp}; }
-  history.push({
+  undoHistory.push({
     stock: stock.map(copyCard),
     waste: waste.map(copyCard),
     tableau: tableau.map(function(col){return col.map(copyCard);}),
@@ -634,11 +634,11 @@ function saveHistory(){
     },
     score: score, moves: moves,
   });
-  if(history.length>30) history.shift();
+  if(undoHistory.length>30) undoHistory.shift();
 }
 function undoMove(){
-  if(history.length===0) return;
-  var h=history.pop();
+  if(undoHistory.length===0) return;
+  var h=undoHistory.pop();
   stock=h.stock; waste=h.waste;
   tableau=h.tableau; foundation=h.foundation;
   score=h.score; moves=h.moves;
