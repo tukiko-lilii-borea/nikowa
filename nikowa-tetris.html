@@ -403,6 +403,56 @@ const nctx = nextCanvas.getContext('2d');
 
 let grid, piece, nextPiece, score, best, level, lines, gameRunning, gameOver, gamePaused = false, dropInterval, lastTime;
 
+// ═════ ゲーム状態の永続化（続きから機能） ═════
+const SAVE_KEY = 'nikowa_tetris_save';
+function saveState() {
+  if (!gameRunning || gameOver) return;
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      grid, piece, nextPiece, score, level, lines
+    }));
+  } catch(e) {}
+}
+function clearState() {
+  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s.grid || !s.piece || !s.nextPiece) return false;
+    grid = s.grid;
+    piece = s.piece;
+    nextPiece = s.nextPiece;
+    score = s.score || 0;
+    level = s.level || 1;
+    lines = s.lines || 0;
+    gameRunning = true;
+    gameOver = false;
+    gamePaused = true; // 必ずポーズ状態で復元
+    lastTime = 0;
+    // UI更新
+    document.getElementById('scoreVal').textContent = score.toLocaleString();
+    document.getElementById('levelVal').textContent = level;
+    document.getElementById('linesVal').textContent = lines;
+    document.getElementById('startBtn').textContent = 'RESET ↻︎';
+    const pb = document.getElementById('pauseBtn');
+    if (pb) { pb.style.display = ''; pb.textContent = '▶ 再開'; }
+    // ポーズオーバーレイ
+    document.getElementById('overlayTitle').textContent = '⏸ つづきからどうぞ';
+    document.getElementById('overlayScore').textContent = 'スコア: ' + score.toLocaleString();
+    document.getElementById('overlayBest').textContent = '▶ 再開 でスタート🌸';
+    document.getElementById('overlay').classList.add('show');
+    // 描画開始（ポーズで止まる）
+    requestAnimationFrame(drop);
+    return true;
+  } catch(e) { return false; }
+}
+// ページ離脱・タブ切替で保存
+window.addEventListener('beforeunload', saveState);
+window.addEventListener('pagehide', saveState);
+
 function newGrid() {
   return Array.from({length: ROWS}, () => Array(COLS).fill(0));
 }
@@ -509,6 +559,7 @@ function lockPiece() {
   piece = nextPiece;
   nextPiece = randomPiece();
   if (!canMove(piece, 0, 0)) endGame();
+  saveState(); // ★ ピース固定したら保存
 }
 
 function clearLines() {
@@ -564,6 +615,7 @@ function drop(now) {
 }
 
 function startGame() {
+  clearState(); // ★ 既存セーブ消す
   initAudio().then(() => { stopBGM(); startBGM(); });
   grid = newGrid();
   score = 0; level = 1; lines = 0;
@@ -588,6 +640,7 @@ function startGame() {
 
 function endGame() {
   stopBGM(); sfxGameOver();
+  clearState(); // ★ ゲームオーバーでセーブ消す
   gameRunning = false;
   gameOver = true;
   gamePaused = false;
@@ -628,10 +681,11 @@ function togglePause() {
   if (gamePaused) resumeGame();
   else pauseGame();
 }
-// ブラウザ・タブ切替で自動ポーズ
+// ブラウザ・タブ切替で自動ポーズ＆保存
 document.addEventListener('visibilitychange', function() {
-  if (document.hidden && gameRunning && !gameOver && !gamePaused) {
-    pauseGame();
+  if (document.hidden && gameRunning && !gameOver) {
+    if (!gamePaused) pauseGame();
+    saveState();
   }
 });
 
@@ -840,7 +894,10 @@ setTimeout(shootingStar, 1200);
 // ===== 夜空エフェクト END =====
 best = parseInt(localStorage.getItem('nikowa_tetris_best') || '0');
 document.getElementById('bestVal').textContent = best.toLocaleString();
-document.getElementById('overlay').classList.add('show');
+// ★ セーブデータあれば続きから（ポーズ状態で復元）、なければスタート画面
+if (!loadState()) {
+  document.getElementById('overlay').classList.add('show');
+}
 
 // ===== ゆめめ テトリス BGM & 効果音 =====
 let audioCtx = null;
