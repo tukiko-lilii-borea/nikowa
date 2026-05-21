@@ -18,12 +18,20 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
 
 /* ── タブ ── */
 .tabs{width:100%;max-width:380px;display:flex;gap:4px;background:var(--surface);border:1.5px solid var(--card-border);border-radius:14px;padding:4px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
-.tab{flex:1;padding:9px 4px;border:none;background:transparent;color:var(--ink-sub);border-radius:10px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:all 0.18s;}
-.tab .material-symbols-rounded{font-size:14px;}
+.tab{flex:1;padding:7px 2px;border:none;background:transparent;color:var(--ink-sub);border-radius:10px;font-family:inherit;font-size:10px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all 0.18s;line-height:1.2;}
+.tab .material-symbols-rounded{font-size:18px;}
 .tab.active{background:var(--accent);color:white;}
 .tab.tab-interval.active{background:var(--accent);}
 .tab.tab-metronome.active{background:var(--metro-purple);}
 .tab.tab-moguTime.active{background:var(--mogu-orange);}
+
+/* もぐタイム モード選択ボタン */
+.mogu-mode-row{display:flex;gap:4px;margin-bottom:14px;}
+.mogu-mode-btn{flex:1;padding:10px 4px;border:1.5px solid var(--mogu-warm);background:white;color:var(--ink-sub);border-radius:12px;font-family:inherit;font-size:10px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.2;}
+.mogu-mode-btn .mogu-mode-icon{font-size:18px;}
+.mogu-mode-btn .mogu-mode-hint{font-size:8px;font-weight:600;color:var(--ink-light);}
+.mogu-mode-btn.active{background:var(--mogu-orange);border-color:var(--mogu-orange);color:white;}
+.mogu-mode-btn.active .mogu-mode-hint{color:rgba(255,255,255,0.85);}
 
 /* ─────────── もぐタイム専用 ─────────── */
 .mogu-phase{font-size:14px;font-weight:900;text-align:center;padding:6px 14px;border-radius:100px;display:inline-block;}
@@ -379,12 +387,35 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
         <div style="font-size:11px;color:var(--ink-sub);font-weight:700;">今日もゆっくり食べよう🌷</div>
       </div>
 
-      <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin-bottom:6px;">⏱ ひと口の待ち時間</div>
-      <div class="mogu-target-row">
-        <button type="button" class="mogu-target-btn" onclick="setMoguTarget(this,15)">15秒</button>
-        <button type="button" class="mogu-target-btn active" onclick="setMoguTarget(this,30)">30秒</button>
-        <button type="button" class="mogu-target-btn" onclick="setMoguTarget(this,45)">45秒</button>
-        <button type="button" class="mogu-target-btn" onclick="setMoguTarget(this,60)">60秒</button>
+      <!-- モード選択 -->
+      <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin-bottom:6px;">🎯 モード</div>
+      <div class="mogu-mode-row">
+        <button type="button" class="mogu-mode-btn active" onclick="setMoguMode(this,'bite')">
+          <span class="mogu-mode-icon">👄</span>
+          <span>噛むタイマー</span>
+          <span class="mogu-mode-hint">ひと口ごとタップ</span>
+        </button>
+        <button type="button" class="mogu-mode-btn" onclick="setMoguMode(this,'loop')">
+          <span class="mogu-mode-icon">🔁</span>
+          <span>ループ</span>
+          <span class="mogu-mode-hint">音だけ・手放し</span>
+        </button>
+        <button type="button" class="mogu-mode-btn" onclick="setMoguMode(this,'pace')">
+          <span class="mogu-mode-icon">⏱</span>
+          <span>ペース</span>
+          <span class="mogu-mode-hint">時間だけ計測</span>
+        </button>
+      </div>
+
+      <!-- 待機時間設定（bite/loopのみ） -->
+      <div id="moguTargetSection">
+        <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin-bottom:6px;">⏱ ひと口の待ち時間</div>
+        <div class="mogu-target-row">
+          <button type="button" class="mogu-target-btn" onclick="setMoguTarget(this,15)">15秒</button>
+          <button type="button" class="mogu-target-btn active" onclick="setMoguTarget(this,30)">30秒</button>
+          <button type="button" class="mogu-target-btn" onclick="setMoguTarget(this,45)">45秒</button>
+          <button type="button" class="mogu-target-btn" onclick="setMoguTarget(this,60)">60秒</button>
+        </div>
       </div>
 
       <button type="button" class="mogu-big-btn mogu-btn-bite" onclick="startMogu()" style="width:100%;margin-top:8px;">🍚 食事をはじめる</button>
@@ -403,8 +434,8 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
           <div class="label">経過時間</div>
           <div class="val" id="moguElapsed">0:00</div>
         </div>
-        <div class="mogu-stat">
-          <div class="label">ひと口</div>
+        <div class="mogu-stat" id="moguBiteStat">
+          <div class="label" id="moguBiteLabel">ひと口</div>
           <div class="val" id="moguBiteCount">0 回</div>
         </div>
       </div>
@@ -413,7 +444,7 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
         <span class="mogu-phase ok" id="moguPhase">最初のひと口どうぞ🌸</span>
       </div>
 
-      <div class="clock-wrap">
+      <div class="clock-wrap" id="moguClockWrap">
         <div class="clock-ring">
           <svg width="180" height="180" viewBox="0 0 180 180">
             <circle class="ring-bg" cx="90" cy="90" r="80"/>
@@ -424,6 +455,13 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
             <div class="time-sub" id="moguTimeSub">残り</div>
           </div>
         </div>
+      </div>
+
+      <!-- ペースモード用：大きい経過時間表示 -->
+      <div id="moguPaceDisplay" style="display:none;text-align:center;padding:30px 0;">
+        <div style="font-size:14px;color:var(--ink-sub);font-weight:800;margin-bottom:8px;">🍚 食事中...</div>
+        <div style="font-size:56px;font-weight:900;color:var(--mogu-orange);line-height:1;font-variant-numeric:tabular-nums;" id="moguPaceTime">0:00</div>
+        <div style="font-size:11px;color:var(--ink-sub);font-weight:700;margin-top:10px;line-height:1.6;">ゆっくり噛んで<br>食べ終わったら下のボタンを押してね🌷</div>
       </div>
 
       <div class="mogu-ctrl-row">
@@ -1307,17 +1345,30 @@ function onMetroToggle(){
 // ════════════════════════════════════════════
 // タブ4：もぐタイム 🍚
 // ════════════════════════════════════════════
+var moguMode='bite'; // bite / loop / pace
 var moguState='ready'; // ready / eating / done
-var moguPhase='next_ok'; // next_ok / waiting
+var moguPhase='next_ok'; // next_ok / waiting / rest (loop用)
 var moguTargetSec=30;
+var moguRestSec=3; // ループモードの休憩秒数
 var moguRemSec=30;
 var moguStartTime=null;
-var moguBiteCount=0;
+var moguBiteCount=0; // bite: ひと口数 / loop: サイクル数
 var moguBiteTimes=[]; // 各ひと口の時刻
 var moguInterval=null;
 var moguLastBiteTime=null;
 var MOGU_TARGET_KEY='nikowa_mogu_target';
 var MOGU_LAST_KEY='nikowa_mogu_last';
+var MOGU_MODE_KEY='nikowa_mogu_mode';
+
+function setMoguMode(btn, mode){
+  document.querySelectorAll('.mogu-mode-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  moguMode=mode;
+  // ペースモードは待ち時間設定不要
+  var targetSec=document.getElementById('moguTargetSection');
+  if(targetSec) targetSec.style.display=(mode==='pace')?'none':'';
+  try{localStorage.setItem(MOGU_MODE_KEY, mode);}catch(e){}
+}
 
 function setMoguTarget(btn, sec){
   document.querySelectorAll('.mogu-target-btn').forEach(function(b){b.classList.remove('active');});
@@ -1335,30 +1386,103 @@ function startMogu(){
   moguBiteTimes=[];
   moguLastBiteTime=null;
   moguRemSec=moguTargetSec;
-  moguPhase='next_ok'; // 最初の一口はすぐOK
+  // モード別フェーズ初期化
+  if(moguMode==='loop'){
+    // ループモード：すぐ待機開始
+    moguPhase='waiting';
+    moguLastBiteTime=Date.now();
+  } else {
+    moguPhase='next_ok';
+  }
   document.getElementById('moguReady').style.display='none';
   document.getElementById('moguDone').style.display='none';
   document.getElementById('moguEating').style.display='';
+
+  // モード別UI出し分け
+  var clockWrap=document.getElementById('moguClockWrap');
+  var paceDisp=document.getElementById('moguPaceDisplay');
+  var biteBtn=document.getElementById('moguBiteBtn');
+  var biteStat=document.getElementById('moguBiteStat');
+  var biteLabel=document.getElementById('moguBiteLabel');
+  var phaseEl=document.getElementById('moguPhase');
+
+  if(moguMode==='pace'){
+    // ペースモード：円タイマー隠す、大きな経過時間、ひと口ボタンなし
+    clockWrap.style.display='none';
+    paceDisp.style.display='';
+    biteBtn.style.display='none';
+    biteStat.style.display='none';
+    phaseEl.parentElement.style.display='none';
+  } else if(moguMode==='loop'){
+    // ループモード：円タイマー表示、ひと口ボタンなし、サイクル表示
+    clockWrap.style.display='';
+    paceDisp.style.display='none';
+    biteBtn.style.display='none';
+    biteStat.style.display='';
+    biteLabel.textContent='サイクル';
+    phaseEl.parentElement.style.display='';
+  } else {
+    // biteモード：既存通り
+    clockWrap.style.display='';
+    paceDisp.style.display='none';
+    biteBtn.style.display='';
+    biteStat.style.display='';
+    biteLabel.textContent='ひと口';
+    phaseEl.parentElement.style.display='';
+  }
+
   updateMoguDisplay();
   moguInterval=setInterval(moguTick, 1000);
 }
 
 function moguTick(){
-  // 経過時間更新
+  // 経過時間更新（全モード共通）
   var elapsed=Math.floor((Date.now()-moguStartTime)/1000);
   var m=Math.floor(elapsed/60), s=elapsed%60;
-  document.getElementById('moguElapsed').textContent=m+':'+(s<10?'0':'')+s;
+  var elStr=m+':'+(s<10?'0':'')+s;
+  document.getElementById('moguElapsed').textContent=elStr;
+  // ペースモードは大きな表示も更新
+  if(moguMode==='pace'){
+    document.getElementById('moguPaceTime').textContent=elStr;
+    return; // ペースモードはこれだけ
+  }
 
-  // 待機中ならカウントダウン
+  // ループモードのフェーズ自動遷移
+  if(moguMode==='loop'){
+    moguRemSec--;
+    if(moguPhase==='waiting'){
+      if(moguRemSec===3 && masterVol>0){
+        playNote(880, 0.08, 0.2, 'sine');
+      }
+      if(moguRemSec<=0){
+        // 「次のひと口」音
+        if(masterVol>0){
+          [523.25, 659.25, 783.99].forEach(function(f,i){
+            _pt(function(){playNote(f,0.2,0.25,'sine');},i*80);
+          });
+        }
+        moguPhase='rest';
+        moguRemSec=moguRestSec;
+        moguBiteCount++; // サイクル完了
+      }
+    } else if(moguPhase==='rest'){
+      if(moguRemSec<=0){
+        moguPhase='waiting';
+        moguRemSec=moguTargetSec;
+      }
+    }
+    updateMoguDisplay();
+    return;
+  }
+
+  // biteモード：待機中ならカウントダウン
   if(moguPhase==='waiting'){
     moguRemSec--;
-    // 残り3秒で軽い通知音
     if(moguRemSec===3 && masterVol>0){
       playNote(880, 0.08, 0.2, 'sine');
     }
     if(moguRemSec<=0){
       moguPhase='next_ok';
-      // 「次のひと口OK」通知音
       if(masterVol>0){
         [523.25, 659.25, 783.99].forEach(function(f,i){
           _pt(function(){playNote(f,0.2,0.25,'sine');},i*80);
@@ -1370,15 +1494,37 @@ function moguTick(){
 }
 
 function updateMoguDisplay(){
-  // ひと口カウント
-  document.getElementById('moguBiteCount').textContent=moguBiteCount+' 回';
+  // ペースモードは何もしない
+  if(moguMode==='pace') return;
+
+  // カウント表示
+  document.getElementById('moguBiteCount').textContent=moguBiteCount+(moguMode==='loop'?' 回':' 回');
   // 残り時間
   var m=Math.floor(moguRemSec/60), s=moguRemSec%60;
   document.getElementById('moguTimeDisplay').textContent=m+':'+(s<10?'0':'')+s;
-  // フェーズ表示
   var ph=document.getElementById('moguPhase');
-  var btn=document.getElementById('moguBiteBtn');
   var ring=document.getElementById('moguRingFg');
+
+  if(moguMode==='loop'){
+    // ループモード
+    if(moguPhase==='waiting'){
+      ph.textContent='🥢 もぐもぐ中...';
+      ph.className='mogu-phase wait';
+      document.getElementById('moguTimeSub').textContent='残り';
+      var pct=moguTargetSec>0 ? moguRemSec/moguTargetSec : 0;
+      ring.style.strokeDashoffset=CIRC*(1-pct);
+    } else { // rest
+      ph.textContent='次のひと口🌸';
+      ph.className='mogu-phase ok';
+      document.getElementById('moguTimeSub').textContent='休憩';
+      var pct=moguRestSec>0 ? moguRemSec/moguRestSec : 0;
+      ring.style.strokeDashoffset=CIRC*(1-pct);
+    }
+    return;
+  }
+
+  // biteモード
+  var btn=document.getElementById('moguBiteBtn');
   var pct=moguTargetSec>0 ? moguRemSec/moguTargetSec : 0;
   if(moguPhase==='next_ok'){
     if(moguBiteCount===0){
@@ -1402,6 +1548,7 @@ function updateMoguDisplay(){
 }
 
 function moguBite(){
+  if(moguMode!=='bite') return; // biteモード以外では動かない
   if(moguPhase!=='next_ok') return;
   ensureAudio();
   moguBiteCount++;
@@ -1430,33 +1577,58 @@ function endMogu(){
     ? Math.floor(moguBiteTimes.reduce(function(a,b){return a+b;},0)/moguBiteTimes.length)
     : 0;
 
-  // ゆっくり度判定
+  // モード別ゆっくり度判定
   var grade='D';
-  if(moguBiteCount===0){
-    grade='-';
-  } else if(avgInterval>=moguTargetSec*0.9){
-    grade='A';
-  } else if(avgInterval>=moguTargetSec*0.7){
-    grade='B';
-  } else if(avgInterval>=moguTargetSec*0.5){
-    grade='C';
-  }
-
-  // アドバイス
   var advice='';
-  if(grade==='A') advice='完璧🌸 このペース最高！';
-  else if(grade==='B') advice='いい感じ🌷 もう少しゆっくりでもOK';
-  else if(grade==='C') advice='ちょっと急いだかな🌱 もう少し待ってみよう';
-  else if(grade==='D') advice='早食い気味かも💧 ひと口の間を空けてみよう';
-  else advice='ひと口記録なし。次は👄ボタン押してみてね';
+  var modeLabel='';
+  if(moguMode==='pace'){
+    // ペースモード：食事時間だけで判定
+    modeLabel='ペース';
+    if(elapsed>=1200){ grade='A'; advice='ゆっくり食べられた🌸 完璧！'; }
+    else if(elapsed>=900){ grade='B'; advice='まずまず🌷 いいペース！'; }
+    else if(elapsed>=600){ grade='C'; advice='もう少しゆっくり食べてみよう🌱'; }
+    else { grade='D'; advice='早食い気味かも💧 次は15分以上を目標に'; }
+  } else if(moguMode==='loop'){
+    // ループモード：食事時間で判定（ペースと同じ）
+    modeLabel='ループ';
+    if(elapsed>=1200){ grade='A'; advice='ゆっくり食べられた🌸 完璧！'; }
+    else if(elapsed>=900){ grade='B'; advice='まずまず🌷 いいペース！'; }
+    else if(elapsed>=600){ grade='C'; advice='もう少しゆっくり食べてみよう🌱'; }
+    else { grade='D'; advice='早食い気味かも💧 次は15分以上を目標に'; }
+  } else {
+    // biteモード：既存ロジック（avgInterval ベース）
+    modeLabel='噛むタイマー';
+    if(moguBiteCount===0){
+      grade='-';
+      advice='ひと口記録なし。次は👄ボタン押してみてね';
+    } else if(avgInterval>=moguTargetSec*0.9){
+      grade='A'; advice='完璧🌸 このペース最高！';
+    } else if(avgInterval>=moguTargetSec*0.7){
+      grade='B'; advice='いい感じ🌷 もう少しゆっくりでもOK';
+    } else if(avgInterval>=moguTargetSec*0.5){
+      grade='C'; advice='ちょっと急いだかな🌱 もう少し待ってみよう';
+    } else {
+      grade='D'; advice='早食い気味かも💧 ひと口の間を空けてみよう';
+    }
+  }
 
   // 表示
   document.getElementById('moguEating').style.display='none';
   document.getElementById('moguDone').style.display='';
   var elM=Math.floor(elapsed/60), elS=elapsed%60;
   document.getElementById('moguDoneTime').textContent=elM+'分'+(elS>0?elS+'秒':'');
-  document.getElementById('moguDoneBite').textContent=moguBiteCount+'回';
-  document.getElementById('moguDoneAvg').textContent=avgInterval+'秒';
+  // モードによって表示変える
+  var doneBiteLabel=document.getElementById('moguDoneBite').previousElementSibling;
+  if(moguMode==='pace'){
+    document.getElementById('moguDoneBite').textContent='-';
+    document.getElementById('moguDoneAvg').textContent='-';
+  } else if(moguMode==='loop'){
+    document.getElementById('moguDoneBite').textContent=moguBiteCount+'回';
+    document.getElementById('moguDoneAvg').textContent=moguTargetSec+'秒';
+  } else {
+    document.getElementById('moguDoneBite').textContent=moguBiteCount+'回';
+    document.getElementById('moguDoneAvg').textContent=avgInterval+'秒';
+  }
   var gel=document.getElementById('moguGrade');
   gel.textContent=grade;
   gel.className='mogu-grade '+grade;
@@ -1469,10 +1641,10 @@ function endMogu(){
     });
   }
 
-  // 最後の記録保存（前回表示用）
+  // 最後の記録保存
   try{
     localStorage.setItem(MOGU_LAST_KEY, JSON.stringify({
-      elapsed:elapsed, biteCount:moguBiteCount, avgInterval:avgInterval, grade:grade,
+      mode:moguMode, elapsed:elapsed, biteCount:moguBiteCount, avgInterval:avgInterval, grade:grade,
       targetSec:moguTargetSec, timestamp:Date.now()
     }));
   }catch(e){}
@@ -1480,7 +1652,13 @@ function endMogu(){
   // Me記録用にセット
   window._lastActivityType='moguTime';
   window._lastActivityDuration=elapsed;
-  window._lastActivityDetail='ひと口'+moguBiteCount+'回・平均'+avgInterval+'秒・ゆっくり度'+grade;
+  if(moguMode==='pace'){
+    window._lastActivityDetail='ペースモード・'+modeLabel+'・'+elM+'分'+(elS>0?elS+'秒':'')+'・ゆっくり度'+grade;
+  } else if(moguMode==='loop'){
+    window._lastActivityDetail='ループモード('+moguTargetSec+'秒)・'+moguBiteCount+'サイクル・ゆっくり度'+grade;
+  } else {
+    window._lastActivityDetail='ひと口'+moguBiteCount+'回・平均'+avgInterval+'秒・ゆっくり度'+grade;
+  }
   window._lastMoguGrade=grade;
 }
 
@@ -1578,6 +1756,21 @@ try{
       b.classList.remove('active');
       if(b.textContent===savedMt+'秒') b.classList.add('active');
     });
+  }
+  // モード復元
+  var savedMm=localStorage.getItem(MOGU_MODE_KEY);
+  if(savedMm && (savedMm==='bite'||savedMm==='loop'||savedMm==='pace')){
+    moguMode=savedMm;
+    document.querySelectorAll('.mogu-mode-btn').forEach(function(b){
+      b.classList.remove('active');
+      var label=b.querySelector('span:nth-child(2)');
+      var match=(savedMm==='bite' && label && label.textContent==='噛むタイマー')
+              ||(savedMm==='loop' && label && label.textContent==='ループ')
+              ||(savedMm==='pace' && label && label.textContent==='ペース');
+      if(match) b.classList.add('active');
+    });
+    var ts=document.getElementById('moguTargetSection');
+    if(ts) ts.style.display=(savedMm==='pace')?'none':'';
   }
   loadMoguLastDisplay();
 }catch(e){}
