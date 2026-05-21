@@ -42704,7 +42704,7 @@ function renderTown() {
       html += '<div style="padding:12px 14px;">';
     // カテゴリチップ（横スクロール）
     const nearbyCats = ['喫煙所','居酒屋','カフェ','バー','動物病院','美容院','公園','コンビニ','薬局','ラーメン','病院'];
-    const selCat = window._nearbyCat || '喫煙所';
+    const selCat = window._nearbyCat || '';
     html += '<div style="overflow-x:auto;white-space:nowrap;padding:0 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;">';
     for (const c of nearbyCats) {
       html += '<button class="town-cat-chip '+(selCat===c?'selected':'')+'" onclick="window._nearbyCat=\''+c+'\';window._nearbyCustomQuery=\'\';window._nearbyResults=[];renderTown();if(window._nearbyGeoStatus===\'ok\')setTimeout(searchNearbyPlaces,200);" style="display:inline-block;margin-right:6px;">'+escapeHtml(c)+'</button>';
@@ -42844,13 +42844,18 @@ function renderTown() {
       // にこわ登録個人店を抽出してGoogle結果より先に表示
       const _locText = placesLocMode === 'addr' ? placesAddrText : '';
       const nikowaMatched = getMatchingNikowaShops(placesSelCat, _locText, placesText);
-      // ★ 検索結果の地図エリア（sticky で上部固定）
-      html += '<div style="position:sticky;top:0;z-index:5;background:var(--bg);padding:0 14px 8px;">';
+      // ★ 地図＋リストを縦flexコンテナで分割
+      // 地図はflex-shrink:0で固定高さ、リストはflex:1でoverflow-y:auto
+      html += '<div style="display:flex;flex-direction:column;height:calc(100dvh - 230px);min-height:400px;">';
+      // 地図エリア（固定）
+      html += '<div style="flex-shrink:0;padding:0 14px 8px;">';
       html += '<div style="position:relative;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">';
-      html += '<div id="placesMap" style="background:#eceff3;height:36vh;width:100%;"></div>';
+      html += '<div id="placesMap" style="background:#eceff3;height:38vh;width:100%;"></div>';
       html += '<div id="placesOverlayCard" style="display:none;position:absolute;bottom:8px;left:8px;right:8px;z-index:10;"></div>';
       html += '</div>';
       html += '</div>';
+      // リストエリア（独立スクロール）
+      html += '<div style="flex:1;overflow-y:auto;padding:0 14px 16px;min-height:0;-webkit-overflow-scrolling:touch;">';
       html += '<div class="place-cards">';
       // にこわ店を先頭に
       for (const s of nikowaMatched) {
@@ -42859,6 +42864,8 @@ function renderTown() {
       // Google結果
       for (const p of placesResults) html += buildPlaceCardHtml(p, catIcon);
       html += '</div>';
+      html += '</div>'; // リストエリア閉じ
+      html += '</div>'; // 全体flex閉じ
     } else if (!placesError) {
       // 検索前でも、カテゴリだけ選んでたらにこわ店だけ先に見せる
       const _locText = placesLocMode === 'addr' ? placesAddrText : '';
@@ -52649,7 +52656,10 @@ function getNearbyLocation() {
       window._nearbyLng = pos.coords.longitude;
       window._nearbyGeoStatus = 'ok';
       renderTown();
-      searchNearbyPlaces();
+      // カテゴリ or 検索クエリが指定されている時のみ検索
+      if (window._nearbyCat || window._nearbyCustomQuery) {
+        searchNearbyPlaces();
+      }
     },
     () => {
       window._nearbyGeoStatus = 'ng';
@@ -53781,6 +53791,16 @@ function setPlacesLocMode(mode) {
   placesLocMode = mode;
   placesResults = [];
   placesError = '';
+  // 「近く」モード切替時：カテゴリ初期化＋未取得なら現在地自動取得
+  if (mode === 'nearby') {
+    window._nearbyCat = '';
+    window._nearbyCustomQuery = '';
+    window._nearbyResults = [];
+    if (window._nearbyGeoStatus !== 'ok') {
+      // 現在地未取得→自動取得（カテゴリ無いので検索はしない、地図に現在地ドアップ）
+      setTimeout(getNearbyLocation, 0);
+    }
+  }
   renderTown();
 }
 
