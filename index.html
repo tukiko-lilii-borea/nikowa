@@ -30929,6 +30929,79 @@ function renderPeriodTracker() {
   }
   html += '</div>';
 
+  // ===== カレンダー =====
+  if (!window.periodCalMonth) {
+    const _t = new Date();
+    window.periodCalMonth = { year: _t.getFullYear(), month: _t.getMonth() };
+  }
+  const calY = window.periodCalMonth.year;
+  const calMo = window.periodCalMonth.month;
+  const firstDay = new Date(calY, calMo, 1);
+  const lastDay = new Date(calY, calMo+1, 0);
+  const startWeek = firstDay.getDay();
+  const daysInMonth = lastDay.getDate();
+
+  // 全生理日を Set に集約
+  const periodDaySet = new Set();
+  records.forEach(r => {
+    if (!r.startDate) return;
+    const s = new Date(r.startDate);
+    const e = r.endDate ? new Date(r.endDate) : new Date(todayStr);
+    for (let dt = new Date(s); dt <= e; dt.setDate(dt.getDate()+1)) {
+      periodDaySet.add(dt.toISOString().slice(0,10));
+    }
+  });
+
+  // 予測日（生理中じゃない場合のみ・次回開始から5日間）
+  const predictedSet = new Set();
+  if (nextPredict && !ongoing) {
+    for (let i = 0; i < 5; i++) {
+      const dt = new Date(nextPredict);
+      dt.setDate(dt.getDate() + i);
+      predictedSet.add(dt.toISOString().slice(0,10));
+    }
+  }
+
+  html += '<div style="padding:0 16px 12px;">';
+  html += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:14px;">';
+  // 月切替
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+  html += '<button onclick="periodCalPrev()" style="background:none;border:none;cursor:pointer;color:#A8456A;padding:4px 8px;display:flex;align-items:center;"><span class="material-symbols-rounded">chevron_left</span></button>';
+  html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+calY+'年 '+(calMo+1)+'月</div>';
+  html += '<button onclick="periodCalNext()" style="background:none;border:none;cursor:pointer;color:#A8456A;padding:4px 8px;display:flex;align-items:center;"><span class="material-symbols-rounded">chevron_right</span></button>';
+  html += '</div>';
+  // 曜日
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;">';
+  const _wdays = ['日','月','火','水','木','金','土'];
+  _wdays.forEach((w, i) => {
+    const c = i===0 ? '#E94B6F' : (i===6 ? '#5B9CC9' : 'var(--ink-sub)');
+    html += '<div style="text-align:center;font-size:10px;font-weight:800;color:'+c+';padding:4px 0;">'+w+'</div>';
+  });
+  html += '</div>';
+  // 日付グリッド
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">';
+  for (let i = 0; i < startWeek; i++) html += '<div></div>';
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dKey = calY+'-'+String(calMo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    const isPeriod = periodDaySet.has(dKey);
+    const isPredict = predictedSet.has(dKey);
+    const isToday = dKey === todayStr;
+    let bg='transparent', color='var(--ink-dark)', border='1px solid transparent';
+    if (isPeriod) { bg='#E94B6F'; color='white'; }
+    else if (isPredict) { bg='#FFF5F8'; color='#A8456A'; border='1px dashed #E94B6F'; }
+    if (isToday) border = '2px solid #C0356A';
+    html += '<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:'+((isPeriod||isToday)?'800':'500')+';background:'+bg+';color:'+color+';border:'+border+';border-radius:8px;">'+day+'</div>';
+  }
+  html += '</div>';
+  // 凡例
+  html += '<div style="display:flex;gap:14px;margin-top:10px;justify-content:center;font-size:10px;color:var(--ink-sub);font-weight:700;">';
+  html += '<div style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#E94B6F;border-radius:50%;"></span>生理日</div>';
+  html += '<div style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#FFF5F8;border:1px dashed #E94B6F;border-radius:50%;box-sizing:border-box;"></span>予測日</div>';
+  html += '<div style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:transparent;border:2px solid #C0356A;border-radius:50%;box-sizing:border-box;"></span>今日</div>';
+  html += '</div>';
+  html += '</div>';
+  html += '</div>';
+
   // 今日の記録（生理中のみ）
   if (ongoing) {
     if (!ongoing.days) ongoing.days = [];
@@ -30960,6 +31033,11 @@ function renderPeriodTracker() {
     // メモ
     html += '<div style="font-size:10px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">メモ</div>';
     html += '<textarea id="periodDayNote" onchange="periodSetDayLog(\'note\',this.value)" placeholder="気分とか、なんでも🌸" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;resize:none;height:50px;box-sizing:border-box;background:#FFFAFC;">'+escapeHtml((todayLog && todayLog.note) || '')+'</textarea>';
+    // 保存ボタン（しほの安心のため・実は即保存だけど明示的に）
+    html += '<button onclick="periodSaveToday()" style="width:100%;margin-top:12px;padding:13px;background:#E94B6F;color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 4px 12px rgba(233,75,111,0.3);display:flex;align-items:center;justify-content:center;gap:6px;">';
+    html += '<span class="material-symbols-rounded" style="font-size:18px;">save</span>';
+    html += 'この日の記録を保存';
+    html += '</button>';
     html += '</div>';
     html += '</div>';
   }
@@ -31075,6 +31153,49 @@ function periodDeleteRecord(id) {
   renderPeriodTracker();
 }
 window.periodDeleteRecord = periodDeleteRecord;
+
+// ===== カレンダー月切替 =====
+function periodCalPrev() {
+  if (!window.periodCalMonth) return;
+  window.periodCalMonth.month--;
+  if (window.periodCalMonth.month < 0) {
+    window.periodCalMonth.month = 11;
+    window.periodCalMonth.year--;
+  }
+  renderPeriodTracker();
+}
+window.periodCalPrev = periodCalPrev;
+
+function periodCalNext() {
+  if (!window.periodCalMonth) return;
+  window.periodCalMonth.month++;
+  if (window.periodCalMonth.month > 11) {
+    window.periodCalMonth.month = 0;
+    window.periodCalMonth.year++;
+  }
+  renderPeriodTracker();
+}
+window.periodCalNext = periodCalNext;
+
+// ===== 今日の記録を明示的に保存（しほの安心用・トースト出る）=====
+function periodSaveToday() {
+  // メモを念のため最新値で保存
+  const noteEl = document.getElementById('periodDayNote');
+  if (noteEl) {
+    const ongoing2 = (data.periodRecords||[]).find(r => r.startDate && !r.endDate);
+    if (ongoing2) {
+      if (!ongoing2.days) ongoing2.days = [];
+      const today = new Date().toISOString().slice(0,10);
+      let log = ongoing2.days.find(d => d.date === today);
+      if (!log) { log = { date: today, symptoms: [] }; ongoing2.days.push(log); }
+      log.note = noteEl.value;
+    }
+  }
+  saveData();
+  const t = new Date();
+  showToast('🌷 '+(t.getMonth()+1)+'/'+t.getDate()+'の記録、保存したよ');
+}
+window.periodSaveToday = periodSaveToday;
 
 // ════════════════════════════════════════════════
 // 💗 体調トラッカー（conditionTracker）
