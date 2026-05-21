@@ -383,8 +383,9 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
     <!-- ＝＝ READY画面 ＝＝ -->
     <div id="moguReady">
       <div style="text-align:center;margin-bottom:14px;">
-        <div style="font-size:18px;font-weight:900;color:var(--mogu-orange);margin-bottom:4px;">🍚 もぐタイム</div>
-        <div style="font-size:11px;color:var(--ink-sub);font-weight:700;">今日もゆっくり食べよう🌷</div>
+        <img id="moguGreetingChar" src="assets/anzu.svg" alt="" style="width:72px;height:72px;margin-bottom:4px;object-fit:contain;" onerror="this.style.display='none'">
+        <div style="font-size:14px;font-weight:900;color:var(--mogu-orange);margin-bottom:4px;">🍚 もぐタイム</div>
+        <div id="moguGreetingLine" style="font-size:12px;color:var(--ink-sub);font-weight:700;line-height:1.6;">今日もゆっくり食べようね🌸</div>
       </div>
 
       <!-- モード選択 -->
@@ -441,12 +442,6 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
       </div>
 
       <button type="button" class="mogu-big-btn mogu-btn-bite" onclick="startMogu()" style="width:100%;margin-top:8px;">🍚 食事をはじめる</button>
-
-      <!-- 前回の記録 -->
-      <div id="moguLastRecord" style="margin-top:16px;display:none;">
-        <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin-bottom:8px;text-align:center;">前回の食事</div>
-        <div id="moguLastDetail" style="background:var(--mogu-warm);border-radius:12px;padding:12px;text-align:center;font-size:12px;color:var(--ink);font-weight:700;line-height:1.6;"></div>
-      </div>
     </div>
 
     <!-- ＝＝ EATING画面 ＝＝ -->
@@ -489,6 +484,11 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
       <div class="mogu-ctrl-row">
         <button type="button" class="mogu-big-btn mogu-btn-bite" id="moguBiteBtn" onclick="moguBite()">👄 ひと口いれた</button>
         <button type="button" class="ctrl-btn mogu-btn-end" onclick="endMogu()" style="padding:11px 0;border-radius:14px;font-size:13px;">🍽 ごちそうさま</button>
+      </div>
+      <!-- サブアクション：一時停止・やり直し -->
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button type="button" id="moguPauseBtn" onclick="togglePauseMogu()" style="flex:1;padding:9px 0;background:var(--surface);border:1.5px solid var(--card-border);border-radius:12px;color:var(--ink-sub);font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;">⏸ 一時停止</button>
+        <button type="button" onclick="resetMoguToReady()" style="flex:1;padding:9px 0;background:var(--surface);border:1.5px solid var(--card-border);border-radius:12px;color:var(--ink-sub);font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;">🔄 やり直し</button>
       </div>
     </div>
 
@@ -1371,6 +1371,8 @@ var moguMode='bite'; // bite / loop / pace
 var moguMealType='normal'; // snack / normal / heavy （pace/loop判定用）
 var moguState='ready'; // ready / eating / done
 var moguPhase='next_ok'; // next_ok / waiting / rest (loop用)
+var moguPaused=false;
+var moguPauseTime=null;
 var moguTargetSec=30;
 var moguRestSec=3; // ループモードの休憩秒数
 var moguRemSec=30;
@@ -1383,6 +1385,27 @@ var MOGU_TARGET_KEY='nikowa_mogu_target';
 var MOGU_LAST_KEY='nikowa_mogu_last';
 var MOGU_MODE_KEY='nikowa_mogu_mode';
 var MOGU_MEAL_KEY='nikowa_mogu_meal';
+
+// もぐタイム挨拶キャラ（ロゴ・つきこは除外）
+var MOGU_CHARS=[
+  { img:'assets/anzu.svg',   lines:['今日もゆっくり食べようね🌸','ひと口ずつ、丁寧に🌷','あんずもいっしょだよ🐰','焦らず、ゆっくりね🌼'] },
+  { img:'assets/beru.svg',   lines:['ゆっくりが、いちばんだよ🫧','よく噛むのって、大事なんだよ✨','のんびりが、いいね🐠','ぶくぶく、いい感じ💧'] },
+  { img:'assets/beteli.svg', lines:['がんばれー！🐟','ゆっくりでいいんだよ✨','30回噛めるかな🌊','その調子その調子！🐡'] },
+  { img:'assets/koito.svg',  lines:['いっしょに泳ぐみたいに、ゆっくりね🎏','焦らず、楽しもう🌸','春の風みたいに、のんびりね🌿','ゆーったり、いこう💙'] },
+  { img:'assets/kotatu.svg', lines:['もぐもぐタイム、はじめよう🐾','ゆっくり噛んだら、おいしいよ🦴','いっしょに食べよ〜🐕','あったかいうちに、ゆっくりね☕'] },
+  { img:'assets/yumeme.svg', lines:['夢みたいに、ゆっくりね🌙','お腹もうれしいよ🌸','ゆっくり、のんびり🐑','もこもこ、いい感じ☁️'] }
+];
+
+function pickMoguGreeting(){
+  try{
+    var c=MOGU_CHARS[Math.floor(Math.random()*MOGU_CHARS.length)];
+    var line=c.lines[Math.floor(Math.random()*c.lines.length)];
+    var img=document.getElementById('moguGreetingChar');
+    var lineEl=document.getElementById('moguGreetingLine');
+    if(img){ img.src=c.img; img.style.display=''; }
+    if(lineEl) lineEl.textContent=line;
+  }catch(e){}
+}
 
 function setMoguMode(btn, mode){
   document.querySelectorAll('.mogu-mode-btn:not(.mogu-meal-btn)').forEach(function(b){b.classList.remove('active');});
@@ -1447,6 +1470,10 @@ function startMogu(){
   moguBiteTimes=[];
   moguLastBiteTime=null;
   moguRemSec=moguTargetSec;
+  moguPaused=false;
+  moguPauseTime=null;
+  var pbtn=document.getElementById('moguPauseBtn');
+  if(pbtn) pbtn.textContent='⏸ 一時停止';
   // モード別フェーズ初期化
   if(moguMode==='loop'){
     // ループモード：すぐ待機開始
@@ -1720,6 +1747,45 @@ function endMogu(){
   window._lastMoguGrade=grade;
 }
 
+function togglePauseMogu(){
+  if(moguState!=='eating') return;
+  var btn=document.getElementById('moguPauseBtn');
+  if(moguPaused){
+    // 再開：停止していた時間分、moguStartTimeと最終ひと口時刻を進める
+    var pausedDuration=Date.now()-moguPauseTime;
+    moguStartTime += pausedDuration;
+    if(moguLastBiteTime) moguLastBiteTime += pausedDuration;
+    moguPaused=false;
+    moguInterval=setInterval(moguTick, 1000);
+    if(btn) btn.textContent='⏸ 一時停止';
+  } else {
+    // 一時停止：interval止める
+    moguPaused=true;
+    moguPauseTime=Date.now();
+    if(moguInterval){clearInterval(moguInterval);moguInterval=null;}
+    if(btn) btn.textContent='▶ 再開';
+  }
+}
+
+// やり直し：EATING→READYに戻す（記録捨てる）
+function resetMoguToReady(){
+  if(moguState!=='eating') return;
+  if(moguInterval){clearInterval(moguInterval);moguInterval=null;}
+  moguState='ready';
+  moguPhase='next_ok';
+  moguBiteCount=0;
+  moguBiteTimes=[];
+  moguLastBiteTime=null;
+  moguRemSec=moguTargetSec;
+  moguPaused=false;
+  moguPauseTime=null;
+  var btn=document.getElementById('moguPauseBtn');
+  if(btn) btn.textContent='⏸ 一時停止';
+  document.getElementById('moguEating').style.display='none';
+  document.getElementById('moguReady').style.display='';
+  pickMoguGreeting();
+}
+
 function resetMogu(){
   moguState='ready';
   moguPhase='next_ok';
@@ -1730,7 +1796,7 @@ function resetMogu(){
   document.getElementById('moguDone').style.display='none';
   document.getElementById('moguEating').style.display='none';
   document.getElementById('moguReady').style.display='';
-  loadMoguLastDisplay();
+  pickMoguGreeting();
 }
 
 function loadMoguLastDisplay(){
@@ -1845,7 +1911,7 @@ try{
       if(match) b.classList.add('active');
     });
   }
-  loadMoguLastDisplay();
+  pickMoguGreeting();
 }catch(e){}
 
 initDrum();
