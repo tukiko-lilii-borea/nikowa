@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 <style>
-:root{--mint:#C8EFE0;--mint-deep:#7DC9A8;--cream:#FFFBF7;--amber:#F6AD55;--navy:#1E3A8A;--ink:#2D3748;--ink-sub:#718096;--surface:rgba(255,255,255,0.88);--card-border:rgba(0,0,0,0.07);--accent:#2EB875;--rest-blue:#5B9CC9;--metro-purple:#9575CD;}
+:root{--mint:#C8EFE0;--mint-deep:#7DC9A8;--cream:#FFFBF7;--amber:#F6AD55;--navy:#1E3A8A;--ink:#2D3748;--ink-sub:#718096;--surface:rgba(255,255,255,0.88);--card-border:rgba(0,0,0,0.07);--accent:#2EB875;--rest-blue:#5B9CC9;--metro-purple:#9575CD;--mogu-orange:#FF9F5A;--mogu-warm:#FFE5D0;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
 body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-image:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(126,201,168,0.18) 29px,rgba(126,201,168,0.18) 30px),repeating-linear-gradient(90deg,transparent,transparent 29px,rgba(126,201,168,0.18) 29px,rgba(126,201,168,0.18) 30px);min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:12px 16px 24px;color:var(--ink);}
 .header{width:100%;max-width:380px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
@@ -23,6 +23,33 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
 .tab.active{background:var(--accent);color:white;}
 .tab.tab-interval.active{background:var(--accent);}
 .tab.tab-metronome.active{background:var(--metro-purple);}
+.tab.tab-moguTime.active{background:var(--mogu-orange);}
+
+/* ─────────── もぐタイム専用 ─────────── */
+.mogu-phase{font-size:14px;font-weight:900;text-align:center;padding:6px 14px;border-radius:100px;display:inline-block;}
+.mogu-phase.wait{background:rgba(255,159,90,0.18);color:var(--mogu-orange);}
+.mogu-phase.ok{background:rgba(46,184,117,0.18);color:var(--accent);}
+.mogu-stats-row{display:flex;justify-content:space-around;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.05);margin-bottom:12px;}
+.mogu-stat{text-align:center;}
+.mogu-stat .label{font-size:9px;color:var(--ink-sub);font-weight:700;}
+.mogu-stat .val{font-size:18px;font-weight:900;color:var(--ink);line-height:1.1;}
+.mogu-ctrl-row{display:flex;gap:8px;flex-direction:column;}
+.mogu-big-btn{padding:18px 0;border-radius:18px;border:none;font-family:inherit;font-size:16px;font-weight:900;cursor:pointer;transition:transform 0.1s;}
+.mogu-big-btn:active{transform:scale(0.97);}
+.mogu-btn-bite{background:linear-gradient(135deg,var(--mogu-orange),#E8843F);color:white;box-shadow:0 4px 14px rgba(255,159,90,0.4);}
+.mogu-btn-bite[disabled]{opacity:0.4;cursor:not-allowed;box-shadow:none;}
+.mogu-btn-end{background:var(--surface);border:1.5px solid var(--card-border);color:var(--ink-sub);}
+.mogu-target-row{display:flex;gap:6px;justify-content:center;margin-bottom:14px;}
+.mogu-target-btn{flex:1;padding:8px 4px;border:1.5px solid var(--mogu-warm);background:white;color:var(--ink-sub);border-radius:100px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;}
+.mogu-target-btn.active{background:var(--mogu-orange);border-color:var(--mogu-orange);color:white;}
+.ring-fg.mogu{stroke:var(--mogu-orange);}
+.time-display.mogu{color:var(--mogu-orange);}
+.mogu-result-card{background:var(--mogu-warm);border-radius:16px;padding:14px;margin-bottom:12px;text-align:center;}
+.mogu-grade{font-size:48px;font-weight:900;line-height:1;}
+.mogu-grade.A{color:#2EB875;}
+.mogu-grade.B{color:#7DC9A8;}
+.mogu-grade.C{color:var(--mogu-orange);}
+.mogu-grade.D{color:#E94B6F;}
 
 .tab-content{display:none;width:100%;max-width:380px;}
 .tab-content.active{display:block;}
@@ -153,9 +180,10 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
 
 <!-- ===== タブ ===== -->
 <div class="tabs">
-  <button type="button" class="tab tab-timer active" onclick="switchTab('timer')"><span class="material-symbols-rounded">timer</span>タイマー</button>
-  <button type="button" class="tab tab-interval" onclick="switchTab('interval')"><span class="material-symbols-rounded">repeat</span>インターバル</button>
-  <button type="button" class="tab tab-metronome" onclick="switchTab('metronome')"><span class="material-symbols-rounded">music_note</span>メトロノーム</button>
+  <button type="button" class="tab tab-timer active" onclick="switchTab('timer')"><span class="material-symbols-rounded" style="font-size:13px;">timer</span>タイマー</button>
+  <button type="button" class="tab tab-interval" onclick="switchTab('interval')"><span class="material-symbols-rounded" style="font-size:13px;">repeat</span>インターバル</button>
+  <button type="button" class="tab tab-metronome" onclick="switchTab('metronome')"><span class="material-symbols-rounded" style="font-size:13px;">music_note</span>メトロ</button>
+  <button type="button" class="tab tab-moguTime" onclick="switchTab('moguTime')"><span class="material-symbols-rounded" style="font-size:13px;">restaurant</span>もぐタイム</button>
 </div>
 
 <!-- ============================================================ -->
@@ -339,6 +367,107 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
   </div>
 </div>
 
+<!-- ============================================================ -->
+<!-- タブ4：もぐタイム 🍚 -->
+<!-- ============================================================ -->
+<div class="tab-content" id="tabMoguTime">
+  <div class="timer-card">
+    <!-- ＝＝ READY画面 ＝＝ -->
+    <div id="moguReady">
+      <div style="text-align:center;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:900;color:var(--mogu-orange);margin-bottom:4px;">🍚 もぐタイム</div>
+        <div style="font-size:11px;color:var(--ink-sub);font-weight:700;">今日もゆっくり食べよう🌷</div>
+      </div>
+
+      <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin-bottom:6px;">⏱ ひと口の待ち時間</div>
+      <div class="mogu-target-row">
+        <button type="button" class="mogu-target-btn" onclick="setMoguTarget(this,15)">15秒</button>
+        <button type="button" class="mogu-target-btn active" onclick="setMoguTarget(this,30)">30秒</button>
+        <button type="button" class="mogu-target-btn" onclick="setMoguTarget(this,45)">45秒</button>
+        <button type="button" class="mogu-target-btn" onclick="setMoguTarget(this,60)">60秒</button>
+      </div>
+
+      <button type="button" class="mogu-big-btn mogu-btn-bite" onclick="startMogu()" style="width:100%;margin-top:8px;">🍚 食事をはじめる</button>
+
+      <!-- 前回の記録 -->
+      <div id="moguLastRecord" style="margin-top:16px;display:none;">
+        <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin-bottom:8px;text-align:center;">前回の食事</div>
+        <div id="moguLastDetail" style="background:var(--mogu-warm);border-radius:12px;padding:12px;text-align:center;font-size:12px;color:var(--ink);font-weight:700;line-height:1.6;"></div>
+      </div>
+    </div>
+
+    <!-- ＝＝ EATING画面 ＝＝ -->
+    <div id="moguEating" style="display:none;">
+      <div class="mogu-stats-row">
+        <div class="mogu-stat">
+          <div class="label">経過時間</div>
+          <div class="val" id="moguElapsed">0:00</div>
+        </div>
+        <div class="mogu-stat">
+          <div class="label">ひと口</div>
+          <div class="val" id="moguBiteCount">0 回</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-bottom:8px;">
+        <span class="mogu-phase ok" id="moguPhase">最初のひと口どうぞ🌸</span>
+      </div>
+
+      <div class="clock-wrap">
+        <div class="clock-ring">
+          <svg width="180" height="180" viewBox="0 0 180 180">
+            <circle class="ring-bg" cx="90" cy="90" r="80"/>
+            <circle class="ring-fg mogu" id="moguRingFg" cx="90" cy="90" r="80" stroke-dasharray="502.65" stroke-dashoffset="0"/>
+          </svg>
+          <div class="clock-text">
+            <div class="time-display mogu" id="moguTimeDisplay">0:30</div>
+            <div class="time-sub" id="moguTimeSub">残り</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mogu-ctrl-row">
+        <button type="button" class="mogu-big-btn mogu-btn-bite" id="moguBiteBtn" onclick="moguBite()">👄 ひと口いれた</button>
+        <button type="button" class="ctrl-btn mogu-btn-end" onclick="endMogu()" style="padding:11px 0;border-radius:14px;font-size:13px;">🍽 ごちそうさま</button>
+      </div>
+    </div>
+
+    <!-- ＝＝ DONE画面 ＝＝ -->
+    <div id="moguDone" style="display:none;">
+      <div style="text-align:center;margin-bottom:14px;">
+        <div style="font-size:16px;font-weight:900;color:var(--ink);">🌸 おつかれさま</div>
+      </div>
+
+      <div class="mogu-result-card">
+        <div class="mogu-grade" id="moguGrade">A</div>
+        <div style="font-size:11px;color:var(--ink-sub);font-weight:800;margin-top:4px;">ゆっくり度</div>
+      </div>
+
+      <div class="mogu-stats-row" style="border-bottom:none;">
+        <div class="mogu-stat">
+          <div class="label">食事時間</div>
+          <div class="val" id="moguDoneTime">0分</div>
+        </div>
+        <div class="mogu-stat">
+          <div class="label">ひと口</div>
+          <div class="val" id="moguDoneBite">0回</div>
+        </div>
+        <div class="mogu-stat">
+          <div class="label">平均間隔</div>
+          <div class="val" id="moguDoneAvg">0秒</div>
+        </div>
+      </div>
+
+      <div id="moguAdvice" style="font-size:12px;color:var(--ink-sub);font-weight:700;text-align:center;padding:10px;background:var(--mogu-warm);border-radius:12px;margin-bottom:14px;line-height:1.6;"></div>
+
+      <div class="mogu-ctrl-row">
+        <button type="button" class="mogu-big-btn mogu-btn-bite" onclick="openMoguRecord()" style="background:linear-gradient(135deg,#FFB74D,#FF9800);">📝 Meに記録する</button>
+        <button type="button" class="ctrl-btn mogu-btn-end" onclick="resetMogu()" style="padding:11px 0;border-radius:14px;font-size:13px;">もう一度</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ドラムロールモーダル（タイマーのカスタム用） -->
 <div class="drum-modal-overlay" id="drumOverlay" onclick="onDrumOverlayClick(event)">
   <div class="drum-modal">
@@ -357,7 +486,24 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--mint);background-
   <div class="speech-bubble" id="charaMsg">おわったよ〜！</div>
   <img class="chara-img" id="charaImg" src="" alt="キャラ">
   <div class="chara-sub" id="charaSub">よくがんばったね🌷</div>
-  <button type="button" class="overlay-close" onclick="closeOverlay()">もう一度</button>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <button type="button" class="overlay-close" id="recordBtn" onclick="openRecordModal()" style="background:linear-gradient(135deg,#FFB74D,#FF9800);box-shadow:0 4px 14px rgba(255,152,0,0.35);">📝 Meに記録</button>
+    <button type="button" class="overlay-close" onclick="closeOverlay()" style="background:rgba(255,255,255,0.9);color:var(--ink-sub);border:1.5px solid rgba(0,0,0,0.1);box-shadow:0 2px 8px rgba(0,0,0,0.06);">もう一度</button>
+  </div>
+</div>
+
+<!-- 記録モーダル -->
+<div class="overlay" id="recordModal" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(6px);">
+  <div style="background:white;border-radius:24px;padding:24px 22px;width:calc(100% - 32px);max-width:340px;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+    <div style="font-size:16px;font-weight:900;color:var(--ink);text-align:center;margin-bottom:6px;">📝 Meに記録する</div>
+    <div id="recordSummary" style="text-align:center;font-size:13px;color:var(--ink-sub);font-weight:700;margin-bottom:18px;padding:10px;background:var(--mint);border-radius:12px;">タイマー使用</div>
+    <label style="font-size:11px;font-weight:800;color:var(--ink-sub);">コメント（任意）</label>
+    <textarea id="recordComment" placeholder="今日もよくがんばった🌸" rows="3" maxlength="200" style="width:100%;margin-top:6px;padding:10px 12px;border:1.5px solid rgba(0,0,0,0.1);border-radius:12px;font-family:inherit;font-size:13px;background:var(--cream);color:var(--ink);box-sizing:border-box;resize:none;outline:none;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button type="button" onclick="closeRecordModal()" style="flex:1;padding:12px;border-radius:14px;border:1.5px solid rgba(0,0,0,0.1);background:white;color:var(--ink-sub);font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">キャンセル</button>
+      <button type="button" onclick="saveRecord()" style="flex:1;padding:12px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),#1A9A55);color:white;font-family:inherit;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 4px 12px rgba(46,184,117,0.35);">保存🌸</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -620,6 +766,22 @@ function showOverlay(){
   document.getElementById('startBtn').textContent='スタート';
   document.getElementById('startBtn').className='ctrl-btn ctrl-start';
   document.getElementById('timeSub').textContent='完了！';
+  // ★ アクティビティ情報を記録モーダル用に保持
+  // タイマー or インターバル かは、どっちが終わったかで判断
+  // → ivRunningが直前まで動いてたかで判別。簡易：active要素チェック
+  if(window._justFinishedInterval){
+    window._lastActivityType='interval';
+    window._lastActivityDuration=ivWorkSec*ivSets + ivRestSec*(ivSets-1);
+    window._lastActivityDetail=ivWorkSec+'秒×'+ivSets+'セット / 休憩'+ivRestSec+'秒';
+    window._justFinishedInterval=false;
+  } else {
+    window._lastActivityType='timer';
+    window._lastActivityDuration=totalSec;
+    window._lastActivityDetail=fmtDuration(totalSec);
+  }
+  // 記録ボタン表示
+  var rb=document.getElementById('recordBtn');
+  if(rb) rb.style.display='';
   document.getElementById('overlay').classList.add('show');
 }
 function closeOverlay(){
@@ -628,6 +790,59 @@ function closeOverlay(){
   document.getElementById('overlay').classList.remove('show');
   onReset();
   onIvReset();
+}
+
+// ━━━━ 経過秒数を読みやすい文字列に ━━━━
+function fmtDuration(sec){
+  if(sec<60) return sec+'秒';
+  var m=Math.floor(sec/60), s=sec%60;
+  if(s===0) return m+'分';
+  return m+'分'+s+'秒';
+}
+
+// ━━━━ 記録モーダル ━━━━
+function openRecordModal(){
+  var type=window._lastActivityType||'timer';
+  var dur=window._lastActivityDuration||0;
+  var detail=window._lastActivityDetail||'';
+  var nameMap={timer:'⏱ タイマー', interval:'🔁 インターバル', metronome:'🎵 メトロノーム', moguTime:'🍚 もぐタイム'};
+  var sum=nameMap[type]+'　'+fmtDuration(dur);
+  if(detail && detail!==fmtDuration(dur)) sum+='（'+detail+'）';
+  document.getElementById('recordSummary').textContent=sum;
+  document.getElementById('recordComment').value='';
+  document.getElementById('recordModal').classList.add('show');
+  setTimeout(function(){document.getElementById('recordComment').focus();},100);
+}
+function closeRecordModal(){
+  document.getElementById('recordModal').classList.remove('show');
+}
+function saveRecord(){
+  var type=window._lastActivityType||'timer';
+  var dur=window._lastActivityDuration||0;
+  var detail=window._lastActivityDetail||'';
+  var comment=(document.getElementById('recordComment').value||'').trim();
+  var now=new Date();
+  var dateStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  var timeStr=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  var entry={
+    type:type, durationSec:dur, detail:detail, comment:comment,
+    date:dateStr, time:timeStr, timestamp:now.getTime()
+  };
+  try{
+    var q=JSON.parse(localStorage.getItem('nikowa_pending_stamps')||'[]');
+    q.push(entry);
+    localStorage.setItem('nikowa_pending_stamps', JSON.stringify(q));
+  }catch(e){}
+  closeRecordModal();
+  // 完了オーバーレイのボタンも更新
+  var rb=document.getElementById('recordBtn');
+  if(rb){rb.textContent='✓ 記録済み';rb.disabled=true;rb.style.opacity='0.5';}
+  // トースト
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(46,184,117,0.95);color:white;padding:12px 20px;border-radius:100px;font-family:inherit;font-size:13px;font-weight:800;z-index:9999;box-shadow:0 4px 14px rgba(46,184,117,0.4);';
+  t.textContent='🌸 Meに記録したよ！';
+  document.body.appendChild(t);
+  setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},2500);
 }
 
 // ドラムロール
@@ -915,6 +1130,7 @@ function ivTick(){
         ivRunning=false;clearInterval(ivInterval);
         document.getElementById('ivStartBtn').textContent='スタート';
         document.getElementById('ivStartBtn').className='ctrl-btn ctrl-start';
+        window._justFinishedInterval=true; // ★ 記録モーダル用
         playEndSoundLoop();
         showOverlay();
         return;
@@ -1044,21 +1260,39 @@ function metroTick(){
   playMetroSound(metroCurBeat===0);
   metroCurBeat=(metroCurBeat+1)%metroBeats;
 }
+var metroStartTime=null; // ★ 使った時間記録用
+
 function startMetro(){
   ensureAudio();
   metroPlaying=true;
   metroCurBeat=0;
+  metroStartTime=Date.now(); // ★ 使用開始時刻
   document.getElementById('metroBtn').textContent='ストップ';
   document.getElementById('metroBtn').className='ctrl-btn ctrl-pause';
   metroTick(); // 即1拍目
   metroInterval=setInterval(metroTick, 60000/metroBpm);
 }
 function stopMetro(){
+  var wasPlaying=metroPlaying;
+  var elapsed=metroStartTime ? Math.floor((Date.now()-metroStartTime)/1000) : 0;
   metroPlaying=false;
   if(metroInterval){clearInterval(metroInterval);metroInterval=null;}
   document.getElementById('metroBtn').textContent='スタート';
   document.getElementById('metroBtn').className='ctrl-btn metro-ctrl';
   document.querySelectorAll('.beat-dot').forEach(function(d){d.classList.remove('active');});
+  // ★ 10秒以上使ってたら記録モーダル提案
+  if(wasPlaying && elapsed>=10){
+    showMetroRecordPrompt(elapsed);
+  }
+  metroStartTime=null;
+}
+function showMetroRecordPrompt(elapsed){
+  // 完了オーバーレイ＋記録モーダルを使う（共通）
+  window._lastActivityType='metronome';
+  window._lastActivityDuration=elapsed;
+  window._lastActivityDetail='BPM '+metroBpm+' / '+metroBeats+'拍子';
+  // メトロは「もう一度」じゃなくて直接記録モーダル
+  openRecordModal();
 }
 function restartMetro(){
   if(metroInterval){clearInterval(metroInterval);}
@@ -1068,6 +1302,223 @@ function restartMetro(){
 function onMetroToggle(){
   if(metroPlaying) stopMetro();
   else startMetro();
+}
+
+// ════════════════════════════════════════════
+// タブ4：もぐタイム 🍚
+// ════════════════════════════════════════════
+var moguState='ready'; // ready / eating / done
+var moguPhase='next_ok'; // next_ok / waiting
+var moguTargetSec=30;
+var moguRemSec=30;
+var moguStartTime=null;
+var moguBiteCount=0;
+var moguBiteTimes=[]; // 各ひと口の時刻
+var moguInterval=null;
+var moguLastBiteTime=null;
+var MOGU_TARGET_KEY='nikowa_mogu_target';
+var MOGU_LAST_KEY='nikowa_mogu_last';
+
+function setMoguTarget(btn, sec){
+  document.querySelectorAll('.mogu-target-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  moguTargetSec=sec;
+  moguRemSec=sec;
+  try{localStorage.setItem(MOGU_TARGET_KEY, String(sec));}catch(e){}
+}
+
+function startMogu(){
+  ensureAudio();
+  moguState='eating';
+  moguStartTime=Date.now();
+  moguBiteCount=0;
+  moguBiteTimes=[];
+  moguLastBiteTime=null;
+  moguRemSec=moguTargetSec;
+  moguPhase='next_ok'; // 最初の一口はすぐOK
+  document.getElementById('moguReady').style.display='none';
+  document.getElementById('moguDone').style.display='none';
+  document.getElementById('moguEating').style.display='';
+  updateMoguDisplay();
+  moguInterval=setInterval(moguTick, 1000);
+}
+
+function moguTick(){
+  // 経過時間更新
+  var elapsed=Math.floor((Date.now()-moguStartTime)/1000);
+  var m=Math.floor(elapsed/60), s=elapsed%60;
+  document.getElementById('moguElapsed').textContent=m+':'+(s<10?'0':'')+s;
+
+  // 待機中ならカウントダウン
+  if(moguPhase==='waiting'){
+    moguRemSec--;
+    // 残り3秒で軽い通知音
+    if(moguRemSec===3 && masterVol>0){
+      playNote(880, 0.08, 0.2, 'sine');
+    }
+    if(moguRemSec<=0){
+      moguPhase='next_ok';
+      // 「次のひと口OK」通知音
+      if(masterVol>0){
+        [523.25, 659.25, 783.99].forEach(function(f,i){
+          _pt(function(){playNote(f,0.2,0.25,'sine');},i*80);
+        });
+      }
+    }
+  }
+  updateMoguDisplay();
+}
+
+function updateMoguDisplay(){
+  // ひと口カウント
+  document.getElementById('moguBiteCount').textContent=moguBiteCount+' 回';
+  // 残り時間
+  var m=Math.floor(moguRemSec/60), s=moguRemSec%60;
+  document.getElementById('moguTimeDisplay').textContent=m+':'+(s<10?'0':'')+s;
+  // フェーズ表示
+  var ph=document.getElementById('moguPhase');
+  var btn=document.getElementById('moguBiteBtn');
+  var ring=document.getElementById('moguRingFg');
+  var pct=moguTargetSec>0 ? moguRemSec/moguTargetSec : 0;
+  if(moguPhase==='next_ok'){
+    if(moguBiteCount===0){
+      ph.textContent='最初のひと口どうぞ🌸';
+    } else {
+      ph.textContent='次のひと口OK🌸';
+    }
+    ph.className='mogu-phase ok';
+    btn.textContent='👄 ひと口いれた';
+    btn.disabled=false;
+    document.getElementById('moguTimeSub').textContent='待機なし';
+    ring.style.strokeDashoffset=0;
+  } else {
+    ph.textContent='🥢 もぐもぐ中...';
+    ph.className='mogu-phase wait';
+    btn.textContent='⏱ もう少し噛もう';
+    btn.disabled=true;
+    document.getElementById('moguTimeSub').textContent='残り';
+    ring.style.strokeDashoffset=CIRC*(1-pct);
+  }
+}
+
+function moguBite(){
+  if(moguPhase!=='next_ok') return;
+  ensureAudio();
+  moguBiteCount++;
+  var now=Date.now();
+  if(moguLastBiteTime){
+    var diff=Math.floor((now-moguLastBiteTime)/1000);
+    moguBiteTimes.push(diff);
+  }
+  moguLastBiteTime=now;
+  moguPhase='waiting';
+  moguRemSec=moguTargetSec;
+  // ひと口入れた音
+  if(masterVol>0) playNote(660, 0.1, 0.25, 'triangle');
+  updateMoguDisplay();
+}
+
+function endMogu(){
+  if(moguState!=='eating') return;
+  clearInterval(moguInterval);
+  moguInterval=null;
+  moguState='done';
+
+  // 集計
+  var elapsed=Math.floor((Date.now()-moguStartTime)/1000);
+  var avgInterval=moguBiteTimes.length>0
+    ? Math.floor(moguBiteTimes.reduce(function(a,b){return a+b;},0)/moguBiteTimes.length)
+    : 0;
+
+  // ゆっくり度判定
+  var grade='D';
+  if(moguBiteCount===0){
+    grade='-';
+  } else if(avgInterval>=moguTargetSec*0.9){
+    grade='A';
+  } else if(avgInterval>=moguTargetSec*0.7){
+    grade='B';
+  } else if(avgInterval>=moguTargetSec*0.5){
+    grade='C';
+  }
+
+  // アドバイス
+  var advice='';
+  if(grade==='A') advice='完璧🌸 このペース最高！';
+  else if(grade==='B') advice='いい感じ🌷 もう少しゆっくりでもOK';
+  else if(grade==='C') advice='ちょっと急いだかな🌱 もう少し待ってみよう';
+  else if(grade==='D') advice='早食い気味かも💧 ひと口の間を空けてみよう';
+  else advice='ひと口記録なし。次は👄ボタン押してみてね';
+
+  // 表示
+  document.getElementById('moguEating').style.display='none';
+  document.getElementById('moguDone').style.display='';
+  var elM=Math.floor(elapsed/60), elS=elapsed%60;
+  document.getElementById('moguDoneTime').textContent=elM+'分'+(elS>0?elS+'秒':'');
+  document.getElementById('moguDoneBite').textContent=moguBiteCount+'回';
+  document.getElementById('moguDoneAvg').textContent=avgInterval+'秒';
+  var gel=document.getElementById('moguGrade');
+  gel.textContent=grade;
+  gel.className='mogu-grade '+grade;
+  document.getElementById('moguAdvice').textContent=advice;
+
+  // 完了音
+  if(masterVol>0){
+    [523.25, 659.25, 783.99, 1046.50].forEach(function(f,i){
+      _pt(function(){playNote(f,0.4,0.22,'sine');},i*120);
+    });
+  }
+
+  // 最後の記録保存（前回表示用）
+  try{
+    localStorage.setItem(MOGU_LAST_KEY, JSON.stringify({
+      elapsed:elapsed, biteCount:moguBiteCount, avgInterval:avgInterval, grade:grade,
+      targetSec:moguTargetSec, timestamp:Date.now()
+    }));
+  }catch(e){}
+
+  // Me記録用にセット
+  window._lastActivityType='moguTime';
+  window._lastActivityDuration=elapsed;
+  window._lastActivityDetail='ひと口'+moguBiteCount+'回・平均'+avgInterval+'秒・ゆっくり度'+grade;
+  window._lastMoguGrade=grade;
+}
+
+function resetMogu(){
+  moguState='ready';
+  moguPhase='next_ok';
+  moguBiteCount=0;
+  moguBiteTimes=[];
+  moguRemSec=moguTargetSec;
+  if(moguInterval){clearInterval(moguInterval);moguInterval=null;}
+  document.getElementById('moguDone').style.display='none';
+  document.getElementById('moguEating').style.display='none';
+  document.getElementById('moguReady').style.display='';
+  loadMoguLastDisplay();
+}
+
+function loadMoguLastDisplay(){
+  try{
+    var raw=localStorage.getItem(MOGU_LAST_KEY);
+    if(!raw){document.getElementById('moguLastRecord').style.display='none';return;}
+    var d=JSON.parse(raw);
+    var el=document.getElementById('moguLastRecord');
+    var detail=document.getElementById('moguLastDetail');
+    var m=Math.floor(d.elapsed/60), s=d.elapsed%60;
+    var when=new Date(d.timestamp);
+    var whenStr=(when.getMonth()+1)+'/'+when.getDate()+' '+when.getHours()+':'+String(when.getMinutes()).padStart(2,'0');
+    detail.innerHTML='<div style="font-size:20px;font-weight:900;color:var(--mogu-orange);margin-bottom:4px;">ゆっくり度 '+d.grade+'</div>'
+      + '<div>'+whenStr+'</div>'
+      + '<div>'+m+'分'+(s>0?s+'秒':'')+' / '+d.biteCount+'口 / 平均'+d.avgInterval+'秒</div>';
+    el.style.display='';
+  }catch(e){
+    document.getElementById('moguLastRecord').style.display='none';
+  }
+}
+
+// もぐタイム→Me記録モーダルを開く
+function openMoguRecord(){
+  openRecordModal();
 }
 
 // ════════════════════════════════════════════
@@ -1115,6 +1566,20 @@ try{
     });
   }
   updateIvCustomDesc();
+}catch(e){}
+
+// ★ もぐタイムの設定読込
+try{
+  var savedMt=localStorage.getItem(MOGU_TARGET_KEY);
+  if(savedMt){
+    moguTargetSec=parseInt(savedMt);
+    moguRemSec=moguTargetSec;
+    document.querySelectorAll('.mogu-target-btn').forEach(function(b){
+      b.classList.remove('active');
+      if(b.textContent===savedMt+'秒') b.classList.add('active');
+    });
+  }
+  loadMoguLastDisplay();
 }catch(e){}
 
 initDrum();

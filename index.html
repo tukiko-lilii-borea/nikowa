@@ -55358,6 +55358,52 @@ if (_globalTheme && THEMES[_globalTheme]) {
   try { localStorage.setItem('nikowa_global_theme', _globalTheme); } catch(e) {}
 }
 applyTheme(data.themeId || 'mint');
+
+// ★ タイマー/インターバル/メトロノームからの記録キューを取り込む
+(function consumePendingStamps(){
+  try {
+    var raw = localStorage.getItem('nikowa_pending_stamps');
+    if (!raw) return;
+    var queue = JSON.parse(raw);
+    if (!Array.isArray(queue) || queue.length === 0) {
+      localStorage.removeItem('nikowa_pending_stamps');
+      return;
+    }
+    if (!data.stampHistory) data.stampHistory = [];
+    var nameMap = {timer:'⏱ タイマー', interval:'🔁 インターバル', metronome:'🎵 メトロノーム', moguTime:'🍚 もぐタイム'};
+    var iconMap = {timer:'timer', interval:'fitness_center', metronome:'music_note', moguTime:'restaurant'};
+    var addedCount = 0;
+    queue.forEach(function(entry){
+      // 重複防止：同じtimestampのものは追加しない
+      if ((data.stampHistory || []).some(function(s){ return s.timestamp === entry.timestamp; })) return;
+      var displayName = (nameMap[entry.type] || 'タイマー');
+      var fmtDur = entry.detail || (entry.durationSec + '秒');
+      data.stampHistory.unshift({
+        id: 'st_act_' + entry.timestamp,
+        icon: iconMap[entry.type] || 'timer',
+        name: displayName + ' ' + fmtDur,
+        category: 'activity',
+        timestamp: entry.timestamp,
+        durationSec: entry.durationSec,
+        detail: entry.detail || '',
+        note: entry.comment || '',
+        source: 'timer_app'
+      });
+      addedCount++;
+    });
+    if (data.stampHistory.length > 200) data.stampHistory = data.stampHistory.slice(0, 200);
+    if (addedCount > 0) saveData();
+    localStorage.removeItem('nikowa_pending_stamps');
+    if (addedCount > 0) {
+      setTimeout(function(){
+        if (typeof showAnzuToast === 'function') {
+          showAnzuToast('🌸 タイマー記録を' + addedCount + '件取り込んだよ');
+        }
+      }, 600);
+    }
+  } catch(e) {}
+})();
+
 render();
 initFirebase();
 </script>
