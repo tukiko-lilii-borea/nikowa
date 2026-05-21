@@ -533,7 +533,12 @@
       background: var(--bg);
       min-height: 100vh;
       overflow: hidden;
+      max-width: none !important;
+      padding: 0 !important;
+      background-image: none !important;
     }
+    /* 旧レイアウトのsidePanelを非表示（pcSidebarが代替） */
+    .side-panel { display: none !important; }
     #pcSidebar {
       display: flex !important;
       flex-direction: column;
