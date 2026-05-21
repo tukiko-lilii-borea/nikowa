@@ -568,29 +568,32 @@
       padding: 32px 48px 80px !important;
       box-sizing: border-box;
       overflow-x: hidden;
+    }
+    /* ホーム画面だけ2列グリッドにする */
+    .app.pc-home-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px 24px;
       align-content: start;
     }
     /* フル幅セクション */
-    .app > .hero-section,
-    .app > div[style*="margin:0 14px 10px"][style*="background:#FFFFFF"],
-    .app > [data-pinned-stamps],
-    .app > .home-pc-friend-wrap,
-    .app > .home-pc-map-row,
-    .app > div[style*="height: 24px"] {
+    .app.pc-home-grid > .hero-section,
+    .app.pc-home-grid > div[style*="margin:0 14px 10px"][style*="background:#FFFFFF"],
+    .app.pc-home-grid > [data-pinned-stamps],
+    .app.pc-home-grid > .home-pc-friend-wrap,
+    .app.pc-home-grid > .home-pc-map-row,
+    .app.pc-home-grid > div[style*="height: 24px"] {
       grid-column: 1 / -1;
     }
     /* 左：ToDay / 右：Diary を並べる */
-    .app > .home-recent-card { grid-column: 1; margin: 0 !important; }
-    .app > .home-quick-card { grid-column: 2; margin: 0 !important; }
+    .app.pc-home-grid > .home-recent-card { grid-column: 1; margin: 0 !important; }
+    .app.pc-home-grid > .home-quick-card { grid-column: 2; margin: 0 !important; }
     /* TODO+Diary 横並び：flex子要素がはみ出さないように */
-    .app > div[style*="padding:0 14px 12px"][style*="display:flex"] > div {
+    .app.pc-home-grid > div[style*="padding:0 14px 12px"][style*="display:flex"] > div {
       min-width: 0;
     }
     /* クイック起動ボタン：PC幅では8列1段で全部見せる */
-    .app > .home-pc-map-row {
+    .app.pc-home-grid > .home-pc-map-row {
       grid-template-columns: repeat(8, 1fr) !important;
     }
     .bottom-nav { display: none !important; }
@@ -681,20 +684,20 @@
     }
 
     /* 地図・路線・お気に入りボタン */
-    .app > div[style*="padding:0 14px 12px"] {
+    .app.pc-home-grid > div[style*="padding:0 14px 12px"] {
       padding: 0 0 12px !important;
       gap: 14px !important;
     }
-    .app > div[style*="padding:0 14px 12px"] button {
+    .app.pc-home-grid > div[style*="padding:0 14px 12px"] button {
       padding: 18px 12px !important;
       gap: 10px !important;
       border-radius: 16px !important;
       font-size: 16px !important;
     }
-    .app > div[style*="padding:0 14px 12px"] button .material-symbols-rounded {
+    .app.pc-home-grid > div[style*="padding:0 14px 12px"] button .material-symbols-rounded {
       font-size: 26px !important;
     }
-    .app > div[style*="padding:0 14px 12px"] button span:last-child {
+    .app.pc-home-grid > div[style*="padding:0 14px 12px"] button span:last-child {
       font-size: 16px !important;
     }
 
@@ -33537,7 +33540,7 @@ function renderPCSidebar() {
   // メインナビ（ボトムナビと同じ5項目）
   const _navMain = [
     { key:'home',     icon:'home',           label:'ホーム',      action:`currentView='top';render();`,    isActive: (_cv==='top' || _cv==='houses') },
-    { key:'me',       icon:'person',         label:'Me',          action:`goToMeMode();`,                  isActive: (_cv==='me') },
+    { key:'me',       icon:'person',         label:'Me',          action:`if(currentMode!=='me')switchMode('me');currentView='me';currentModeTab['me']='diary';delete data.tweetViewDate;render();`, isActive: (_cv==='me') },
     { key:'schedule', icon:'calendar_month', label:'スケジュール', action:`currentView='schedule';render();`, isActive: (_cv==='schedule') },
     { key:'nest',     icon:'groups',         label:'Nest',        action:`goToNestMode();`,                isActive: (_cv==='nest' || _cv==='new_nest') },
     { key:'town',     icon:'location_city',  label:'Town',        action:`currentView='town';render();`,   isActive: (_cv==='town') },
@@ -55586,6 +55589,12 @@ function render() {
       _appEl.style.backgroundAttachment = '';
       _appEl.style.minHeight = '';
     }
+  }
+  // PC: ホーム画面だけ2列グリッドにする（他画面の崩れ防止）
+  const _appElForGrid = document.getElementById('app');
+  if (_appElForGrid) {
+    const _isHomeView = (currentView === 'top' || currentView === 'houses');
+    _appElForGrid.classList.toggle('pc-home-grid', _isHomeView);
   }
   if (currentView === 'top') renderTop();
   else if (currentView === 'me') renderMeMode();
