@@ -533,12 +533,7 @@
       background: var(--bg);
       min-height: 100vh;
       overflow: hidden;
-      max-width: none !important;
-      padding: 0 !important;
-      background-image: none !important;
     }
-    /* 旧レイアウトのsidePanelを非表示（pcSidebarが代替） */
-    .side-panel { display: none !important; }
     #pcSidebar {
       display: flex !important;
       flex-direction: column;
@@ -563,39 +558,28 @@
       box-sizing: border-box;
     }
     .app {
-      max-width: 1500px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 32px 48px 80px !important;
       box-sizing: border-box;
       overflow-x: hidden;
-    }
-    /* ホーム画面だけ2列グリッドにする */
-    .app.pc-home-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px 24px;
       align-content: start;
     }
     /* フル幅セクション */
-    .app.pc-home-grid > .hero-section,
-    .app.pc-home-grid > div[style*="margin:0 14px 10px"][style*="background:#FFFFFF"],
-    .app.pc-home-grid > [data-pinned-stamps],
-    .app.pc-home-grid > .home-pc-friend-wrap,
-    .app.pc-home-grid > .home-pc-map-row,
-    .app.pc-home-grid > div[style*="height: 24px"] {
+    .app > .hero-section,
+    .app > div[style*="margin:0 14px 10px"][style*="background:#FFFFFF"],
+    .app > [data-pinned-stamps],
+    .app > .home-pc-friend-wrap,
+    .app > .home-pc-map-row,
+    .app > div[style*="height: 24px"] {
       grid-column: 1 / -1;
     }
     /* 左：ToDay / 右：Diary を並べる */
-    .app.pc-home-grid > .home-recent-card { grid-column: 1; margin: 0 !important; }
-    .app.pc-home-grid > .home-quick-card { grid-column: 2; margin: 0 !important; }
-    /* TODO+Diary 横並び：flex子要素がはみ出さないように */
-    .app.pc-home-grid > div[style*="padding:0 14px 12px"][style*="display:flex"] > div {
-      min-width: 0;
-    }
-    /* クイック起動ボタン：PC幅では8列1段で全部見せる */
-    .app.pc-home-grid > .home-pc-map-row {
-      grid-template-columns: repeat(8, 1fr) !important;
-    }
+    .app > .home-recent-card { grid-column: 1; margin: 0 !important; }
+    .app > .home-quick-card { grid-column: 2; margin: 0 !important; }
     .bottom-nav { display: none !important; }
 
     /* ===== ロゴ＆天気 ===== */
@@ -684,20 +668,20 @@
     }
 
     /* 地図・路線・お気に入りボタン */
-    .app.pc-home-grid > div[style*="padding:0 14px 12px"] {
+    .app > div[style*="padding:0 14px 12px"] {
       padding: 0 0 12px !important;
       gap: 14px !important;
     }
-    .app.pc-home-grid > div[style*="padding:0 14px 12px"] button {
+    .app > div[style*="padding:0 14px 12px"] button {
       padding: 18px 12px !important;
       gap: 10px !important;
       border-radius: 16px !important;
       font-size: 16px !important;
     }
-    .app.pc-home-grid > div[style*="padding:0 14px 12px"] button .material-symbols-rounded {
+    .app > div[style*="padding:0 14px 12px"] button .material-symbols-rounded {
       font-size: 26px !important;
     }
-    .app.pc-home-grid > div[style*="padding:0 14px 12px"] button span:last-child {
+    .app > div[style*="padding:0 14px 12px"] button span:last-child {
       font-size: 16px !important;
     }
 
@@ -30929,79 +30913,6 @@ function renderPeriodTracker() {
   }
   html += '</div>';
 
-  // ===== カレンダー =====
-  if (!window.periodCalMonth) {
-    const _t = new Date();
-    window.periodCalMonth = { year: _t.getFullYear(), month: _t.getMonth() };
-  }
-  const calY = window.periodCalMonth.year;
-  const calMo = window.periodCalMonth.month;
-  const firstDay = new Date(calY, calMo, 1);
-  const lastDay = new Date(calY, calMo+1, 0);
-  const startWeek = firstDay.getDay();
-  const daysInMonth = lastDay.getDate();
-
-  // 全生理日を Set に集約
-  const periodDaySet = new Set();
-  records.forEach(r => {
-    if (!r.startDate) return;
-    const s = new Date(r.startDate);
-    const e = r.endDate ? new Date(r.endDate) : new Date(todayStr);
-    for (let dt = new Date(s); dt <= e; dt.setDate(dt.getDate()+1)) {
-      periodDaySet.add(dt.toISOString().slice(0,10));
-    }
-  });
-
-  // 予測日（生理中じゃない場合のみ・次回開始から5日間）
-  const predictedSet = new Set();
-  if (nextPredict && !ongoing) {
-    for (let i = 0; i < 5; i++) {
-      const dt = new Date(nextPredict);
-      dt.setDate(dt.getDate() + i);
-      predictedSet.add(dt.toISOString().slice(0,10));
-    }
-  }
-
-  html += '<div style="padding:0 16px 12px;">';
-  html += '<div style="background:white;border:1px solid var(--line);border-radius:14px;padding:14px;">';
-  // 月切替
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
-  html += '<button onclick="periodCalPrev()" style="background:none;border:none;cursor:pointer;color:#A8456A;padding:4px 8px;display:flex;align-items:center;"><span class="material-symbols-rounded">chevron_left</span></button>';
-  html += '<div style="font-size:13px;font-weight:800;color:var(--ink-dark);">'+calY+'年 '+(calMo+1)+'月</div>';
-  html += '<button onclick="periodCalNext()" style="background:none;border:none;cursor:pointer;color:#A8456A;padding:4px 8px;display:flex;align-items:center;"><span class="material-symbols-rounded">chevron_right</span></button>';
-  html += '</div>';
-  // 曜日
-  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;">';
-  const _wdays = ['日','月','火','水','木','金','土'];
-  _wdays.forEach((w, i) => {
-    const c = i===0 ? '#E94B6F' : (i===6 ? '#5B9CC9' : 'var(--ink-sub)');
-    html += '<div style="text-align:center;font-size:10px;font-weight:800;color:'+c+';padding:4px 0;">'+w+'</div>';
-  });
-  html += '</div>';
-  // 日付グリッド
-  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">';
-  for (let i = 0; i < startWeek; i++) html += '<div></div>';
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dKey = calY+'-'+String(calMo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-    const isPeriod = periodDaySet.has(dKey);
-    const isPredict = predictedSet.has(dKey);
-    const isToday = dKey === todayStr;
-    let bg='transparent', color='var(--ink-dark)', border='1px solid transparent';
-    if (isPeriod) { bg='#E94B6F'; color='white'; }
-    else if (isPredict) { bg='#FFF5F8'; color='#A8456A'; border='1px dashed #E94B6F'; }
-    if (isToday) border = '2px solid #C0356A';
-    html += '<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:'+((isPeriod||isToday)?'800':'500')+';background:'+bg+';color:'+color+';border:'+border+';border-radius:8px;">'+day+'</div>';
-  }
-  html += '</div>';
-  // 凡例
-  html += '<div style="display:flex;gap:14px;margin-top:10px;justify-content:center;font-size:10px;color:var(--ink-sub);font-weight:700;">';
-  html += '<div style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#E94B6F;border-radius:50%;"></span>生理日</div>';
-  html += '<div style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#FFF5F8;border:1px dashed #E94B6F;border-radius:50%;box-sizing:border-box;"></span>予測日</div>';
-  html += '<div style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:transparent;border:2px solid #C0356A;border-radius:50%;box-sizing:border-box;"></span>今日</div>';
-  html += '</div>';
-  html += '</div>';
-  html += '</div>';
-
   // 今日の記録（生理中のみ）
   if (ongoing) {
     if (!ongoing.days) ongoing.days = [];
@@ -31033,11 +30944,6 @@ function renderPeriodTracker() {
     // メモ
     html += '<div style="font-size:10px;color:var(--ink-sub);font-weight:700;margin-bottom:4px;">メモ</div>';
     html += '<textarea id="periodDayNote" onchange="periodSetDayLog(\'note\',this.value)" placeholder="気分とか、なんでも🌸" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;resize:none;height:50px;box-sizing:border-box;background:#FFFAFC;">'+escapeHtml((todayLog && todayLog.note) || '')+'</textarea>';
-    // 保存ボタン（しほの安心のため・実は即保存だけど明示的に）
-    html += '<button onclick="periodSaveToday()" style="width:100%;margin-top:12px;padding:13px;background:#E94B6F;color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 4px 12px rgba(233,75,111,0.3);display:flex;align-items:center;justify-content:center;gap:6px;">';
-    html += '<span class="material-symbols-rounded" style="font-size:18px;">save</span>';
-    html += 'この日の記録を保存';
-    html += '</button>';
     html += '</div>';
     html += '</div>';
   }
@@ -31153,49 +31059,6 @@ function periodDeleteRecord(id) {
   renderPeriodTracker();
 }
 window.periodDeleteRecord = periodDeleteRecord;
-
-// ===== カレンダー月切替 =====
-function periodCalPrev() {
-  if (!window.periodCalMonth) return;
-  window.periodCalMonth.month--;
-  if (window.periodCalMonth.month < 0) {
-    window.periodCalMonth.month = 11;
-    window.periodCalMonth.year--;
-  }
-  renderPeriodTracker();
-}
-window.periodCalPrev = periodCalPrev;
-
-function periodCalNext() {
-  if (!window.periodCalMonth) return;
-  window.periodCalMonth.month++;
-  if (window.periodCalMonth.month > 11) {
-    window.periodCalMonth.month = 0;
-    window.periodCalMonth.year++;
-  }
-  renderPeriodTracker();
-}
-window.periodCalNext = periodCalNext;
-
-// ===== 今日の記録を明示的に保存（しほの安心用・トースト出る）=====
-function periodSaveToday() {
-  // メモを念のため最新値で保存
-  const noteEl = document.getElementById('periodDayNote');
-  if (noteEl) {
-    const ongoing2 = (data.periodRecords||[]).find(r => r.startDate && !r.endDate);
-    if (ongoing2) {
-      if (!ongoing2.days) ongoing2.days = [];
-      const today = new Date().toISOString().slice(0,10);
-      let log = ongoing2.days.find(d => d.date === today);
-      if (!log) { log = { date: today, symptoms: [] }; ongoing2.days.push(log); }
-      log.note = noteEl.value;
-    }
-  }
-  saveData();
-  const t = new Date();
-  showToast('🌷 '+(t.getMonth()+1)+'/'+t.getDate()+'の記録、保存したよ');
-}
-window.periodSaveToday = periodSaveToday;
 
 // ════════════════════════════════════════════════
 // 💗 体調トラッカー（conditionTracker）
@@ -33658,19 +33521,16 @@ function renderPCSidebar() {
   const _uname = (data.user && data.user.name) || (data.myProfile && data.myProfile.name) || 'にこわ';
   const _cv = currentView;
 
-  // メインナビ（ボトムナビと同じ5項目）
-  const _navMain = [
-    { key:'home',     icon:'home',           label:'ホーム',      action:`currentView='top';render();`,    isActive: (_cv==='top' || _cv==='houses') },
-    { key:'me',       icon:'person',         label:'Me',          action:`if(currentMode!=='me')switchMode('me');currentView='me';currentModeTab['me']='diary';delete data.tweetViewDate;render();`, isActive: (_cv==='me') },
-    { key:'schedule', icon:'calendar_month', label:'スケジュール', action:`currentView='schedule';render();`, isActive: (_cv==='schedule') },
-    { key:'nest',     icon:'groups',         label:'Nest',        action:`goToNestMode();`,                isActive: (_cv==='nest' || _cv==='new_nest') },
-    { key:'town',     icon:'location_city',  label:'Town',        action:`currentView='town';render();`,   isActive: (_cv==='town') },
-  ];
-
-  // サブナビ（PCからよく触る制作系）
-  const _navSub = [
-    { key:'atelier',  icon:'palette',        label:'アトリエ',    action:`goToAtelierView();`,             isActive: (_cv==='atelier') },
-    { key:'shop',     icon:'storefront',     label:'マイショップ', action:`currentView='shop';render();`,   isActive: (_cv==='shop') },
+  const _navItems = [
+    { key:'top',      icon:'home',         label:'ホーム',    action:`currentView='top';render();` },
+    { key:'me_stamp', icon:'wb_sunny',      label:'今日の記録', action:`goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
+    { key:'schedule', icon:'calendar_month',label:'カレンダー', action:`currentView='schedule';render();` },
+    { key:'nest',     icon:'home',          label:'家族',      action:`goToNestMode();` },
+    { key:'pet',      icon:'pets',          label:'ペット',    action:`goToPetMode();` },
+    { key:'health',   icon:'favorite',      label:'けんこう',  action:`goToMeMode();setTimeout(()=>setModePageTab('me','stamp'),100);` },
+    { key:'memo',     icon:'sticky_note_2', label:'メモ',      action:`goToMeMode();setTimeout(()=>setModePageTab('me','secret'),100);` },
+    { key:'town',     icon:'location_city', label:'まち',      action:`currentView='town';render();` },
+    { key:'atelier',  icon:'palette',       label:'お店・制作', action:`goToAtelierView();` },
   ];
 
   let h = '';
@@ -33682,27 +33542,15 @@ function renderPCSidebar() {
   h += '<div style="font-size:11px;color:var(--ink-sub);margin-top:6px;font-weight:700;">'+escapeHtml(_uname)+'</div>';
   h += '</div>';
 
-  // ナビ描画ヘルパー
-  const _renderNavBtn = (item) => {
-    const ia = item.isActive;
-    let b = `<button class="pc-nav-item ${ia?'active':''}" onclick="${item.action}">`;
-    b += `<span class="material-symbols-rounded" style="color:${ia?'var(--accent-deep)':'var(--ink-light)'};">${item.icon}</span>`;
-    b += `<span>${item.label}</span>`;
-    b += '</button>';
-    return b;
-  };
-
-  // メインナビ
-  h += '<div style="padding:8px 0;flex:1;display:flex;flex-direction:column;">';
-  h += '<div>';
-  for (const item of _navMain) h += _renderNavBtn(item);
-  h += '</div>';
-
-  // 仕切り線＋サブナビ
-  h += '<div style="border-top:1px solid var(--line);margin:8px 0;"></div>';
-  h += '<div>';
-  for (const item of _navSub) h += _renderNavBtn(item);
-  h += '</div>';
+  // ナビ
+  h += '<div style="padding:8px 0;flex:1;">';
+  for (const item of _navItems) {
+    const isActive = _cv === item.key || (_cv === 'me' && item.key.startsWith('me'));
+    h += `<button class="pc-nav-item ${isActive?'active':''}" onclick="${item.action}">`;
+    h += `<span class="material-symbols-rounded" style="color:${isActive?'var(--accent-deep)':'var(--ink-light)'};">${item.icon}</span>`;
+    h += `<span>${item.label}</span>`;
+    h += '</button>';
+  }
   h += '</div>';
 
   // 下部：設定
@@ -43003,6 +42851,13 @@ function renderTown() {
       // にこわ登録個人店を抽出してGoogle結果より先に表示
       const _locText = placesLocMode === 'addr' ? placesAddrText : '';
       const nikowaMatched = getMatchingNikowaShops(placesSelCat, _locText, placesText);
+      // ★ 検索結果の地図エリア（小さく、結果がある時だけ表示）
+      html += '<div style="padding:0 14px 8px;">';
+      html += '<div style="position:relative;border-radius:14px;overflow:hidden;">';
+      html += '<div id="placesMap" style="background:#eceff3;height:38vh;width:100%;"></div>';
+      html += '<div id="placesOverlayCard" style="display:none;position:absolute;bottom:8px;left:8px;right:8px;z-index:10;"></div>';
+      html += '</div>';
+      html += '</div>';
       html += '<div class="place-cards">';
       // にこわ店を先頭に
       for (const s of nikowaMatched) {
@@ -43036,6 +42891,10 @@ function renderTown() {
     if (placesAddrInput) {
       placesAddrInput.oninput = (e) => { placesAddrText = e.target.value; };
       placesAddrInput.onkeydown = (e) => { if (e.key === 'Enter') searchPlaces(); };
+    }
+    // ★ 検索結果がある時、地図を初期化
+    if (placesResults.length > 0 && document.getElementById('placesMap')) {
+      setTimeout(initPlacesMap, 0);
     }
     return;
   }
@@ -52597,6 +52456,105 @@ async function searchNearbyPlaces() {
   }
 }
 
+// ════════════════════════════════════════════
+// 住所・現在地モードの地図表示
+// ════════════════════════════════════════════
+function initPlacesMap() {
+  const el = document.getElementById('placesMap');
+  if (!el) return;
+  if (typeof google === 'undefined' || !google.maps) {
+    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink-light);font-size:12px;">地図を読み込めませんでした</div>';
+    return;
+  }
+  // 検索結果から有効な lat/lng を持つピンだけ集める
+  const pins = [];
+  for (const id in placesResultsMap) {
+    const r = placesResultsMap[id];
+    if (Number.isFinite(r.lat) && Number.isFinite(r.lng)) {
+      pins.push(r);
+    }
+  }
+  if (pins.length === 0) {
+    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink-light);font-size:12px;">地図表示できる場所がありません</div>';
+    return;
+  }
+  // 中心は1個目のピン
+  const center = { lat: pins[0].lat, lng: pins[0].lng };
+  const map = new google.maps.Map(el, {
+    center: center, zoom: 15,
+    disableDefaultUI: true, zoomControl: true,
+    gestureHandling: 'greedy', clickableIcons: false,
+    mapTypeControl: false, streetViewControl: false,
+    fullscreenControl: false, tilt: 0
+  });
+  // ★ ピン
+  const pinIcon = {
+    path: 'M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z',
+    fillColor: '#E84855', fillOpacity: 1,
+    strokeColor: '#ffffff', strokeWeight: 1.5,
+    scale: 1.2, anchor: new google.maps.Point(12, 12)
+  };
+  const goldIcon = {
+    path: 'M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z',
+    fillColor: '#F5B731', fillOpacity: 1,
+    strokeColor: '#ffffff', strokeWeight: 1.8,
+    scale: 1.5, anchor: new google.maps.Point(12, 12)
+  };
+  window._placesMarkers = [];
+  const bounds = new google.maps.LatLngBounds();
+  for (const r of pins) {
+    const marker = new google.maps.Marker({
+      position: { lat: r.lat, lng: r.lng },
+      map: map, title: r.name, icon: pinIcon
+    });
+    marker._placeId = r.id;
+    marker.addListener('click', function() {
+      highlightPlacesMarker(r.id);
+    });
+    window._placesMarkers.push(marker);
+    bounds.extend({ lat: r.lat, lng: r.lng });
+  }
+  if (pins.length > 1) {
+    map.fitBounds(bounds, { top: 30, bottom: 30, left: 30, right: 30 });
+    google.maps.event.addListenerOnce(map, 'idle', () => {
+      if (map.getZoom() > 17) map.setZoom(17);
+    });
+  }
+  window._placesMap = map;
+  window._placesPinIcon = pinIcon;
+  window._placesGoldIcon = goldIcon;
+}
+window.initPlacesMap = initPlacesMap;
+
+function highlightPlacesMarker(placeId) {
+  const map = window._placesMap;
+  const markers = window._placesMarkers || [];
+  if (!map) return;
+  const target = markers.find(m => m._placeId === placeId);
+  if (!target) return;
+  markers.forEach(m => m.setIcon(window._placesPinIcon));
+  target.setIcon(window._placesGoldIcon);
+  map.panTo(target.getPosition());
+  if (map.getZoom() < 16) map.setZoom(16);
+  const overlay = document.getElementById('placesOverlayCard');
+  if (overlay) {
+    const r = placesResultsMap[placeId];
+    if (r) {
+      overlay.innerHTML =
+        '<div style="background:white;border-radius:12px;padding:10px 12px;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:flex;align-items:center;gap:10px;">' +
+        (r.photoUrl ? '<img src="'+r.photoUrl+'" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;">' : '<div style="width:48px;height:48px;border-radius:8px;background:var(--surface-warm);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;">'+(r.catIcon||'📍')+'</div>') +
+        '<div style="flex:1;min-width:0;">' +
+        '<div style="font-weight:800;font-size:12.5px;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escapeHtml(r.name)+'</div>' +
+        '<div style="font-size:10px;color:var(--ink-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">'+escapeHtml(r.addr||'')+'</div>' +
+        '</div>' +
+        '<button onclick="document.getElementById(\'placesOverlayCard\').style.display=\'none\'" style="background:none;border:none;color:var(--ink-light);font-size:18px;cursor:pointer;padding:4px;line-height:1;">×</button>' +
+        '</div>';
+      overlay.style.display = 'block';
+    }
+  }
+}
+window.highlightPlacesMarker = highlightPlacesMarker;
+
 function initNearbyMap() {
   const el = document.getElementById('nearbyMap');
   if (!el) return;
@@ -55710,12 +55668,6 @@ function render() {
       _appEl.style.backgroundAttachment = '';
       _appEl.style.minHeight = '';
     }
-  }
-  // PC: ホーム画面だけ2列グリッドにする（他画面の崩れ防止）
-  const _appElForGrid = document.getElementById('app');
-  if (_appElForGrid) {
-    const _isHomeView = (currentView === 'top' || currentView === 'houses');
-    _appElForGrid.classList.toggle('pc-home-grid', _isHomeView);
   }
   if (currentView === 'top') renderTop();
   else if (currentView === 'me') renderMeMode();
