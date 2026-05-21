@@ -558,7 +558,7 @@
       box-sizing: border-box;
     }
     .app {
-      max-width: 900px;
+      max-width: 1500px;
       margin: 0 auto;
       padding: 32px 48px 80px !important;
       box-sizing: border-box;
@@ -580,6 +580,14 @@
     /* 左：ToDay / 右：Diary を並べる */
     .app > .home-recent-card { grid-column: 1; margin: 0 !important; }
     .app > .home-quick-card { grid-column: 2; margin: 0 !important; }
+    /* TODO+Diary 横並び：flex子要素がはみ出さないように */
+    .app > div[style*="padding:0 14px 12px"][style*="display:flex"] > div {
+      min-width: 0;
+    }
+    /* クイック起動ボタン：PC幅では8列1段で全部見せる */
+    .app > .home-pc-map-row {
+      grid-template-columns: repeat(8, 1fr) !important;
+    }
     .bottom-nav { display: none !important; }
 
     /* ===== ロゴ＆天気 ===== */
