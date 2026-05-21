@@ -10636,31 +10636,39 @@ function renderCollectionFolder() {
   } else {
     html += '<span class="material-symbols-rounded" style="font-size:24px;color:var(--ink-dark);">'+(col.cover||'folder')+'</span>';
   }
-  html += '<h2 style="font-size:16px;font-weight:800;color:var(--ink-dark);flex:1;margin:0;">'+col.name+'</h2>';
+  html += '<h2 style="font-size:16px;font-weight:800;color:var(--ink-dark);flex:1;margin:0;">'+escapeHtml(col.name)+'</h2>';
   html += '<button onclick="openEditCollectionFolderModal(\''+col.id+'\')" style="padding:6px;background:none;border:none;cursor:pointer;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:18px;">edit</span></button>';
   html += '</div>';
-  // アイテム一覧
+  // アイテム一覧（3列サムネイルグリッド）
   if (items.length === 0) {
     html += '<div style="text-align:center;padding:60px 16px;color:var(--ink-sub);">';
     html += '<span class="material-symbols-rounded" style="font-size:40px;opacity:0.3;">photo_library</span>';
     html += '<div style="margin-top:10px;font-size:13px;">まだ何もないよ<br>追加してみてね</div>';
     html += '</div>';
   } else {
-    html += '<div style="padding:8px 16px 90px;display:flex;flex-direction:column;gap:10px;">';
+    html += '<div style="padding:8px 12px 90px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
     for (const item of items) {
-      html += '<div style="background:var(--surface-warm);border-radius:14px;overflow:hidden;display:flex;gap:0;border:1px solid var(--line);">';
-      if (item.photo) {
-        html += '<img src="data:image/jpeg;base64,'+item.photo+'" style="width:80px;height:80px;object-fit:cover;flex-shrink:0;" />';
+      const isVideo = item.mediaType === 'video' && item.video;
+      html += '<button onclick="openCollectionItemViewer(\''+col.id+'\',\''+item.id+'\')" style="position:relative;aspect-ratio:1/1;background:var(--surface-warm);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;font-family:inherit;padding:0;">';
+      if (isVideo) {
+        // 動画サムネイル（thumb があればそれ、なければアイコン）
+        if (item.thumb) {
+          html += '<img src="data:image/jpeg;base64,'+item.thumb+'" style="width:100%;height:100%;object-fit:cover;display:block;" />';
+        } else {
+          html += '<div style="width:100%;height:100%;background:linear-gradient(135deg,#444,#222);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:36px;color:white;">movie</span></div>';
+        }
+        // 動画マーク
+        html += '<div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.55);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:14px;color:white;">play_arrow</span></div>';
+      } else if (item.photo) {
+        html += '<img src="data:image/jpeg;base64,'+item.photo+'" style="width:100%;height:100%;object-fit:cover;display:block;" />';
       } else {
-        html += '<div style="width:80px;height:80px;flex-shrink:0;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:28px;color:var(--accent-deep);opacity:0.4;">image</span></div>';
+        html += '<div style="width:100%;height:100%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:28px;color:var(--accent-deep);opacity:0.4;">image</span></div>';
       }
-      html += '<div style="flex:1;padding:10px 12px;min-width:0;">';
-      html += '<div style="font-size:13px;font-weight:700;color:var(--ink-dark);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">'+item.title+'</div>';
-      if (item.date) html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:2px;">'+item.date+'</div>';
-      if (item.memo) html += '<div style="font-size:11px;color:var(--ink-sub);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">'+item.memo+'</div>';
-      html += '</div>';
-      html += '<button onclick="openEditCollectionItemModal(\''+col.id+'\',\''+item.id+'\')" style="padding:8px;background:none;border:none;cursor:pointer;color:var(--ink-sub);align-self:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:16px;">more_vert</span></button>';
-      html += '</div>';
+      // タイトルあれば下部に薄く帯
+      if (item.title) {
+        html += '<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.55));padding:14px 5px 5px;"><div style="font-size:9px;font-weight:700;color:white;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">'+escapeHtml(item.title)+'</div></div>';
+      }
+      html += '</button>';
     }
     html += '</div>';
   }
@@ -10670,6 +10678,52 @@ function renderCollectionFolder() {
   app.innerHTML = html;
 }
 window.renderCollectionFolder = renderCollectionFolder;
+
+// ───────────────────────────────
+// アイテム詳細ビューアー（タップで開く）
+// ───────────────────────────────
+function openCollectionItemViewer(colId, itemId) {
+  const col = (data.collections||[]).find(c => c.id === colId);
+  if (!col) return;
+  const item = (col.items||[]).find(i => i.id === itemId);
+  if (!item) return;
+
+  const ex = document.getElementById('colItemViewer');
+  if (ex) ex.remove();
+
+  const isVideo = item.mediaType === 'video' && item.video;
+
+  let h = '<div id="colItemViewer" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;flex-direction:column;">';
+  // 閉じる
+  h += '<button onclick="document.getElementById(\'colItemViewer\').remove()" style="position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded">close</span></button>';
+  // 編集
+  h += '<button onclick="document.getElementById(\'colItemViewer\').remove();openEditCollectionItemModal(\''+colId+'\',\''+itemId+'\')" style="position:absolute;top:14px;left:14px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:18px;">edit</span></button>';
+
+  // メディア
+  h += '<div style="max-width:100%;max-height:60vh;margin-bottom:18px;">';
+  if (isVideo) {
+    h += '<video src="data:video/mp4;base64,'+item.video+'" controls autoplay playsinline style="max-width:100%;max-height:60vh;border-radius:12px;display:block;"></video>';
+  } else if (item.photo) {
+    h += '<img src="data:image/jpeg;base64,'+item.photo+'" style="max-width:100%;max-height:60vh;border-radius:12px;display:block;" />';
+  } else {
+    h += '<div style="width:240px;height:240px;background:rgba(255,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:48px;color:rgba(255,255,255,0.4);">image</span></div>';
+  }
+  h += '</div>';
+
+  // 情報カード
+  h += '<div style="background:white;border-radius:14px;padding:14px 16px;width:100%;max-width:420px;">';
+  if (item.title) {
+    h += '<div style="font-size:15px;font-weight:900;color:var(--ink-dark);margin-bottom:4px;">'+escapeHtml(item.title)+'</div>';
+  } else {
+    h += '<div style="font-size:13px;font-weight:600;color:var(--ink-light);margin-bottom:4px;font-style:italic;">無題</div>';
+  }
+  if (item.date) h += '<div style="font-size:11px;color:var(--ink-sub);font-weight:700;margin-bottom:8px;">'+escapeHtml(item.date)+'</div>';
+  if (item.memo) h += '<div style="font-size:12px;color:var(--ink-dark);line-height:1.6;white-space:pre-wrap;word-break:break-word;">'+escapeHtml(item.memo)+'</div>';
+  h += '</div>';
+  h += '</div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window.openCollectionItemViewer = openCollectionItemViewer;
 
 // フォルダ追加モーダル
 function openAddCollectionFolderModal(editId) {
@@ -10797,9 +10851,17 @@ function openAddCollectionItemModal(colId, editItemId) {
   window._colItemColId = colId;
   window._colItemEditId = editItemId || null;
   window._colItemPhoto = null;
+  window._colItemVideo = null;
+  window._colItemVideoChanged = false;
   const col = (data.collections||[]).find(c=>c.id===colId);
   const existing = editItemId ? (col&&col.items||[]).find(i=>i.id===editItemId) : null;
-  if (existing && existing.photo) window._colItemPhoto = existing.photo;
+  if (existing) {
+    if (existing.mediaType === 'video' && existing.video) {
+      window._colItemVideo = existing.video;
+    } else if (existing.photo) {
+      window._colItemPhoto = existing.photo;
+    }
+  }
 
   const modal = document.getElementById('collectionItemModal');
   if (modal) {
@@ -10818,13 +10880,14 @@ function openAddCollectionItemModal(colId, editItemId) {
     <div style="background:var(--surface-warm);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 16px 40px;max-height:85vh;overflow-y:auto;">
       <div style="font-size:15px;font-weight:800;color:var(--ink-dark);margin-bottom:14px;text-align:center;">${editItemId?'編集する':'追加する'}</div>
       <div id="colItemPhotoArea" style="margin-bottom:12px;display:flex;justify-content:center;"></div>
-      <label style="font-size:11px;font-weight:700;color:var(--ink-sub);">タイトル <span style="color:var(--accent);">*</span></label>
-      <input id="colItemTitle" placeholder="タイトルを入力" maxlength="50" style="width:100%;margin-top:4px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink-dark);box-sizing:border-box;" />
+      <label style="font-size:11px;font-weight:700;color:var(--ink-sub);">タイトル <span style="color:var(--ink-light);font-weight:600;">（任意）</span></label>
+      <input id="colItemTitle" placeholder="タイトルを入力（空でもOK）" maxlength="50" style="width:100%;margin-top:4px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink-dark);box-sizing:border-box;" />
       <label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-top:12px;">日付</label>
       <input id="colItemDate" type="date" style="width:100%;margin-top:4px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink-dark);box-sizing:border-box;" />
       <label style="font-size:11px;font-weight:700;color:var(--ink-sub);display:block;margin-top:12px;">メモ</label>
       <textarea id="colItemMemo" placeholder="メモを入力（任意）" rows="3" maxlength="300" style="width:100%;margin-top:4px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink-dark);box-sizing:border-box;resize:none;"></textarea>
       <input type="file" id="colItemPhotoInput" accept="image/*" style="display:none;" onchange="_handleColItemPhoto(event)">
+      <input type="file" id="colItemVideoInput" accept="video/*" style="display:none;" onchange="_handleColItemVideo(event)">
       <div style="display:flex;gap:8px;margin-top:18px;">
         ${editItemId?'<button onclick="deleteCollectionItem()" style="padding:12px;border-radius:12px;border:1.5px solid #ffb3b3;background:#fff0f0;color:#e05;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">削除</button>':''}
         <button onclick="closeCollectionItemModal()" style="flex:1;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface-warm);color:var(--ink-sub);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>
@@ -10845,19 +10908,45 @@ window.openEditCollectionItemModal = (colId, itemId) => openAddCollectionItemMod
 function _renderColItemPhoto() {
   const area = document.getElementById('colItemPhotoArea');
   if (!area) return;
-  if (window._colItemPhoto) {
+  // 動画選択中
+  if (window._colItemVideo) {
+    area.innerHTML = '<div style="position:relative;display:inline-block;">'
+      + '<video src="data:video/mp4;base64,'+window._colItemVideo+'" muted playsinline style="width:140px;height:100px;object-fit:cover;border-radius:12px;border:2px solid var(--accent);background:#000;"></video>'
+      + '<div style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,0.6);color:white;border-radius:8px;padding:2px 6px;font-size:9px;font-weight:700;display:flex;align-items:center;gap:3px;"><span class="material-symbols-rounded" style="font-size:11px;">movie</span>動画</div>'
+      + '<button onclick="window._colItemVideo=null;window._colItemVideoChanged=true;_renderColItemPhoto()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#e05;border:none;color:white;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">×</button>'
+      + '</div>';
+  } else if (window._colItemPhoto) {
     area.innerHTML = '<div style="position:relative;display:inline-block;">'
       + '<img src="data:image/jpeg;base64,'+window._colItemPhoto+'" style="width:100px;height:100px;object-fit:cover;border-radius:12px;border:2px solid var(--accent);" />'
       + '<button onclick="window._colItemPhoto=null;_renderColItemPhoto()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#e05;border:none;color:white;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">×</button>'
       + '<button onclick="document.getElementById(\'colItemPhotoInput\').click()" style="position:absolute;bottom:-6px;right:-6px;width:24px;height:24px;border-radius:50%;background:var(--accent-deep);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><span class="material-symbols-rounded" style="font-size:13px;">edit</span></button>'
       + '</div>';
   } else {
-    area.innerHTML = '<button onclick="document.getElementById(\'colItemPhotoInput\').click()" style="width:80px;height:80px;border-radius:12px;border:2px dashed var(--accent);background:var(--accent-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-family:inherit;">'
+    // 写真と動画の2択ボタン
+    area.innerHTML = '<div style="display:flex;gap:10px;">'
+      + '<button onclick="document.getElementById(\'colItemPhotoInput\').click()" style="width:90px;height:90px;border-radius:12px;border:2px dashed var(--accent);background:var(--accent-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-family:inherit;">'
       + '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent-deep);">add_a_photo</span>'
-      + '<span style="font-size:9px;color:var(--accent-deep);font-weight:700;">写真</span></button>';
+      + '<span style="font-size:10px;color:var(--accent-deep);font-weight:700;">写真</span></button>'
+      + '<button onclick="_tryAddVideo()" style="width:90px;height:90px;border-radius:12px;border:2px dashed #8B7AA8;background:#F3E5F5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-family:inherit;">'
+      + '<span class="material-symbols-rounded" style="font-size:22px;color:#7B1FA2;">videocam</span>'
+      + '<span style="font-size:10px;color:#7B1FA2;font-weight:700;">動画</span></button>'
+      + '</div>';
   }
 }
 window._renderColItemPhoto = _renderColItemPhoto;
+
+// 動画追加（プレミアム判定の入口）
+function _tryAddVideo() {
+  // 月額制切替の入口：data.isPremium === true なら使える
+  // 今は全員使えるようにする（あとで !isPremiumEnabled() に変更）
+  const PREMIUM_REQUIRED = false; // ★ 月額制に切り替える時はここを true にする
+  if (PREMIUM_REQUIRED && !(typeof isPremiumEnabled === 'function' && isPremiumEnabled())) {
+    showToast('動画はプレミアムプラン限定だよ🌷');
+    return;
+  }
+  document.getElementById('colItemVideoInput').click();
+}
+window._tryAddVideo = _tryAddVideo;
 
 async function _handleColItemPhoto(e) {
   const file = e.target.files && e.target.files[0];
@@ -10878,7 +10967,7 @@ window.closeCollectionItemModal = closeCollectionItemModal;
 
 function saveCollectionItem() {
   const title = (document.getElementById('colItemTitle').value||'').trim();
-  if (!title) { showToast('タイトルを入力してね'); return; }
+  // タイトル任意：空でもOK
   const memo = (document.getElementById('colItemMemo').value||'').trim();
   const date = document.getElementById('colItemDate').value || new Date().toISOString().slice(0,10);
   const colId = window._colItemColId;
@@ -10887,18 +10976,73 @@ function saveCollectionItem() {
   const col = data.collections.find(c=>c.id===colId);
   if (!col) return;
   if (!col.items) col.items = [];
+
+  // 動画 or 写真
+  const hasVideo = !!window._colItemVideo;
+  const mediaType = hasVideo ? 'video' : 'photo';
+  const payload = { title, memo, date, mediaType };
+  if (hasVideo) {
+    payload.video = window._colItemVideo;
+    payload.thumb = window._colItemPhoto || null; // 動画のサムネイル（任意）
+    payload.photo = null;
+  } else {
+    payload.photo = window._colItemPhoto || null;
+    payload.video = null;
+    payload.thumb = null;
+  }
+
   if (editId) {
     const idx = col.items.findIndex(i=>i.id===editId);
-    if (idx>=0) Object.assign(col.items[idx], {title, memo, date, photo: window._colItemPhoto||col.items[idx].photo||null});
+    if (idx>=0) {
+      // 既存データ保持しつつマージ
+      const old = col.items[idx];
+      if (!hasVideo && !window._colItemPhoto && !window._colItemVideoChanged) {
+        // メディア未変更：既存のまま
+        Object.assign(old, { title, memo, date });
+      } else {
+        Object.assign(old, payload);
+      }
+    }
   } else {
-    col.items.unshift({ id: _genColId(), title, memo, date, photo: window._colItemPhoto||null });
+    col.items.unshift(Object.assign({ id: _genColId() }, payload));
   }
+  // 一時状態クリア
+  window._colItemPhoto = null;
+  window._colItemVideo = null;
+  window._colItemVideoChanged = false;
   saveData();
   closeCollectionItemModal();
   renderCollectionFolder();
   showToast(editId ? '更新したよ🌷' : '追加したよ🌷');
 }
 window.saveCollectionItem = saveCollectionItem;
+
+// 動画選択ハンドラ
+async function _handleColItemVideo(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  // ファイルサイズチェック（50MB上限：base64展開すると約66MB、Firestoreの1MB制限超えるのでlocalStorage onlyになる）
+  if (file.size > 50 * 1024 * 1024) {
+    showToast('動画は50MB以下にしてね🌷');
+    return;
+  }
+  try {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const dataUrl = ev.target.result;
+      const b64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+      window._colItemVideo = b64;
+      window._colItemVideoChanged = true;
+      window._colItemPhoto = null; // 動画選んだら写真クリア
+      _renderColItemPhoto();
+      showToast('動画を追加したよ🎬');
+    };
+    reader.readAsDataURL(file);
+  } catch(err) {
+    showToast('動画の読み込みに失敗したよ');
+  }
+}
+window._handleColItemVideo = _handleColItemVideo;
 
 function deleteCollectionItem() {
   const colId = window._colItemColId;
@@ -23322,23 +23466,38 @@ function renderMeMode() {
     html += '<button onclick="_closePlannerOnly()" title="閉じる" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);cursor:pointer;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-sub);">close</span></button>';
     html += '</div>';
   } else if (tab === 'diary') {
-    // ===== Diary専用topbar：日付・時間・天気なし、コントロールのみ =====
+    // ===== Diary専用topbar：3段レイアウト（Nestと統一）=====
     const _dit2 = data.diaryInputTab || 'diary';
     const _isRec2 = _dit2 === 'record';
-    html += '<div style="padding:8px 12px 4px;display:flex;align-items:center;gap:6px;">';
-    // ハンバーガー（一番左）
+    // ユーザープロフィール初期化
+    if (!data.userName) data.userName = 'あなた';
+    if (!data.userIcon) data.userIcon = 'favorite';
+    if (!data.userColor) data.userColor = '#E85B8B';
+    const _uName = data.userName;
+    const _uIcon = data.userIcon;
+    const _uColor = data.userColor;
+
+    // 行1: ハンバーガー / アイコン+名前 / Record / Diary / ×
+    html += '<div style="padding:8px 12px 4px;display:flex;align-items:center;gap:8px;">';
     html += '<button onclick="openMeDrawerMenu()" style="flex-shrink:0;background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:36px;height:36px;border-radius:50%;font-family:inherit;color:var(--accent-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);box-shadow:0 2px 6px rgba(0,0,0,0.04);"><span class="material-symbols-rounded" style="font-size:20px;">menu</span></button>';
-    // アクションアイコン（左側に並ぶ）
-    html += '<button onclick="openTweetFilterModal()" title="検索" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">search</span></button>';
-    html += '<button onclick="openTweetAlbumModal()" title="写真アルバム" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">photo_library</span></button>';
-    html += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">calendar_month</span></button>';
-    html += '<button onclick="_openPlannerToday()" title="プランナー" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">edit_calendar</span></button>';
-    html += '<button onclick="openTweetBgModal()" title="背景画像" style="flex-shrink:0;width:28px;height:28px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:15px;">wallpaper</span></button>';
-    // スペーサー
+    // アイコン（タップで編集）
+    html += '<button onclick="_openMeProfileModal()" style="flex-shrink:0;width:38px;height:38px;border-radius:50%;background:white;border:2px solid '+_uColor+';display:flex;align-items:center;justify-content:center;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:20px;color:'+_uColor+';">'+_uIcon+'</span></button>';
+    // 名前（タップで編集）
+    html += '<button onclick="_openMeProfileModal()" style="flex-shrink:0;background:transparent;border:none;color:var(--ink-dark);cursor:pointer;font-family:inherit;font-size:14px;font-weight:900;padding:0;">'+escapeHtml(_uName)+'</button>';
     html += '<div style="flex:1;"></div>';
-    // Record / Diary タブボタン（右側）：選択中は大きく＆太字
-    html += '<button onclick="setDiaryInputTab(\'record\')" style="flex-shrink:0;padding:'+(_isRec2?'6px 14px':'4px 10px')+';border-radius:100px;border:'+(_isRec2?'2px':'1.5px')+' solid '+(_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(_isRec2?'var(--accent-deep)':'transparent')+';color:'+(_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(_isRec2?'14px':'11px')+';font-weight:'+(_isRec2?'900':'600')+';cursor:pointer;letter-spacing:'+(_isRec2?'0.5px':'0')+';transition:all 0.2s;">Record</button>';
-    html += '<button onclick="setDiaryInputTab(\'diary\')" style="flex-shrink:0;padding:'+(!_isRec2?'6px 14px':'4px 10px')+';border-radius:100px;border:'+(!_isRec2?'2px':'1.5px')+' solid '+(!_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(!_isRec2?'var(--accent-deep)':'transparent')+';color:'+(!_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(!_isRec2?'14px':'11px')+';font-weight:'+(!_isRec2?'900':'600')+';cursor:pointer;letter-spacing:'+(!_isRec2?'0.5px':'0')+';transition:all 0.2s;">Diary</button>';
+    // Record/Diary タブ
+    html += '<button onclick="setDiaryInputTab(\'record\')" style="flex-shrink:0;padding:'+(_isRec2?'6px 14px':'4px 10px')+';border-radius:100px;border:'+(_isRec2?'2px':'1.5px')+' solid '+(_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(_isRec2?'var(--accent-deep)':'transparent')+';color:'+(_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(_isRec2?'14px':'11px')+';font-weight:'+(_isRec2?'900':'600')+';cursor:pointer;transition:all 0.2s;">Record</button>';
+    html += '<button onclick="setDiaryInputTab(\'diary\')" style="flex-shrink:0;padding:'+(!_isRec2?'6px 14px':'4px 10px')+';border-radius:100px;border:'+(!_isRec2?'2px':'1.5px')+' solid '+(!_isRec2?'var(--accent-deep)':'var(--line)')+';background:'+(!_isRec2?'var(--accent-deep)':'transparent')+';color:'+(!_isRec2?'white':'var(--ink-sub)')+';font-family:inherit;font-size:'+(!_isRec2?'14px':'11px')+';font-weight:'+(!_isRec2?'900':'600')+';cursor:pointer;transition:all 0.2s;">Diary</button>';
+    html += '<button onclick="setMeMode(\'day\')" style="flex-shrink:0;background:rgba(255,255,255,0.7);border:1.5px solid var(--card-border);width:32px;height:32px;border-radius:50%;font-family:inherit;color:var(--ink-sub);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:18px;">close</span></button>';
+    html += '</div>';
+
+    // 行2: アクションアイコン群（中央寄せ）
+    html += '<div style="padding:0 12px 4px;display:flex;align-items:center;gap:8px;justify-content:center;">';
+    html += '<button onclick="openTweetFilterModal()" title="検索" style="flex-shrink:0;width:32px;height:32px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:16px;">search</span></button>';
+    html += '<button onclick="openTweetAlbumModal()" title="写真アルバム" style="flex-shrink:0;width:32px;height:32px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:16px;">photo_library</span></button>';
+    html += '<button onclick="openTweetCalendarModal()" title="カレンダー" style="flex-shrink:0;width:32px;height:32px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:16px;">calendar_month</span></button>';
+    html += '<button onclick="_openPlannerToday()" title="プランナー" style="flex-shrink:0;width:32px;height:32px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:16px;">edit_calendar</span></button>';
+    html += '<button onclick="openTweetBgModal()" title="背景画像" style="flex-shrink:0;width:32px;height:32px;background:rgba(255,255,255,0.7);color:var(--accent-deep);border:1.5px solid var(--card-border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);"><span class="material-symbols-rounded" style="font-size:16px;">wallpaper</span></button>';
     html += '</div>';
   } else {
     // 通常topbar（天気あり）
@@ -24125,6 +24284,104 @@ function _ensureStampLib() {
   try { saveData(); } catch(e) {}
 }
 window._ensureStampLib = _ensureStampLib;
+
+// ═══════════════════════════════════════
+// Meプロフィール編集モーダル（名前・アイコン・色）
+// ═══════════════════════════════════════
+function _openMeProfileModal() {
+  const ex = document.getElementById('meProfileModal');
+  if (ex) ex.remove();
+  if (!data.userName) data.userName = 'あなた';
+  if (!data.userIcon) data.userIcon = 'favorite';
+  if (!data.userColor) data.userColor = '#E85B8B';
+
+  const ICONS = ['favorite','star','pets','cake','mood','spa','local_florist','park','wb_sunny','nightlight','bubble_chart','auto_awesome','psychology','self_improvement','volunteer_activism','sentiment_very_satisfied','emoji_emotions','child_care','crib','school','work','home','restaurant','local_cafe','sports_esports','sports_soccer','palette','music_note','headphones','book'];
+  const COLORS = ['#E85B8B','#F4A6BC','#E57373','#FFB74D','#FFD54F','#AED581','#4DB6AC','#64B5F6','#9575CD','#BA68C8','#A1887F','#8B7AA8'];
+
+  let h = '<div id="meProfileModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;">';
+  h += '<div style="background:white;border-radius:20px;padding:20px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;">';
+  // ヘッダー
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">';
+  h += '<div style="flex:1;font-size:15px;font-weight:900;color:var(--ink-dark);">プロフィール編集</div>';
+  h += '<button onclick="document.getElementById(\'meProfileModal\').remove()" style="background:none;border:none;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--ink-sub);"><span class="material-symbols-rounded" style="font-size:22px;">close</span></button>';
+  h += '</div>';
+  // プレビュー
+  h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px;background:var(--surface-warm);border-radius:14px;">';
+  h += '<div id="meProfPreviewIcon" style="width:54px;height:54px;border-radius:50%;background:white;border:2.5px solid '+data.userColor+';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:28px;color:'+data.userColor+';">'+data.userIcon+'</span></div>';
+  h += '<input id="meProfNameInput" type="text" value="'+escapeHtml(data.userName)+'" maxlength="20" placeholder="名前" style="flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;box-sizing:border-box;">';
+  h += '</div>';
+  // 色
+  h += '<div style="margin-bottom:14px;">';
+  h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:8px;">色を選ぶ</div>';
+  h += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+  for (const c of COLORS) {
+    const sel = c === data.userColor;
+    h += '<button onclick="_setMeProfColor(\''+c+'\')" data-color="'+c+'" style="width:36px;height:36px;border-radius:50%;background:'+c+';border:'+(sel?'3px solid var(--ink-dark)':'2px solid white')+';box-shadow:0 2px 4px rgba(0,0,0,0.1);cursor:pointer;"></button>';
+  }
+  h += '</div></div>';
+  // アイコン
+  h += '<div style="margin-bottom:16px;">';
+  h += '<div style="font-size:11px;font-weight:700;color:var(--ink-sub);margin-bottom:8px;">アイコンを選ぶ</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;">';
+  for (const ic of ICONS) {
+    const sel = ic === data.userIcon;
+    h += '<button onclick="_setMeProfIcon(\''+ic+'\')" data-icon="'+ic+'" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:'+(sel?'var(--accent-bg)':'#FAFAFA')+';border:'+(sel?'2px solid var(--accent)':'1.5px solid #EEE')+';border-radius:10px;cursor:pointer;"><span class="material-symbols-rounded" style="font-size:22px;color:'+(sel?'var(--accent-deep)':'#888')+';">'+ic+'</span></button>';
+  }
+  h += '</div></div>';
+  // 保存
+  h += '<button onclick="_saveMeProfile()" style="width:100%;padding:13px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:900;cursor:pointer;">保存🌸</button>';
+  h += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', h);
+}
+window._openMeProfileModal = _openMeProfileModal;
+
+function _setMeProfColor(c) {
+  data.userColor = c;
+  // プレビュー即時更新
+  const prev = document.getElementById('meProfPreviewIcon');
+  if (prev) {
+    prev.style.borderColor = c;
+    const sp = prev.querySelector('span');
+    if (sp) sp.style.color = c;
+  }
+  // 色ボタンのselected更新
+  document.querySelectorAll('#meProfileModal [data-color]').forEach(btn => {
+    btn.style.border = (btn.dataset.color === c) ? '3px solid var(--ink-dark)' : '2px solid white';
+  });
+  // アイコンボタンの色も連動
+  document.querySelectorAll('#meProfileModal [data-icon]').forEach(btn => {
+    const sp = btn.querySelector('span');
+    if (sp && btn.dataset.icon === data.userIcon) sp.style.color = c;
+  });
+}
+window._setMeProfColor = _setMeProfColor;
+
+function _setMeProfIcon(ic) {
+  data.userIcon = ic;
+  const prev = document.getElementById('meProfPreviewIcon');
+  if (prev) {
+    const sp = prev.querySelector('span');
+    if (sp) sp.textContent = ic;
+  }
+  document.querySelectorAll('#meProfileModal [data-icon]').forEach(btn => {
+    const sp = btn.querySelector('span');
+    const sel = btn.dataset.icon === ic;
+    btn.style.background = sel ? 'var(--accent-bg)' : '#FAFAFA';
+    btn.style.border = sel ? '2px solid var(--accent)' : '1.5px solid #EEE';
+    if (sp) sp.style.color = sel ? data.userColor : '#888';
+  });
+}
+window._setMeProfIcon = _setMeProfIcon;
+
+function _saveMeProfile() {
+  const nameInput = document.getElementById('meProfNameInput');
+  if (nameInput) data.userName = (nameInput.value || '').trim() || 'あなた';
+  saveData();
+  document.getElementById('meProfileModal').remove();
+  render();
+  showToast('プロフィール更新したよ🌸');
+}
+window._saveMeProfile = _saveMeProfile;
 
 function renderTweetsDiary() {
   if (!data.tweets) data.tweets = [];
