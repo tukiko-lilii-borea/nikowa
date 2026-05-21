@@ -37746,14 +37746,8 @@ function setShopSampleKind(k) {
 }
 
 // ===== タウン流れるニュース =====
-const SAMPLE_NEWS = [
-  { region:'大阪', tag:'トリミング', kind:'shop',     name:'ふわふわトリミング',    text:'春のふわふわコース始まりました🌸', minutes: 2 },
-  { region:'大阪', tag:'カフェ',     kind:'shop',     name:'カフェ ハナ',           text:'桜パフェはじめました🌸 5/3まで', minutes: 8 },
-  { region:'兵庫', tag:'動物病院',   kind:'shop',     name:'動物病院ぽぷり',         text:'5月の予約枠 公開中💉', minutes: 15 },
-  { region:'大阪', tag:'マルシェ',   kind:'marche',   name:'マルシェ・なにわ',        text:'5/15 中之島マルシェ開催🎪', minutes: 32 },
-  { region:'兵庫', tag:'パン屋',     kind:'shop',     name:'神戸ベーカリー',         text:'焼きたて食パン 朝7時から🍞', minutes: 47 },
-  { region:'京都', tag:'ヨガ',       kind:'personal', name:'ヨガスタジオ華',         text:'朝ヨガ無料体験会 5/10🧘', minutes: 64 },
-];
+// サンプルニュースは削除済み（架空店だったため）
+const SAMPLE_NEWS = [];
 let _newsIndex = 0;
 let _newsTimer = null;
 const NEWS_INTERVAL_MS = 10000; // 10秒
@@ -37842,14 +37836,8 @@ function stopNewsTicker() {
 }
 
 // ===== サンプルショップ =====
-const SAMPLE_SHOPS = [
-  { id:'shop1', name:'ふわふわトリミング', region:'大阪', kind:'shop',     emoji:'🐩', tags:['トリミング','シャンプー','犬'],   color:'pink' },
-  { id:'shop2', name:'カフェ ハナ',         region:'大阪', kind:'shop',     emoji:'☕', tags:['カフェ','モーニング'],            color:'butter' },
-  { id:'shop3', name:'動物病院ぽぷり',     region:'兵庫', kind:'shop',     emoji:'🏥', tags:['動物病院','犬','猫'],              color:'sky' },
-  { id:'shop4', name:'マルシェ・なにわ',   region:'大阪', kind:'marche',   emoji:'🎪', tags:['マルシェ','イベント'],            color:'mint' },
-  { id:'shop5', name:'神戸ベーカリー',     region:'兵庫', kind:'shop',     emoji:'🍞', tags:['パン屋','食パン'],                color:'butter' },
-  { id:'shop6', name:'ヨガスタジオ華',     region:'京都', kind:'personal', emoji:'🧘', tags:['ヨガ','朝活'],                    color:'lavender' },
-];
+// サンプル店は削除済み（架空店だったため）。実装で参照されるが空でOK
+const SAMPLE_SHOPS = [];
 
 // ショップ画面の表示モード
 let townShopView = 'list';  // 'list' | 'detail'
@@ -42856,10 +42844,10 @@ function renderTown() {
       // にこわ登録個人店を抽出してGoogle結果より先に表示
       const _locText = placesLocMode === 'addr' ? placesAddrText : '';
       const nikowaMatched = getMatchingNikowaShops(placesSelCat, _locText, placesText);
-      // ★ 検索結果の地図エリア（小さく、結果がある時だけ表示）
-      html += '<div style="padding:0 14px 8px;">';
-      html += '<div style="position:relative;border-radius:14px;overflow:hidden;">';
-      html += '<div id="placesMap" style="background:#eceff3;height:38vh;width:100%;"></div>';
+      // ★ 検索結果の地図エリア（sticky で上部固定）
+      html += '<div style="position:sticky;top:0;z-index:5;background:var(--bg);padding:0 14px 8px;">';
+      html += '<div style="position:relative;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">';
+      html += '<div id="placesMap" style="background:#eceff3;height:36vh;width:100%;"></div>';
       html += '<div id="placesOverlayCard" style="display:none;position:absolute;bottom:8px;left:8px;right:8px;z-index:10;"></div>';
       html += '</div>';
       html += '</div>';
@@ -52540,7 +52528,7 @@ function highlightPlacesMarker(placeId) {
   markers.forEach(m => m.setIcon(window._placesPinIcon));
   target.setIcon(window._placesGoldIcon);
   map.panTo(target.getPosition());
-  if (map.getZoom() < 16) map.setZoom(16);
+  map.setZoom(18); // タップでドアップ
   const overlay = document.getElementById('placesOverlayCard');
   if (overlay) {
     const r = placesResultsMap[placeId];
@@ -53195,8 +53183,8 @@ function buildPlaceCardHtml(p, catIcon) {
   if (id) placesResultsMap[id] = { id, name, addr, mapsUrl, catIcon, lat: pos && pos.lat, lng: pos && pos.lng, photoUrl: photoUrl, rating: rating };
 
   let html = '<div class="place-card">';
-  // 写真エリア
-  html += '<div class="place-card-photo-wrap">';
+  // 写真エリア（タップで地図ハイライト）
+  html += '<div class="place-card-photo-wrap" style="cursor:pointer;" onclick="highlightPlacesMarker(\''+idEsc+'\')">';
   if (photoUrl) {
     html += '<img class="place-card-photo" src="'+photoUrl+'" alt="'+escapeHtml(name)+'" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">';
     html += '<div class="place-card-photo-ph" style="display:none;position:absolute;inset:0;"><span class="material-symbols-rounded">photo_camera</span></div>';
@@ -53222,7 +53210,7 @@ function buildPlaceCardHtml(p, catIcon) {
   html += '<div class="place-card-body">';
   html += '<div class="place-card-header">';
   html += '<div class="place-card-icon">'+catIcon+'</div>';
-  html += '<div class="place-card-info">';
+  html += '<div class="place-card-info" style="cursor:pointer;" onclick="highlightPlacesMarker(\''+idEsc+'\')">';
   html += '<div class="place-card-name">'+escapeHtml(name)+'</div>';
   if (hours) html += '<div style="font-size:10px;color:var(--ink-sub);margin-top:2px;">'+escapeHtml(hours)+'</div>';
   html += '<div class="place-card-addr" style="margin-top:2px;">'+escapeHtml(addr)+'</div>';
